@@ -11,6 +11,7 @@ import android.util.Log;
 import android.os.Handler;
 import android.os.Looper;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.ui.view.MainActivityView;
 import net.toload.main.hd.ui.view.NavigationDrawerView;
 import net.toload.main.hd.ui.view.NavigationMenuItem;
@@ -19,7 +20,6 @@ import net.toload.main.hd.DBServer;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.ui.view.NavigationDrawerFragment;
 import net.toload.main.hd.ui.NavigationManager;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.R;
@@ -138,11 +138,11 @@ public class SetupImController extends BaseController implements ImportDialog.On
         }
         
         try {
-            List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
-            for (Im im : imList) {
-                String imName = im.getCode();
+            List<ImConfig> imConfigList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
+            for (ImConfig imConfig : imConfigList) {
+                String imName = imConfig.getCode();
                 if (imName != null) {
-                    String amount = searchServer.getImInfo(imName, "amount");
+                    String amount = searchServer.getImConfig(imName, "amount");
                     boolean isAvailable = amount != null && !amount.isEmpty() && !amount.equals("0");
                     buttonStates.put(imName, isAvailable);
                 }
@@ -160,8 +160,8 @@ public class SetupImController extends BaseController implements ImportDialog.On
         return buttonStates;
     }
 
-    public List<Im> getImList() {
-        List<Im> result = searchServer.getImList(null, LIME.IM_FULL_NAME);
+    public List<ImConfig> getImConfigList() {
+        List<ImConfig> result = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
         return result != null ? result : new ArrayList<>();
     }
     
@@ -169,11 +169,11 @@ public class SetupImController extends BaseController implements ImportDialog.On
         List<NavigationMenuItem> items = new ArrayList<>();
 
         try {
-            List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
+            List<ImConfig> imConfigList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
 
             // Also update NavigationManager's imList
             if (navigationManager != null) {
-                navigationManager.setImList(imList);
+                navigationManager.setImConfigFullNameList(imConfigList);
             }
 
             // Add default menu items
@@ -181,9 +181,9 @@ public class SetupImController extends BaseController implements ImportDialog.On
             items.add(new NavigationMenuItem(null, 1, false)); // Related
 
             // Add IM menu items
-            for (int i = 0; i < imList.size(); i++) {
-                Im im = imList.get(i);
-                items.add(new NavigationMenuItem(im, i + 2, false));
+            for (int i = 0; i < imConfigList.size(); i++) {
+                ImConfig imConfig = imConfigList.get(i);
+                items.add(new NavigationMenuItem(imConfig, i + 2, false));
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to load menu items", e);
@@ -454,7 +454,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
         try {
             showProgress(mainActivityView, context.getString(R.string.setup_load_migrate_export));
             
-            List<Im> imList = searchServer.getImList(tableName);
+            List<ImConfig> imConfigList = searchServer.getImAllConfigList(tableName);
             if (onProgress != null) {
                 onProgress.run();
             }
@@ -462,7 +462,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             final File[] resultFile = {null};
             
             // Use progress listener to get real-time export progress
-            dbServer.exportTxtTable(tableName, targetFile, imList, new net.toload.main.hd.global.LIMEProgressListener() {
+            dbServer.exportTxtTable(tableName, targetFile, imConfigList, new net.toload.main.hd.global.LIMEProgressListener() {
                 @Override
                 public void onProgress(long percentageDone, long var2, String status) {
                     updateProgress(mainActivityView, (int) percentageDone, status != null ? status : context.getString(R.string.setup_load_migrate_export));
@@ -518,7 +518,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
         try {
             showProgress(mainActivityView, context.getString(R.string.setup_load_migrate_export));
 
-            List<Im> imInfo = searchServer.getImList(LIME.DB_TABLE_RELATED);
+            List<ImConfig> imConfigInfo = searchServer.getImAllConfigList(LIME.DB_TABLE_RELATED);
             if (onProgress != null) {
                 onProgress.run();
             }
@@ -526,7 +526,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             final File[] resultFile = {null};
             
             // Use progress listener to get real-time export progress
-            dbServer.exportTxtTable(LIME.DB_TABLE_RELATED, targetFile, imInfo, new net.toload.main.hd.global.LIMEProgressListener() {
+            dbServer.exportTxtTable(LIME.DB_TABLE_RELATED, targetFile, imConfigInfo, new net.toload.main.hd.global.LIMEProgressListener() {
                 @Override
                 public void onProgress(long percentageDone, long var2, String status) {
                     updateProgress(mainActivityView, (int) percentageDone, status != null ? status : "Exporting...");

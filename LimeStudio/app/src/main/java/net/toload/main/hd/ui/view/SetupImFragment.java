@@ -58,10 +58,10 @@ import android.widget.Toast;
 
 
 import net.toload.main.hd.DBServer;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.ui.MainActivity;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.global.LIMEUtilities;
@@ -121,7 +121,7 @@ public class SetupImFragment extends Fragment implements SetupImView {
     private Activity activity;
     private LIMEPreferenceManager mLIMEPref;
 
-    List<Im> imlist;
+    List<ImConfig> imlist;
 
     TextView txtVersion;
 
@@ -209,17 +209,17 @@ public class SetupImFragment extends Fragment implements SetupImView {
      *
      * @param button The button to configure
      * @param tableName The database table name constant (e.g., LIME.DB_TABLE_PHONETIC)
-     * @param imList List of IMs to check if table is loaded
+     * @param imConfigList List of IMs to check if table is loaded
      *
      */
-    private void setupInputMethodButton(Button button, String tableName, List<Im> imList) {
+    private void setupInputMethodButton(Button button, String tableName, List<ImConfig> imConfigList) {
         if (button == null) return;
 
         String tableValue = null;
-        if (imList != null) {
-            for (Im im : imList) {
-                if (tableName.equals(im.getCode())) {
-                    tableValue = im.getDesc();
+        if (imConfigList != null) {
+            for (ImConfig imConfig : imConfigList) {
+                if (tableName.equals(imConfig.getCode())) {
+                    tableValue = imConfig.getDesc();
                     break;
                 }
             }
@@ -320,7 +320,7 @@ public class SetupImFragment extends Fragment implements SetupImView {
         if (setupImController != null) {
             try {
                 // Get IM list for other operations
-                imlist = setupImController.getImList();
+                imlist = setupImController.getImConfigList();
                 // Update IM pick up list items
                 mLIMEPref.syncIMActivatedState(imlist);
 
@@ -366,9 +366,9 @@ public class SetupImFragment extends Fragment implements SetupImView {
                 // Setup custom import button - always keep it active/clickable
                 if (btnSetupImImportStandard != null) {
                     String customTableName =null;
-                    for (Im im : imlist ){
-                        if (im.getCode().equals(LIME.DB_TABLE_CUSTOM)) {
-                            customTableName = im.getDesc();
+                    for (ImConfig imConfig : imlist ){
+                        if (imConfig.getCode().equals(LIME.DB_TABLE_CUSTOM)) {
+                            customTableName = imConfig.getDesc();
                         }
                     }
                     if (customTableName != null) {

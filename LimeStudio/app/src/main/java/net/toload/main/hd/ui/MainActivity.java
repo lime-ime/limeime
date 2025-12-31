@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityView 
         setupImController.setNavigationManager(navigationManager);
 
         // initial imList
-        navigationManager.setImList(manageImController.getImList());
+        navigationManager.setImConfigFullNameList(manageImController.getImConfigFullNameList());
 
         // Set up the navigation drawer - fragments are now guaranteed to find initialized controllers
         mNavigationDrawerFragment = (NavigationDrawerFragment)

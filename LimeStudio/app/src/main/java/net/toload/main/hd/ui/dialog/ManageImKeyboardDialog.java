@@ -24,7 +24,6 @@
 
 package net.toload.main.hd.ui.dialog;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -111,8 +110,6 @@ public class ManageImKeyboardDialog extends DialogFragment implements
 
         assert getDialog() != null;
         getDialog().getWindow().setTitle(getResources().getString(R.string.manage_select_keyboard));
-
-        Activity activity = getActivity();
 
         View view = inflater.inflate(R.layout.fragment_dialog_keyboard, container, false);
 

@@ -42,9 +42,9 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.ui.controller.ManageImController;
 import net.toload.main.hd.ui.MainActivity;
 
@@ -180,26 +180,26 @@ public class ImportDialog extends DialogFragment {
 			btnImportRelated.setVisibility(View.VISIBLE);
 		}
 
-		List<Im> imList = manageImController.getImList();
+		List<ImConfig> imConfigFullNameList = manageImController.getImConfigFullNameList();
 
 		// Setup all IM type buttons using imList
-		setupImportDialogButton(view, R.id.btnImportCustom, LIME.DB_TABLE_CUSTOM, LIME.IM_CUSTOM, imList);
-		setupImportDialogButton(view, R.id.btnImportArray, LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY, imList);
-		setupImportDialogButton(view, R.id.btnImportArray10, LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10, imList);
-		setupImportDialogButton(view, R.id.btnImportCj, LIME.DB_TABLE_CJ, LIME.IM_CJ, imList);
-		setupImportDialogButton(view, R.id.btnImportCj5, LIME.DB_TABLE_CJ5, LIME.IM_CJ5, imList);
-		setupImportDialogButton(view, R.id.btnImportDayi, LIME.DB_TABLE_DAYI, LIME.IM_DAYI, imList);
-		setupImportDialogButton(view, R.id.btnImportEcj, LIME.DB_TABLE_ECJ, LIME.IM_ECJ, imList);
-		setupImportDialogButton(view, R.id.btnImportEz, LIME.DB_TABLE_EZ, LIME.IM_EZ, imList);
-		setupImportDialogButton(view, R.id.btnImportPhonetic, LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC, imList);
-		setupImportDialogButton(view, R.id.btnImportPinyin, LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN, imList);
-		setupImportDialogButton(view, R.id.btnImportScj, LIME.DB_TABLE_SCJ, LIME.IM_SCJ, imList);
-		setupImportDialogButton(view, R.id.btnImportWb, LIME.DB_TABLE_WB, LIME.IM_WB, imList);
-		setupImportDialogButton(view, R.id.btnImportHs, LIME.DB_TABLE_HS, LIME.IM_HS, imList);
+		setupImportDialogButton(view, R.id.btnImportCustom, LIME.DB_TABLE_CUSTOM, LIME.IM_CUSTOM, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportArray, LIME.DB_TABLE_ARRAY, LIME.IM_ARRAY, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportArray10, LIME.DB_TABLE_ARRAY10, LIME.IM_ARRAY10, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportCj, LIME.DB_TABLE_CJ, LIME.IM_CJ, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportCj5, LIME.DB_TABLE_CJ5, LIME.IM_CJ5, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportDayi, LIME.DB_TABLE_DAYI, LIME.IM_DAYI, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportEcj, LIME.DB_TABLE_ECJ, LIME.IM_ECJ, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportEz, LIME.DB_TABLE_EZ, LIME.IM_EZ, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportPhonetic, LIME.DB_TABLE_PHONETIC, LIME.IM_PHONETIC, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportPinyin, LIME.DB_TABLE_PINYIN, LIME.IM_PINYIN, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportScj, LIME.DB_TABLE_SCJ, LIME.IM_SCJ, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportWb, LIME.DB_TABLE_WB, LIME.IM_WB, imConfigFullNameList);
+		setupImportDialogButton(view, R.id.btnImportHs, LIME.DB_TABLE_HS, LIME.IM_HS, imConfigFullNameList);
 
 		// Setup related table button
 		if (importMode == IMPORT_MODE_TEXT && importText != null && importText.length() > 1) {
-			setupImportDialogButton(view, R.id.btnImportRelated, LIME.DB_TABLE_RELATED, LIME.DB_TABLE_RELATED, imList);
+			setupImportDialogButton(view, R.id.btnImportRelated, LIME.DB_TABLE_RELATED, LIME.DB_TABLE_RELATED, imConfigFullNameList);
 		} else {
 			setupButtonDisabled(btnImportRelated);
 		}
@@ -213,17 +213,17 @@ public class ImportDialog extends DialogFragment {
 	 * @param view The parent view
 	 * @param buttonId The button resource ID
 	 * @param tableName The database table name
-	 * @param imName The IM name
-	 * @param imList List of existing Im objects
+	 * @param imCode The IM name
+	 * @param imConfigList List of existing Im objects
 	 */
-	private void setupImportDialogButton(View view, int buttonId, String tableName, String imName, List<Im> imList) {
+	private void setupImportDialogButton(View view, int buttonId, String tableName, String imCode, List<ImConfig> imConfigList) {
 		Button button = view.findViewById(buttonId);
 		boolean shouldShow;
 		if (importMode == IMPORT_MODE_TEXT) {
-			// Enable if any Im in imList has code matching imName
+			// Enable if any Im in imList has code matching imCode
 			shouldShow = false;
-			for (Im im : imList) {
-				if (im.getCode().equals(imName)) {
+			for (ImConfig imConfig : imConfigList) {
+				if (imConfig.getCode().equals(imCode)) {
 					shouldShow = true;
 					break;
 				}
@@ -239,7 +239,7 @@ public class ImportDialog extends DialogFragment {
 			button.setAlpha(LIME.NORMAL_ALPHA_VALUE);
 			button.setTypeface(null, Typeface.BOLD);
 			button.setEnabled(true);
-			button.setOnClickListener(v -> confirmImportDialog(imName));
+			button.setOnClickListener(v -> confirmImportDialog(imCode));
 		} else {
 			setupButtonDisabled(button);
 		}

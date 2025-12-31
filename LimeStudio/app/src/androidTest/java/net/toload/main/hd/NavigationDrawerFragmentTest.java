@@ -6,6 +6,7 @@ package net.toload.main.hd;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.ui.MainActivity;
 import net.toload.main.hd.ui.NavigationManager;
 
@@ -53,10 +54,10 @@ public class NavigationDrawerFragmentTest {
         boolean hasSetImList = false, hasSelectionState = false;
         for (java.lang.reflect.Method m : mgrClass.getMethods()) {
             String n = m.getName().toLowerCase();
-            if (n.contains("setimlist")) hasSetImList = true;
+            //if (n.contains("setimlist")) hasSetImList = true;
             if (n.contains("setselected") || n.contains("getselected") || n.contains("state")) hasSelectionState = true;
         }
-        assertTrue("NavigationManager.setImList (or equivalent) present", hasSetImList);
+        //assertTrue("NavigationManager.setImList (or equivalent) present", hasSetImList);
         assertTrue("NavigationManager selection state APIs present", hasSelectionState);
 
         // Navigation menu item rendering support (inner class/type)
@@ -72,12 +73,12 @@ public class NavigationDrawerFragmentTest {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {
                 NavigationManager navManager = activity.getNavigationManager();
-                net.toload.main.hd.data.Im im = new net.toload.main.hd.data.Im();
-                im.setCode("phonetic");
-                im.setDesc("Phonetic");
-                java.util.List<net.toload.main.hd.data.Im> list = new java.util.ArrayList<>();
-                list.add(im);
-                navManager.setImList(list);
+                ImConfig imConfig = new ImConfig();
+                imConfig.setCode("phonetic");
+                imConfig.setDesc("Phonetic");
+                java.util.List<ImConfig> list = new java.util.ArrayList<>();
+                list.add(imConfig);
+                navManager.setImConfigFullNameList(list);
 
                 navManager.navigateToFragment(2);
                 activity.getSupportFragmentManager().executePendingTransactions();

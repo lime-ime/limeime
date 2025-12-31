@@ -34,7 +34,7 @@ import android.util.Log;
 
 import androidx.core.content.ContextCompat;
 
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEProgressListener;
@@ -209,16 +209,16 @@ public class  DBServer {
 	 * 
 	 * @param table The table name to export (must be valid, use {@link LIME#DB_TABLE_RELATED} for related phrases)
 	 * @param targetFile The target file to write to
-	 * @param imInfo List of Im objects containing IM configuration info (can be null, only used for regular tables)
+	 * @param imConfigList List of Im objects containing IM configuration info (can be null, only used for regular tables)
 	 * @param progressListener Progress listener for export updates (can be null)
 	 * @return true if export successful, false otherwise
 	 */
-	public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo, LIMEProgressListener progressListener) {
+	public boolean exportTxtTable(String table, File targetFile, List<ImConfig> imConfigList, LIMEProgressListener progressListener) {
 		if (datasource == null) {
 			Log.e(TAG, "exportTxtTable(): datasource is null");
 			return false;
 		}
-		return datasource.exportTxtTable(table, targetFile, imInfo, progressListener);
+		return datasource.exportTxtTable(table, targetFile, imConfigList, progressListener);
 	}
 
 	/**
@@ -229,11 +229,11 @@ public class  DBServer {
 	 * 
 	 * @param table The table name to export
 	 * @param targetFile The target file to write to
-	 * @param imInfo List of Im objects containing IM configuration info
+	 * @param imConfigList List of Im objects containing IM configuration info
 	 * @return true if export successful, false otherwise
 	 */
-	public boolean exportTxtTable(String table, File targetFile, List<Im> imInfo) {
-		return exportTxtTable(table, targetFile, imInfo, null);
+	public boolean exportTxtTable(String table, File targetFile, List<ImConfig> imConfigList) {
+		return exportTxtTable(table, targetFile, imConfigList, null);
 	}
 
 	/**

@@ -28,9 +28,6 @@ import android.database.Cursor;
 
 import net.toload.main.hd.global.LIME;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Represents an Input Method (IM) configuration record in the database.
  * 
@@ -43,7 +40,7 @@ import java.util.List;
  * 
  * @author LimeIME Team
  */
-public class Im {
+public class ImConfig {
 
 	private int id;
 	private String code;
@@ -127,63 +124,6 @@ public class Im {
 		this.spacestyle = spacestyle;
 	}
 
-	/**
-	 * Helper method to safely get a String from cursor.
-	 * 
-	 * <p>Validates that the column exists before accessing it.
-	 * 
-	 * @param cursor The Cursor to read from
-	 * @param columnName The column name to read
-	 * @return The column value, or empty string if column is missing
-	 */
-	private static String getCursorString(Cursor cursor, String columnName) {
-		int index = cursor.getColumnIndex(columnName);
-		if (index >= 0) {
-			return cursor.getString(index);
-		}
-		return ""; // Return empty string if column is missing
-	}
 
-	/**
-	 * Helper method to safely get an int from cursor.
-	 * 
-	 * <p>Validates that the column exists before accessing it.
-	 * 
-	 * @param cursor The Cursor to read from
-	 * @param columnName The column name to read
-	 * @return The column value, or 0 if column is missing
-	 */
-	private static int getCursorInt(Cursor cursor, String columnName) {
-		int index = cursor.getColumnIndex(columnName);
-		if (index >= 0) {
-			return cursor.getInt(index);
-		}
-		return 0; // Return 0 if column is missing
-	}
-
-	/**
-	 * Creates an Im object from a Cursor row.
-	 * 
-	 * <p>This method reads the current row from the cursor and creates
-	 * an Im object with the column values. The cursor should be
-	 * positioned at the desired row before calling this method.
-	 * 
-	 * @param cursor The Cursor positioned at the desired row
-	 * @return A new Im object populated with cursor data
-	 */
-	public static Im get(Cursor cursor){
-		Im record = new Im();
-		record.setId(getCursorInt(cursor, LIME.DB_IM_COLUMN_ID));
-		record.setCode(getCursorString(cursor, LIME.DB_IM_COLUMN_CODE));
-		record.setTitle(getCursorString(cursor, LIME.DB_IM_COLUMN_TITLE));
-		record.setDesc(getCursorString(cursor, LIME.DB_IM_COLUMN_DESC));
-		record.setKeyboard(getCursorString(cursor, LIME.DB_IM_COLUMN_KEYBOARD));
-		String disableStr = getCursorString(cursor, LIME.DB_IM_COLUMN_DISABLE);
-		record.setDisable(Boolean.getBoolean(disableStr));
-		record.setSelkey(getCursorString(cursor, LIME.DB_IM_COLUMN_SELKEY));
-		record.setEndkey(getCursorString(cursor, LIME.DB_IM_COLUMN_ENDKEY));
-		record.setSpacestyle(getCursorString(cursor, LIME.DB_IM_COLUMN_SPACESTYLE));
-		return record;
-	}
 
 }

@@ -30,7 +30,7 @@ import android.os.RemoteException;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.data.Related;
@@ -72,26 +72,26 @@ public class SearchServerTest {
     // ========================================================================
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListWithNullCode() {
+    public void testSearchServerGetImConfigListWithNullCode() {
         // Test getIm() with null code (should return all IMs)
-        List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
-        assertNotNull("getIm() should return a list (not null)", imList);
-        assertTrue("getIm() with null code should return a list", imList instanceof List);
+        List<ImConfig> imConfigList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
+        assertNotNull("getIm() should return a list (not null)", imConfigList);
+        assertTrue("getIm() with null code should return a list", imConfigList instanceof List);
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListWithSpecificCode() {
+    public void testSearchServerGetImConfigListWithSpecificCode() {
         // Test getIm() with specific code
-        List<Im> imList = searchServer.getImList("custom", LIME.IM_FULL_NAME);
-        assertNotNull("getIm() should return a list (not null)", imList);
-        assertTrue("getIm() with specific code should return a list", imList instanceof List);
+        List<ImConfig> imConfigList = searchServer.getImConfigList("custom", LIME.IM_FULL_NAME);
+        assertNotNull("getIm() should return a list (not null)", imConfigList);
+        assertTrue("getIm() with specific code should return a list", imConfigList instanceof List);
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListWithTypeFilter() {
+    public void testSearchServerGetImConfigListWithTypeFilter() {
         // Test getIm() with type filter
-        List<Im> nameList = searchServer.getImList(null, LIME.IM_FULL_NAME);
-        List<Im> keyboardList = searchServer.getImList(null, LIME.IM_KEYBOARD);
+        List<ImConfig> nameList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
+        List<ImConfig> keyboardList = searchServer.getImConfigList(null, LIME.IM_KEYBOARD);
         
         assertNotNull("getIm() with IM_TYPE_NAME should return a list", nameList);
         assertNotNull("getIm() with IM_TYPE_KEYBOARD should return a list", keyboardList);
@@ -107,9 +107,9 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListInfo() {
+    public void testSearchServerGetImConfigListInfo() {
         // Test getImInfo() - retrieving IM info field
-        String info = searchServer.getImInfo("custom", "name");
+        String info = searchServer.getImConfig("custom", "name");
         // Info might be null if IM doesn't exist, which is acceptable
         assertTrue("getImInfo() should return a string or null", info == null || info instanceof String);
     }
@@ -117,7 +117,7 @@ public class SearchServerTest {
     @Test(timeout = 10000)
     public void testSearchServerGetImInfoWithNonExistentImList() {
         // Test getImInfo() with non-existent IM (should return empty string, not null)
-        String info = searchServer.getImInfo("nonexistent_im", "name");
+        String info = searchServer.getImConfig("nonexistent_im", "name");
         // SearchServer.getImInfo() returns empty string "" for non-existent IM, not null
         assertTrue("getImInfo() with non-existent IM should return empty string or null", 
                   info == null || info.isEmpty());
@@ -131,9 +131,9 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListInfoWithNonExistentField() {
+    public void testSearchServerGetImConfigListInfoWithNonExistentField() {
         // Test getImInfo() with non-existent field (should return empty string, not null)
-        String info = searchServer.getImInfo("custom", "nonexistent_field");
+        String info = searchServer.getImConfig("custom", "nonexistent_field");
         // SearchServer.getImInfo() returns empty string "" for non-existent field, not null
         assertTrue("getImInfo() with non-existent field should return empty string or null", 
                   info == null || info.isEmpty());
@@ -147,15 +147,15 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerSetImInfo() {
+    public void testSearchServerSetImConfig() {
         // Test setImInfo() - setting IM info field
         try {
-            searchServer.setImInfo("custom", "test_field", "test_value");
+            searchServer.setImConfig("custom", "test_field", "test_value");
             // If no exception thrown, operation succeeded
             assertTrue("setImInfo() should complete without exception", true);
             
             // Verify the value was set
-            String value = searchServer.getImInfo("custom", "test_field");
+            String value = searchServer.getImConfig("custom", "test_field");
             assertEquals("setImInfo() should set the field value", "test_value", value);
         } catch (Exception e) {
             Log.e(TAG, "setImInfo() threw exception", e);
@@ -164,17 +164,17 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerSetImInfoUpdateExisting() {
+    public void testSearchServerSetImConfigUpdateExisting() {
         // Test setImInfo() - updating existing field
         try {
             // Set initial value
-            searchServer.setImInfo("custom", "test_field_update", "initial_value");
+            searchServer.setImConfig("custom", "test_field_update", "initial_value");
             
             // Update the value
-            searchServer.setImInfo("custom", "test_field_update", "updated_value");
+            searchServer.setImConfig("custom", "test_field_update", "updated_value");
             
             // Verify the value was updated
-            String value = searchServer.getImInfo("custom", "test_field_update");
+            String value = searchServer.getImConfig("custom", "test_field_update");
             assertEquals("setImInfo() should update existing field", "updated_value", value);
         } catch (Exception e) {
             Log.e(TAG, "setImInfo() update threw exception", e);
@@ -360,7 +360,7 @@ public class SearchServerTest {
         // Test getMappingByCode() - basic search functionality
         try {
             // Set table name first (required for getMappingByCode)
-            searchServer.setTablename("custom", false, false);
+            searchServer.setTableName("custom", false, false);
             
             // Add a test record first
             searchServer.addOrUpdateMappingRecord("custom", "search_test", "搜尋測試", 10);
@@ -473,14 +473,14 @@ public class SearchServerTest {
     // ========================================================================
 
     @Test(timeout = 5000)
-    public void testSearchServerGetImListWithNullDbadapter() {
+    public void testSearchServerGetImConfigListWithNullDbadapter() {
         // Test getIm() with null dbadapter (should return empty list)
         // Note: This test verifies the null check in SearchServer
         // In practice, dbadapter should not be null after SearchServer construction,
         // but we test the defensive coding
-        List<Im> imList = searchServer.getImList(null, LIME.IM_FULL_NAME);
+        List<ImConfig> imConfigList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
         // Should return empty list, not null, based on SearchServer implementation
-        assertNotNull("getIm() should return a list even if dbadapter is null", imList);
+        assertNotNull("getIm() should return a list even if dbadapter is null", imConfigList);
     }
 
     @Test(timeout = 5000)
@@ -491,9 +491,9 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 5000)
-    public void testSearchServerGetImListInfoWithNullDbadapter() {
+    public void testSearchServerGetImConfigListInfoWithNullDbadapter() {
         // Test getImInfo() with null dbadapter (should return null)
-        String info = searchServer.getImInfo("custom", "name");
+        String info = searchServer.getImConfig("custom", "name");
         // Should handle null dbadapter gracefully
         assertTrue("getImInfo() should return null or string", info == null || info instanceof String);
     }
@@ -556,15 +556,15 @@ public class SearchServerTest {
                 "test_export_" + System.currentTimeMillis() + ".lime");
             
             // Create IM info list
-            List<Im> imInfo = new java.util.ArrayList<>();
-            Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_FULL_NAME);
-            versionIm.setDesc("1.0");
-            imInfo.add(versionIm);
+            List<ImConfig> imConfigInfo = new java.util.ArrayList<>();
+            ImConfig versionImConfig = new ImConfig();
+            versionImConfig.setTitle(LIME.IM_FULL_NAME);
+            versionImConfig.setDesc("1.0");
+            imConfigInfo.add(versionImConfig);
             
             // Export table using DBServer
             DBServer dbServer = DBServer.getInstance(appContext);
-            boolean success = dbServer.exportTxtTable("custom", exportFile, imInfo);
+            boolean success = dbServer.exportTxtTable("custom", exportFile, imConfigInfo);
             assertTrue("exportTxtTable() should succeed", success);
             assertTrue("Export file should exist", exportFile.exists());
             assertTrue("Export file should not be empty", exportFile.length() > 0);
@@ -855,17 +855,17 @@ public class SearchServerTest {
         // Test removeImInfo() - delegation to LimeDB.removeImInfo()
         try {
             // First set some IM info
-            searchServer.setImInfo("custom", "test_remove_field", "test_value");
+            searchServer.setImConfig("custom", "test_remove_field", "test_value");
             
             // Verify it was set
-            String valueBefore = searchServer.getImInfo("custom", "test_remove_field");
+            String valueBefore = searchServer.getImConfig("custom", "test_remove_field");
             assertEquals("Value should be set before removal", "test_value", valueBefore);
             
             // Remove the IM info
             searchServer.removeImInfo("custom", "test_remove_field");
             
             // Verify it was removed
-            String valueAfter = searchServer.getImInfo("custom", "test_remove_field");
+            String valueAfter = searchServer.getImConfig("custom", "test_remove_field");
             assertTrue("Value should be empty after removal", valueAfter == null || valueAfter.isEmpty());
             
         } catch (Exception e) {
@@ -875,25 +875,25 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerResetImInfo() {
+    public void testSearchServerResetImConfig() {
         // Test resetImInfo() - delegation to LimeDB.resetImInfo()
         try {
             // First set some IM info
-            searchServer.setImInfo("custom", "test_reset_field1", "value1");
-            searchServer.setImInfo("custom", "test_reset_field2", "value2");
+            searchServer.setImConfig("custom", "test_reset_field1", "value1");
+            searchServer.setImConfig("custom", "test_reset_field2", "value2");
             
             // Verify they were set
-            String value1Before = searchServer.getImInfo("custom", "test_reset_field1");
-            String value2Before = searchServer.getImInfo("custom", "test_reset_field2");
+            String value1Before = searchServer.getImConfig("custom", "test_reset_field1");
+            String value2Before = searchServer.getImConfig("custom", "test_reset_field2");
             assertEquals("Value1 should be set before reset", "value1", value1Before);
             assertEquals("Value2 should be set before reset", "value2", value2Before);
             
             // Reset all IM info
-            searchServer.resetImInfo("custom");
+            searchServer.resetImConfig("custom");
             
             // Verify they were reset
-            String value1After = searchServer.getImInfo("custom", "test_reset_field1");
-            String value2After = searchServer.getImInfo("custom", "test_reset_field2");
+            String value1After = searchServer.getImConfig("custom", "test_reset_field1");
+            String value2After = searchServer.getImConfig("custom", "test_reset_field2");
             assertTrue("Value1 should be empty after reset", value1After == null || value1After.isEmpty());
             assertTrue("Value2 should be empty after reset", value2After == null || value2After.isEmpty());
             
@@ -984,12 +984,12 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 10000)
-    public void testSearchServerGetImListKeyboardConfigListWithCode() {
+    public void testSearchServerGetImListKeyboardConfigKeyboardListWithCode() {
         // Test getImList(String code) - delegation to LimeDB.getImList()
         try {
-            List<net.toload.main.hd.data.Im> imList = searchServer.getImList("custom");
-            assertNotNull("getImList should return a list (not null)", imList);
-            assertTrue("getImList should return a list", imList instanceof List);
+            List<ImConfig> imConfigList = searchServer.getImAllConfigList("custom");
+            assertNotNull("getImList should return a list (not null)", imConfigList);
+            assertTrue("getImList should return a list", imConfigList instanceof List);
             
         } catch (Exception e) {
             Log.e(TAG, "getImList(String) test threw exception", e);
@@ -1010,10 +1010,10 @@ public class SearchServerTest {
     }
 
     @Test
-    public void testSearchServerSetTablename() {
+    public void testSearchServerSetTableName() {
         try {
             String testTable = "cj";
-            searchServer.setTablename(testTable, true, true);
+            searchServer.setTableName(testTable, true, true);
             String retrievedTable = searchServer.getTablename();
             assertEquals("Table name should be set correctly", testTable, retrievedTable);
         } catch (Exception e) {
@@ -1070,10 +1070,10 @@ public class SearchServerTest {
     }
 
     @Test
-    public void testSearchServerGetImListKeyboardConfigList() {
+    public void testSearchServerGetImListKeyboardConfigKeyboardList() {
         try {
-            List<Im> imList = searchServer.getImList();
-            assertNotNull("IM list should not be null", imList);
+            List<ImConfig> imConfigList = searchServer.getAllImKeyboardConfigList();
+            assertNotNull("IM list should not be null", imConfigList);
             // List could be empty but should not be null
         } catch (Exception e) {
             Log.e(TAG, "getImList() test threw exception", e);

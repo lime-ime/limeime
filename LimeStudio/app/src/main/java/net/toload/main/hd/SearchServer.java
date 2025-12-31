@@ -24,6 +24,7 @@
 
 package net.toload.main.hd;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.os.RemoteException;
@@ -31,7 +32,7 @@ import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Record;
@@ -177,10 +178,14 @@ public class SearchServer {
      * @param numberMapping Whether the table supports number mapping.
      * @param symbolMapping Whether the table supports symbol mapping.
      */
-    public void setTablename(String table, boolean numberMapping, boolean symbolMapping) {
+    public void setTableName(String table, boolean numberMapping, boolean symbolMapping) {
         if (DEBUG)
             Log.i(TAG, "SearchService.setTablename()");
-
+        // Validate table name before setting
+        if (!isValidTableName(table)) {
+            Log.e(TAG, "setTableName(): Invalid table name: " + table);
+            throw new IllegalArgumentException("Invalid table name: " + table);
+        }
         dbadapter.setTableName(table);
         tablename = table;
         hasNumberMapping = numberMapping;
@@ -291,7 +296,7 @@ public class SearchServer {
     private String cacheKey(String code) {
         String key;
 
-        //Jeremy '11,6,17 Seperate physical keyboard cache with keybaordtype
+        //Jeremy '11,6,17 Separate physical keyboard cache with keybaordtype
         if (isPhysicalKeyboardPressed) {
             if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {
                 key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTableName()
@@ -1600,11 +1605,11 @@ List<Mapping> scorelistSnapshot = null;
     /**
      * Retrieves the list of Input Methods (IMs).
      *
-     * @return A list of {@link Im} objects.
+     * @return A list of {@link ImConfig} objects with soft keyboard settings of all activated IM.
      * @throws RemoteException If a database error occurs.
      */
-    public List<Im> getImList() throws RemoteException {
-        return dbadapter.getImList(null, null);
+    public List<ImConfig> getAllImKeyboardConfigList() throws RemoteException {
+        return dbadapter.getImConfigList(null, LIME.DB_IM_COLUMN_KEYBOARD);
     }
 
 
@@ -1706,7 +1711,7 @@ List<Mapping> scorelistSnapshot = null;
         }
         if (selKeyMap.get(table) == null || selKeyMap.isEmpty()) {
             //if(dbadapter == null){dbadapter = new LimeDB(ctx);}
-            selkey = dbadapter.getImInfo(tablename, "selkey");
+            selkey = dbadapter.getImConfig(tablename, "selkey");
             if (DEBUG)
                 Log.i(TAG, "getSelkey():selkey from db:" + selkey);
             boolean validSelkey = true;
@@ -1903,12 +1908,12 @@ List<Mapping> scorelistSnapshot = null;
      * @param configEntry The IM configEntry to filter by, or null/empty for all
      * @return List of Im objects, or empty list if database error
      */
-    public List<Im> getImList(String code, String configEntry) {
+    public List<ImConfig> getImConfigList(String code, String configEntry) {
         if (dbadapter == null) {
             Log.e(TAG, "getIm(): dbadapter is null");
             return new ArrayList<>();
         }
-        return dbadapter.getImList(code, configEntry);
+        return dbadapter.getImConfigList(code, configEntry);
     }
 
     /**
@@ -1934,37 +1939,37 @@ List<Mapping> scorelistSnapshot = null;
      * <p>This method delegates to LimeDB.countRecords() to count mapping records.
      * UI components should use this method instead of directly accessing LimeDB.
      * 
-     * @param im The table name to count records in
+     * @param imCode The table name to count records in
      * @return The number of records, or 0 if database error
      */
 
 
-    public String getImInfo(String im, String field) {
+    public String getImConfig(String imCode, String field) {
         if (dbadapter == null) {
             Log.e(TAG, "getImInfo(): dbadapter is null");
             return "";
         }
-        return dbadapter.getImInfo(im, field);
+        return dbadapter.getImConfig(imCode, field);
     }
 
     /**
      * Sets IM information for a specific field.
      *
      * <p>This method delegates to LimeDB.setImInfo() to store or update configuration
-     * information in the im table. UI components should use this method instead of
+     * information in the imCode table. UI components should use this method instead of
      * directly accessing LimeDB.
      *
-     * @param im    The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
+     * @param imCode    The IM code (e.g., LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_DAYI)
      * @param field The field name to set
      * @param value The value to store
      * @return
      */
-    public boolean setImInfo(String im, String field, String value) {
+    public boolean setImConfig(String imCode, String field, String value) {
         if (dbadapter == null) {
             Log.e(TAG, "setImInfo(): dbadapter is null");
             return false;
         }
-        dbadapter.setImInfo(im, field, value);
+        dbadapter.setImConfig(imCode, field, value);
         return false;
     }
 
@@ -1984,7 +1989,7 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "setIMKeyboard(): dbadapter is null");
             return;
         }
-        dbadapter.setIMKeyboard(im, value, keyboard);
+        dbadapter.setIMConfigKeyboard(im, value, keyboard);
     }
 
     /**
@@ -1994,15 +1999,15 @@ List<Mapping> scorelistSnapshot = null;
      * configuration in the im table. UI components should use this method instead
      * of directly accessing LimeDB.
      * 
-     * @param code The IM code
+     * @param imCode The IM imCode
      * @param keyboard The Keyboard object containing keyboard information
      */
-    public void setIMKeyboard(String code, Keyboard keyboard) {
+    public void setIMKeyboard(String imCode, Keyboard keyboard) {
         if (dbadapter == null) {
             Log.e(TAG, "setIMKeyboard(): dbadapter is null");
             return;
         }
-        dbadapter.setImKeyboard(code, keyboard);
+        dbadapter.setImConfigKeyboard(imCode, keyboard);
     }
 
     /**
@@ -2157,7 +2162,7 @@ List<Mapping> scorelistSnapshot = null;
      * @param values The ContentValues containing column values
      * @return The row ID of the newly inserted row, or -1 if error
      */
-    public long addRecord(String table, android.content.ContentValues values) {
+    public long addRecord(String table, ContentValues values) {
         if (dbadapter == null) {
             Log.e(TAG, "addRecord(): dbadapter is null");
             return -1;
@@ -2311,7 +2316,7 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "removeImInfo(): dbadapter is null");
             return;
         }
-        dbadapter.removeImInfo(im, field);
+        dbadapter.removeImConfig(im, field);
     }
 
     /**
@@ -2321,14 +2326,14 @@ List<Mapping> scorelistSnapshot = null;
      * information for an IM. UI components should use this method instead of
      * directly accessing LimeDB.
      * 
-     * @param im The IM code to reset
+     * @param imCode The IM code to reset
      */
-    public void resetImInfo(String im) {
+    public void resetImConfig(String imCode) {
         if (dbadapter == null) {
             Log.e(TAG, "resetImInfo(): dbadapter is null");
             return;
         }
-        dbadapter.resetImInfo(im);
+        dbadapter.resetImConfig(imCode);
     }
 
     /**
@@ -2527,16 +2532,16 @@ List<Mapping> scorelistSnapshot = null;
      * 
      * <p>This method delegates to LimeDB.getImList() to retrieve IM information.
      * UI components should use this method instead of directly accessing LimeDB.
-     * 
+     *
      * @param code The IM code to retrieve information for
      * @return List of Im objects, or null if database error
      */
-    public List<net.toload.main.hd.data.Im> getImList(String code) {
+    public List<ImConfig> getImAllConfigList(String code) {
         if (dbadapter == null) {
             Log.e(TAG, "getImList(): dbadapter is null");
             return null;
         }
-        return dbadapter.getImList(code, null);
+        return dbadapter.getImConfigList(code, null);
     }
 
     /**

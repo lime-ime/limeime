@@ -2,13 +2,13 @@ package net.toload.main.hd;
 
 import static org.junit.Assert.*;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.ui.controller.SetupImController;
 
@@ -532,10 +532,10 @@ public class IntegrationTestBackupRestore {
     @Test
     public void test_5_6_9_BackupRestoreDatabasePair() throws Exception {
         // Get IM list and record counts before backup
-        java.util.List<net.toload.main.hd.data.Im> imObjListBefore = setupController.getImList();
+        java.util.List<ImConfig> imConfigObjListBefore = setupController.getImConfigList();
         java.util.List<String> imListBefore = new java.util.ArrayList<>();
-        for (net.toload.main.hd.data.Im im : imObjListBefore) {
-            imListBefore.add(String.valueOf(im.getCode()));
+        for (ImConfig imConfig : imConfigObjListBefore) {
+            imListBefore.add(String.valueOf(imConfig.getCode()));
         }
         java.util.Map<String, Integer> imCountsBefore = new java.util.HashMap<>();
         for (String im : imListBefore) {
@@ -564,10 +564,10 @@ public class IntegrationTestBackupRestore {
             setupController.performRestore(backupUri);
 
             // Get IM list and record counts after restore
-            java.util.List<net.toload.main.hd.data.Im> imObjListAfter = setupController.getImList();
+            java.util.List<ImConfig> imConfigObjListAfter = setupController.getImConfigList();
             java.util.List<String> imListAfter = new java.util.ArrayList<>();
-            for (net.toload.main.hd.data.Im im : imObjListAfter) {
-                imListAfter.add(String.valueOf(im.getCode()));
+            for (ImConfig imConfig : imConfigObjListAfter) {
+                imListAfter.add(String.valueOf(imConfig.getCode()));
             }
             java.util.Map<String, Integer> imCountsAfter = new java.util.HashMap<>();
             for (String im : imListAfter) {

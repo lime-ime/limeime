@@ -127,7 +127,7 @@ importTxtTable(String table, LIMEProgressListener progressListener)
   ├─> setImInfo(table, "source", filename)
   │   ├─> checkDBConnection()
   │   ├─> removeImInfo(im, field)
-  │   │   └─> removeImInfoOnDB(db, im, field)
+  │   │   └─> removeImInfo(im, field)
   │   │       └─> db.delete("im", whereClause, whereArgs)
   │   └─> db.insert("im", null, cv)
   ├─> setImInfo(table, "name", imname)
@@ -135,9 +135,9 @@ importTxtTable(String table, LIMEProgressListener progressListener)
   ├─> setImInfo(table, "import", new Date().toString())
   └─> setIMKeyboard(table, kobj.getDescription(), kobj.getCode())
       ├─> checkDBConnection()
-      └─> setIMKeyboardOnDB(db, im, value, keyboard)
-          ├─> removeImInfoOnDB(dbin, im, LIME.DB_KEYBOARD)
-          └─> dbin.insert(LIME.DB_TABLE_IM, null, cv)
+      └─> setIMKeyboard(db, im, value, keyboard)
+          ├─> removeImInfo(im, LIME.DB_KEYBOARD)
+          └─> db.insert(LIME.DB_TABLE_IM, null, cv)
 ```
 
 **Improvement**: Uses unified `countRecords()` method instead of `countMapping()`
@@ -524,50 +524,49 @@ getRelatedSize(pword) → countRecords(LIME.DB_TABLE_RELATED, buildWhereClause(.
 
 **BEFORE:**
 ```
-getImInfo(String im, String field)
+getImInfo(String imCode, String field)
   ├─> checkDBConnection()
-  └─> db.rawQuery("SELECT * FROM im WHERE code='" + im + "' AND title='" + field + "'", null)
+  └─> db.rawQuery("SELECT * FROM im WHERE code='" + imCode + "' AND title='" + field + "'", null)
       └─> getCursorString(cursor, LIME.DB_IM_COLUMN_DESC)
 
-setImInfo(String im, String field, String value)
+setImInfo(String imCode, String field, String value)
   ├─> checkDBConnection()
-  ├─> removeImInfo(im, field)
-  │   └─> removeImInfoOnDB(db, im, field)
+  ├─> removeImInfo(imCode, field)
+  │   └─> removeImInfoOnDB(db, imCode, field)
   │       └─> db.delete(LIME.DB_TABLE_IM, whereClause, whereArgs)
-  └─> db.insert("im", null, cv)
+  └─> db.insert("imCode", null, cv)
 
-removeImInfo(String im, String field)
+removeImInfo(String imCode, String field)
   ├─> checkDBConnection()
-  └─> removeImInfoOnDB(db, im, field)
+  └─> removeImInfo(imCode, field)
       └─> db.delete(LIME.DB_TABLE_IM, whereClause, whereArgs)
 
-resetImInfo(String im)
+resetImInfo(String imCode)
   ├─> checkDBConnection()
-  └─> db.execSQL("DELETE FROM im WHERE code='" + im + "'")
+  └─> db.execSQL("DELETE FROM imCode WHERE code='" + imCode + "'")
 ```
 
 **AFTER:**
 ```
-getImInfo(String im, String field)
+getImConfig(String imCode, String field)
   ├─> checkDBConnection()
   └─> db.query(LIME.DB_TABLE_IM, null, whereClause, whereArgs, ...) [NEW - Parameterized]
       └─> getCursorString(cursor, LIME.DB_IM_COLUMN_DESC)
 
-setImInfo(String im, String field, String value)
+setImConfig(String imCode, String field, String value)
   ├─> checkDBConnection()
-  ├─> removeImInfo(im, field)
-  │   └─> removeImInfoOnDB(db, im, field)
-  │       └─> deleteRecord(LIME.DB_TABLE_IM, whereClause, whereArgs) [Already parameterized]
-  └─> addRecord("im", cv) [NEW - Uses parameterized insert]
+  ├─> removeImInfo(imCode, field)
+  │   └─> deleteRecord(LIME.DB_TABLE_IM, whereClause, whereArgs) [Already parameterized]
+  └─> addRecord("imCode", cv) [NEW - Uses parameterized insert]
 
-removeImInfo(String im, String field)
+removeImConfig(String imCode, String field)
   ├─> checkDBConnection()
-  └─> removeImInfoOnDB(db, im, field)
+  └─> removeImInfo(imCode, field)
       └─> deleteRecord(LIME.DB_TABLE_IM, whereClause, whereArgs) [Already parameterized]
 
-resetImInfo(String im)
+resetImConfig(String imCode)
   ├─> checkDBConnection()
-  └─> deleteRecord(LIME.DB_TABLE_IM, LIME.DB_IM_COLUMN_CODE + " = ?", new String[]{im}) [NEW - Parameterized]
+  └─> deleteRecord(LIME.DB_TABLE_IM, LIME.DB_IM_COLUMN_CODE + " = ?", new String[]{imCode}) [NEW - Parameterized]
 ```
 
 **Improvement**: All operations use parameterized queries, consistent with security best practices
@@ -850,39 +849,39 @@ unzip(File sourceFile, String targetFolder, String targetFile, boolean removeOri
 
 **BEFORE:**
 ```
-getImInfo(String im, String field)
-  └─> datasource.getImInfo(im, field)
+getImInfo(String imCode, String field)
+  └─> datasource.getImInfo(imCode, field)
       └─> [See LimeDB getImInfo chain]
 
-setImInfo(String im, String field, String value)
-  └─> datasource.setImInfo(im, field, value)
+setImInfo(String imCode, String field, String value)
+  └─> datasource.setImInfo(imCode, field, value)
       └─> [See LimeDB setImInfo chain]
 
-removeImInfo(String im, String field)
-  └─> datasource.removeImInfo(im, field)
+removeImInfo(String imCode, String field)
+  └─> datasource.removeImInfo(imCode, field)
       └─> [See LimeDB removeImInfo chain]
 
-resetImInfo(String im)
-  └─> datasource.resetImInfo(im)
+resetImInfo(String imCode)
+  └─> datasource.resetImInfo(imCode)
       └─> [See LimeDB resetImInfo chain]
 ```
 
 **AFTER:**
 ```
-getImInfo(String im, String field)
-  └─> datasource.getImInfo(im, field)
+getImConfig(String imCode, String field)
+  └─> datasource.getImInfo(imCode, field)
       └─> [See LimeDB getImInfo chain - now uses parameterized query]
 
-setImInfo(String im, String field, String value)
-  └─> datasource.setImInfo(im, field, value)
+setImConfig(String imCode, String field, String value)
+  └─> datasource.setImInfo(imCode, field, value)
       └─> [See LimeDB setImInfo chain - now uses addRecord()]
 
-removeImInfo(String im, String field)
-  └─> datasource.removeImInfo(im, field)
+removeImConfig(String imCode, String field)
+  └─> datasource.removeImInfo(imCode, field)
       └─> [See LimeDB removeImInfo chain - now uses deleteRecord()]
 
-resetImInfo(String im)
-  └─> datasource.resetImInfo(im)
+resetImConfig(String imCode)
+  └─> datasource.resetImInfo(imCode)
       └─> [See LimeDB resetImInfo chain - now uses deleteRecord()]
 ```
 
@@ -1280,13 +1279,13 @@ NavigationDrawerFragment.onMenuItemSelected() [action_reset]
 | `getKeyboardList()` | `dbadapter.getKeyboardList()` | Get available keyboards |
 | `getIm(String code, String type)` | `dbadapter.getIm(code, type)` | Get IM list by type (for UI components) |
 | `getKeyboard()` | `dbadapter.getKeyboard()` | Get keyboard list (for UI components) |
-| `getImInfo(String im, String field)` | `dbadapter.getImInfo(im, field)` | Get IM configuration info |
-| `setImInfo(String im, String field, String value)` | `dbadapter.setImInfo(im, field, value)` | Set IM configuration info |
-| `setIMKeyboard(String im, String value, String keyboard)` | `dbadapter.setIMKeyboard(im, value, keyboard)` | Set IM keyboard assignment |
-| `removeImInfo(String im, String field)` | `dbadapter.removeImInfo(im, field)` | Remove IM configuration info |
-| `resetImInfo(String im)` | `dbadapter.resetImInfo(im)` | Reset all IM information for a specific IM |
+| `getImInfo(String imConfig, String field)` | `dbadapter.getImInfo(imConfig, field)` | Get IM configuration info |
+| `setImInfo(String imConfig, String field, String value)` | `dbadapter.setImInfo(imConfig, field, value)` | Set IM configuration info |
+| `setIMKeyboard(String imConfig, String value, String keyboard)` | `dbadapter.setIMKeyboard(imConfig, value, keyboard)` | Set IM keyboard assignment |
+| `removeImInfo(String imConfig, String field)` | `dbadapter.removeImInfo(imConfig, field)` | Remove IM configuration info |
+| `resetImInfo(String imConfig)` | `dbadapter.resetImInfo(imConfig)` | Reset all IM information for a specific IM |
 | `getKeyboardInfo(String keyboardCode, String field)` | `dbadapter.getKeyboardInfo(keyboardCode, field)` | Get keyboard information |
-| `getKeyboardCode(String im)` | `dbadapter.getKeyboardCode(im)` | Get keyboard code assigned to an IM |
+| `getKeyboardCode(String imConfig)` | `dbadapter.getKeyboardCode(imConfig)` | Get keyboard code assigned to an IM |
 | `getKeyboardObj(String keyboard)` | `dbadapter.getKeyboardObj(keyboard)` | Get keyboard object information |
 | `checkBackuptable(String table)` | `dbadapter.checkBackupTable(table)` | Check if backup table exists and has records |
 | `backupUserRecords(String table)` | `dbadapter.backupUserRecords(table)` | Backup user-learned records to backup table |
@@ -1727,9 +1726,9 @@ SetupImLoadRunnable.run()
   │   └─> DBServer.importMapping()
   ├─> datasource.rawQuery("select * from " + backupTableName) [SQL in Runnable]
   │   └─> SQLiteDatabase.rawQuery()
-  ├─> datasource.setImInfo(im, field, value) [Direct LimeDB access]
+  ├─> datasource.setImInfo(imConfig, field, value) [Direct LimeDB access]
   │   └─> LimeDB.setImInfo()
-  └─> datasource.setIMKeyboard(im, value, keyboard) [Direct LimeDB access]
+  └─> datasource.setIMKeyboard(imConfig, value, keyboard) [Direct LimeDB access]
       └─> LimeDB.setIMKeyboard()
 ```
 
@@ -2146,8 +2145,8 @@ ShareTxtRunnable.run()
 **AFTER:**
 ```
 ShareTxtRunnable.run()
-  └─> searchServer.exportTxtTable(table, targetFile, imInfo)
-      └─> LimeDB.exportTxtTable(table, targetFile, imInfo)
+  └─> searchServer.exportTxtTable(table, targetFile, imConfigInfo)
+      └─> LimeDB.exportTxtTable(table, targetFile, imConfigInfo)
           ├─> [Check if table == LIME.DB_TABLE_RELATED]
           ├─> getAllRecords(table) [Returns List<Record> for regular tables]
           │   └─> getRecords(table, null, false, 0, 0)

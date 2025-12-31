@@ -33,8 +33,8 @@ The View layer consists of all user-facing components that display data and rece
   - `ManageImFragment` - IM record management
   - `ManageRelatedFragment` - Related phrase management
 - **Dialogs**:
-  - `ImportDialog` - Import IM records
-  - `ShareDialog` - Share IM and related data
+  - `ImportDialog` - Import IM table
+  - `ShareDialog` - Share IM and related table
   - `ManageImAddDialog` - Add/edit IM records
   - `SetupImLoadDialog` - Load IM files
   - `ManageImKeyboardDialog` - Keyboard management
@@ -721,8 +721,8 @@ User selects .lime option
     ↓
 ShareManager.shareImAsText(tableName)
     ├─ ProgressDialogManager.show()
-    ├─ SearchServer.getImList() (get IM data)
-    ├─ SearchServer.exportTxtTable() (export as text)
+    ├─ SearchServer.getAllImKeyboardConfig() (get IM data)
+    ├─ SearchServer.exportTxtTable() (export Im as text)
     ├─ ProgressDialogManager.dismiss()
     └─ Create share intent
     ↓
@@ -864,10 +864,10 @@ ProgressDialogManager progressMgr; // Abstract operation
 Controllers and managers return safe defaults instead of null:
 
 ```java
-// Return empty list instead of null
-public List<Record> getImList(String table) {
-    List<Record> records = searchServer.getRecords(table, null, false, -1, 0);
-    return records != null ? records : Collections.emptyList();
+// Return empty config list instead of null
+public List<ImConfig> getImAllConfigList(String table) {
+    List<ImConfig> configs = searchServer.getImConfigs(table);
+    return configs != null ? configs : Collections.emptyList();
 }
 ```
 

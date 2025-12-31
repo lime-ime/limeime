@@ -47,10 +47,10 @@ public class ShareDialogTest {
         Class<?> dialog = Class.forName("net.toload.main.hd.ui.dialog.ShareDialog");
         assertNotNull(dialog);
 
-        Class<?> search = Class.forName("net.toload.main.hd.SearchServer");
+        Class<?> search = Class.forName("net.toload.main.hd.ui.controller.SetupImController");
         boolean hasGetIm = false;
         for (java.lang.reflect.Method m : search.getMethods()) {
-            if (m.getName().equals("getImList")) { hasGetIm = true; break; }
+            if (m.getName().equals("getImConfigList")) { hasGetIm = true; break; }
         }
         assertTrue("SearchServer.getImList() present", hasGetIm);
 
@@ -85,10 +85,10 @@ public class ShareDialogTest {
         Class<?> search = Class.forName("net.toload.main.hd.SearchServer");
         boolean hasGetImList = false, hasExportTxt = false;
         for (java.lang.reflect.Method m : search.getMethods()) {
-            if (m.getName().equals("getImList")) hasGetImList = true;
+            if (m.getName().equals("getImConfigList")) hasGetImList = true;
             if (m.getName().equals("exportTxtTable")) hasExportTxt = true;
         }
-        assertTrue("SearchServer.getImList() present", hasGetImList);
+        assertTrue("SearchServer.getImConfigList() present", hasGetImList);
         assertTrue("SearchServer.exportTxtTable(...) present (delegated if needed)", hasExportTxt || true);
     }
 

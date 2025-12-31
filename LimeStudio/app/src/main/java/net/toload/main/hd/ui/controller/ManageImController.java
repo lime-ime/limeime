@@ -1,10 +1,10 @@
 package net.toload.main.hd.ui.controller;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.ui.view.ManageImView;
 import net.toload.main.hd.ui.view.ManageRelatedView;
 import net.toload.main.hd.SearchServer;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIME;
@@ -296,12 +296,12 @@ public class ManageImController extends BaseController {
      *
      * @return a non-null list of `Im` objects; may be empty when the server is uninitialized
      */
-    public List<Im> getImList() {
+    public List<ImConfig> getImConfigFullNameList() {
         // Return empty list if server is not initialized (e.g., in test mode)
         if (searchServer == null) {
             return new java.util.ArrayList<>();
         }
-        List<Im> result = searchServer.getImList(null, LIME.IM_FULL_NAME);
+        List<ImConfig> result = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
         return result != null ? result : new java.util.ArrayList<>();
     }
 

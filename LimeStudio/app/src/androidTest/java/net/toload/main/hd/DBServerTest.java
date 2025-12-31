@@ -44,12 +44,12 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEUtilities;
 import net.toload.main.hd.global.LIMEProgressListener;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.data.Record;
-import net.toload.main.hd.data.Im;
 
 /**
  * Test cases for DBServer database operations and file management.
@@ -1831,14 +1831,14 @@ public class DBServerTest {
         
         try {
             // Create IM info for export
-            List<Im> imInfo = new ArrayList<>();
-            Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_FULL_NAME);
-            versionIm.setDesc("1.0");
-            imInfo.add(versionIm);
+            List<ImConfig> imConfigInfo = new ArrayList<>();
+            ImConfig versionImConfig = new ImConfig();
+            versionImConfig.setTitle(LIME.IM_FULL_NAME);
+            versionImConfig.setDesc("1.0");
+            imConfigInfo.add(versionImConfig);
             
             // Export using DBServer directly
-            boolean exportSuccess = dbServer.exportTxtTable(tableName, exportFile, imInfo);
+            boolean exportSuccess = dbServer.exportTxtTable(tableName, exportFile, imConfigInfo);
             assertTrue("Export should succeed", exportSuccess);
             assertTrue("Export file should exist", exportFile.exists());
             assertTrue("Export file should not be empty", exportFile.length() > 0);
@@ -2816,13 +2816,13 @@ public class DBServerTest {
             }
             exportFile = new File(cacheDir, "test_export_import_pair_" + System.currentTimeMillis() + ".lime");
             
-            List<Im> imInfo = new ArrayList<>();
-            Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_FULL_NAME);
-            versionIm.setDesc("1.0");
-            imInfo.add(versionIm);
+            List<ImConfig> imConfigInfo = new ArrayList<>();
+            ImConfig versionImConfig = new ImConfig();
+            versionImConfig.setTitle(LIME.IM_FULL_NAME);
+            versionImConfig.setDesc("1.0");
+            imConfigInfo.add(versionImConfig);
             
-            boolean exportSuccess = limeDB.exportTxtTable("custom", exportFile, imInfo);
+            boolean exportSuccess = limeDB.exportTxtTable("custom", exportFile, imConfigInfo);
             assertTrue("exportTxtTable should succeed", exportSuccess);
             assertTrue("Export file should exist", exportFile.exists());
             

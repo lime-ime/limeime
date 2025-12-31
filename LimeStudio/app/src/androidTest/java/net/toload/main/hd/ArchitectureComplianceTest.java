@@ -309,4 +309,278 @@ public class ArchitectureComplianceTest {
         }
         return lines;
     }
+
+    // ============================================================
+    // 7.1 Static Analysis Tests
+    // ============================================================
+
+    /**
+     * Test 7.1.2: No SQL operations outside LimeDB
+     *
+     * Verifies that SQL operations (execSQL, rawQuery, query, insert, update, delete)
+     * only occur in LimeDB.java and allowed exceptions (LimeHanConverter, EmojiConverter).
+     */
+    @Test
+    public void test_7_1_2_NoSQLOperationsOutsideLimeDB() {
+        List<String> violations = new ArrayList<>();
+
+        // Define SQL operation patterns to search for
+        String[] sqlOperations = {
+            "execSQL", "rawQuery", "\\.query\\(", "\\.insert\\(",
+            "\\.update\\(", "\\.delete\\(", "SQLiteDatabase"
+        };
+
+        // Define allowed files (exceptions)
+        String[] allowedFiles = {
+            "LimeDB.java",
+            "LimeHanConverter.java",
+            "EmojiConverter.java"
+        };
+
+        // Scan main source directory
+        File mainDir = new File(sourceRoot, "app/src/main/java/net/toload/main/hd");
+
+        if (mainDir.exists() && mainDir.isDirectory()) {
+            scanForSQLViolations(mainDir, violations, sqlOperations, allowedFiles);
+        }
+
+        // Assert no violations found
+        if (!violations.isEmpty()) {
+            StringBuilder message = new StringBuilder();
+            message.append("Architecture violation: SQL operations found outside LimeDB:\n");
+            for (String violation : violations) {
+                message.append("  - ").append(violation).append("\n");
+            }
+            fail(message.toString());
+        }
+    }
+
+    /**
+     * Test 7.1.3: No file operations outside DBServer
+     * Verifies that file operations (FileOutputStream, FileInputStream, zip, unzip)
+     * only occur in DBServer.java and utilities.
+     */
+    @Test
+    public void test_7_1_3_NoFileOperationsOutsideDBServer() {
+        List<String> violations = new ArrayList<>();
+
+        // Define file operation patterns to search for
+        String[] fileOperations = {
+            "FileOutputStream", "FileInputStream",
+            "LIMEUtilities.zip", "LIMEUtilities.unzip",
+            "new\\s+File\\(.*\\.limedb"
+        };
+
+        // Define allowed files (exceptions)
+        String[] allowedFiles = {
+            "DBServer.java",
+            "LIMEUtilities.java",
+            "SetupImController.java" // Allowed for temporary file handling
+        };
+
+        // Scan main source directory
+        File mainDir = new File(sourceRoot, "app/src/main/java/net/toload/main/hd");
+
+        if (mainDir.exists() && mainDir.isDirectory()) {
+            scanForFileOpViolations(mainDir, violations, fileOperations, allowedFiles);
+        }
+
+        // Assert no violations found
+        if (!violations.isEmpty()) {
+            StringBuilder message = new StringBuilder();
+            message.append("Architecture violation: File operations found outside DBServer:\n");
+            for (String violation : violations) {
+                message.append("  - ").append(violation).append("\n");
+            }
+            fail(message.toString());
+        }
+    }
+
+    // ============================================================
+    // 7.2 Runtime Architecture Tests
+    // ============================================================
+
+    /**
+     * Test 7.2.1: Component initialization verification
+     *
+     * Verifies that UI components initialize SearchServer, not LimeDB directly,
+     * and that LIMEService initializes SearchServer properly.
+     */
+    @Test
+    public void test_7_2_1_ComponentInitialization() {
+        try {
+            // Test LIMEService initialization
+            Class<?> limeServiceClass = Class.forName("net.toload.main.hd.LIMEService");
+            java.lang.reflect.Field[] fields = limeServiceClass.getDeclaredFields();
+
+            boolean hasSearchServerField = false;
+            boolean hasLimeDBField = false;
+
+            for (java.lang.reflect.Field field : fields) {
+                String fieldTypeName = field.getType().getSimpleName();
+                if (fieldTypeName.equals("SearchServer")) {
+                    hasSearchServerField = true;
+                }
+                if (fieldTypeName.equals("LimeDB")) {
+                    hasLimeDBField = true;
+                }
+            }
+
+            assertTrue("LIMEService should have SearchServer field", hasSearchServerField);
+            assertFalse("LIMEService should not have direct LimeDB field", hasLimeDBField);
+
+        } catch (ClassNotFoundException e) {
+            fail("LIMEService class not found: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Test 7.2.2: Method call tracing
+     *
+     * Verifies that method calls from UI components go through SearchServer or DBServer,
+     * not directly to LimeDB.
+     */
+    @Test
+    public void test_7_2_2_MethodCallTracing() {
+        // Test that controllers expose proper methods for UI
+        try {
+            Class<?> setupControllerClass = Class.forName("net.toload.main.hd.ui.controller.SetupImController");
+            Class<?> manageControllerClass = Class.forName("net.toload.main.hd.ui.controller.ManageImController");
+
+            // Verify SetupImController has proper delegation methods
+            boolean hasTableMethod = false;
+            boolean hasImportMethod = false;
+
+            for (java.lang.reflect.Method method : setupControllerClass.getDeclaredMethods()) {
+                String methodName = method.getName();
+                if (methodName.contains("Table") || methodName.contains("clear")) {
+                    hasTableMethod = true;
+                }
+                if (methodName.contains("import") || methodName.contains("download") || methodName.contains("export")) {
+                    hasImportMethod = true;
+                }
+            }
+
+            assertTrue("SetupImController should have table management methods", hasTableMethod);
+            assertTrue("SetupImController should have import/export methods", hasImportMethod);
+
+            // Verify ManageImController has proper delegation methods
+            boolean hasRecordMethod = false;
+
+            for (java.lang.reflect.Method method : manageControllerClass.getDeclaredMethods()) {
+                String methodName = method.getName();
+                if (methodName.contains("Record") || methodName.contains("count")) {
+                    hasRecordMethod = true;
+                    break;
+                }
+            }
+
+            assertTrue("ManageImController should have record management methods", hasRecordMethod);
+
+        } catch (ClassNotFoundException e) {
+            fail("Controller class not found: " + e.getMessage());
+        }
+    }
+
+    // Helper methods for new tests
+
+    private void scanForSQLViolations(File dir, List<String> violations,
+                                     String[] sqlOperations, String[] allowedFiles) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                scanForSQLViolations(file, violations, sqlOperations, allowedFiles);
+            } else if (file.getName().endsWith(".java")) {
+                // Skip allowed files
+                boolean isAllowed = false;
+                for (String allowed : allowedFiles) {
+                    if (file.getName().equals(allowed)) {
+                        isAllowed = true;
+                        break;
+                    }
+                }
+
+                if (!isAllowed) {
+                    checkFileForSQLUsage(file, violations, sqlOperations);
+                }
+            }
+        }
+    }
+
+    private void checkFileForSQLUsage(File file, List<String> violations, String[] sqlOperations) {
+        List<String> lines = readFileLines(file);
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+
+            // Skip comments and imports
+            if (line.startsWith("//") || line.startsWith("/*") || line.startsWith("*")
+                || line.startsWith("import")) {
+                continue;
+            }
+
+            // Check for SQL operations
+            for (String sqlOp : sqlOperations) {
+                if (line.matches(".*" + sqlOp + ".*")) {
+                    String relativePath = file.getAbsolutePath()
+                        .substring(sourceRoot.getAbsolutePath().length());
+                    violations.add(String.format("%s:%d - SQL operation '%s'",
+                        relativePath, i + 1, sqlOp));
+                    break; // Only report first violation per line
+                }
+            }
+        }
+    }
+
+    private void scanForFileOpViolations(File dir, List<String> violations,
+                                        String[] fileOperations, String[] allowedFiles) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                scanForFileOpViolations(file, violations, fileOperations, allowedFiles);
+            } else if (file.getName().endsWith(".java")) {
+                // Skip allowed files
+                boolean isAllowed = false;
+                for (String allowed : allowedFiles) {
+                    if (file.getName().equals(allowed)) {
+                        isAllowed = true;
+                        break;
+                    }
+                }
+
+                if (!isAllowed) {
+                    checkFileForFileOpUsage(file, violations, fileOperations);
+                }
+            }
+        }
+    }
+
+    private void checkFileForFileOpUsage(File file, List<String> violations, String[] fileOperations) {
+        List<String> lines = readFileLines(file);
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+
+            // Skip comments and imports
+            if (line.startsWith("//") || line.startsWith("/*") || line.startsWith("*")
+                || line.startsWith("import")) {
+                continue;
+            }
+
+            // Check for file operations
+            for (String fileOp : fileOperations) {
+                if (line.matches(".*" + fileOp + ".*")) {
+                    String relativePath = file.getAbsolutePath()
+                        .substring(sourceRoot.getAbsolutePath().length());
+                    violations.add(String.format("%s:%d - File operation '%s'",
+                        relativePath, i + 1, fileOp));
+                    break; // Only report first violation per line
+                }
+            }
+        }
+    }
 }

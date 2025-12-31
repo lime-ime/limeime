@@ -76,6 +76,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        coreLibraryDesugaringEnabled = true
     }
 
     sourceSets {
@@ -109,6 +110,7 @@ android {
 
 dependencies {
     // implementation fileTree(include: ['*.jar'], dir: 'libs')
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
@@ -127,4 +129,6 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.6.1'
     androidTestImplementation 'androidx.test:monitor:1.8.0'
     androidTestImplementation 'androidx.fragment:fragment-testing:1.8.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-idling-resource:3.5.1'
 }

@@ -83,7 +83,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -482,7 +481,7 @@ public class LIMEService extends InputMethodService
         // -> 26.May.2011 by Art : Update keyboard list when user click the keyboard.
         try {
             mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
-            mKeyboardSwitcher.setImKeyboardConfigList(SearchSrv.getImList());
+            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
         } catch (RemoteException e) {
             Log.e(TAG, "Error setting keyboard/IM list in onFinishInput", e);
         }
@@ -701,9 +700,9 @@ public class LIMEService extends InputMethodService
             hasCandidatesShown = false;
         }
 
-        // Reset the IM softkeyboard settings. Jeremy '11,6,19
+        // Reset the IM soft keyboard settings. Jeremy '11,6,19
         try {
-            mKeyboardSwitcher.setImKeyboardConfigList(SearchSrv.getImList());
+            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
         } catch (RemoteException e) {
             Log.e(TAG, "Error setting IM list on keyboard reset", e);
         }
@@ -860,7 +859,7 @@ public class LIMEService extends InputMethodService
         disable_physical_selection = mLIMEPref.getDisablePhysicalSelkey();
 
         auto_commit = mLIMEPref.getAutoCommitValue();
-        currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+        currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
 
 
     }
@@ -2047,7 +2046,7 @@ public class LIMEService extends InputMethodService
             }
         }
         mLIMEPref.setActiveIM(activeIM);
-        //Jeremy '12,4,21 force clear when switch to next keybaord
+        //Jeremy '12,4,21 force clear when switch to next keyboard
         clearComposing(false);
         // cancel candidate view if it's shown
         mEnglishOnly = false;
@@ -2057,14 +2056,14 @@ public class LIMEService extends InputMethodService
         Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT).show();
         try {
             mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
-            mKeyboardSwitcher.setImKeyboardConfigList(SearchSrv.getImList());
+            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             //mKeyboardSwitcher.clearKeyboards();
         } catch (RemoteException e) {
             Log.e(TAG, "Error setting IM list during initialization", e);
         }
 
         // Update keyboard xml information
-        currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+        currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
     }
 
     private void buildActivatedIMList() {
@@ -2088,13 +2087,13 @@ public class LIMEService extends InputMethodService
 
             mIMActivatedState = pIMActiveState;
 
-            String[] s = pIMActiveState.split(";");
+            String[] activeState = pIMActiveState.split(";");
 
             activatedIMFullNameList.clear();
             activatedIMList.clear();
             activatedIMShortNameList.clear();
 
-            for (String value : s) {
+            for (String value : activeState) {
                 if (value.isEmpty()) continue;
                 int index = Integer.parseInt(value);
 
@@ -2242,11 +2241,11 @@ public class LIMEService extends InputMethodService
 
         try {
             mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
-            mKeyboardSwitcher.setImKeyboardConfigList(SearchSrv.getImList());
+            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             //mKeyboardSwitcher.clearKeyboards();
 
             // Update soft keybaord information
-            currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+            currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
 
         } catch (RemoteException e) {
             Log.e(TAG, "Error getting keyboard for active IM", e);
@@ -3066,7 +3065,7 @@ public class LIMEService extends InputMethodService
         updateShiftKeyState(getCurrentInputEditorInfo());
 
         // Update keyboard xml information
-        currentSoftKeyboard = mKeyboardSwitcher.getImKeyboard(activeIM);
+        currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
 
     }
 
@@ -3146,12 +3145,12 @@ public class LIMEService extends InputMethodService
         }
         mKeyboardSwitcher.setInputView(mInputView);
         buildActivatedIMList();
-        mKeyboardSwitcher.setActivatedIMList(activatedIMList, activatedIMFullNameList, activatedIMShortNameList);
+        mKeyboardSwitcher.setActivatedIMList(activatedIMList, activatedIMShortNameList);
 
         if (mKeyboardSwitcher.getKeyboardSize() == 0 && SearchSrv != null) {
             try {
                 mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardList());
-                mKeyboardSwitcher.setImKeyboardConfigList(SearchSrv.getImList());
+                mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
             } catch (RemoteException e) {
                 Log.e(TAG, "Error setting keyboard/IM list", e);
             }
@@ -3243,7 +3242,7 @@ public class LIMEService extends InputMethodService
         if (DEBUG)
             Log.i(TAG, "switchKeyboard() current keyboard:" +
                     tablename + " hasnumbermapping:" + hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
-        SearchSrv.setTablename(tablename, hasNumberMapping, hasSymbolMapping);
+        SearchSrv.setTableName(tablename, hasNumberMapping, hasSymbolMapping);
     }
 
     private boolean handleSelkey(int primaryCode) {

@@ -38,13 +38,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.ui.MainActivity;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
 import net.toload.main.hd.ui.controller.ManageImController;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -145,11 +144,11 @@ public class ShareDialog extends DialogFragment {
 
         Button btnShareRelated = view.findViewById(R.id.btnShareRelated);
 
-		List<Im> imList = (manageImController != null) ? manageImController.getImList() : java.util.Collections.emptyList();
+		List<ImConfig> imConfigList = (manageImController != null) ? manageImController.getImConfigFullNameList() : java.util.Collections.emptyList();
 
 		for (ShareButtonConfig config : SHARE_BUTTON_CONFIGS) {
 			Button b = view.findViewById(config.buttonId);
-			setupShareButton(b, imList, config.tableName, config.imName);
+			setupShareButton(b, imConfigList, config.tableName, config.imName);
 		}
 
 		btnShareRelated.setOnClickListener(v -> confirmShareDialog(LIME.DB_TABLE_RELATED));
@@ -160,10 +159,10 @@ public class ShareDialog extends DialogFragment {
 	/**
 	 * Sets up a share button based on whether the table exists.
 	 */
-	private void setupShareButton(Button button, List<Im> imList, String tableName, String IM) {
+	private void setupShareButton(Button button, List<ImConfig> imConfigList, String tableName, String IM) {
 		boolean exists = false;
-		for (Im im : imList) {
-			if (im.getCode().equals(tableName)) {
+		for (ImConfig imConfig : imConfigList) {
+			if (imConfig.getCode().equals(tableName)) {
 				exists = true;
 				break;
 			}

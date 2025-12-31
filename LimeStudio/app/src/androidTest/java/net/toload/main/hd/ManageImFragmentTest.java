@@ -73,8 +73,8 @@ public class ManageImFragmentTest {
                 assertNotNull("MainActivity should provide ManageImController", controller);
                 
                 // Verify controller has methods for IM/keyboard operations
-                assertNotNull("Controller should have getImList method", 
-                    getMethodOrNull(controller, "getImList"));
+                assertNotNull("Controller should have getImConfigFullNameList method",
+                    getMethodOrNull(controller, "getImConfigFullNameList"));
                 assertNotNull("Controller should have getKeyboardList method", 
                     getMethodOrNull(controller, "getKeyboardList"));
             });

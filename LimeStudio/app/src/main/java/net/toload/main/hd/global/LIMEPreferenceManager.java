@@ -30,7 +30,7 @@ import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
 
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 
 import java.util.HashMap;
 import java.util.List;
@@ -132,21 +132,7 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		sp.edit().putString("total_userdict_record", records).apply();	
 	}
-	@Deprecated
-	public boolean getDatabaseOnHold(){
 
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getString("mapping_loadg", "no").equals("yes");
-	}
-	@Deprecated
-	public void holdDatabaseCoonection(boolean loading){
-
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		String loadingStatus = loading?"yes":"no";	
-		sp.edit().putString("mapping_loadg",loadingStatus).apply();
-		
-	}
-	
 	public boolean getLanguageMode(){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -160,17 +146,7 @@ public class LIMEPreferenceManager {
 		sp.edit().putString("language_mode",loadingStatus).apply();
 		
 	}
-	
-	
-	public int getMappingFileImportLines(){
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return Integer.parseInt( sp.getString( "mapping_import_line", "0"));
-	}
-	public void setMappingFileImportLines(int lines){
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		sp.edit().putString( "mapping_import_line", String.valueOf(lines)).apply();	
-	}
-	
+
 	public String getRerverseLookupTable(String table){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if(table.equals(LIME.DB_TABLE_PHONETIC)){
@@ -187,10 +163,6 @@ public class LIMEPreferenceManager {
         return true;
     }
 
-	public boolean getDisableSoftwareKeyboard(){
-		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("disable_software_keyboard", false);
-	}
 	
 	public boolean getLearnRelatedWord(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -295,10 +267,10 @@ public class LIMEPreferenceManager {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return sp.getBoolean("number_row_in_english", true);
 	}
-	public void syncIMActivatedState(List<Im> imlist){
+	public void syncIMActivatedState(List<ImConfig> imlist){
 		StringBuilder state = new StringBuilder();
 		HashMap<String, String> imMap = new HashMap<>();
-		for(Im i :imlist){
+		for(ImConfig i :imlist){
 			imMap.put(i.getCode(), i.getCode());
 		}
 

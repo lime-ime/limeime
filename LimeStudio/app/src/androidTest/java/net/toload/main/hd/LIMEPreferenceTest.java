@@ -138,6 +138,7 @@ public class LIMEPreferenceTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testEdgeToEdgeColorsApplied() {
         try (ActivityScenario<LIMEPreference> scenario = ActivityScenario.launch(LIMEPreference.class)) {
             scenario.onActivity(activity -> {

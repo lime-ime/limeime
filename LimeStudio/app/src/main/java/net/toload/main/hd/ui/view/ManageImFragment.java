@@ -49,7 +49,7 @@ import net.toload.main.hd.data.Record;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.ui.MainActivity;
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.ui.controller.ManageImController;
 import net.toload.main.hd.ui.dialog.ManageImAddDialog;
@@ -137,10 +137,6 @@ public class ManageImFragment extends Fragment implements ManageImView {
         } else {
             Log.w(TAG, "Activity is not MainActivity; ManageImController unavailable");
         }
-
-        // initial imlist via controller
-        List<Im> imkeyboardlist = (manageImController != null) ? manageImController.getImList() : new ArrayList<>();
-
 
         this.gridManageIm = rootView.findViewById(R.id.gridManageIm);
         this.gridManageIm.setLayoutManager(new GridLayoutManager(activity, 2));
@@ -241,10 +237,13 @@ public class ManageImFragment extends Fragment implements ManageImView {
 
         this.txtNavigationInfo = rootView.findViewById(R.id.txtNavigationInfo);
 
+        // initial imConfigFullNamelist via controller
+        List<ImConfig> imConfigFullNamelist = (manageImController != null) ? manageImController.getImConfigFullNameList() : new ArrayList<>();
+
         // UpdateKeyboard display
-        for(Im obj : imkeyboardlist){
-            if(obj.getCode().equals(table)){
-                btnManageImKeyboard.setText(obj.getDesc());
+        for(ImConfig imConfig : imConfigFullNamelist){
+            if(imConfig.getCode().equals(table)){
+                btnManageImKeyboard.setText(imConfig.getDesc());
                 break;
             }
         }

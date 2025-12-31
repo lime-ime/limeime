@@ -5,7 +5,7 @@ import android.util.Log;
 import androidx.fragment.app.FragmentManager;
 
 import net.toload.main.hd.R;
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.ui.view.ManageImFragment;
 import net.toload.main.hd.ui.view.ManageRelatedFragment;
 import net.toload.main.hd.ui.view.NavigationDrawerFragment;
@@ -32,7 +32,7 @@ public class NavigationManager implements NavigationDrawerFragment.NavigationDra
     private static final String TAG = "NavigationManager";
     
     private final MainActivity activity;
-    private List<Im> imList;
+    private List<ImConfig> imConfigFullNameList;
     private CharSequence currentTitle;
     
     /**
@@ -70,20 +70,12 @@ public class NavigationManager implements NavigationDrawerFragment.NavigationDra
      * <p>The IM list is used to determine which fragment to display when
      * a user selects an IM from the navigation drawer (positions 2+).
      * 
-     * @param imList The list of available IM tables
+     * @param imConfigList The list of available IM tables
      */
-    public void setImList(List<Im> imList) {
-        this.imList = imList;
+    public void setImConfigFullNameList(List<ImConfig> imConfigList) {
+        this.imConfigFullNameList = imConfigList;
     }
     
-    /**
-     * Gets the IM list used for navigation.
-     * 
-     * @return The current IM list, or null if not set
-     */
-    public List<Im> getImList() {
-        return this.imList;
-    }
 
     private int selectedPosition = -1;
 
@@ -153,7 +145,7 @@ public class NavigationManager implements NavigationDrawerFragment.NavigationDra
             updateTitle(position);
         } else {
             // Navigate to ManageImFragment for specific IM table
-            if (imList == null || imList.isEmpty()) {
+            if (imConfigFullNameList == null || imConfigFullNameList.isEmpty()) {
                 Log.w(TAG, "IM list is empty, cannot navigate to position " + position);
                 return;
             }
@@ -161,12 +153,12 @@ public class NavigationManager implements NavigationDrawerFragment.NavigationDra
             int imIndex = position - 2;
             
             // Validate index
-            if (imIndex < 0 || imIndex >= imList.size()) {
-                Log.w(TAG, "Invalid IM index: " + imIndex + " (list size: " + imList.size() + ")");
+            if (imIndex < 0 || imIndex >= imConfigFullNameList.size()) {
+                Log.w(TAG, "Invalid IM index: " + imIndex + " (list size: " + imConfigFullNameList.size() + ")");
                 return;
             }
             
-            String tableName = imList.get(imIndex).getCode();
+            String tableName = imConfigFullNameList.get(imIndex).getCode();
             fragmentManager.beginTransaction()
                     .replace(R.id.container, ManageImFragment.newInstance(position, tableName), 
                              "ManageImFragment_" + tableName)
@@ -197,8 +189,8 @@ public class NavigationManager implements NavigationDrawerFragment.NavigationDra
             int imIndex = position - 2;
             
             // Validate IM list and index
-            if (imList != null && !imList.isEmpty() && imIndex >= 0 && imIndex < imList.size()) {
-                currentTitle = imList.get(imIndex).getDesc();
+            if (imConfigFullNameList != null && !imConfigFullNameList.isEmpty() && imIndex >= 0 && imIndex < imConfigFullNameList.size()) {
+                currentTitle = imConfigFullNameList.get(imIndex).getDesc();
             } else {
                 // Fallback to empty string if invalid
                 currentTitle = "";

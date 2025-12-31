@@ -29,7 +29,7 @@ import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import net.toload.main.hd.data.Im;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.data.Record;
 import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.data.Mapping;
@@ -327,15 +327,15 @@ public class LimeDBTest {
         String testIm = "test_im_" + System.currentTimeMillis();
         String testField = "test_field";
         String testValue = "test_value";
-        limeDB.setImInfo(testIm, testField, testValue);
+        limeDB.setImConfig(testIm, testField, testValue);
         
         // Test getting IM info
-        String retrievedValue = limeDB.getImInfo(testIm, testField);
+        String retrievedValue = limeDB.getImConfig(testIm, testField);
         assertEquals("Retrieved value should match set value", testValue, retrievedValue);
         
         // Test removing IM info
-        limeDB.removeImInfo(testIm, testField);
-        String valueAfterRemove = limeDB.getImInfo(testIm, testField);
+        limeDB.removeImConfig(testIm, testField);
+        String valueAfterRemove = limeDB.getImConfig(testIm, testField);
         assertTrue("Value should be empty after removal", 
                   valueAfterRemove == null || valueAfterRemove.isEmpty());
     }
@@ -426,14 +426,14 @@ public class LimeDBTest {
         }
         
         // Test getting IM list
-        List<Im> imList = limeDB.getImList(null, null);
-        if (imList != null) {
+        List<ImConfig> imConfigList = limeDB.getImConfigList(null, null);
+        if (imConfigList != null) {
             assertTrue("IM list should be accessible", true);
         }
         
         // Test getting IM list by code
-        List<net.toload.main.hd.data.Im> imByCode = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
-        if (imByCode != null) {
+        List<ImConfig> imConfigByCode = limeDB.getImConfigList(LIME.DB_TABLE_PHONETIC, null);
+        if (imConfigByCode != null) {
             assertTrue("IM list by code should be accessible", true);
         }
     }
@@ -459,7 +459,7 @@ public class LimeDBTest {
         assertEquals("Count should be 0 for non-existent table", 0, nonExistentCount);
         
         // Test getting info for non-existent IM
-        String nonExistentInfo = limeDB.getImInfo("non_existent_im", "field");
+        String nonExistentInfo = limeDB.getImConfig("non_existent_im", "field");
         assertTrue("Info should be empty for non-existent IM", 
                   nonExistentInfo == null || nonExistentInfo.isEmpty());
     }
@@ -520,7 +520,7 @@ public class LimeDBTest {
         
         // Test setFinish and getCount
         limeDB.setFinish(true);
-        int count = limeDB.getCount();
+        int count = limeDB.getCountImported();
         assertTrue("Count should be non-negative", count >= 0);
         
         // Test getProgressPercentageDone
@@ -718,7 +718,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBResetImInfo() {
+    public void testLimeDBResetImConfig() {
         // Test resetImInfo operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -730,17 +730,17 @@ public class LimeDBTest {
         
         // First, set some IM info
         String testIm = "test_reset_" + System.currentTimeMillis();
-        limeDB.setImInfo(testIm, "test_field", "test_value");
+        limeDB.setImConfig(testIm, "test_field", "test_value");
         
         // Verify it was set
-        String valueBefore = limeDB.getImInfo(testIm, "test_field");
+        String valueBefore = limeDB.getImConfig(testIm, "test_field");
         assertEquals("Value should be set", "test_value", valueBefore);
         
         // Reset IM info
-        limeDB.resetImInfo(testIm);
+        limeDB.resetImConfig(testIm);
         
         // Verify it was reset
-        String valueAfter = limeDB.getImInfo(testIm, "test_field");
+        String valueAfter = limeDB.getImConfig(testIm, "test_field");
         assertTrue("Value should be empty after reset", 
                   valueAfter == null || valueAfter.isEmpty());
     }
@@ -906,7 +906,7 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
-    public void testLimeDBGetImList() {
+    public void testLimeDBGetImConfigList() {
         // Test getIm operation
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -917,14 +917,14 @@ public class LimeDBTest {
         }
         
         // Test getting IM by code
-        List<net.toload.main.hd.data.Im> imList = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
-        if (imList != null) {
+        List<ImConfig> imConfigList = limeDB.getImConfigList(LIME.DB_TABLE_PHONETIC, null);
+        if (imConfigList != null) {
             assertTrue("IM list should be accessible", true);
         }
         
         // Test getting IM by code and type
-        List<net.toload.main.hd.data.Im> imByType = limeDB.getImList(LIME.DB_TABLE_PHONETIC, "keyboard");
-        if (imByType != null) {
+        List<ImConfig> imConfigByType = limeDB.getImConfigList(LIME.DB_TABLE_PHONETIC, "keyboard");
+        if (imConfigByType != null) {
             assertTrue("IM list by type should be accessible", true);
         }
     }
@@ -1020,7 +1020,7 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBSetImKeyboardWithKeyboard() {
+    public void testLimeDBSetImKeyboardWithConfigConfigKeyboard() {
         // Test setImKeyboard with Keyboard object
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -1029,7 +1029,7 @@ public class LimeDBTest {
         List<Keyboard> keyboards = limeDB.getKeyboardList();
         if (keyboards != null && !keyboards.isEmpty()) {
             Keyboard keyboard = keyboards.get(0);
-            limeDB.setImKeyboard("custom", keyboard);
+            limeDB.setImConfigKeyboard("custom", keyboard);
             assertTrue("setImKeyboard with Keyboard should complete", true);
         }
     }
@@ -1694,41 +1694,41 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBGetImListInfoEdgeCases() {
+    public void testLimeDBGetImConfigListInfoEdgeCases() {
         // Test getImInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null IM code
-        String nullImInfo = limeDB.getImInfo(null, "field");
+        String nullImInfo = limeDB.getImConfig(null, "field");
         assertTrue("Null IM code should return null or empty", 
                   nullImInfo == null || nullImInfo.isEmpty());
         
         // Test with null field
-        String nullFieldInfo = limeDB.getImInfo(LIME.DB_TABLE_PHONETIC, null);
+        String nullFieldInfo = limeDB.getImConfig(LIME.DB_TABLE_PHONETIC, null);
         assertTrue("Null field should return null or empty", 
                   nullFieldInfo == null || nullFieldInfo.isEmpty());
         
         // Test with empty IM code
-        String emptyImInfo = limeDB.getImInfo("", "field");
+        String emptyImInfo = limeDB.getImConfig("", "field");
         assertTrue("Empty IM code should return null or empty", 
                   emptyImInfo == null || emptyImInfo.isEmpty());
         
         // Test with empty field
-        String emptyFieldInfo = limeDB.getImInfo(LIME.DB_TABLE_PHONETIC, "");
+        String emptyFieldInfo = limeDB.getImConfig(LIME.DB_TABLE_PHONETIC, "");
         assertTrue("Empty field should return null or empty", 
                   emptyFieldInfo == null || emptyFieldInfo.isEmpty());
     }
 
     @Test
-    public void testLimeDBSetImInfoEdgeCases() {
+    public void testLimeDBSetImConfigEdgeCases() {
         // Test setImInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null IM code
         try {
-            limeDB.setImInfo(null, "field", "value");
+            limeDB.setImConfig(null, "field", "value");
             assertTrue("Null IM code should be handled", true);
         } catch (Exception e) {
             assertTrue("Null IM code should be handled gracefully", true);
@@ -1736,32 +1736,32 @@ public class LimeDBTest {
         
         // Test with null field
         try {
-            limeDB.setImInfo(LIME.DB_TABLE_PHONETIC, null, "value");
+            limeDB.setImConfig(LIME.DB_TABLE_PHONETIC, null, "value");
             assertTrue("Null field should be handled", true);
         } catch (Exception e) {
             assertTrue("Null field should be handled gracefully", true);
         }
         
         // Test with null value
-        limeDB.setImInfo(LIME.DB_TABLE_PHONETIC, "field", null);
-        String retrieved = limeDB.getImInfo(LIME.DB_TABLE_PHONETIC, "field");
+        limeDB.setImConfig(LIME.DB_TABLE_PHONETIC, "field", null);
+        String retrieved = limeDB.getImConfig(LIME.DB_TABLE_PHONETIC, "field");
         assertTrue("Null value should be handled", 
                   retrieved == null || retrieved.isEmpty());
         
         // Test with empty strings
-        limeDB.setImInfo("", "", "");
+        limeDB.setImConfig("", "", "");
         assertTrue("Empty strings should be handled", true);
     }
 
     @Test
-    public void testLimeDBRemoveImInfoEdgeCases() {
+    public void testLimeDBRemoveImConfigEdgeCases() {
         // Test removeImInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null IM code
         try {
-            limeDB.removeImInfo(null, "field");
+            limeDB.removeImConfig(null, "field");
             assertTrue("Null IM code should be handled", true);
         } catch (Exception e) {
             assertTrue("Null IM code should be handled gracefully", true);
@@ -1769,37 +1769,37 @@ public class LimeDBTest {
         
         // Test with null field
         try {
-            limeDB.removeImInfo(LIME.DB_TABLE_PHONETIC, null);
+            limeDB.removeImConfig(LIME.DB_TABLE_PHONETIC, null);
             assertTrue("Null field should be handled", true);
         } catch (Exception e) {
             assertTrue("Null field should be handled gracefully", true);
         }
         
         // Test with empty strings
-        limeDB.removeImInfo("", "");
+        limeDB.removeImConfig("", "");
         assertTrue("Empty strings should be handled", true);
     }
 
     @Test
-    public void testLimeDBResetImInfoEdgeCases() {
+    public void testLimeDBResetImConfigEdgeCases() {
         // Test resetImInfo with edge cases
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null IM code
         try {
-            limeDB.resetImInfo(null);
+            limeDB.resetImConfig(null);
             assertTrue("Null IM code should be handled", true);
         } catch (Exception e) {
             assertTrue("Null IM code should be handled gracefully", true);
         }
         
         // Test with empty IM code
-        limeDB.resetImInfo("");
+        limeDB.resetImConfig("");
         assertTrue("Empty IM code should be handled", true);
         
         // Test with non-existent IM
-        limeDB.resetImInfo("nonexistent_im_" + System.currentTimeMillis());
+        limeDB.resetImConfig("nonexistent_im_" + System.currentTimeMillis());
         assertTrue("Non-existent IM should be handled", true);
     }
 
@@ -2140,7 +2140,7 @@ public class LimeDBTest {
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test initial state
-        int initialCount = limeDB.getCount();
+        int initialCount = limeDB.getCountImported();
         assertTrue("Initial count should be non-negative", initialCount >= 0);
         
         int initialProgress = limeDB.getProgressPercentageDone();
@@ -2185,64 +2185,64 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBGetImListKeyboardConfigListWithNullCode() {
+    public void testLimeDBGetImListKeyboardConfigConfigListWithNullCode() {
         // Test getImList with null code
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null code
-        List<net.toload.main.hd.data.Im> nullImList = limeDB.getImList(null,null);
-        if (nullImList != null) {
+        List<ImConfig> nullImConfigList = limeDB.getImConfigList(null,null);
+        if (nullImConfigList != null) {
             assertTrue("Null code should return list", true);
         }
         
         // Test with empty code
-        List<net.toload.main.hd.data.Im> emptyImList = limeDB.getImList("",null);
-        if (emptyImList != null) {
+        List<ImConfig> emptyImConfigList = limeDB.getImConfigList("",null);
+        if (emptyImConfigList != null) {
             assertTrue("Empty code should return list", true);
         }
     }
 
     @Test
-    public void testLimeDBGetImListWithNullParameters() {
+    public void testLimeDBGetImConfigListWithNullParameters() {
         // Test getIm with null parameters
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null code
-        List<net.toload.main.hd.data.Im> nullCodeIm = limeDB.getImList(null, null);
-        if (nullCodeIm != null) {
+        List<ImConfig> nullCodeImConfig = limeDB.getImConfigList(null, null);
+        if (nullCodeImConfig != null) {
             assertTrue("Null code should return list", true);
         }
         
         // Test with null type
-        List<net.toload.main.hd.data.Im> nullTypeIm = limeDB.getImList(LIME.DB_TABLE_PHONETIC, null);
-        if (nullTypeIm != null) {
+        List<ImConfig> nullTypeImConfig = limeDB.getImConfigList(LIME.DB_TABLE_PHONETIC, null);
+        if (nullTypeImConfig != null) {
             assertTrue("Null type should return list", true);
         }
         
         // Test with empty code
-        List<net.toload.main.hd.data.Im> emptyCodeIm = limeDB.getImList("", null);
-        if (emptyCodeIm != null) {
+        List<ImConfig> emptyCodeImConfig = limeDB.getImConfigList("", null);
+        if (emptyCodeImConfig != null) {
             assertTrue("Empty code should return list", true);
         }
         
         // Test with empty type
-        List<net.toload.main.hd.data.Im> emptyTypeIm = limeDB.getImList(LIME.DB_TABLE_PHONETIC, "");
-        if (emptyTypeIm != null) {
+        List<ImConfig> emptyTypeImConfig = limeDB.getImConfigList(LIME.DB_TABLE_PHONETIC, "");
+        if (emptyTypeImConfig != null) {
             assertTrue("Empty type should return list", true);
         }
     }
 
     @Test
-    public void testLimeDBSetIMKeyboardWithNullParameters() {
+    public void testLimeDBSetIMConfigKeyboardWithNullParameters() {
         // Test setIMKeyboard with null parameters
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
         
         // Test with null IM code
         try {
-            limeDB.setIMKeyboard(null, "Test Keyboard", "lime");
+            limeDB.setIMConfigKeyboard(null, "Test Keyboard", "lime");
             assertTrue("Null IM code should be handled", true);
         } catch (Exception e) {
             assertTrue("Null IM code should be handled gracefully", true);
@@ -2250,7 +2250,7 @@ public class LimeDBTest {
         
         // Test with null value
         try {
-            limeDB.setIMKeyboard("custom", null, "lime");
+            limeDB.setIMConfigKeyboard("custom", null, "lime");
             assertTrue("Null value should be handled", true);
         } catch (Exception e) {
             assertTrue("Null value should be handled gracefully", true);
@@ -2258,7 +2258,7 @@ public class LimeDBTest {
         
         // Test with null keyboard code
         try {
-            limeDB.setIMKeyboard("custom", "Test Keyboard", null);
+            limeDB.setIMConfigKeyboard("custom", "Test Keyboard", null);
             assertTrue("Null keyboard code should be handled", true);
         } catch (Exception e) {
             assertTrue("Null keyboard code should be handled gracefully", true);
@@ -2266,7 +2266,7 @@ public class LimeDBTest {
     }
 
     @Test
-    public void testLimeDBSetIMKeyboardWithKeyboardObject() {
+    public void testLimeDBSetIMKeyboardWithConfigConfigKeyboardObject() {
         // Test setIMKeyboard with Keyboard object
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
@@ -2278,7 +2278,7 @@ public class LimeDBTest {
             
             // Test with null IM code
             try {
-                limeDB.setImKeyboard(null, keyboard);
+                limeDB.setImConfigKeyboard(null, keyboard);
                 assertTrue("Null IM code should be handled", true);
             } catch (Exception e) {
                 assertTrue("Null IM code should be handled gracefully", true);
@@ -2286,14 +2286,14 @@ public class LimeDBTest {
             
             // Test with null keyboard
             try {
-                limeDB.setImKeyboard("custom", null);
+                limeDB.setImConfigKeyboard("custom", null);
                 assertTrue("Null keyboard should be handled", true);
             } catch (Exception e) {
                 assertTrue("Null keyboard should be handled gracefully", true);
             }
             
             // Test with valid parameters
-            limeDB.setImKeyboard("custom", keyboard);
+            limeDB.setImConfigKeyboard("custom", keyboard);
             assertTrue("Valid parameters should work", true);
         }
     }
@@ -4959,18 +4959,18 @@ public class LimeDBTest {
         limeDB.addOrUpdateMappingRecord("custom", "test3", "測試3", 30);
         
         // Create IM info list
-        List<Im> imInfo = new ArrayList<>();
-        Im versionIm = new Im();
-        versionIm.setTitle(LIME.IM_FULL_NAME);
-        versionIm.setDesc("1.0");
-        imInfo.add(versionIm);
+        List<ImConfig> imConfigInfo = new ArrayList<>();
+        ImConfig versionImConfig = new ImConfig();
+        versionImConfig.setTitle(LIME.IM_FULL_NAME);
+        versionImConfig.setDesc("1.0");
+        imConfigInfo.add(versionImConfig);
         
         // Create export file
         File exportFile = new File(appContext.getCacheDir(), "test_export_" + System.currentTimeMillis() + ".lime");
         
         try {
             // Export table
-            boolean success = limeDB.exportTxtTable("custom", exportFile, imInfo);
+            boolean success = limeDB.exportTxtTable("custom", exportFile, imConfigInfo);
             assertTrue("exportTxtTable should succeed", success);
             assertTrue("Export file should exist", exportFile.exists());
             assertTrue("Export file should not be empty", exportFile.length() > 0);
@@ -5231,14 +5231,14 @@ public class LimeDBTest {
         
         try {
             // Create IM info for export
-            List<Im> imInfo = new ArrayList<>();
-            Im versionIm = new Im();
-            versionIm.setTitle(LIME.IM_FULL_NAME);
-            versionIm.setDesc("1.0");
-            imInfo.add(versionIm);
+            List<ImConfig> imConfigInfo = new ArrayList<>();
+            ImConfig versionImConfig = new ImConfig();
+            versionImConfig.setTitle(LIME.IM_FULL_NAME);
+            versionImConfig.setDesc("1.0");
+            imConfigInfo.add(versionImConfig);
             
             // Export table
-            boolean exportSuccess = limeDB.exportTxtTable("custom", exportFile, imInfo);
+            boolean exportSuccess = limeDB.exportTxtTable("custom", exportFile, imConfigInfo);
             assertTrue("exportTxtTable should succeed", exportSuccess);
             assertTrue("Export file should exist", exportFile.exists());
             assertTrue("Export file should not be empty", exportFile.length() > 0);

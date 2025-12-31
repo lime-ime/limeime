@@ -345,34 +345,34 @@ public List<Keyboard> getKeyboard()
 
 /**
  * Gets IM configuration info.
- * @param im IM code
+ * @param imConfig IM code
  * @param field Field name (e.g., "name", "source", "selkey")
  * @return Field value, or null if not found
  */
-public String getImInfo(String im, String field)
+public String getImInfo(String imConfig, String field)
 
 /**
  * Sets IM configuration info.
- * @param im IM code
+ * @param imConfig IM code
  * @param field Field name
  * @param value Field value
  */
-public void setImInfo(String im, String field, String value)
+public void setImInfo(String imConfig, String field, String value)
 
 /**
  * Sets IM keyboard assignment.
- * @param im IM code
+ * @param imConfig IM code
  * @param value Keyboard description
  * @param keyboard Keyboard code
  */
-public void setIMKeyboard(String im, String value, String keyboard)
+public void setIMKeyboard(String imConfig, String value, String keyboard)
 
 /**
  * Sets IM keyboard assignment (overload with Keyboard object).
- * @param im IM code
+ * @param imConfig IM code
  * @param keyboard Keyboard object
  */
-public void setIMKeyboard(String im, Keyboard keyboard)
+public void setIMKeyboard(String imConfig, Keyboard keyboard)
 
 /**
  * Resets all LIME settings to factory defaults.
@@ -451,13 +451,13 @@ imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 ```java
 // BEFORE
 private LimeDB datasource;
-datasource.setImInfo(im, field, value);
-datasource.setIMKeyboard(im, value, keyboard);
+datasource.setImInfo(imConfig, field, value);
+datasource.setIMKeyboard(imConfig, value, keyboard);
 
 // AFTER
 private SearchServer searchServer;
-searchServer.setImInfo(im, field, value);
-searchServer.setIMKeyboard(im, value, keyboard);
+searchServer.setImInfo(imConfig, field, value);
+searchServer.setIMKeyboard(imConfig, value, keyboard);
 ```
 
 ---
@@ -519,7 +519,7 @@ searchServer.setIMKeyboard(im, value, keyboard);
 - [x] Replace `LimeDB.list()` with `getAllRecords()` that returns `List<Record>`
 - [x] Add `getAllRelated()` to `LimeDB` that returns `List<Related>` (renamed from `getAllRelatedRecords()`)
 - [x] Rename `loadRelated()` to `getRelated()` in `LimeDB`
-- [x] Add `exportTxtTable(String table, File targetFile, List<Im> imInfo)` to `LimeDB` for both regular and related table export
+- [x] Add `exportTxtTable(String table, File targetFile, List<Im> imConfigInfo)` to `LimeDB` for both regular and related table export
 - [x] Rename `SearchServer.loadRelated()` to `getRelated()` to match LimeDB
 - [x] Update `ShareTxtRunnable` to use `SearchServer.exportTxtTable()` (delegates to `LimeDB.exportTxtTable()`)
 - [x] Update `ShareRelatedTxtRunnable` to use `SearchServer.exportTxtTable()` with `LIME.DB_TABLE_RELATED` (delegates to `LimeDB.exportTxtTable()`)
@@ -578,14 +578,14 @@ searchServer.setIMKeyboard(im, value, keyboard);
 #### 4.1 Add UI-Compatible Methods to SearchServer
 - [x] Add `getIm(String code, String type)` method to `SearchServer`
 - [x] Add `getKeyboard()` method to `SearchServer`
-- [x] Add `getImInfo(String im, String field)` method to `SearchServer`
-- [x] Add `setImInfo(String im, String field, String value)` method to `SearchServer`
-- [x] Add `setIMKeyboard(String im, String value, String keyboard)` method to `SearchServer`
-- [x] Add `setIMKeyboard(String im, Keyboard keyboard)` overload to `SearchServer`
-- [x] Add `removeImInfo(String im, String field)` method to `SearchServer`
-- [x] Add `resetImInfo(String im)` method to `SearchServer`
+- [x] Add `getImInfo(String imConfig, String field)` method to `SearchServer`
+- [x] Add `setImInfo(String imConfig, String field, String value)` method to `SearchServer`
+- [x] Add `setIMKeyboard(String imConfig, String value, String keyboard)` method to `SearchServer`
+- [x] Add `setIMKeyboard(String imConfig, Keyboard keyboard)` overload to `SearchServer`
+- [x] Add `removeImInfo(String imConfig, String field)` method to `SearchServer`
+- [x] Add `resetImInfo(String imConfig)` method to `SearchServer`
 - [x] Add `getKeyboardInfo(String keyboardCode, String field)` method to `SearchServer`
-- [x] Add `getKeyboardCode(String im)` method to `SearchServer`
+- [x] Add `getKeyboardCode(String imConfig)` method to `SearchServer`
 - [x] Add `getKeyboardObj(String keyboard)` method to `SearchServer`
 - [x] Add `isValidTableName(String tableName)` method to `SearchServer`
 - [x] Add `resetLimeSetting()` method to `SearchServer` (delegates to `LimeDB.resetLimeSetting()`)
@@ -659,14 +659,14 @@ searchServer.setIMKeyboard(im, value, keyboard);
 - [ ] Run tests for all UI components
 
 #### 4.3 Remove IM/Keyboard Config APIs from DBServer
-- [x] Remove `getImInfo(String im, String field)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `getImInfo(String imConfig, String field)` from `DBServer` (migrated to `SearchServer`)
 - [x] Remove `getKeyboardInfo(String keyboardCode, String field)` from `DBServer` (migrated to `SearchServer`)
-- [x] Remove `getKeyboardCode(String im)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `getKeyboardCode(String imConfig)` from `DBServer` (migrated to `SearchServer`)
 - [x] Remove `getKeyboardObj(String table)` from `DBServer` (migrated to `SearchServer`)
-- [x] Remove `setImInfo(String im, String field, String value)` from `DBServer` (migrated to `SearchServer`)
-- [x] Remove `removeImInfo(String im, String field)` from `DBServer` (migrated to `SearchServer`)
-- [x] Remove `resetImInfo(String im)` from `DBServer` (migrated to `SearchServer`)
-- [x] Remove `setIMKeyboard(String im, String value, String keyboard)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `setImInfo(String imConfig, String field, String value)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `removeImInfo(String imConfig, String field)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `resetImInfo(String imConfig)` from `DBServer` (migrated to `SearchServer`)
+- [x] Remove `setIMKeyboard(String imConfig, String value, String keyboard)` from `DBServer` (migrated to `SearchServer`)
 - [x] Make `showNotificationMessage(String message)` private in `DBServer` (internal utility method)
 - [x] Remove tests for `showNotificationMessage()` from `DBServerTest`
 - [x] Remove tests for IM/Keyboard config methods from `DBServerTest` (moved to `SearchServerTest`)

@@ -227,7 +227,7 @@ public class LIMEPreference extends AppCompatActivity {
                     }
                     SearchSrv.setIMKeyboard("phonetic", keyboardConfig.getDescription(), keyboardConfig.getCode());
 					if(DEBUG) Log.i(TAG, "onSharedPreferenceChanged() PhoneticIMInfo.kyeboard:" + 
-							SearchSrv.getImInfo("phonetic", "keyboard"));	
+							SearchSrv.getImConfig("phonetic", "keyboard"));
 				} catch (Exception e) {
 					Log.i(TAG, "onSharedPreferenceChanged(), WriteIMinfo for selected phonetic keyboard failed!!");
 					Log.e(TAG, "Error in operation", e);

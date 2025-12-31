@@ -62,11 +62,11 @@ public class ImportDialogTest {
     }
 
     @Test
-    public void testSearchServerProvidesListAndCounts() throws Exception {
-        Class<?> ss = Class.forName("net.toload.main.hd.SearchServer");
+    public void testSetupIMControllerProvidesListAndCounts() throws Exception {
+        Class<?> ss = Class.forName("net.toload.main.hd.ui.controller.SetupImController");
         boolean hasGetIm = false, hasCountMapping = false;
         for (java.lang.reflect.Method m : ss.getMethods()) {
-            if (m.getName().equals("getImList")) hasGetIm = true;
+            if (m.getName().equals("getImConfigList")) hasGetIm = true;
             if (m.getName().equals("countRecords")) hasCountMapping = true;
         }
         assertTrue("SearchServer.getImList() present", hasGetIm);
