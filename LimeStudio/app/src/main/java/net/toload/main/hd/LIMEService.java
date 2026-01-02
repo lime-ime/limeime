@@ -1910,6 +1910,13 @@ public class LIMEService extends InputMethodService
     private void handleOptions() {
         if (DEBUG)
             Log.i(TAG, "handleOptions()");
+
+        // Check if Looper is available (not in test environment)
+        if (Looper.myLooper() == null) {
+            Log.w(TAG, "handleOptions(): No Looper available, skipping dialog creation");
+            return;
+        }
+
         AlertDialog.Builder builder;
 
         builder = new AlertDialog.Builder(this);
@@ -2053,16 +2060,29 @@ public class LIMEService extends InputMethodService
         mLIMEPref.setLanguageMode(false);
         //initialKeyboard();
         initialIMKeyboard();
-        Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT).show();
+
+        // Only show toast if Looper is available (not in test environment)
         try {
-            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
-            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
-            //mKeyboardSwitcher.clearKeyboards();
+            if (Looper.myLooper() != null) {
+                Toast.makeText(this, activeIMName, Toast.LENGTH_SHORT).show();
+            }
+        } catch (RuntimeException e) {
+            // Ignore toast errors in test environment
+            Log.w(TAG, "Cannot show toast: " + e.getMessage());
+        }
+
+        try {
+            if (mKeyboardSwitcher != null) {
+                mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
+                mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
+                //mKeyboardSwitcher.clearKeyboards();
+            }
         } catch (RemoteException e) {
             Log.e(TAG, "Error setting IM list during initialization", e);
         }
 
         // Update keyboard xml information
+        assert mKeyboardSwitcher != null;
         currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
     }
 
@@ -2240,13 +2260,14 @@ public class LIMEService extends InputMethodService
         initialIMKeyboard();
 
         try {
-            mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
-            mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
-            //mKeyboardSwitcher.clearKeyboards();
+            if (mKeyboardSwitcher != null) {
+                mKeyboardSwitcher.setKeyboardConfigList(SearchSrv.getKeyboardConfigList());
+                mKeyboardSwitcher.setImConfigKeyboardList(SearchSrv.getAllImKeyboardConfigList());
+                //mKeyboardSwitcher.clearKeyboards();
 
-            // Update soft keybaord information
-            currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
-
+                // Update soft keybaord information
+                currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
+            }
         } catch (RemoteException e) {
             Log.e(TAG, "Error getting keyboard for active IM", e);
         }
@@ -3168,6 +3189,11 @@ public class LIMEService extends InputMethodService
         //mEnglishOnly = false;
         //super.setCandidatesViewShown(false);
 
+        if (mKeyboardSwitcher == null) {
+            Log.w(TAG, "initialIMKeyboard(): mKeyboardSwitcher is null, skipping keyboard initialization");
+            return;
+        }
+
         switch (activeIM) {
             case "custom":
                 mKeyboardSwitcher.setKeyboardMode(activeIM,
@@ -3465,7 +3491,9 @@ public class LIMEService extends InputMethodService
         finishComposing();
 
         requestHideSelf(0);
-        mInputView.closing();
+        if (mInputView != null) {
+            mInputView.closing();
+        }
     }
 
     private void checkToggleCapsLock() {
@@ -4161,6 +4189,9 @@ public class LIMEService extends InputMethodService
     private int mKeyboardThemeIndex = -1;
 
     private int getKeyboardTheme() {
+        if (mKeyboardThemeIndex < 0 || mKeyboardThemeIndex >= KEYBOARD_THEMES.length) {
+            return KEYBOARD_THEMES[0].mStyleId;
+        }
         return KEYBOARD_THEMES[mKeyboardThemeIndex].mStyleId;
     }
 

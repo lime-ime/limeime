@@ -54,7 +54,7 @@ UI Components
   ├─> SearchServer (some operations)
   ├─> DBServer (file operations)
   └─> LimeDB (direct access - PROBLEM)
-      ├─> getIm()
+      ├─> getAllImKeyboardConfig()
       ├─> getKeyboard()
       ├─> setImInfo()
       ├─> setIMKeyboard()
@@ -71,13 +71,13 @@ UI Components
 ```
 
 **Affected Files:**
-- `SetupImFragment.java` - Uses `datasource.getIm()`
-- `ManageImFragment.java` - Uses `datasource.getIm()`, `datasource.getKeyboard()`
-- `ManageImKeyboardDialog.java` - Uses `datasource.getKeyboard()`, `datasource.setImKeyboard()`
-- `ImportDialog.java` - Uses `datasource.getIm()`
-- `ShareDialog.java` - Uses `datasource.getIm()`
-- `SetupImLoadRunnable.java` - Uses `datasource.setImInfo()`, `datasource.setIMKeyboard()`
-- `NavigationDrawerFragment.java` - Uses `datasource.getIm()`, `datasource.resetLimeSetting()`
+- `SetupImFragment.java` - Uses `searchServer.getAllImKeyboardConfig()`
+- `ManageImFragment.java` - Uses `searchServer.getAllImKeyboardConfig()`, `searchServer.getKeyboard()`
+- `ManageImKeyboardDialog.java` - Uses `searchServer.getKeyboard()`, `searchServer.setIMKeyboard()`
+- `ImportDialog.java` - Uses `searchServer.getAllImKeyboardConfig()`
+- `ShareDialog.java` - Uses `searchServer.getAllImKeyboardConfig()`
+- `SetupImLoadRunnable.java` - Uses `searchServer.setImInfo()`, `searchServer.setIMKeyboard()`
+- `NavigationDrawerFragment.java` - Uses `searchServer.getAllImKeyboardConfig()`, `searchServer.resetLimeSetting()`
 
 #### Problem 2: SQL Operations Outside LimeDB
 
@@ -330,12 +330,10 @@ public File exportZippedDbRelated(File targetFile, Runnable progressCallback)
 **New Methods in SearchServer:**
 ```java
 /**
- * Gets IM list by type (for UI components).
- * @param code IM code filter (null for all)
- * @param type IM type (LIME.IM_TYPE_NAME, LIME.IM_TYPE_KEYBOARD)
- * @return List of Im objects
+ * Gets all IM keyboard configurations (for UI components).
+ * @return List of ImConfig objects
  */
-public List<Im> getIm(String code, String type)
+public List<ImConfig> getAllImKeyboardConfig()
 
 /**
  * Gets keyboard list (for UI components).
@@ -390,25 +388,30 @@ public void resetLimeSetting()
 
 **SetupImFragment.java**
 ```java
+imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 // BEFORE
 private LimeDB datasource;
-imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = datasource.getImList();
 
 // AFTER
 private SearchServer searchServer;
-imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = searchServer.getAllImKeyboardConfig();
 ```
 
 **ManageImFragment.java**
 ```java
+imlist = datasource.getIm(null, LIME.IM_TYPE_KEYBOARD);
+keyboardlist = datasource.getKeyboard();
+imlist = searchServer.getIm(null, LIME.IM_TYPE_KEYBOARD);
+keyboardlist = searchServer.getKeyboard();
 // BEFORE
 private LimeDB datasource;
-imlist = datasource.getIm(null, LIME.IM_TYPE_KEYBOARD);
+imConfigList = datasource.getImList(String type);
 keyboardlist = datasource.getKeyboard();
 
 // AFTER
 private SearchServer searchServer;
-imlist = searchServer.getIm(null, LIME.IM_TYPE_KEYBOARD);
+imConfigList = searchServer.getImAllConfigList(String type);
 keyboardlist = searchServer.getKeyboard();
 ```
 
@@ -427,36 +430,44 @@ searchServer.setIMKeyboard(code, keyboard);
 
 **ImportDialog.java**
 ```java
+imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 // BEFORE
 private LimeDB datasource;
-imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = datasource.getImList();
 
 // AFTER
 private SearchServer searchServer;
-imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = searchServer.getAllImKeyboardConfig();
 ```
 
 **ShareDialog.java**
 ```java
+imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
 // BEFORE
 private LimeDB datasource;
-imlist = datasource.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = datasource.getImList();
 
 // AFTER
 private SearchServer searchServer;
-imlist = searchServer.getIm(null, LIME.IM_TYPE_NAME);
+imConfigList = searchServer.getAllImKeyboardConfig();
 ```
 
 **SetupImLoadRunnable.java**
 ```java
+datasource.setImInfo(imConfig, field, value);
+datasource.setIMKeyboard(imConfig, value, keyboard);
+searchServer.setImInfo(imConfig, field, value);
+searchServer.setIMKeyboard(imConfig, value, keyboard);
 // BEFORE
 private LimeDB datasource;
-datasource.setImInfo(imConfig, field, value);
+datasource.setImConfigList(imConfig, field, value);
 datasource.setIMKeyboard(imConfig, value, keyboard);
 
 // AFTER
 private SearchServer searchServer;
-searchServer.setImInfo(imConfig, field, value);
+searchServer.setImConfigList(imConfig, field, value);
 searchServer.setIMKeyboard(imConfig, value, keyboard);
 ```
 

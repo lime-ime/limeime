@@ -520,7 +520,7 @@ getRelatedSize(pword) → countRecords(LIME.DB_TABLE_RELATED, buildWhereClause(.
 
 ---
 
-### 8. IM Info Operations Chain
+### 8. IMConfig Operations Chain
 
 **BEFORE:**
 ```
@@ -845,7 +845,7 @@ unzip(File sourceFile, String targetFolder, String targetFile, boolean removeOri
 
 ---
 
-### 5. IM Info Proxy Chain
+### 5. IMConfig Proxy Chain
 
 **BEFORE:**
 ```

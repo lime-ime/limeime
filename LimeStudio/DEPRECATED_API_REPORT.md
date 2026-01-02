@@ -253,13 +253,13 @@ These deprecated APIs are properly suppressed with `@SuppressWarnings("deprecati
 
 These are custom methods marked as deprecated within the codebase, not Android API deprecations:
 
-- **`SetupImLoadRunnable.java`**: `setImInfo()`, `setIMKeyboard()`, `getKeyboardObj()` - Custom deprecated methods
+- **`SetupImLoadRunnable.java`**: `setImConfigList()`, `setIMKeyboard()`, `getKeyboardObj()` - Custom deprecated methods (renamed from `setImInfo()`)
 - **`LIMEPreferenceManager.java`**: Two deprecated methods - Custom deprecated methods
 - **`CandidateView.java`**: One deprecated method - Custom deprecated method
 - **`LimeDB.java`**: One deprecated method - Custom deprecated method
 - **`DBServer.java`**: One deprecated method - Custom deprecated method
 
-**Status**: ✅ Acceptable - These are internal API deprecations, not Android platform deprecations. They indicate methods that should not be used in new code but are maintained for backward compatibility.
+**Status**:  Acceptable - These are internal API deprecations, not Android platform deprecations. They indicate methods that should not be used in new code but are maintained for backward compatibility.
 
 ### Unchecked Cast (Properly Suppressed)
 

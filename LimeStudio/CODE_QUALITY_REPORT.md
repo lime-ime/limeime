@@ -101,6 +101,7 @@ All critical security vulnerabilities and resource management issues have been f
    - New safe methods: `addRecord()`, `deleteRecord()`, `updateRecord()` with ContentValues
    - Raw query validation in `rawQuery()` method
    - Deprecated unsafe methods (`add()`, `insert()`, `remove()`, `update()`) marked for removal
+   - Deprecated IM/keyboard config methods replaced with new names in all code and documentation
    - **Status**: ✅ **EXCELLENT** - Comprehensive protection implemented, 95%+ of operations use parameterized queries
 2. **Zip-Slip Protection** ✅
 

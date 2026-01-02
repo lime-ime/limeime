@@ -355,7 +355,7 @@ Mapping (Core unified data model)
     ├── Record (extends Mapping - UI alias for Setup/Manage IM)
     └── Related (extends Mapping - UI alias for Related Phrases)
 
-Im (Input Method configuration)
+ImConfig (Input Method configuration)
 
 Keyboard (Keyboard layout configuration)
 
@@ -673,13 +673,13 @@ config.setKeyboard("bpmf");
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `imConfig` | Im | The Im object (or null for fixed items) |
+| `imConfig` | ImConfig | The ImConfig object (or null for fixed items) |
 | `position` | int | Position in navigation menu |
 | `isSelected` | boolean | Selection state |
 
 **Key Methods:**
 ```java
-Im getIm()
+ImConfig getImConfig()
 int getPosition()
 boolean isSelected()
 ```
@@ -695,7 +695,7 @@ items.add(new NavigationMenuItem(null, 1, false));  // Related
 
 // IM items
 for (int i = 0; i < imConfigList.size(); i++) {
-    Im imConfig = imConfigList.get(i);
+    ImConfig imConfig = imConfigList.get(i);
     items.add(new NavigationMenuItem(imConfig, i + 2, false));
 }
 ```
@@ -817,17 +817,17 @@ searchServer.learnLDPhrase(LDPhraseListArray);
 
 ```java
 // Load available IMs
-List<Im> imConfigList = searchServer.getImList(null, LIME.IM_FULL_NAME);
+List<ImConfig> imConfigList = searchServer.getAllImKeyboardConfig();
 
 // Load available keyboards
 List<Keyboard> keyboards = searchServer.getKeyboardList();
 
 // User selects IM and keyboard
-Im selectedIm = imConfigList.get(userChoice);
+ImConfig selectedImConfig = imConfigList.get(userChoice);
 Keyboard selectedKb = keyboards.get(userChoice);
 
 // Save configuration
-searchServer.setIMKeyboard(selectedIm.getCode(), selectedKb.getCode());
+searchServer.setIMKeyboard(selectedImConfig.getCode(), selectedKb.getCode());
 ```
 
 ### Pattern 4: Navigation (Fragment Selection)
@@ -841,7 +841,7 @@ menuItems.add(new NavigationMenuItem(null, 0, false));  // Setup
 menuItems.add(new NavigationMenuItem(null, 1, false));  // Related
 
 // Add IM items
-List<Im> imConfigList = searchServer.getImList(null, LIME.IM_FULL_NAME);
+List<ImConfig> imConfigList = searchServer.getAllImKeyboardConfig();
 for (int i = 0; i < imConfigList.size(); i++) {
     menuItems.add(new NavigationMenuItem(imConfigList.get(i), i + 2, false));
 }

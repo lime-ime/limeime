@@ -4,19 +4,16 @@
 package net.toload.main.hd;
 
 import android.content.Context;
-import android.content.Intent;
 import androidx.fragment.app.DialogFragment;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
-// import androidx.test.rule.ActivityTestRule;
 
 import net.toload.main.hd.ui.MainActivity;
 import net.toload.main.hd.ui.dialog.HelpDialog;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
@@ -102,35 +99,50 @@ public class HelpDialogTest {
         assertTrue("HelpDialog should define link/button handlers", hasClick);
     }
 
-    @Ignore("MainActivity cannot launch in test environment (times out after 45+ seconds) despite working correctly in manual testing. This appears to be an emulator/test environment limitation.")
-    @Test
+    /**
+     * Test that HelpDialog can be shown and survives activity recreation.
+     *
+     * Note: This test has an extended timeout (60 seconds) to accommodate slower emulators.
+     */
+    @Test(timeout = 60000)
     public void testHelpDialogSurvivesRecreation() throws Exception {
-        /*
-        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(appContext, MainActivity.class);
-        
-        activityRule.launchActivity(intent);
-        MainActivity activity = activityRule.getActivity();
-        
-        if (activity != null) {
-            DialogFragment dialog = HelpDialog.newInstance();
-            dialog.show(activity.getSupportFragmentManager(), "helpdialog-smoke");
+        try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+            // Show the HelpDialog
+            scenario.onActivity(activity -> {
+                DialogFragment dialog = HelpDialog.newInstance();
+                dialog.show(activity.getSupportFragmentManager(), "helpdialog-smoke");
+            });
+
+            // Wait for dialog to be displayed
             Thread.sleep(500);
-            
-            // Recreate activity
-            activity.recreate();
-            Thread.sleep(500);
-            
-            MainActivity newActivity = activityRule.getActivity();
-            if (newActivity != null) {
-                DialogFragment newDialog = (DialogFragment) newActivity.getSupportFragmentManager()
+
+            // Verify dialog exists before recreation
+            scenario.onActivity(activity -> {
+                DialogFragment dialog = (DialogFragment) activity.getSupportFragmentManager()
                     .findFragmentByTag("helpdialog-smoke");
-                assertNotNull("Dialog should survive recreation", newDialog);
-                newDialog.dismiss();
-            }
-            assertTrue("Dialog survived recreation", true);
+                assertNotNull("Dialog should be shown before recreation", dialog);
+            });
+
+            // Recreate activity (simulates configuration change)
+            scenario.recreate();
+
+            // Wait for recreation to complete
+            Thread.sleep(500);
+
+            // Verify dialog survives recreation
+            scenario.onActivity(activity -> {
+                DialogFragment dialog = (DialogFragment) activity.getSupportFragmentManager()
+                    .findFragmentByTag("helpdialog-smoke");
+                assertNotNull("Dialog should survive recreation", dialog);
+
+                // Clean up - dismiss dialog
+                if (dialog != null) {
+                    dialog.dismissAllowingStateLoss();
+                }
+            });
+
+            // Wait for dismiss to complete
+            Thread.sleep(200);
         }
-        */
-        assertTrue("Test ignored/skipped due to ActivityTestRule deprecation and environment issues", true);
     }
 }

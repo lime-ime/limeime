@@ -42,16 +42,12 @@ public class IntentHandlerTest {
 
     /**
      * Tests text/plain intent routing with .lime file.
-     * 
-     * <p><b>Note</b>: This test is currently ignored due to intermittent timeouts on first
-     * process launch. The timeout is caused by DEX bytecode verification overhead that only
-     * occurs once per test process. Subsequent tests in the same process complete successfully.
-     * 
-     * <p>This is a known limitation of Android instrumented testing on emulators and does not
-     * indicate a functional problem with the IntentHandler.
+     *
+     * <p><b>Note</b>: This test has an extended timeout (60 seconds) to accommodate
+     * DEX bytecode verification overhead on first process launch. The timeout is usually
+     * only needed on slower emulators during the first test execution.
      */
-    @Test(timeout = 10000)
-    @Ignore("Intermittent timeout on first process launch due to DEX verification")
+    @Test(timeout = 60000)
     public void processTextPlainIntent_doesNotCrash() {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             scenario.onActivity(activity -> {

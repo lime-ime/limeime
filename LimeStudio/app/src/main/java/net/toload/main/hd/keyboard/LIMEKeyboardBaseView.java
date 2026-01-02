@@ -298,9 +298,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     private final UIHandler mHandler = new UIHandler(this);
 
-    //private boolean isAPIpre8;
-
-    //private LIMEPreferenceManager mLIMEPref;
 
     static class UIHandler extends Handler {
         private static final int MSG_POPUP_PREVIEW = 1;
@@ -329,10 +326,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     break;
                 case MSG_DISMISS_PREVIEW:
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_DISMISS_PREVIEW");
-                    mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
-                    if(mLIMEKeyboardBaseView.mPreviewPopup.isShowing())
+                    if (mLIMEKeyboardBaseView.mPreviewText != null) {
+                        mLIMEKeyboardBaseView.mPreviewText.setVisibility(INVISIBLE);
+                    }
+                    if(mLIMEKeyboardBaseView.mPreviewPopup != null && mLIMEKeyboardBaseView.mPreviewPopup.isShowing())
                         mLIMEKeyboardBaseView.mPreviewPopup.dismiss();
-
                     break;
                 case MSG_REPEAT_KEY: {
                     if(DEBUG) Log.i(TAG, "handleMessage()  MSG_REPEAT_KEY");
@@ -352,7 +350,9 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     final PointerTracker tracker = (PointerTracker) msg.obj;
                     if(!tracker.isSpaceKey(msg.arg1))
                         mLIMEKeyboardBaseView.startKeyPreviewFadeInAnimation();
-                    mLIMEKeyboardBaseView.mPreviewText.setVisibility(VISIBLE);
+                    if (mLIMEKeyboardBaseView.mPreviewText != null) {
+                        mLIMEKeyboardBaseView.mPreviewText.setVisibility(VISIBLE);
+                    }
                     break;
                 }
             }

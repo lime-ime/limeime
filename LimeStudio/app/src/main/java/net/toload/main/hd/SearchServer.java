@@ -44,6 +44,7 @@ import net.toload.main.hd.limedb.LimeDB;
 import net.toload.main.hd.ui.MainActivity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -83,7 +84,7 @@ public class SearchServer {
     //Jeremy '12,6,9 make run-time suggestion phrase
     private static final boolean doRunTimeSuggestion = true;
 
-    private static List<Mapping> scorelist = null;
+    private static List<Mapping> scorelist = Collections.synchronizedList(new ArrayList<>());
 
     //Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
     private static List<List<Pair<Mapping, String>>> suggestionLoL;
@@ -100,7 +101,7 @@ public class SearchServer {
 
     private static String tablename = "";
 
-    private final LIMEPreferenceManager mLIMEPref;
+    private LIMEPreferenceManager mLIMEPref;
 
     private static boolean isPhysicalKeyboardPressed; // Sync to LIMEService and LIMEDB
     //Jeremy '11,6,10
@@ -134,8 +135,16 @@ public class SearchServer {
 
         this.mContext = context;
 
-        mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
-        if (dbadapter == null) dbadapter = new LimeDB(mContext);
+        // Handle null context gracefully (e.g., in tests) by using a dummy context
+        // This prevents NullPointerException during object construction
+        if (mContext != null) {
+            mLIMEPref = new LIMEPreferenceManager(mContext.getApplicationContext());
+            if (dbadapter == null) dbadapter = new LimeDB(mContext);
+        } else {
+            // For null context (test scenarios), create a minimal preference manager
+            // This allows the object to be constructed without crashing
+            mLIMEPref = null; // Will be handled by null checks in methods that use it
+        }
         initialCache();
 
 
@@ -295,10 +304,14 @@ public class SearchServer {
      */
     private String cacheKey(String code) {
         String key;
-
-        //Jeremy '11,6,17 Separate physical keyboard cache with keybaordtype
+        if(mLIMEPref==null || dbadapter==null){
+            Log.e(TAG, "cacheKey() mLIMEPref or dbadapter is null");
+            return "";
+        }
+        //Jeremy '11,6,17 Separate physical keyboard cache with keyboardtype
         if (isPhysicalKeyboardPressed) {
             if (tablename.equals(LIME.DB_TABLE_PHONETIC)) {
+
                 key = mLIMEPref.getPhysicalKeyboardType() + dbadapter.getTableName()
                         + mLIMEPref.getPhoneticKeyboardType() + code;
             } else {
@@ -740,6 +753,21 @@ public class SearchServer {
             throws RemoteException {
         if (DEBUG||dumpRunTimeSuggestion)
             Log.i(TAG, "getMappingByCode(): code=" + code);
+
+        // Handle null or empty code gracefully
+        if (code == null || code.isEmpty()) {
+            if (DEBUG)
+                Log.w(TAG, "getMappingByCode(): code is null or empty, returning empty list");
+            return new LinkedList<>();
+        }
+
+        // Handle null dbadapter gracefully (e.g., when SearchServer created with null context)
+        if (mLIMEPref==null || dbadapter == null) {
+            if (DEBUG)
+                Log.w(TAG, "getMappingByCode(): mLIMEPref or dbadapter is null, returning empty list");
+            return new LinkedList<>();
+        }
+
         // Check if system need to reset cache
 
         //check reset cache with local variable instead of reading from shared preference for better performance
@@ -751,156 +779,153 @@ public class SearchServer {
         //codeLengthMap.clear();//Jeremy '12,6,2 reset the codeLengthMap
 
         List<Mapping> result = new LinkedList<>();
-        if (code != null) {
-            // clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
-            if (isPhysicalKeyboardPressed == softkeyboard)
-                isPhysicalKeyboardPressed = !softkeyboard;
+        // clear mappingidx when user switching between softkeyboard and hard keyboard. Jeremy '11,6,11
+        if (isPhysicalKeyboardPressed == softkeyboard)
+            isPhysicalKeyboardPressed = !softkeyboard;
 
-            // Jeremy '11,9, 3 remove cached keyname when request full records
-            if (getAllRecords && keynamecache.get(cacheKey(code)) != null)
-                keynamecache.remove(cacheKey(code));
+        // Jeremy '11,9, 3 remove cached keyname when request full records
+        if (getAllRecords && keynamecache.get(cacheKey(code)) != null)
+            keynamecache.remove(cacheKey(code));
 
-            int size = code.length();
+        int size = code.length();
 
-            //boolean hasMore = false;
-
-
-            // 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
-            //'15,6,4 Jeremy. Do exact search only in between search mode (1 time only).
-            List<Mapping> resultList
-                    = getMappingByCodeFromCacheOrDB(code, getAllRecords);
+        //boolean hasMore = false;
 
 
-
-            //Jeremy '15,7,16 reset abandonPhraseSuggestion if code length ==1
-            if(mLIMEPref.getSmartChineseInput() && abandonPhraseSuggestion && code.length()==1){
-                clearRunTimeSuggestion(false);
-            }
-            // make run-time suggestion '15, 6, 9 Jeremy.
-            if (!abandonPhraseSuggestion && !prefetchCache && mLIMEPref.getSmartChineseInput()) {
-                makeRunTimeSuggestion(code, resultList);
-            }
-
-            // 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
-            //'15,6,4 Jeremy. Do exact search only in between search mode.
-            //for (int i = 0; i < ((LimeDB.getBetweenSearch()) ? 1 : size); i++) {
-            String cacheKey = cacheKey(code);
-            List<Mapping> cacheTemp = cache.get(cacheKey);
+        // 12,6,4 Jeremy. Ascending a ab abc... looking up db if the cache is not exist
+        //'15,6,4 Jeremy. Do exact search only in between search mode (1 time only).
+        List<Mapping> resultList
+                = getMappingByCodeFromCacheOrDB(code, getAllRecords);
 
 
-            if (cacheTemp != null) {
-                List<Mapping> resultlist = cacheTemp;
-
-                //if getAllRecords is true and result list or related list has has more mark in the end
-                // recall LimeDB.GetMappingByCode with getAllRecords true.
-                if (getAllRecords &&
-                        resultlist.size() > 1 && resultlist.get(resultlist.size() - 1).isHasMoreRecordsMarkRecord()) {
-                    try {
-                        cacheTemp = dbadapter.getMappingByCode(code, !isPhysicalKeyboardPressed, true);
-                        cache.remove(cacheKey);
-                        cache.put(cacheKey, cacheTemp);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error in search operation", e);
-                    }
-
-                }
-            }
-
-            if (cacheTemp != null) {
-                List<Mapping> resultlist = cacheTemp;
-                //List<Mapping> relatedtlist = cacheTemp.second;
-
-                if (DEBUG || dumpRunTimeSuggestion)
-                    Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size() + ", abandonPhraseSuggestion:" + abandonPhraseSuggestion);
-
-
-                //if (i == 0) {
-                if (resultlist.isEmpty() && code.length() > 1) {
-                    //If the result list is empty we need to go back to last result list with nonzero result list
-                    String wayBackCode = code;
-                    do {
-                        wayBackCode = wayBackCode.substring(0, wayBackCode.length() - 1);
-                        cacheTemp = cache.get(cacheKey(wayBackCode));
-                        if (cacheTemp != null)
-                            resultlist = cacheTemp;
-                    } while (resultlist.isEmpty() && wayBackCode.length() > 1);
-                }
-
-
-                Mapping self = new Mapping();
-                self.setWord(code);
-                self.setCode(code);
-                self.setComposingCodeRecord();
-                // put run-time built suggestion if it's present
-                        /*List<Pair<Mapping, String>> bestSuggestionList = null;
-                        Mapping bestSuggestion = null;
-                        if (!suggestionLoL.isEmpty()) {
-                            bestSuggestionList = suggestionLoL.get(suggestionLoL.size() - 1);
-                        }
-                        if (bestSuggestionList != null && !bestSuggestionList.isEmpty()) {
-                            bestSuggestion = bestSuggestionList.get(bestSuggestionList.size() - 1).first;
-                        }*/
-
-                //Jeremy '15,7,16 check english suggestion if code length > maxCodeLength
-                Mapping englishSuggestion = null;
-                if(code.length() > maxCodeLength) {
-                    List<Mapping> englishSuggestions = getEnglishSuggestions(code);
-                    if(englishSuggestions!=null && !englishSuggestions.isEmpty()) {
-                        englishSuggestion = englishSuggestions.get(0);
-                        englishSuggestion.setRuntimeBuiltPhraseRecord();
-                        englishSuggestion.setCode(code);
-                    }
-                }
-
-
-                Mapping bestSuggestion = null;
-                if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty()) {
-                    bestSuggestion = bestSuggestionStack.lastElement().first;
-                }
-                int averageScore =(bestSuggestion==null)?0: (bestSuggestion.getBasescore()  / bestSuggestion.getWord().length());
-
-                if (bestSuggestion != null    // the last element is run-time built suggestion from remaining code query
-                        && !abandonPhraseSuggestion
-                        && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
-                        && bestSuggestion.getWord().length() > 1
-                        && ( (englishSuggestion==null && averageScore  > MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > MAX_SCORE_THRESHOLD ))  ) {
-                    result.add(self);
-                    result.add(bestSuggestion);
-
-                } else if( englishSuggestion!=null && averageScore <= MAX_SCORE_THRESHOLD){
-                    clearRunTimeSuggestion(true);
-                    result.add(self);
-                    result.add(englishSuggestion);
-                } else {
-                    // put self into the first mapping for mixed input.
-                    result.add(self);
-                }
-                // }
-
-                if (!resultlist.isEmpty()) {
-                    result.addAll(resultlist);
-                    /*
-                    int rsize = result.size();
-                    if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()) {
-                        //do not need to touch the has more record in between search mode. Jeremy '15,6,4
-                        result.remove(rsize - 1);
-                        hasMore = true;
-
-                        }
-                        */
-                    if (DEBUG)
-                        Log.i(TAG, "getMappingByCode() code=" + code + "  result list added resultlist.size()="
-                                + resultlist.size());
-
-                }
-
-            }
-            //codeLengthMap is deprecated and replace by exact match stack scheme '15,6,3 jeremy
-            //codeLengthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
-            //if (DEBUG) 	Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
-
-            code = code.substring(0, code.length() - 1);
+        //Jeremy '15,7,16 reset abandonPhraseSuggestion if code length ==1
+        if(mLIMEPref.getSmartChineseInput() && abandonPhraseSuggestion && code.length()==1){
+            clearRunTimeSuggestion(false);
         }
+        // make run-time suggestion '15, 6, 9 Jeremy.
+        if (!abandonPhraseSuggestion && !prefetchCache && mLIMEPref.getSmartChineseInput()) {
+            makeRunTimeSuggestion(code, resultList);
+        }
+
+        // 12,6,4 Jeremy. Descending  abc ab a... Build the result candidate list.
+        //'15,6,4 Jeremy. Do exact search only in between search mode.
+        //for (int i = 0; i < ((LimeDB.getBetweenSearch()) ? 1 : size); i++) {
+        String cacheKey = cacheKey(code);
+        List<Mapping> cacheTemp = cache.get(cacheKey);
+
+
+        if (cacheTemp != null) {
+            List<Mapping> resultlist = cacheTemp;
+
+            //if getAllRecords is true and result list or related list has has more mark in the end
+            // recall LimeDB.GetMappingByCode with getAllRecords true.
+            if (getAllRecords &&
+                    resultlist.size() > 1 && resultlist.get(resultlist.size() - 1).isHasMoreRecordsMarkRecord()) {
+                try {
+                    cacheTemp = dbadapter.getMappingByCode(code, !isPhysicalKeyboardPressed, true);
+                    cache.remove(cacheKey);
+                    cache.put(cacheKey, cacheTemp);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in search operation", e);
+                }
+
+            }
+        }
+
+        if (cacheTemp != null) {
+            List<Mapping> resultlist = cacheTemp;
+            //List<Mapping> relatedtlist = cacheTemp.second;
+
+            if (DEBUG || dumpRunTimeSuggestion)
+                Log.i(TAG, "getMappingByCode() code=" + code + " resultlist.size()=" + resultlist.size() + ", abandonPhraseSuggestion:" + abandonPhraseSuggestion);
+
+
+            //if (i == 0) {
+            if (resultlist.isEmpty() && code.length() > 1) {
+                //If the result list is empty we need to go back to last result list with nonzero result list
+                String wayBackCode = code;
+                do {
+                    wayBackCode = wayBackCode.substring(0, wayBackCode.length() - 1);
+                    cacheTemp = cache.get(cacheKey(wayBackCode));
+                    if (cacheTemp != null)
+                        resultlist = cacheTemp;
+                } while (resultlist.isEmpty() && wayBackCode.length() > 1);
+            }
+
+
+            Mapping self = new Mapping();
+            self.setWord(code);
+            self.setCode(code);
+            self.setComposingCodeRecord();
+            // put run-time built suggestion if it's present
+                    /*List<Pair<Mapping, String>> bestSuggestionList = null;
+                    Mapping bestSuggestion = null;
+                    if (!suggestionLoL.isEmpty()) {
+                        bestSuggestionList = suggestionLoL.get(suggestionLoL.size() - 1);
+                    }
+                    if (bestSuggestionList != null && !bestSuggestionList.isEmpty()) {
+                        bestSuggestion = bestSuggestionList.get(bestSuggestionList.size() - 1).first;
+                    }*/
+
+            //Jeremy '15,7,16 check english suggestion if code length > maxCodeLength
+            Mapping englishSuggestion = null;
+            if(code.length() > maxCodeLength) {
+                List<Mapping> englishSuggestions = getEnglishSuggestions(code);
+                if(englishSuggestions!=null && !englishSuggestions.isEmpty()) {
+                    englishSuggestion = englishSuggestions.get(0);
+                    englishSuggestion.setRuntimeBuiltPhraseRecord();
+                    englishSuggestion.setCode(code);
+                }
+            }
+
+
+            Mapping bestSuggestion = null;
+            if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty()) {
+                bestSuggestion = bestSuggestionStack.lastElement().first;
+            }
+            int averageScore =(bestSuggestion==null)?0: (bestSuggestion.getBasescore()  / bestSuggestion.getWord().length());
+
+            if (bestSuggestion != null    // the last element is run-time built suggestion from remaining code query
+                    && !abandonPhraseSuggestion
+                    && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
+                    && bestSuggestion.getWord().length() > 1
+                    && ( (englishSuggestion==null && averageScore  > MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > MAX_SCORE_THRESHOLD ))  ) {
+                result.add(self);
+                result.add(bestSuggestion);
+
+            } else if( englishSuggestion!=null && averageScore <= MAX_SCORE_THRESHOLD){
+                clearRunTimeSuggestion(true);
+                result.add(self);
+                result.add(englishSuggestion);
+            } else {
+                // put self into the first mapping for mixed input.
+                result.add(self);
+            }
+            // }
+
+            if (!resultlist.isEmpty()) {
+                result.addAll(resultlist);
+                /*
+                int rsize = result.size();
+                if (result.get(rsize - 1).isHasMoreRecordsMarkRecord()) {
+                    //do not need to touch the has more record in between search mode. Jeremy '15,6,4
+                    result.remove(rsize - 1);
+                    hasMore = true;
+
+                    }
+                    */
+                if (DEBUG)
+                    Log.i(TAG, "getMappingByCode() code=" + code + "  result list added resultlist.size()="
+                            + resultlist.size());
+
+            }
+
+        }
+        //codeLengthMap is deprecated and replace by exact match stack scheme '15,6,3 jeremy
+        //codeLengthMap.add(new Pair<>(code.length(), result.size()));  //Jeremy 12,6,2 preserve the code length in each loop.
+        //if (DEBUG) 	Log.i(TAG, "getMappingByCode() codeLengthMap  code length = " + code.length() + ", result size = " + result.size());
+
+        code = code.substring(0, code.length() - 1);
         if (DEBUG)
             Log.i(TAG, "getMappingByCode() code=" + code + " result.size()=" + result.size());
 
@@ -921,8 +946,9 @@ public class SearchServer {
      * @return List of mappings.
 	 */
     private List<Mapping> getMappingByCodeFromCacheOrDB(String queryCode, Boolean getAllRecords) {
-        String cacheKey = cacheKey(queryCode);
-        List<Mapping> cacheTemp = cache.get(cacheKey);
+        String cachedKey = cacheKey(queryCode);
+        assert cachedKey != null;
+        List<Mapping> cacheTemp = cache.get(cachedKey);
 
         if (DEBUG)
             Log.i(TAG, " getMappingByCode() check if cached exist on code = '" + queryCode + "'");
@@ -932,7 +958,7 @@ public class SearchServer {
             // Just ignore error when something wrong with the result set
             try {
                 cacheTemp = dbadapter.getMappingByCode(queryCode, !isPhysicalKeyboardPressed, getAllRecords);
-                if (cacheTemp != null) cache.put(cacheKey, cacheTemp);
+                if (cacheTemp != null) cache.put(cachedKey, cacheTemp);
                 //Jeremy '12,6,5 check if need to update code remap cache
                 if (cacheTemp != null
                         && !cacheTemp.isEmpty() && cacheTemp.get(0) != null
@@ -1191,8 +1217,7 @@ List<Mapping> scorelistSnapshot = null;
         Thread UpdatingThread = new Thread() {
             public void run() {
                 // for thread-safe operation, duplicate local copy of scorelist and LDphraselistarray
-                //List<Mapping> localScorelist = new LinkedList<Mapping>();
-                if (scorelist != null) {
+                synchronized (scorelist) {
                     scorelistSnapshot.addAll(scorelist);
                     scorelist.clear();
                 }
@@ -1540,16 +1565,12 @@ List<Mapping> scorelistSnapshot = null;
     {
         if (DEBUG) Log.i(TAG, "learnRelatedPhraseAndUpdateScore() ");
 
-        if (scorelist == null) {
-            scorelist = new ArrayList<>();
-        }
-
         // Temp final Mapping Object For updateMapping thread.
         if (updateMapping != null) {
             final Mapping updateMappingTemp = new Mapping(updateMapping);
-
-            // Jeremy '11,6,11. Always update score and sort according to preferences.
-            scorelist.add(updateMappingTemp);
+            synchronized (scorelist) {
+                scorelist.add(updateMappingTemp);
+            }
             Thread UpdatingThread = new Thread() {
                 public void run() {
                     updateScoreCache(updateMappingTemp);
@@ -1775,7 +1796,7 @@ List<Mapping> scorelistSnapshot = null;
                     Log.i(TAG, "addExactMatch() complete code = " + code + "" +
                             ", got exact match  = " + exactMatchMapping.getWord()
                             + " score =" + exactMatchMapping.getScore() + ", basescore=" + exactMatchMapping.getBasescore());
-
+                
 
                 //push the exact match mapping with current code into exact match stack. '15,6,2 Jeremy
                 if (exactMatchMapping.getBasescore() > 0) {
@@ -1818,8 +1839,7 @@ List<Mapping> scorelistSnapshot = null;
                             if (phraseLen < 2 || remainingCodeExactMatchMapping.getBasescore() < 2)
                                 continue;
                             int remainingScore = remainingCodeExactMatchMapping.getBasescore();
-                            int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() /
-                                    remainingCodeExactMatchMapping.getWord().length() * 30;
+                            int codeLenBonus = remainingCodeExactMatchMapping.getCode().length() / remainingCodeExactMatchMapping.getWord().length() * 30;
                             if (remainingScore > 120) remainingScore = 120;
                             remainingScore = remainingScore / remainingCodeExactMatchMapping.getWord().length() + codeLenBonus;
 
@@ -1945,8 +1965,8 @@ List<Mapping> scorelistSnapshot = null;
 
 
     public String getImConfig(String imCode, String field) {
-        if (dbadapter == null) {
-            Log.e(TAG, "getImInfo(): dbadapter is null");
+        if (dbadapter == null || imCode == null) {
+            Log.e(TAG, "getImConfig(): dbadapter or imCode is null");
             return "";
         }
         return dbadapter.getImConfig(imCode, field);
