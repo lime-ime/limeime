@@ -87,9 +87,9 @@ public class SearchServer {
     private static List<Mapping> scorelist = Collections.synchronizedList(new ArrayList<>());
 
     //Jeremy '15,6,2 preserve the exact match mapping with the code user typed.
-    private static List<List<Pair<Mapping, String>>> suggestionLoL;
-    private static Stack<Pair<Mapping, String>> bestSuggestionStack;
-    private static String lastCode; // preserved the last code queried from LIMEService
+    protected static List<List<Pair<Mapping, String>>> suggestionLoL;
+    protected static Stack<Pair<Mapping, String>> bestSuggestionStack;
+    protected static String lastCode; // preserved the last code queried from LIMEService
 
     //Jeremy '15,6,21
     private static int maxCodeLength = 4;
@@ -332,7 +332,7 @@ public class SearchServer {
      *
      * @param abandonSuggestion true if the suggestion process should be abandoned.
      */
-    private void clearRunTimeSuggestion(boolean abandonSuggestion)
+    protected void clearRunTimeSuggestion(boolean abandonSuggestion)
     {
         for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
             suggestList.clear();
@@ -360,7 +360,7 @@ public class SearchServer {
      * @param code                   The current full input code sequence.
      * @param completeCodeResultList A list of mappings that exactly match the current code (or parts of it).
      */
-    private synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
+    protected synchronized void makeRunTimeSuggestion(String code, List<Mapping> completeCodeResultList) {
 
         long startTime=0;
         if (DEBUG || dumpRunTimeSuggestion) {
@@ -383,6 +383,10 @@ public class SearchServer {
                 //remove best suggestion stack last element if last element is with lastCode
                 if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty() && bestSuggestionStack.lastElement().second.equals(lastCode)) {
                     bestSuggestionStack.pop();
+                }
+                // If nothing remains at the current depth, clear runtime state to avoid stale suggestions
+                if (suggestionLoL.stream().allMatch(List::isEmpty) && bestSuggestionStack != null) {
+                    bestSuggestionStack.clear();
                 }
             }
 
@@ -672,7 +676,7 @@ public class SearchServer {
      * @param b Second string.
      * @return The longest common substring.
      */
-    private String lcs(String a, String b) {
+    protected String lcs(String a, String b) {
         int aLen = a.length();
         int bLen = b.length();
         if (aLen == 0 || bLen == 0) {
@@ -883,12 +887,20 @@ public class SearchServer {
             if (bestSuggestionStack != null && !bestSuggestionStack.isEmpty()) {
                 bestSuggestion = bestSuggestionStack.lastElement().first;
             }
-            int averageScore =(bestSuggestion==null)?0: (bestSuggestion.getBasescore()  / bestSuggestion.getWord().length());
+            int averageScore = 0;
+            int bestSuggestionLength = 0;
+            if (bestSuggestion != null) {
+                String bestSuggestionWord = bestSuggestion.getWord();
+                bestSuggestionLength = (bestSuggestionWord == null) ? 0 : bestSuggestionWord.length();
+                if (bestSuggestionLength > 0) {
+                    averageScore = bestSuggestion.getBasescore() / bestSuggestionLength;
+                }
+            }
 
             if (bestSuggestion != null    // the last element is run-time built suggestion from remaining code query
                     && !abandonPhraseSuggestion
                     && !bestSuggestion.isExactMatchToCodeRecord() //will be the first item of result list, dont' add duplicated item
-                    && bestSuggestion.getWord().length() > 1
+                    && bestSuggestionLength > 1
                     && ( (englishSuggestion==null && averageScore  > MIN_SCORE_THRESHOLD) || (englishSuggestion!=null && averageScore > MAX_SCORE_THRESHOLD ))  ) {
                 result.add(self);
                 result.add(bestSuggestion);
@@ -1007,7 +1019,7 @@ public class SearchServer {
      * @param currentCode     The current input buffer.
      * @return The length of the code corresponding to the selection.
      */
-    int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
+    protected int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
         if (DEBUG)
             Log.i(TAG, "getRealCodeLength()");
 
@@ -1170,8 +1182,15 @@ public class SearchServer {
                                         break;
                                     }
                                 }
-
                             }
+                            break;
+                        }
+                    }
+                } else {
+                    // When sorting is disabled, still record the score bump to keep cache accurate
+                    for (Mapping mapping : cachedList) {
+                        if (cachedMapping.getId().equals(mapping.getId())) {
+                            mapping.setScore(mapping.getScore() + 1);
                             break;
                         }
                     }
