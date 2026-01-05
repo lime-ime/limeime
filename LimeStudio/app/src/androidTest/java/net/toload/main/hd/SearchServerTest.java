@@ -1,4 +1,4 @@
-﻿package net.toload.main.hd;
+package net.toload.main.hd;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;

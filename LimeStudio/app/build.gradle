@@ -133,4 +133,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-idling-resource:3.5.1'
     androidTestImplementation 'org.mockito:mockito-core:5.14.2'
     androidTestImplementation 'org.mockito:mockito-android:5.14.2'
+    
+    // Local unit test dependencies (Robolectric)
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.14.1'
+    testImplementation 'androidx.test:core:1.6.1'
+    testImplementation 'androidx.test.ext:junit:1.2.1'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
 }

@@ -122,29 +122,29 @@ This section provides a quick reference of all test lists organized by phase, si
   - [x] Test: `updateRecord()` with ContentValues ✅ `testLimeDBAddRecordDeleteRecordUpdateRecordBranches()`, `testLimeDBUpdateRecordWithMultipleRecords()`, `testLimeDBUpdateRecordWithInvalidInputs()`, `testLimeDBUpdateRecordWithNoMatchingRecords()`
   - [x] Test: `deleteRecord()` with parameterized queries ✅ `testLimeDBAddRecordDeleteRecordUpdateRecordBranches()`, `testLimeDBDeleteRecordWithMultipleRecords()`, `testLimeDBDeleteRecordWithInvalidInputs()`, `testLimeDBDeleteRecordWithNoMatchingRecords()`
 
-#### 1.2 Unified Methods (Wrappers)** (8 tests)
+#### **1.2 Unified Methods (Wrappers)** (8 tests)
   - [x] Test: `countMapping()` delegates to `countRecords()` ✅ `testLimeDBCountMappingDelegatesToCountRecords()`
   - [x] Test: `getRecordSize()` delegates to `countRecords()` ✅ `testLimeDBGetRecordSizeDelegatesToCountRecords()`
   - [x] Test: `getRelatedSize()` delegates to `countRecords()` ✅ `testLimeDBGetRelatedSizeDelegatesToCountRecords()`, `testLimeDBGetRelatedSizeEdgeCases()`
   - [x] Test: `getRelated()` method ✅ `testLimeDBGetRelated()`
   - [x] Test: `getAllRelated()` method ✅ `testLimeDBGetAllRelated()`
 
-#### 1.3 Backup/Import Operations** (15 tests)
+#### **1.3 Backup/Import Operations** (15 tests)
   - [x] Test: `prepareBackup()` unified method ✅ `testLimeDBPrepareBackupWithSingleTable()`, `testLimeDBPrepareBackupWithMultipleTables()`, `testLimeDBPrepareBackupWithIncludeRelated()`, `testLimeDBPrepareBackupWithInvalidTableName()`
   - [x] Test: `importDb()` unified method ✅ `testLimeDBImportDBWithSingleTable()`, `testLimeDBImportDbWithMultipleTables()`, `testLimeDBImportBackupWithOverwriteExisting()`, `testLimeDBImportDbWithOverwriteExistingFalse()`, `testLimeDBImportDbWithIncludeRelated()`, `testLimeDBImportBackupWithInvalidFile()`
   - [x] Test: `exportTxtTable()` with related table ✅ `testLimeDBExportTxtTableWithRelatedTable()`
   - [x] Test: `exportTxtTable()` / `importTxtTable()` pair for related table ✅ `testLimeDBExportTxtTableRelatedAndImportTxtTableWithDataConsistency()`
   - [x] Test: Wrapper methods delegate correctly ✅ `testLimeDBPrepareBackupDbDelegatesToPrepareBackup()`, `testLimeDBPrepareBackupRelatedDbDelegatesToPrepareBackup()`, `testLimeDBImportDbRelatedDelegatesToImportDb()`, `testLimeDBImportBackupRelatedDbDelegatesToImportBackup()`, `testLimeDBWrapperMethodsDelegationComplete()`
 
-#### 1.4 Helper Methods** (10 tests)
+#### **1.4 Helper Methods** (10 tests)
   - [x] Test: `getBackupTableRecords()` ✅ `testLimeDBGetBackupTableRecordsWithValidBackupTable()`, `testLimeDBGetBackupTableRecordsWithInvalidFormat()`, `testLimeDBGetBackupTableRecordsWithInvalidBaseTableName()`
   - [x] Test: `buildWhereClause()` helper ✅ `testLimeDBBuildWhereClauseWithEmptyMap()`, `testLimeDBBuildWhereClauseWithSingleCondition()`, `testLimeDBBuildWhereClauseWithMultipleConditions()`, `testLimeDBBuildWhereClauseWithNullMap()`
   - [x] Test: `queryWithPagination()` helper ✅ `testLimeDBQueryWithPaginationWithLimitAndOffset()`, `testLimeDBQueryWithPaginationWithNoLimit()`, `testLimeDBQueryWithPaginationWithInvalidTableName()`, `testLimeDBQueryWithPaginationWithWhereClause()`
 
-#### 1.5 Table Name Validation** (4 tests)
+#### **1.5 Table Name Validation** (4 tests)
   - [x] Test: `isValidTableName()` ✅ `testLimeDBIsValidTableNameWithAllValidTables()`, `testLimeDBIsValidTableNameWithInvalidTables()`, `testLimeDBIsValidTableNameWithSQLInjectionAttempts()`
 
-#### 1.6 SQL Injection Prevention** (5 tests)
+#### **1.6 SQL Injection Prevention** (5 tests)
   - [x] Test: All methods use parameterized queries ✅ `testLimeDBSQLInjectionPreventionInCountRecords()`, `testLimeDBSQLInjectionPreventionInTableName()`, `testLimeDBSQLInjectionPreventionInAddRecord()`, `testLimeDBSQLInjectionPreventionInUpdateRecord()`, `testLimeDBSQLInjectionPreventionInDeleteRecord()`
 
 ---
@@ -156,12 +156,12 @@ This section provides a quick reference of all test lists organized by phase, si
 **Test File**: DBServerTest.java
 **Test Coverage**: 35+ test methods
 
-- **2.1 File Export Operations** (15 tests)
+#### **2.1 File Export Operations** (15 tests)
   - [x] Test: `exportZippedDb()` ✅ `testDBServerExportImDatabaseWithValidTableName()`, `testDBServerExportImDatabaseWithInvalidTableName()`, `testDBServerExportImDatabaseWithProgressCallback()`, `testDBServerExportZippedDbWithNullTableName()`, `testDBServerExportZippedDbWithNullTargetFile()`, `testDBServerExportZippedDbWithDataIntegrity()`, `testDBServerExportZippedDbWithExistingTargetFile()`, `testDBServerExportZippedDbAndImportWithDataConsistency()`
   - [x] Test: `exportZippedDbRelated()` ✅ `testDBServerExportRelatedDatabase()`, `testDBServerExportZippedDbRelatedAndImportWithDataConsistency()`
   - [x] Test: `exportZippedDbRelated()` / `importZippedDbRelated()` pair ✅ `testDBServerExportZippedDbRelatedAndImportWithDataConsistency()`
 
-- **2.2 File Import Operations** (20+ tests)
+#### **2.2 File Import Operations** (20+ tests)
   - [x] Test: `importTxtTable(String filename, ...)` ✅ `testDBServerImportTxtTableWithStringFilename()`, `testDBServerImportTxtTableWithInvalidTableName()`, `testDBServerImportTxtTableWithEmptyFile()`, `testDBServerImportTxtTableWithProgressListener()`, `testDBServerImportTxtTableDelegatesToLimeDB()`, `testDBServerExportTxtTableAndImportTxtTablePair()`, `testDBServerExportTxtTableRelatedAndImportTxtTablePair()`
   - [x] Test: `importTxtTable(File sourcefile, ...)` ✅ `testDBServerImportTxtTableWithFile()`, `testDBServerImportTxtTableWithNullFile()`, `testDBServerImportTxtTableWithNonExistentFile()`
   - [x] Test: `importDb(File sourcedb, String tableName)` ✅ `testDBServerImportDbWithUncompressedDatabase()`, `testDBServerImportDbWithNullSourceDb()`, `testDBServerImportDbWithNonExistentFile()`, `testDBServerImportBackupDbDelegation()`
@@ -169,15 +169,15 @@ This section provides a quick reference of all test lists organized by phase, si
   - [x] Test: `importZippedDb()` ✅ `testDBServerExportZippedDbAndImportWithDataConsistency()`
   - [x] Test: `importZippedDbRelated()` ✅ `testDBServerExportZippedDbRelatedAndImportWithDataConsistency()`
 
-- **2.3 Backup/Restore Operations** (8 tests)
+#### **2.3 Backup/Restore Operations** (8 tests)
   - [x] Test: `backupDatabase()` ✅ `testDBServerBackupDatabaseWithUri()`, `testDBServerBackupDatabaseWithNullUri()`, `testDBServerBackupDatabaseWithDataIntegrity()`, `testDBServerBackupDatabaseAndRestoreWithDataConsistency()`
   - [x] Test: `restoreDatabase()` ✅ `testDBServerRestoreDatabaseWithUri()`, `testDBServerRestoreDatabaseWithNullUri()`, `testDBServerRestoreDatabaseWithDataIntegrity()`, `testDBServerRestoreDatabaseWithStringPath()`, `testDBServerBackupDatabaseAndRestoreWithDataConsistency()`
 
-- **2.4 Shared Preferences Operations** (4 tests)
+#### **2.4 Shared Preferences Operations** (4 tests)
   - [x] Test: `backupDefaultSharedPreference()` ✅ `testDBServerBackupDefaultSharedPreference()`, `testDBServerBackupDefaultSharedPreferenceWithNullFile()`, `testDBServerBackupDefaultSharedPreferenceAndRestorePair()`
   - [x] Test: `restoreDefaultSharedPreference()` ✅ `testDBServerRestoreDefaultSharedPreference()`, `testDBServerRestoreDefaultSharedPreferenceWithNonExistentFile()`, `testDBServerBackupDefaultSharedPreferenceAndRestorePair()`
 
-- **2.5 User Records Backup/Restore** (5 tests)
+#### **2.5 User Records Backup/Restore** (5 tests)
   - [x] Test: User records backup/restore via LimeDB ✅ `testDBServerBackupUserRecordsViaLimeDB()`, `testDBServerBackupUserRecordsWithInvalidTableName()`, `testDBServerRestoreUserRecordsViaLimeDB()`, `testDBServerBackupUserRecordsAndRestoreUserRecordsPair()`, `testDBServerGetBackupTableRecords()`, `testDBServerCheckBackupTable()`
 
 ---
@@ -187,7 +187,7 @@ This section provides a quick reference of all test lists organized by phase, si
 **Objective**: Test SearchServer as single interface for all database operations.
 **Test File**: SearchServerTest.java
 
-####  ***3.1 getMappingByCode (22 tests implemented; +9 new to reach 100% coverage)***
+#### **3.1 getMappingByCode (22 tests implemented; +9 new to reach 100% coverage)**
 - **[x] 3.1.1 Input guards**:
   - `test_3_1_1_1_getMappingByCode_null_or_empty_returns_empty` – returns an empty result when the code or table name is null or empty. ✅
   - `test_3_1_1_2_getMappingByCode_null_dbadapter_returns_empty` – short-circuits to empty when dbadapter is missing. ✅
@@ -231,7 +231,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_1_10_8_remapcache_updates_on_exact_match` – exact-match remap updates coderemapcache in helper path. ✅
   - `test_3_1_10_9_db_exception_returns_safe_list` – DB exception triggers catch block and returns non-null list. ✅
 
-#### ***3.2 Runtime suggestions core (9–11 tests)***
+#### **3.2 Runtime suggestions core (9–11 tests)**
 - **[x] 3.2.1 makeRunTimeSuggestion**:
   - `test_3_2_1_1_makeRunTimeSuggestion_empty_list` – returns no suggestions when mapping list is empty. ✅
   - `test_3_2_1_2_makeRunTimeSuggestion_depth_cap` – enforces stack depth limits while building suggestions. ✅
@@ -264,7 +264,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_2_6_4_postFinishInput_snapshot_restoration` – restores suggestion snapshots correctly
   - `test_3_2_6_5_postFinishInput_with_scorelist` – creates background thread for learning with non-null scorelist
 
-#### ***3.3 Cache utilities (9 tests)***
+#### **3.3 Cache utilities (9 tests)**
 - **[x] 3.3.1 initialCache/resetCache flag**:
   - `test_3_3_1_1_initialCache_recreates_all_maps` – initial cache call recreates all internal maps.
   - `test_3_3_1_2_resetCache_flag_triggers_initialCache_on_next_query` – reset flag forces cache rebuild on the next lookup.
@@ -300,7 +300,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_3_5_19_updateScoreCache_partial_match` – partial match records remove cached entries
   - `test_3_3_5_20_updateScoreCache_sorting_disabled` – updates score without reordering when sorting is disabled
 
-#### ***3.4 Records/search CRUD (11 tests)***
+#### **3.4 Records/search CRUD (11 tests)**
 - **[x] 3.4.1 getRecords**:
   - `test_3_4_1_1_getRecords_pagination_bounds` – enforces limit/offset bounds when paging results.
   - `test_3_4_1_2_getRecords_empty_result` – returns empty collections when no rows match.
@@ -331,7 +331,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_4_6_1_updateSimilarCodeCache_code_length_1` – handles single character code edge case
   - `test_3_4_6_2_updateSimilarCodeCache_longer_code` – removes cached substring entries for longer codes
 
-#### ***3.5 IM/keyboard config helpers (17 tests)***
+#### **3.5 IM/keyboard config helpers (17 tests)**
 - **[x] 3.5.1 getImConfigList/getAllImKeyboardConfigList**:
   - `test_3_5_1_1_getImConfigList_null_dbadapter` – null dbadapter returns empty config lists safely.
   - `test_3_5_1_2_getImConfigList_null_filters` – no filters returns the full config list.
@@ -403,7 +403,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_5_10_5_getImAllConfigList_with_valid_dbadapter` – delegates to dbadapter successfully
   - `test_3_5_10_6_getKeyboardConfig_with_valid_dbadapter` – delegates to dbadapter successfully
 
-#### ***3.6 Backup/restore + converters (12 tests)***
+#### **3.6 Backup/restore + converters (12 tests)**
 - **[x] 3.6.1 backupUserRecords/restoreUserRecords**:
   - `test_3_6_1_1_backupUserRecords_null_db_or_invalid_table` – guards backup/restore when dbadapter is null or table is invalid.
   - `test_3_6_1_2_restoreUserRecords_empty_backup` – handles empty backups gracefully during restore.
@@ -423,7 +423,7 @@ This section provides a quick reference of all test lists organized by phase, si
   - `test_3_6_4_2_emojiConvert_cache_hit` – cache hits return stored emoji conversions.
   - `test_3_6_4_3_emojiConvert_db_fallback_type_variation` – falls back to DB lookup with type variations when cache misses.
 
-#### ***3.7 Learning Methods (56 tests)***
+#### **3.7 Learning Methods (56 tests)**
 - **[x] 3.7.1 learnRelatedPhraseAndUpdateScore() Tests** (6 tests):
   - `test_3_7_1_1_learnRelatedPhraseAndUpdateScore_null_mapping` – null mapping handled safely.
   - `test_3_7_1_2_learnRelatedPhraseAndUpdateScore_updates_score` – updates mapping score in database.
@@ -474,7 +474,7 @@ This section provides a quick reference of all test lists organized by phase, si
 **Test Files**: Multiple test files (see below)
 **Test Coverage**: 80+ test methods across all UI components
 
-- **4.1 Architecture Compliance Tests** (5 tests)
+#### **4.1 Architecture Compliance Tests** (5 tests)
   - [x] Test: No direct LimeDB in UI components ✅
     - `ManageImFragmentTest.testNoDirectLimeDBAccess`
     - `SetupImFragmentTest` (all tests)
@@ -482,7 +482,7 @@ This section provides a quick reference of all test lists organized by phase, si
     - `SetupImControllerFlowsTest` (all tests)
     - `ManageImControllerTest` (all tests)
 
-- **4.2 SetupImFragment** (15 tests)
+#### **4.2 SetupImFragment** (15 tests)
   - [x] **Test File**: SetupImFragmentTest.java
     - [x] Fragment initialization
       - Verifies SetupImFragment initializes correctly. ✅
@@ -603,7 +603,7 @@ This section provides a quick reference of all test lists organized by phase, si
       - Tests singleton creation of controller/manager in MainActivity. ✅
       - Mapping: `MainActivityTest` (singleton creation)
 
-- **4.9 VoiceInputActivity** (35 tests) ✅ **COMPLETED**
+#### **4.9 VoiceInputActivity** (35 tests) 
   - [x] **Test File**: VoiceInputActivityTest.java
     - [x] Activity creation and initialization
       - Verifies activity creation and initialization sequence.✅
@@ -669,7 +669,7 @@ This section provides a quick reference of all test lists organized by phase, si
       - Ensures Unicode text is handled in recognition results. ✅
       - Mapping: `VoiceInputActivityTest.testRecognizedTextWithUnicode`
 
-- **4.10 Additional UI Component Tests**
+#### **4.10 Additional UI Component Tests**
   - [x] **Adapter Tests**: ManageImAdapterTest.java, ManageRelatedAdapterTest.java
     - [x] ManageImAdapter DiffUtil and item handling
       - Tests DiffUtil and item handling logic in ManageImAdapter. ✅
@@ -728,120 +728,308 @@ This section provides a quick reference of all test lists organized by phase, si
 **Objective**: Test the core Input Method Engine (IME) logic on Android platform.
 
 **Test File**: LIMEServiceTest.java
-**Test Coverage**: 113 test methods planned across 18 subsections
+**Test Coverage**: 191 test methods planned across 18 subsections + 103 regression/mock tests (5.19-5.24) = **294 total tests**
 
-- **5.1 LIMEService Lifecycle Tests** (12 tests)
-  - [x] Test: Service initialization (4 tests) ✅
-    - Mapping: `testLIMEServiceConstants`, `testLIMEServiceAvailability`
-  - [x] Test: Input session lifecycle (4 tests) ✅
-    - Mapping: `testLIMEServicePreferenceIntegration`, `testLIMEServiceSearchServerIntegration`
-  - [x] Test: Configuration change handling (4 tests) ✅
-    - Mapping: `testLIMEServiceConfigurationHandling`
+#### **5.1 LIMEService Lifecycle Tests** (15 tests)
+  - [x] 5.1.1 Service initialization (7 tests)
+    - `test_5_1_1_1_ServiceInitialization` - Verifies LIMEService can be instantiated and basic initialization completes ✅
+    - `test_5_1_1_2_ServiceAvailability` - Tests service availability check methods return expected values ✅
+    - `test_5_1_1_3_DelayConstant` - Validates DELAY_UPDATE_SUGGESTIONS constant is properly defined ✅
+    - `test_5_1_1_4_ResourceAccess` - Ensures service can access application resources correctly ✅
+    - `test_5_1_1_5_SystemServiceAccess` - Tests access to system services (InputMethodManager, etc.) ✅
+    - `test_5_1_1_6_StaticConstants` - Verifies all static constants are initialized with expected values ✅
+    - `test_5_1_1_7_Instantiation` - Tests LIMEService instantiation without crashes ✅
+  - [x] 5.1.2 Input session lifecycle (5 tests)
+    - `test_5_1_2_1_IMListHandling` - Tests IM list loading and management during session ✅
+    - `test_5_1_2_2_LifecycleMethods` - Verifies onCreate/onDestroy lifecycle methods execute correctly ✅
+    - `test_5_1_2_3_InputMethodServiceMethods` - Tests InputMethodService base class method integration ✅
+    - `test_5_1_2_4_OnFinishInput` - Validates onFinishInput() properly cleans up input session state ✅
+    - `test_5_1_2_5_OnStartInputView` - Tests onStartInputView() initializes input view correctly ✅
+  - [x] 5.1.3 Configuration change handling (3 tests)
+    - `test_5_1_3_1_ConfigurationChangeHandling` - Tests service handles configuration changes (rotation, etc.) correctly ✅
+    - `test_5_1_3_2_ConfigurationConstants` - Verifies Configuration-related constants are properly defined ✅
+    - `test_5_1_3_3_OnConfigurationChanged` - Tests onConfigurationChanged() updates UI state appropriately ✅
 
-- **5.2 Soft Keyboard / Keyboard View Tests** (20 tests)
-  - [x] Test: Keyboard view creation (3 tests) ✅
-    - Mapping: `testLIMEServiceKeyboardConstants`
-  - [x] Test: Keyboard switching (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyboardConstants`
-  - [x] Test: Keyboard key handling (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyEventHandling`
-  - [x] Test: Keyboard layout variants (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyboardConstants`
-  - [x] Test: Shift and meta key handling (3 tests) ✅
-    - Mapping: `testLIMEServiceKeyboardConstants`
+#### **5.2 Soft Keyboard / Keyboard View Tests** (20 tests)
+  - [x] 5.2.1 Keyboard view creation (6 tests)
+    - `test_5_2_1_1_KeyboardViewCreation` - Tests onCreateInputView() creates keyboard view successfully ✅
+    - `test_5_2_1_2_KeyboardThemeConstants` - Verifies keyboard theme constants are properly initialized ✅
+    - `test_5_2_1_3_IsKeyboardViewHidden` - Tests isKeyboardViewHidden() returns correct visibility state ✅
+    - `test_5_2_1_4_RestoreKeyboardViewIfHidden` - Validates restoreKeyboardViewIfHidden() shows hidden keyboard ✅
+    - `test_5_2_1_5_OnCreateInputView` - Tests onCreateInputView() complete flow including theme application ✅
+  - [x] 5.2.2 Keyboard switching (2 tests)
+    - `test_5_2_2_1_KeyboardSwitching` - Tests keyboard switching between different layouts (phonetic, dayi, etc.) ✅
+  - [x] 5.2.3 Keyboard key handling (8 tests)
+    - `test_5_2_3_1_KeyboardKeyHandling` - Tests onKey() handles keyboard key presses correctly ✅
+    - `test_5_2_3_2_KeyCodeConstants` - Verifies KeyEvent.KEYCODE_* constants are properly defined ✅
+    - `test_5_2_3_3_KeyEventKeyCodes` - Tests KeyEvent keycode handling for all input keys ✅
+    - `test_5_2_3_4_KeyCharacterMapConstants` - Validates KeyCharacterMap constants for character mapping ✅
+    - `test_5_2_3_5_OnPress` - Tests onPress() feedback method fires on key press ✅
+    - `test_5_2_3_6_OnRelease` - Tests onRelease() cleanup method fires on key release ✅
+  - [x] 5.2.4 Keyboard layout variants (2 tests)
+    - `test_5_2_4_1_KeyboardModeConstants` - Verifies keyboard mode constants (portrait, landscape) are defined ✅
+    - `test_5_2_4_2_SplitKeyboardConstants` - Tests split keyboard layout constants are properly initialized ✅
+  - [x] 5.2.5 Shift and meta key handling (2 tests)
+    - `test_5_2_5_1_KeyEventMetaStateConstants` - Validates KeyEvent.META_* state constants for shift/alt/ctrl ✅
+    - `test_5_2_5_2_UpdateShiftKeyState` - Tests updateShiftKeyState() updates keyboard shift state correctly ✅
 
-- **5.3 Candidate View / Candidate Window Tests** (12 tests)
-  - [x] Test: Candidate view display (3 tests) ✅
-    - Mapping: `testLIMEServiceCandidateViewHandler`
-  - [x] Test: Candidate selection (4 tests) ✅
-    - Mapping: `testLIMEServiceCandidateViewHandler`
-  - [x] Test: Candidate list operations (4 tests) ✅
-    - Mapping: `testLIMEServiceCandidateViewHandler`
-  - [x] Test: Related phrase suggestions (3 tests) ✅
-    - Mapping: `testLIMEServiceCandidateViewHandler`
+#### **5.3 Candidate View / Candidate Window Tests** (11 tests)
+  - [x] 5.3.1 Candidate view display (3 tests)
+    - `test_5_3_1_1_CandidateViewDisplay` - Tests candidate view displays candidates correctly ✅
+    - `test_5_3_1_2_SetCandidatesViewShown` - Validates setCandidatesViewShown() shows/hides candidate window ✅
+    - `test_5_3_1_3_OnCreateCandidatesView` - Tests onCreateCandidatesView() creates candidate view successfully ✅
+  - [x] 5.3.2 Candidate selection (2 tests)
+    - `test_5_3_2_1_PickHighlightedCandidate` - Tests pickHighlightedCandidate() commits highlighted candidate ✅
+    - `test_5_3_2_2_PickCandidateManually` - Validates pickCandidateManually() commits user-selected candidate ✅
+  - [x] 5.3.3 Candidate list operations (4 tests)
+    - `test_5_3_3_1_CandidateListOperations` - Tests candidate list add/remove/clear operations ✅
+    - `test_5_3_3_2_UpdateCandidateViewWidthConstraint` - Validates updateCandidateViewWidthConstraint() adjusts view width ✅
+    - `test_5_3_3_3_UpdateCandidates` - Tests updateCandidates() refreshes candidate display with new data ✅
+    - `test_5_3_3_4_UpdateCandidatesOverload` - Tests updateCandidates() overload with pagination parameters ✅
 
-- **5.4 Input Handling and Text Composition Tests** (16 tests)
-  - [x] Test: Physical keyboard input (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyEventHandling`
-  - [x] Test: Composing text management (5 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Composing text edge cases (4 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Text commit operations (4 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.4 Input Handling and Text Composition Tests** (10 tests)
+  - [x] 5.4.1 Physical keyboard input (4 tests)
+    - `test_5_4_1_1_KeyEventFlags` - Verifies KeyEvent flag constants (ACTION_DOWN, ACTION_UP) are valid ✅
+    - `test_5_4_1_2_KeyEventCreation` - Tests KeyEvent object creation with various parameters ✅
+    - `test_5_4_1_3_OnKey` - Tests onKey() processes physical keyboard input correctly ✅
+    - `test_5_4_1_4_OnKeyBranches` - Validates onKey() branches for different key types (letter, number, special) ✅
+  - [x] 5.4.2 Composing text management (3 tests)
+    - `test_5_4_2_1_ComposingTextManagement` - Tests composing text buffer management (add, delete, clear) ✅
+    - `test_5_4_2_2_ComposingTextHandling` - Validates composing text handling during input process ✅
+    - `test_5_4_2_3_ComposingTextOperations` - Tests composing text operations with InputConnection ✅
+  - [x] 5.4.3 Composing text edge cases (2 tests)
+    - `test_5_4_3_1_ComposingTextEdgeCases` - Tests composing text edge cases (empty, max length, unicode) ✅
+    - `test_5_4_3_2_OnText` - Validates onText() handles raw text input correctly ✅
 
-- **5.5 English Prediction and Mixed Input Tests** (8 tests)
-  - [x] Test: English prediction mode (5 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Language mode switching (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.5 English Prediction and Mixed Input Tests** (5 tests)
+  - [x] 5.5.1 English prediction mode (4 tests)
+    - `test_5_5_1_1_TempEnglishWordOperations` - Tests tempEnglishWord buffer operations (add, get, clear) ✅
+    - `test_5_5_1_2_TempEnglishListOperations` - Validates tempEnglishList management for English suggestions ✅
+    - `test_5_5_1_3_SetSuggestions` - Tests setSuggestions() updates English prediction list ✅
+    - `test_5_5_1_4_ResetTempEnglishWord` - Validates resetTempEnglishWord() clears English prediction state ✅
+  - [x] 5.5.2 Language mode switching (1 test)
+    - `test_5_5_2_1_LanguageModeSwitching` - Tests switching between Chinese and English input modes ✅
 
-- **5.6 Chinese Han Conversion and Emoji Tests** (5 tests)
-  - [x] Test: Han conversion (Traditional ↔ Simplified) (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Emoji input (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.6 Chinese Han Conversion and Emoji Tests** (5 tests)
+  - [x] 5.6.1 Han conversion (Traditional ↔ Simplified) (3 tests)
+    - `test_5_6_1_1_UnicodeSurrogateHandling` - Tests Unicode surrogate pair handling in Han conversion ✅
+    - `test_5_6_1_2_HanConvertOptions` - Validates Han conversion options (Traditional→Simplified, Simplified→Traditional) ✅
+    - `test_5_6_1_3_UnicodeHandling` - Tests Unicode character handling in conversion process ✅
+  - [x] 5.6.2 Emoji input (2 tests)
+    - `test_5_6_2_1_EmojiModeSetting` - Tests emoji mode enable/disable setting ✅
+    - `test_5_6_2_2_EmojiDisplayPositionSetting` - Validates emoji display position preference (inline, separate) ✅
 
-- **5.7 Audio/Haptic Feedback Tests** (6 tests)
-  - [x] Test: Sound feedback (3 tests) ✅
-    - Mapping: `testLIMEServiceAudioManagerCompatibility`
-  - [x] Test: Vibration feedback (3 tests) ✅
-    - Mapping: `testLIMEServiceVibratorCompatibility`
+#### **5.7 Audio/Haptic Feedback Tests** (6 tests)
+  - [x] 5.7.1 Sound feedback (2 tests)
+    - `test_5_7_1_1_SoundFeedback` - Tests sound feedback triggers on key press ✅
+    - `test_5_7_1_2_AudioManagerSoundEffects` - Validates AudioManager.playSoundEffect() integration ✅
+  - [x] 5.7.2 Vibration feedback (3 tests)
+    - `test_5_7_2_1_VibrationFeedback` - Tests vibration feedback triggers on key press ✅
+    - `test_5_7_2_2_VibrationEffectCompatibility` - Validates VibrationEffect API compatibility (API 26+) ✅
+    - `test_5_7_2_3_VibratorManagerCompatibility` - Tests VibratorManager compatibility (API 31+) ✅
+  - [x] 5.7.3 Audio and haptic coordination (1 test)
+    - `test_5_7_3_1_DoVibrateSound` - Tests doVibrateSound() coordinates both audio and haptic feedback ✅
 
-- **5.8 Swipe Gesture Tests** (4 tests)
-  - [x] Test: Swipe gestures (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyEventHandling`
+#### **5.8 Swipe Gesture Tests** (2 tests)
+  - [x] 5.8.1 Swipe gestures (2 tests)
+    - `test_5_8_1_1_SwipeMethods` - Tests swipe gesture detection (left, right, up, down) ✅
+    - `test_5_8_1_2_SwipeMethodsDirect` - Validates direct swipe method invocation and handling ✅
 
-- **5.9 Voice Input Integration Tests** (5 tests)
-  - [x] Test: Voice input launch (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Voice input result handling (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.9 Voice Input Integration Tests** (11 tests)
+  - [x] 5.9.1 Voice input launch (7 tests)
+    - `test_5_9_1_1_VoiceInputIntentCreation` - Tests voice input Intent creation with correct action ✅
+    - `test_5_9_1_2_VoiceInputActivityAvailability` - Validates voice input activity availability check ✅
+    - `test_5_9_1_3_VoiceRecognitionAvailability` - Tests RecognizerIntent.ACTION_RECOGNIZE_SPEECH availability ✅
+    - `test_5_9_1_4_VoiceIMEDetection` - Validates detection of installed voice IME ✅
+    - `test_5_9_1_5_VoiceInputActivityConstants` - Tests VoiceInputActivity constant definitions ✅
+    - `test_5_9_1_6_VoiceInputActivityIntentFlags` - Validates Intent flags for voice input launch ✅
+    - `test_5_9_1_7_VoiceInputConstants` - Tests voice input related constants (actions, extras) ✅
+  - [x] 5.9.2 Voice input result handling (3 tests)
+    - `test_5_9_2_1_VoiceInputBroadcastReceiver` - Tests broadcast receiver for voice input results ✅
+    - `test_5_9_2_2_VoiceInputIMEIdStorage` - Validates storage and retrieval of voice IME ID ✅
+    - `test_5_9_2_3_VoiceInputBroadcastReceiverRegistration` - Tests broadcast receiver registration/unregistration ✅
 
-- **5.10 IM Picker and Options Menu Tests** (5 tests)
-  - [x] Test: IM picker (3 tests) ✅
-    - Mapping: `testLIMEServiceInputMethodManager`
-  - [x] Test: Options menu (3 tests) ✅
-    - Mapping: `testLIMEServiceInputMethodManager`
+#### **5.10 IM Picker and Options Menu Tests** (1 test)
+  - [x] 5.10.1 IM picker (1 test)
+    - `test_5_10_1_1_IMPicker` - Tests IM picker dialog display and IM selection ✅
 
-- **5.11 Fullscreen Mode Tests** (3 tests)
-  - [x] Test: Fullscreen editing mode (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.11 Fullscreen Mode Tests** (2 tests)
+  - [x] 5.11.1 Fullscreen editing mode (2 tests)
+    - `test_5_11_1_1_DisplayMetricsHandling` - Tests DisplayMetrics access and screen dimension handling ✅
+    - `test_5_11_1_2_OnEvaluateFullscreenMode` - Validates onEvaluateFullscreenMode() returns correct fullscreen state ✅
 
-- **5.12 Window Insets and Layout Tests** (3 tests)
-  - [x] Test: Window insets handling (3 tests) ✅
-    - Mapping: `testLIMEServiceWindowInsetsHandling`
+#### **5.12 Window Insets and Layout Tests** (1 test)
+  - [x] 5.12.1 Window insets handling (1 test)
+    - `test_5_12_1_1_WindowInsetsHandling` - Tests WindowInsets handling for proper IME positioning ✅
 
-- **5.13 Input Connection Integration Tests** (5 tests)
-  - [x] Test: InputConnection operations (5 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.13 Input Connection Integration Tests** (6 tests)
+  - [x] 5.13.1 InputConnection operations (6 tests)
+    - `test_5_13_1_1_EditorInfoTypeMasks` - Verifies EditorInfo.TYPE_MASK_* constants for input type detection ✅
+    - `test_5_13_1_2_EditorInfoTypeClasses` - Tests EditorInfo.TYPE_CLASS_* constants (text, number, phone) ✅
+    - `test_5_13_1_3_EditorInfoVariations` - Validates EditorInfo.TYPE_*_VARIATION_* constants ✅
+    - `test_5_13_1_4_EditorInfoCreation` - Tests EditorInfo object creation and field initialization ✅
+    - `test_5_13_1_5_OnDisplayCompletions` - Tests onDisplayCompletions() handles completion suggestions ✅
+    - `test_5_13_1_6_KeyDownUp` - Validates keyDownUp() sends key events to InputConnection ✅
 
-- **5.14 Mapping and Record Handling Tests** (3 tests)
-  - [x] Test: Mapping data handling (3 tests) ✅
-    - Mapping: `testLIMEServiceSearchServerIntegration`
+#### **5.14 Mapping and Record Handling Tests** (4 tests)
+  - [x] 5.14.1 Mapping data handling (4 tests)
+    - `test_5_14_1_1_MappingDataHandling` - Tests Mapping object creation and field access ✅
+    - `test_5_14_1_2_MappingRecordTypes` - Validates Mapping.RECORD_TYPE_* constants (normal, user, related) ✅
+    - `test_5_14_1_3_MappingOperations` - Tests Mapping operations (getWord, getCode, getScore) ✅
+    - `test_5_14_1_4_RequestFullRecords` - Tests requestFullRecords flag handling in queries ✅
 
-- **5.15 Character Validation Tests** (4 tests)
-  - [x] Test: Character type validation (4 tests) ✅
-    - Mapping: `testLIMEServiceKeyEventHandling`
+#### **5.15 Character Validation Tests** (3 tests)
+  - [x] 5.15.1 Character type validation (3 tests)
+    - `test_5_15_1_1_CharacterTypeValidation` - Tests Character.isLetter/isDigit/isWhitespace validation ✅
+    - `test_5_15_1_2_CharacterValidationEdgeCases` - Validates character validation edge cases (unicode, emoji) ✅
+    - `test_5_15_1_3_ValidationHelpers` - Tests helper methods for character type checking ✅
 
-- **5.16 Preference Integration Tests** (4 tests)
-  - [x] Test: Preference manager integration (4 tests) ✅
-    - Mapping: `testLIMEServicePreferenceIntegration`
+#### **5.16 Preference Integration Tests** (6 tests)
+  - [x] 5.16.1 Preference manager integration (6 tests)
+    - `test_5_16_1_1_PreferenceManagerIntegration` - Tests LIMEPref integration and preference access ✅
+    - `test_5_16_1_2_ShowArrowKeysSetting` - Validates show arrow keys preference get/set ✅
+    - `test_5_16_1_3_SplitKeyboardSetting` - Tests split keyboard preference get/set ✅
+    - `test_5_16_1_4_SelkeyOptionSetting` - Validates selection key option preference ✅
+    - `test_5_16_1_5_PreferenceDefaultValues` - Tests preference default value initialization ✅
+    - `test_5_16_1_6_PreferenceBoundaryValues` - Validates preference boundary value handling ✅
 
-- **5.17 SearchServer Integration Tests (via LIMEService)** (3 tests)
-  - [x] Test: SearchServer lookup from LIMEService (3 tests) ✅
-    - Mapping: `testLIMEServiceSearchServerIntegration`
+#### **5.17 SearchServer Integration Tests (via LIMEService)** (1 test)
+  - [x] 5.17.1 SearchServer lookup from LIMEService (1 test)
+    - `test_5_17_1_1_SearchServerLookup` - Tests SearchServer access and query operations from LIMEService ✅
 
-- **5.18 Error Handling and Edge Cases** (9 tests)
-  - [x] Test: Null input handling (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Empty string handling (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
-  - [x] Test: Boundary conditions (3 tests) ✅
-    - Mapping: `testLIMEServiceEditorInfoHandling`
+#### **5.18 Error Handling and Edge Cases** (11 tests)
+  - [x] 5.18.1 Null input handling (2 tests)
+    - `test_5_18_1_1_NullInputHandling` - Tests null input parameter handling without crashes ✅
+    - `test_5_18_1_2_MappingNullHandling` - Validates null Mapping object handling ✅
+  - [x] 5.18.2 Empty string handling (1 test)
+    - `test_5_18_2_1_EmptyStringHandling` - Tests empty string input handling without errors ✅
+  - [x] 5.18.3 Boundary conditions (5 tests)
+    - `test_5_18_3_1_CandidateIndexValidation` - Validates candidate index boundary checking (0 to size-1) ✅
+    - `test_5_18_3_2_StringLengthEdgeCases` - Tests string length edge cases (empty, max length) ✅
+    - `test_5_18_3_3_IndexBoundsValidation` - Tests index bounds validation in all list operations ✅
+    - `test_5_18_3_4_ListOperationsEdgeCases` - Validates list operation edge cases (empty, single item) ✅
+    - `test_5_18_3_5_StringBuilderEdgeCases` - Tests StringBuilder edge cases in composing text ✅
+
+ **Phase 5 Regression Extensions (RegressionTest.java, moved from Phase 8)**
 
 
-**Phase 5 Total**: 109 existing tests + 120 new (5.27-5.31) = **229 tests** (Target: 90% coverage)
+#### **5.19 IM Switching (LIMEService)** (1 test) **COMPLETED**
+  - [x] Switch between IM types - `test_5_19_SwitchBetweenIM` - Tests switching between different IM types (phonetic, dayi, array) ✅
+
+#### **5.20 LIMEService Voice Input Integration** (15 tests) **COMPLETED**
+  - [x] Voice input launch - `test_5_20_1_VoiceInputLaunch` - Tests launching voice input activity from keyboard ✅
+  - [x] Voice IME unavailable fallback - `test_5_20_2_VoiceIMEUnavailableFallback` - Validates fallback behavior when voice IME unavailable ✅
+  - [x] Voice input intent configuration - `test_5_20_3_VoiceInputIntentConfiguration` - Tests voice input Intent configuration (language, prompts) ✅
+  - [x] IME change monitoring setup - `test_5_20_4_IMEChangeMonitoringSetup` - Validates IME change monitoring for voice input completion ✅
+  - [x] Switch back to LIME - `test_5_20_5_SwitchBackToLIME` - Tests automatic switch back to LIME after voice input ✅
+  - [x] Voice input broadcast receiver - `test_5_20_6_VoiceInputBroadcastReceiver` - Validates broadcast receiver receives voice input results ✅
+  - [x] Voice input null IMM - `test_5_20_7_VoiceInputNullIMM` - Tests null InputMethodManager handling in voice input ✅
+  - [x] Voice input security exception - `test_5_20_8_VoiceInputSecurityException` - Validates SecurityException handling in voice input launch ✅
+  - [x] Voice input receiver unregister error - `test_5_20_9_VoiceInputReceiverUnregisterError` - Tests error handling in receiver unregistration ✅
+  - [x] Voice input monitoring timeout - `test_5_20_10_VoiceInputMonitoringTimeout` - Validates timeout handling for voice input monitoring ✅
+  - [x] Voice input from candidate view - `test_5_20_11_VoiceInputFromCandidateView` - Tests voice input launch from candidate view button ✅
+  - [x] Voice input results insertion - `test_5_20_12_VoiceInputResultsInsertion` - Validates voice recognition results insertion into text ✅
+  - [x] Voice input with composing text - `test_5_20_13_VoiceInputWithComposingText` - Tests voice input with existing composing text ✅
+  - [x] Multiple voice input invocations - `test_5_20_14_MultipleVoiceInputInvocations` - Validates multiple consecutive voice input invocations ✅
+  - [x] Voice input disabled preference - `test_5_20_15_VoiceInputDisabledPreference` - Tests voice input behavior when disabled in preferences ✅
+
+#### **5.21 LIMEService IME Selection and Options Menu** (22 tests) **COMPLETED**
+  - [x] Options menu invocation - `test_5_21_1_OptionsMenuInvocation` - Tests options menu display on long-press or menu key ✅
+  - [x] IM picker menu item selection - `test_5_21_2_IMPickerMenuItemSelection` - Validates IM picker menu item triggers picker dialog ✅
+  - [x] Settings menu item selection - `test_5_21_3_SettingsMenuItemSelection` - Tests settings menu item launches settings activity ✅
+  - [x] Han converter menu item selection - `test_5_21_4_HanConverterMenuItemSelection` - Validates Han converter menu item toggles conversion mode ✅
+  - [x] IM picker dialog creation - `test_5_21_5_IMPickerDialogCreation` - Tests IM picker dialog creation with IM list ✅
+  - [x] IM selection from picker - `test_5_21_6_IMSelectionFromPicker` - Validates IM selection from picker switches active IM ✅
+  - [x] IM picker empty list - `test_5_21_7_IMPickerEmptyList` - Tests IM picker behavior with empty IM list ✅
+  - [x] IM picker dialog dismissal - `test_5_21_8_IMPickerDialogDismissal` - Validates IM picker dialog dismissal without selection ✅
+  - [x] Build activated IM list filtering - `test_5_21_9_BuildActivatedIMListFiltering` - Tests buildActivatedIMList() filters enabled IMs only ✅
+  - [x] Switch to next IM forward - `test_5_21_10_SwitchToNextIMForward` - Validates switchToNextIM(forward=true) cycles to next IM ✅
+  - [x] Switch to next IM backward - `test_5_21_11_SwitchToNextIMBackward` - Tests switchToNextIM(forward=false) cycles to previous IM ✅
+  - [x] IM switching single IM - `test_5_21_12_IMSwitchingSingleIM` - Validates IM switching behavior with only one enabled IM ✅
+  - [x] Build activated IM list empty state - `test_5_21_13_BuildActivatedIMList_EmptyState` - Tests buildActivatedIMList() with no preferences (all IMs activated by default) ✅
+  - [x] Build activated IM list with state - `test_5_21_14_BuildActivatedIMList_WithState` - Validates buildActivatedIMList() with specific enabled IMs from preferences ✅
+  - [x] Switch to next IM forward detailed - `test_5_21_15_SwitchToNextIM_Forward` - Tests detailed forward IM switching through multiple IMs ✅
+  - [x] Switch to next IM backward detailed - `test_5_21_16_SwitchToNextIM_Backward` - Validates detailed backward IM switching through multiple IMs ✅
+  - [x] Switch to next IM wrap forward - `test_5_21_17_SwitchToNextIM_WrapForward` - Tests IM switching wraps from last to first IM ✅
+  - [x] Switch to next IM wrap backward - `test_5_21_18_SwitchToNextIM_WrapBackward` - Validates IM switching wraps from first to last IM ✅
+  - [x] Switch to next IM single IM detailed - `test_5_21_19_SwitchToNextIM_SingleIM` - Tests IM switching with only one enabled IM (should remain on same IM) ✅
+  - [x] Build activated IM list index bounds - `test_5_21_20_BuildActivatedIMList_IndexOutOfBounds` - Validates buildActivatedIMList() handles invalid IM indices gracefully ✅
+  - [x] Switch to next IM active not in list - `test_5_21_21_SwitchToNextIM_ActiveNotInList` - Tests switching when current IM is not in activated list ✅
+  - [x] Build activated IM list cache hit - `test_5_21_22_BuildActivatedIMList_CacheHit` - Validates buildActivatedIMList() uses cached results when preferences unchanged ✅
+
+#### **5.22 LIMEService Theme and UI Styling** (6 tests) **COMPLETED**
+  - [x] Keyboard theme retrieval - `test_5_22_1_KeyboardThemeRetrieval` - Tests getKeyboardTheme() retrieves current theme ID ✅
+  - [x] Theme application to keyboard - `test_5_22_2_ThemeApplicationToKeyboard` - Validates theme application updates keyboard colors/styles ✅
+  - [x] Invalid theme ID handling - `test_5_22_3_InvalidThemeIDHandling` - Tests invalid theme ID falls back to default theme ✅
+  - [x] Navigation bar icon styling - `test_5_22_4_NavigationBarIconStyling` - Validates navigation bar icon color styling (light/dark) ✅
+  - [x] Navigation bar styling API level - `test_5_22_5_NavigationBarStylingAPILevel` - Tests navigation bar styling compatibility (API 26+) ✅
+  - [x] Navigation bar styling exception - `test_5_22_6_NavigationBarStylingException` - Validates exception handling in navigation bar styling ✅
+
+#### **5.23 LIMEService Methods with Mock Dependencies** (50 tests) **COMPLETED**
+  - [x] Clear suggestions with mocks - `test_5_23_1_ClearSuggestionsWithMockCandidateView` - Tests clearSuggestions() with mocked candidate view ✅
+  - [x] Finish composing with mocks - `test_5_23_2_FinishComposingWithMocks` - Validates finishComposing() with mocked dependencies ✅
+  - [x] Handle shift with mocks - `test_5_23_3_HandleShiftWithMocks` - Tests handleShift() with mocked keyboard state ✅
+  - [x] Do vibrate sound with mocks - `test_5_23_4_DoVibrateSoundWithMocks` - Validates doVibrateSound() with mocked audio/vibration ✅
+  - [x] Switch keyboard with mocks - `test_5_23_5_SwitchKeyboardWithMocks` - Tests switchKeyboard() with mocked keyboard switcher ✅
+  - [x] Initial IM keyboard with mocks - `test_5_23_6_InitialIMKeyboardWithMocks` - Validates initial IM keyboard setup with mocks ✅
+  - [x] Initial view and switcher with mocks - `test_5_23_7_InitialViewAndSwitcherWithMocks` - Tests view and switcher initialization with mocks ✅
+  - [x] Hide candidate view with mocks - `test_5_23_8_HideCandidateViewWithMocks` - Validates hiding candidate view with mocks ✅
+  - [x] Toggle caps lock with mocks - `test_5_23_9_ToggleCapsLockWithMocks` - Tests caps lock toggle with mocked keyboard ✅
+  - [x] Update shift key state with mocks - `test_5_23_10_UpdateShiftKeyStateWithMocks` - Validates shift key state updates with mocks ✅
+  - [x] Restore keyboard view with mocks - `test_5_23_11_RestoreKeyboardViewWithMocks` - Tests keyboard view restoration with mocks ✅
+  - [x] Is keyboard view hidden with mocks - `test_5_23_12_IsKeyboardViewHiddenWithMocks` - Validates keyboard visibility check with mocks ✅
+  - [x] Set suggestions with mocks - `test_5_23_13_SetSuggestionsWithMocks` - Tests setSuggestions() with mocked candidate view ✅
+  - [x] Handle character with mocks - `test_5_23_14_HandleCharacterWithMocks` - Validates character handling with mocked input ✅
+  - [x] Handle selkey with mocks - `test_5_23_15_HandleSelkeyWithMocks` - Tests selection key handling with mocks ✅
+  - [x] Pick candidate manually with mocks - `test_5_23_16_PickCandidateManuallyWithMocks` - Validates manual candidate selection with mocks ✅
+  - [x] Switch Chi/Eng with mocks - `test_5_23_17_SwitchChiEngWithMocks` - Tests Chinese/English mode switching with mocks ✅
+  - [x] On press with mocks - `test_5_23_18_OnPressWithMocks` - Validates onPress() callback with mocks ✅
+  - [x] Update candidates with mocks - `test_5_23_19_UpdateCandidatesWithMocks` - Tests updateCandidates() with mocked candidate view ✅
+  - [x] Update related phrase with mocks - `test_5_23_20_UpdateRelatedPhraseWithMocks` - Validates related phrase updates with mocks ✅
+  - [x] Show IM picker with mocks - `test_5_23_21_ShowIMPickerWithMocks` - Tests IM picker display with mocks ✅
+  - [x] Show Han convert picker with mocks - `test_5_23_22_ShowHanConvertPickerWithMocks` - Validates Han converter picker with mocks ✅
+  - [x] Switch to next activated IM with mocks - `test_5_23_23_SwitchToNextActivatedIMWithMocks` - Tests IM switching with mocks ✅
+  - [x] Build activated IM list with mocks - `test_5_23_24_BuildActivatedIMListWithMocks` - Validates IM list building with mocks ✅
+  - [x] Start voice input with mocks - `test_5_23_25_StartVoiceInputWithMocks` - Tests voice input launch with mocks ✅
+  - [x] Launch recognizer intent with mocks - `test_5_23_26_LaunchRecognizerIntentWithMocks` - Validates recognizer Intent launch with mocks ✅
+  - [x] Vibrate with mocks - `test_5_23_27_VibrateWithMocks` - Tests vibration with mocked Vibrator ✅
+  - [x] Check toggle caps lock with mocks - `test_5_23_28_CheckToggleCapsLockWithMocks` - Validates caps lock toggle check with mocks ✅
+  - [x] Init candidate view with mocks - `test_5_23_29_InitCandidateViewWithMocks` - Tests candidate view initialization with mocks ✅
+  - [x] Show candidate view with mocks - `test_5_23_30_ShowCandidateViewWithMocks` - Validates candidate view display with mocks ✅
+  - [x] Set candidates view shown with mocks - `test_5_23_31_SetCandidatesViewShownWithMocks` - Tests setCandidatesViewShown() with mocks ✅
+  - [x] On compute insets with mocks - `test_5_23_32_OnComputeInsetsWithMocks` - Validates onComputeInsets() with mocks ✅
+  - [x] On evaluate fullscreen mode with mocks - `test_5_23_33_OnEvaluateFullscreenModeWithMocks` - Tests fullscreen mode evaluation with mocks ✅
+  - [x] On create with mocks - `test_5_23_34_OnCreateWithMocks` - Validates onCreate() lifecycle with mocks ✅
+  - [x] On initialize interface with mocks - `test_5_23_35_OnInitializeInterfaceWithMocks` - Tests onInitializeInterface() with mocks ✅
+  - [x] On create candidates view with mocks - `test_5_23_36_OnCreateCandidatesViewWithMocks` - Validates onCreateCandidatesView() with mocks ✅
+  - [x] Handle options with mocks - `test_5_23_37_HandleOptionsWithMocks` - Tests handleOptions() with mocked menu ✅
+  - [x] Handle options lambda with mocks - `test_5_23_38_HandleOptionsLambdaWithMocks` - Validates handleOptions() lambda callback with mocks ✅
+  - [x] Commit typed with mocks - `test_5_23_39_CommitTypedWithMocks` - Tests commitTyped() with mocked input connection ✅
+  - [x] Init on start input with mocks - `test_5_23_40_InitOnStartInputWithMocks` - Validates initOnStartInput() with mocks ✅
+  - [x] Translate key down with mocks - `test_5_23_41_TranslateKeyDownWithMocks` - Tests translateKeyDown() with mocked keyboard events ✅
+  - [x] Translate key down lambda with mocks - `test_5_23_42_TranslateKeyDownLambdaWithMocks` - Validates translateKeyDown() lambda with mocks ✅
+  - [x] Get vibrator with mocks - `test_5_23_43_GetVibratorWithMocks` - Tests getVibrator() with mocked system service ✅
+  - [x] Update English prediction with mocks - `test_5_23_44_UpdateEnglishPredictionWithMocks` - Validates updateEnglishPrediction() with mocks ✅
+  - [x] On text with mocks - `test_5_23_45_OnTextWithMocks` - Tests onText() with mocked input ✅
+  - [x] Restore keyboard lambda with mocks - `test_5_23_46_RestoreKeyboardLambdaWithMocks` - Validates restoreKeyboard() lambda with mocks ✅
+  - [x] Switch back to LIME with mocks - `test_5_23_47_SwitchBackToLIMEWithMocks` - Tests switchBackToLIME() with mocked IMM ✅
+  - [x] Start monitoring IME changes lambda with mocks - `test_5_23_48_StartMonitoringIMEChangesLambdaWithMocks` - Validates IME change monitoring with mocks ✅
+  - [x] Register voice input receiver with mocks - `test_5_23_49_RegisterVoiceInputReceiverWithMocks` - Tests voice input receiver registration with mocks ✅
+  - [x] Set navigation bar icons dark with mocks - `test_5_23_50_SetNavigationBarIconsDarkWithMocks` - Validates navigation bar icon styling with mocks ✅
+
+#### **5.24 LIMEService with StubActivity Context Tests** (9 tests) **COMPLETED**
+  - [x] onCreate with Context - `test_5_24_1_OnCreateWithContext` - Tests LIMEService.onCreate() executes successfully (initializes SearchSrv, mLIMEPref, buildActivatedIMList, voice receiver) (lines 254-285) ✅
+  - [x] showIMPicker with Context - `test_5_24_2_ShowIMPickerWithContext` - Tests showIMPicker() dialog method (lines 2203-2248) ✅
+  - [x] showHanConvertPicker with Context - `test_5_24_3_ShowHanConvertPickerWithContext` - Tests showHanConvertPicker() dialog method (lines 2162-2191) ✅
+  - [x] handleOptions with Context - `test_5_24_4_HandleOptionsWithContext` - Tests handleOptions() options menu dialog (lines 1910-2024) ✅
+  - [x] launchSettings with Context - `test_5_24_5_LaunchSettingsWithContext` - Tests launchSettings() Intent creation and launch (lines 2023-2032) ✅
+  - [x] launchRecognizerIntent with Context - `test_5_24_6_LaunchRecognizerIntentWithContext` - Tests launchRecognizerIntent() voice recognition (lines 3931-3945) ✅
+  - [x] vibrate with Context - `test_5_24_7_VibrateWithContext` - Tests vibrate() Vibrator system service access and API branching (lines 3684-3698) ✅
+  - [x] doVibrateSound with Context - `test_5_24_8_DoVibrateSoundWithContext` - Tests doVibrateSound() audio/vibration preferences (lines 3701-3730) ✅
+  - [x] switchToNextActivatedIM with Context - `test_5_24_9_SwitchToNextActivatedIMWithContext` - Tests switchToNextActivatedIM() IM switching logic (lines 2035-2088) ✅
+
+
+**Phase 5 Total**: 191 existing tests + 121 regression/mock tests (5.19-5.24) = **312 tests** (Target: 90% coverage)
 
 ---
 
@@ -853,15 +1041,15 @@ This section provides a quick reference of all test lists organized by phase, si
 
 **Test Coverage**: 60+ test methods
 
-- **6.1 SearchServer → LimeDB Integration** (5 tests)
+#### **6.1 SearchServer → LimeDB Integration** (5 tests)
   - [x] Test: Complete search flow with REAL IM data (3 tests)
   - [x] Test: Configuration operations (3 tests)
 
-- **6.2 DBServer → LimeDB Integration** (6 tests)
+#### **6.2 DBServer → LimeDB Integration** (6 tests)
   - [x] Test: Export flow with REAL IM data (3 tests)
   - [x] Test: Import flow (4 tests)
 
-- **6.3 UI → SearchServer Integration (Complete Flow)** (25 tests)
+#### **6.3 UI → SearchServer Integration (Complete Flow)** (25 tests)
   - **6.3.1 Basic UI Operation Flow** (3 tests)
     - [x] Test: Complete UI operation flow (3 tests)
   - **6.3.2 Remote Import + Hot Path Queries** (8 tests)
@@ -874,14 +1062,14 @@ This section provides a quick reference of all test lists organized by phase, si
     - [x] Test: Learned entries influence results (2 tests)
     - [x] Test: Cache respects learning updates (1 test)
 
-- **6.4 UI → DBServer → LimeDB Integration** (6 tests)
+#### **6.4 UI → DBServer → LimeDB Integration** (6 tests)
   - [x] Test: Complete file operation flow (6 tests)
 
-- **6.5 Backup Path (User Records) — Before Overwrite** (4 tests)
+#### **6.5 Backup Path (User Records) — Before Overwrite** (4 tests)
   - [x] Test: Explicit backup on clear table (2 tests)
   - [x] Test: Backup during import (restore flag path) (2 tests)
 
-- **6.6 Restore Path (User Records) — After Import** (5 tests)
+#### **6.6 Restore Path (User Records) — After Import** (5 tests)
   - [x] Test: Restore after import (3 tests)
   - [x] Test: No-restore path (1 test)
   - [x] Test: Error handling (2 tests)
@@ -895,12 +1083,12 @@ This section provides a quick reference of all test lists organized by phase, si
 
 **Test Coverage**: 10+ test methods
 
-- **7.1 Static Analysis Tests** (3 tests)
+#### **7.1 Static Analysis Tests** (3 tests)
   - [x] Test: No direct LimeDB access from UI
   - [x] Test: No SQL operations outside LimeDB
   - [x] Test: No file operations outside DBServer
 
-- **7.2 Runtime Architecture Tests** (2 tests)
+#### **7.2 Runtime Architecture Tests** (2 tests)
   - [x] Test: Component initialization
   - [x] Test: Method call tracing
 
@@ -916,17 +1104,17 @@ This section provides a quick reference of all test lists organized by phase, si
 
 **Note**: Edge case testing (null handling, empty data, invalid input) is already covered by Phase 1-2 unit tests in LimeDBTest and SearchServerTest. Phase 8 focuses on end-to-end user workflows with real IM data.
 
-- **8.1 Soft Keyboard Input Integration** (2 tests) ✅ **COMPLETED**
+#### **8.1 Soft Keyboard Input Integration** (2 tests) ✅ **COMPLETED**
   - [x] Soft keyboard input → query → candidates - `test_8_1_SoftKeyboardInputWithRealData` ✅
   - [x] Incremental composing text - `test_8_1_IncrementalComposingText` ✅
 
-- **8.2 Hard Keyboard Input Integration** (1 test) ✅ **COMPLETED**
+#### **8.2 Hard Keyboard Input Integration** (1 test) ✅ **COMPLETED**
   - [x] Hardware keyboard input - `test_8_2_HardwareKeyboardInput` ✅
 
-- **8.3 Query and Caching Path** (1 test) ✅ **COMPLETED**
+#### **8.3 Query and Caching Path** (1 test) ✅ **COMPLETED**
   - [x] Query latency and caching - `test_8_3_QueryLatencyAndCaching` ✅
 
-- **8.4 Learning Path Integration** (27 tests) ✅ **COMPLETED**
+#### **8.4 Learning Path Integration** (27 tests) ✅ **COMPLETED**
   - [x] Score update after selection - `test_8_4_ScoreUpdateAfterSelection` ✅
   - **8.4.1 learnRelatedPhraseAndUpdateScore() Tests** (4 tests) ✅
     - [x] Basic functionality - `test_8_4_1_LearnRelatedPhraseAndUpdateScore` ✅
@@ -955,51 +1143,9 @@ This section provides a quick reference of all test lists organized by phase, si
     - [x] Learning flow with preference combinations - `test_8_4_4_LearningPreferenceCombinations` ✅
     - [x] Learning persistence across IME sessions - `test_8_4_4_LearningPersistenceAcrossSessions` ✅
 
-- **8.5 IM Switching with Real Data** (1 test) ✅ **COMPLETED**
-  - [x] Switch between IM types - `test_8_5_SwitchBetweenIM` ✅
+**Phase 8 Total**: 31 existing tests (8.1-8.4). Sections 5.19-5.22 are tracked under Phase 5 metrics.
 
-- **8.6 LIMEService Voice Input Integration** (15 tests) ✅ **COMPLETED**
-  - [x] Voice input launch - `test_8_6_1_VoiceInputLaunch` ✅
-  - [x] Voice IME unavailable fallback - `test_8_6_2_VoiceIMEUnavailableFallback` ✅
-  - [x] Voice input intent configuration - `test_8_6_3_VoiceInputIntentConfiguration` ✅
-  - [x] IME change monitoring setup - `test_8_6_4_IMEChangeMonitoringSetup` ✅
-  - [x] Switch back to LIME - `test_8_6_5_SwitchBackToLIME` ✅
-  - [x] Voice input broadcast receiver - `test_8_6_6_VoiceInputBroadcastReceiver` ✅
-  - [x] Voice input null IMM - `test_8_6_7_VoiceInputNullIMM` ✅
-  - [x] Voice input security exception - `test_8_6_8_VoiceInputSecurityException` ✅
-  - [x] Voice input receiver unregister error - `test_8_6_9_VoiceInputReceiverUnregisterError` ✅
-  - [x] Voice input monitoring timeout - `test_8_6_10_VoiceInputMonitoringTimeout` ✅
-  - [x] Voice input from candidate view - `test_8_6_11_VoiceInputFromCandidateView` ✅
-  - [x] Voice input results insertion - `test_8_6_12_VoiceInputResultsInsertion` ✅
-  - [x] Voice input with composing text - `test_8_6_13_VoiceInputWithComposingText` ✅
-  - [x] Multiple voice input invocations - `test_8_6_14_MultipleVoiceInputInvocations` ✅
-  - [x] Voice input disabled preference - `test_8_6_15_VoiceInputDisabledPreference` ✅
-
-- **8.7 LIMEService IME Selection and Options Menu** (12 tests) ✅ **COMPLETED**
-  - [x] Options menu invocation - `test_8_7_1_OptionsMenuInvocation` ✅
-  - [x] IM picker menu item selection - `test_8_7_2_IMPickerMenuItemSelection` ✅
-  - [x] Settings menu item selection - `test_8_7_3_SettingsMenuItemSelection` ✅
-  - [x] Han converter menu item selection - `test_8_7_4_HanConverterMenuItemSelection` ✅
-  - [x] IM picker dialog creation - `test_8_7_5_IMPickerDialogCreation` ✅
-  - [x] IM selection from picker - `test_8_7_6_IMSelectionFromPicker` ✅
-  - [x] IM picker empty list - `test_8_7_7_IMPickerEmptyList` ✅
-  - [x] IM picker dialog dismissal - `test_8_7_8_IMPickerDialogDismissal` ✅
-  - [x] Build activated IM list filtering - `test_8_7_9_BuildActivatedIMListFiltering` ✅
-  - [x] Switch to next IM forward - `test_8_7_10_SwitchToNextIMForward` ✅
-  - [x] Switch to next IM backward - `test_8_7_11_SwitchToNextIMBackward` ✅
-  - [x] IM switching single IM - `test_8_7_12_IMSwitchingSingleIM` ✅
-
-- **8.8 LIMEService Theme and UI Styling** (6 tests) ✅ **COMPLETED**
-  - [x] Keyboard theme retrieval - `test_8_8_1_KeyboardThemeRetrieval` ✅
-  - [x] Theme application to keyboard - `test_8_8_2_ThemeApplicationToKeyboard` ✅
-  - [x] Invalid theme ID handling - `test_8_8_3_InvalidThemeIDHandling` ✅
-  - [x] Navigation bar icon styling - `test_8_8_4_NavigationBarIconStyling` ✅
-  - [x] Navigation bar styling API level - `test_8_8_5_NavigationBarStylingAPILevel` ✅
-  - [x] Navigation bar styling exception - `test_8_8_6_NavigationBarStylingException` ✅
-
-**Phase 8 Total**: 65 existing tests (8.1-8.8) = **65 tests** (Comprehensive regression coverage with real IM data)
-
-**Note**: Sections 8.9+ were removed to avoid duplicating Phase 3 and Phase 5 tests. Phase 8 regression tests focus on end-to-end workflows that uniquely benefit from the real IM data environment (8.1-8.8). Additional coverage will come from Phase 3.16-3.17 unit tests (SearchServer) and Phase 5.27-5.31 unit/integration tests (LIMEService) - those phases already include regression tests where real data provides value.
+**Note**: Sections 8.9+ were removed to avoid duplicating Phase 3 and Phase 5 tests. Phase 8 regression tests focus on end-to-end workflows that uniquely benefit from the real IM data environment (8.1-8.4). Additional coverage will come from Phase 3.16-3.17 unit tests (SearchServer) and Phase 5.27-5.31 unit/integration tests (LIMEService) - those phases already include regression tests where real data provides value.
 
 ---
 
@@ -1009,16 +1155,16 @@ This section provides a quick reference of all test lists organized by phase, si
 
 **Test Coverage**: 10+ benchmark tests
 
-- **9.1 Database Operation Benchmarks** (3 tests)
+#### **9.1 Database Operation Benchmarks** (3 tests)
   - [x] Benchmark: Count operations
   - [x] Benchmark: Search operations
   - [x] Benchmark: Backup/import operations
 
-- **9.2 File Operation Benchmarks** (2 tests)
+#### **9.2 File Operation Benchmarks** (2 tests)
   - [x] Benchmark: Export operations
   - [x] Benchmark: Import operations
 
-- **9.3 Memory Usage** (1 test)
+#### **9.3 Memory Usage** (1 test)
   - [x] Test: Memory leaks
 
 ---
@@ -1031,12 +1177,12 @@ This section provides a quick reference of all test lists organized by phase, si
 | Phase 2: DBServer Layer | 35+ | ✅ Completed | High |
 | Phase 3: SearchServer Layer | 93 (50 existing + 43 new) | 🟡 Partial | High |
 | Phase 4: UI Component Tests | 50+ | 🟡 Partial | Medium |
-| Phase 5: IME Logic Tests | 191 (113 existing + 78 new) | ⚠️ Planned | High |
+| Phase 5: IME Logic Tests | 225 (incl. RegressionTest 5.1-5.4 from Phase 8) | ⚠️ Planned | High |
 | Phase 6: Integration Tests | 22+ | ✅ Completed | High |
 | Phase 7: Architecture Compliance | 10+ | ✅ Completed | High |
-| Phase 8: Regression Tests (Core IME End-to-End) | 65 (8.1-8.8 complete) | ✅ Completed | **Critical** |
+| Phase 8: Regression Tests (Core IME End-to-End) | 31 (8.1-8.4 complete; 5.1-5.4 tracked under Phase 5) | ✅ Completed | **Critical** |
 | Phase 9: Performance Tests | 6 | ✅ Completed | Medium |
-| **TOTAL** | **~521 tests** | | |
+| **TOTAL** | **~521 tests (reclassified 5.1-5.4 to Phase 5)** | | |
 
 **Legend:**
 - ✅ Completed - All tests implemented and passing

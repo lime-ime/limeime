@@ -1,17 +1,15 @@
 # Test Coverage Report
 
-**Generated:** January 1, 2026
+**Generated:** January 4, 2026
 **Test Status:** 35 Active Test Files | 2 Ignored Test Methods
 **Total Test Files:** 35
 
 
 ## Latest Execution
 
-- **Instrumentation Run:** 694 tests executed on 1 AVD (Android 16 - Pixel 9 Pro)
-- **Failures:** 0 failed, 2 skipped
-- **Success Rate:** 100%
-- **Coverage Report:** 41% instructions, 31% branches (androidTest)
-- **Report Path:** app/build/reports/coverage/androidTest/debug/connected/index.html
+- **Instrumentation Run:** latest JaCoCo report (androidTest)
+- **Coverage Report:** 58% instructions, 44% branches (package net.toload.main.hd)
+- **Report Path:** app/build/reports/coverage/androidTest/debug/connected/net.toload.main.hd/index.html
 
 ---
 
@@ -173,9 +171,9 @@
 | Source File | Test File(s) | Coverage | Notes |
 |-------------|-------------|----------|-------|
 | LimeDB.java | LimeDBTest.java | 79% 🟢 | Fully tested |
-| SearchServer.java | SearchServerTest.java | 50% 🟠 | Fully tested, runtime suggestion engine not covered |
-| DBServer.java | DBServerTest.java, SearchServerTest.java | 83% 🟢 / 32% 🟠 | Fully/partially tested |
-| LIMEService.java | LIMEServiceTest.java | 29% 🟠 | Fully tested, voice input system not covered |
+| SearchServer.java | SearchServerTest.java | 95% 🟢 / 85% 🟢 | High coverage; remaining branches in edge cases |
+| DBServer.java | DBServerTest.java, SearchServerTest.java | 83% 🟢 / 60% 🟡 | Core paths covered; some branches pending |
+| LIMEService.java | LIMEServiceTest.java | 38% 🟠 / 25% 🔴 | Improved, but voice input/options flows still sparse |
 | MainActivity.java | MainActivityTest.java, ArchitectureComplianceTest.java | 74% 🟢 / 51% 🟡 | Fully/partially tested |
 | IntentHandler.java | IntentHandlerTest.java | 50% 🟠 | Fully tested |
 | LIMEPreference.java | LIMEPreferenceTest.java | 97% 🟢 | Fully tested |
@@ -202,7 +200,7 @@
 | ManageRelatedAdapter.java | ManageRelatedAdapterTest.java | 8% 🔴 | Adapter, limited testability |
 | SetupImController.java | SetupImControllerFlowsTest.java | 11% 🔴 | Architecture test only |
 | ManageImController.java | ArchitectureComplianceTest.java | 11% 🔴 | Architecture test only |
-| VoiceInputActivity.java | VoiceInputActivityTest.java | 32% 🟠 | Main functionality covered |
+| VoiceInputActivity.java | VoiceInputActivityTest.java | 49% 🟠 / 20% 🔴 | Core flows covered; branching low |
 | BaseController.java | (Indirect) | 11% 🔴 | Abstract class, tested via subclasses |
 | CandidateView.java | (Indirect) | 20% 🔴 | UI view, limited testability |
 | CandidateExpandedView.java | (Indirect) | 20% 🔴 | UI view, limited testability |
@@ -218,7 +216,7 @@
 | Keyboard.java | (Indirect) | 69% 🟢 | Data model, covered via usage |
 | KeyboardObj.java | (Indirect) | 69% 🟢 | Data model, covered via usage |
 | LIME.java | (Indirect) | 41% 🟡 | Constants, covered via usage |
-| LIMEBackupAgent.java | (Indirect) | 32% 🟠 | System component, low priority |
+| LIMEBackupAgent.java | (Indirect) | 0% 🔴 | Untested system component |
 | Mapping.java | (Indirect) | 69% 🟢 | Data model, covered via usage |
 | Record.java | (Indirect) | 69% 🟢 | Data model, covered via usage |
 | Related.java | (Indirect) | 69% 🟢 | Data model, covered via usage |
@@ -381,10 +379,10 @@ Phase 8 (Performance):            1 test file  ✅
   - Theme retrieval and application (4 tests)
   - Navigation bar styling (4 tests)
 
-**Phase 8 (Integration/Regression) - Add 33 new tests**:
-- Section 8.8: Voice Input Integration (15 tests)
-- Section 8.9: IME Selection and Options Menu Integration (12 tests)
-- Section 8.10: Theme and UI Styling Integration (6 tests)
+**Phase 5 (LIMEService Regression) - Add 33 new tests**:
+- Section 5.20: Voice Input Integration (15 tests)
+- Section 5.21: IME Selection and Options Menu Integration (12 tests)
+- Section 5.22: Theme and UI Styling Integration (6 tests)
 
 **Total New Tests**: 158 tests (40 SearchServer + 85 LIMEService + 33 Integration)
 
@@ -399,14 +397,14 @@ Phase 8 (Performance):            1 test file  ✅
 3. **Medium Priority**: Phase 5.24 (IME selection UI) - User-facing feature (~25% of gap)
 4. **Medium Priority**: Phase 3.15 (Search branch coverage) - Completes SearchServer 90% goal
 5. **Low Priority**: Phase 5.25-5.26 (Switching/theme) - Smaller subsystems (~15% of gap)
-6. **Low Priority**: Phase 8.8-8.10 (Integration tests) - Validates end-to-end workflows
+6. **Low Priority**: Phase 5.20-5.22 (Integration tests) - Validates end-to-end workflows
 
 ---
 
 
 ## Conclusion
 
-**Current Coverage: 41% instructions, 31% branches (androidTest Jacoco)**
+**Current Coverage: 58% instructions, 44% branches (androidTest JaCoCo, package net.toload.main.hd)**
 
 The test suite provides comprehensive coverage of:
 - ✅ All major data layers (LimeDB, SearchServer)

@@ -2088,10 +2088,10 @@ public class LIMEService extends InputMethodService
 
     private void buildActivatedIMList() {
 
-        CharSequence[] fullNames = getResources().getStringArray(R.array.keyboard);
-        CharSequence[] shortNames = getResources().getStringArray(R.array.keyboardShortname);
-        CharSequence[] IMs = getResources().getStringArray(
-                R.array.keyboard_codes);
+        // Use LIME constants instead of resources for better testability
+        String[] fullNames = LIME.IM_FULL_NAMES;
+        String[] shortNames = LIME.IM_SHORT_NAMES;
+        String[] IMs = LIME.IM_CODES;
 
         String pIMActiveState = mLIMEPref.getIMActivatedState();
 
@@ -2118,12 +2118,12 @@ public class LIMEService extends InputMethodService
                 int index = Integer.parseInt(value);
 
                 if (index < fullNames.length) {
-                    activatedIMFullNameList.add(fullNames[index].toString());
-                    activatedIMShortNameList.add(shortNames[index].toString());
-                    activatedIMList.add(IMs[index].toString());
+                    activatedIMFullNameList.add(fullNames[index]);
+                    activatedIMShortNameList.add(shortNames[index]);
+                    activatedIMList.add(IMs[index]);
                     if (DEBUG)
                         Log.i(TAG, "buildActivatedIMList()(): buildActivatedIMList()[" + index + "] = "
-                                + IMs[index].toString() + " ;" + shortNames[index].toString());
+                                + IMs[index] + " ;" + shortNames[index]);
                 } else {
                     break;
                 }
