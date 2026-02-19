@@ -104,5 +104,7 @@
 
     <color name="background_score">#88333333</color>
 
+    <!-- Semi-transparent white background for keyboard (90% opaque, 10% transparent) -->
+    <color name="keyboard_background_semi_transparent">#E6FFFFFF</color>
 
 </resources>

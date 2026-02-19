@@ -30,7 +30,8 @@
     android:orientation="vertical"
     android:paddingTop="0dp"
     android:paddingBottom="0dp"
-    android:background="@android:color/transparent">
+    android:background="@color/keyboard_background_semi_transparent"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="fill_parent"
