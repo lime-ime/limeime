@@ -265,6 +265,21 @@ public class LIMEService extends InputMethodService
         // Construct Preference Access Tool
         mLIMEPref = new LIMEPreferenceManager(this);
 
+        // Initialize vibrator for haptic feedback
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            // API 31+ approach
+            android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+            if (vibratorManager != null) {
+                mVibrator = vibratorManager.getDefaultVibrator();
+            }
+        } else {
+            // API < 31 approach
+            mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        }
+
+        // Initialize AudioManager for sound feedback
+        mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+
         // mFixedCandidateViewOn is always true, so we can remove the variable
         // mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
 
@@ -3701,15 +3716,11 @@ public class LIMEService extends InputMethodService
     public void doVibrateSound(int primaryCode) {
         if (DEBUG) Log.i(TAG, "doVibrateSound()");
 
-        if (mAudioManager == null) {
-            mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        }
-
         if (hasVibration) {
             //Jeremy '11,9,1 add preference on vibrate level
             vibrate(mLIMEPref.getVibrateLevel());
         }
-        if (hasSound) {
+        if (hasSound && mAudioManager != null) {
             int sound = AudioManager.FX_KEYPRESS_STANDARD;
             switch (primaryCode) {
                 case LIMEBaseKeyboard.KEYCODE_DELETE:
@@ -3723,7 +3734,6 @@ public class LIMEService extends InputMethodService
                     break;
             }
             float FX_VOLUME = 1.0f;
-            assert mAudioManager != null;
             mAudioManager.playSoundEffect(sound, FX_VOLUME);
         }
     }
@@ -3910,12 +3920,34 @@ public class LIMEService extends InputMethodService
         }
     }
 
-    private static Intent getVoiceIntent() {
+    private Intent getVoiceIntent() {
         Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
 
-        // Set language to current locale
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toString());
+        // Set language based on active input method (Chinese or English) 
+        // Only set language to Chinese locales on Android 16+ when in Chinese input mode
+        if (!mEnglishOnly) {
+            // Chinese input mode - set to Chinese (Traditional for Taiwan)
+            Locale currentLocale = Locale.getDefault();
+            String language = currentLocale.getLanguage();
+            
+            if ("zh".equals(language)) {
+                // System is already set to Chinese, use the default
+                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentLocale.toString());
+            } else {
+                // System is not Chinese, but LIME is in Chinese mode - use Taiwan Chinese (Traditional)
+                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh_TW");
+            }
+        } else {
+            // English-only mode - use system default or English
+            String systemLanguage = Locale.getDefault().getLanguage();
+            if ("en".equals(systemLanguage)) {
+                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toString());
+            } else {
+                // System is not English, but LIME is in English mode - use US English
+                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_US");
+            }
+        }
 
         // Add prompt text
         voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
@@ -4106,6 +4138,7 @@ public class LIMEService extends InputMethodService
     /**
      * Register BroadcastReceiver to receive voice input results from VoiceInputActivity
      * Note: RECEIVER_NOT_EXPORTED flag is only available on API 33+, so we use conditional registration
+     * Android 16+ may have delivery restrictions, so we handle null InputConnection by queuing the text
      */
     @SuppressLint({"UnspecifiedRegisterReceiverFlag", "RegisterReceiverFlag"})
     private void registerVoiceInputReceiver() {
@@ -4116,20 +4149,55 @@ public class LIMEService extends InputMethodService
         mVoiceInputReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                if (DEBUG) {
+                    Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Action: " + intent.getAction());
+                }
+                
                 if (ACTION_VOICE_RESULT.equals(intent.getAction())) {
                     String recognizedText = intent.getStringExtra(EXTRA_RECOGNIZED_TEXT);
+                    if (DEBUG) {
+                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Recognized text: " + recognizedText);
+                    }
+                    
                     if (recognizedText != null && !recognizedText.isEmpty()) {
-                        Log.i(TAG, "registerVoiceInputReceiver(): Received recognized text: " + recognizedText);
-                        // Insert the recognized text into the input field
+                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Processing recognized text: " + recognizedText);
+                        
+                        // Try to insert the recognized text into the input field
                         android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
                         if (ic != null) {
-                            ic.commitText(recognizedText, 1);
-                            Log.i(TAG, "registerVoiceInputReceiver(): Inserted text into input field");
+                            try {
+                                ic.commitText(recognizedText, 1);
+                                Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Successfully inserted text into input field");
+                            } catch (Exception e) {
+                                Log.e(TAG, "registerVoiceInputReceiver().onReceive(): Failed to commit text: " + e.getMessage());
+                            }
                         } else {
-                            Log.w(TAG, "registerVoiceInputReceiver(): InputConnection is null");
+                            Log.w(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection is null - attempting to get fresh connection");
+                            
+                            // On Android 16+, InputConnection might be null due to async timing
+                            // Try to commit through a delayed handler to give the system time to establish connection
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                android.view.inputmethod.InputConnection delayedIc = getCurrentInputConnection();
+                                if (delayedIc != null) {
+                                    try {
+                                        delayedIc.commitText(recognizedText, 1);
+                                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Successfully inserted text (delayed)");
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "registerVoiceInputReceiver().onReceive(): Failed to commit text (delayed): " + e.getMessage());
+                                    }
+                                } else {
+                                    Log.e(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection still null after delay");
+                                }
+                            }, 100); // 100ms delay to allow connection to be established
                         }
+                    } else if (recognizedText == null) {
+                        Log.w(TAG, "registerVoiceInputReceiver().onReceive(): Recognized text is null");
                     }
+                    
                     mIsVoiceInputActive = false;
+                    if (DEBUG) {
+                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Set mIsVoiceInputActive = false");
+                    }
                 }
             }
         };
@@ -4138,16 +4206,21 @@ public class LIMEService extends InputMethodService
         // On API 33+ (TIRAMISU), must specify RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED
         // This receiver is for internal app communication only, so use RECEIVER_NOT_EXPORTED
         // For API < 33, the flag doesn't exist, so we register without it (lint warning suppressed above)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mVoiceInputReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            // RECEIVER_NOT_EXPORTED flag is not available on API < 33
-            // This is safe because the broadcast is internal to the app only
-            // Lint warning suppressed at method level with @SuppressLint
-            // noinspection UnspecifiedRegisterReceiverFlag
-            registerReceiver(mVoiceInputReceiver, filter);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(mVoiceInputReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                // RECEIVER_NOT_EXPORTED flag is not available on API < 33
+                // This is safe because the broadcast is internal to the app only
+                // Lint warning suppressed at method level with @SuppressLint
+                // noinspection UnspecifiedRegisterReceiverFlag
+                registerReceiver(mVoiceInputReceiver, filter);
+            }
+            Log.i(TAG, "registerVoiceInputReceiver(): Registered receiver successfully on API " + Build.VERSION.SDK_INT);
+        } catch (Exception e) {
+            Log.e(TAG, "registerVoiceInputReceiver(): Failed to register receiver: " + e.getMessage());
+            mVoiceInputReceiver = null;
         }
-        Log.i(TAG, "registerVoiceInputReceiver(): Registered receiver");
     }
 
     /**

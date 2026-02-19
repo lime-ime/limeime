@@ -24,7 +24,10 @@
 package net.toload.main.hd;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.speech.RecognizerIntent;
 import android.util.Log;
 import android.view.Window;
@@ -41,6 +44,9 @@ import java.util.Locale;
 /**
  * Helper Activity to launch RecognizerIntent and return results
  * This is needed because InputMethodService cannot launch activities on API 35+
+ * 
+ * Note: On Android 14+ (API 34+), broadcast delivery may be restricted to system apps.
+ * This class manages the broadcast to ensure it reaches LIMEService's receiver.
  */
 public class VoiceInputActivity extends ComponentActivity {
     private static final String TAG = "VoiceInputActivity";
@@ -59,7 +65,7 @@ public class VoiceInputActivity extends ComponentActivity {
         getWindow().setFlags(flagFullscreen, flagFullscreen);
         getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         
-        Log.i(TAG, "onCreate(): Starting voice input");
+        Log.i(TAG, "onCreate(): Starting voice input on API level " + Build.VERSION.SDK_INT);
         
         // Register ActivityResultLauncher for voice input
         ActivityResultLauncher<Intent> voiceInputLauncher = registerForActivityResult(
@@ -98,6 +104,7 @@ public class VoiceInputActivity extends ComponentActivity {
     
     /**
      * Handle the result from voice input activity using Activity Result API.
+     * Sends recognized text back to LIMEService via broadcast with retry logic for Android 14+.
      */
     private void handleVoiceInputResult(ActivityResult result) {
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
@@ -105,13 +112,10 @@ public class VoiceInputActivity extends ComponentActivity {
             ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
                 String recognizedText = results.get(0);
-                Log.i(TAG, "handleVoiceInputResult(): Recognized text: " + recognizedText);
+                Log.i(TAG, "handleVoiceInputResult(): Recognized text: '" + recognizedText + "'");
                 
                 // Send result back to LIMEService via broadcast
-                Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
-                resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
-                sendBroadcast(resultIntent);
-                Log.i(TAG, "handleVoiceInputResult(): Sent broadcast with recognized text");
+                sendVoiceResultBroadcast(recognizedText);
             } else {
                 Log.w(TAG, "handleVoiceInputResult(): No results in data");
             }
@@ -121,10 +125,42 @@ public class VoiceInputActivity extends ComponentActivity {
         finish();
     }
 
+    /**
+     * Send voice input result broadcast to LIMEService with retry logic.
+     * On Android 14+ (API 34+), broadcasts may be restricted, so we retry with a delay.
+     */
+    private void sendVoiceResultBroadcast(String recognizedText) {
+        Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
+        resultIntent.setPackage(getPackageName()); // Explicit package to target app only
+        resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
+        
+        // Send broadcast with retry on Android 14+ to handle delivery restrictions
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Android 14+ (API 34+): Send multiple times with slight delays to ensure delivery
+            Log.i(TAG, "sendVoiceResultBroadcast(): Using multi-send strategy for Android 14+");
+            
+            sendBroadcast(resultIntent);
+            Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast (attempt 1)");
+            
+            // Send again after 50ms to ensure receiver gets it
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                sendBroadcast(resultIntent);
+                Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast (attempt 2 - delayed)");
+            }, 50);
+            
+        } else {
+            // Android 13 and earlier: Single send is sufficient
+            Log.i(TAG, "sendVoiceResultBroadcast(): Using single-send for Android 13 and earlier");
+            sendBroadcast(resultIntent);
+            Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast");
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
     }
 }
+
 
