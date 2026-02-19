@@ -228,3 +228,4 @@ LimeStudio/app/app.iml
 LimeStudio/app/release/baselineProfiles
 *.dm
 #output-metadata.json
+LimeStudio/gradle/gradle-daemon-jvm.properties

@@ -152,6 +152,7 @@ public class LIMEService extends InputMethodService
     // Voice input monitoring
     private ContentObserver mInputMethodObserver = null;
     private boolean mIsVoiceInputActive = false;
+    private String mPendingVoiceText = null; // text to commit once InputConnection is re-established
     private String mLIMEId = null;
     private BroadcastReceiver mVoiceInputReceiver = null;
     private static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
@@ -487,8 +488,11 @@ public class LIMEService extends InputMethodService
         }
         // Stop monitoring IME changes when input finishes
         stopMonitoringIMEChanges();
-        // Unregister voice input receiver
-        unregisterVoiceInputReceiver();
+        // Don't unregister voice input receiver if voice input is in progress,
+        // otherwise the broadcast carrying recognized text will be lost.
+        if (!mIsVoiceInputActive) {
+            unregisterVoiceInputReceiver();
+        }
         super.onFinishInput();
 
         // mFixedCandidateViewOn is always true, so this branch is never executed
@@ -676,6 +680,24 @@ public class LIMEService extends InputMethodService
         // Don't restore keyboard view here - only restore when user explicitly touches
         // the soft keyboard area (candidate view or InputView container)
         // This prevents restoring when InputView is shown but user is still using physical keyboard
+
+        // Commit any voice text: check static field first (primary), then instance field (backup)
+        String voiceText = VoiceInputActivity.consumePendingVoiceText();
+        if (voiceText == null && mPendingVoiceText != null) {
+            voiceText = mPendingVoiceText;
+            mPendingVoiceText = null;
+        }
+        if (voiceText != null) {
+            InputConnection ic = getCurrentInputConnection();
+            if (ic != null) {
+                ic.commitText(voiceText, 1);
+                Log.i(TAG, "onStartInputView(): Committed voice text: '" + voiceText + "'");
+            } else {
+                Log.w(TAG, "onStartInputView(): IC still null, storing voice text for retry");
+                mPendingVoiceText = voiceText;
+            }
+            mIsVoiceInputActive = false;
+        }
 
         // Set navigation bar icons to dark when keyboard is shown
         setNavigationBarIconsDark();
@@ -4247,23 +4269,11 @@ public class LIMEService extends InputMethodService
                                 Log.e(TAG, "registerVoiceInputReceiver().onReceive(): Failed to commit text: " + e.getMessage());
                             }
                         } else {
-                            Log.w(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection is null - attempting to get fresh connection");
-                            
-                            // On Android 16+, InputConnection might be null due to async timing
-                            // Try to commit through a delayed handler to give the system time to establish connection
-                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                                android.view.inputmethod.InputConnection delayedIc = getCurrentInputConnection();
-                                if (delayedIc != null) {
-                                    try {
-                                        delayedIc.commitText(recognizedText, 1);
-                                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Successfully inserted text (delayed)");
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "registerVoiceInputReceiver().onReceive(): Failed to commit text (delayed): " + e.getMessage());
-                                    }
-                                } else {
-                                    Log.e(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection still null after delay");
-                                }
-                            }, 100); // 100ms delay to allow connection to be established
+                            // InputConnection not yet re-established (IME is still reconnecting after
+                            // VoiceInputActivity dismissed). Store the text and commit it in
+                            // onStartInputView() when the connection is guaranteed to be ready.
+                            Log.w(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection is null - storing as pending text");
+                            mPendingVoiceText = recognizedText;
                         }
                     } else if (recognizedText == null) {
                         Log.w(TAG, "registerVoiceInputReceiver().onReceive(): Recognized text is null");

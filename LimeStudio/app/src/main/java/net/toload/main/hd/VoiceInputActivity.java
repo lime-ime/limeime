@@ -55,6 +55,22 @@ public class VoiceInputActivity extends ComponentActivity {
     public static final String EXTRA_RECOGNIZED_TEXT = "recognized_text";
     public static final String EXTRA_VOICE_INTENT = "voice_intent";
 
+    /**
+     * Static pending text set BEFORE finish() so LIMEService can consume it
+     * in onStartInputView() without relying on broadcast delivery timing.
+     */
+    private static volatile String sPendingVoiceText = null;
+
+    /**
+     * Consume and return any pending voice text.
+     * Returns the text and clears it atomically.
+     */
+    public static String consumePendingVoiceText() {
+        String text = sPendingVoiceText;
+        sPendingVoiceText = null;
+        return text;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,55 +142,61 @@ public class VoiceInputActivity extends ComponentActivity {
     
     /**
      * Handle the result from voice input activity using Activity Result API.
-     * Sends recognized text back to LIMEService via broadcast with retry logic for Android 14+.
+     * Sets recognized text in a static field BEFORE finishing so LIMEService can
+     * consume it reliably in onStartInputView(), then also sends a broadcast as backup.
      */
     private void handleVoiceInputResult(ActivityResult result) {
+        String recognizedText = null;
         if (result.getResultCode() == RESULT_OK && result.getData() != null) {
             Intent data = result.getData();
             ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
             if (results != null && !results.isEmpty()) {
-                String recognizedText = results.get(0);
+                recognizedText = results.get(0);
                 Log.i(TAG, "handleVoiceInputResult(): Recognized text: '" + recognizedText + "'");
-                
-                // Send result back to LIMEService via broadcast
-                sendVoiceResultBroadcast(recognizedText);
             } else {
                 Log.w(TAG, "handleVoiceInputResult(): No results in data");
             }
         } else {
             Log.w(TAG, "handleVoiceInputResult(): Voice recognition cancelled or failed, resultCode: " + result.getResultCode());
         }
+
+        // Store text in static field BEFORE finish() so LIMEService can pick it up
+        // in onStartInputView() without relying on broadcast timing.
+        if (recognizedText != null) {
+            sPendingVoiceText = recognizedText;
+            Log.i(TAG, "handleVoiceInputResult(): Stored pending voice text in static field");
+        }
+
+        // Finish so the window closes and the text field regains input focus.
         finish();
+
+        // Also send broadcast as a backup mechanism, using ApplicationContext
+        // since this Activity's context may be invalid after finish().
+        if (recognizedText != null) {
+            final String textToCommit = recognizedText;
+            new Handler(Looper.getMainLooper()).postDelayed(
+                    () -> sendVoiceResultBroadcast(textToCommit), 300);
+        }
     }
 
     /**
-     * Send voice input result broadcast to LIMEService with retry logic.
-     * On Android 14+ (API 34+), broadcasts may be restricted, so we retry with a delay.
+     * Send voice input result broadcast to LIMEService as a backup mechanism.
+     * Uses getApplicationContext() because this Activity may already be destroyed
+     * after finish() was called.
      */
     private void sendVoiceResultBroadcast(String recognizedText) {
-        Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
-        resultIntent.setPackage(getPackageName()); // Explicit package to target app only
-        resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
-        
-        // Send broadcast with retry on Android 14+ to handle delivery restrictions
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Android 14+ (API 34+): Send multiple times with slight delays to ensure delivery
-            Log.i(TAG, "sendVoiceResultBroadcast(): Using multi-send strategy for Android 14+");
-            
-            sendBroadcast(resultIntent);
-            Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast (attempt 1)");
-            
-            // Send again after 50ms to ensure receiver gets it
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                sendBroadcast(resultIntent);
-                Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast (attempt 2 - delayed)");
-            }, 50);
-            
-        } else {
-            // Android 13 and earlier: Single send is sufficient
-            Log.i(TAG, "sendVoiceResultBroadcast(): Using single-send for Android 13 and earlier");
-            sendBroadcast(resultIntent);
-            Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast");
+        try {
+            Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
+            resultIntent.setPackage(getPackageName());
+            resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
+
+            // Use ApplicationContext to ensure broadcast works after Activity is destroyed
+            getApplicationContext().sendBroadcast(resultIntent);
+            Log.i(TAG, "sendVoiceResultBroadcast(): Sent broadcast via ApplicationContext");
+        } catch (Exception e) {
+            // If broadcast fails, the static field (sPendingVoiceText) is the primary
+            // mechanism and will be consumed by LIMEService in onStartInputView().
+            Log.w(TAG, "sendVoiceResultBroadcast(): Broadcast failed (static field is primary): " + e.getMessage());
         }
     }
 
