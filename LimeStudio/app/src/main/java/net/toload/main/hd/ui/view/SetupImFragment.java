@@ -26,9 +26,11 @@ package net.toload.main.hd.ui.view;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -86,6 +88,9 @@ public class SetupImFragment extends Fragment implements SetupImView {
 
     // Debug Flag
     private final boolean DEBUG = false;
+
+    // BroadcastReceiver to listen for IME changes
+    private BroadcastReceiver imeChangeReceiver = null;
 
     //Activate LIME IM
 
@@ -167,6 +172,8 @@ public class SetupImFragment extends Fragment implements SetupImView {
             mLIMEPref.syncIMActivatedState(imlist);
         }
 
+        // Unregister BroadcastReceiver to prevent memory leaks
+        unregisterImeChangeReceiver();
     }
 
     /**
@@ -193,11 +200,71 @@ public class SetupImFragment extends Fragment implements SetupImView {
 
         super.onResume();
 
-        // Post to main thread queue to avoid FragmentManager transaction conflicts
+        // Register BroadcastReceiver to listen for IME changes
+        // This detects when user enables/disables/switches IME in system settings
+        registerImeChangeReceiver();
+
+        // Also refresh immediately in case no broadcast is sent
         if (rootView != null) {
-            rootView.post(this::refreshButtonState);
+            new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (isAdded() && rootView != null) {
+                    Log.i(TAG, "onResume() - refreshing button state");
+                    refreshButtonState();
+                }
+            }, 500); // 500ms delay ensures system processes the IME change
         }
 
+    }
+
+    /**
+     * Register receiver to listen for IME changes
+     * Detects when user enables/disables LIME or switches to another IME
+     */
+    private void registerImeChangeReceiver() {
+        if (imeChangeReceiver != null) {
+            return; // Already registered
+        }
+
+        imeChangeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null && 
+                    (intent.getAction().equals("android.intent.action.INPUT_METHOD_CHANGED") ||
+                     intent.getAction().equals("android.settings.INPUT_METHOD_SETTINGS"))) {
+                    
+                    Log.i(TAG, "IME change detected via broadcast - refreshing UI");
+                    if (rootView != null && isAdded()) {
+                        refreshButtonState();
+                    }
+                }
+            }
+        };
+
+        Context context = requireActivity();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("android.intent.action.INPUT_METHOD_CHANGED");
+        
+        // Register receiver for API compatibility
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(imeChangeReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(imeChangeReceiver, filter);
+        }
+    }
+
+    /**
+     * Unregister the IME change receiver
+     */
+    private void unregisterImeChangeReceiver() {
+        if (imeChangeReceiver != null) {
+            try {
+                requireActivity().unregisterReceiver(imeChangeReceiver);
+                Log.i(TAG, "IME change receiver unregistered");
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "IME change receiver was not registered: " + e.getMessage());
+            }
+            imeChangeReceiver = null;
+        }
     }
 
 
@@ -356,11 +423,14 @@ public class SetupImFragment extends Fragment implements SetupImView {
                 }
 
 
-                btnSetupImSystemSettings.setOnClickListener(v -> LIMEUtilities.showInputMethodSettingsPage(requireActivity().getApplicationContext()));
+                btnSetupImSystemSettings.setOnClickListener(v -> {
+                    Log.i(TAG, "Opening IME settings to enable LimeIME");
+                    LIMEUtilities.showInputMethodSettingsPage(requireActivity().getApplicationContext());
+                });
 
                 btnSetupImSystemIMPicker.setOnClickListener(v -> {
+                    Log.i(TAG, "Opening IME picker to select LimeIME");
                     LIMEUtilities.showInputMethodPicker(requireActivity().getApplicationContext());
-                    rootView.invalidate();
                 });
 
                 // Setup custom import button - always keep it active/clickable

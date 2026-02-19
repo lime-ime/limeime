@@ -40,6 +40,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import androidx.core.os.ConfigurationCompat;
 
 /**
  * Helper Activity to launch RecognizerIntent and return results
@@ -52,6 +53,7 @@ public class VoiceInputActivity extends ComponentActivity {
     private static final String TAG = "VoiceInputActivity";
     public static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
     public static final String EXTRA_RECOGNIZED_TEXT = "recognized_text";
+    public static final String EXTRA_VOICE_INTENT = "voice_intent";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,12 +74,32 @@ public class VoiceInputActivity extends ComponentActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 this::handleVoiceInputResult);
         
-        // Launch RecognizerIntent
-        Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toString());
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
-        voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        // Get the voiceIntent passed from LIMEService, or create a default one
+        Intent voiceIntent = getIntent().getParcelableExtra(EXTRA_VOICE_INTENT, Intent.class);
+        if (voiceIntent == null) {
+            Log.w(TAG, "onCreate(): voiceIntent is NULL, using fallback with system locale");
+            // Fallback: create a basic voiceIntent if not provided - use system locale
+            voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            // Use ConfigurationCompat to retrieve the top system locale without using
+            // the deprecated Configuration.locale field.
+            Locale systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
+            String languageTag;
+            try {
+                languageTag = systemLocale.toLanguageTag();
+            } catch (NoSuchMethodError e) {
+                languageTag = systemLocale.getLanguage();
+                if (systemLocale.getCountry() != null && !systemLocale.getCountry().isEmpty()) {
+                    languageTag += "-" + systemLocale.getCountry();
+                }
+            }
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag);
+            //voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        } else {
+            String language = voiceIntent.getStringExtra(RecognizerIntent.EXTRA_LANGUAGE);
+            Log.i(TAG, "onCreate(): Received voiceIntent from LIMEService with language: " + language);
+        }
         
         // Check if RecognizerIntent is available
         android.content.ComponentName componentName = voiceIntent.resolveActivity(getPackageManager());

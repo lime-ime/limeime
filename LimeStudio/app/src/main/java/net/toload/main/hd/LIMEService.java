@@ -85,6 +85,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import androidx.core.os.ConfigurationCompat;
 import java.util.Objects;
 
 
@@ -261,24 +262,39 @@ public class LIMEService extends InputMethodService
         mEnglishOnly = false;
         mEnglishFlagShift = false;
 
+        // Initialize default preferences from XML on first run
+        // This must be called before creating LIMEPreferenceManager
+        // PreferenceManager.setDefaultValues() loads XML defaults into SharedPreferences
+        androidx.preference.PreferenceManager.setDefaultValues(this, R.xml.preference, false);
+        Log.i(TAG, "onCreate() - Default preferences initialized from XML");
 
         // Construct Preference Access Tool
         mLIMEPref = new LIMEPreferenceManager(this);
 
-        // Initialize vibrator for haptic feedback
+        // Initialize hasVibration flag from preferences immediately (so it's available for first keypress)
+        hasVibration = mLIMEPref.getVibrateOnKeyPressed();
+        Log.i(TAG, "onCreate() - initialized hasVibration: " + hasVibration);
+
+        // Initialize vibrator for haptic feedback using VibratorManager (modern approach)
+        Log.i(TAG, "onCreate() - Initializing Vibrator service");
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             // API 31+ approach
+            Log.i(TAG, "onCreate() - Using VibratorManager for API 31+");
             android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
             if (vibratorManager != null) {
                 mVibrator = vibratorManager.getDefaultVibrator();
+                Log.i(TAG, "onCreate() - VibratorManager obtained, mVibrator = " + (mVibrator != null ? "valid" : "null"));
+            } else {
+                Log.e(TAG, "onCreate() - VibratorManager service is null!");
             }
         } else {
-            // API < 31 approach
-            mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            // API < 31 approach - use lazy initialization in getVibrator()
+            Log.i(TAG, "onCreate() - Vibrator will be initialized on first use for API <31");
         }
 
         // Initialize AudioManager for sound feedback
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        Log.i(TAG, "onCreate() - AudioManager obtained, mAudioManager = " + (mAudioManager != null ? "valid" : "null"));
 
         // mFixedCandidateViewOn is always true, so we can remove the variable
         // mFixedCandidateViewOn = mLIMEPref.getFixedCandidateViewDisplay();
@@ -3650,8 +3666,8 @@ public class LIMEService extends InputMethodService
      * First method to call after key press
      */
     public void onPress(int primaryCode) {
-        if (DEBUG)
-            Log.i(TAG, "onPress(): code = " + primaryCode);
+        //Log.i(TAG, "onPress(): code = " + primaryCode + ", hasVibration = " + hasVibration + ", mVibrator = " + (mVibrator != null ? "valid" : "null"));
+        
         // Record key press time (press down)
         //keyPressTime = System.currentTimeMillis();
         // To identify the source of character (Software keyboard or physical keyboard)
@@ -3672,20 +3688,42 @@ public class LIMEService extends InputMethodService
 
     /**
      * Get Vibrator instance compatible with all API levels.
-     * For API 31+, uses VibratorManager. For older versions, uses VIBRATOR_SERVICE.
+     * Uses VibratorManager for all API levels (recommended approach).
      */
-    @SuppressWarnings("deprecation")
     private Vibrator getVibrator() {
         if (mVibrator == null) {
+            Log.w(TAG, "getVibrator() - mVibrator is null, attempting to initialize, API level: " + android.os.Build.VERSION.SDK_INT);
+            
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                 // API 31+ approach
+                Log.i(TAG, "getVibrator() - Using VibratorManager for API 31+");
                 android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
                 if (vibratorManager != null) {
                     mVibrator = vibratorManager.getDefaultVibrator();
+                    Log.i(TAG, "getVibrator() - VibratorManager obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
+                } else {
+                    Log.e(TAG, "getVibrator() - VibratorManager is null!");
                 }
             } else {
-                // API < 31 approach
-                mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                // API < 31 approach - use Context.getSystemService with VibratorManager when available
+                Log.i(TAG, "getVibrator() - Using fallback for API <31");
+                try {
+                    // Try to get it via the new method if available
+                    Object vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+                    if (vibratorManager instanceof android.os.VibratorManager) {
+                        mVibrator = ((android.os.VibratorManager) vibratorManager).getDefaultVibrator();
+                        Log.i(TAG, "getVibrator() - VibratorManager obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "getVibrator() - VibratorManager not available on API <31: " + e.getMessage());
+                }
+                // Final fallback if VibratorManager not available - must use deprecated service for API <31
+                if (mVibrator == null) {
+                    @SuppressWarnings("deprecation")
+                    Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    mVibrator = vibrator;
+                    Log.i(TAG, "getVibrator() - Fallback Vibrator obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
+                }
             }
         }
         return mVibrator;
@@ -3697,29 +3735,48 @@ public class LIMEService extends InputMethodService
      */
     @SuppressWarnings("deprecation")
     private void vibrate(long duration) {
-        Vibrator vibrator = getVibrator();
-        if (vibrator == null) {
+        //Log.i(TAG, "vibrate() called with duration: " + duration);
+        
+        if (duration <= 0) {
+            Log.w(TAG, "vibrate() called with invalid duration: " + duration);
             return;
         }
+        
+        Vibrator vibrator = getVibrator();
+        if (vibrator == null) {
+            Log.e(TAG, "vibrate() - vibrator is null! Failed to get vibrator service.");
+            return;
+        }
+        
+        //Log.i(TAG, "vibrate() - vibrator obtained, API level: " + android.os.Build.VERSION.SDK_INT);
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            // API 26+ approach
-            android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
-            vibrator.vibrate(effect);
-        } else {
-            // API < 26 approach
-            vibrator.vibrate(duration);
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                // API 26+ approach
+                android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
+                vibrator.vibrate(effect);
+                //Log.i(TAG, "vibrate() - vibration triggered with VibrationEffect (API 26+)");
+            } else {
+                // API < 26 approach
+                vibrator.vibrate(duration);
+                //Log.i(TAG, "vibrate() - vibration triggered with deprecated vibrate() (API <26)");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "vibrate() failed to trigger vibration: " + e.getMessage(), e);
         }
     }
 
     @SuppressWarnings("deprecation")
     public void doVibrateSound(int primaryCode) {
-        if (DEBUG) Log.i(TAG, "doVibrateSound()");
+        //Log.i(TAG, "doVibrateSound() called with primaryCode: " + primaryCode + ", hasVibration: " + hasVibration);
 
         if (hasVibration) {
             //Jeremy '11,9,1 add preference on vibrate level
-            vibrate(mLIMEPref.getVibrateLevel());
+            long vibrateLevel = mLIMEPref.getVibrateLevel();
+            //Log.i(TAG, "doVibrateSound() - hasVibration=true, vibrateLevel: " + vibrateLevel + "ms");
+            vibrate(vibrateLevel);
         }
+        
         if (hasSound && mAudioManager != null) {
             int sound = AudioManager.FX_KEYPRESS_STANDARD;
             switch (primaryCode) {
@@ -3735,6 +3792,7 @@ public class LIMEService extends InputMethodService
             }
             float FX_VOLUME = 1.0f;
             mAudioManager.playSoundEffect(sound, FX_VOLUME);
+            //Log.i(TAG, "doVibrateSound() - sound played, sound code: " + sound);
         }
     }
 
@@ -3888,7 +3946,7 @@ public class LIMEService extends InputMethodService
                         }
                     }, 200); // Delay to check if switch worked - short enough for quick fallback
 
-                    return; // Assume success, will fall back if verification fails
+                    //return; // Assume success, will fall back if verification fails
                 } catch (SecurityException e) {
                     if (DEBUG)
                         Log.e(TAG, "startVoiceInput(): SecurityException switching to voice IME: " + e.getMessage(), e);
@@ -3924,30 +3982,24 @@ public class LIMEService extends InputMethodService
         Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
 
-        // Set language based on active input method (Chinese or English) 
-        // Only set language to Chinese locales on Android 16+ when in Chinese input mode
-        if (!mEnglishOnly) {
-            // Chinese input mode - set to Chinese (Traditional for Taiwan)
-            Locale currentLocale = Locale.getDefault();
-            String language = currentLocale.getLanguage();
-            
-            if ("zh".equals(language)) {
-                // System is already set to Chinese, use the default
-                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, currentLocale.toString());
-            } else {
-                // System is not Chinese, but LIME is in Chinese mode - use Taiwan Chinese (Traditional)
-                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "zh_TW");
-            }
-        } else {
-            // English-only mode - use system default or English
-            String systemLanguage = Locale.getDefault().getLanguage();
-            if ("en".equals(systemLanguage)) {
-                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toString());
-            } else {
-                // System is not English, but LIME is in English mode - use US English
-                voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en_US");
+        // Use actual system locale for voice input (user's native language)
+        // Use ConfigurationCompat to retrieve the top system locale without using
+        // the deprecated Configuration.locale field.
+        Locale systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
+        String languageTag;
+        try {
+            assert systemLocale != null;
+            languageTag = systemLocale.toLanguageTag();
+        } catch (NoSuchMethodError e) {
+            // Fallback for older runtimes: construct BCP-47-like tag
+            languageTag = systemLocale.getLanguage();
+            systemLocale.getCountry();
+            if (!systemLocale.getCountry().isEmpty()) {
+                languageTag += "-" + systemLocale.getCountry();
             }
         }
+        voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag);
+        Log.i(TAG, "getVoiceIntent() - Using system locale for voice input: " + languageTag);
 
         // Add prompt text
         voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
@@ -3961,14 +4013,32 @@ public class LIMEService extends InputMethodService
      * Launch RecognizerIntent as fallback for voice input
      */
     private void launchRecognizerIntent(Intent voiceIntent) {
-        if (DEBUG)
-            Log.i(TAG, "launchRecognizerIntent(): Intent action: " + voiceIntent.getAction() +
-                    "launchRecognizerIntent(): Intent extras: " + voiceIntent.getExtras() +
-                    "launchRecognizerIntent(): API level: " + android.os.Build.VERSION.SDK_INT);
+        if (voiceIntent == null) {
+            Log.e(TAG, "launchRecognizerIntent(): voiceIntent is NULL! Creating default intent");
+            voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            Locale systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
+            String languageTag;
+            try {
+                assert systemLocale != null;
+                languageTag = systemLocale.toLanguageTag();
+            } catch (NoSuchMethodError e) {
+                languageTag = systemLocale.getLanguage();
+                systemLocale.getCountry();
+                if (!systemLocale.getCountry().isEmpty()) {
+                    languageTag += "-" + systemLocale.getCountry();
+                }
+            }
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag);
+            //voiceIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now");
+            voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        }
+        
+        String language = voiceIntent.getStringExtra(RecognizerIntent.EXTRA_LANGUAGE);
+        Log.i(TAG, "launchRecognizerIntent(): Intent language: " + language + ", Intent action: " + voiceIntent.getAction() +
+                ", API level: " + android.os.Build.VERSION.SDK_INT);
 
         // Check if voice recognition activity is available
-        // On API 35+, resolveActivity() might return null even if activities exist
-        // Try queryIntentActivities as an alternative check
         java.util.List<android.content.pm.ResolveInfo> activities = getPackageManager().queryIntentActivities(voiceIntent, 0);
 
         if (activities.isEmpty()) {
@@ -3976,7 +4046,7 @@ public class LIMEService extends InputMethodService
             return;
         }
 
-        android.content.ComponentName componentName = voiceIntent.resolveActivity(getPackageManager());
+        //android.content.ComponentName componentName = voiceIntent.resolveActivity(getPackageManager());
 
         // Use helper Activity to launch RecognizerIntent for all API levels
         // InputMethodService cannot receive onActivityResult, so we need VoiceInputActivity
@@ -3986,6 +4056,9 @@ public class LIMEService extends InputMethodService
             Intent helperIntent = new Intent(this, VoiceInputActivity.class);
             helperIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             helperIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            // Pass the configured voiceIntent to VoiceInputActivity
+            helperIntent.putExtra(VoiceInputActivity.EXTRA_VOICE_INTENT, voiceIntent);
+            Log.i(TAG, "launchRecognizerIntent(): Passing voiceIntent to VoiceInputActivity with language: " + language);
             startActivity(helperIntent);
             mIsVoiceInputActive = true;
 
@@ -4000,6 +4073,8 @@ public class LIMEService extends InputMethodService
             Toast.makeText(getApplicationContext(), "Voice input unavailable: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
+
+
 
 
     /**
