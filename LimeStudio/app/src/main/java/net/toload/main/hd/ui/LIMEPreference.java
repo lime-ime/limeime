@@ -157,6 +157,15 @@ public class LIMEPreference extends AppCompatActivity {
 			}
 			mLIMEPref = new LIMEPreferenceManager(ctx);
 			SearchSrv = new SearchServer(ctx);
+
+			// On API 31+, vibration intensity is controlled by the system via performHapticFeedback.
+			// The vibrate_level duration preference has no effect, so hide it to avoid confusion.
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				androidx.preference.Preference vibrateLevelPref = findPreference("vibrate_level");
+				if (vibrateLevelPref != null) {
+					vibrateLevelPref.setVisible(false);
+				}
+			}
 		}
 
 		@Override
