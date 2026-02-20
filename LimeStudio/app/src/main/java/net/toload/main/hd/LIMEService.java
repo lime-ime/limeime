@@ -3730,7 +3730,7 @@ public class LIMEService extends InputMethodService
     }
 
     /**
-     * Map vibration duration preference to a predefined VibrationEffect for API 29+.
+     * Map vibration duration preference to a predefined VibrationEffect for API 29-32.
      * Predefined effects are optimized for device haptic hardware (especially Pixel LRA motors).
      * Vibrate level mapping:
      *   20ms (Very Weak)    -> EFFECT_TICK        (light tap)
@@ -3752,13 +3752,32 @@ public class LIMEService extends InputMethodService
 
     /**
      * Vibrate with specified duration, compatible with all API levels.
-     * API 29+: uses predefined effects (hardware-optimized, works on Pixel LRA motors).
+     * API 33+: uses performHapticFeedback on the keyboard view — direct Vibrator access
+     *          from IME service contexts is restricted on Android 13+ (API 36 silences it).
+     * API 29-32: uses predefined VibrationEffect (hardware-optimized for Pixel LRA motors).
      * API 26-28: uses VibrationEffect.createOneShot().
      * API <26: uses deprecated vibrate(long).
      */
     private void vibrate(long duration) {
         if (duration <= 0) {
             Log.w(TAG, "vibrate() called with invalid duration: " + duration);
+            return;
+        }
+
+        // API 33+: use performHapticFeedback on the keyboard view.
+        // Direct Vibrator.vibrate() from an IME service is silenced on Android 13+ when targeting
+        // SDK 36, even with USAGE_TOUCH. The View haptic pipeline works correctly because the
+        // keyboard view is attached to the IME window which has proper interaction context.
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (mInputView != null) {
+                // FLAG_IGNORE_VIEW_SETTING: fire even if the view's hapticFeedbackEnabled is off.
+                // FLAG_IGNORE_GLOBAL_SETTING: let the app's own vibration preference be the sole
+                // control, matching the behaviour of the old direct Vibrator approach.
+                mInputView.performHapticFeedback(
+                        android.view.HapticFeedbackConstants.KEYBOARD_TAP,
+                        android.view.HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING
+                                | android.view.HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+            }
             return;
         }
 
@@ -3770,20 +3789,10 @@ public class LIMEService extends InputMethodService
 
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // API 29+: use predefined effects optimized for device haptic hardware
+                // API 29-32: use predefined effects optimized for device haptic hardware
                 int effectId = mapDurationToVibrationEffect(duration);
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                    // API 33+: supply USAGE_TOUCH so Android 13+ routes vibration through the
-                    // touch-feedback channel and respects "Keyboard vibration" system setting
-                    // (without this, Android 16 targeting SDK 36 silences the vibration)
-                    android.os.VibrationAttributes attrs = new android.os.VibrationAttributes.Builder()
-                            .setUsage(android.os.VibrationAttributes.USAGE_TOUCH)
-                            .build();
-                    vibrator.vibrate(effect, attrs);
-                } else {
-                    vibrator.vibrate(effect);
-                }
+                vibrator.vibrate(effect);
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 // API 26-28: use createOneShot
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
