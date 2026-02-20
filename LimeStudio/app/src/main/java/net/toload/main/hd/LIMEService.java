@@ -44,6 +44,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -276,22 +277,19 @@ public class LIMEService extends InputMethodService
         hasVibration = mLIMEPref.getVibrateOnKeyPressed();
         Log.i(TAG, "onCreate() - initialized hasVibration: " + hasVibration);
 
-        // Initialize vibrator for haptic feedback using VibratorManager (modern approach)
-        Log.i(TAG, "onCreate() - Initializing Vibrator service");
+        // Initialize vibrator for haptic feedback
+        Log.i(TAG, "onCreate() - Initializing Vibrator service, API level: " + android.os.Build.VERSION.SDK_INT);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            // API 31+ approach
-            Log.i(TAG, "onCreate() - Using VibratorManager for API 31+");
+            // API 31+: use VibratorManager
             android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
             if (vibratorManager != null) {
                 mVibrator = vibratorManager.getDefaultVibrator();
-                Log.i(TAG, "onCreate() - VibratorManager obtained, mVibrator = " + (mVibrator != null ? "valid" : "null"));
-            } else {
-                Log.e(TAG, "onCreate() - VibratorManager service is null!");
             }
         } else {
-            // API < 31 approach - use lazy initialization in getVibrator()
-            Log.i(TAG, "onCreate() - Vibrator will be initialized on first use for API <31");
+            // API 22-30: use deprecated VIBRATOR_SERVICE
+            mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         }
+        Log.i(TAG, "onCreate() - mVibrator = " + (mVibrator != null ? "valid" : "null"));
 
         // Initialize AudioManager for sound feedback
         mAudioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
@@ -2581,8 +2579,8 @@ public class LIMEService extends InputMethodService
                     if (ic == null) return;
                     boolean after = false;
                     try {
-                        if (ic.getTextAfterCursor(1, 1).length() > 0) {
-                            char c = ic.getTextAfterCursor(1, 1).charAt(0);
+                        if (Objects.requireNonNull(ic.getTextAfterCursor(1, 1)).length() > 0) {
+                            char c = Objects.requireNonNull(ic.getTextAfterCursor(1, 1)).charAt(0);
                             if (!Character.isLetterOrDigit(c)) {
                                 after = true;
                             }
@@ -2600,9 +2598,9 @@ public class LIMEService extends InputMethodService
                         try {
                             if (tempEnglishWord.toString()
                                     .equalsIgnoreCase(
-                                            ic.getTextBeforeCursor(
+                                            Objects.requireNonNull(ic.getTextBeforeCursor(
                                                             tempEnglishWord.toString()
-                                                                    .length(), 1)
+                                                                    .length(), 1))
                                                     .toString())) {
                                 matchedtemp = true;
                             }
@@ -2903,7 +2901,7 @@ public class LIMEService extends InputMethodService
         }
 
         @Override
-        public void handleMessage(Message msg) {
+        public void handleMessage(@NonNull Message msg) {
             if (DEBUG) Log.i(TAG, "CandidateViewHandler.handleMessage(): message:" + msg.what);
             LIMEService mLIMEInstance = mLIMEService.get();
             if (mLIMEInstance == null) return;
@@ -3469,7 +3467,7 @@ public class LIMEService extends InputMethodService
                 //misMatched = mComposing.toString();
             } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals(LIME.IM_ARRAY)
                     && mComposing != null && mComposing.length() >= 1
-                    && getCurrentInputConnection().getTextBeforeCursor(1, 1).charAt(0) == 'w'
+                    && Objects.requireNonNull(getCurrentInputConnection().getTextBeforeCursor(1, 1)).charAt(0) == 'w'
                     && Character.isDigit((char) primaryCode)
                     && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 // 27.May.2011 Art : This is the method to check user input type
@@ -3714,81 +3712,80 @@ public class LIMEService extends InputMethodService
      */
     private Vibrator getVibrator() {
         if (mVibrator == null) {
-            Log.w(TAG, "getVibrator() - mVibrator is null, attempting to initialize, API level: " + android.os.Build.VERSION.SDK_INT);
-            
+            Log.w(TAG, "getVibrator() - mVibrator is null, re-initializing, API level: " + android.os.Build.VERSION.SDK_INT);
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                // API 31+ approach
-                Log.i(TAG, "getVibrator() - Using VibratorManager for API 31+");
+                // API 31+: use VibratorManager
                 android.os.VibratorManager vibratorManager = (android.os.VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
                 if (vibratorManager != null) {
                     mVibrator = vibratorManager.getDefaultVibrator();
-                    Log.i(TAG, "getVibrator() - VibratorManager obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
-                } else {
-                    Log.e(TAG, "getVibrator() - VibratorManager is null!");
                 }
             } else {
-                // API < 31 approach - use Context.getSystemService with VibratorManager when available
-                Log.i(TAG, "getVibrator() - Using fallback for API <31");
-                try {
-                    // Try to get it via the new method if available
-                    Object vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
-                    if (vibratorManager instanceof android.os.VibratorManager) {
-                        mVibrator = ((android.os.VibratorManager) vibratorManager).getDefaultVibrator();
-                        Log.i(TAG, "getVibrator() - VibratorManager obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
-                    }
-                } catch (Exception e) {
-                    Log.w(TAG, "getVibrator() - VibratorManager not available on API <31: " + e.getMessage());
-                }
-                // Final fallback if VibratorManager not available - must use deprecated service for API <31
-                if (mVibrator == null) {
-                    @SuppressWarnings("deprecation")
-                    Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    mVibrator = vibrator;
-                    Log.i(TAG, "getVibrator() - Fallback Vibrator obtained, vibrator = " + (mVibrator != null ? "valid" : "null"));
-                }
+                // API 22-30: use deprecated VIBRATOR_SERVICE
+                mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             }
+            Log.i(TAG, "getVibrator() - mVibrator = " + (mVibrator != null ? "valid" : "null"));
         }
         return mVibrator;
     }
 
     /**
-     * Vibrate with specified duration, compatible with all API levels.
-     * For API 26+, uses VibrationEffect. For older versions, uses deprecated vibrate(long).
+     * Map vibration duration preference to a predefined VibrationEffect for API 29+.
+     * Predefined effects are optimized for device haptic hardware (especially Pixel LRA motors).
+     * Vibrate level mapping:
+     *   20ms (Very Weak)    -> EFFECT_TICK        (light tap)
+     *   30ms (Weak)         -> EFFECT_TICK        (light tap)
+     *   40ms (Medium)       -> EFFECT_CLICK       (standard click)
+     *   50ms (Strong)       -> EFFECT_HEAVY_CLICK (strong thud)
+     *   60ms (Very Strong)  -> EFFECT_HEAVY_CLICK (strong thud)
      */
-    @SuppressWarnings("deprecation")
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private int mapDurationToVibrationEffect(long duration) {
+        if (duration <= 30) {
+            return android.os.VibrationEffect.EFFECT_TICK;        // light tap
+        } else if (duration <= 40) {
+            return android.os.VibrationEffect.EFFECT_CLICK;       // standard click
+        } else {
+            return android.os.VibrationEffect.EFFECT_HEAVY_CLICK; // strong thud
+        }
+    }
+
+    /**
+     * Vibrate with specified duration, compatible with all API levels.
+     * API 29+: uses predefined effects (hardware-optimized, works on Pixel LRA motors).
+     * API 26-28: uses VibrationEffect.createOneShot().
+     * API <26: uses deprecated vibrate(long).
+     */
     private void vibrate(long duration) {
-        //Log.i(TAG, "vibrate() called with duration: " + duration);
-        
         if (duration <= 0) {
             Log.w(TAG, "vibrate() called with invalid duration: " + duration);
             return;
         }
-        
+
         Vibrator vibrator = getVibrator();
         if (vibrator == null) {
             Log.e(TAG, "vibrate() - vibrator is null! Failed to get vibrator service.");
             return;
         }
-        
-        //Log.i(TAG, "vibrate() - vibrator obtained, API level: " + android.os.Build.VERSION.SDK_INT);
 
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                // API 26+ approach
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                // API 29+: use predefined effects optimized for device haptic hardware
+                int effectId = mapDurationToVibrationEffect(duration);
+                android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
+                vibrator.vibrate(effect);
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                // API 26-28: use createOneShot
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
                 vibrator.vibrate(effect);
-                //Log.i(TAG, "vibrate() - vibration triggered with VibrationEffect (API 26+)");
             } else {
-                // API < 26 approach
+                // API < 26
                 vibrator.vibrate(duration);
-                //Log.i(TAG, "vibrate() - vibration triggered with deprecated vibrate() (API <26)");
             }
         } catch (Exception e) {
             Log.e(TAG, "vibrate() failed to trigger vibration: " + e.getMessage(), e);
         }
     }
 
-    @SuppressWarnings("deprecation")
     public void doVibrateSound(int primaryCode) {
         //Log.i(TAG, "doVibrateSound() called with primaryCode: " + primaryCode + ", hasVibration: " + hasVibration);
 
@@ -4199,9 +4196,6 @@ public class LIMEService extends InputMethodService
     private void switchBackToLIME() {
         if (mLIMEId == null) {
             mLIMEId = LIMEUtilities.getLIMEID(getBaseContext());
-        }
-
-        if (mLIMEId == null) {
             if (DEBUG)
                 Log.e(TAG, "switchBackToLIME(): LIME ID is null");
             stopMonitoringIMEChanges();
@@ -4233,6 +4227,32 @@ public class LIMEService extends InputMethodService
     }
 
     /**
+     * Try to commit voice text, retrying up to 3 times with 200ms delays if InputConnection is null.
+     * Falls back to storing as pending text for onStartInputView() if all retries fail.
+     */
+    private void commitVoiceTextWithRetry(String text, int attempt) {
+        InputConnection ic = getCurrentInputConnection();
+        if (ic != null) {
+            try {
+                ic.commitText(text, 1);
+                Log.i(TAG, "commitVoiceTextWithRetry(): Committed voice text on attempt " + attempt);
+            } catch (Exception e) {
+                Log.e(TAG, "commitVoiceTextWithRetry(): Failed to commit: " + e.getMessage());
+                mPendingVoiceText = text;
+            }
+        } else if (attempt < 3) {
+            Log.w(TAG, "commitVoiceTextWithRetry(): IC null, retry " + (attempt + 1) + " in 200ms");
+            new Handler(Looper.getMainLooper()).postDelayed(
+                    () -> commitVoiceTextWithRetry(text, attempt + 1), 200);
+            return; // Don't clear mIsVoiceInputActive yet
+        } else {
+            Log.w(TAG, "commitVoiceTextWithRetry(): IC still null after 3 retries, storing as pending");
+            mPendingVoiceText = text;
+        }
+        mIsVoiceInputActive = false;
+    }
+
+    /**
      * Register BroadcastReceiver to receive voice input results from VoiceInputActivity
      * Note: RECEIVER_NOT_EXPORTED flag is only available on API 33+, so we use conditional registration
      * Android 16+ may have delivery restrictions, so we handle null InputConnection by queuing the text
@@ -4257,31 +4277,15 @@ public class LIMEService extends InputMethodService
                     }
                     
                     if (recognizedText != null && !recognizedText.isEmpty()) {
+                        // Clear static field since we received it via broadcast
+                        VoiceInputActivity.consumePendingVoiceText();
                         Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Processing recognized text: " + recognizedText);
-                        
-                        // Try to insert the recognized text into the input field
-                        android.view.inputmethod.InputConnection ic = getCurrentInputConnection();
-                        if (ic != null) {
-                            try {
-                                ic.commitText(recognizedText, 1);
-                                Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Successfully inserted text into input field");
-                            } catch (Exception e) {
-                                Log.e(TAG, "registerVoiceInputReceiver().onReceive(): Failed to commit text: " + e.getMessage());
-                            }
-                        } else {
-                            // InputConnection not yet re-established (IME is still reconnecting after
-                            // VoiceInputActivity dismissed). Store the text and commit it in
-                            // onStartInputView() when the connection is guaranteed to be ready.
-                            Log.w(TAG, "registerVoiceInputReceiver().onReceive(): InputConnection is null - storing as pending text");
-                            mPendingVoiceText = recognizedText;
-                        }
+
+                        // Try to commit with retry logic
+                        commitVoiceTextWithRetry(recognizedText, 0);
                     } else if (recognizedText == null) {
                         Log.w(TAG, "registerVoiceInputReceiver().onReceive(): Recognized text is null");
-                    }
-                    
-                    mIsVoiceInputActive = false;
-                    if (DEBUG) {
-                        Log.i(TAG, "registerVoiceInputReceiver().onReceive(): Set mIsVoiceInputActive = false");
+                        mIsVoiceInputActive = false;
                     }
                 }
             }
@@ -4357,7 +4361,6 @@ public class LIMEService extends InputMethodService
      * Set navigation bar (gesture bar) icons to dark when keyboard is shown.
      * This ensures navigation bar icons are visible on light backgrounds.
      */
-    @SuppressWarnings("deprecation")
     private void setNavigationBarIconsDark() {
         // In InputMethodService, getWindow() returns a Dialog, not a Window
         // We need to get the window from the Dialog
@@ -4366,20 +4369,16 @@ public class LIMEService extends InputMethodService
             android.view.Window window = dialog.getWindow();
             if (window != null) {
                 View decorView = window.getDecorView();
-                if (decorView != null) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                        // API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
-                        WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window, decorView);
-                        // Use dark navigation bar icons (black) for visibility on light backgrounds
-                        // setAppearanceLightNavigationBars(true) = light navigation bar appearance = dark icons
-                        windowInsetsController.setAppearanceLightNavigationBars(true);
-                    } else {
-                        // API 21-22: Cannot programmatically change navigation bar icon color
-                        // Set a light navigation bar color to encourage dark icons (system behavior)
-                        @SuppressWarnings("deprecation")
-                        Window win = window;
-                        win.setNavigationBarColor(0xFFFFFFFF); // Solid white
-                    }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    // API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
+                    WindowInsetsControllerCompat windowInsetsController = WindowCompat.getInsetsController(window, decorView);
+                    // Use dark navigation bar icons (black) for visibility on light backgrounds
+                    // setAppearanceLightNavigationBars(true) = light navigation bar appearance = dark icons
+                    windowInsetsController.setAppearanceLightNavigationBars(true);
+                } else {
+                    // API 21-22: Cannot programmatically change navigation bar icon color
+                    // Set a light navigation bar color to encourage dark icons (system behavior)
+                    window.setNavigationBarColor(0xFFFFFFFF); // Solid white
                 }
             }
         }

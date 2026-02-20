@@ -542,21 +542,19 @@ public class MainActivity extends AppCompatActivity implements MainActivityView 
         window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
         window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
 
-        // Set status bar icon appearance to dark (black icons) for better visibility
-        // Since status bar is transparent and content behind may be light, use dark icons
+        // Set status bar icon appearance to dark (black icons) for better visibility.
+        // Background is white/light, so we need dark icons to be legible.
+        // SYSTEM_UI_FLAG_LIGHT_STATUS_BAR (when SET) = dark icons on light background.
+        // SYSTEM_UI_FLAG_LIGHT_STATUS_BAR (when CLEARED) = light/white icons (invisible on white).
         View decorView = getWindow().getDecorView();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // API 23+ (Marshmallow+): Use setSystemUiVisibility for light status bar icons
+            // API 23+: SET SYSTEM_UI_FLAG_LIGHT_STATUS_BAR to request dark (black) icons
             int flags = decorView.getSystemUiVisibility();
-            // Remove light status bar flag if present
-            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
             decorView.setSystemUiVisibility(flags);
         } else {
-            // API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
-            // On API 21-22, we cannot change icon color programmatically
-            // Set a dark status bar so white icons are visible (compromise for API 21-22)
-            // Use a dark color so white icons are visible
-            // This maintains some edge-to-edge while ensuring icons are visible
+            // API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR not available; fall back to solid
+            // dark status bar so the default white icons remain visible
             getWindow().setStatusBarColor(0xFF000000); // Solid black
         }
     }

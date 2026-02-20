@@ -43,12 +43,25 @@ import java.util.Locale;
 import androidx.core.os.ConfigurationCompat;
 
 /**
- * Helper Activity to launch RecognizerIntent and return results
- * This is needed because InputMethodService cannot launch activities on API 35+
- * 
- * Note: On Android 14+ (API 34+), broadcast delivery may be restricted to system apps.
- * This class manages the broadcast to ensure it reaches LIMEService's receiver.
+ * Helper Activity to launch RecognizerIntent and return results.
+ * <p>
+ * API-level considerations for voice input:
+ * <p>
+ *   API < 33 (Android 12L and below): getParcelableExtra(String) used
+ *       (non-typed, deprecated in API 33); broadcasts delivered without restrictions;
+ *       InputMethodService can launch activities directly.
+ *   API 33 (Android 13 / Tiramisu): getParcelableExtra(String, Class) introduced
+ *       (type-safe variant); runtime permission POST_NOTIFICATIONS required for foreground
+ *       services.
+ *   API 34 (Android 14 / UpsideDownCake): implicit broadcast delivery restricted
+ *       to system apps; setPackage() required on broadcast intents to ensure delivery;
+ *       background activity launch restrictions tightened.
+ *   API 35+ (Android 15+): InputMethodService cannot launch activities directly;
+ *       this helper Activity is required as a trampoline to start RecognizerIntent; static
+ *       field (sPendingVoiceText) used as primary result delivery mechanism to avoid broadcast
+ *       timing issues; broadcast sent as backup.
  */
+
 public class VoiceInputActivity extends ComponentActivity {
     private static final String TAG = "VoiceInputActivity";
     public static final String ACTION_VOICE_RESULT = "net.toload.main.hd.VOICE_INPUT_RESULT";
@@ -77,8 +90,9 @@ public class VoiceInputActivity extends ComponentActivity {
         
         // Make activity transparent
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        // FLAG_FULLSCREEN is deprecated in API 30+, but necessary for older APIs
-        @SuppressWarnings("deprecation")
+        // API 30+: FLAG_FULLSCREEN is deprecated; recommended to use
+        // WindowInsetsController to control system bars instead.
+        // API < 30: FLAG_FULLSCREEN is the standard way to hide the status bar.
         int flagFullscreen = WindowManager.LayoutParams.FLAG_FULLSCREEN;
         getWindow().setFlags(flagFullscreen, flagFullscreen);
         getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -90,8 +104,17 @@ public class VoiceInputActivity extends ComponentActivity {
                 new ActivityResultContracts.StartActivityForResult(),
                 this::handleVoiceInputResult);
         
-        // Get the voiceIntent passed from LIMEService, or create a default one
-        Intent voiceIntent = getIntent().getParcelableExtra(EXTRA_VOICE_INTENT, Intent.class);
+        // Get the voiceIntent passed from LIMEService, or create a default one.
+        // API 33+: use type-safe getParcelableExtra(String, Class) to avoid unchecked cast warnings.
+        // API < 33: use deprecated getParcelableExtra(String) which returns raw Parcelable.
+        Intent voiceIntent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // API 33+ (Tiramisu): type-safe parcelable extraction
+            voiceIntent = getIntent().getParcelableExtra(EXTRA_VOICE_INTENT, Intent.class);
+        } else {
+            // API < 33: deprecated untyped parcelable extraction
+            voiceIntent = getIntent().getParcelableExtra(EXTRA_VOICE_INTENT);
+        }
         if (voiceIntent == null) {
             Log.w(TAG, "onCreate(): voiceIntent is NULL, using fallback with system locale");
             // Fallback: create a basic voiceIntent if not provided - use system locale
@@ -102,10 +125,12 @@ public class VoiceInputActivity extends ComponentActivity {
             Locale systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
             String languageTag;
             try {
+                assert systemLocale != null;
                 languageTag = systemLocale.toLanguageTag();
             } catch (NoSuchMethodError e) {
                 languageTag = systemLocale.getLanguage();
-                if (systemLocale.getCountry() != null && !systemLocale.getCountry().isEmpty()) {
+                systemLocale.getCountry();
+                if (!systemLocale.getCountry().isEmpty()) {
                     languageTag += "-" + systemLocale.getCountry();
                 }
             }
@@ -170,8 +195,11 @@ public class VoiceInputActivity extends ComponentActivity {
         // Finish so the window closes and the text field regains input focus.
         finish();
 
-        // Also send broadcast as a backup mechanism, using ApplicationContext
-        // since this Activity's context may be invalid after finish().
+        // API 34+: implicit broadcast delivery restricted; setPackage() is required
+        // in sendVoiceResultBroadcast() to ensure the intent reaches LIMEService.
+        // API < 34: broadcast delivered without restriction, but setPackage() is still safe.
+        // Note: this broadcast is a backup mechanism; the primary delivery is via
+        // the static sPendingVoiceText field consumed in onStartInputView().
         if (recognizedText != null) {
             final String textToCommit = recognizedText;
             new Handler(Looper.getMainLooper()).postDelayed(
@@ -183,10 +211,15 @@ public class VoiceInputActivity extends ComponentActivity {
      * Send voice input result broadcast to LIMEService as a backup mechanism.
      * Uses getApplicationContext() because this Activity may already be destroyed
      * after finish() was called.
+     * <p>
+     * API 34+: implicit broadcasts are restricted; setPackage() makes this an
+     *          explicit-package broadcast so it can still be delivered.
+     * API < 34: setPackage() is optional but harmless; included for consistency.
      */
     private void sendVoiceResultBroadcast(String recognizedText) {
         try {
             Intent resultIntent = new Intent(ACTION_VOICE_RESULT);
+            // API 34+: required to set package for broadcast delivery to non-system apps
             resultIntent.setPackage(getPackageName());
             resultIntent.putExtra(EXTRA_RECOGNIZED_TEXT, recognizedText);
 
