@@ -26,8 +26,8 @@ package net.toload.main.hd;
 
 import android.content.Context;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,26 +40,49 @@ import java.lang.reflect.Method;
 import static org.junit.Assert.*;
 
 /**
- * Test LIMEService lifecycle methods using StubActivity to provide Context.
+ * Test LIMEService lifecycle methods using InstrumentationRegistry to provide Context.
  * This approach properly initializes the service via attachBaseContext(),
  * allowing onCreate() and other lifecycle methods to execute without NPE.
  */
 @RunWith(AndroidJUnit4.class)
 public class LIMEServiceWithStubActivityTest {
 
-    private ActivityScenario<StubActivity> scenario;
     private LIMEService limeService;
 
     @Before
     public void setUp() {
-        scenario = ActivityScenario.launch(StubActivity.class);
+        Context targetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LIMEService service = new LIMEService();
+        // attachBaseContext is declared in ContextWrapper on older APIs (e.g. API 28),
+        // but may be overridden higher in the hierarchy on newer APIs.
+        // Walk up the class hierarchy until we find the method declaration.
+        try {
+            Method attachBaseContext = null;
+            Class<?> clazz = android.app.Service.class;
+            while (clazz != null && attachBaseContext == null) {
+                try {
+                    attachBaseContext = clazz.getDeclaredMethod("attachBaseContext", Context.class);
+                } catch (NoSuchMethodException ignored) {
+                    clazz = clazz.getSuperclass();
+                }
+            }
+            if (attachBaseContext == null) {
+                throw new NoSuchMethodException("attachBaseContext not found in Service hierarchy");
+            }
+            attachBaseContext.setAccessible(true);
+            attachBaseContext.invoke(service, targetContext);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to attach base context to LIMEService", e);
+        }
+        // onCreate() creates SoftInputWindow (extends Dialog), which requires a Looper.
+        // Run it on the main thread (which has a Looper) and block until it completes.
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(service::onCreate);
+        limeService = service;
     }
 
     @After
     public void tearDown() {
-        if (scenario != null) {
-            scenario.close();
-        }
+        limeService = null;
     }
 
     /**
@@ -70,24 +93,14 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_1_OnCreateWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                // Create LIMEService with proper Context initialization
-                // This calls attachBaseContext() then onCreate() which initializes:
-                // - SearchSrv = new SearchServer(this)
-                // - mLIMEPref = new LIMEPreferenceManager(this)
-                // - Calls buildActivatedIMList()
-                // - Registers voice input receiver
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Verify service was created and onCreate() completed successfully
-                assertNotNull("LIMEService should be created", limeService);
-                assertNotNull("Service should have valid Context", limeService.getApplicationContext());
-                
-            } catch (Exception e) {
-                fail("onCreate() should not throw exception when Context is provided: " + e.getMessage());
-            }
-        });
+        try {
+            // Verify service was created and onCreate() completed successfully
+            assertNotNull("LIMEService should be created", limeService);
+            assertNotNull("Service should have valid Context", limeService.getApplicationContext());
+
+        } catch (Exception e) {
+            fail("onCreate() should not throw exception when Context is provided: " + e.getMessage());
+        }
     }
 
     /**
@@ -97,31 +110,27 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_2_ShowIMPickerWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call the actual showIMPicker() method using reflection (it's private)
-                Method showIMPickerMethod = LIMEService.class.getDeclaredMethod("showIMPicker");
-                showIMPickerMethod.setAccessible(true);
-                showIMPickerMethod.invoke(limeService);
-                
-                // Method executed successfully, covered the dialog creation code
-                assertTrue("showIMPicker() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: mInputView is null, so window token setup will fail
-                // But the important code paths (buildActivatedIMList, dialog builder) were covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be NPE or acceptable", 
-                          cause instanceof NullPointerException || cause != null);
-            } catch (Exception e) {
-                // Reflection exceptions are acceptable as long as method was invoked
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call the actual showIMPicker() method using reflection (it's private)
+            Method showIMPickerMethod = LIMEService.class.getDeclaredMethod("showIMPicker");
+            showIMPickerMethod.setAccessible(true);
+            showIMPickerMethod.invoke(limeService);
+
+            // Method executed successfully, covered the dialog creation code
+            assertTrue("showIMPicker() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: mInputView is null, so window token setup will fail
+            // But the important code paths (buildActivatedIMList, dialog builder) were covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be NPE or acceptable",
+                      cause instanceof NullPointerException || cause != null);
+        } catch (Exception e) {
+            // Reflection exceptions are acceptable as long as method was invoked
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test showHanConvertPicker() dialog method with proper Context.
      * This method creates a dialog to select Han conversion option.
@@ -129,31 +138,27 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_3_ShowHanConvertPickerWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call the actual showHanConvertPicker() method using reflection (it's private)
-                Method showHanConvertPickerMethod = LIMEService.class.getDeclaredMethod("showHanConvertPicker");
-                showHanConvertPickerMethod.setAccessible(true);
-                showHanConvertPickerMethod.invoke(limeService);
-                
-                // Method executed successfully, covered the dialog creation code
-                assertTrue("showHanConvertPicker() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: mInputView is null, so window token setup will fail
-                // But the important code paths (dialog builder, preference access) were covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be NPE or acceptable", 
-                          cause instanceof NullPointerException || cause != null);
-            } catch (Exception e) {
-                // Reflection exceptions are acceptable as long as method was invoked
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call the actual showHanConvertPicker() method using reflection (it's private)
+            Method showHanConvertPickerMethod = LIMEService.class.getDeclaredMethod("showHanConvertPicker");
+            showHanConvertPickerMethod.setAccessible(true);
+            showHanConvertPickerMethod.invoke(limeService);
+
+            // Method executed successfully, covered the dialog creation code
+            assertTrue("showHanConvertPicker() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: mInputView is null, so window token setup will fail
+            // But the important code paths (dialog builder, preference access) were covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be NPE or acceptable",
+                      cause instanceof NullPointerException || cause != null);
+        } catch (Exception e) {
+            // Reflection exceptions are acceptable as long as method was invoked
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test handleOptions() dialog method with proper Context.
      * This method creates the options menu dialog that can launch other dialogs.
@@ -161,31 +166,27 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_4_HandleOptionsWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call the actual handleOptions() method using reflection (it's private)
-                Method handleOptionsMethod = LIMEService.class.getDeclaredMethod("handleOptions");
-                handleOptionsMethod.setAccessible(true);
-                handleOptionsMethod.invoke(limeService);
-                
-                // Method executed successfully, covered the dialog creation code
-                assertTrue("handleOptions() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: mInputView is null, so window token setup will fail
-                // But the important code paths (dialog builder, resource access) were covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be NPE or acceptable", 
-                          cause instanceof NullPointerException || cause != null);
-            } catch (Exception e) {
-                // Reflection exceptions are acceptable as long as method was invoked
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call the actual handleOptions() method using reflection (it's private)
+            Method handleOptionsMethod = LIMEService.class.getDeclaredMethod("handleOptions");
+            handleOptionsMethod.setAccessible(true);
+            handleOptionsMethod.invoke(limeService);
+
+            // Method executed successfully, covered the dialog creation code
+            assertTrue("handleOptions() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: mInputView is null, so window token setup will fail
+            // But the important code paths (dialog builder, resource access) were covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be NPE or acceptable",
+                      cause instanceof NullPointerException || cause != null);
+        } catch (Exception e) {
+            // Reflection exceptions are acceptable as long as method was invoked
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test launchSettings() method with proper Context.
      * This method launches the LIMEPreference activity.
@@ -193,29 +194,25 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_5_LaunchSettingsWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call launchSettings() using reflection (it's private)
-                Method launchSettingsMethod = LIMEService.class.getDeclaredMethod("launchSettings");
-                launchSettingsMethod.setAccessible(true);
-                launchSettingsMethod.invoke(limeService);
-                
-                // Method executed successfully, covered Intent creation and startActivity
-                assertTrue("launchSettings() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // May throw if activity can't be started in test environment
-                // But the method code (Intent creation) was covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be acceptable", cause != null);
-            } catch (Exception e) {
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call launchSettings() using reflection (it's private)
+            Method launchSettingsMethod = LIMEService.class.getDeclaredMethod("launchSettings");
+            launchSettingsMethod.setAccessible(true);
+            launchSettingsMethod.invoke(limeService);
+
+            // Method executed successfully, covered Intent creation and startActivity
+            assertTrue("launchSettings() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // May throw if activity can't be started in test environment
+            // But the method code (Intent creation) was covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be acceptable", cause != null);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test launchRecognizerIntent() method with proper Context.
      * This method checks for voice recognition availability and launches it.
@@ -223,34 +220,30 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_6_LaunchRecognizerIntentWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Create a voice recognition Intent
-                android.content.Intent voiceIntent = new android.content.Intent(
-                    android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                
-                // Call launchRecognizerIntent() using reflection (it's private)
-                Method launchRecognizerMethod = LIMEService.class.getDeclaredMethod(
-                    "launchRecognizerIntent", android.content.Intent.class);
-                launchRecognizerMethod.setAccessible(true);
-                launchRecognizerMethod.invoke(limeService, voiceIntent);
-                
-                // Method executed successfully, covered PackageManager query
-                assertTrue("launchRecognizerIntent() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: May not have voice recognition or can't launch in test
-                // But the queryIntentActivities() code was covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be acceptable", cause != null);
-            } catch (Exception e) {
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Create a voice recognition Intent
+            android.content.Intent voiceIntent = new android.content.Intent(
+                android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+
+            // Call launchRecognizerIntent() using reflection (it's private)
+            Method launchRecognizerMethod = LIMEService.class.getDeclaredMethod(
+                "launchRecognizerIntent", android.content.Intent.class);
+            launchRecognizerMethod.setAccessible(true);
+            launchRecognizerMethod.invoke(limeService, voiceIntent);
+
+            // Method executed successfully, covered PackageManager query
+            assertTrue("launchRecognizerIntent() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: May not have voice recognition or can't launch in test
+            // But the queryIntentActivities() code was covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be acceptable", cause != null);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test vibrate() method with proper Context.
      * This method accesses Vibrator system service and handles API level differences.
@@ -258,29 +251,25 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_7_VibrateWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call vibrate(long) using reflection (it's private)
-                Method vibrateMethod = LIMEService.class.getDeclaredMethod("vibrate", long.class);
-                vibrateMethod.setAccessible(true);
-                vibrateMethod.invoke(limeService, 50L);
-                
-                // Method executed successfully, covered Vibrator access and API branching
-                assertTrue("vibrate() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: May not have VIBRATE permission or Vibrator in test
-                // But the method code (getVibrator, API level check) was covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be acceptable", cause != null);
-            } catch (Exception e) {
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call vibrate(long) using reflection (it's private)
+            Method vibrateMethod = LIMEService.class.getDeclaredMethod("vibrate", long.class);
+            vibrateMethod.setAccessible(true);
+            vibrateMethod.invoke(limeService, 50L);
+
+            // Method executed successfully, covered Vibrator access and API branching
+            assertTrue("vibrate() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: May not have VIBRATE permission or Vibrator in test
+            // But the method code (getVibrator, API level check) was covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be acceptable", cause != null);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
-    
+
     /**
      * Test doVibrateSound() method with proper Context.
      * This method handles vibration and sound effects based on preferences.
@@ -288,50 +277,46 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_8_DoVibrateSoundWithContext() {
-        scenario.onActivity(activity -> {
+        try {
+            // Set hasVibration and hasSound flags directly via reflection to enable coverage
             try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Set hasVibration and hasSound flags directly via reflection to enable coverage
-                try {
-                    Field hasVibrationField = LIMEService.class.getDeclaredField("hasVibration");
-                    hasVibrationField.setAccessible(true);
-                    hasVibrationField.set(limeService, true);
-                    
-                    Field hasSoundField = LIMEService.class.getDeclaredField("hasSound");
-                    hasSoundField.setAccessible(true);
-                    hasSoundField.set(limeService, true);
-                } catch (Exception e) {
-                    // If setting fields fails, try loadSettings
-                    try {
-                        Method loadSettingsMethod = LIMEService.class.getDeclaredMethod("loadSettings");
-                        loadSettingsMethod.setAccessible(true);
-                        loadSettingsMethod.invoke(limeService);
-                    } catch (Exception e2) {
-                        // loadSettings may fail, but we can still test doVibrateSound
-                    }
-                }
-                
-                // Test with different key codes to cover switch branches
-                limeService.doVibrateSound(32); // Space key
-                limeService.doVibrateSound(-5); // Delete key (KEYCODE_DELETE)
-                limeService.doVibrateSound(10); // Enter key (MY_KEYCODE_ENTER) 
-                limeService.doVibrateSound(65); // Standard key
-                
-                // Method executed successfully, covered AudioManager/vibration logic
-                assertTrue("doVibrateSound() executed", true);
-                
+                Field hasVibrationField = LIMEService.class.getDeclaredField("hasVibration");
+                hasVibrationField.setAccessible(true);
+                hasVibrationField.set(limeService, true);
+
+                Field hasSoundField = LIMEService.class.getDeclaredField("hasSound");
+                hasSoundField.setAccessible(true);
+                hasSoundField.set(limeService, true);
             } catch (Exception e) {
-                // Expected: May not have permissions or services in test environment
-                // But the method code (AudioManager check, preference checks) was covered
-                assertTrue("Exception should be acceptable", 
-                          e instanceof NullPointerException || 
-                          e instanceof SecurityException ||
-                          e != null);
+                // If setting fields fails, try loadSettings
+                try {
+                    Method loadSettingsMethod = LIMEService.class.getDeclaredMethod("loadSettings");
+                    loadSettingsMethod.setAccessible(true);
+                    loadSettingsMethod.invoke(limeService);
+                } catch (Exception e2) {
+                    // loadSettings may fail, but we can still test doVibrateSound
+                }
             }
-        });
+
+            // Test with different key codes to cover switch branches
+            limeService.doVibrateSound(32); // Space key
+            limeService.doVibrateSound(-5); // Delete key (KEYCODE_DELETE)
+            limeService.doVibrateSound(10); // Enter key (MY_KEYCODE_ENTER)
+            limeService.doVibrateSound(65); // Standard key
+
+            // Method executed successfully, covered AudioManager/vibration logic
+            assertTrue("doVibrateSound() executed", true);
+
+        } catch (Exception e) {
+            // Expected: May not have permissions or services in test environment
+            // But the method code (AudioManager check, preference checks) was covered
+            assertTrue("Exception should be acceptable",
+                      e instanceof NullPointerException ||
+                      e instanceof SecurityException ||
+                      e != null);
+        }
     }
-    
+
     /**
      * Test switchToNextActivatedIM() method with proper Context.
      * This method switches between activated input methods.
@@ -339,30 +324,26 @@ public class LIMEServiceWithStubActivityTest {
      */
     @Test
     public void test_5_24_9_SwitchToNextActivatedIMWithContext() {
-        scenario.onActivity(activity -> {
-            try {
-                limeService = activity.createLIMEServiceWithContext();
-                
-                // Call switchToNextActivatedIM(boolean) using reflection (it's private)
-                Method switchMethod = LIMEService.class.getDeclaredMethod(
-                    "switchToNextActivatedIM", boolean.class);
-                switchMethod.setAccessible(true);
-                switchMethod.invoke(limeService, true); // forward = true
-                
-                // Method executed successfully, covered buildActivatedIMList and IM switching logic
-                assertTrue("switchToNextActivatedIM() executed", true);
-                
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                // Expected: mKeyboardSwitcher is null, will throw NPE at that point
-                // But the buildActivatedIMList() and IM list logic was covered
-                Throwable cause = e.getCause();
-                assertTrue("Exception should be NPE or acceptable", 
-                          cause instanceof NullPointerException || 
-                          cause instanceof AssertionError ||
-                          cause != null);
-            } catch (Exception e) {
-                fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
-            }
-        });
+        try {
+            // Call switchToNextActivatedIM(boolean) using reflection (it's private)
+            Method switchMethod = LIMEService.class.getDeclaredMethod(
+                "switchToNextActivatedIM", boolean.class);
+            switchMethod.setAccessible(true);
+            switchMethod.invoke(limeService, true); // forward = true
+
+            // Method executed successfully, covered buildActivatedIMList and IM switching logic
+            assertTrue("switchToNextActivatedIM() executed", true);
+
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            // Expected: mKeyboardSwitcher is null, will throw NPE at that point
+            // But the buildActivatedIMList() and IM list logic was covered
+            Throwable cause = e.getCause();
+            assertTrue("Exception should be NPE or acceptable",
+                      cause instanceof NullPointerException ||
+                      cause instanceof AssertionError ||
+                      cause != null);
+        } catch (Exception e) {
+            fail("Unexpected exception: " + e.getClass().getName() + ": " + e.getMessage());
+        }
     }
 }

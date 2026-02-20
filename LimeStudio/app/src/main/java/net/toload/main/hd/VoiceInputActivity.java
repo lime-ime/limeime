@@ -44,9 +44,9 @@ import androidx.core.os.ConfigurationCompat;
 
 /**
  * Helper Activity to launch RecognizerIntent and return results.
- * <p>
+ *<p>
  * API-level considerations for voice input:
- * <p>
+ *<p>
  *   API < 33 (Android 12L and below): getParcelableExtra(String) used
  *       (non-typed, deprecated in API 33); broadcasts delivered without restrictions;
  *       InputMethodService can launch activities directly.

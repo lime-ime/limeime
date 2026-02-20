@@ -803,7 +803,9 @@ public class SearchServer {
 
 
         //Jeremy '15,7,16 reset abandonPhraseSuggestion if code length ==1
-        if(mLIMEPref.getSmartChineseInput() && abandonPhraseSuggestion && code.length()==1){
+        // Skip for prefetch queries — they are background cache warming, not real user input,
+        // and must not disturb the phrase suggestion state.
+        if (!prefetchCache && mLIMEPref.getSmartChineseInput() && abandonPhraseSuggestion && code.length()==1){
             clearRunTimeSuggestion(false);
         }
         // make run-time suggestion '15, 6, 9 Jeremy.

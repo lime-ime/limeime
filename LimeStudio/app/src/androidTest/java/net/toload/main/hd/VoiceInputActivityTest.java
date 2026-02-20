@@ -362,13 +362,15 @@ public class VoiceInputActivityTest {
 
     @Test
     public void testVoiceInputActivityUsesOnlyBroadcastCommunication() {
-        // Test that VoiceInputActivity's public interface only uses broadcast communication
-        // Check that the only public constants are ACTION_VOICE_RESULT and EXTRA_RECOGNIZED_TEXT
+        // Test that VoiceInputActivity's public interface only uses the expected constants:
+        //   - ACTION_VOICE_RESULT / EXTRA_RECOGNIZED_TEXT: broadcast result interface
+        //   - EXTRA_VOICE_INTENT: startup interface (LIMEService passes the voice Intent via this key)
+        //   - TAG: logging
         try {
             Class<?> activityClass = VoiceInputActivity.class;
             // Use getDeclaredFields() to only get fields declared in this class, not inherited
             java.lang.reflect.Field[] fields = activityClass.getDeclaredFields();
-            
+
             int publicConstantCount = 0;
             for (java.lang.reflect.Field field : fields) {
                 if (java.lang.reflect.Modifier.isPublic(field.getModifiers()) &&
@@ -376,15 +378,15 @@ public class VoiceInputActivityTest {
                     java.lang.reflect.Modifier.isFinal(field.getModifiers()) &&
                     field.getType() == String.class) {
                     String fieldName = field.getName();
-                    // Allow TAG, ACTION_VOICE_RESULT, and EXTRA_RECOGNIZED_TEXT
-                    assertTrue("Public constant should be TAG, ACTION_VOICE_RESULT or EXTRA_RECOGNIZED_TEXT, but found: " + fieldName,
-                            fieldName.equals("ACTION_VOICE_RESULT") || 
+                    assertTrue("Unexpected public constant: " + fieldName,
+                            fieldName.equals("ACTION_VOICE_RESULT") ||
                             fieldName.equals("EXTRA_RECOGNIZED_TEXT") ||
+                            fieldName.equals("EXTRA_VOICE_INTENT") ||
                             fieldName.equals("TAG"));
                     publicConstantCount++;
                 }
             }
-            
+
             assertTrue("Should have at least 2 public String constants (ACTION_VOICE_RESULT, EXTRA_RECOGNIZED_TEXT)",
                     publicConstantCount >= 2);
         } catch (Exception e) {

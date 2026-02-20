@@ -2133,8 +2133,9 @@ public class LIMEService extends InputMethodService
         }
 
         // Update keyboard xml information
-        assert mKeyboardSwitcher != null;
-        currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
+        if (mKeyboardSwitcher != null) {
+            currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
+        }
     }
 
     private void buildActivatedIMList() {
@@ -3772,7 +3773,17 @@ public class LIMEService extends InputMethodService
                 // API 29+: use predefined effects optimized for device haptic hardware
                 int effectId = mapDurationToVibrationEffect(duration);
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
-                vibrator.vibrate(effect);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    // API 33+: supply USAGE_TOUCH so Android 13+ routes vibration through the
+                    // touch-feedback channel and respects "Keyboard vibration" system setting
+                    // (without this, Android 16 targeting SDK 36 silences the vibration)
+                    android.os.VibrationAttributes attrs = new android.os.VibrationAttributes.Builder()
+                            .setUsage(android.os.VibrationAttributes.USAGE_TOUCH)
+                            .build();
+                    vibrator.vibrate(effect, attrs);
+                } else {
+                    vibrator.vibrate(effect);
+                }
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 // API 26-28: use createOneShot
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
@@ -4001,21 +4012,28 @@ public class LIMEService extends InputMethodService
         Intent voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
 
-        // Use actual system locale for voice input (user's native language)
-        // Use ConfigurationCompat to retrieve the top system locale without using
-        // the deprecated Configuration.locale field.
-        Locale systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
-        String languageTag;
+        // Defensive: fallback to "en" if locale/resources unavailable (for test envs)
+        String languageTag = "en";
         try {
-            assert systemLocale != null;
-            languageTag = systemLocale.toLanguageTag();
-        } catch (NoSuchMethodError e) {
-            // Fallback for older runtimes: construct BCP-47-like tag
-            languageTag = systemLocale.getLanguage();
-            systemLocale.getCountry();
-            if (!systemLocale.getCountry().isEmpty()) {
-                languageTag += "-" + systemLocale.getCountry();
+            Locale systemLocale = null;
+            try {
+                systemLocale = ConfigurationCompat.getLocales(getResources().getConfiguration()).get(0);
+            } catch (Exception e) {
+                // getResources() or getConfiguration() may throw in test env
             }
+            if (systemLocale != null) {
+                try {
+                    languageTag = systemLocale.toLanguageTag();
+                } catch (NoSuchMethodError e) {
+                    languageTag = systemLocale.getLanguage();
+                    String country = systemLocale.getCountry();
+                    if (country != null && !country.isEmpty()) {
+                        languageTag += "-" + country;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // fallback to default "en"
         }
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag);
         Log.i(TAG, "getVoiceIntent() - Using system locale for voice input: " + languageTag);
