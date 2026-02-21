@@ -348,11 +348,11 @@ public class SetupImLoadDialog extends DialogFragment {
                 };
             case LIME.DB_TABLE_ARRAY:
                 return new ButtonConfig[]{
-                    new ButtonConfig(R.string.l3_im_download_from_array, "31,999", LIME.IM_ARRAY)
+                    new ButtonConfig(R.string.l3_im_download_from_array, "32,386", LIME.IM_ARRAY)
                 };
             case LIME.DB_TABLE_ARRAY10:
                 return new ButtonConfig[]{
-                    new ButtonConfig(R.string.l3_im_download_from_array10, "31,700", LIME.IM_ARRAY10)
+                    new ButtonConfig(R.string.l3_im_download_from_array10, "32,120", LIME.IM_ARRAY10)
                 };
             case LIME.DB_TABLE_PINYIN:
                 return new ButtonConfig[]{

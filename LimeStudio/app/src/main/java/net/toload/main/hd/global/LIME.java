@@ -110,9 +110,9 @@ public class LIME {
 	public static final String DATABASE_CLOUD_IM_CJ_BIG5 = DATABASE_CLOUD_URL_BASED + "cjbig5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
 	public static final String DATABASE_CLOUD_IM_CJ_KEYBOARD = "cj";
-	public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.zip";
+	public static final String DATABASE_CLOUD_IM_ARRAY10 = DATABASE_CLOUD_URL_BASED + "array10.limedb";
 	public static final String DATABASE_CLOUD_IM_ARRAY10_KEYBOARD = "phonenum";
-	public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.zip";
+	public static final String DATABASE_CLOUD_IM_ARRAY = DATABASE_CLOUD_URL_BASED + "array.limedb";
 	public static final String DATABASE_CLOUD_IM_ARRAY_KEYBOARD = "arraynum";
 	public static final String DATABASE_CLOUD_IM_HS = DATABASE_CLOUD_URL_BASED + "hs.zip";
 	public static final String DATABASE_CLOUD_IM_HS_V1 = DATABASE_CLOUD_URL_BASED + "hs1.zip";
