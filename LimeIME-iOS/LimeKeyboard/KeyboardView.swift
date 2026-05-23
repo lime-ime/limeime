@@ -161,6 +161,20 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private var repeatTimer: Timer?
     private var repeatKeyDef: KeyDef?
     private weak var globeButton: UIButton?
+    /// Weak ref to the bottom-row `-3` (LimeKeyCode.done) button — needed in legacy
+    /// iPhone globe mode so we can swap its SF Symbol image when the flag flips.
+    private weak var keyboardDoneButton: UIButton?
+
+    /// Set by KeyboardViewController. When true, the `-3` key paints as a globe and
+    /// hands tap + long-press to iOS' input-mode picker (spec: docs/IPHONE_LEGACY_KB.md).
+    /// Changing this triggers a full layout rebuild because the bottom-row gesture
+    /// wiring is determined at button-construction time.
+    var legacyGlobeMode: Bool = false {
+        didSet {
+            guard oldValue != legacyGlobeMode else { return }
+            setLayout(layout)
+        }
+    }
     private var shiftHoldTrackingActive = false
     private static let styledContentTag = 92731
     /// Set by KeyboardViewController so globe button uses the system keyboard picker.

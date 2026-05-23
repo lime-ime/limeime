@@ -23,6 +23,23 @@ final class CandidateBarView: UIView {
     private let dismissButton = UIButton(type: .system)
     private let emojiButton   = UIButton(type: .system)
     private let optionsButton = UIButton(type: .system)
+
+    /// Set by KeyboardViewController. When true, `optionsButton` paints as
+    /// `keyboard.chevron.compact.down`, taps dismiss the keyboard, long-press
+    /// shows the LIME options menu, and it stays visible regardless of bar
+    /// state (spec: docs/IPHONE_LEGACY_KB.md).
+    var legacyGlobeMode: Bool = false {
+        didSet {
+            guard oldValue != legacyGlobeMode else { return }
+            applyLegacyOptionsBinding()
+        }
+    }
+
+    /// Long-press recognizer attached to `optionsButton` in legacy mode so a
+    /// long press routes to the LIME options menu while a short tap dismisses.
+    /// Kept as a weak property so `applyLegacyOptionsBinding()` can remove it
+    /// when leaving legacy mode.
+    private weak var legacyOptionsLongPress: UILongPressGestureRecognizer?
     /// Leading region that displays the composing keyname. iPad uses this
     /// in lieu of the in-keyboard composingPopupLabel strip (which wastes
     /// vertical space). iPhone keeps the strip and leaves this collapsed.
@@ -828,6 +845,12 @@ final class CandidateBarView: UIView {
     @objc private func emojiTapped() {
         fireHaptic()
         delegate?.candidateBarViewDidRequestEmoji(self)
+    }
+
+    /// No-op stub — full body lands in Phase 4. Declared in Phase 2 so the
+    /// `legacyGlobeMode` didSet compiles.
+    private func applyLegacyOptionsBinding() {
+        // Intentionally empty; see Phase 4 for the real implementation.
     }
 
     @objc private func optionsTapped() {
