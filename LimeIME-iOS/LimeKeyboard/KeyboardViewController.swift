@@ -2728,10 +2728,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {
         // Keyboard key (code -3): show the LIME options menu (spec §10).
         // Globe long-press is routed through UIInputViewController.handleInputModeList.
-        // Per spec §10: briefly show globe icon preview to satisfy Apple's globe affordance requirement,
-        // then display the inline options menu.
+        // The globe-icon preview popup that used to flash before the menu is
+        // removed — modern iPhones, iPad, and legacy iPhones each have a
+        // dedicated globe affordance elsewhere (system action bar, in-keyboard
+        // globe key, or candidate-bar ☰), so the preview is redundant.
         if keyDef.code == LimeKeyCode.done.rawValue {
-            showGlobeKeyPreview(for: keyDef, in: view)
             showGlobeMenu(from: view)
         }
         // Space key: show LIME-internal IM picker only (spec §10: NOT iOS keyboard switch)
