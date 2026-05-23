@@ -906,14 +906,14 @@
           "popupCharacters": ""
         },
         {
-          "code": -99,
+          "code": -201,
           "codes": [
-            -99
+            -201
           ],
           "label": "",
           "sublabel": "",
           "widthPercent": 7.0,
-          "icon": "mic",
+          "icon": "face.smiling",
           "isModifier": true,
           "isRepeatable": false,
           "isSticky": false,

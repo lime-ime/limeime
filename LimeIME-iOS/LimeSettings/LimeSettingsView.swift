@@ -1,4 +1,4 @@
-// LimeSettingsView.swift
+﻿// LimeSettingsView.swift
 // LimeIME-iOS
 //
 // Root 5-tab TabView. Hosted via UIHostingController from MainViewController.
@@ -138,11 +138,12 @@ private extension View {
 struct ConstrainedDetailLayout<Trailing: View>: ViewModifier {
     let title: String
     let trailing: () -> Trailing
+    private let titleSectionHeight: CGFloat = 60
     @Environment(\.dismiss) private var dismiss
 
     func body(content: Content) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack {
                 Button {
                     dismiss()
                 } label: {
@@ -151,17 +152,19 @@ struct ConstrainedDetailLayout<Trailing: View>: ViewModifier {
                         .foregroundStyle(.tint)
                 }
                 Spacer()
-                trailing()
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
 
-            Text(title)
-                .font(.largeTitle.bold())
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .center, spacing: 12) {
+                Text(title)
+                    .font(.largeTitle.bold())
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                trailing()
+            }
+                .frame(height: titleSectionHeight)
                 .padding(.horizontal, 20)
-                .padding(.top, 4)
-                .padding(.bottom, 8)
 
             content
         }
@@ -172,6 +175,19 @@ struct ConstrainedDetailLayout<Trailing: View>: ViewModifier {
 }
 
 extension View {
+    /// Match SetupTabView's white page with gray grouped blocks for
+    /// settings/list-style screens that use SwiftUI List or Form.
+    func setupMatchedGroupedSurface() -> some View {
+        self
+            .scrollContentBackground(.hidden)
+            .background(Color(.systemBackground))
+    }
+
+    /// Apply SetupTabView's gray block fill to rows inside a List/Form.
+    func setupMatchedSectionBlock() -> some View {
+        self.listRowBackground(Color(.secondarySystemBackground))
+    }
+
     /// Apply the standard constrained-detail layout (chevron + static title
     /// + 560pt column + hidden system nav bar). No trailing toolbar items.
     func constrainedDetailLayout(_ title: String) -> some View {

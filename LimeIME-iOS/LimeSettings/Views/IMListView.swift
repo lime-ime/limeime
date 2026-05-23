@@ -1,4 +1,4 @@
-// IMListView.swift
+﻿// IMListView.swift
 // LimeIME-iOS
 //
 // IM Manager tab — list of installed IMs with enable/disable and reorder.
@@ -131,12 +131,14 @@ struct IMListView: View {
                             .onMove(perform: moveIMs)
                         }
                     }
+                    .setupMatchedSectionBlock()
 
                     Section(header: Text("關聯字庫")) {
                         NavigationLink(value: DetailSelection.related) {
                             Label("關聯字庫", systemImage: "text.bubble")
                         }
                     }
+                    .setupMatchedSectionBlock()
                 }
                 .overlay(alignment: .bottomTrailing) {
                     Button {
@@ -153,6 +155,7 @@ struct IMListView: View {
                     .padding([.bottom, .trailing], 20)
                 }
                 .listStyle(.insetGrouped)
+                .setupMatchedGroupedSurface()
             }
         }
     }

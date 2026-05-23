@@ -81,6 +81,7 @@ struct IMInstallView: View {
                     }
                 }
             }
+            .setupMatchedSectionBlock()
 
             // MARK: Status
             if !statusMessage.isEmpty {
@@ -89,6 +90,7 @@ struct IMInstallView: View {
                         .font(.footnote)
                         .foregroundColor(.secondary)
                 }
+                .setupMatchedSectionBlock()
             }
 
             // MARK: Per-IM DisclosureGroups (§5.3 / §13.3)
@@ -151,8 +153,10 @@ struct IMInstallView: View {
                     }
                 }
             }
+            .setupMatchedSectionBlock()
         }
         .listStyle(.insetGrouped)
+        .setupMatchedGroupedSurface()
         .constrainedDetailLayout("下載 / 匯入輸入法") {
             Button {
                 downloadManager.refreshInstalledTables()

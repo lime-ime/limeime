@@ -92,6 +92,7 @@ struct IMDetailView: View {
                 }
                 LabeledContent("筆數", value: totalRecord)
             }
+            .setupMatchedSectionBlock()
 
             if im.tableNick != "related" {
                 Section(header: Text("軟鍵盤配置")) {
@@ -99,6 +100,7 @@ struct IMDetailView: View {
                         LabeledContent("鍵盤佈局", value: keyboardName.isEmpty ? "—" : keyboardName)
                     }
                 }
+                .setupMatchedSectionBlock()
             }
 
             // Phonetic keyboard type (§5.2.2 — moved here because the pref only
@@ -114,6 +116,7 @@ struct IMDetailView: View {
                         updatePhoneticKeyboard(type: newType)
                     }
                 }
+                .setupMatchedSectionBlock()
             }
 
             // Array10 phone-numpad auto-commit setting
@@ -131,6 +134,7 @@ struct IMDetailView: View {
                         }
                     }
                 }
+                .setupMatchedSectionBlock()
             }
 
             // §13.3 — shown only for the user-built custom IM
@@ -151,6 +155,7 @@ struct IMDetailView: View {
                         }
                     }
                 }
+                .setupMatchedSectionBlock()
             }
 
             Section(header: Text(im.tableNick == "related" ? "關聯字庫" : "字根資料表")) {
@@ -165,6 +170,7 @@ struct IMDetailView: View {
                     }
                 }
             }
+            .setupMatchedSectionBlock()
 
             if im.tableNick == "related" {
                 Section {
@@ -178,12 +184,14 @@ struct IMDetailView: View {
                         }
                     }
                 }
+                .setupMatchedSectionBlock()
             }
 
             if im.tableNick != "related" {
                 Section(header: Text("選項")) {
                     Toggle("刪除時備份已學習記錄", isOn: backupOnDeleteBinding)
                 }
+                .setupMatchedSectionBlock()
             }
 
             if im.tableNick != "related" {
@@ -203,18 +211,19 @@ struct IMDetailView: View {
                     }
                     .disabled(isRemoving)
                 }
+                .setupMatchedSectionBlock()
             }
         }
-        .constrainedDetailLayout(im.label)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    showSharePicker = true
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                }
-                .disabled(isExporting)
+        .setupMatchedGroupedSurface()
+        .constrainedDetailLayout(im.label) {
+            Button {
+                showSharePicker = true
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.title2.weight(.semibold))
+                    .frame(width: 44, height: 44)
             }
+            .disabled(isExporting)
         }
         .confirmationDialog("匯出格式", isPresented: $showSharePicker, titleVisibility: .visible) {
             if im.tableNick != "related" {

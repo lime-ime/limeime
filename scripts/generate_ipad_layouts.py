@@ -14,7 +14,7 @@ LAYOUTS_DIR = os.path.normpath(os.path.join(SCRIPT_DIR,
 # LimeKeyCode values (mirror LimeKeyCode.swift)
 C_ENTER = 10; C_SPACE = 32; C_DELETE = -5; C_SHIFT = -1
 C_DONE  = -3; C_SYM   = -2; C_EN    = -9;  C_IM    = -10
-C_GLOBE = -200; C_MENU = -100; C_MIC = -99; C_TAB = 9
+C_GLOBE = -200; C_MENU = -100; C_EMOJI = -201; C_TAB = 9
 C_ARRL = -30; C_ARRR = -31; C_ARRU = -32; C_ARRD = -33
 
 
@@ -52,8 +52,8 @@ def fix_total(keys, target=100.0):
 # ---------------------------------------------------------------------------
 
 def bottom_row(sym='.?123', left_cjk=False, cjk=False, shifted=False):
-    # Non-CJK: globe(8) + left(10) + mic(7) + space(57) + sym(10) + dismiss(8) = 100
-    # CJK:     globe(8) + left(10) + mic(7) + space(50) + ，/。(7) + sym(10) + dismiss(8) = 100
+    # Non-CJK: globe(8) + left(10) + emoji(7) + space(57) + sym(10) + dismiss(8) = 100
+    # CJK:     globe(8) + left(10) + emoji(7) + space(50) + ，/。(7) + sym(10) + dismiss(8) = 100
     # shifted: ，/。 key becomes 。only
     # left_cjk=True: replace left sym key with 中 (C_IM) key for symbol layouts
     left_key = (mk(C_IM, label='中', width=10.0, mod=True) if left_cjk
@@ -64,7 +64,7 @@ def bottom_row(sym='.?123', left_cjk=False, cjk=False, shifted=False):
         return fix_total([
             mk(C_GLOBE, icon='globe',                         width=8.0,  mod=True, lp=C_MENU),
             left_key,
-            mk(C_MIC,   icon='mic',                           width=7.0,  mod=True),
+            mk(C_EMOJI, icon='face.smiling',                   width=7.0,  mod=True),
             mk(C_SPACE, icon='space.bar',                     width=50.0),
             comma_key,
             mk(C_SYM,   label=sym,                            width=10.0, mod=True),
@@ -73,7 +73,7 @@ def bottom_row(sym='.?123', left_cjk=False, cjk=False, shifted=False):
     return fix_total([
         mk(C_GLOBE, icon='globe',                         width=8.0,  mod=True, lp=C_MENU),
         left_key,
-        mk(C_MIC,   icon='mic',                           width=7.0,  mod=True),
+        mk(C_EMOJI, icon='face.smiling',                   width=7.0,  mod=True),
         mk(C_SPACE, icon='space.bar',                     width=57.0),
         mk(C_SYM,   label=sym,                            width=10.0, mod=True),
         mk(C_DONE,  icon='keyboard.chevron.compact.down', width=8.0,  mod=True, lp=C_MENU),

@@ -1,4 +1,4 @@
-// KeyboardPickerView.swift
+﻿// KeyboardPickerView.swift
 // LimeIME-iOS
 //
 // Soft keyboard layout selection for a given IM.
@@ -41,7 +41,9 @@ struct KeyboardPickerView: View {
                     selectKeyboard(kb)
                 }
             }
+            .setupMatchedSectionBlock()
         }
+        .setupMatchedGroupedSurface()
         .constrainedDetailLayout("選擇鍵盤佈局")
         .task { await loadKeyboards() }
     }

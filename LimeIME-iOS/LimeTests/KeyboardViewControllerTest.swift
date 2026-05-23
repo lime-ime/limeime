@@ -104,6 +104,21 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    func testAllIPadJsonLayoutsUseEmojiInsteadOfMic() throws {
+        let layoutsURL = projectFileURL("LimeKeyboard/Layouts")
+        let urls = try FileManager.default.contentsOfDirectory(
+            at: layoutsURL,
+            includingPropertiesForKeys: nil
+        ).filter { $0.lastPathComponent.contains("_ipad") && $0.pathExtension == "json" }
+
+        XCTAssertFalse(urls.isEmpty)
+        for url in urls {
+            let source = try String(contentsOf: url, encoding: .utf8)
+            XCTAssertFalse(source.contains(#""icon": "mic""#), url.lastPathComponent)
+            XCTAssertFalse(source.contains(#""code": -99"#), url.lastPathComponent)
+        }
+    }
+
     func testIPadBottomRowSumsToHundredPercent() throws {
         for id in iPadLayoutsForBottomRowAudit {
             let layout = try loadKeyboardLayoutFixture(id)
@@ -404,6 +419,48 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("return !hasCandidates && idleRevealReady && !idleToolsSuppressed && allowTool"))
         XCTAssertTrue(source.contains("shouldShowActiveChrome"))
         XCTAssertTrue(source.contains("return hasCandidates || (!showIdleTools && !idleRevealReady)"))
+    }
+
+    func testIMDetailShareButtonUsesConstrainedLayoutTrailingSlot() throws {
+        let sourceURL = projectFileURL("LimeSettings/Views/IMDetailView.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let layoutSource = try String(
+            contentsOf: projectFileURL("LimeSettings/LimeSettingsView.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(source.contains(".constrainedDetailLayout(im.label) {"))
+        XCTAssertFalse(source.contains("ToolbarItem(placement: .navigationBarTrailing)"))
+        XCTAssertTrue(source.contains("showSharePicker = true"))
+        XCTAssertTrue(source.contains("square.and.arrow.up"))
+        XCTAssertTrue(source.contains(".font(.title2.weight(.semibold))"))
+        XCTAssertTrue(source.contains(".frame(width: 44, height: 44)"))
+        XCTAssertTrue(layoutSource.contains("private let titleSectionHeight: CGFloat = 60"))
+        XCTAssertTrue(layoutSource.contains("HStack(alignment: .center, spacing: 12)"))
+        XCTAssertTrue(layoutSource.contains(".frame(height: titleSectionHeight)"))
+    }
+
+    func testSettingsGroupedSurfacesMatchSetupTabColors() throws {
+        let settingsSource = try String(
+            contentsOf: projectFileURL("LimeSettings/LimeSettingsView.swift"),
+            encoding: .utf8
+        )
+        XCTAssertTrue(settingsSource.contains("func setupMatchedGroupedSurface() -> some View"))
+        XCTAssertTrue(settingsSource.contains(".scrollContentBackground(.hidden)"))
+        XCTAssertTrue(settingsSource.contains(".background(Color(.systemBackground))"))
+        XCTAssertTrue(settingsSource.contains(".listRowBackground(Color(.secondarySystemBackground))"))
+
+        for relativePath in [
+            "LimeSettings/Views/IMListView.swift",
+            "LimeSettings/Views/IMDetailView.swift",
+            "LimeSettings/Views/IMInstallView.swift",
+            "LimeSettings/Views/KeyboardPickerView.swift",
+            "LimeSettings/Views/PreferencesTabView.swift",
+            "LimeSettings/Views/ReverseLookupSettingsView.swift"
+        ] {
+            let source = try String(contentsOf: projectFileURL(relativePath), encoding: .utf8)
+            XCTAssertTrue(source.contains(".setupMatchedGroupedSurface()"), relativePath)
+        }
     }
 
     private func emojiMapping(_ word: String) -> Mapping {

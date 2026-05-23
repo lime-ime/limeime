@@ -25,6 +25,7 @@ struct ReverseLookupSettingsView: View {
                     .font(.footnote)
                     .foregroundColor(.secondary)
             }
+            .setupMatchedSectionBlock()
 
             Section(header: Text("各輸入法反查來源")) {
                 if lookupTargets.isEmpty {
@@ -36,7 +37,9 @@ struct ReverseLookupSettingsView: View {
                     }
                 }
             }
+            .setupMatchedSectionBlock()
         }
+        .setupMatchedGroupedSurface()
         .constrainedDetailLayout("字根反查設定")
         .task { await loadLookupOptions() }
     }
