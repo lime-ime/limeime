@@ -149,8 +149,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         KeyboardGesturePolicy.shouldUseDualRowGesture(isPad: isPad, layoutId: layoutId, keyDef: keyDef)
     }
 
-    static func shouldUseLimeOptionsMenuGesture(keyDef: KeyDef) -> Bool {
-        KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(keyDef: keyDef)
+    static func shouldUseLimeOptionsMenuGesture(keyDef: KeyDef,
+                                                 legacyGlobeMode: Bool = false) -> Bool {
+        KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
+            keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
     }
 
     weak var delegate: KeyboardViewDelegate?
@@ -293,6 +295,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             rowViews.forEach { $0.removeFromSuperview() }
             rowViews.removeAll()
             globeButton = nil
+            keyboardDoneButton = nil
             shiftKeyButtons.removeAll()
             buildKeys()
             updateShiftKeyIcon()
@@ -306,6 +309,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             rowViews.forEach { $0.removeFromSuperview() }
             rowViews.removeAll()
             globeButton = nil
+            keyboardDoneButton = nil
             buildKeys()
         }
     }
@@ -318,6 +322,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             rowViews.forEach { $0.removeFromSuperview() }
             rowViews.removeAll()
             globeButton = nil
+            keyboardDoneButton = nil
             shiftKeyButtons.removeAll()
             buildKeys()
             updateShiftKeyIcon()
@@ -331,6 +336,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             rowViews.forEach { $0.removeFromSuperview() }
             rowViews.removeAll()
             globeButton = nil
+            keyboardDoneButton = nil
             shiftKeyButtons.removeAll()
             buildKeys()
             updateShiftKeyIcon()
@@ -344,6 +350,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             rowViews.forEach { $0.removeFromSuperview() }
             rowViews.removeAll()
             globeButton = nil
+            keyboardDoneButton = nil
             shiftKeyButtons.removeAll()
             buildKeys()
             updateShiftKeyIcon()
@@ -416,6 +423,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         rowViews.forEach { $0.removeFromSuperview() }
         rowViews.removeAll()
         globeButton = nil
+        keyboardDoneButton = nil
         shiftKeyButtons.removeAll()
         buildKeys()
         updateShiftKeyIcon()
@@ -437,6 +445,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         rowViews.forEach { $0.removeFromSuperview() }
         rowViews.removeAll()
         globeButton = nil
+        keyboardDoneButton = nil
         shiftKeyButtons.removeAll()
         buildKeys()
         updateShiftKeyIcon()
@@ -695,7 +704,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         let btn = KeyButton(keyDef: keyDef)
 
-        let isKeyboardOptionsKey = Self.shouldUseLimeOptionsMenuGesture(keyDef: keyDef)
+        let isKeyboardOptionsKey = Self.shouldUseLimeOptionsMenuGesture(
+            keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
         let isSystemGlobe = keyDef.code == LimeKeyCode.globe.rawValue
             && inputModeViewController != nil
 
@@ -724,6 +734,22 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             }
         }
 
+        // Keyboard key (code -3): in legacy iPhone globe mode it takes over the
+        // role of the missing system-bar globe (spec: docs/IPHONE_LEGACY_KB.md).
+        // We always track it so the icon can be repainted; we wire the system
+        // picker only when the policy says so.
+        if keyDef.code == LimeKeyCode.done.rawValue {
+            keyboardDoneButton = btn
+            let wireSystemPicker = KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+                keyDef: keyDef,
+                legacyGlobeMode: legacyGlobeMode,
+                hasInputModeViewController: inputModeViewController != nil)
+            if wireSystemPicker, let ivc = inputModeViewController {
+                btn.addTarget(ivc, action: #selector(UIInputViewController.handleInputModeList(from:with:)),
+                              for: .allTouchEvents)
+            }
+        }
+
         // Popup keyboard: long-press shows a mini keyboard panel (e.g. accent variants, punctuation)
         if !keyDef.popupKeyboard.isEmpty {
             let lp = UILongPressGestureRecognizer(target: self, action: #selector(popupKeyLongPressed(_:)))
@@ -740,10 +766,16 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let isDualRowIPadKey = Self.shouldUseDualRowGesture(isPad: isPad,
                                                              layoutId: layout.id,
                                                              keyDef: keyDef)
-        if keyDef.code == LimeKeyCode.done.rawValue
-            || isKeyboardOptionsKey
-            || (keyDef.code == LimeKeyCode.globe.rawValue && !isSystemGlobe)
-            || !keyDef.popupKeyboard.isEmpty || isDualRowIPadKey {
+        // In legacy iPhone globe mode the `-3` key is owned by iOS' input-mode
+        // picker — we must not also fire our own touchUpInside dismiss/menu.
+        let legacyOwnedByIVC = keyDef.code == LimeKeyCode.done.rawValue
+            && legacyGlobeMode
+            && inputModeViewController != nil
+        if !legacyOwnedByIVC && (
+            keyDef.code == LimeKeyCode.done.rawValue
+                || isKeyboardOptionsKey
+                || (keyDef.code == LimeKeyCode.globe.rawValue && !isSystemGlobe)
+                || !keyDef.popupKeyboard.isEmpty || isDualRowIPadKey) {
             btn.addTarget(self, action: #selector(keyboardKeyTapped(_:)), for: .touchUpInside)
         }
         // iPad dual-row keys: pan gesture for slide-down → secondary glyph; long-press → preview secondary.
@@ -853,8 +885,13 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let keyLabel: UIColor = (override != nil)
             ? .white
             : (keyDef.isModifier ? palette.modifierLabel : palette.label)
-        let renderIcon  = override?.icon  ?? keyDef.icon
-        let renderLabel = override?.label ?? keyDef.label
+        // Legacy iPhone globe mode: the `-3` key paints as a globe glyph instead
+        // of the keyboard-down chevron (spec: docs/IPHONE_LEGACY_KB.md). Policy
+        // returns nil for every other key/mode, so the JSON icon wins.
+        let policyIcon = KeyboardGesturePolicy.iconForKeyboardKey(
+            keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
+        let renderIcon  = policyIcon ?? override?.icon  ?? keyDef.icon
+        let renderLabel = policyIcon == nil ? (override?.label ?? keyDef.label) : ""
         if !renderIcon.isEmpty {
             // SF Symbol icon key — dismiss key uses a larger point size for legibility
             let iconSize: CGFloat = renderIcon == "keyboard.chevron.compact.down"
