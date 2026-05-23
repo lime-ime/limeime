@@ -347,6 +347,7 @@ final class KeyboardViewController: UIInputViewController {
         let currentReturn = textDocumentProxy.returnKeyType ?? .default
         if currentKB != lastSeenKeyboardType || currentReturn != lastSeenReturnKeyType {
             initOnStartInput()
+            updateGlobeAndDismissBindings()
             return
         }
 
@@ -358,6 +359,13 @@ final class KeyboardViewController: UIInputViewController {
             }
         }
         updateShiftForAutoCap()
+
+        // Re-evaluate legacyGlobeMode on every text-input change. iOS toggles
+        // `needsInputModeSwitchKey` on hardware-keyboard attach/detach and on
+        // some field transitions; without this call the legacy globe binding
+        // would stick until the next layout pass (spec: docs/IPHONE_LEGACY_KB.md
+        // § Risks/pitfalls — first-tap latency).
+        updateGlobeAndDismissBindings()
     }
 
     // MARK: - Initialization (spec §2 initOnStartInput)
