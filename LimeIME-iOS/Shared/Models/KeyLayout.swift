@@ -363,10 +363,41 @@ enum KeyboardGesturePolicy {
             && keyDef.popupKeyboard.isEmpty
     }
 
-    static func shouldUseLimeOptionsMenuGesture(keyDef: KeyDef) -> Bool {
-        keyDef.code == LimeKeyCode.done.rawValue
+    /// Whether `keyDef` should receive the LIME options-menu long-press recognizer.
+    /// In legacy iPhone globe mode the `-3` keyboard key releases its long-press
+    /// to the iOS system input-mode picker, so it must NOT get the LIME gesture.
+    static func shouldUseLimeOptionsMenuGesture(keyDef: KeyDef,
+                                                 legacyGlobeMode: Bool = false) -> Bool {
+        if legacyGlobeMode && keyDef.code == LimeKeyCode.done.rawValue {
+            return false
+        }
+        return keyDef.code == LimeKeyCode.done.rawValue
             || (keyDef.longPressCode == LimeKeyCode.keyboardOptionsMenu.rawValue
                 && keyDef.code != LimeKeyCode.globe.rawValue)
+    }
+
+    /// Whether `keyDef`'s button should be wired to
+    /// `UIInputViewController.handleInputModeList(from:with:)` (system
+    /// input-mode picker). True only for the `-3` keyboard key in legacy
+    /// globe mode, and only when the host extension provides an
+    /// `inputModeViewController` reference.
+    static func shouldWireSystemPickerOnKeyboardKey(keyDef: KeyDef,
+                                                     legacyGlobeMode: Bool,
+                                                     hasInputModeViewController: Bool) -> Bool {
+        legacyGlobeMode
+            && keyDef.code == LimeKeyCode.done.rawValue
+            && hasInputModeViewController
+    }
+
+    /// SF Symbol override for `keyDef`'s rendered icon. Returns `nil` when the
+    /// caller should use `keyDef.icon` from the JSON / hardcoded layout.
+    /// In legacy iPhone globe mode the `-3` keyboard key paints as `"globe"`.
+    static func iconForKeyboardKey(keyDef: KeyDef,
+                                    legacyGlobeMode: Bool) -> String? {
+        if legacyGlobeMode && keyDef.code == LimeKeyCode.done.rawValue {
+            return "globe"
+        }
+        return nil
     }
 }
 

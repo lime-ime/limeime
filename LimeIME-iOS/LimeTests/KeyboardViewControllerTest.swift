@@ -223,6 +223,97 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(keyDef: globeKey))
     }
 
+    // MARK: - Legacy iPhone globe mode (spec: docs/IPHONE_LEGACY_KB.md)
+
+    private func makeKeyboardKey() -> KeyDef {
+        KeyDef(code: LimeKeyCode.done.rawValue,
+               widthPercent: 14,
+               icon: "keyboard.chevron.compact.down",
+               isModifier: true,
+               longPressCode: LimeKeyCode.keyboardOptionsMenu.rawValue)
+    }
+
+    private func makeGlobeKey() -> KeyDef {
+        KeyDef(code: LimeKeyCode.globe.rawValue,
+               widthPercent: 8,
+               icon: "globe",
+               isModifier: true,
+               longPressCode: LimeKeyCode.keyboardOptionsMenu.rawValue)
+    }
+
+    func testStandardModeKeyboardKeyOwnsLimeOptionsMenu() {
+        let key = makeKeyboardKey()
+        XCTAssertTrue(KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
+            keyDef: key, legacyGlobeMode: false))
+    }
+
+    func testLegacyModeKeyboardKeyReleasesLimeOptionsMenuToSystemPicker() {
+        let key = makeKeyboardKey()
+        XCTAssertFalse(KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
+            keyDef: key, legacyGlobeMode: true))
+    }
+
+    func testStandardModeGlobeKeyNeverGetsLimeOptionsMenu() {
+        let key = makeGlobeKey()
+        XCTAssertFalse(KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
+            keyDef: key, legacyGlobeMode: false))
+    }
+
+    func testLegacyModeGlobeKeyStillBypassesLimeOptionsMenu() {
+        let key = makeGlobeKey()
+        XCTAssertFalse(KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
+            keyDef: key, legacyGlobeMode: true))
+    }
+
+    func testStandardModeKeyboardKeyDoesNotWireSystemPicker() {
+        let key = makeKeyboardKey()
+        XCTAssertFalse(KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+            keyDef: key, legacyGlobeMode: false, hasInputModeViewController: true))
+    }
+
+    func testLegacyModeKeyboardKeyWiresSystemPickerWhenIVCPresent() {
+        let key = makeKeyboardKey()
+        XCTAssertTrue(KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+            keyDef: key, legacyGlobeMode: true, hasInputModeViewController: true))
+    }
+
+    func testLegacyModeWithoutIVCDoesNotWireSystemPicker() {
+        let key = makeKeyboardKey()
+        XCTAssertFalse(KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+            keyDef: key, legacyGlobeMode: true, hasInputModeViewController: false))
+    }
+
+    func testLegacyModeOnlyAppliesToKeyboardKey_NotShiftOrEnter() {
+        let shift = KeyDef(code: LimeKeyCode.shift.rawValue, widthPercent: 14,
+                           icon: "shift", isModifier: true)
+        let enter = KeyDef(code: LimeKeyCode.enter.rawValue, widthPercent: 14,
+                           icon: "return", isModifier: true)
+        XCTAssertFalse(KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+            keyDef: shift, legacyGlobeMode: true, hasInputModeViewController: true))
+        XCTAssertFalse(KeyboardGesturePolicy.shouldWireSystemPickerOnKeyboardKey(
+            keyDef: enter, legacyGlobeMode: true, hasInputModeViewController: true))
+    }
+
+    func testIconForKeyboardKey_StandardModeReturnsNilSoJSONIconWins() {
+        let key = makeKeyboardKey()
+        XCTAssertNil(KeyboardGesturePolicy.iconForKeyboardKey(
+            keyDef: key, legacyGlobeMode: false))
+    }
+
+    func testIconForKeyboardKey_LegacyModeReturnsGlobe() {
+        let key = makeKeyboardKey()
+        XCTAssertEqual(
+            KeyboardGesturePolicy.iconForKeyboardKey(keyDef: key, legacyGlobeMode: true),
+            "globe")
+    }
+
+    func testIconForKeyboardKey_LegacyModeIgnoresNonKeyboardKey() {
+        let shift = KeyDef(code: LimeKeyCode.shift.rawValue, widthPercent: 14,
+                           icon: "shift", isModifier: true)
+        XCTAssertNil(KeyboardGesturePolicy.iconForKeyboardKey(
+            keyDef: shift, legacyGlobeMode: true))
+    }
+
     func testKeyLayoutHasVoiceInputCode() {
         XCTAssertEqual(LimeKeyCode.voiceInput.rawValue, -220)
     }
