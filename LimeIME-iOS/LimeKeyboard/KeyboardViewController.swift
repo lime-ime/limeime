@@ -1406,11 +1406,70 @@ final class KeyboardViewController: UIInputViewController {
         guard let capType = textDocumentProxy.autocapitalizationType,
               capType == .sentences || capType == .allCharacters || capType == .words else { return }
         let before = textDocumentProxy.documentContextBeforeInput ?? ""
-        let atStart = before.isEmpty || before.hasSuffix(". ") || before.hasSuffix("! ") || before.hasSuffix("? ")
-        if atStart {
+        if shouldAutoCapitalize(before: before) {
             isShiftOn = true
             applyShiftState()
         }
+    }
+
+    /// LatinIME-style sentence-boundary detection (see docs/ENGLISH_KB.md §1).
+    /// Fires at start-of-document, after a newline/paragraph, or after
+    /// `. ` / `! ` / `? `, allowing trailing closing quotes/parens before the
+    /// space, and skipping `(\w\.){2,}` patterns ("U.S.", "e.g.") plus a small
+    /// allowlist of common single-word abbreviations ("Mr.", "Dr.", …).
+    internal func shouldAutoCapitalize(before: String) -> Bool {
+        if before.isEmpty { return true }
+
+        // American-typography rule: drop trailing closing quotes/parens so
+        // `She said "Hello." |` still triggers sentence-cap.
+        var s = Substring(before)
+        let closers: Set<Character> = [
+            "\"", "'", ")", "]", "}",
+            "\u{201D}",  // right double quotation mark
+            "\u{2019}",  // right single quotation mark
+        ]
+        while let last = s.last, closers.contains(last) {
+            s = s.dropLast()
+        }
+
+        // Newline / paragraph trigger.
+        if let last = s.last, last == "\n" || last == "\r" { return true }
+
+        // Must end with "<terminator><space>".
+        guard s.count >= 2, s.last == " " else { return false }
+        let term = s[s.index(s.endIndex, offsetBy: -2)]
+        guard term == "." || term == "!" || term == "?" else { return false }
+
+        // Abbreviation guard applies only to ".".
+        if term == ".", isAbbreviationBeforeDot(s.dropLast(2)) {
+            return false
+        }
+        return true
+    }
+
+    /// True if `beforeDot` looks like the tail of an abbreviation, i.e. the
+    /// trailing `.` is part of an abbreviation rather than a sentence end.
+    /// Matches LatinIME's `(\w\.){2,}` (covers "U.S.", "e.g.", "i.e.") plus a
+    /// small allowlist of common single-word abbreviations.
+    internal func isAbbreviationBeforeDot(_ beforeDot: Substring) -> Bool {
+        guard let last = beforeDot.last, last.isLetter else { return false }
+
+        // `(\w\.){2,}` tail: previous char is itself a `.` — covers "U.S",
+        // "e.g", "i.e", "a.m", "p.m" before the trailing dot.
+        if beforeDot.dropLast().last == "." { return true }
+
+        // Trailing word run (allowlist match).
+        var idx = beforeDot.endIndex
+        while idx > beforeDot.startIndex {
+            let prev = beforeDot.index(before: idx)
+            if beforeDot[prev].isLetter { idx = prev } else { break }
+        }
+        let word = String(beforeDot[idx..<beforeDot.endIndex])
+        let allowList: Set<String> = [
+            "Mr", "Mrs", "Ms", "Dr", "Prof", "Jr", "Sr", "St",
+            "etc", "vs", "Ltd", "Inc", "Co", "Mt", "Ft",
+        ]
+        return allowList.contains(word)
     }
 
     // MARK: - iOS Composing Simulation (spec §12)
