@@ -3379,6 +3379,12 @@ extension KeyboardViewController: CandidateBarViewDelegate {
         cancelActiveComposingFromCandidateDismiss()
     }
 
+    func candidateBarViewDidRequestKeyboardDismiss(_ view: CandidateBarView) {
+        if isExpandedCandidatesVisible { hideExpandedCandidates() }
+        cancelActiveComposingFromCandidateDismiss()
+        dismissKeyboard()
+    }
+
     func candidateBarViewDidRequestMore(_ view: CandidateBarView) {
         // Tap again to collapse
         if isExpandedCandidatesVisible {

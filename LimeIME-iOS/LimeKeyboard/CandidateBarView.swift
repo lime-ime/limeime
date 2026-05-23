@@ -9,6 +9,11 @@ protocol CandidateBarViewDelegate: AnyObject {
     func candidateBarViewDidRequestDismiss(_ view: CandidateBarView)
     func candidateBarViewDidRequestEmoji(_ view: CandidateBarView)
     func candidateBarViewDidRequestOptions(_ view: CandidateBarView)
+    /// Legacy iPhone globe mode: short tap on the candidate-bar chevron
+    /// asks the host to dismiss the keyboard outright (spec:
+    /// docs/IPHONE_LEGACY_KB.md). Distinct from `…RequestDismiss` which
+    /// only hides expanded candidates + cancels composing.
+    func candidateBarViewDidRequestKeyboardDismiss(_ view: CandidateBarView)
 }
 
 final class CandidateBarView: UIView {
@@ -911,7 +916,7 @@ final class CandidateBarView: UIView {
 
     @objc private func legacyDismissTapped() {
         fireHaptic()
-        delegate?.candidateBarViewDidRequestDismiss(self)
+        delegate?.candidateBarViewDidRequestKeyboardDismiss(self)
     }
 
     @objc private func legacyOptionsLongPressed(_ gr: UILongPressGestureRecognizer) {
