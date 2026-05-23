@@ -1850,6 +1850,10 @@ public class LIMEService extends InputMethodService
             EditorInfo ei = getCurrentInputEditorInfo();
             if (mAutoCap && ei != null && ei.inputType != EditorInfo.TYPE_NULL) {
                 caps = ic.getCursorCapsMode(attr.inputType);
+                if (caps == 0 && mEnglishOnly
+                        && shouldAutoCapitalizeEnglishText(ic.getTextBeforeCursor(64, 0))) {
+                    caps = 1;
+                }
             }
             mInputView.setShifted(mCapsLock || caps != 0);
         } else {
@@ -1859,6 +1863,91 @@ public class LIMEService extends InputMethodService
             }
         }
 
+    }
+
+    static boolean shouldAutoCapitalizeEnglishText(CharSequence beforeCursor) {
+        if (beforeCursor == null || beforeCursor.length() == 0) {
+            return true;
+        }
+
+        int end = beforeCursor.length();
+        boolean hasBoundaryWhitespace = false;
+        while (end > 0) {
+            char c = beforeCursor.charAt(end - 1);
+            if (c == ' ' || c == '\t') {
+                hasBoundaryWhitespace = true;
+                end--;
+            } else {
+                break;
+            }
+        }
+        while (end > 0 && isEnglishClosingPunctuation(beforeCursor.charAt(end - 1))) {
+            end--;
+        }
+        if (end == 0) {
+            return true;
+        }
+
+        char term = beforeCursor.charAt(end - 1);
+        if (term == '\n' || term == '\r') {
+            return true;
+        }
+        if (!hasBoundaryWhitespace) {
+            return false;
+        }
+        if (term != '.' && term != '!' && term != '?') {
+            return false;
+        }
+        return term != '.' || !isEnglishAbbreviationBeforeDot(beforeCursor, end - 1);
+    }
+
+    static boolean shouldInsertPeriodForEnglishDoubleSpace(CharSequence beforeCursor) {
+        if (beforeCursor == null || beforeCursor.length() < 2
+                || beforeCursor.charAt(beforeCursor.length() - 1) != ' ') {
+            return false;
+        }
+
+        int previousIndex = beforeCursor.length() - 2;
+        char previous = beforeCursor.charAt(previousIndex);
+        if (".!?,:;".indexOf(previous) >= 0) {
+            return false;
+        }
+
+        int tokenStart = previousIndex;
+        while (tokenStart > 0 && !Character.isWhitespace(beforeCursor.charAt(tokenStart - 1))) {
+            tokenStart--;
+        }
+        String token = beforeCursor.subSequence(tokenStart, previousIndex + 1).toString();
+        if (token.contains("://") || token.contains(".")) {
+            return false;
+        }
+
+        return Character.isLetterOrDigit(previous) || isEnglishClosingPunctuation(previous);
+    }
+
+    private static boolean isEnglishClosingPunctuation(char c) {
+        return c == '"' || c == '\'' || c == ')' || c == ']' || c == '}'
+                || c == '\u201D' || c == '\u2019';
+    }
+
+    private static boolean isEnglishAbbreviationBeforeDot(CharSequence text, int dotIndex) {
+        if (dotIndex <= 0 || !Character.isLetter(text.charAt(dotIndex - 1))) {
+            return false;
+        }
+        if (dotIndex >= 2 && text.charAt(dotIndex - 2) == '.') {
+            return true;
+        }
+
+        int start = dotIndex - 1;
+        while (start > 0 && Character.isLetter(text.charAt(start - 1))) {
+            start--;
+        }
+        String word = text.subSequence(start, dotIndex).toString();
+        return "Mr".equals(word) || "Mrs".equals(word) || "Ms".equals(word)
+                || "Dr".equals(word) || "Prof".equals(word) || "Jr".equals(word)
+                || "Sr".equals(word) || "St".equals(word) || "etc".equals(word)
+                || "vs".equals(word) || "Ltd".equals(word) || "Inc".equals(word)
+                || "Co".equals(word) || "Mt".equals(word) || "Ft".equals(word);
     }
 
     private boolean isValidLetter(int code) {
@@ -4676,6 +4765,20 @@ public class LIMEService extends InputMethodService
                 }
             }
 
+            InputConnection ic = getCurrentInputConnection();
+            if (primaryCode == MY_KEYCODE_SPACE && mAutoCap && ic != null
+                    && shouldInsertPeriodForEnglishDoubleSpace(ic.getTextBeforeCursor(64, 0))) {
+                resetTempEnglishWord();
+                if (mLIMEPref.getEnglishPrediction() && mPredictionOn) {
+                    this.updateEnglishPrediction();
+                }
+                ic.deleteSurroundingText(1, 0);
+                ic.commitText(". ", 1);
+                if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
+                    updateShiftKeyState(getCurrentInputEditorInfo());
+                return;
+            }
+
             if (mLIMEPref.getEnglishPrediction() && mPredictionOn && !mKeyboardSwitcher.isSymbols()
                     && (!hasPhysicalKeyPressed || mLIMEPref.getEnglishPredictionOnPhysicalKeyboard())
             ) {
@@ -4689,8 +4792,9 @@ public class LIMEService extends InputMethodService
 
             }
 
-            getCurrentInputConnection().commitText(
-                    String.valueOf((char) primaryCode), 1);
+            if (ic != null) {
+                ic.commitText(String.valueOf((char) primaryCode), 1);
+            }
         }
 
         if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))

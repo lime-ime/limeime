@@ -11468,4 +11468,23 @@ public class LIMEServiceTest {
         assertTrue("Cache hit test completed", true);
     }
 
+    @Test
+    public void test_8_7_EnglishAutoCapRecognizesNewlinesQuotesAndAbbreviations() {
+        assertTrue(LIMEService.shouldAutoCapitalizeEnglishText("Hello.\n"));
+        assertTrue(LIMEService.shouldAutoCapitalizeEnglishText("She said \"Hello.\" "));
+        assertTrue(LIMEService.shouldAutoCapitalizeEnglishText("Ready?) "));
+        assertFalse(LIMEService.shouldAutoCapitalizeEnglishText("e."));
+        assertFalse(LIMEService.shouldAutoCapitalizeEnglishText("Mr. "));
+        assertFalse(LIMEService.shouldAutoCapitalizeEnglishText("U.S. "));
+    }
+
+    @Test
+    public void test_8_7_EnglishDoubleSpacePeriodOnlyAfterWordLikeContext() {
+        assertTrue(LIMEService.shouldInsertPeriodForEnglishDoubleSpace("hello "));
+        assertTrue(LIMEService.shouldInsertPeriodForEnglishDoubleSpace("Go2 "));
+        assertTrue(LIMEService.shouldInsertPeriodForEnglishDoubleSpace("done) "));
+        assertFalse(LIMEService.shouldInsertPeriodForEnglishDoubleSpace("hello. "));
+        assertFalse(LIMEService.shouldInsertPeriodForEnglishDoubleSpace("http://lime-ime.github.io "));
+    }
+
 }

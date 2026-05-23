@@ -399,3 +399,67 @@ enum ShiftHoldTouchPolicy {
         (wasShiftAlreadyHeld && activeTouchCount > 0) || activeTouchCount > 1
     }
 }
+
+enum EnglishKeyboardPolicy {
+    private static let closingPunctuation: Set<Character> = [
+        "\"", "'", ")", "]", "}",
+        "\u{201D}", "\u{2019}",
+    ]
+
+    private static let abbreviationWords: Set<String> = [
+        "Mr", "Mrs", "Ms", "Dr", "Prof", "Jr", "Sr", "St",
+        "etc", "vs", "Ltd", "Inc", "Co", "Mt", "Ft",
+    ]
+
+    static func shouldAutoCapitalize(before: String) -> Bool {
+        if before.isEmpty { return true }
+
+        var s = Substring(before)
+        var hasBoundaryWhitespace = false
+        while let last = s.last, last == " " || last == "\t" {
+            hasBoundaryWhitespace = true
+            s = s.dropLast()
+        }
+        while let last = s.last, closingPunctuation.contains(last) {
+            s = s.dropLast()
+        }
+
+        if let last = s.last, last == "\n" || last == "\r" { return true }
+        guard hasBoundaryWhitespace else { return false }
+        guard let term = s.last, term == "." || term == "!" || term == "?" else { return false }
+
+        if term == ".", isAbbreviationBeforeDot(s.dropLast()) {
+            return false
+        }
+        return true
+    }
+
+    static func shouldInsertPeriodForDoubleSpace(before: String) -> Bool {
+        guard before.hasSuffix(" "), before.count >= 2 else { return false }
+        let beforeSpace = before.dropLast()
+        guard let previous = beforeSpace.last else { return false }
+
+        if ".!?,:;".contains(previous) { return false }
+        let tokenStart = beforeSpace.lastIndex(where: { $0.isWhitespace })
+            .map { beforeSpace.index(after: $0) } ?? beforeSpace.startIndex
+        let token = String(beforeSpace[tokenStart...])
+        if token.contains("://") || token.contains(".") { return false }
+
+        if previous.isLetter || previous.isNumber { return true }
+        return closingPunctuation.contains(previous)
+    }
+
+    private static func isAbbreviationBeforeDot(_ beforeDot: Substring) -> Bool {
+        guard let last = beforeDot.last, last.isLetter else { return false }
+
+        if beforeDot.dropLast().last == "." { return true }
+
+        var idx = beforeDot.endIndex
+        while idx > beforeDot.startIndex {
+            let prev = beforeDot.index(before: idx)
+            if beforeDot[prev].isLetter { idx = prev } else { break }
+        }
+        let word = String(beforeDot[idx..<beforeDot.endIndex])
+        return abbreviationWords.contains(word)
+    }
+}

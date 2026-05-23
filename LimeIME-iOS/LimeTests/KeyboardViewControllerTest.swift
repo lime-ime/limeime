@@ -265,6 +265,23 @@ final class KeyboardViewControllerTest: XCTestCase {
                                                             wasShiftAlreadyHeld: true))
     }
 
+    func testEnglishAutoCapRecognizesNewlinesQuotesAndAbbreviations() {
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "Hello.\n"))
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "She said \"Hello.\" "))
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "Ready?) "))
+        XCTAssertFalse(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "e."))
+        XCTAssertFalse(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "Mr. "))
+        XCTAssertFalse(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "U.S. "))
+    }
+
+    func testEnglishDoubleSpacePeriodOnlyAfterWordLikeContext() {
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: "hello "))
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: "Go2 "))
+        XCTAssertTrue(EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: "done) "))
+        XCTAssertFalse(EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: "hello. "))
+        XCTAssertFalse(EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: "http://lime-ime.github.io "))
+    }
+
     func testIOSBundlesDoNotDeclareVoiceInputPrivacyUsageDescriptions() throws {
         for plistURL in [
             projectFileURL("LimeKeyboard/Info.plist"),

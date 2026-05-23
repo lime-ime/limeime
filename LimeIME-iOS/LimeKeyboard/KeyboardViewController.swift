@@ -1129,7 +1129,15 @@ final class KeyboardViewController: UIInputViewController {
             if !isEnter, !mEnglishOnly, isPhonetic, !mComposing.isEmpty {
                 handleCharacter(LimeKeyCode.space.rawValue)  // space as tone mark
             } else {
-                textDocumentProxy.insertText(isEnter ? "\n" : " ")
+                if !isEnter,
+                   mEnglishOnly,
+                   LIMEPreferenceManager.shared.autoCap,
+                   shouldInsertPeriodForDoubleSpace(before: textDocumentProxy.documentContextBeforeInput ?? "") {
+                    textDocumentProxy.deleteBackward()
+                    textDocumentProxy.insertText(". ")
+                } else {
+                    textDocumentProxy.insertText(isEnter ? "\n" : " ")
+                }
                 // Space or enter in English mode: word boundary crossed — reset prediction.
                 if mEnglishOnly {
                     resetTempEnglishWord()
@@ -1418,33 +1426,7 @@ final class KeyboardViewController: UIInputViewController {
     /// space, and skipping `(\w\.){2,}` patterns ("U.S.", "e.g.") plus a small
     /// allowlist of common single-word abbreviations ("Mr.", "Dr.", …).
     internal func shouldAutoCapitalize(before: String) -> Bool {
-        if before.isEmpty { return true }
-
-        // American-typography rule: drop trailing closing quotes/parens so
-        // `She said "Hello." |` still triggers sentence-cap.
-        var s = Substring(before)
-        let closers: Set<Character> = [
-            "\"", "'", ")", "]", "}",
-            "\u{201D}",  // right double quotation mark
-            "\u{2019}",  // right single quotation mark
-        ]
-        while let last = s.last, closers.contains(last) {
-            s = s.dropLast()
-        }
-
-        // Newline / paragraph trigger.
-        if let last = s.last, last == "\n" || last == "\r" { return true }
-
-        // Must end with "<terminator><space>".
-        guard s.count >= 2, s.last == " " else { return false }
-        let term = s[s.index(s.endIndex, offsetBy: -2)]
-        guard term == "." || term == "!" || term == "?" else { return false }
-
-        // Abbreviation guard applies only to ".".
-        if term == ".", isAbbreviationBeforeDot(s.dropLast(2)) {
-            return false
-        }
-        return true
+        EnglishKeyboardPolicy.shouldAutoCapitalize(before: before)
     }
 
     /// True if `beforeDot` looks like the tail of an abbreviation, i.e. the
@@ -1452,24 +1434,11 @@ final class KeyboardViewController: UIInputViewController {
     /// Matches LatinIME's `(\w\.){2,}` (covers "U.S.", "e.g.", "i.e.") plus a
     /// small allowlist of common single-word abbreviations.
     internal func isAbbreviationBeforeDot(_ beforeDot: Substring) -> Bool {
-        guard let last = beforeDot.last, last.isLetter else { return false }
+        !EnglishKeyboardPolicy.shouldAutoCapitalize(before: "\(beforeDot). ")
+    }
 
-        // `(\w\.){2,}` tail: previous char is itself a `.` — covers "U.S",
-        // "e.g", "i.e", "a.m", "p.m" before the trailing dot.
-        if beforeDot.dropLast().last == "." { return true }
-
-        // Trailing word run (allowlist match).
-        var idx = beforeDot.endIndex
-        while idx > beforeDot.startIndex {
-            let prev = beforeDot.index(before: idx)
-            if beforeDot[prev].isLetter { idx = prev } else { break }
-        }
-        let word = String(beforeDot[idx..<beforeDot.endIndex])
-        let allowList: Set<String> = [
-            "Mr", "Mrs", "Ms", "Dr", "Prof", "Jr", "Sr", "St",
-            "etc", "vs", "Ltd", "Inc", "Co", "Mt", "Ft",
-        ]
-        return allowList.contains(word)
+    internal func shouldInsertPeriodForDoubleSpace(before: String) -> Bool {
+        EnglishKeyboardPolicy.shouldInsertPeriodForDoubleSpace(before: before)
     }
 
     // MARK: - iOS Composing Simulation (spec §12)
