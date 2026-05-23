@@ -6,9 +6,8 @@ import androidx.fragment.app.FragmentManager;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.ImConfig;
-import net.toload.main.hd.ui.view.ManageImFragment;
-import net.toload.main.hd.ui.view.ManageRelatedFragment;
-import net.toload.main.hd.ui.view.SetupImFragment;
+import net.toload.main.hd.ui.view.SetupFragment;
+import net.toload.main.hd.ui.view.TwoPaneHostFragment;
 
 import java.util.List;
 
@@ -18,7 +17,7 @@ import java.util.List;
  * <p>This class encapsulates all navigation-related functionality, including:
  * <ul>
  *   <li>Fragment transaction management</li>
- *   <li>Navigation drawer item selection handling</li>
+ *   <li>Legacy drawer-position mapping to the new tab host</li>
  *   <li>ActionBar title updates based on current section</li>
  *   <li>IM list management for navigation</li>
  * </ul>
@@ -35,26 +34,6 @@ public class NavigationManager {
     private CharSequence currentTitle;
     
     /**
-     * Data class representing a navigation menu item.
-     * Used for rendering navigation drawer items.
-     */
-    public static class NavigationMenuItem {
-        private final String code;
-        private final String title;
-        private final int iconResId;
-        
-        public NavigationMenuItem(String code, String title, int iconResId) {
-            this.code = code;
-            this.title = title;
-            this.iconResId = iconResId;
-        }
-        
-        public String getCode() { return code; }
-        public String getTitle() { return title; }
-        public int getIconResId() { return iconResId; }
-    }
-    
-    /**
      * Creates a new NavigationManager.
      * 
      * @param activity The activity context for navigation operations
@@ -66,8 +45,7 @@ public class NavigationManager {
     /**
      * Sets the IM list used for navigation.
      * 
-     * <p>The IM list is used to determine which fragment to display when
-     * a user selects an IM from the navigation drawer (positions 2+).
+     * <p>The IM list is kept for legacy callers that still pass drawer positions.
      * 
      * @param imConfigList The list of available IM tables
      */
@@ -99,55 +77,30 @@ public class NavigationManager {
     /**
      * Navigates to a fragment based on the selected position.
      * 
-     * <p>This method handles navigation to different fragments:
+     * <p>This method maps old drawer positions to the new tab-based UI:
      * <ul>
-     *   <li>Position 0: Shows SetupImFragment (IM setup)</li>
-     *   <li>Position 1: Shows ManageRelatedFragment (related phrases)</li>
-     *   <li>Position 2+: Shows ManageImFragment for the corresponding IM table</li>
+     *   <li>Position 0: Shows SetupFragment (Setup tab)</li>
+     *   <li>Position 1+: Shows TwoPaneHostFragment (IM tab)</li>
      * </ul>
      * 
      * <p>All fragment transactions are added to the back stack to allow navigation
      * back through the history.
      * 
-     * @param position The position of the selected item in the navigation drawer
+     * @param position The legacy drawer position
      */
     public void navigateToFragment(int position) {
         FragmentManager fragmentManager = activity.getSupportFragmentManager();
         
         if (position == 0) {
-            // Navigate to SetupImFragment (IM setup)
             fragmentManager.beginTransaction()
-                    .replace(R.id.main_fragment_container, SetupImFragment.newInstance(position), "SetupImFragment")
-                    .addToBackStack("SetupImFragment")
-                    .commit();
-            updateTitle(position);
-        } else if (position == 1) {
-            // Navigate to ManageRelatedFragment (related phrases)
-            fragmentManager.beginTransaction()
-                    .replace(R.id.main_fragment_container, ManageRelatedFragment.newInstance(position), "ManageRelatedFragment")
-                    .addToBackStack("ManageRelatedFragment")
+                    .replace(R.id.main_fragment_container, SetupFragment.newInstance(), "SetupFragment")
+                    .addToBackStack("SetupFragment")
                     .commit();
             updateTitle(position);
         } else {
-            // Navigate to ManageImFragment for specific IM table
-            if (imConfigFullNameList == null || imConfigFullNameList.isEmpty()) {
-                Log.w(TAG, "IM list is empty, cannot navigate to position " + position);
-                return;
-            }
-            
-            int imIndex = position - 2;
-            
-            // Validate index
-            if (imIndex < 0 || imIndex >= imConfigFullNameList.size()) {
-                Log.w(TAG, "Invalid IM index: " + imIndex + " (list size: " + imConfigFullNameList.size() + ")");
-                return;
-            }
-            
-            String tableName = imConfigFullNameList.get(imIndex).getCode();
             fragmentManager.beginTransaction()
-                    .replace(R.id.main_fragment_container, ManageImFragment.newInstance(position, tableName), 
-                             "ManageImFragment_" + tableName)
-                    .addToBackStack("ManageImFragment_" + tableName)
+                    .replace(R.id.main_fragment_container, TwoPaneHostFragment.newInstance(), "TwoPaneHostFragment")
+                    .addToBackStack("TwoPaneHostFragment")
                     .commit();
             updateTitle(position);
         }
@@ -158,9 +111,8 @@ public class NavigationManager {
      * 
      * <p>This method updates the title displayed in the ActionBar:
      * <ul>
-     *   <li>Position 0: "Initial" (IM setup)</li>
-     *   <li>Position 1: "Related" (related phrases)</li>
-     *   <li>Position 2+: The IM description from imList</li>
+     *   <li>Position 0: "Initial" (setup)</li>
+     *   <li>Position 1+: "Related" or the IM description from the legacy IM list</li>
      * </ul>
      * 
      * @param position The current section position

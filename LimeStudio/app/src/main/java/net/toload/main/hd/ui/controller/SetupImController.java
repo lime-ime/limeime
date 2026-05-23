@@ -13,9 +13,6 @@ import android.os.Looper;
 
 import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.ui.view.LIMESettingsView;
-import net.toload.main.hd.ui.view.NavigationDrawerView;
-import net.toload.main.hd.ui.view.NavigationMenuItem;
-import net.toload.main.hd.ui.view.SetupImView;
 import net.toload.main.hd.DBServer;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.ui.NavigationManager;
@@ -26,7 +23,6 @@ import net.toload.main.hd.R;
 import net.toload.main.hd.ui.dialog.ImportDialog;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +45,6 @@ public class SetupImController extends BaseController implements ImportDialog.On
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
     private LIMESettingsView mainActivityView;
-    private NavigationDrawerView navigationDrawerView;
-    private SetupImView setupImView;
     private NavigationManager navigationManager;
 
     private File fileToImport;
@@ -65,16 +59,8 @@ public class SetupImController extends BaseController implements ImportDialog.On
         this.mainActivityView = view;
     }
     
-    public void setNavigationDrawerView(NavigationDrawerView view) {
-        this.navigationDrawerView = view;
-    }
-    
     public void setNavigationManager(NavigationManager manager) {
         this.navigationManager = manager;
-    }
-
-    public void setSetupImView(SetupImView view) {
-        this.setupImView = view;
     }
     
     /**
@@ -100,27 +86,20 @@ public class SetupImController extends BaseController implements ImportDialog.On
     public void onImportDialogImSelected(String tableName, boolean restoreUserRecords) {
         if (fileToImport == null) {
             Log.e(TAG, "No file set for import");
-            handleError(setupImView, "No file selected for import", null);
+            handleError(mainActivityView, "No file selected for import", null);
             return;
         }
         importTxtTable(fileToImport, tableName, restoreUserRecords);
     }
 
     public void loadNavigationMenu() {
-        List<NavigationMenuItem> items;
-        
-        // Skip loading if server is not initialized (e.g., in test mode)
-        if (searchServer == null) {
-            // Provide minimal default menu items for test mode
-            items = new ArrayList<>();
-            items.add(new NavigationMenuItem(null, 0, false)); // Initial
-            items.add(new NavigationMenuItem(null, 1, false)); // Related
-        } else {
-            items = addImNavigationMenuItem();
+        if (searchServer == null || navigationManager == null) {
+            return;
         }
-        
-        if (navigationDrawerView != null) {
-            navigationDrawerView.updateMenuItems(items);
+        try {
+            navigationManager.setImConfigFullNameList(searchServer.getImConfigList(null, LIME.IM_FULL_NAME));
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to refresh IM navigation list", e);
         }
     }
 
@@ -145,54 +124,23 @@ public class SetupImController extends BaseController implements ImportDialog.On
             try {
                 refreshSetupImButtonStates();
             } catch (Exception updateException) {
-                Log.e(TAG, "Failed to update button buttonStates (fragment may be detached)", updateException);
+                Log.e(TAG, "Failed to update button states", updateException);
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "Failed to load button buttonStates", e);
+            Log.e(TAG, "Failed to load button states", e);
                         }
         return buttonStates;
     }
 
     public List<ImConfig> getImConfigList() {
         List<ImConfig> result = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
-        return result != null ? result : new ArrayList<>();
-    }
-    
-    private List<NavigationMenuItem> addImNavigationMenuItem() {
-        List<NavigationMenuItem> items = new ArrayList<>();
-
-        try {
-            List<ImConfig> imConfigList = searchServer.getImConfigList(null, LIME.IM_FULL_NAME);
-
-            // Also update NavigationManager's imList
-            if (navigationManager != null) {
-                navigationManager.setImConfigFullNameList(imConfigList);
-            }
-
-            // Add default menu items
-            items.add(new NavigationMenuItem(null, 0, false)); // Initial
-            items.add(new NavigationMenuItem(null, 1, false)); // Related
-
-            // Add IM menu items
-            for (int i = 0; i < imConfigList.size(); i++) {
-                ImConfig imConfig = imConfigList.get(i);
-                items.add(new NavigationMenuItem(imConfig, i + 2, false));
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to load menu items", e);
-        }
-
-        return items;
+        return result != null ? result : java.util.Collections.emptyList();
     }
     
     public void onNavigationItemSelected(int position) {
         if (navigationManager != null) {
             navigationManager.navigateToFragment(position);
-        }
-
-        if (navigationDrawerView != null) {
-            navigationDrawerView.setSelectedItem(position);
         }
     }
 
@@ -285,14 +233,14 @@ public class SetupImController extends BaseController implements ImportDialog.On
                 dbServer.importDbRelated(limeDbPath);
                 limeDbPath.deleteOnExit();
             }else {
-                handleError(setupImView, context.getString(R.string.error_import_db), null);
+                handleError(mainActivityView, context.getString(R.string.error_import_db), null);
             }
             refreshNavigationMenu();
             hideProgress(mainActivityView);
 
         } catch (Exception e) {
             hideProgress(mainActivityView);
-            handleError(setupImView, context.getString(R.string.error_import_db), e);
+            handleError(mainActivityView, context.getString(R.string.error_import_db), e);
         }
     }
 
@@ -318,7 +266,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
 
         } catch (Exception e) {
             hideProgress(mainActivityView);
-            handleError(setupImView, context.getString(R.string.error_import_db), e);
+            handleError(mainActivityView, context.getString(R.string.error_import_db), e);
         }
     }
 
@@ -338,7 +286,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
         } else {
             if (!isValidTableName(tableName)) {
                 hideProgress(mainActivityView);
-                handleError(setupImView, context.getString(R.string.error_table_name)+": " + tableName, null);
+                handleError(mainActivityView, context.getString(R.string.error_table_name)+": " + tableName, null);
                 return;
             }
             try {
@@ -347,7 +295,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
                     try {
                         searchServer.backupUserRecords(tableName);
                     } catch (Exception e) {
-                        handleError(setupImView,context.getString(R.string.error_backup_user_records),e);
+                        handleError(mainActivityView,context.getString(R.string.error_backup_user_records),e);
                     }
                 }
                 dbServer.importZippedDb(fileToImport, tableName);
@@ -358,7 +306,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
                             searchServer.restoreUserRecords(tableName);
                         }
                     } catch (Exception e) {
-                        handleError(setupImView, context.getString(R.string.error_backup_user_records), e);
+                        handleError(mainActivityView, context.getString(R.string.error_backup_user_records), e);
                     }
                 }
 
@@ -389,12 +337,12 @@ public class SetupImController extends BaseController implements ImportDialog.On
     public void downloadAndImportZippedDb(String tableName, String url, boolean restoreLearning,
                                           Runnable onSuccess) {
         if (context == null) {
-            handleError(setupImView, "Context unavailable for download", null);
+            handleError(mainActivityView, "Context unavailable for download", null);
             return;
         }
 
         if (!isNetworkAvailable() || url == null || url.isEmpty()) {
-            handleError(setupImView, context.getString(R.string.l3_tab_initial_error), null);
+            handleError(mainActivityView, context.getString(R.string.l3_tab_initial_error), null);
             return;
         }
 
@@ -415,7 +363,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
                     final int minFileSizeBytes = 100000;
                     if (tempfile == null || tempfile.length() < minFileSizeBytes) {
                         hideProgress(mainActivityView);
-                        handleError(setupImView, context.getString(R.string.error_import_db), null);
+                        handleError(mainActivityView, context.getString(R.string.error_import_db), null);
                         return;
                     }
 
@@ -424,7 +372,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
 
                 } catch (Exception e) {
                     hideProgress(mainActivityView);
-                    handleError(setupImView, context.getString(R.string.error_import_db), e);
+                    handleError(mainActivityView, context.getString(R.string.error_import_db), e);
                 }
             });
         } finally {
@@ -447,8 +395,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
     }
 
     private void refreshSetupImButtonStates() {
-        if(setupImView != null)
-            mainHandler.post(setupImView::refreshButtonState);
+        loadNavigationMenu();
     }
 
 
@@ -474,7 +421,9 @@ public class SetupImController extends BaseController implements ImportDialog.On
                 @Override
                 public void onError(int code, String source) {
                     hideProgress(mainActivityView);
-                    if (setupImView != null && source != null && !source.isEmpty()) setupImView.onError(source);
+                    if (mainActivityView != null && source != null && !source.isEmpty()) {
+                        mainActivityView.onError(source);
+                    }
 
                 }
 
@@ -491,7 +440,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             
             return resultFile[0];
         } catch (Exception e) {
-            handleError(setupImView, context.getString(R.string.error_export_table), e);
+            handleError(mainActivityView, context.getString(R.string.error_export_table), e);
             hideProgress(mainActivityView);
 
             return null;
@@ -512,7 +461,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             return result;
         } catch (Exception e) {
             hideProgress(mainActivityView);
-            handleError(setupImView, context.getString(R.string.error_export_table), e);
+            handleError(mainActivityView, context.getString(R.string.error_export_table), e);
             return null;
         }
     }
@@ -564,7 +513,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             
             return resultFile[0];
         } catch (Exception e) {
-            handleError(setupImView, context.getString(R.string.error_export_table), e);
+            handleError(mainActivityView, context.getString(R.string.error_export_table), e);
             hideProgress(mainActivityView);
 
             return null;
@@ -586,7 +535,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
 
             return result;
         } catch (Exception e) {
-            handleError(setupImView, context.getString(R.string.error_export_table), e);
+            handleError(mainActivityView, context.getString(R.string.error_export_table), e);
             hideProgress(mainActivityView);
             return null;
         }
@@ -609,7 +558,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
     public void importTxtTable(File file, String tableName, boolean restoreUserRecords,
                                Runnable onSuccess) {
         if (!searchServer.isValidTableName(tableName)) {
-            handleError(setupImView, context.getString(R.string.error_table_name) + ": " + tableName, null);
+            handleError(mainActivityView, context.getString(R.string.error_table_name) + ": " + tableName, null);
             return;
         }
 
@@ -618,7 +567,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
             try {
                 searchServer.backupUserRecords(tableName);
             } catch (Exception e) {
-                handleError(setupImView, context.getString(R.string.error_backup_user_records), e);
+                handleError(mainActivityView, context.getString(R.string.error_backup_user_records), e);
             }
 
             dbServer.importTxtTable(file.getAbsolutePath(), tableName, new net.toload.main.hd.global.LIMEProgressListener() {
@@ -638,7 +587,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
                 public void onError(int code, String source) {
                     hideProgress(mainActivityView);
                     if (source != null && !source.isEmpty()) {
-                        handleError(setupImView, source, null);
+                        handleError(mainActivityView, source, null);
                     }
                 }
 
@@ -662,7 +611,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
                 }
             });
         } catch (Exception e) {
-            handleError(setupImView, context.getString(R.string.error_import_db), e);
+            handleError(mainActivityView, context.getString(R.string.error_import_db), e);
         }
     }
 
@@ -695,7 +644,4 @@ public class SetupImController extends BaseController implements ImportDialog.On
     }
 
 }
-
-
-
 

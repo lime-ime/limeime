@@ -41,6 +41,12 @@ public class DbManagerFragment extends Fragment {
 
     private static final String TAG = "DbManagerFragment";
 
+    private enum BackupRestoreType {
+        BACKUP,
+        RESTORE,
+        BACKUP_TO_DOWNLOADS
+    }
+
     private SetupImController setupImController;
     private Activity activity;
 
@@ -124,10 +130,10 @@ public class DbManagerFragment extends Fragment {
             PackageManager pm = requireActivity().getPackageManager();
             List<ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
             if (intent.resolveActivity(pm) == null || activities == null || activities.isEmpty()) {
-                showAlertDialog(SetupImView.BackupRestoreType.BACKUP_TO_DOWNLOADS);
+                showAlertDialog(BackupRestoreType.BACKUP_TO_DOWNLOADS);
                 return;
             }
-            showAlertDialog(SetupImView.BackupRestoreType.BACKUP);
+            showAlertDialog(BackupRestoreType.BACKUP);
         } catch (Exception e) {
             Log.e(TAG, "Error checking backup options", e);
             showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
@@ -232,7 +238,7 @@ public class DbManagerFragment extends Fragment {
                 showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
                 return;
             }
-            showAlertDialog(SetupImView.BackupRestoreType.RESTORE);
+            showAlertDialog(BackupRestoreType.RESTORE);
         } catch (Exception e) {
             Log.e(TAG, "Error checking restore options", e);
             showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_SHORT);
@@ -289,7 +295,7 @@ public class DbManagerFragment extends Fragment {
     // Shared confirm dialog (backup / restore)
     // -----------------------------------------------------------------------
 
-    private void showAlertDialog(SetupImView.BackupRestoreType type) {
+    private void showAlertDialog(BackupRestoreType type) {
         int messageResId;
         Runnable onConfirm;
         switch (type) {

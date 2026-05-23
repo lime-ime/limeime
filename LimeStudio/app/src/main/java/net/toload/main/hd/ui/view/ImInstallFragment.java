@@ -266,7 +266,7 @@ public class ImInstallFragment extends Fragment {
         txtLauncher.launch(intent);
     }
 
-    // -------- URI → File helper (verbatim from SetupImLoadDialog) --------
+    // -------- URI → File helper --------
 
     private File saveUriToFile(Uri uri, Activity act) {
         if (act == null) return null;

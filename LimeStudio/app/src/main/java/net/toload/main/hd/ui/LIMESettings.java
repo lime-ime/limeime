@@ -57,7 +57,7 @@ import net.toload.main.hd.ui.view.LIMESettingsView;
  *   <li><b>Controllers</b>: {@link SetupImController}, {@link ManageImController} - handle business logic</li>
  *   <li><b>Managers</b>: {@link NavigationManager}, {@link ProgressManager}, {@link ShareManager} - manage UI concerns</li>
  *   <li><b>Handlers</b>: {@link IntentHandler} - process incoming intents</li>
- *   <li><b>Fragments</b>: SetupImFragment, ManageRelatedFragment, ManageImFragment - provide UI</li>
+ *   <li><b>Fragments</b>: SetupFragment, TwoPaneHostFragment, LimePreferenceFragment, DbManagerFragment - provide UI</li>
  * </ul>
  *
  * <h2>Initialization Sequence</h2>
@@ -69,7 +69,7 @@ import net.toload.main.hd.ui.view.LIMESettingsView;
  * <p>Fragment navigation is delegated to {@link NavigationManager}, which orchestrates:
  * <ul>
  *   <li>Fragment transaction management</li>
- *   <li>Navigation drawer item selection</li>
+ *   <li>Tab selection and legacy position mapping</li>
  *   <li>ActionBar title updates</li>
  * </ul>
  *
@@ -276,15 +276,14 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
      * <p>This method handles navigation to different fragments based on the selected
      * position:
      * <ul>
-     *   <li>Position 0: Shows SetupImFragment (IM setup)</li>
-     *   <li>Position 1: Shows ManageRelatedFragment (related phrases)</li>
-     *   <li>Position 2+: Shows ManageImFragment for the corresponding IM table</li>
+     *   <li>Position 0: Shows the setup tab</li>
+     *   <li>Position 1+: Shows the input-method manager tab</li>
      * </ul>
      *
      * <p>All fragment transactions are added to the back stack to allow navigation
      * back through the history.
      *
-     * @param position The position of the selected item in the navigation drawer
+     * @param position The legacy navigation position
      * @see NavigationManager#navigateToFragment(int)
      */
     @Override

@@ -3784,9 +3784,9 @@ public class DBServerTest {
         // Verify UI components don't have file operations (except using DBServer methods)
         // This is an architecture compliance test
         
-        // Check SetupImFragment - should use DBServer for import operations
+        // Check SetupImController - UI import callers should delegate file operations here.
         try {
-            java.io.File sourceFile = new java.io.File("app/src/main/java/net/toload/main/hd/ui/SetupImFragment.java");
+            java.io.File sourceFile = new java.io.File("app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java");
             if (sourceFile.exists()) {
                 java.util.Scanner scanner = new java.util.Scanner(sourceFile);
                 boolean foundDBServerCall = false;
@@ -3810,12 +3810,12 @@ public class DBServerTest {
                 }
                 scanner.close();
                 
-                // SetupImFragment should use DBServer for import operations
-                assertTrue("SetupImFragment should delegate file operations to DBServer", 
+                // SetupImController should use DBServer for import operations.
+                assertTrue("SetupImController should delegate file operations to DBServer",
                           foundDBServerCall || !foundDirectFileOps);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Could not verify SetupImFragment architecture compliance: " + e.getMessage());
+            Log.w(TAG, "Could not verify SetupImController architecture compliance: " + e.getMessage());
         }
     }
 
