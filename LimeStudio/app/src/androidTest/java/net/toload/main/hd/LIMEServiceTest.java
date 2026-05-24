@@ -11359,7 +11359,7 @@ public class LIMEServiceTest {
         helper.setField("mIMActivatedState", "");
         helper.setField("activeIM", "phonetic");
         
-        // State references index 50 which is out of bounds for LIME.IM_CODES (length 13)
+        // State references index 50 which is out of bounds for LIME.IM_CODES.
         try {
             Object mockPref = helper.getField("mLIMEPref");
             if (mockPref != null) {

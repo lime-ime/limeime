@@ -907,6 +907,17 @@ final class LimeDBTest: XCTestCase {
         XCTAssertTrue(info != nil || true)
     }
 
+    func testLimeDBUsesExistingCangjieKeyboardForCj4() throws {
+        let db = try makeLimeDB()
+        XCTAssertNil(db.getKeyboardConfig("cj4"))
+        let kb = try XCTUnwrap(db.getKeyboardConfig("cj"))
+        XCTAssertEqual(kb.code, "cj")
+        XCTAssertEqual(kb.imkb, "lime_cj")
+        XCTAssertEqual(kb.imshiftkb, "lime_cj_shift")
+        XCTAssertEqual(kb.engkb, "lime")
+        XCTAssertEqual(kb.engshiftkb, "lime_shift")
+    }
+
     func testLimeDBGetKeyboardConfigList() throws {
         let db = try makeLimeDB()
         let list = db.getKeyboardConfigList()
@@ -1367,7 +1378,7 @@ final class LimeDBTest: XCTestCase {
 
     func testLimeDBIsValidTableNameWithAllValidTables() throws {
         let db = try makeLimeDB()
-        for t in ["array", "array10", "cj", "cj5", "custom", "dayi", "ecj", "ez", "hs",
+        for t in ["array", "array10", "cj", "cj4", "cj5", "custom", "dayi", "ecj", "ez", "hs",
                   "phonetic", "pinyin", "scj", "wb", "related", "im", "keyboard",
                   "imtable2", "imtable3", "imtable4"] {
             XCTAssertTrue(db.isValidTableName(t), "\(t) should be valid")
@@ -1376,7 +1387,7 @@ final class LimeDBTest: XCTestCase {
 
     func testLimeDBIsValidTableNameWithInvalidTableNames() throws {
         let db = try makeLimeDB()
-        for t in ["invalid", "'; DROP TABLE", "random_table", "123"] {
+        for t in ["invalid", "'; DROP TABLE", "random_table", "123", "4cj"] {
             XCTAssertFalse(db.isValidTableName(t), "\(t) should be invalid")
         }
     }
@@ -1391,6 +1402,7 @@ final class LimeDBTest: XCTestCase {
         let db = try makeLimeDB()
         XCTAssertTrue(db.isValidTableName("phonetic_user"))
         XCTAssertTrue(db.isValidTableName("custom_user"))
+        XCTAssertTrue(db.isValidTableName("cj4_user"))
         XCTAssertFalse(db.isValidTableName("invalid_user"))
     }
 
@@ -2356,14 +2368,15 @@ final class LimeDBTest: XCTestCase {
         XCTAssertNotEqual(custom?.id, Int64(versionRow?.id ?? -1))
     }
 
-    // MARK: - 36. DB 103 integrated seed / upgrade / restore paths
+    // MARK: - 36. DB 104 integrated seed / upgrade / restore paths
 
     func testDB103FreshBundledSeedRefreshesEmojiData() throws {
         try copyBundledLimeSeed(to: tempURL)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 103)
+        XCTAssertEqual(try db.databaseVersionForTest(), 104)
         XCTAssertGreaterThan(db.countRecords("im", "title = ?", ["name"]), 0)
+        assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
     }
 
@@ -2374,7 +2387,8 @@ final class LimeDBTest: XCTestCase {
                                            insertCurrentEmojiVersion: false)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 103)
+        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
     }
 
@@ -2385,8 +2399,41 @@ final class LimeDBTest: XCTestCase {
                                            insertCurrentEmojiVersion: true)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 103)
+        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
+    }
+
+    func testDB103OpeningDatabaseRemovesStaleCj4KeyboardRow() throws {
+        tempURL = try makeDB103SeedVariant(name: "lime_ios_104_stale_cj4_keyboard.db",
+                                           userVersion: 104,
+                                           dropEmojiSchema: false,
+                                           insertCurrentEmojiVersion: false)
+        let queue = try DatabaseQueue(path: tempURL.path)
+        try queue.write { db in
+            try db.execute(sql: """
+                INSERT OR REPLACE INTO keyboard (
+                    code, name, desc, type, image,
+                    imkb, imshiftkb, engkb, engshiftkb,
+                    symbolkb, symbolshiftkb,
+                    defaultkb, defaultshiftkb,
+                    extendedkb, extendedshiftkb,
+                    disable
+                ) VALUES (
+                    'cj4', '四碼倉頡', '四碼倉頡輸入法鍵盤', 'phone', 'cj_keyboard_preview',
+                    'lime_cj', 'lime_cj_shift', 'lime', 'lime_shift',
+                    'symbols', 'symbols_shift',
+                    '', '',
+                    'lime_cj_number', 'lime_cj_number_shift',
+                    0
+                )
+            """)
+        }
+
+        let db = try makeLimeDB()
+        db.ensureCurrentDatabase()
+
+        assertCj4SchemaAndKeyboardLoaded(db)
     }
 
     func testDB103EmojiRefreshPreservesValidUserUsageAndPrunesInvalidUsage() throws {
@@ -2431,7 +2478,9 @@ final class LimeDBTest: XCTestCase {
         DBServer().restoreDatabase(srcFilePath: restoreZip.path)
 
         let stats = try rawDB103Stats(liveDB)
-        XCTAssertEqual(stats.version, 103)
+        XCTAssertEqual(stats.version, 104)
+        XCTAssertEqual(stats.cj4KeyboardRows, 0)
+        XCTAssertEqual(stats.cjKeyboardRows, 1)
         XCTAssertGreaterThan(stats.emojiDataRows, 0)
         XCTAssertGreaterThan(stats.emojiImRows, 0)
     }
@@ -2444,8 +2493,10 @@ final class LimeDBTest: XCTestCase {
         try DBServer().restoreBundledDatabase()
 
         let stats = try rawDB103Stats(liveDB)
-        XCTAssertEqual(stats.version, 103)
+        XCTAssertEqual(stats.version, 104)
         XCTAssertGreaterThan(stats.coreNameRows, 0)
+        XCTAssertEqual(stats.cj4KeyboardRows, 0)
+        XCTAssertEqual(stats.cjKeyboardRows, 1)
         XCTAssertGreaterThan(stats.emojiDataRows, 0)
         XCTAssertGreaterThan(stats.emojiImRows, 0)
     }
@@ -2468,6 +2519,12 @@ final class LimeDBTest: XCTestCase {
         XCTAssertTrue(db.tableExists("emoji_fts"))
         XCTAssertGreaterThan((try? db.emojiDataCountForTest()) ?? 0, 0)
         XCTAssertGreaterThan((try? db.emojiImRowCountForTest()) ?? 0, 0)
+    }
+
+    private func assertCj4SchemaAndKeyboardLoaded(_ db: LimeDB) {
+        XCTAssertTrue(db.tableExists("cj4"))
+        XCTAssertNil(db.getKeyboardConfig("cj4"))
+        XCTAssertEqual(db.getKeyboardConfig("cj")?.imkb, "lime_cj")
     }
 
     private func copyBundledLimeSeed(to target: URL) throws {
@@ -2534,14 +2591,16 @@ final class LimeDBTest: XCTestCase {
         try? FileManager.default.removeItem(at: backup)
     }
 
-    private func rawDB103Stats(_ dbURL: URL) throws -> (version: Int, coreNameRows: Int, emojiDataRows: Int, emojiImRows: Int) {
+    private func rawDB103Stats(_ dbURL: URL) throws -> (version: Int, coreNameRows: Int, emojiDataRows: Int, emojiImRows: Int, cj4KeyboardRows: Int, cjKeyboardRows: Int) {
         let queue = try DatabaseQueue(path: dbURL.path)
         return try queue.read { db in
             let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
             let core = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM im WHERE title = 'name'") ?? 0
             let emojiData = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM emoji_data") ?? 0
             let emojiIm = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM im WHERE code = 'emoji'") ?? 0
-            return (version, core, emojiData, emojiIm)
+            let cj4KeyboardRows = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'cj4'") ?? 0
+            let cjKeyboardRows = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'cj' AND imkb = 'lime_cj'") ?? 0
+            return (version, core, emojiData, emojiIm, cj4KeyboardRows, cjKeyboardRows)
         }
     }
 }

@@ -137,8 +137,8 @@ final class LimeDB {
 
     // MARK: - Schema Migration
 
-    // Current schema version (mirrors Android DB_VERSION = 103).
-    private static let CURRENT_DB_VERSION = 103
+    // Current schema version (mirrors Android DB_VERSION = 104).
+    private static let CURRENT_DB_VERSION = 104
     private static let EMOJI_DATA_VERSION = "17.0"
     private static let EMOJI_TABLE_DATA = "emoji_data"
     private static let EMOJI_TABLE_FTS = "emoji_fts"
@@ -238,7 +238,7 @@ final class LimeDB {
         //                insert wb and hs rows into keyboard table if absent.
         if version < 102 {
             // Add basescore column to every mapping table that is missing it
-            let mappingTables = ["custom", "phonetic", "wb", "cj", "array", "dayi", "ez",
+            let mappingTables = ["custom", "phonetic", "wb", "cj", "cj4", "array", "dayi", "ez",
                                  "hs", "et26", "et_41", "hsu", "scj", "ecj", "pinyin",
                                  "imtable2","imtable3","imtable4","imtable5","imtable6",
                                  "imtable7","imtable8","imtable9","imtable10"]
@@ -275,6 +275,9 @@ final class LimeDB {
         if version < 103 {
             try LimeDB.createEmojiTables(db, forceRecreate: false)
         }
+        if version < 104 {
+            try LimeDB.ensureCj4Schema(db)
+        }
         // Stamp the new version
         try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
     }
@@ -291,6 +294,7 @@ final class LimeDB {
         do {
             try dbQueue.write { db in
                 try LimeDB.createEmojiTables(db, forceRecreate: false)
+                try LimeDB.ensureCj4Schema(db)
                 let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
                 if version < LimeDB.CURRENT_DB_VERSION {
                     try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
@@ -434,7 +438,7 @@ final class LimeDB {
     func isValidTableName(_ name: String?) -> Bool {
         guard let name = name, !name.isEmpty else { return false }
         let valid: Set<String> = [
-            "array", "array10", "cj", "cj5", "custom", "dayi", "ecj", "ez",
+            "array", "array10", "cj", "cj4", "cj5", "custom", "dayi", "ecj", "ez",
             "hs", "phonetic", "pinyin", "scj", "wb",
             "imtable2", "imtable3", "imtable4", "imtable5",
             "imtable6", "imtable7", "imtable8", "imtable9", "imtable10",
@@ -1530,7 +1534,7 @@ final class LimeDB {
                     keyString     = LimeDB.BPMF_KEY
                     keynameString = LimeDB.BPMF_CHAR
                 }
-            case "cj", "scj", "cj5", "ecj":
+            case "cj", "cj4", "scj", "cj5", "ecj":
                 keyString = LimeDB.CJ_KEY
                 keynameString = LimeDB.CJ_CHAR
             case "dayi":
@@ -2484,6 +2488,22 @@ final class LimeDB {
         """)
     }
 
+    private static func ensureCj4Schema(_ db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS cj4 (
+                _id INTEGER primary key autoincrement,
+                code text,
+                code3r text,
+                word text,
+                related text,
+                score integer,
+                'basescore' type integer
+            )
+        """)
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS cj4_idx_code ON cj4 (code)")
+        try db.execute(sql: "DELETE FROM keyboard WHERE code = ?", arguments: ["cj4"])
+    }
+
     private static func rebuildEmojiFTS(_ db: Database) throws {
         try db.execute(sql: "INSERT INTO \(EMOJI_TABLE_FTS)(\(EMOJI_TABLE_FTS)) VALUES ('rebuild')")
     }
@@ -3358,7 +3378,7 @@ final class LimeDB {
         holdDBConnection()
         defer { unHoldDBConnection() }
         let mappingTables = [
-            "phonetic", "dayi", "array", "array10", "cj", "cj5", "custom",
+            "phonetic", "dayi", "array", "array10", "cj", "cj4", "cj5", "custom",
             "ecj", "ez", "hs", "pinyin", "scj", "wb",
             "imtable2", "imtable3", "imtable4", "imtable5",
             "imtable6", "imtable7", "imtable8", "imtable9", "imtable10"
@@ -3396,7 +3416,7 @@ final class LimeDB {
             if kbType.hasPrefix("hsu")                        { return LimeDB.HSU_KEY }
             if kbType == "et_41" || kbType == "eten"          { return LimeDB.ETEN_KEY }
             return LimeDB.BPMF_KEY
-        case "cj", "scj", "cj5", "ecj":
+        case "cj", "cj4", "scj", "cj5", "ecj":
             return LimeDB.CJ_KEY
         case "dayi":
             return LimeDB.DAYI_KEY

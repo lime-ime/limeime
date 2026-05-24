@@ -224,7 +224,7 @@ fallback, then `RecognizerIntent` fallback.
 
 **Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !fullAccessEnabled`; causes the keyboard extension's `viewWillAppear` to write a fresh `keyboard_has_full_access` to the App Group.
 
-**About section** (`GroupBox` styled as form section): `LabeledContent("版本", value: appVersion())` — `CFBundleShortVersionString (build)`; `LabeledContent("授權", value: "GPL-3.0")`; `Link("原始碼 (GitHub)", destination: githubURL)`.
+**About section** (`GroupBox` styled as form section): `LabeledContent("版本", value: appVersion())` — `CFBundleShortVersionString (build)`; `授權` row shows `Link("版權說明", destination: licenseURL)` pointing to `https://github.com/lime-ime/limeime/blob/master/LICENSE.md`; `Link("原始碼 (GitHub)", destination: githubURL)`.
 
 Full layout structure:
 
@@ -290,7 +290,11 @@ NavigationStack (.navigationBarHidden(true))
                 LabeledContent("版本", value: appVersion())   // CFBundleShortVersionString (build)
                     .padding(.vertical, 11)
                 Divider()
-                LabeledContent("授權", value: "GPL-3.0")
+                HStack {
+                    Text("授權")
+                    Spacer()
+                    Link("版權說明", destination: licenseURL)
+                }
                     .padding(.vertical, 11)
                 Divider()
                 Link("原始碼 (GitHub)", destination: githubURL)
@@ -351,7 +355,7 @@ Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: 
 | Enabled, not active | Description `"萊姆輸入法已啟用但尚未被選用，請按下方按鈕後，在系統鍵盤輸入法選擇頁選用萊姆輸入法。"`, outlined button `"選用萊姆輸入法"` → `showInputMethodPicker()` |
 | Enabled and active | Setup heading + buttons hidden; IM list (`SetupImList`) shown |
 
-**About card**: `"版本"` (right-aligned, `version_format` = `"v%1$s - %2$d"`), `"授權"` / `"GPL-3.0"`, `"原始碼"` (right-aligned clickable `txtGithubUrl`).
+**About card**: `"版本"` (right-aligned, `version_format` = `"v%1$s - %2$d"`), `"授權"` / clickable `"版權說明"` linking to `https://github.com/lime-ime/limeime/blob/master/LICENSE.md`, `"原始碼"` (right-aligned clickable `txtGithubUrl`).
 
 ### 4.2 Status Banner
 

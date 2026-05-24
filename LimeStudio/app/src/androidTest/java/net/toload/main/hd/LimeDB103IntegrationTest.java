@@ -1,5 +1,5 @@
 /*
- * Integration tests for the DB 103 seed, upgrade, restore, repair, and emoji
+ * Integration tests for the DB 104 seed, upgrade, restore, repair, and emoji
  * refresh paths.
  */
 package net.toload.main.hd;
@@ -74,8 +74,9 @@ public class LimeDB103IntegrationTest {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
         assertTrue("bundled lime.db must keep core IM rows", queryInt("SELECT COUNT(*) FROM im WHERE title = ?", "name") > 0);
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
@@ -87,7 +88,8 @@ public class LimeDB103IntegrationTest {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
@@ -99,9 +101,37 @@ public class LimeDB103IntegrationTest {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
+    }
+
+    @Test
+    public void openingDatabaseRemovesStaleCj4KeyboardRow() throws Exception {
+        File dbFile = createSeedVariant("lime_104_stale_cj4_keyboard.db", 104, false, false);
+        SQLiteDatabase writable = SQLiteDatabase.openDatabase(dbFile.getPath(), null, SQLiteDatabase.OPEN_READWRITE);
+        try {
+            writable.execSQL(
+                    "INSERT OR REPLACE INTO keyboard " +
+                            "(code, name, desc, type, image, imkb, imshiftkb, engkb, engshiftkb, " +
+                            "symbolkb, symbolshiftkb, defaultkb, defaultshiftkb, extendedkb, extendedshiftkb, disable) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    new Object[]{
+                            LIME.DB_TABLE_CJ4, "四碼倉頡", "四碼倉頡輸入法鍵盤", "phone", "cj_keyboard_preview",
+                            "lime_cj", "lime_cj_shift", "lime", "lime_shift", "symbols", "symbols_shift",
+                            "", "", "lime_cj_number", "lime_cj_number_shift", "false"
+                    });
+        } finally {
+            writable.close();
+        }
+        replaceAppDatabaseWith(dbFile);
+
+        LimeDB db = new LimeDB(appContext);
+        db.ensureCurrentDatabase();
+        db.close();
+
+        assertCj4SchemaExists();
     }
 
     @Test
@@ -139,7 +169,8 @@ public class LimeDB103IntegrationTest {
 
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
@@ -153,7 +184,8 @@ public class LimeDB103IntegrationTest {
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
         assertTrue("restored DB should exist in Android databases folder", appDb.exists());
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
@@ -166,8 +198,9 @@ public class LimeDB103IntegrationTest {
         db.restoredToDefault();
         db.close();
 
-        assertEquals(103, queryUserVersion());
+        assertEquals(104, queryUserVersion());
         assertTrue("factory reset must restore core IM rows", queryInt("SELECT COUNT(*) FROM im WHERE title = ?", "name") > 0);
+        assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
@@ -195,6 +228,14 @@ public class LimeDB103IntegrationTest {
     private void assertEmojiDataLoaded() {
         assertTrue("emoji.db payload must be copied into lime.db", queryInt("SELECT COUNT(*) FROM emoji_data") > 0);
         assertTrue("emoji IM rows must be rebuilt from emoji data", queryInt("SELECT COUNT(*) FROM im WHERE code = ?", "emoji") > 0);
+    }
+
+    private void assertCj4SchemaExists() {
+        assertEquals(1, queryInt("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?", LIME.DB_TABLE_CJ4));
+        assertEquals(1, queryInt("SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = ?", "cj4_idx_code"));
+        assertEquals(0, queryInt("SELECT COUNT(*) FROM keyboard WHERE code = ?", LIME.DB_TABLE_CJ4));
+        assertEquals(1, queryInt("SELECT COUNT(*) FROM keyboard WHERE code = ? AND imkb = ?",
+                LIME.DB_TABLE_CJ, "lime_cj"));
     }
 
     private File createSeedVariant(String name, int userVersion, boolean dropEmojiSchema, boolean forceOldEmojiVersion)

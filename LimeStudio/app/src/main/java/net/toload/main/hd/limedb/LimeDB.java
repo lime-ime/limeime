@@ -118,7 +118,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 103;
+    private final static int DATABASE_VERSION = 104;
     private final static String EMOJI_DATA_VERSION = "17.0";
     private final static String EMOJI_TABLE_DATA = "emoji_data";
     private final static String EMOJI_TABLE_FTS = "emoji_fts";
@@ -609,7 +609,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         // Whitelist of valid table names
         String[] validTables = {
             LIME.DB_TABLE_ARRAY, LIME.DB_TABLE_ARRAY10,
-            LIME.DB_TABLE_CJ, LIME.DB_TABLE_CJ5, LIME.DB_TABLE_CUSTOM,
+            LIME.DB_TABLE_CJ, LIME.DB_TABLE_CJ4, LIME.DB_TABLE_CJ5, LIME.DB_TABLE_CUSTOM,
             LIME.DB_TABLE_DAYI, LIME.DB_TABLE_ECJ, LIME.DB_TABLE_EZ,
             LIME.DB_TABLE_HS, LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_PINYIN,
             LIME.DB_TABLE_SCJ, LIME.DB_TABLE_WB,
@@ -699,6 +699,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
         if (oldVersion < 103) {
             createEmojiTables(dbin, false);
+        }
+        if (oldVersion < 104) {
+            ensureCj4Schema(dbin);
         }
 
     }
@@ -874,6 +877,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             return;
         }
 
+        ensureCj4Schema(db);
         if (db.getVersion() < DATABASE_VERSION) {
             db.setVersion(DATABASE_VERSION);
         }
@@ -1602,6 +1606,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     keyString.isEmpty() || keynameString.isEmpty()) {
                 switch (table) {
                     case LIME.DB_TABLE_CJ:
+                    case LIME.DB_TABLE_CJ4:
                     case LIME.DB_TABLE_SCJ:
                     case LIME.DB_TABLE_CJ5:
                     case LIME.DB_TABLE_ECJ:
@@ -4161,6 +4166,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         }
                     } else if (table.equals(LIME.DB_TABLE_DAYI)) {
                         kConfig = getKeyboardConfig("dayisym");
+                    } else if (table.equals(LIME.DB_TABLE_CJ4)) {
+                        kConfig = getKeyboardConfig("cj");
                     } else if (table.equals(LIME.DB_TABLE_CJ5)) {
                         kConfig = getKeyboardConfig("cj");
                     } else if (table.equals(LIME.DB_TABLE_ECJ)) {
@@ -5142,6 +5149,19 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 "value TEXT PRIMARY KEY REFERENCES " + EMOJI_TABLE_DATA + "(value), " +
                 "last_used INTEGER, " +
                 "use_count INTEGER NOT NULL DEFAULT 0)");
+    }
+
+    private static void ensureCj4Schema(SQLiteDatabase targetDb) {
+        targetDb.execSQL("CREATE TABLE IF NOT EXISTS " + LIME.DB_TABLE_CJ4 + " (" +
+                "_id INTEGER primary key autoincrement, " +
+                "code text, " +
+                "code3r text, " +
+                "word text, " +
+                "related text, " +
+                "score integer, " +
+                "'basescore' type integer)");
+        targetDb.execSQL("CREATE INDEX IF NOT EXISTS cj4_idx_code ON " + LIME.DB_TABLE_CJ4 + " (code)");
+        targetDb.delete(LIME.DB_TABLE_KEYBOARD, LIME.DB_KEYBOARD_COLUMN_CODE + " = ?", new String[]{LIME.DB_TABLE_CJ4});
     }
 
     private static boolean tableExists(SQLiteDatabase targetDb, String tableName) {

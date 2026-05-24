@@ -791,6 +791,7 @@
     <string name="setup_status_enabled_not_active">已啟用，但尚未切換為 LimeIME — 點按下方按鈕切換</string>
     <string name="setup_status_not_enabled">尚未在系統中啟用 LimeIME — 點按下方按鈕前往系統設定</string>
     <string name="url_github_limeime">https://github.com/lime-ime/limeime</string>
+    <string name="url_license_limeime">https://github.com/lime-ime/limeime/blob/master/LICENSE.md</string>
     <string name="setup_im_privacy_note">LimeIME 不會收集任何輸入內容或個人資料。</string>
 
     <!-- Step 6: ImListFragment / ImDetailFragment strings -->

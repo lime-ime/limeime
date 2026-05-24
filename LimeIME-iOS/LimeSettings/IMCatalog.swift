@@ -1,4 +1,4 @@
-import Foundation
+﻿import Foundation
 
 // Static catalog of all downloadable input methods.
 // Source: Android's SetupImLoadDialog.java button configs + LIME.java cloud URLs.
@@ -28,7 +28,6 @@ struct IMVariant: Identifiable, Hashable {
     let keyboardId: String   // im.keyboard_id
     let recordCount: Int     // approximate number of entries
     let compressedKB: Int    // approximate download size in KB
-    let isLimeDB: Bool       // true = .limedb (attach directly), false = .zip (extract first)
 
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
     static func == (l: IMVariant, r: IMVariant) -> Bool { l.id == r.id }
@@ -58,10 +57,10 @@ enum IMCatalog {
             description: "標準注音符號，適合台灣使用者",
             systemIcon: "character.phonetic",
             variants: [
-                .init(id: "phonetic",              name: "OpenVanilla 注音字根",          filename: "phonetic.zip",              tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 34_838,  compressedKB: 589,  isLimeDB: false),
-                .init(id: "phoneticbig5",          name: "OpenVanilla 注音字根 (BIG5字集)", filename: "phoneticbig5.zip",          tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 15_945,  compressedKB: 465,  isLimeDB: false),
-                .init(id: "phoneticcomplete",      name: "注音連打字根",                   filename: "phoneticcomplete.zip",      tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 95_029,  compressedKB: 2900, isLimeDB: false),
-                .init(id: "phoneticcompletebig5",  name: "注音連打字根 (BIG5字集)",         filename: "phoneticcompletebig5.zip",  tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 76_122,  compressedKB: 2400, isLimeDB: false),
+                .init(id: "phonetic",              name: "OpenVanilla 注音字根",          filename: "phonetic.zip",              tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 34_838,  compressedKB: 589),
+                .init(id: "phoneticbig5",          name: "OpenVanilla 注音字根 (BIG5字集)", filename: "phoneticbig5.zip",          tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 15_945,  compressedKB: 465),
+                .init(id: "phoneticcomplete",      name: "注音連打字根",                   filename: "phoneticcomplete.zip",      tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 95_029,  compressedKB: 2900),
+                .init(id: "phoneticcompletebig5",  name: "注音連打字根 (BIG5字集)",         filename: "phoneticcompletebig5.zip",  tableName: "phonetic", imName: "phonetic",         label: "注音",      keyboardId: "phonetic",  recordCount: 76_122,  compressedKB: 2400),
             ]
         ),
         .init(
@@ -71,9 +70,19 @@ enum IMCatalog {
             description: "倉頡輸入法，多種字集選擇",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj",     name: "倉頡字根",           filename: "cj.zip",     tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 28_596, compressedKB: 830, isLimeDB: false),
-                .init(id: "cjbig5", name: "倉頡字根 (BIG5字集)", filename: "cjbig5.zip", tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 13_859, compressedKB: 506, isLimeDB: false),
-                .init(id: "cjhk",   name: "倉頡香港字字根",      filename: "cjhk.zip",   tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 30_278, compressedKB: 884, isLimeDB: false),
+                .init(id: "cj",     name: "倉頡字根",           filename: "cj.zip",     tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 28_596, compressedKB: 830),
+                .init(id: "cjbig5", name: "倉頡字根 (BIG5字集)", filename: "cjbig5.zip", tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 13_859, compressedKB: 506),
+                .init(id: "cjhk",   name: "倉頡香港字字根",      filename: "cjhk.zip",   tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 30_278, compressedKB: 884),
+            ]
+        ),
+        .init(
+            id: "cj4",
+            chineseName: "四碼倉頡",
+            englishName: "Four-code Cangjie",
+            description: "四碼倉頡輸入法",
+            systemIcon: "square.grid.2x2",
+            variants: [
+                .init(id: "cj4", name: "哈哈倉頡", filename: "cj4.limedb", tableName: "cj4", imName: "cj4", label: "哈哈倉頡", keyboardId: "cj", recordCount: 33_021, compressedKB: 598),
             ]
         ),
         .init(
@@ -83,7 +92,7 @@ enum IMCatalog {
             description: "倉頡五代輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj5", name: "倉頡五代字根", filename: "cj5.zip", tableName: "cj5", imName: "cj5", label: "倉頡五代", keyboardId: "cj", recordCount: 24_004, compressedKB: 491, isLimeDB: false),
+                .init(id: "cj5", name: "倉頡五代字根", filename: "cj5.zip", tableName: "cj5", imName: "cj5", label: "倉頡五代", keyboardId: "cj", recordCount: 24_004, compressedKB: 491),
             ]
         ),
         .init(
@@ -93,7 +102,7 @@ enum IMCatalog {
             description: "快速倉頡輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "scj", name: "快倉字根", filename: "scj.zip", tableName: "scj", imName: "scj", label: "速成", keyboardId: "limenum", recordCount: 74_250, compressedKB: 1400, isLimeDB: false),
+                .init(id: "scj", name: "快倉字根", filename: "scj.zip", tableName: "scj", imName: "scj", label: "速成", keyboardId: "limenum", recordCount: 74_250, compressedKB: 1400),
             ]
         ),
         .init(
@@ -103,8 +112,8 @@ enum IMCatalog {
             description: "速成輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "ecj",   name: "簡易速成",       filename: "ecj.zip",   tableName: "ecj", imName: "ecj", label: "ECJ",    keyboardId: "cj", recordCount: 13_119, compressedKB: 136, isLimeDB: false),
-                .init(id: "ecjhk", name: "速成香港字字根", filename: "ecjhk.zip", tableName: "ecj", imName: "ecj", label: "ECJ HK", keyboardId: "cj", recordCount: 27_853, compressedKB: 210, isLimeDB: false),
+                .init(id: "ecj",   name: "簡易速成",       filename: "ecj.zip",   tableName: "ecj", imName: "ecj", label: "ECJ",    keyboardId: "cj", recordCount: 13_119, compressedKB: 136),
+                .init(id: "ecjhk", name: "速成香港字字根", filename: "ecjhk.zip", tableName: "ecj", imName: "ecj", label: "ECJ HK", keyboardId: "cj", recordCount: 27_853, compressedKB: 210),
             ]
         ),
         .init(
@@ -114,9 +123,9 @@ enum IMCatalog {
             description: "大易輸入法，支援統一碼字集",
             systemIcon: "textformat.alt",
             variants: [
-                .init(id: "dayi",     name: "OpenVanilla 大易字根",  filename: "dayi.zip",     tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 18_638,  compressedKB: 486, isLimeDB: false),
-                .init(id: "dayiuni",  name: "Unicode 3+4 碼單字版", filename: "dayiuni.zip",  tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 27_198,  compressedKB: 584, isLimeDB: false),
-                .init(id: "dayiunip", name: "Unicode 3+4 碼詞庫版", filename: "dayiunip.zip", tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 117_766, compressedKB: 2700, isLimeDB: false),
+                .init(id: "dayi",     name: "OpenVanilla 大易字根",  filename: "dayi.zip",     tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 18_638,  compressedKB: 486),
+                .init(id: "dayiuni",  name: "Unicode 3+4 碼單字版", filename: "dayiuni.zip",  tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 27_198,  compressedKB: 584),
+                .init(id: "dayiunip", name: "Unicode 3+4 碼詞庫版", filename: "dayiunip.zip", tableName: "dayi", imName: "dayi",  label: "大易",     keyboardId: "dayisym", recordCount: 117_766, compressedKB: 2700),
             ]
         ),
         .init(
@@ -126,7 +135,7 @@ enum IMCatalog {
             description: "輕鬆輸入法",
             systemIcon: "hand.tap",
             variants: [
-                .init(id: "ez", name: "輕鬆字根", filename: "ez.limedb", tableName: "ez", imName: "ez", label: "輕鬆", keyboardId: "ez", recordCount: 14_422, compressedKB: 237, isLimeDB: false),
+                .init(id: "ez", name: "輕鬆字根", filename: "ez.limedb", tableName: "ez", imName: "ez", label: "輕鬆", keyboardId: "ez", recordCount: 14_422, compressedKB: 237),
             ]
         ),
         .init(
@@ -143,8 +152,7 @@ enum IMCatalog {
                 // "array.db" — prefer that for the iOS unzip + attach pipeline.
                 .init(id: "array", name: "老刀行列字根", filename: "array.limedb",
                       tableName: "array", imName: "array", label: "行列30",
-                      keyboardId: "array", recordCount: 32_386, compressedKB: 524,
-                      isLimeDB: false),
+                      keyboardId: "array", recordCount: 32_386, compressedKB: 524),
             ]
         ),
         .init(
@@ -160,8 +168,7 @@ enum IMCatalog {
                 // IMs with different tableName / imName (matches Android IM_ARRAY10).
                 .init(id: "array10", name: "老刀行列10字根", filename: "array10.limedb",
                       tableName: "array10", imName: "array10", label: "行列10",
-                      keyboardId: "phone_simple", recordCount: 32_120, compressedKB: 558,
-                      isLimeDB: false),
+                      keyboardId: "phone_simple", recordCount: 32_120, compressedKB: 558),
             ]
         ),
         .init(
@@ -171,7 +178,7 @@ enum IMCatalog {
             description: "筆順五碼輸入法",
             systemIcon: "pencil.and.outline",
             variants: [
-                .init(id: "wb", name: "筆順五碼字根", filename: "wb.zip", tableName: "wb", imName: "wb", label: "筆順", keyboardId: "wb", recordCount: 26_378, compressedKB: 267, isLimeDB: false),
+                .init(id: "wb", name: "筆順五碼字根", filename: "wb.zip", tableName: "wb", imName: "wb", label: "筆順", keyboardId: "wb", recordCount: 26_378, compressedKB: 267),
             ]
         ),
         .init(
@@ -181,10 +188,10 @@ enum IMCatalog {
             description: "華象直覺輸入法，多種版本",
             systemIcon: "wand.and.stars",
             variants: [
-                .init(id: "hs",  name: "華象完整版", filename: "hs.zip",  tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 183_659, compressedKB: 3600, isLimeDB: false),
-                .init(id: "hs1", name: "華象一版",  filename: "hs1.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 50_845,  compressedKB: 830,  isLimeDB: false),
-                .init(id: "hs2", name: "華象二版",  filename: "hs2.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 50_838,  compressedKB: 834,  isLimeDB: false),
-                .init(id: "hs3", name: "華象三版",  filename: "hs3.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 64_324,  compressedKB: 1000, isLimeDB: false),
+                .init(id: "hs",  name: "華象完整版", filename: "hs.zip",  tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 183_659, compressedKB: 3600),
+                .init(id: "hs1", name: "華象一版",  filename: "hs1.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 50_845,  compressedKB: 830),
+                .init(id: "hs2", name: "華象二版",  filename: "hs2.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 50_838,  compressedKB: 834),
+                .init(id: "hs3", name: "華象三版",  filename: "hs3.zip", tableName: "hs", imName: "hs", label: "華象", keyboardId: "hs", recordCount: 64_324,  compressedKB: 1000),
             ]
         ),
         .init(
@@ -194,8 +201,8 @@ enum IMCatalog {
             description: "漢語拼音輸入法",
             systemIcon: "text.bubble",
             variants: [
-                .init(id: "pinyin",   name: "拼音字根",         filename: "pinyin.zip",   tableName: "pinyin", imName: "pinyin", label: "拼音",      keyboardId: "pinyin", recordCount: 34_753, compressedKB: 509, isLimeDB: false),
-                .init(id: "pinyingb", name: "拼音字根 (簡體GB)", filename: "pinyingb.zip", tableName: "pinyin", imName: "pinyin", label: "拼音 (GB)", keyboardId: "pinyin", recordCount: 34_753, compressedKB: 502, isLimeDB: false),
+                .init(id: "pinyin",   name: "拼音字根",         filename: "pinyin.zip",   tableName: "pinyin", imName: "pinyin", label: "拼音",      keyboardId: "pinyin", recordCount: 34_753, compressedKB: 509),
+                .init(id: "pinyingb", name: "拼音字根 (簡體GB)", filename: "pinyingb.zip", tableName: "pinyin", imName: "pinyin", label: "拼音 (GB)", keyboardId: "pinyin", recordCount: 34_753, compressedKB: 502),
             ]
         ),
         // 自建輸入法 — no cloud download; local import only (§13.3)

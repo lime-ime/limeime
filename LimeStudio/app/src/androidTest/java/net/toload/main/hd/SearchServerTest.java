@@ -4616,6 +4616,9 @@ public class SearchServerTest {
             
             boolean arrayValid = searchServer.isValidTableName("array");
             assertTrue("array table should be valid", arrayValid);
+
+            boolean cj4Valid = searchServer.isValidTableName("cj4");
+            assertTrue("cj4 table should be valid", cj4Valid);
         } finally {
             setStatic("dbadapter", original);
         }

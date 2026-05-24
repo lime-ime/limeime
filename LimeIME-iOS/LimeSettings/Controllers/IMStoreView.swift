@@ -122,13 +122,7 @@ final class IMDownloadManager: ObservableObject {
             let server = DBServer.shared
 
             do {
-                if variant.isLimeDB {
-                    // .limedb is a plain SQLite file — ATTACH directly
-                    try server.importFromAttachedDB(sourcePath: tempURL.path, tableName: variant.tableName)
-                } else {
-                    // .zip — extract the .db inside, then ATTACH
-                    try server.importFromZip(at: tempURL, tableName: variant.tableName)
-                }
+                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName)
 
                 if restoreLearning {
                     if let ss = server.makeSearchServer() {

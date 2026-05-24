@@ -15,6 +15,7 @@ private enum LIME {
     static let DB_TABLE_IM        = "im"
     static let DB_TABLE_KEYBOARD  = "keyboard"
     static let DB_TABLE_CJ        = "cj"
+    static let DB_TABLE_CJ4       = "cj4"
     static let DB_TABLE_ARRAY     = "array"
     static let DB_TABLE_DAYI      = "dayi"
 
@@ -2041,6 +2042,7 @@ final class SearchServerTest: XCTestCase {
         let ss = try makeSearchServer()
         XCTAssertTrue(ss.isValidTableName(LIME.DB_TABLE_PHONETIC))
         XCTAssertTrue(ss.isValidTableName(LIME.DB_TABLE_CJ))
+        XCTAssertTrue(ss.isValidTableName(LIME.DB_TABLE_CJ4))
         XCTAssertTrue(ss.isValidTableName(LIME.DB_TABLE_ARRAY))
     }
 

@@ -276,7 +276,7 @@ final class SetupImController: BaseController {
     }
 }
 
-private func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
+func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
     if isZipArchive(at: url) {
         try server.importFromZip(at: url, tableName: tableName)
     } else {

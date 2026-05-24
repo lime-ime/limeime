@@ -4967,6 +4967,7 @@ public class LimeDBTest {
         assertTrue("DB_TABLE_ARRAY should be valid", limeDB.isValidTableName(LIME.DB_TABLE_ARRAY));
         assertTrue("DB_TABLE_ARRAY10 should be valid", limeDB.isValidTableName(LIME.DB_TABLE_ARRAY10));
         assertTrue("DB_TABLE_CJ should be valid", limeDB.isValidTableName(LIME.DB_TABLE_CJ));
+        assertTrue("cj4 should be valid", limeDB.isValidTableName("cj4"));
         assertTrue("DB_TABLE_CJ5 should be valid", limeDB.isValidTableName(LIME.DB_TABLE_CJ5));
         assertTrue("DB_TABLE_CUSTOM should be valid", limeDB.isValidTableName(LIME.DB_TABLE_CUSTOM));
         assertTrue("DB_TABLE_DAYI should be valid", limeDB.isValidTableName(LIME.DB_TABLE_DAYI));
@@ -4993,6 +4994,7 @@ public class LimeDBTest {
         assertFalse("SQL injection attempt should return false", limeDB.isValidTableName("'; DROP TABLE custom; --"));
         assertFalse("Table name with spaces should return false", limeDB.isValidTableName("custom table"));
         assertFalse("Table name with special chars should return false", limeDB.isValidTableName("custom-table"));
+        assertFalse("Digit-leading table names should return false", limeDB.isValidTableName("4cj"));
     }
 
     @Test
@@ -5014,6 +5016,7 @@ public class LimeDBTest {
         // Backup tables should be valid (base table + "_user")
         assertTrue("custom_user should be valid", limeDB.isValidTableName("custom_user"));
         assertTrue("cj_user should be valid", limeDB.isValidTableName("cj_user"));
+        assertTrue("cj4_user should be valid", limeDB.isValidTableName("cj4_user"));
     }
 
     // ========================================================================

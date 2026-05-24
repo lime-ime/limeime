@@ -536,25 +536,32 @@ public class ImDetailFragment extends Fragment {
 
         new Thread(() -> {
             final List<Keyboard> keyboards = ctrl.getKeyboardList();
+            final Keyboard current = ctrl.getCurrentKeyboard(tableCode);
             if (act == null) return;
             act.runOnUiThread(() -> {
                 if (!isAdded() || activity == null) return;
                 if (keyboards == null || keyboards.isEmpty()) return;
 
                 String[] names = new String[keyboards.size()];
+                int checkedIndex = -1;
                 for (int i = 0; i < keyboards.size(); i++) {
-                    names[i] = keyboards.get(i).getDesc();
+                    Keyboard keyboard = keyboards.get(i);
+                    names[i] = keyboard.getDesc();
+                    if (current != null && keyboard.getCode().equals(current.getCode())) {
+                        checkedIndex = i;
+                    }
                 }
 
                 final String tbl = tableCode;
                 new AlertDialog.Builder(activity)
                         .setTitle(R.string.im_detail_keyboard_picker_title)
-                        .setItems(names, (dialog, which) -> {
+                        .setSingleChoiceItems(names, checkedIndex, (dialog, which) -> {
                             Keyboard selected = keyboards.get(which);
                             if (tvKeyboardValue != null) {
                                 tvKeyboardValue.setText(selected.getDesc());
                             }
                             new Thread(() -> ctrl.setIMKeyboard(tbl, selected)).start();
+                            dialog.dismiss();
                         })
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();

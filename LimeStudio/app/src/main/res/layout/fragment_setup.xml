@@ -227,11 +227,15 @@
                         android:text="授權" />
 
                     <TextView
+                        android:id="@+id/txtLicenseUrl"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:gravity="end"
-                        android:text="GPL-3.0" />
+                        android:text="版權說明"
+                        android:textColor="@color/material_blue"
+                        android:clickable="true"
+                        android:focusable="true" />
 
                 </LinearLayout>
 

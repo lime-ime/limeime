@@ -144,6 +144,21 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    func testDatabaseImportFileAutoDetectImportsZippedLimedb() throws {
+        let (url, db) = try makeDB()
+        let zipped = try makeZippedCustomLimedb()
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: zipped.dbURL)
+            try? FileManager.default.removeItem(at: zipped.zipURL)
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+
+        try importDatabaseFile(server: server, url: zipped.zipURL, tableName: "custom")
+
+        XCTAssertGreaterThan(db.countRecords("custom", nil, nil), 0)
+    }
+
     func testExportLimedbRemoveAndReimportRestoresSameCustomEntries() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }

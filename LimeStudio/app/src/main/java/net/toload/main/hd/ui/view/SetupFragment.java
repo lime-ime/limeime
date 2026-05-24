@@ -136,7 +136,16 @@ public class SetupFragment extends Fragment {
             Log.w(TAG, "Could not read version", e);
         }
 
-        // GitHub link tap
+        // License and GitHub link taps
+        TextView txtLicense = rootView.findViewById(R.id.txtLicenseUrl);
+        if (txtLicense != null) {
+            txtLicense.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse(getString(R.string.url_license_limeime)));
+                startActivity(intent);
+            });
+        }
+
         TextView txtGithub = rootView.findViewById(R.id.txtGithubUrl);
         if (txtGithub != null) {
             txtGithub.setOnClickListener(v -> {
