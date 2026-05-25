@@ -899,8 +899,13 @@ public class DBServerTest {
         
         // Test with non-existent file
         String nonExistentPath = appContext.getCacheDir().getAbsolutePath() + "/nonexistent_" + System.currentTimeMillis() + ".zip";
-        dbServer.restoreDatabase(nonExistentPath);
-        // Should show error notification, which is acceptable
+        try {
+            dbServer.restoreDatabase(nonExistentPath);
+            fail("restoreDatabase with non-existent path should throw");
+        } catch (Exception e) {
+            // Exception is expected for non-existent file.
+            assertTrue("restoreDatabase with non-existent path throws", true);
+        }
         
         // Test with null path
         try {
@@ -943,14 +948,13 @@ public class DBServerTest {
             // Create URI from file
             android.net.Uri testUri = android.net.Uri.fromFile(testFile);
             
-            // Test restoreDatabase with Uri
-            // This may fail if file format is invalid, which is acceptable
+            // Test restoreDatabase with a zero-byte Uri. This must fail visibly instead of
+            // returning and letting the UI report restore success.
             try {
                 dbServer.restoreDatabase(testUri);
-                assertTrue("restoreDatabase with Uri should complete", true);
+                fail("restoreDatabase with zero-byte Uri should throw");
             } catch (Exception e) {
-                // Exception is acceptable for invalid file format
-                assertTrue("restoreDatabase with Uri may throw exception", true);
+                assertTrue("restoreDatabase with zero-byte Uri throws", true);
             }
             
             // Clean up

@@ -195,17 +195,19 @@ public class SetupImController extends BaseController implements ImportDialog.On
      * 
      * @param uri The URI of the backup file to restore from
      */
-    public void performRestore(Uri uri) {
+    public void performRestore(Uri uri) throws Exception {
         try {
             showProgress(mainActivityView, "Restoring database...");
             dbServer.restoreDatabase(uri);
             hideProgress(mainActivityView);
-            
+
             // Refresh the menu and UI after restore
             refreshNavigationMenu();
             refreshSetupImButtonStates();
         } catch (Exception e) {
             handleError(mainActivityView, "Failed to restore database", e);
+            hideProgress(mainActivityView);
+            throw e;
         }
     }
 

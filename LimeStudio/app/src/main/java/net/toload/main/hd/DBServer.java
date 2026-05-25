@@ -481,7 +481,7 @@ public class  DBServer {
 
     }
 
-    public void restoreDatabase(Uri uri) {
+    public void restoreDatabase(Uri uri) throws IOException {
         if (DEBUG)
             Log.i(TAG, "restoreDatabase(Uri) Starting....");
 
@@ -502,12 +502,26 @@ public class  DBServer {
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
             }
+            outputStream.flush();
+            outputStream.close();
+            outputStream = null;
+
+            // Reject zero-byte copies — Android Uri import can silently produce empty files
+            if (tempZip.length() == 0) {
+                throw new IOException("Restore failed: copied backup archive is empty (0 bytes)");
+            }
+
             Log.i(TAG, "restoreDatabase(Uri) temp file created: " + tempZip.getAbsolutePath());
             restoreDatabase(tempZip.getAbsolutePath());
 
+        } catch (IOException e) {
+            Log.e(TAG, "Error restoring database", e);
+            showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
+            throw e;
         } catch (Exception e) {
             Log.e(TAG, "Error restoring database", e);
             showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
+            throw new IOException("Restore failed: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()), e);
         } finally {
             try {
                 if (inputStream != null) inputStream.close();
@@ -519,55 +533,74 @@ public class  DBServer {
         }
     }
 
-	public void restoreDatabase(String srcFilePath) {
+	public void restoreDatabase(String srcFilePath) throws IOException {
 		File check = new File(srcFilePath);
         String dataDir = getDataDirPath();
 
-		if(check.exists()){
-
-			datasource.holdDBConnection(); //Jeremy '15,5,23
-			closeDatabase();
-            //restore shared preference
-            File sharedPref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
-            File preferenceManifest = new File(dataDir, PreferenceBackupAdapter.MANIFEST_PATH);
-
-            boolean unzipSucceeded = false;
-            try {
-				LIMEUtilities.unzip(srcFilePath, dataDir, true);
-                unzipSucceeded = true;
-			} catch (Exception e) {
-				Log.e(TAG, "Error unzipping restore file", e);
-				showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
-			}
-
-				datasource.unHoldDBConnection(); //Jeremy '15,5,23
-				datasource.openDBConnection(true);
-				datasource.ensureCurrentDatabase();
-
-                if (!unzipSucceeded) {
-                    return;
-                }
-
-				showNotificationMessage(appContext.getText(R.string.l3_initial_restore_end) + "");
-
-                if (!restorePreferenceCompatibilityManifest(preferenceManifest)) {
-                    restoreDefaultSharedPreference(sharedPref);
-                }
-            //Delete the shared preference backup file after restored.
-            if(sharedPref.exists() && !sharedPref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
-            if(preferenceManifest.exists() && !preferenceManifest.delete()) Log.w(TAG, "Failed to delete preference manifest after restore");
-			//mLIMEPref.setResetCacheFlag(true);
-            net.toload.main.hd.SearchServer.resetCache(true);
-
-				// Check and upgrade the database table
-				datasource.checkAndUpdateRelatedTable();
-				datasource.ensureCurrentDatabase();
-
-			}else{
+		if (!check.exists()) {
 			showNotificationMessage(appContext.getText(R.string.error_restore_not_found) + "");
-
+			throw new FileNotFoundException("Restore source file not found: " + srcFilePath);
 		}
 
+		// Validate the archive contains a lime.db entry before touching the live database.
+		// Prevents wiping the running DB when the user picks an unrelated/corrupted zip.
+		if (!zipContainsLimeDbEntry(check)) {
+			showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
+			throw new IOException("Restore failed: backup archive does not contain a lime.db entry");
+		}
+
+		datasource.holdDBConnection(); //Jeremy '15,5,23
+		closeDatabase();
+		//restore shared preference
+		File sharedPref = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
+		File preferenceManifest = new File(dataDir, PreferenceBackupAdapter.MANIFEST_PATH);
+
+		boolean unzipSucceeded = false;
+		IOException unzipError = null;
+		try {
+			LIMEUtilities.unzip(srcFilePath, dataDir, true);
+			unzipSucceeded = true;
+		} catch (Exception e) {
+			Log.e(TAG, "Error unzipping restore file", e);
+			showNotificationMessage(appContext.getText(R.string.l3_initial_restore_error) + "");
+			unzipError = new IOException("Restore failed: unable to unzip backup archive", e);
+		}
+
+		datasource.unHoldDBConnection(); //Jeremy '15,5,23
+		datasource.openDBConnection(true);
+		datasource.ensureCurrentDatabase();
+
+		if (!unzipSucceeded) {
+			throw unzipError;
+		}
+
+		showNotificationMessage(appContext.getText(R.string.l3_initial_restore_end) + "");
+
+		if (!restorePreferenceCompatibilityManifest(preferenceManifest)) {
+			restoreDefaultSharedPreference(sharedPref);
+		}
+		//Delete the shared preference backup file after restored.
+		if(sharedPref.exists() && !sharedPref.delete()) Log.w(TAG, "Failed to delete shared preferences backup file after restore");
+		if(preferenceManifest.exists() && !preferenceManifest.delete()) Log.w(TAG, "Failed to delete preference manifest after restore");
+		//mLIMEPref.setResetCacheFlag(true);
+		net.toload.main.hd.SearchServer.resetCache(true);
+
+		// Check and upgrade the database table
+		datasource.checkAndUpdateRelatedTable();
+		datasource.ensureCurrentDatabase();
+	}
+
+	private boolean zipContainsLimeDbEntry(File zipFile) throws IOException {
+		try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(zipFile)))) {
+			ZipEntry entry;
+			while ((entry = zis.getNextEntry()) != null) {
+				String name = entry.getName();
+				if (name != null && !entry.isDirectory() && name.endsWith("lime.db")) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
     private void backupPreferenceCompatibilityManifest(File manifestFile) {

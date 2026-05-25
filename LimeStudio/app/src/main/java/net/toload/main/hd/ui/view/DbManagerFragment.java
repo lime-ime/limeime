@@ -263,8 +263,14 @@ public class DbManagerFragment extends Fragment {
     }
 
     private void performRestore(Uri uri) {
+        if (setupImController == null) {
+            showToastMessage(getString(R.string.l3_initial_restore_error), Toast.LENGTH_LONG);
+            runOnUi(() -> setStatus(getString(R.string.db_status_restore_fail, "controller unavailable")));
+            return;
+        }
         try {
-            if (setupImController != null) setupImController.performRestore(uri);
+            setupImController.performRestore(uri);
+            // Only reached when no exception propagated from the controller/DBServer chain.
             runOnUi(() -> setStatus(getString(R.string.db_status_restore_ok)));
         } catch (Exception e) {
             Log.e(TAG, "Failed to restore database", e);
