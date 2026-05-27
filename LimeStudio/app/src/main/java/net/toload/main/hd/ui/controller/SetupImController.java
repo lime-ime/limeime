@@ -182,10 +182,11 @@ public class SetupImController extends BaseController implements ImportDialog.On
         try {
             showProgress(settingsView, "Backing up database...");
             dbServer.backupDatabase(uri);
-            hideProgress(settingsView);
         } catch (Exception e) {
             handleError(settingsView, "Failed to backup database", e);
             throw e;
+        } finally {
+            hideProgress(settingsView);
         }
     }
 

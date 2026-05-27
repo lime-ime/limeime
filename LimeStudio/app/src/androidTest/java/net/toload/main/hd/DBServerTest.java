@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -1032,22 +1033,112 @@ public class DBServerTest {
     }
 
     @Test
+    public void testDBServerBackupDatabaseSkipsMissingOptionalJournal() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        DBServer dbServer = DBServer.getInstance(appContext);
+
+        if (!ensureDatabaseReady(dbServer)) {
+            fail("ERROR: Database is still on hold before missing-journal backup test.");
+        }
+
+        File journalFile = appContext.getDatabasePath(LIME.DATABASE_JOURNAL);
+        if (journalFile.exists() && !journalFile.delete()) {
+            fail("Could not remove optional journal before backup test: " + journalFile.getAbsolutePath());
+        }
+
+        File backupFile = new File(appContext.getCacheDir(), "test_backup_missing_journal_" + System.currentTimeMillis() + ".zip");
+        try {
+            dbServer.backupDatabase(android.net.Uri.fromFile(backupFile));
+
+            assertTrue("Backup should be created even when optional lime.db-journal is absent", backupFile.exists());
+            assertTrue("Backup should not be empty when optional lime.db-journal is absent", backupFile.length() > 0);
+
+            try (ZipFile zipFile = new ZipFile(backupFile)) {
+                assertNotNull("Backup should still include required lime.db", zipFile.getEntry("databases/" + LIME.DATABASE_NAME));
+                assertNull("Missing optional lime.db-journal should not be added to the zip", zipFile.getEntry("databases/" + LIME.DATABASE_JOURNAL));
+                assertNotNull("Backup should include shared preferences backup", zipFile.getEntry(LIME.SHARED_PREFS_BACKUP_NAME));
+            }
+        } finally {
+            if (backupFile.exists() && !backupFile.delete()) {
+                Log.w(TAG, "Failed to delete missing-journal backup test file: " + backupFile.getAbsolutePath());
+            }
+        }
+    }
+
+    @Test
+    public void testDBServerBackupDatabaseExcludesPresentOptionalJournal() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        DBServer dbServer = DBServer.getInstance(appContext);
+
+        if (!ensureDatabaseReady(dbServer)) {
+            fail("ERROR: Database is still on hold before present-journal backup test.");
+        }
+
+        File journalFile = appContext.getDatabasePath(LIME.DATABASE_JOURNAL);
+        File journalParent = journalFile.getParentFile();
+        assertTrue("Journal parent directory should exist", journalParent != null && (journalParent.exists() || journalParent.mkdirs()));
+        try (FileOutputStream out = new FileOutputStream(journalFile)) {
+            out.write("transient journal sidecar".getBytes());
+        }
+        assertTrue("Test should create an optional journal sidecar before backup", journalFile.exists());
+
+        File backupFile = new File(appContext.getCacheDir(), "test_backup_present_journal_" + System.currentTimeMillis() + ".zip");
+        try {
+            dbServer.backupDatabase(android.net.Uri.fromFile(backupFile));
+
+            assertTrue("Backup should be created when optional lime.db-journal is present", backupFile.exists());
+            assertTrue("Backup should not be empty when optional lime.db-journal is present", backupFile.length() > 0);
+
+            try (ZipFile zipFile = new ZipFile(backupFile)) {
+                assertNotNull("Backup should still include required lime.db", zipFile.getEntry("databases/" + LIME.DATABASE_NAME));
+                assertNull("Optional lime.db-journal should be excluded from the zip", zipFile.getEntry("databases/" + LIME.DATABASE_JOURNAL));
+                assertNotNull("Backup should include shared preferences backup", zipFile.getEntry(LIME.SHARED_PREFS_BACKUP_NAME));
+            }
+        } finally {
+            if (journalFile.exists() && !journalFile.delete()) {
+                Log.w(TAG, "Failed to delete present-journal test sidecar: " + journalFile.getAbsolutePath());
+            }
+            if (backupFile.exists() && !backupFile.delete()) {
+                Log.w(TAG, "Failed to delete present-journal backup test file: " + backupFile.getAbsolutePath());
+            }
+        }
+    }
+
+    @Test
+    public void testDBServerBackupDatabasePropagatesOutputFailures() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        DBServer dbServer = DBServer.getInstance(appContext);
+
+        if (!ensureDatabaseReady(dbServer)) {
+            fail("ERROR: Database is still on hold before output-failure backup test.");
+        }
+
+        File outputDirectory = new File(appContext.getCacheDir(), "backup_output_directory_" + System.currentTimeMillis());
+        assertTrue("Output directory should be created for failure propagation test", outputDirectory.mkdirs());
+
+        try {
+            dbServer.backupDatabase(android.net.Uri.fromFile(outputDirectory));
+            fail("backupDatabase should throw when the selected output URI cannot be written");
+        } catch (RemoteException e) {
+            assertTrue("Failure should describe backup failure", e.getMessage() != null && e.getMessage().contains("Failed to backup database"));
+        } finally {
+            if (outputDirectory.exists() && !outputDirectory.delete()) {
+                Log.w(TAG, "Failed to delete output failure test directory: " + outputDirectory.getAbsolutePath());
+            }
+        }
+    }
+
+    @Test
     public void testDBServerBackupDatabaseWithNullUri() {
         // Test backupDatabase with null Uri
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DBServer dbServer = DBServer.getInstance(appContext);
         
-        // Test backupDatabase with null Uri
-        // This should handle null gracefully
         try {
             dbServer.backupDatabase(null);
-            assertTrue("backupDatabase with null Uri should handle gracefully", true);
+            fail("backupDatabase should propagate null output Uri failures");
         } catch (RemoteException e) {
-            // RemoteException is acceptable for null Uri
-            assertTrue("backupDatabase with null Uri may throw RemoteException", true);
-        } catch (Exception e) {
-            // Other exceptions are acceptable
-            assertTrue("backupDatabase with null Uri may throw exception", true);
+            assertTrue("Failure should describe backup failure", e.getMessage() != null && e.getMessage().contains("Failed to backup database"));
         }
     }
 

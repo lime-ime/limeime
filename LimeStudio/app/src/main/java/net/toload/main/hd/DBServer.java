@@ -399,85 +399,110 @@ public class  DBServer {
             Log.i(TAG, "backupDatabase()");
 
         String dataDir = getDataDirPath();
-        //backup shared preferences
-
         File fileSharedPrefsBackup = new File(dataDir, LIME.SHARED_PREFS_BACKUP_NAME);
-        if(fileSharedPrefsBackup.exists() && !fileSharedPrefsBackup.delete()) Log.w(TAG, "Failed to delete existing shared preferences backup file");
-        backupDefaultSharedPreference(fileSharedPrefsBackup);
         File filePreferenceManifest = new File(dataDir, PreferenceBackupAdapter.MANIFEST_PATH);
-        backupPreferenceCompatibilityManifest(filePreferenceManifest);
-
-        // create backup file list.
-        String limeDBPath = ctx.getDatabasePath(LIME.DATABASE_NAME).getAbsolutePath();
-        String limeDBJournalPath = ctx.getDatabasePath(LIME.DATABASE_JOURNAL).getAbsolutePath();
-        if (limeDBPath.startsWith(dataDir)) {
-            limeDBPath = limeDBPath.substring(dataDir.length());
-        }
-        if (limeDBJournalPath.startsWith(dataDir)) {
-            limeDBJournalPath = limeDBJournalPath.substring(dataDir.length());
-        }
-        List<String> backupFileList = new ArrayList<>();
-        //backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
-        //backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_JOURNAL);
-        backupFileList.add(limeDBPath);
-        backupFileList.add(limeDBJournalPath);
-        backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
-        backupFileList.add(PreferenceBackupAdapter.MANIFEST_PATH);
-
-        // hold database connection and close database.
-        datasource.holdDBConnection(); //Jeremy '15,5,23
-        closeDatabase();
-
-        //ready to zip backup file list
         File tempZip = new File(appContext.getCacheDir(), LIME.DATABASE_BACKUP_NAME);
-        if(tempZip.exists() && !tempZip.delete()) Log.w(TAG, "Failed to delete existing temp zip file");
         OutputStream outputStream = null;
         FileInputStream inputStream = null;
+        boolean backupSucceeded = false;
+        boolean databaseHeld = false;
 
         try {
+            //backup shared preferences
+            if(fileSharedPrefsBackup.exists() && !fileSharedPrefsBackup.delete()) Log.w(TAG, "Failed to delete existing shared preferences backup file");
+            backupDefaultSharedPreference(fileSharedPrefsBackup);
+            backupPreferenceCompatibilityManifest(filePreferenceManifest);
+
+            // hold database connection and close database before checking optional SQLite sidecar files.
+            datasource.holdDBConnection(); //Jeremy '15,5,23
+            databaseHeld = true;
+            closeDatabase();
+
+            // create backup file list after closeDatabase(), because SQLite can delete the rollback journal while closing.
+            File limeDBFile = ctx.getDatabasePath(LIME.DATABASE_NAME);
+            File limeDBJournalFile = ctx.getDatabasePath(LIME.DATABASE_JOURNAL);
+            String limeDBPath = limeDBFile.getAbsolutePath();
+            if (limeDBPath.startsWith(dataDir)) {
+                limeDBPath = limeDBPath.substring(dataDir.length());
+            }
+            List<String> backupFileList = new ArrayList<>();
+            //backupFileList.add(LIME.DATABASE_RELATIVE_FOLDER + File.separator + LIME.DATABASE_NAME);
+            // Do not add LIME.DATABASE_JOURNAL here. SQLite rollback journals are transient
+            // sidecar files; after closeDatabase() the main database is the required backup source.
+            backupFileList.add(limeDBPath);
+            Log.i(TAG, "Skipping optional SQLite journal during backup: " + limeDBJournalFile.getAbsolutePath());
+            backupFileList.add(LIME.SHARED_PREFS_BACKUP_NAME);
+            backupFileList.add(PreferenceBackupAdapter.MANIFEST_PATH);
+
+            //ready to zip backup file list
+            if(tempZip.exists() && !tempZip.delete()) Log.w(TAG, "Failed to delete existing temp zip file");
             LIMEUtilities.zip(tempZip.getAbsolutePath(), backupFileList, dataDir , true);
+            if (!tempZip.exists() || tempZip.length() == 0) {
+                throw new IOException("Backup zip was not created or is empty: " + tempZip.getAbsolutePath());
+            }
             //saveFileToDownloads(tempZip);
             // Copy temp zip to the User selected URI
             inputStream = new FileInputStream(tempZip);
             outputStream = appContext.getContentResolver().openOutputStream(uri);
+            if (outputStream == null) {
+                throw new FileNotFoundException("Could not open output stream for URI: " + uri);
+            }
 
             byte[] buffer = new byte[LIME.BUFFER_SIZE_4KB];
             int bytesRead;
+            long bytesCopied = 0;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
+                bytesCopied += bytesRead;
             }
+            outputStream.flush();
+            outputStream.close();
+            outputStream = null;
+            inputStream.close();
+            inputStream = null;
+            if (bytesCopied == 0) {
+                throw new IOException("Backup copy wrote 0 bytes to URI: " + uri);
+            }
+            Log.i(TAG, "Database backup wrote " + bytesCopied + " bytes to selected URI");
+            backupSucceeded = true;
 
         } catch (Exception e) {
             Log.e(TAG, "Error backing up database", e);
             showNotificationMessage(appContext.getText(R.string.l3_initial_backup_error) + "");
+            String detail = e.getMessage() != null ? e.getMessage() : e.toString();
+            RemoteException remoteException = new RemoteException("Failed to backup database: " + detail);
+            remoteException.initCause(e);
+            throw remoteException;
         } finally {
-            try {
-                if (outputStream != null) outputStream.close();
-                if (inputStream != null) inputStream.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Error closing streams during backup", e);
+            if (outputStream != null) {
+                try {
+                    outputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing output stream during backup", e);
+                }
             }
-            // Reopen DB
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing input stream during backup", e);
+                }
+            }
+            // Reopen DB and release backup hold even when backup fails.
             if (datasource != null) {
+                if (databaseHeld) {
+                    datasource.unHoldDBConnection(); //Jeremy '15,5,23
+                }
                 datasource.openDBConnection(true);
             }
             if (fileSharedPrefsBackup.exists() && !fileSharedPrefsBackup.delete()) Log.w(TAG, "Failed to delete shared preferences backup file in finally");
             if (filePreferenceManifest.exists() && !filePreferenceManifest.delete()) Log.w(TAG, "Failed to delete preference manifest in finally");
             if (tempZip.exists() && !tempZip.delete()) Log.w(TAG, "Failed to delete temp zip file in finally");
 
-            showNotificationMessage(appContext.getText(R.string.l3_initial_backup_end) + "");
+            if (backupSucceeded) {
+                showNotificationMessage(appContext.getText(R.string.l3_initial_backup_end) + "");
+            }
         }
-
-
-
-        // backup finished.  unhold the database connection and false reopen the database.
-        datasource.unHoldDBConnection(); //Jeremy '15,5,23
-        //mLIMEPref.holdDatabaseConnection(false);
-        datasource.openDBConnection(true);
-
-        //cleanup the shared preference backup file.
-        if(fileSharedPrefsBackup.exists() && !fileSharedPrefsBackup.delete()) Log.w(TAG, "Failed to delete shared preferences backup file at end");
-        if(filePreferenceManifest.exists() && !filePreferenceManifest.delete()) Log.w(TAG, "Failed to delete preference manifest at end");
 
 
     }
