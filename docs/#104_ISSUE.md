@@ -1,4 +1,4 @@
-# Issue #104 — Android Enter key commits related candidate after 6.1.16
+# Issue #104 — Enter/Return commits related candidate after 6.1.16
 
 ## Problem statement
 
@@ -104,7 +104,13 @@ Confirmed reporter platform. The inspected Android `LIMEService` candidate/Enter
 
 ### iOS
 
-Not reported. iOS has a separate Swift keyboard implementation, so Android `LIMEService.java` state handling does not directly apply. Still, iOS should receive a light parity audit for return-key behavior when related candidates remain visible after commit, especially if the intended product rule is that Enter/Search/Return should pass through once composition has ended.
+iOS has a separate Swift keyboard implementation, but the parity audit found the same class of risk:
+
+- `KeyboardViewController.handleEnterOrSpace(...)` already treats related, Chinese-punctuation, and English-prediction lists as browse-only, so Return/Space should pass through in the direct #104 path.
+- However, `LimeEndkeyPolicy.defaultCommitCandidateIndex(...)` used the same unsafe fallback-to-`0` shape as Android, and normal candidate-strip selection called that helper. This couples `%limeendkey` commit resolution to visible default selection.
+- `updateRelatedPhrase(...)` and `updateEnglishPrediction(...)` displayed browse-only candidates with `showCandidates(..., selectedIndex: -1)` but still set controller `selectedCandidate` to `.first`, leaving stale controller-side selection inconsistent with the unhighlighted UI.
+
+The iOS fix mirrors Android: split visible default selection (`defaultCandidateSelectionIndex`) from end-key commit resolution (`defaultCommitCandidateIndex`), remove the fallback-to-first behavior for end-key resolution, and keep browse-only related/English lists with `selectedCandidate = nil` unless the user explicitly taps one.
 
 ## Verification plan
 
@@ -112,12 +118,13 @@ Not reported. iOS has a separate Swift keyboard implementation, so Android `LIME
 - Android manual: in a normal multiline text field, press Enter after committing a word with related candidates visible and confirm a newline occurs.
 - Android manual: in a browser/search field, press Enter/Search after committing a word with related candidates visible and confirm search/action runs.
 - Regression: active composing candidate selection with Space and valid selection keys still works; `%limeendkey`/`@limeendkey@` behavior from #96 remains unchanged.
-- iOS audit: confirm return/search key behavior with visible related candidates after commit, or document that iOS behavior is already independent.
+- iOS unit coverage: added Swift policy coverage for legacy default candidate-strip selection, related-only no-selection, `%limeendkey` commit selection staying separate, and no fallback to related candidates.
+- iOS manual: with related candidates visible after commit, press Return/Search and confirm the host editor action passes through; explicitly tapping a related candidate should still commit it.
 
 ## Current follow-up status
 
-- Classification: Android bug / regression.
-- Public issue: open, source fix prepared in branch `fix/issue-104-restore-default-candidate`.
+- Classification: Android bug / regression; iOS parity risk found and fixed in the same branch.
+- Public issue: open, source fix prepared in branch `fix/issue-104-restore-default-candidate` / PR #105.
 - Root-cause attribution: `35abf08da89ddec0b221fab5612a44cbd2ea03d4` introduced default-selection fallback `return 0`, which accidentally highlights related-only candidates.
-- Validation in WSL: Java/app and androidTest compilation pass; connected instrumentation execution is blocked by no attached Android device/emulator.
+- Validation in WSL: Java/app and androidTest compilation pass; Swift policy helper compiles/runs with Linux Swift; connected Android instrumentation and full iOS/Xcode builds are blocked by no attached Android device/emulator and no macOS/Xcode toolchain in WSL.
 - Retest condition: wait for a newer Android APK than `6.1.16` containing the targeted Enter/related-candidate fix before asking the reporter to retest.

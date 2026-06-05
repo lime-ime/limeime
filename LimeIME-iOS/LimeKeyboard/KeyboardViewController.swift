@@ -1798,7 +1798,7 @@ final class KeyboardViewController: UIInputViewController {
               !full.isEmpty else { return }
         mCandidateList = full
         hasCandidatesShown = true
-        let idx = LimeEndkeyPolicy.defaultCommitCandidateIndex(full)
+        let idx = LimeEndkeyPolicy.defaultCandidateSelectionIndex(full)
         selectedCandidate = (idx >= 0) ? full[idx] : nil
         candidateBar.appendCandidates(full, selectedIndex: idx)
         // If the expanded grid is currently visible for normal candidates,
@@ -1823,7 +1823,7 @@ final class KeyboardViewController: UIInputViewController {
         // Normal-candidate selection seed (mirrors Android CandidateView.setSuggestions,
         // CandidateView.java:1182–1196). Associated lists (related phrases, punctuation,
         // English) bypass this method entirely and stay at selectedIndex = -1.
-        let selectedIdx = LimeEndkeyPolicy.defaultCommitCandidateIndex(list)
+        let selectedIdx = LimeEndkeyPolicy.defaultCandidateSelectionIndex(list)
         selectedCandidate = (selectedIdx >= 0) ? list[selectedIdx] : nil
         candidateBar.setIdleToolsSuppressed(false)
 
@@ -2401,7 +2401,7 @@ final class KeyboardViewController: UIInputViewController {
                     self.mCandidateList         = related
                     self.hasCandidatesShown     = true
                     self.isShowingRelatedPhrases = true
-                    self.selectedCandidate      = related.first
+                    self.selectedCandidate      = nil
                     self.showCandidates(related)
                 }
             }
@@ -2438,7 +2438,7 @@ final class KeyboardViewController: UIInputViewController {
                 else {
                     self.mCandidateList    = mappings
                     self.hasCandidatesShown = true
-                    self.selectedCandidate = mappings.first
+                    self.selectedCandidate = nil
                     self.showCandidates(mappings)
                 }
             }
