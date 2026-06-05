@@ -155,17 +155,42 @@ public class LIMEServiceTest {
     }
 
     @Test
-    public void defaultSelectedCandidatePrefersChinesePunctuationOverRawComposingCode() {
-        Mapping composing = createPlainCandidate(".", ".");
+    public void defaultSelectedCandidateKeepsLegacyCompositionRules() {
+        Mapping composing = createPlainCandidate("aa", "aa");
         composing.setComposingCodeRecord();
+        Mapping exactCandidate = createPlainCandidate("aa", "昌");
+        exactCandidate.setExactMatchToCodeRecord();
+        List<Mapping> exactCandidates = new ArrayList<>();
+        exactCandidates.add(composing);
+        exactCandidates.add(exactCandidate);
+
+        assertEquals(1, LIMEService.defaultSelectedCandidateIndex(exactCandidates, false));
+        assertSame(exactCandidate, LIMEService.defaultSelectedCandidateForSuggestions(exactCandidates, false));
+
+        Mapping punctuationComposing = createPlainCandidate(".", ".");
+        punctuationComposing.setComposingCodeRecord();
         Mapping punctuation = createPlainCandidate(".", "。");
         punctuation.setChinesePunctuationSymbolRecord();
-        List<Mapping> candidates = new ArrayList<>();
-        candidates.add(composing);
-        candidates.add(punctuation);
+        List<Mapping> punctuationCandidates = new ArrayList<>();
+        punctuationCandidates.add(punctuationComposing);
+        punctuationCandidates.add(punctuation);
 
-        assertEquals(1, LIMEService.defaultSelectedCandidateIndex(candidates, false));
-        assertSame(punctuation, LIMEService.defaultSelectedCandidateForSuggestions(candidates, false));
+        assertEquals(0, LIMEService.defaultSelectedCandidateIndex(punctuationCandidates, false));
+        assertSame(punctuationComposing, LIMEService.defaultSelectedCandidateForSuggestions(punctuationCandidates, false));
+    }
+
+    @Test
+    public void relatedPhraseCandidatesHaveNoDefaultSelectionForEnterPassThrough() {
+        Mapping relatedOne = createPlainCandidate("", "了");
+        relatedOne.setRelatedPhraseRecord();
+        Mapping relatedTwo = createPlainCandidate("", "的");
+        relatedTwo.setRelatedPhraseRecord();
+        List<Mapping> relatedCandidates = new ArrayList<>();
+        relatedCandidates.add(relatedOne);
+        relatedCandidates.add(relatedTwo);
+
+        assertEquals(-1, LIMEService.defaultSelectedCandidateIndex(relatedCandidates, false));
+        assertNull(LIMEService.defaultSelectedCandidateForSuggestions(relatedCandidates, false));
     }
 
     @Test
@@ -297,7 +322,8 @@ public class LIMEServiceTest {
         candidates.add(candidate);
         Mapping commaComposing = createCandidate(",", ",");
         commaComposing.setComposingCodeRecord();
-        Mapping commaCandidate = createCandidate(",", "，");
+        Mapping commaCandidate = createPlainCandidate(",", "，");
+        commaCandidate.setChinesePunctuationSymbolRecord();
         LinkedList<Mapping> commaCandidates = new LinkedList<>();
         commaCandidates.add(commaComposing);
         commaCandidates.add(commaCandidate);

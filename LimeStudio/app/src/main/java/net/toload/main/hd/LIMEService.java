@@ -2236,7 +2236,7 @@ public class LIMEService extends InputMethodService
                 return null;
             }
             mCandidateList = new LinkedList<>(candidates);
-            selectedCandidate = defaultSelectedCandidateForSuggestions(mCandidateList, hasPhysicalKeyPressed);
+            selectedCandidate = endkeySelectedCandidateForSuggestions(mCandidateList);
             hasMappingList = selectedCandidate != null;
             hasCandidatesShown = selectedCandidate != null;
             return selectedCandidate;
@@ -2275,15 +2275,31 @@ public class LIMEService extends InputMethodService
         if (suggestions == null || suggestions.isEmpty()) {
             return -1;
         }
-        for (int i = 0; i < suggestions.size(); i++) {
-            if (isDefaultCommitCandidate(suggestions.get(i))) {
-                return i;
-            }
+        if (suggestions.size() > 1
+                && (suggestions.get(1).isExactMatchToCodeRecord()
+                || suggestions.get(1).isPartialMatchToCodeRecord())) {
+            return 1;
         }
-        return 0;
+        Mapping firstCandidate = suggestions.get(0);
+        if (firstCandidate.isComposingCodeRecord() || firstCandidate.isRuntimeBuiltPhraseRecord()) {
+            return 0;
+        }
+        return -1;
     }
 
-    private static boolean isDefaultCommitCandidate(Mapping candidate) {
+    private static Mapping endkeySelectedCandidateForSuggestions(List<Mapping> suggestions) {
+        if (suggestions == null || suggestions.isEmpty()) {
+            return null;
+        }
+        for (Mapping candidate : suggestions) {
+            if (isEndkeyCommitCandidate(candidate)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isEndkeyCommitCandidate(Mapping candidate) {
         return candidate != null
                 && !candidate.isComposingCodeRecord()
                 && (candidate.isExactMatchToCodeRecord()

@@ -74,17 +74,17 @@ Before `35abf08d`, `CandidateView.setSuggestions(...)` explicitly kept related p
 
 So the fix should restore the old no-default-highlight rule for post-commit related/association candidates while preserving the intended #96 behavior for active composition and Lime end-key resolution.
 
-## Proposed fix / investigation plan
+## Fix approach
 
-1. Reproduce with Android `6.1.16` using a table/setting path that leaves related candidates visible after committing a word.
-2. Add focused regression coverage that a related-only candidate list returns no default selected index / no highlighted item, and that Enter with `mComposing.length() == 0` plus related candidates visible passes through rather than committing candidate 0.
-3. Adjust default candidate selection so related/association candidate lists keep `mSelectedIndex = -1`; do not rely only on special-casing Enter after the fact.
-4. Keep existing expected behavior for:
-   - active composing candidate selection,
-   - Space candidate commit behavior,
-   - opt-in end-key behavior from `%limeendkey` / `@limeendkey@`,
-   - physical-keyboard Enter if it shares the same state path.
-5. Verify with normal text/newline fields and browser/search fields because the reporter specifically mentions newline/search actions.
+The source fix restores the pre-`35abf08d` default-highlight rules used by `CandidateView` / visible candidate strips:
+
+1. If the second candidate is an exact/partial match to the current code, default-select index `1`.
+2. Else if the first candidate is the composing-code or runtime-built-phrase record, default-select index `0`.
+3. Else leave no default selected item (`-1`).
+
+That means related/association-only strips, Chinese punctuation-symbol-only strips, and English suggestions do not get an automatic highlighted/default item. Enter/Search/Return can therefore pass through after composition has already ended.
+
+`%limeendkey` / `@limeendkey@` is handled separately: end-key resolution now uses a private end-key candidate resolver that can still choose exact/partial/chinese-punctuation candidates for explicit end-key commits without changing the visible/default candidate selection rules. This keeps #96 behavior decoupled from the candidate-strip default item.
 
 ## Follow-up questions
 
@@ -108,7 +108,7 @@ Not reported. iOS has a separate Swift keyboard implementation, so Android `LIME
 
 ## Verification plan
 
-- Android unit/instrumentation coverage: construct a related-only candidate list and verify `defaultSelectedCandidateIndex(...) == -1` / `CandidateView` has no highlighted item; simulate post-commit related candidates visible with no composing code, press Enter, and verify no related candidate is committed and the editor action/newline path is allowed.
+- Android unit/instrumentation coverage: added coverage for legacy default-selection rules and related-only candidate lists returning `-1` / no default selected candidate. Existing end-key coverage now uses a Chinese-punctuation record (not just an exact-match record) for the fresh trigger candidate.
 - Android manual: in a normal multiline text field, press Enter after committing a word with related candidates visible and confirm a newline occurs.
 - Android manual: in a browser/search field, press Enter/Search after committing a word with related candidates visible and confirm search/action runs.
 - Regression: active composing candidate selection with Space and valid selection keys still works; `%limeendkey`/`@limeendkey@` behavior from #96 remains unchanged.
@@ -116,7 +116,8 @@ Not reported. iOS has a separate Swift keyboard implementation, so Android `LIME
 
 ## Current follow-up status
 
-- Classification: plausible Android bug / regression.
-- Public issue: open, pending source fix.
+- Classification: Android bug / regression.
+- Public issue: open, source fix prepared in branch `fix/issue-104-restore-default-candidate`.
 - Root-cause attribution: `35abf08da89ddec0b221fab5612a44cbd2ea03d4` introduced default-selection fallback `return 0`, which accidentally highlights related-only candidates.
-- Retest condition: wait for a newer Android APK than `6.1.16` containing a targeted Enter/related-candidate fix before asking the reporter to retest.
+- Validation in WSL: Java/app and androidTest compilation pass; connected instrumentation execution is blocked by no attached Android device/emulator.
+- Retest condition: wait for a newer Android APK than `6.1.16` containing the targeted Enter/related-candidate fix before asking the reporter to retest.
