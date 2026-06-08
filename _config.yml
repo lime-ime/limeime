@@ -1,16 +1,75 @@
 theme: jekyll-theme-primer
-title: 萊姆輸入法
-description: Lightweight Input Method Editor
+title: 萱姆輸入法
+description: Lightweight Input Method Editor for Traditional Chinese
 
+# Site URLs
+url: "https://lime-ime.github.io/limeime"
+baseurl: ""
+
+# Plugins
 plugins:
   - jekyll-optional-front-matter
+  - jekyll-sitemap
 
+# Include files
 include:
   - LICENSE.md
+  - _redirects
 
+# Exclude from build
+exclude:
+  - .claude
+  - .git
+  - .gitignore
+  - "*.jsonl"
+  - "docs/"
+  - "LimeStudio/"
+  - "LimeIME-iOS/"
+  - "LimeIME-Android/"
+
+# Collections
+collections:
+  manual_pages:
+    output: true
+    permalink: /manual/:path/
+
+# Defaults for documentation pages
 defaults:
+  # Root pages
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+  # Manual pages (all markdown in /manual/)
+  - scope:
+      path: "manual"
+      type: pages
+    values:
+      layout: page
+      sitemap: true
+
+  # License page
   - scope:
       path: "LICENSE.md"
     values:
       title: 版權聲明
       permalink: /LICENSE/
+
+# Markdown processing
+markdown: kramdown
+kramdown:
+  hard_wrap: true
+  parse_block_html: true
+
+# Navigation metadata
+navigation:
+  main:
+    - title: 首頁
+      url: /
+    - title: 使用指南
+      url: /manual/
+    - title: 常見問題
+      url: /manual/faq.html
+    - title: GitHub
+      url: https://github.com/lime-ime/limeime

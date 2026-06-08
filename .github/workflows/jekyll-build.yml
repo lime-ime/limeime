@@ -1,0 +1,91 @@
+name: Build User Manual (Jekyll)
+
+on:
+  push:
+    branches:
+      - manual-setup
+    paths:
+      - 'manual/**'
+      - '_config.yml'
+      - '.github/workflows/jekyll-build.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'manual/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          gem install bundler
+          bundle install --gemfile=Gemfile || gem install jekyll jekyll-optional-front-matter jekyll-sitemap
+
+      - name: Build Jekyll site
+        run: |
+          jekyll build --source . --destination _site --verbose
+        env:
+          JEKYLL_ENV: production
+
+      - name: List build artifacts
+        run: |
+          echo "=== Build Output ==="
+          ls -la _site/ | head -20
+          find _site/manual -name "*.html" | wc -l
+          echo "=== Sample Pages ==="
+          ls -la _site/manual/ | head -10
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: jekyll-site
+          path: _site/
+
+      - name: Create PR comment with preview link
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Manual build successful! Download the artifact to preview the Jekyll build.'
+            })
+
+      - name: Deploy to Pages (manual-setup branch only)
+        if: github.ref == 'refs/heads/manual-setup'
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '_site'
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/manual-setup'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
