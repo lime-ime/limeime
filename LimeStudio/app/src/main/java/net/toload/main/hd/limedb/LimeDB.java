@@ -4892,6 +4892,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         //db.insert(LIME.DB_TABLE_IM, null, cv);
         addRecord(LIME.DB_TABLE_IM,cv);
 
+        // The soft-keyboard startup path caches the IM -> keyboard assignment list.
+        // Loading/enabling an IM can happen while LIMEService first focused an email/password
+        // field, so the next normal text field must see this DB-side keyboard assignment change.
+        if (mLIMEPref != null) {
+            mLIMEPref.resetStartupConfigVersion();
+        }
+
     }
 
 

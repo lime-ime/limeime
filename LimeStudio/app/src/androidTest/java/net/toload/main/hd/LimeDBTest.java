@@ -37,6 +37,7 @@ import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Related;
 import net.toload.main.hd.global.LIME;
+import net.toload.main.hd.global.LIMEPreferenceManager;
 import net.toload.main.hd.global.LIMEUtilities;
 
 import org.junit.Test;
@@ -822,6 +823,26 @@ public class LimeDBTest {
         List<ImConfig> configs = limeDB.getImConfigList(LIME.DB_TABLE_CUSTOM, LIME.IM_FULL_NAME);
         assertFalse("Legacy IM row should still be surfaced for the name list", configs.isEmpty());
         assertEquals("自建輸入法", configs.get(0).getDesc());
+    }
+
+    @Test(timeout = 5000)
+    public void testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+
+        if (!initializeDatabase(limeDB)) {
+            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
+        }
+
+        LIMEPreferenceManager prefManager = new LIMEPreferenceManager(appContext);
+        long initializedVersion = prefManager.initializeStartupConfigVersion();
+        assertTrue("Startup config version should be initialized before the keyboard assignment changes",
+                initializedVersion > 0L);
+
+        limeDB.setIMConfigKeyboard("__issue115_test__", "Issue 115 Test", "phonenum");
+
+        assertEquals("Changing an IM's keyboard assignment must force LIMEService to refresh its startup snapshot",
+                0L, prefManager.getStartupConfigVersion());
     }
 
     @Test(timeout = 5000)
