@@ -7142,6 +7142,81 @@ public class LIMEServiceTest {
     }
 
     @Test
+    public void emailFirstStartupThenNormalTextRefreshesChangedImKeyboardSnapshot() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LIMEPreferenceManager prefManager = new LIMEPreferenceManager(appContext);
+        prefManager.resetStartupConfigVersion();
+        prefManager.setActiveIM(LIME.IM_ARRAY10);
+        prefManager.setIMActivatedState("7");
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .putBoolean("persistent_language_mode", false)
+                .commit();
+        prefManager.initializeStartupConfigVersion();
+
+        LIMEService service = new LIMEService();
+        setPrivateField(service, "mLIMEPref", prefManager);
+        setPrivateField(service, "activeIM", LIME.IM_ARRAY10);
+        setPrivateField(service, "activatedIMFullNameList", new ArrayList<String>());
+        setPrivateField(service, "activatedIMList", new ArrayList<String>());
+        setPrivateField(service, "activatedIMShortNameList", new ArrayList<String>());
+        setPrivateField(service, "mKeyboardThemeIndex", prefManager.getKeyboardTheme());
+        setPrivateField(service, "mShowArrowKeys", prefManager.getShowArrowKeys());
+        setPrivateField(service, "mSplitKeyboard", prefManager.getSplitKeyboard());
+        setPrivateField(service, "mInputView", createMockInputView());
+        setPrivateField(service, "mCandidateView", createMockCandidateView());
+        setPrivateField(service, "mComposing", new StringBuilder());
+        setPrivateField(service, "mCandidateList", new LinkedList<Mapping>());
+
+        LIMEKeyboardSwitcher keyboardSwitcher = createMockKeyboardSwitcher();
+        setPrivateField(service, "mKeyboardSwitcher", keyboardSwitcher);
+
+        ImConfig enabledArray10 = createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum");
+        List<ImConfig> enabledImConfigs = new ArrayList<>();
+        enabledImConfigs.add(enabledArray10);
+
+        ImConfig staleArray10Keyboard = createImConfig(LIME.IM_ARRAY10, "行列10", "lime");
+        List<ImConfig> staleKeyboardConfigs = new ArrayList<>();
+        staleKeyboardConfigs.add(staleArray10Keyboard);
+
+        ImConfig freshArray10Keyboard = createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum");
+        List<ImConfig> freshKeyboardConfigs = new ArrayList<>();
+        freshKeyboardConfigs.add(freshArray10Keyboard);
+
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getImConfigList(null, LIME.IM_FULL_NAME)).thenReturn(enabledImConfigs);
+        when(searchServer.getKeyboardConfigList()).thenReturn(new ArrayList<>());
+        when(searchServer.getAllImKeyboardConfigList()).thenReturn(staleKeyboardConfigs).thenReturn(freshKeyboardConfigs);
+        doNothing().when(searchServer).setTableName(anyString(), anyBoolean(), anyBoolean());
+        setPrivateField(service, "SearchSrv", searchServer);
+
+        Method initOnStartInput = LIMEService.class.getDeclaredMethod("initOnStartInput", EditorInfo.class);
+        initOnStartInput.setAccessible(true);
+
+        EditorInfo emailField = new EditorInfo();
+        emailField.inputType = EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS;
+        initOnStartInput.invoke(service, emailField);
+        List<ImConfig> snapshotAfterEmail = getPrivateField(service, "mStartupImKeyboardConfigList");
+        assertEquals("Email-first startup can still have the stale pre-import keyboard snapshot",
+                "lime", snapshotAfterEmail.get(0).getKeyboard());
+
+        prefManager.resetStartupConfigVersion();
+
+        EditorInfo normalField = new EditorInfo();
+        normalField.inputType = EditorInfo.TYPE_CLASS_TEXT;
+        initOnStartInput.invoke(service, normalField);
+        List<ImConfig> snapshotAfterNormalText = getPrivateField(service, "mStartupImKeyboardConfigList");
+        assertEquals("Normal text startup after invalidation must refresh the IM keyboard mapping",
+                "phonenum", snapshotAfterNormalText.get(0).getKeyboard());
+
+        verify(searchServer, times(2)).getAllImKeyboardConfigList();
+        verify(keyboardSwitcher).setKeyboardMode(
+                eq(LIME.IM_ARRAY10), eq(LIMEKeyboardSwitcher.MODE_EMAIL), anyInt(), eq(false), eq(false), eq(false));
+        verify(keyboardSwitcher).setKeyboardMode(
+                eq(LIME.IM_ARRAY10), eq(LIMEKeyboardSwitcher.MODE_TEXT), anyInt(), eq(true), eq(false), eq(false));
+    }
+
+    @Test
     public void onCreateInputViewWithoutStartInputViewReturnsCandidateHostWithoutEagerEmojiContent() throws Exception {
         LIMEService service = new LIMEService();
         attachTargetContext(service);
