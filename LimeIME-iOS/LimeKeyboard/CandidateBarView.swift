@@ -741,9 +741,11 @@ final class CandidateBarView: UIView {
         moreSep.isHidden       = !showMoreChrome
         dismissButton.isHidden = !(showActiveChrome || showEmptyDismissChrome)
         emojiButton.isHidden   = !showIdleTools || !allowEmoji
-        // Legacy iPhone globe mode: optionsButton owns dismiss + LIME menu and
-        // must remain reachable regardless of bar state (spec: docs/IPHONE_LEGACY_KB.md).
-        optionsButton.isHidden = legacyGlobeMode ? false : (!showIdleTools || !allowOptions)
+        optionsButton.isHidden = !CandidateBarView.shouldShowOptionsButton(
+            legacyGlobeMode: legacyGlobeMode,
+            hasCandidates: hasCandidates,
+            showIdleTools: showIdleTools,
+            allowOptions: allowOptions)
     }
 
     static func shouldShowIdleTools(
@@ -761,6 +763,18 @@ final class CandidateBarView: UIView {
         idleRevealReady: Bool
     ) -> Bool {
         return hasCandidates || (!showIdleTools && !idleRevealReady)
+    }
+
+    static func shouldShowOptionsButton(
+        legacyGlobeMode: Bool,
+        hasCandidates: Bool,
+        showIdleTools: Bool,
+        allowOptions: Bool
+    ) -> Bool {
+        if legacyGlobeMode {
+            return !hasCandidates
+        }
+        return showIdleTools && allowOptions
     }
 
     private func updateIdleToolsRevealState(hadCandidates: Bool) {
@@ -914,7 +928,7 @@ final class CandidateBarView: UIView {
 
     /// Swap the right-edge `optionsButton`'s role based on `legacyGlobeMode`.
     /// Legacy mode: keyboard-down chevron, tap dismisses, long-press → LIME menu,
-    /// always visible. Standard mode: hamburger ☰, tap → LIME menu, visibility
+    /// visible only while idle. Standard mode: hamburger ☰, tap → LIME menu, visibility
     /// driven by composing state (existing behavior).
     private func applyLegacyOptionsBinding() {
         // Tap target swap. Remove both possible targets defensively so repeated
@@ -958,13 +972,10 @@ final class CandidateBarView: UIView {
             optionsButton.setTitle(legacyGlobeMode ? "⌄" : "☰", for: .normal)
         }
 
-        // Force visibility in legacy mode so the dismiss/menu surface is
-        // always reachable, even when no candidates are composing. The
-        // standard-mode visibility rule (hidden when not composing) is owned
-        // by other call sites and only takes effect when this function does
-        // NOT override.
+        // Legacy mode keeps the dismiss/menu surface reachable only while idle.
+        // Once candidates appear, the right-side expand chevron owns this slot.
         if legacyGlobeMode {
-            optionsButton.isHidden = false
+            optionsButton.isHidden = !candidates.isEmpty
         }
     }
 

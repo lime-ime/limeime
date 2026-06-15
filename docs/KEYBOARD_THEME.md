@@ -140,16 +140,16 @@ For each iOS theme, capture:
 
 Required screenshot set:
 
-| Theme | 注音 Chinese IM Keyboard | English Keyboard |
-|---|---|---|
-| System, system light | <img src="assets/ios_keyboard_zhuyin_system_light.png" alt="iOS system-light LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_system_light.png" alt="iOS system-light LIME English keyboard with 中 key" width="220"> |
-| Explicit light | <img src="assets/ios_keyboard_zhuyin_light.png" alt="iOS light LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_light.png" alt="iOS light LIME English keyboard with 中 key" width="220"> |
-| System, system dark | <img src="assets/ios_keyboard_zhuyin_system_dark.png" alt="iOS system-dark LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_system_dark.png" alt="iOS system-dark LIME English keyboard with 中 key" width="220"> |
-| Explicit dark | <img src="assets/ios_keyboard_zhuyin_dark.png" alt="iOS dark LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_dark.png" alt="iOS dark LIME English keyboard with 中 key" width="220"> |
-| Pink | <img src="assets/ios_keyboard_zhuyin_pink.png" alt="iOS pink LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_pink.png" alt="iOS pink LIME English keyboard with 中 key" width="220"> |
-| Tech Blue | <img src="assets/ios_keyboard_zhuyin_tech_blue.png" alt="iOS tech-blue LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_tech_blue.png" alt="iOS tech-blue LIME English keyboard with 中 key" width="220"> |
-| Fashion Purple | <img src="assets/ios_keyboard_zhuyin_fashion_purple.png" alt="iOS fashion-purple LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_fashion_purple.png" alt="iOS fashion-purple LIME English keyboard with 中 key" width="220"> |
-| Relax Green | <img src="assets/ios_keyboard_zhuyin_relax_green.png" alt="iOS relax-green LIME 注音 keyboard" width="220"> | <img src="assets/ios_keyboard_english_relax_green.png" alt="iOS relax-green LIME English keyboard with 中 key" width="220"> |
+| Theme | Current iPhone 注音 | Legacy iPhone 注音 | Current iPhone English | Legacy iPhone English |
+|---|---|---|---|---|
+| System, system light | <img src="assets/ios_keyboard_zhuyin_system_light.png" alt="iOS system-light LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_system_light.png" alt="Legacy iPhone system-light LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_system_light.png" alt="iOS system-light LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_system_light.png" alt="Legacy iPhone system-light LIME English keyboard with 中 key" width="180"> |
+| Explicit light | <img src="assets/ios_keyboard_zhuyin_light.png" alt="iOS light LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_light.png" alt="Legacy iPhone light LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_light.png" alt="iOS light LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_light.png" alt="Legacy iPhone light LIME English keyboard with 中 key" width="180"> |
+| System, system dark | <img src="assets/ios_keyboard_zhuyin_system_dark.png" alt="iOS system-dark LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_system_dark.png" alt="Legacy iPhone system-dark LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_system_dark.png" alt="iOS system-dark LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_system_dark.png" alt="Legacy iPhone system-dark LIME English keyboard with 中 key" width="180"> |
+| Explicit dark | <img src="assets/ios_keyboard_zhuyin_dark.png" alt="iOS dark LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_dark.png" alt="Legacy iPhone dark LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_dark.png" alt="iOS dark LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_dark.png" alt="Legacy iPhone dark LIME English keyboard with 中 key" width="180"> |
+| Pink | <img src="assets/ios_keyboard_zhuyin_pink.png" alt="iOS pink LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_pink.png" alt="Legacy iPhone pink LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_pink.png" alt="iOS pink LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_pink.png" alt="Legacy iPhone pink LIME English keyboard with 中 key" width="180"> |
+| Tech Blue | <img src="assets/ios_keyboard_zhuyin_tech_blue.png" alt="iOS tech-blue LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_tech_blue.png" alt="Legacy iPhone tech-blue LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_tech_blue.png" alt="iOS tech-blue LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_tech_blue.png" alt="Legacy iPhone tech-blue LIME English keyboard with 中 key" width="180"> |
+| Fashion Purple | <img src="assets/ios_keyboard_zhuyin_fashion_purple.png" alt="iOS fashion-purple LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_fashion_purple.png" alt="Legacy iPhone fashion-purple LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_fashion_purple.png" alt="iOS fashion-purple LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_fashion_purple.png" alt="Legacy iPhone fashion-purple LIME English keyboard with 中 key" width="180"> |
+| Relax Green | <img src="assets/ios_keyboard_zhuyin_relax_green.png" alt="iOS relax-green LIME 注音 keyboard" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_zhuyin_relax_green.png" alt="Legacy iPhone relax-green LIME 注音 keyboard" width="180"> | <img src="assets/ios_keyboard_english_relax_green.png" alt="iOS relax-green LIME English keyboard with 中 key" width="180"> | <img src="assets/ios_legacy_iphone_keyboard_english_relax_green.png" alt="Legacy iPhone relax-green LIME English keyboard with 中 key" width="180"> |
 
 ### iOS Emoji Panel Screenshot Requirement
 
@@ -157,9 +157,9 @@ iOS emoji panels are not per-keyboard-theme evidence. They draw over a transpare
 keyboard backdrop, so capture only the effective system light and dark appearances. The
 search field, emoji grid, and bottom category row are the proof that the panel is active.
 
-| System Light | System Dark |
-|---|---|
-| <img src="assets/ios_emoji_panel_system_light.png" alt="iOS system-light LIME emoji panel" width="220"> | <img src="assets/ios_emoji_panel_system_dark.png" alt="iOS system-dark LIME emoji panel" width="220"> |
+| Current iPhone System Light | Legacy iPhone System Light | Current iPhone System Dark | Legacy iPhone System Dark |
+|---|---|---|---|
+| <img src="assets/ios_emoji_panel_system_light.png" alt="iOS system-light LIME emoji panel" width="180"> | <img src="assets/ios_legacy_iphone_emoji_panel_system_light.png" alt="Legacy iPhone system-light LIME emoji panel" width="180"> | <img src="assets/ios_emoji_panel_system_dark.png" alt="iOS system-dark LIME emoji panel" width="180"> | <img src="assets/ios_legacy_iphone_emoji_panel_system_dark.png" alt="Legacy iPhone system-dark LIME emoji panel" width="180"> |
 
 ## Android Theme-Aware Rule
 

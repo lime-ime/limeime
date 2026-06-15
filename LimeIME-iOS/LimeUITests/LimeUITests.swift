@@ -161,16 +161,40 @@ final class LimeUITests: XCTestCase {
         try ensureLimeChineseKeyboardVisible(in: safari, scenario: label)
         Thread.sleep(forTimeInterval: 1.5)
 
+        dismissTextEditingMenuIfVisible(in: safari)
         try saveScreenshot(named: "ios_keyboard_zhuyin_\(label)")
 
-        safari.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.88)).tap()
+        let abcModeKey = safari.descendants(matching: .any)["ABC"]
+        if abcModeKey.waitForExistence(timeout: 1) {
+            abcModeKey.tap()
+        } else {
+            safari.coordinate(withNormalizedOffset: CGVector(dx: 0.35, dy: 0.955)).tap()
+        }
         Thread.sleep(forTimeInterval: 1.0)
         try ensureLimeEnglishKeyboardVisible(in: safari, scenario: label)
+        dismissTextEditingMenuIfVisible(in: safari)
         try saveScreenshot(named: "ios_keyboard_english_\(label)")
 
-        safari.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.64)).tap()
+        let candidateEmojiButton = safari.descendants(matching: .any)["lime_candidate_bar_emoji_button"]
+        if candidateEmojiButton.waitForExistence(timeout: 1) {
+            candidateEmojiButton.tap()
+        } else {
+            safari.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.64)).tap()
+        }
         Thread.sleep(forTimeInterval: 1.0)
+        dismissTextEditingMenuIfVisible(in: safari)
         try saveScreenshot(named: "ios_emoji_panel_\(label)")
+    }
+
+    private func dismissTextEditingMenuIfVisible(in app: XCUIApplication) {
+        let editMenuItems = ["Paste", "AutoFill", "Share..."]
+        let hasEditMenu = editMenuItems.contains { label in
+            app.menuItems.matching(Self.modeKeyPredicate(label)).firstMatch.exists
+        }
+        guard hasEditMenu else { return }
+
+        app.typeText(" ")
+        Thread.sleep(forTimeInterval: 0.3)
     }
 
     private func captureScreenshotDuringHold(named name: String) -> XCTestExpectation {
@@ -379,7 +403,9 @@ final class LimeUITests: XCTestCase {
     }
 
     private func ensureLimeChineseKeyboardVisible(in app: XCUIApplication, scenario: String) throws {
-        let abcModeKey = app.descendants(matching: .any)["ABC"]
+        let abcModeKey = app.descendants(matching: .any)
+            .matching(Self.modeKeyPredicate("ABC"))
+            .firstMatch
         if abcModeKey.exists {
             abcModeKey.tap()
             Thread.sleep(forTimeInterval: 0.8)
@@ -389,7 +415,9 @@ final class LimeUITests: XCTestCase {
             return
         }
 
-        let chineseModeKey = app.descendants(matching: .any)["中"]
+        let chineseModeKey = app.descendants(matching: .any)
+            .matching(Self.modeKeyPredicate("中"))
+            .firstMatch
         if chineseModeKey.exists {
             chineseModeKey.tap()
             Thread.sleep(forTimeInterval: 0.8)
@@ -414,6 +442,10 @@ final class LimeUITests: XCTestCase {
             \(String(app.debugDescription.prefix(5000)))
             """
         )
+    }
+
+    private static func modeKeyPredicate(_ label: String) -> NSPredicate {
+        NSPredicate(format: "identifier == %@ OR label == %@", label, label)
     }
 
     private func isLimeKeyboardActive(in app: XCUIApplication) -> Bool {

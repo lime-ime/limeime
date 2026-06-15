@@ -692,6 +692,17 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("return hasCandidates || (!showIdleTools && !idleRevealReady)"))
     }
 
+    func testLegacyCandidateBarOptionsHideWhenCandidatesShowExpandChevron() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/CandidateBarView.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        XCTAssertTrue(source.contains("shouldShowOptionsButton("))
+        XCTAssertTrue(source.contains("optionsButton.isHidden = !CandidateBarView.shouldShowOptionsButton("))
+        XCTAssertTrue(source.contains("if legacyGlobeMode {\n            return !hasCandidates\n        }"))
+        XCTAssertTrue(source.contains("optionsButton.isHidden = !candidates.isEmpty"))
+        XCTAssertFalse(source.contains("if legacyGlobeMode {\n            optionsButton.isHidden = false\n        }"))
+    }
+
     func testIMDetailShareButtonUsesConstrainedLayoutTrailingSlot() throws {
         let sourceURL = projectFileURL("LimeSettings/Views/IMDetailView.swift")
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
