@@ -139,9 +139,22 @@ Interpretation:
 - Problem 3 should remain a watch item rather than a confirmed defect until it recurs, because the reporter's latest test says the default keyboard now looks normal.
 - The improved recovery path is useful evidence: the wrong state remains within the Chinese/IM keyboard switching path and can be corrected by an in-session `EN` -> `中` toggle without restarting the target app.
 
+## Follow-up source fix after the 6.1.20 negative/partial retest
+
+PR #118 (`fix(android): refresh IM keyboard config before draw`) was merged to `master` on 2026-06-16 after the reporter's 6.1.20 retest. GitHub auto-closed #115 from the PR body. The PR head/merge commit is `676f9b4d50c398126ff7489d48e7db83727a58c2`; the direct startup-keyboard follow-up fix commit is `e984c4c1432ea1efd1996b69285cafe425e6b22c`, and the same PR also includes adjacent expanded-candidate-popup alignment work in `676f9b4d50c398126ff7489d48e7db83727a58c2`.
+
+The source fix targets the remaining Problems 1-2 evidence from the 6.1.20 retest:
+
+- refresh and apply the startup IM keyboard config immediately before Chinese keyboard draw paths, not only during earlier service startup;
+- avoid marking the startup config snapshot clean when critical IM keyboard config data is unavailable or empty;
+- reset startup config version after generic `im.disable` updates so enable/disable changes force a fresh snapshot;
+- add regression coverage for refresh-before-draw ordering and IM-disable invalidation.
+
+Latest reporter-testable Android APK metadata is still `LIMEHD2026-6.1.20.apk` / versionName `6.1.20` (blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14053640 bytes), which predates PR #118. Therefore #115 should be treated as source-fixed / release-ready, but reporter verification is still pending until a newer Android APK contains PR #118. Do not post another public retest request, and do not claim reporter confirmation, until that newer APK exists. When a newer APK containing PR #118 is published, reopen #115 if it is still closed and post one scoped retest request for Problems 1-2.
+
 ## Follow-up questions for reporter
 
-Defer reporter questions until a newer targeted Android APK or a focused maintainer reproduction asks for them. Do not post another generic same-APK retest request because 6.1.20 already received a negative/partial retest. Problem 3 questions are conditional only if the manual Array10 `.lime` default-keyboard symptom resurfaces.
+Defer reporter questions until a newer targeted Android APK containing PR #118 is available, or until focused maintainer reproduction asks for them. Do not post another generic same-APK retest request because 6.1.20 already received a negative/partial retest and does not contain PR #118. Problem 3 questions are conditional only if the manual Array10 `.lime` default-keyboard symptom resurfaces.
 
 1. Does problem 1 happen with `記憶中英模式` (remember Chinese/English mode across fields/apps) enabled, disabled, or both?
 2. For problem 1, does the wrong first keyboard appear only on the immediate first launch after mounting the first non-`注音` IM, or also on later app launches without changing IM settings?
@@ -157,7 +170,7 @@ Defer reporter questions until a newer targeted Android APK or a focused maintai
   - `LimeDBTest.testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot()`
   - `LIMEServiceTest.emailFirstStartupThenNormalTextRefreshesChangedImKeyboardSnapshot()`
 - Compile verification: `./gradlew :app:compileDebugJavaWithJavac :app:compileDebugAndroidTestJavaWithJavac` and `./gradlew :app:assembleDebug`.
-- Post-APK verification still needed before closing: run focused instrumentation tests on an emulator/device and manually verify `倉頡`, `大易`, `行列`, `行列10`, and `注音` first-normal-text startup after adding/removing IMs.
+- Post-APK reporter verification is still needed before treating the community report as resolved: after a newer Android APK contains PR #118, run focused instrumentation/manual checks and ask the reporter to verify `倉頡`, `大易`, `行列`, `行列10`, and `注音` first-normal-text startup after adding/removing IMs.
 - Android APK `LIMEHD2026-6.1.20.apk` was published after the PR #116 merge and is the targeted reporter retest build for #115; retest request posted at https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519.
 - Reporter retest on 6.1.20 says first-mounted non-`注音` IMs and adding-a-second-IM paths still reproduce, but the workaround improved to only `EN` -> `中` without restarting the target app. Treat this as a negative/partial retest for the directly targeted stale-snapshot scope and do not ask for another same-APK generic retest.
 - The attached manual Array10 `.lime` import default-keyboard path currently appears normal in the reporter's 6.1.20 retest. Keep it as a watch item only if it recurs; do not treat it as the remaining confirmed failure.
@@ -170,4 +183,6 @@ Defer reporter questions until a newer targeted Android APK or a focused maintai
 
 ## Current status
 
-Open after negative/partial reporter retest on Android APK 6.1.20. Labeled `bug` + `Usability`, assigned to `jrywu`, and tracked in `docs/BACKLOG.md` under active issue follow-up. PR #116 merged to `master` as `0a03fcca34fd70c51db547ef054f163f35bd7151`, with fix commit `976465e8057d8ca9aa66ceb2159c8ae74945241c`; the later APK bump commit `08816a80ff5f` published `LIMEHD2026-6.1.20.apk` (versionName 6.1.20, blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14053640 bytes) as the targeted #115 retest build. `limeimetw` posted the scoped 6.1.20 retest request at https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519. Reporter `gontera` replied at https://github.com/lime-ime/limeime/issues/115#issuecomment-4716038267 that Problems 1 and 2 still reproduce but are improved because `EN` -> `中` now restores the correct keyboard without restarting the target app; the manual Array10 `.lime` default-keyboard path currently looks normal. Keep the issue open, investigate a follow-up fix for the first-mounted non-`注音` and second-IM initial keyboard paths, and avoid another same-APK generic retest request. Problem 3 remains watch-only unless it recurs. iOS remains out of reporter-tested scope unless shared `.lime` import semantics change separately.
+Closed by the PR #118 merge on 2026-06-16, but not reporter-confirmed yet. Labeled `bug` + `Usability`, assigned to `jrywu`, and tracked in `docs/BACKLOG.md` as source-fixed / release-ready pending a newer Android APK. PR #116 merged to `master` as `0a03fcca34fd70c51db547ef054f163f35bd7151`, with fix commit `976465e8057d8ca9aa66ceb2159c8ae74945241c`; the later APK bump commit `08816a80ff5f` published `LIMEHD2026-6.1.20.apk` (versionName 6.1.20, blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14053640 bytes) as the targeted #115 retest build. `limeimetw` posted the scoped 6.1.20 retest request at https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519. Reporter `gontera` replied at https://github.com/lime-ime/limeime/issues/115#issuecomment-4716038267 that Problems 1 and 2 still reproduce but are improved because `EN` -> `中` now restores the correct keyboard without restarting the target app; the manual Array10 `.lime` default-keyboard path currently looks normal.
+
+PR #118 then merged to `master` as `676f9b4d50c398126ff7489d48e7db83727a58c2`, with direct #115 follow-up fix commit `e984c4c1432ea1efd1996b69285cafe425e6b22c`. Latest APK metadata remains `LIMEHD2026-6.1.20.apk`, so no reporter-testable APK containing PR #118 exists yet. Keep #115 closed for now as maintainer/source-fixed, do not post another public comment or retest request yet, and on the next Android APK containing PR #118 reopen the issue if needed and ask `gontera` for a scoped Problems 1-2 retest. Problem 3 remains watch-only unless it recurs. iOS remains out of reporter-tested scope unless shared `.lime` import semantics change separately.

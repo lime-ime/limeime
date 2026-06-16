@@ -2,11 +2,11 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-16
+Last reviewed: 2026-06-17
 
 ## Active issue follow-up
 
-- #115 Android: reporter `gontera` gave a negative/partial retest on APK `LIMEHD2026-6.1.20.apk` (blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14053640 bytes) after PR #116 / commit `976465e8057d8ca9aa66ceb2159c8ae74945241c` addressed the stale initial IM keyboard snapshot path by invalidating startup config when IM keyboard assignments change. Retest request: https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519. Reporter result: https://github.com/lime-ime/limeime/issues/115#issuecomment-4716038267 says the first-mounted `倉頡` / `大易` / `行列` / `行列10` and adding-a-second-IM paths still reproduce but improved because `EN` -> `中` now restores the correct keyboard without restarting the target app; the attached manual Array10 `.lime` default-keyboard path currently looks normal. Keep open for follow-up investigation/fix of Problems 1-2, avoid another same-APK generic retest request, and keep Problem 3 as watch-only unless it recurs. Audit iOS only if shared `.lime` import semantics change.
+- #115 Android: reporter `gontera` gave a negative/partial retest on APK `LIMEHD2026-6.1.20.apk` (blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14053640 bytes) after PR #116 / commit `976465e8057d8ca9aa66ceb2159c8ae74945241c` addressed the first stale-snapshot path. Reporter result: https://github.com/lime-ime/limeime/issues/115#issuecomment-4716038267 says Problems 1-2 still reproduce but improved because `EN` -> `中` now restores the correct keyboard without restarting the target app; the attached manual Array10 `.lime` default-keyboard path currently looks normal. Follow-up PR #118 merged to `master` as `676f9b4d50c398126ff7489d48e7db83727a58c2`, with direct #115 fix commit `e984c4c1432ea1efd1996b69285cafe425e6b22c`, and GitHub auto-closed #115. Latest APK metadata still points to `LIMEHD2026-6.1.20.apk`, so no reporter-testable APK contains PR #118 yet. Treat #115 as closed/source-fixed/release-ready pending the next Android APK; when a newer APK containing PR #118 is published, reopen if needed and post one scoped retest request for Problems 1-2. Keep Problem 3 as watch-only unless it recurs. Audit iOS only if shared `.lime` import semantics change.
 - #111 was closed by `limeimetw` after acknowledgement; the confirmed `scj` table-data correction remains tracked under pending fixes until a rebuilt table/artifact decision is made.
 
 ## Unfiled release-QA follow-up
