@@ -7217,6 +7217,113 @@ public class LIMEServiceTest {
     }
 
     @Test
+    public void switchToImModeRefreshesSnapshotBeforeInitialKeyboard() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LIMEPreferenceManager prefManager = new LIMEPreferenceManager(appContext);
+        prefManager.resetStartupConfigVersion();
+        prefManager.setActiveIM(LIME.IM_ARRAY10);
+        prefManager.setIMActivatedState("7");
+        prefManager.initializeStartupConfigVersion();
+
+        LIMEService service = new LIMEService();
+        setPrivateField(service, "mLIMEPref", prefManager);
+        setPrivateField(service, "activeIM", LIME.IM_ARRAY10);
+        setPrivateField(service, "mEnglishOnly", true);
+        setPrivateField(service, "mComposing", new StringBuilder());
+        setPrivateField(service, "mCandidateViewInInputView", createMockCandidateView());
+        setPrivateField(service, "activatedIMFullNameList", new ArrayList<String>());
+        setPrivateField(service, "activatedIMList", new ArrayList<String>());
+        setPrivateField(service, "activatedIMShortNameList", new ArrayList<String>());
+
+        LIMEKeyboardSwitcher keyboardSwitcher = createMockKeyboardSwitcher();
+        when(keyboardSwitcher.getImConfigKeyboard(LIME.IM_ARRAY10)).thenReturn("phonenum");
+        setPrivateField(service, "mKeyboardSwitcher", keyboardSwitcher);
+
+        List<ImConfig> enabledImConfigs = new ArrayList<>();
+        enabledImConfigs.add(createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum"));
+        List<ImConfig> freshKeyboardConfigs = new ArrayList<>();
+        freshKeyboardConfigs.add(createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum"));
+
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getImConfigList(null, LIME.IM_FULL_NAME)).thenReturn(enabledImConfigs);
+        when(searchServer.getKeyboardConfigList()).thenReturn(new ArrayList<>());
+        when(searchServer.getAllImKeyboardConfigList()).thenReturn(freshKeyboardConfigs);
+        doNothing().when(searchServer).setTableName(anyString(), anyBoolean(), anyBoolean());
+        setPrivateField(service, "SearchSrv", searchServer);
+
+        prefManager.resetStartupConfigVersion();
+
+        Method switchKeyboard = LIMEService.class.getDeclaredMethod("switchKeyboard", int.class);
+        switchKeyboard.setAccessible(true);
+        switchKeyboard.invoke(service, LIMEService.KEYCODE_SWITCH_TO_IM_MODE);
+
+        org.mockito.InOrder order = inOrder(keyboardSwitcher);
+        order.verify(keyboardSwitcher).setImConfigKeyboardList(freshKeyboardConfigs);
+        order.verify(keyboardSwitcher).setKeyboardMode(
+                eq(LIME.IM_ARRAY10), eq(LIMEKeyboardSwitcher.MODE_TEXT), anyInt(), eq(true), eq(false), eq(false));
+        assertEquals("phonenum", getPrivateField(service, "currentSoftKeyboard"));
+    }
+
+    @Test
+    public void handleIMSelectionRefreshesSnapshotBeforeInitialKeyboard() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LIMEPreferenceManager prefManager = new LIMEPreferenceManager(appContext);
+        prefManager.resetStartupConfigVersion();
+        prefManager.setActiveIM(LIME.IM_PHONETIC);
+        prefManager.setIMActivatedState("6;7");
+        prefManager.initializeStartupConfigVersion();
+
+        LIMEService service = new LIMEService();
+        setPrivateField(service, "mLIMEPref", prefManager);
+        setPrivateField(service, "activeIM", LIME.IM_PHONETIC);
+        setPrivateField(service, "mEnglishOnly", false);
+        setPrivateField(service, "mComposing", new StringBuilder());
+        setPrivateField(service, "mCandidateView", createMockCandidateView());
+
+        ArrayList<String> fullNames = new ArrayList<>();
+        fullNames.add("注音");
+        fullNames.add("行列10");
+        setPrivateField(service, "activatedIMFullNameList", fullNames);
+        ArrayList<String> imCodes = new ArrayList<>();
+        imCodes.add(LIME.IM_PHONETIC);
+        imCodes.add(LIME.IM_ARRAY10);
+        setPrivateField(service, "activatedIMList", imCodes);
+        ArrayList<String> shortNames = new ArrayList<>();
+        shortNames.add("注");
+        shortNames.add("列10");
+        setPrivateField(service, "activatedIMShortNameList", shortNames);
+
+        LIMEKeyboardSwitcher keyboardSwitcher = createMockKeyboardSwitcher();
+        when(keyboardSwitcher.getImConfigKeyboard(LIME.IM_ARRAY10)).thenReturn("phonenum");
+        setPrivateField(service, "mKeyboardSwitcher", keyboardSwitcher);
+
+        List<ImConfig> enabledImConfigs = new ArrayList<>();
+        enabledImConfigs.add(createImConfig(LIME.IM_PHONETIC, "注音", LIME.IM_PHONETIC));
+        enabledImConfigs.add(createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum"));
+        List<ImConfig> freshKeyboardConfigs = new ArrayList<>();
+        freshKeyboardConfigs.add(createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum"));
+
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getImConfigList(null, LIME.IM_FULL_NAME)).thenReturn(enabledImConfigs);
+        when(searchServer.getKeyboardConfigList()).thenReturn(new ArrayList<>());
+        when(searchServer.getAllImKeyboardConfigList()).thenReturn(freshKeyboardConfigs);
+        doNothing().when(searchServer).setTableName(anyString(), anyBoolean(), anyBoolean());
+        setPrivateField(service, "SearchSrv", searchServer);
+
+        prefManager.resetStartupConfigVersion();
+
+        Method handleIMSelection = LIMEService.class.getDeclaredMethod("handleIMSelection", int.class);
+        handleIMSelection.setAccessible(true);
+        handleIMSelection.invoke(service, 1);
+
+        org.mockito.InOrder order = inOrder(keyboardSwitcher);
+        order.verify(keyboardSwitcher).setImConfigKeyboardList(freshKeyboardConfigs);
+        order.verify(keyboardSwitcher).setKeyboardMode(
+                eq(LIME.IM_ARRAY10), eq(LIMEKeyboardSwitcher.MODE_TEXT), anyInt(), eq(true), eq(false), eq(false));
+        assertEquals("phonenum", getPrivateField(service, "currentSoftKeyboard"));
+    }
+
+    @Test
     public void onCreateInputViewWithoutStartInputViewReturnsCandidateHostWithoutEagerEmojiContent() throws Exception {
         LIMEService service = new LIMEService();
         attachTargetContext(service);

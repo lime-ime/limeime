@@ -3491,6 +3491,33 @@ public class SearchServerTest {
     }
 
     @Test(timeout = 5000)
+    public void test_3_4_4_1a_updateRecord_im_disable_resets_startup_config_version() throws Exception {
+        Object original = getStatic("dbadapter", Object.class);
+        StubLimeDBRecords stub = new StubLimeDBRecords(appContext);
+        stub.updateResult = 1;
+        setStatic("dbadapter", stub);
+
+        LIMEPreferenceManager pref = new LIMEPreferenceManager(appContext);
+        pref.resetStartupConfigVersion();
+        assertTrue(pref.initializeStartupConfigVersion() > 0L);
+
+        try {
+            ContentValues values = new ContentValues();
+            values.put(LIME.DB_IM_COLUMN_DISABLE, "true");
+            int updated = searchServer.updateRecord(LIME.DB_TABLE_IM, values,
+                    LIME.DB_IM_COLUMN_ID + "=?", new String[]{"7"});
+
+            assertEquals(1, updated);
+            assertEquals(LIME.DB_TABLE_IM, stub.lastTable);
+            assertEquals("true", stub.lastValues.getAsString(LIME.DB_IM_COLUMN_DISABLE));
+            assertEquals(0L, pref.getStartupConfigVersion());
+        } finally {
+            pref.resetStartupConfigVersion();
+            setStatic("dbadapter", original);
+        }
+    }
+
+    @Test(timeout = 5000)
     public void test_3_4_4_2_add_update_delete_invalid_table() throws Exception {
         Object original = getStatic("dbadapter", Object.class);
         StubLimeDBRecords stub = new StubLimeDBRecords(appContext);

@@ -85,6 +85,7 @@ import net.toload.main.hd.candidate.CandidateInInputViewContainer;
 import net.toload.main.hd.candidate.CandidateView;
 import net.toload.main.hd.data.ChineseSymbol;
 import net.toload.main.hd.data.ImConfig;
+import net.toload.main.hd.data.Keyboard;
 import net.toload.main.hd.data.Mapping;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.global.LIMEPreferenceManager;
@@ -996,6 +997,7 @@ public class LIMEService extends InputMethodService
 
                 } else {
                     mEnglishOnly = false;
+                    prepareImKeyboardConfigForChineseDraw(true);
                     initialIMKeyboard();  //'12,4,29 intial chinese IM keybaord
                 }
         }
@@ -1060,13 +1062,28 @@ public class LIMEService extends InputMethodService
             buildActivatedIMList();
         }
 
+        boolean loadedStartupCriticalConfig = false;
         if (SearchSrv != null) {
             try {
-                mStartupKeyboardConfigList = SearchSrv.getKeyboardConfigList();
-                mStartupImKeyboardConfigList = SearchSrv.getAllImKeyboardConfigList();
+                List<Keyboard> keyboardConfigList = SearchSrv.getKeyboardConfigList();
+                List<ImConfig> imKeyboardConfigList = SearchSrv.getAllImKeyboardConfigList();
+                if (imKeyboardConfigList != null && !imKeyboardConfigList.isEmpty()) {
+                    mStartupKeyboardConfigList = keyboardConfigList;
+                    mStartupImKeyboardConfigList = imKeyboardConfigList;
+                    loadedStartupCriticalConfig = true;
+                } else {
+                    Log.w(TAG, "Startup keyboard config snapshot not marked clean: IM keyboard config list is empty");
+                }
             } catch (RemoteException e) {
                 Log.e(TAG, "Error refreshing startup keyboard config snapshot", e);
             }
+        } else {
+            Log.w(TAG, "Startup keyboard config snapshot not marked clean: SearchSrv is unavailable");
+        }
+
+        if (!loadedStartupCriticalConfig) {
+            mStartupConfigSnapshotReady = false;
+            return false;
         }
 
         mStartupConfigSnapshotReady = true;
@@ -1091,6 +1108,36 @@ public class LIMEService extends InputMethodService
         if (mStartupImKeyboardConfigList != null && !mStartupImKeyboardConfigList.isEmpty()) {
             mKeyboardSwitcher.setImConfigKeyboardList(mStartupImKeyboardConfigList);
         }
+    }
+
+    private void prepareImKeyboardConfigForChineseDraw(boolean rebuildActivatedIMList) {
+        refreshStartupConfigSnapshotIfNeeded(rebuildActivatedIMList);
+        applyStartupConfigSnapshotToKeyboardSwitcher();
+        if (mKeyboardSwitcher != null) {
+            mKeyboardSwitcher.setActivatedIMList(activatedIMList, activatedIMShortNameList);
+        }
+
+        if (activeImKeyboardMappingMissing()) {
+            Log.w(TAG, "Active IM keyboard mapping missing before Chinese draw; forcing startup config refresh. activeIM="
+                    + activeIM + ", activatedIMList=" + activatedIMList);
+            invalidateStartupConfigSnapshot();
+            refreshStartupConfigSnapshotIfNeeded(rebuildActivatedIMList);
+            applyStartupConfigSnapshotToKeyboardSwitcher();
+            if (mKeyboardSwitcher != null) {
+                mKeyboardSwitcher.setActivatedIMList(activatedIMList, activatedIMShortNameList);
+            }
+            if (activeImKeyboardMappingMissing()) {
+                Log.w(TAG, "Active IM keyboard mapping still missing after forced refresh. activeIM="
+                        + activeIM + ", activatedIMList=" + activatedIMList);
+            }
+        }
+    }
+
+    private boolean activeImKeyboardMappingMissing() {
+        if (mKeyboardSwitcher == null || activeIM == null || activeIM.isEmpty()) return false;
+        if (activatedIMList == null || !activatedIMList.contains(activeIM)) return false;
+        String keyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
+        return keyboard == null || keyboard.isEmpty();
     }
 
     private void advanceInputViewGeneration() {
@@ -3817,12 +3864,10 @@ public class LIMEService extends InputMethodService
         mEnglishOnly = false;
         mLIMEPref.setLanguageMode(false);
         //initialKeyboard();
+        prepareImKeyboardConfigForChineseDraw(false);
         initialIMKeyboard();
 
         showLimeToast(activeIMName);
-
-        refreshStartupConfigSnapshotIfNeeded(false);
-        applyStartupConfigSnapshotToKeyboardSwitcher();
 
         // Update keyboard xml information
         if (mKeyboardSwitcher != null) {
@@ -4086,10 +4131,8 @@ public class LIMEService extends InputMethodService
         if (!mEnglishOnly) clearComposing(true);
 
         mEnglishOnly = false;//Jeremy '12,5,24 force to switch to Chinese mode if it's choosing in english mode.
+        prepareImKeyboardConfigForChineseDraw(false);
         initialIMKeyboard();
-
-        refreshStartupConfigSnapshotIfNeeded(false);
-        applyStartupConfigSnapshotToKeyboardSwitcher();
         if (mKeyboardSwitcher != null) {
             currentSoftKeyboard = mKeyboardSwitcher.getImConfigKeyboard(activeIM);
         }
@@ -5154,6 +5197,7 @@ public class LIMEService extends InputMethodService
         } else if (primaryCode == KEYCODE_SWITCH_TO_IM_MODE) { //Eng --> Chi moved from SwitchKeyboardIM by Jeremy '12,4,29
             mEnglishOnly = false;
             mLIMEPref.setLanguageMode(false);
+            prepareImKeyboardConfigForChineseDraw(true);
             initialIMKeyboard();
             // mFixedCandidateViewOn is always true
             mCandidateViewInInputView.setSuggestions(null, false);  // reset the candiate view if it's force hided before
@@ -5179,6 +5223,10 @@ public class LIMEService extends InputMethodService
         //Jeremy '12,4,21 force clear before switching chi/eng
         clearComposing(false);
 
+        boolean switchingToChinese = !mKeyboardSwitcher.isChinese();
+        if (switchingToChinese) {
+            prepareImKeyboardConfigForChineseDraw(true);
+        }
         mKeyboardSwitcher.toggleChinese();
         mEnglishOnly = !mKeyboardSwitcher.isChinese();
         mLIMEPref.setLanguageMode(mEnglishOnly);

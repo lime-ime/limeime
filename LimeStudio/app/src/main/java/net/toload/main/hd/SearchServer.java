@@ -2728,7 +2728,15 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "updateRecord(): dbadapter is null");
             return -1;
         }
-        return dbadapter.updateRecord(table, values, whereClause, whereArgs);
+        int updated = dbadapter.updateRecord(table, values, whereClause, whereArgs);
+        if (updated > 0
+                && LIME.DB_TABLE_IM.equals(table)
+                && values != null
+                && values.containsKey(LIME.DB_IM_COLUMN_DISABLE)
+                && mLIMEPref != null) {
+            mLIMEPref.resetStartupConfigVersion();
+        }
+        return updated;
     }
 
 
