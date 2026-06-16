@@ -141,10 +141,10 @@ Interpretation:
 
 ## Follow-up questions for reporter
 
-Only ask if needed after the next code/device investigation pass. Avoid asking for a same-APK generic retest because 6.1.20 already received a negative/partial retest.
+Defer reporter questions until a newer targeted Android APK or a focused maintainer reproduction asks for them. Do not post another generic same-APK retest request because 6.1.20 already received a negative/partial retest. Problem 3 questions are conditional only if the manual Array10 `.lime` default-keyboard symptom resurfaces.
 
 1. Does problem 1 happen with `記憶中英模式` (remember Chinese/English mode across fields/apps) enabled, disabled, or both?
-2. For problem 1, does the wrong first keyboard appear immediately after importing/loading the table only, or also after later app launches without changing IM settings?
+2. For problem 1, does the wrong first keyboard appear only on the immediate first launch after mounting the first non-`注音` IM, or also on later app launches without changing IM settings?
 3. For problem 2, after adding the second IM, does the wrong first keyboard happen only immediately after the add/change flow, or continue on later app launches after toggling `EN` / `中`?
 4. For problem 2, does the behavior depend on which IM is added second, or on which IM was mounted first?
 5. If problem 3 recurs, in the manage-IM list, what is the internal table/import target shown for the attached `.lime` file when the default keyboard becomes `行列+數字列鍵盤`?
