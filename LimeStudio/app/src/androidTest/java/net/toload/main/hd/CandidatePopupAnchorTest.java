@@ -103,9 +103,9 @@ public class CandidatePopupAnchorTest {
     }
 
     @Test
-    public void bottomAlignedPopupUsesNoAnchorYOffset() {
-        assertEquals(0, CandidateView.popupYOffset(30, 90, true));
-        assertEquals(0, CandidateView.popupYOffset(30, 90, false));
+    public void hiddenKeyboardPopupWindowCoversLiveCandidateBottomArea() {
+        assertEquals(210, CandidateView.hiddenKeyboardPopupWindowHeight(90, 120));
+        assertEquals(90, CandidateView.hiddenKeyboardPopupWindowHeight(90, 0));
     }
 
     @Test
@@ -146,9 +146,11 @@ public class CandidatePopupAnchorTest {
     }
 
     @Test
-    public void rightActionShowsDownBeforeExpandAndUpAfterExpand() {
+    public void rightActionGlyphFollowsExpansionDirection() {
         assertFalse(CandidateInInputViewContainer.shouldShowCollapseGlyph(false, false, false));
         assertTrue(CandidateInInputViewContainer.shouldShowCollapseGlyph(false, true, false));
+        assertFalse(CandidateInInputViewContainer.shouldShowCollapseGlyph(false, false, true));
+        assertFalse(CandidateInInputViewContainer.shouldShowCollapseGlyph(false, true, true));
         assertFalse(CandidateInInputViewContainer.shouldShowCollapseGlyph(true, true, false));
     }
 

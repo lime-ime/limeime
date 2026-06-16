@@ -25,6 +25,7 @@
 package net.toload.main.hd;
 
 import android.content.Context;
+import android.os.Handler;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -82,6 +83,18 @@ public class LIMEServiceWithStubActivityTest {
 
     @After
     public void tearDown() {
+        if (limeService != null) {
+            try {
+                Field handlerField = LIMEService.class.getDeclaredField("mCandidateViewHandler");
+                handlerField.setAccessible(true);
+                Handler handler = (Handler) handlerField.get(limeService);
+                if (handler != null) {
+                    handler.removeCallbacksAndMessages(null);
+                }
+            } catch (Exception ignored) {
+                // Best-effort cleanup for handler messages posted by partial service lifecycle tests.
+            }
+        }
         limeService = null;
     }
 

@@ -7169,6 +7169,7 @@ public class LIMEServiceTest {
         setPrivateField(service, "mCandidateList", new LinkedList<Mapping>());
 
         LIMEKeyboardSwitcher keyboardSwitcher = createMockKeyboardSwitcher();
+        when(keyboardSwitcher.getImConfigKeyboard(LIME.IM_ARRAY10)).thenReturn("lime", "phonenum", "phonenum");
         setPrivateField(service, "mKeyboardSwitcher", keyboardSwitcher);
 
         ImConfig enabledArray10 = createImConfig(LIME.IM_ARRAY10, "行列10", "phonenum");

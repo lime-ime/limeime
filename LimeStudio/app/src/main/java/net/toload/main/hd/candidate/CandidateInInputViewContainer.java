@@ -279,7 +279,7 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
     }
 
     static boolean shouldShowCollapseGlyph(boolean isEmpty, boolean isExpanded, boolean isKeyboardHidden) {
-        return !isEmpty && (isExpanded || isKeyboardHidden);
+        return !isEmpty && isExpanded && !isKeyboardHidden;
     }
 
     static boolean shouldShowIdleTools(boolean isEmpty, boolean idleRevealReady, boolean composingOrSearching) {
