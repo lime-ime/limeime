@@ -143,7 +143,7 @@ Only ask if needed after initial code/device reproduction attempts:
   - `LIMEServiceTest.emailFirstStartupThenNormalTextRefreshesChangedImKeyboardSnapshot()`
 - Compile verification: `./gradlew :app:compileDebugJavaWithJavac :app:compileDebugAndroidTestJavaWithJavac` and `./gradlew :app:assembleDebug`.
 - Device verification still needed before release: run focused instrumentation tests on an emulator/device and manually verify `倉頡`, `大易`, `行列`, `行列10`, and `注音` first-normal-text startup after adding/removing IMs.
-- Request reporter retest only after a newer Android APK contains the #115 fix.
+- Reporter retest is now requested against Android APK `LIMEHD2026-6.1.20.apk` in https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519.
 
 ### iOS
 
@@ -153,4 +153,4 @@ Only ask if needed after initial code/device reproduction attempts:
 
 ## Current status
 
-Open / plausible Android bug with a proposed code fix on branch `fix/issue-115-initial-keyboard`. Labeled `bug` + `Usability`, assigned to `jrywu`, and tracked in `docs/BACKLOG.md` under active issue follow-up. No APK retest request should be made until a newer Android APK includes the fix. Revised live issue scope after the 2026-06-14 edit: tested first mounted non-`注音` IMs (`倉頡`, `大易`, `行列`, `行列10`) can start with the wrong Chinese-mode generic keyboard; adding a second IM can make any active IM, including `注音`, show the same wrong first keyboard; manual Array10 `.lime` import can still intermittently choose the wrong default layout. Implemented fix target: IM keyboard-assignment DB writes now invalidate the startup snapshot so the next normal text startup refreshes the active IM -> keyboard mapping. Compile checks pass; device instrumentation/manual verification still needed before release/retest.
+Open / Android APK `LIMEHD2026-6.1.20.apk` retest requested. The fix branch was merged as PR #116 in merge commit `0a03fcca34fd`, and APK commit `08816a80ff5f` updated `output-metadata.json` plus `LIMEHD2026-6.1.20.apk` (GitHub Contents blob SHA `cbe1ff21ab7a499eef952c702ee5eb0a40131c05`, size 14,053,640 bytes). `limeimetw` posted the scoped retest request in https://github.com/lime-ime/limeime/issues/115#issuecomment-4715747519. Revised live issue scope after the 2026-06-14 edit: tested first mounted non-`注音` IMs (`倉頡`, `大易`, `行列`, `行列10`) can start with the wrong Chinese-mode generic keyboard; adding a second IM can make any active IM, including `注音`, show the same wrong first keyboard; manual Array10 `.lime` import can still intermittently choose the wrong default layout. Current follow-up is reporter confirmation on 6.1.20; keep the issue open until reporter/maintainer confirmation.
