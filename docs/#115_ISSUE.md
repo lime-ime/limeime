@@ -135,7 +135,7 @@ Results from that comment:
 
 Interpretation:
 
-- The 6.1.20 stale-snapshot invalidation fix did not fully resolve the first-mounted non-`注音` and second-IM initial keyboard paths. Keep #115 open and treat Problems 1 and 2 as still requiring investigation/fix.
+- The 6.1.20 stale-snapshot invalidation fix did not fully resolve the first-mounted non-`注音` and second-IM initial keyboard paths. At that point, Problems 1 and 2 still required a follow-up source fix; PR #118 later delivered that follow-up and closed #115 from source.
 - Problem 3 should remain a watch item rather than a confirmed defect until it recurs, because the reporter's latest test says the default keyboard now looks normal.
 - The improved recovery path is useful evidence: the wrong state remains within the Chinese/IM keyboard switching path and can be corrected by an in-session `EN` -> `中` toggle without restarting the target app.
 
