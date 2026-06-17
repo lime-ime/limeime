@@ -539,6 +539,17 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(EmojiPanelSource.source(isEnglishOnly: false), .chineseIM)
     }
 
+    func testDatabaseSetupAppliesResolvedInitialIMLayoutWithoutSavedKeyboardList() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        XCTAssertTrue(source.contains("private func applyResolvedActiveIMLayout()"),
+                      "setupDatabase fallback path must apply the resolved first IM layout after async DB setup")
+        XCTAssertTrue(source.contains("self.applyResolvedActiveIMLayout()"))
+        XCTAssertTrue(source.contains("self.activeIM      = resolvedIM"))
+        XCTAssertTrue(source.contains("self.activeIMIndex = resolved.firstIndex"))
+    }
+
     func testCandidateBarChromeUsesSystemAppearanceOnly() {
         XCTAssertTrue(CandidateBarSystemChrome.usesLightForeground(systemUserInterfaceStyle: .dark))
         XCTAssertFalse(CandidateBarSystemChrome.usesLightForeground(systemUserInterfaceStyle: .light))

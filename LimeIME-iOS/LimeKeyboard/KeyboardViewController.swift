@@ -563,30 +563,11 @@ final class KeyboardViewController: UIInputViewController {
                 self.activeIMIndex = idx
                 let savedCaps = ss.detectIMCapabilities(tableName: savedIM)
                 ss.setTableName(savedIM, hasNumberMapping: savedCaps.hasNumber, hasSymbolMapping: savedCaps.hasSymbol)
-                // Refresh the keyboard layout if the restored IM differs from the
-                // phonetic default that initOnStartInput applied before DB was ready.
-                let savedImKb: String = {
-                    let kbCode = resolved.first(where: { $0.tableNick == savedIM })?.keyboardId ?? ""
-                    // If kbCode is already a loadable layout name (e.g. "lime_array", "phone_simple"),
-                    // use it directly — same logic as resolvedLayoutId().
-                    if LayoutLoader.load(kbCode) != nil {
-                        if savedIM == "array10"  { return "phone_simple" }
-                        return kbCode
-                    }
-                    if let imkb = ss.getKeyboardConfig(kbCode)?.imkb, !imkb.isEmpty { return imkb }
-                    if savedIM == "array10" { return "phone_simple" }
-                    return "lime_\(savedIM)"
-                }()
-                if !self.mEnglishOnly, let layout = LayoutLoader.load(savedImKb),
-                   layout.id != self.currentLayout.id {
-                    self.clearShiftState()
-                    self.currentLayout = layout
-                    self.keyboardView?.setLayout(layout)
-                    self.applyHeight()
-                }
+                self.applyResolvedActiveIMLayout()
             } else {
                 self.activeIM      = resolvedIM
-                self.activeIMIndex = 0
+                self.activeIMIndex = resolved.firstIndex { $0.tableNick == resolvedIM } ?? 0
+                self.applyResolvedActiveIMLayout()
             }
 
             // Load settings from shared UserDefaults (spec §15)
@@ -599,6 +580,17 @@ final class KeyboardViewController: UIInputViewController {
             self.applyFeedbackSettings()
             self.preloadEmojiCategoryPages()
         }
+    }
+
+    private func applyResolvedActiveIMLayout() {
+        guard !mEnglishOnly else { return }
+        let layoutName = resolvedLayoutId(for: activeIM)
+        guard let layout = LayoutLoader.load(layoutName),
+              layout.id != currentLayout.id else { return }
+        clearShiftState()
+        currentLayout = layout
+        keyboardView?.setLayout(layout)
+        applyHeight()
     }
 
     /// Returns the JSON layout file ID (e.g. "lime_array_number") for the given IM table nick.

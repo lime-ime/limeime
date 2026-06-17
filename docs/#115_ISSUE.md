@@ -177,6 +177,7 @@ Android APK `LIMEHD2026-6.1.21.apk` / versionName `6.1.21` was published by comm
 
 - Confirmed reporter platform is Android; the report references Android APK versions and Android soft-keyboard behavior.
 - The verified fix scope is Android-only. The first-keyboard-display root cause depends on Android `LIMEService`, `LIMEKeyboardSwitcher`, and `EditorInfo` startup paths, so it is not directly portable to iOS.
+- Local iOS audit found the same class of startup-layout risk after async DB setup: the fallback initial IM path restored `activeIM` but did not refresh the keyboard layout. The iOS follow-up now applies the resolved active IM layout after DB setup for both saved-IM and fallback-IM paths, using the existing `resolvedLayoutId(for:)` logic.
 - If shared `.lime` metadata/default-keyboard semantics change separately, audit iOS text import/default-keyboard registration at that time.
 
 ## Final status
