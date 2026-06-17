@@ -93,8 +93,9 @@
   - 相關 PR：<https://github.com/lime-ime/limeime/pull/116>、<https://github.com/lime-ime/limeime/pull/118>
   - 分析文件：[#115_ISSUE.md](https://github.com/lime-ime/limeime/blob/master/docs/%23115_ISSUE.md)
 
-- **#112 — 哈哈倉頡 / 四碼倉頡資料與 Lime end-key metadata**
+- **#112 — 哈哈倉頡 / 四碼倉頡與行列10資料更新**
   - 更新哈哈倉頡相關 `.limedb` 匯入／匯出資料，補齊 Lime end-key metadata，讓表格資料與 catalog 行為更一致。
+  - 同版也更新 `Database/array10.limedb`，並隨 Android APK `6.1.21` 一起發布。
   - 相關 issue：<https://github.com/lime-ime/limeime/issues/112>
   - 相關提交：<https://github.com/lime-ime/limeime/commit/650ca4f0>、<https://github.com/lime-ime/limeime/commit/4f4e9706>
 
