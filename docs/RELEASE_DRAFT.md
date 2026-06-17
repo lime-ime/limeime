@@ -145,13 +145,6 @@
   - 修正 iOS theme-screenshot UITest，讓截圖測試顯示正確主題下的注音鍵盤。
   - 相關 PR：<https://github.com/lime-ime/limeime/pull/108>
 
-## 已知待處理項目
-
-- **#111 — 快倉 `scj` 表格資料 `x` / `z` 候選異常**
-  - 目前確認為表格資料待修正項目。`Database/scj.db` 中 `x` 與 `z` 仍可能出現 `1991` 作為前方候選。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/111>
-  - 分析文件：[#111_ISSUE.md](https://github.com/lime-ime/limeime/blob/master/docs/%23111_ISSUE.md)
-
 ## APK 驗證資訊
 
 - APK 路徑：`LimeStudio/app/release/LIMEHD2026-6.1.21.apk`
