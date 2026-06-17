@@ -114,7 +114,7 @@ This should be treated as a hypothesis until reproduced on-device or with an imp
 2. Add regression coverage for both sides of the clue:
    - `LimeDBTest.testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot()` locks the DB-write invalidation behavior.
    - `LIMEServiceTest.emailFirstStartupThenNormalTextRefreshesChangedImKeyboardSnapshot()` locks the sequence where the first focused field is forced English/email, then the next normal text field refreshes after a startup-version invalidation and routes to Chinese IM layout.
-3. Do not keep an active watch for the manual `.lime` Array10 default-layout path after closure. The 6.1.20 retest looked normal and the 6.1.21 closure did not report recurrence. If the reporter reopens or provides new evidence, treat that as a separate import-target/default-selection follow-up because manual import UI storage could still skip the `array10 -> phonenum` preset branch.
+3. Do not keep an active watch for the manual `.lime` Array10 default-layout path after closure. The 6.1.20 retest looked normal, and Problem 3 was outside the scoped 6.1.21 retest with no later recurrence report before closure. If the reporter reopens or provides new evidence, treat that as a separate import-target/default-selection follow-up because manual import UI storage could still skip the `array10 -> phonenum` preset branch.
 
 ## Existing coverage / fragility assessment
 
