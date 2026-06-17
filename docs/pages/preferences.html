@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+<script>(function(){try{var sp=new URLSearchParams(location.search);var q=sp.get("theme");if(q==="dark"||q==="light")sessionStorage.setItem("lime-theme-test",q);var st=sessionStorage.getItem("lime-theme-test");var test=!!st||sp.has("theme")||sp.has("test");var pick=st||q;var d=pick?pick==="dark":matchMedia("(prefers-color-scheme:dark)").matches;var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(test)de.classList.add("theme-test");}catch(e){}})();</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>喜好設定 · 萊姆輸入法 使用手冊</title>
@@ -8,13 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="manual.css?v=3"/>
+<link rel="stylesheet" href="manual.css?v=7"/>
 </head>
 <body>
 
 <div class="m-top">
   <div class="bar">
     <a class="logo" href="../index.html"><img src="../assets/lime-icon.png" alt=""/><span class="wm">萊姆輸入法</span></a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深淺色模式" aria-pressed="false" title="切換深淺色模式"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.2 17.2L18.6 18.6M5 19l1.4-1.4M17.2 6.8L18.6 5.4"/></svg></button>
   </div>
 </div>
 
@@ -87,12 +89,12 @@
     <div class="manual-screenshot-pair">
       <div class="shot">
         <div class="cap"><span class="pf"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" style="vertical-align:-1px;margin-right:4px"><path d="M16.5 1.6c.1 1-.3 2-1 2.8-.7.8-1.8 1.4-2.8 1.3-.1-1 .4-2 1-2.7.7-.8 1.9-1.3 2.8-1.4zM19.9 17c-.5 1.2-.8 1.7-1.5 2.7-.9 1.4-2.2 3.1-3.8 3.1-1.4 0-1.8-.9-3.7-.9-1.9 0-2.3.9-3.7.9-1.6 0-2.8-1.5-3.7-2.9C.9 16.5.6 12 2.2 9.6c1-1.6 2.7-2.5 4.3-2.5 1.6 0 2.6 1 3.9 1 1.3 0 2-.9 3.9-1 1.4 0 2.9.8 3.9 2.1-3.5 1.9-2.9 6.9 1.8 7.8z"/></svg>iPhone</span>喜好設定</div>
-        <div class="shot-frame"><img src="../assets/shots/lime_settings_ios_preferences.png" alt="iPhone 喜好設定畫面"/></div>
+        <div class="shot-frame"><img data-dark="../assets/shots/lime_settings_ios_preferences_dark.png" class="themed" src="../assets/shots/lime_settings_ios_preferences.png" alt="iPhone 喜好設定畫面"/></div>
         <p class="ph-note">「喜好設定」分頁集中鍵盤外觀、回饋與輸入行為等選項。</p>
       </div>
       <div class="shot">
         <div class="cap"><span class="pf"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" style="vertical-align:-1px;margin-right:4px"><path d="M6 9h12v8a1 1 0 0 1-1 1h-1v3h-2v-3h-4v3H8v-3H7a1 1 0 0 1-1-1V9zm-3 .5a1.5 1.5 0 0 1 3 0v5a1.5 1.5 0 0 1-3 0v-5zm15 0a1.5 1.5 0 0 1 3 0v5a1.5 1.5 0 0 1-3 0v-5zM7.5 7.8C7.8 5.4 9.7 3.6 12 3.6s4.2 1.8 4.5 4.2H7.5zM10 5.6a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2zm4 0a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2z"/></svg>Android</span>喜好設定</div>
-        <div class="shot-frame"><img src="../assets/shots/lime_settings_android_preferences.png" alt="Android 喜好設定畫面"/></div>
+        <div class="shot-frame"><img data-dark="../assets/shots/lime_settings_android_preferences_dark.png" class="themed" src="../assets/shots/lime_settings_android_preferences.png" alt="Android 喜好設定畫面"/></div>
         <p class="ph-note">Android 喜好設定，選項與 iOS 大致一致。</p>
       </div>
     </div>
@@ -169,5 +171,6 @@
 </div>
 
 
+<script>(function(){function testMode(){try{return !!sessionStorage.getItem("lime-theme-test")||new URLSearchParams(location.search).has("theme")||new URLSearchParams(location.search).has("test");}catch(e){return false;}}function resolve(){try{var st=sessionStorage.getItem("lime-theme-test");if(st)return st;var q=new URLSearchParams(location.search).get("theme");if(q==="dark"||q==="light"){sessionStorage.setItem("lime-theme-test",q);return q;}}catch(e){}return matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}function apply(){var d=resolve()==="dark";var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(testMode())de.classList.add("theme-test");document.querySelectorAll("img.themed").forEach(function(im){var lt=im.getAttribute("data-light");if(!lt){lt=im.getAttribute("src");im.setAttribute("data-light",lt);}im.src=d?im.getAttribute("data-dark"):lt;});var b=document.getElementById("theme-toggle");if(b)b.setAttribute("aria-pressed",String(d));}document.addEventListener("DOMContentLoaded",function(){apply();var b=document.getElementById("theme-toggle");if(b)b.addEventListener("click",function(){try{sessionStorage.setItem("lime-theme-test",resolve()==="dark"?"light":"dark");}catch(e){}apply();});try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!testMode())apply();});}catch(e){}});})();</script>
 </body>
 </html>

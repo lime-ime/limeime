@@ -211,3 +211,38 @@ a.manual-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px -16px rgba
 @media(min-width:861px) and (max-width:1100px){
   .m-content{max-width:none}
 }
+
+
+/* ============================================================
+   Dark theme — toggled via html[data-theme="dark"]
+   (inline head script sets it from saved preference, else system).
+   ============================================================ */
+html[data-theme="dark"]{
+  --lime:#A7CC3A; --lime-deep:#C0DC5C; --lime-ink:#CBE271;
+  --wash:#2A3318; --paper:#14160E; --card:#1E2117;
+  --ink:#ECEEE0; --muted:#9C9D8D; --line:#30342A; --line-soft:#272B20;
+  --warn:#EBA869; --warn-bg:#2C2113; --warn-line:#473820;
+  --note-bg:#222A12; --note-line:#3A451F;
+}
+html[data-theme="dark"] .m-top{background:rgba(20,22,14,.92);}
+html[data-theme="dark"] .m-top .logo .wm{color:var(--ink);}
+html[data-theme="dark"] .manual-hero{background:linear-gradient(150deg,#10130B,#1E2914);}
+html[data-theme="dark"] .m-side a.on{background:#2A3318;color:var(--ink);}
+html[data-theme="dark"] .m-content pre.cb{background:#0E110A;}
+html[data-theme="dark"] .m-content h3{color:#EDEFE1;}
+html[data-theme="dark"] .m-content p,html[data-theme="dark"] .m-content ul,html[data-theme="dark"] .m-content ol,html[data-theme="dark"] .m-content tbody td{color:#CCCEBF;}
+html[data-theme="dark"] .manual-warning{color:#EAC9A2;}
+html[data-theme="dark"] .manual-screenshot-pair figure img{background:#10130B;}
+html[data-theme="dark"] .shot-frame img{background:#0E110A;}
+
+/* theme toggle button */
+.theme-toggle{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:10px;
+  border:1.5px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;flex:none;
+  transition:color .15s,border-color .15s}
+.theme-toggle:hover{color:var(--lime-ink);border-color:var(--lime-deep)}
+.theme-toggle svg{width:19px;height:19px}
+.theme-toggle .ic-sun{display:none}
+html[data-theme="dark"] .theme-toggle .ic-sun{display:block}
+html[data-theme="dark"] .theme-toggle .ic-moon{display:none}
+html.theme-test .theme-toggle{display:inline-grid!important}
+.m-top .bar .theme-toggle{margin-left:auto}

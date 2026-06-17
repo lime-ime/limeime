@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+<script>(function(){try{var sp=new URLSearchParams(location.search);var q=sp.get("theme");if(q==="dark"||q==="light")sessionStorage.setItem("lime-theme-test",q);var st=sessionStorage.getItem("lime-theme-test");var test=!!st||sp.has("theme")||sp.has("test");var pick=st||q;var d=pick?pick==="dark":matchMedia("(prefers-color-scheme:dark)").matches;var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(test)de.classList.add("theme-test");}catch(e){}})();</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>鍵盤輸入 · 萊姆輸入法 使用手冊</title>
@@ -8,13 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="manual.css?v=3"/>
+<link rel="stylesheet" href="manual.css?v=7"/>
 </head>
 <body>
 
 <div class="m-top">
   <div class="bar">
     <a class="logo" href="../index.html"><img src="../assets/lime-icon.png" alt=""/><span class="wm">萊姆輸入法</span></a>
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="切換深淺色模式" aria-pressed="false" title="切換深淺色模式"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.2 17.2L18.6 18.6M5 19l1.4-1.4M17.2 6.8L18.6 5.4"/></svg></button>
   </div>
 </div>
 
@@ -82,15 +84,15 @@
     <p>萊姆輸入法輸入畫面通常分成兩部分，候選列在上，鍵盤區在下。候選列會顯示輸入碼、中文候選字與英文建議字，左右兩側可能有 Emoji、麥克風、選單或鍵盤收合按鈕。鍵盤區則依目前輸入法、英文模式、符號模式或 Emoji 面板，顯示不同的版面。</p>
     <div class="manual-screenshot-pair trio">
       <figure>
-        <img src="../assets/kb/and_zhuyin.png" alt="Android 萊姆輸入法注音鍵盤，上方為候選列，下方為鍵盤區"/>
+        <img data-dark="../assets/kb/c_and_zhuyin_dark.png" class="themed" src="../assets/kb/c_and_zhuyin_light.png" alt="Android 萊姆輸入法注音鍵盤，上方為候選列，下方為鍵盤區"/>
         <figcaption>Android 鍵盤畫面，候選列在鍵盤上方，右側固定按鈕可顯示麥克風或鍵盤功能。</figcaption>
       </figure>
       <figure>
-        <img src="../assets/kb/ios_zhuyin.png" alt="iPhone 萊姆輸入法注音鍵盤，上方為候選列，下方為鍵盤區"/>
+        <img data-dark="../assets/kb/c_ios_zhuyin_dark.png" class="themed" src="../assets/kb/c_ios_zhuyin_light.png" alt="iPhone 萊姆輸入法注音鍵盤，上方為候選列，下方為鍵盤區"/>
         <figcaption>iPhone 鍵盤畫面，候選列左右兩側提供 Emoji 與選單按鈕。</figcaption>
       </figure>
       <figure>
-        <img src="../assets/kb/ios_legacy_zhuyin.png" alt="舊版 iPhone（Home 鍵）萊姆輸入法注音鍵盤，右上角為鍵盤收合鍵"/>
+        <img data-dark="../assets/kb/c_ios_legacy_zhuyin_dark.png" class="themed" src="../assets/kb/c_ios_legacy_zhuyin_light.png" alt="舊版 iPhone（Home 鍵）萊姆輸入法注音鍵盤，右上角為鍵盤收合鍵"/>
         <figcaption>舊版 iPhone（含 Home 鍵）鍵盤畫面，右上角以鍵盤收合鍵取代選單鍵，左下角為地球鍵。</figcaption>
       </figure>
     </div>
@@ -215,11 +217,11 @@
     <p>切到萊姆輸入法英文模式後即可直接輸入英文字母，鍵盤上的 <code>中</code> 鍵會把輸入狀態切回中文模式。</p>
     <div class="manual-screenshot-pair">
       <figure>
-        <img src="../assets/kb/and_english.png" alt="Android 萊姆輸入法英文鍵盤，顯示可切回中文的中鍵"/>
+        <img data-dark="../assets/kb/c_and_english_dark.png" class="themed" src="../assets/kb/c_and_english_light.png" alt="Android 萊姆輸入法英文鍵盤，顯示可切回中文的中鍵"/>
         <figcaption>Android 英文模式，可看到切回中文的 <code>中</code> 鍵。</figcaption>
       </figure>
       <figure>
-        <img src="../assets/kb/ios_english.png" alt="iOS 萊姆輸入法英文鍵盤，顯示可切回中文的中鍵"/>
+        <img data-dark="../assets/kb/c_ios_english_dark.png" class="themed" src="../assets/kb/c_ios_english_light.png" alt="iOS 萊姆輸入法英文鍵盤，顯示可切回中文的中鍵"/>
         <figcaption>iOS 英文模式，可看到切回中文的 <code>中</code> 鍵。</figcaption>
       </figure>
     </div>
@@ -281,11 +283,11 @@
     <p>開啟 Emoji 面板後，畫面由三部分組成，最上方是搜尋列，中間是 Emoji 網格，底部是分類列。</p>
     <div class="manual-screenshot-pair">
       <figure>
-        <img src="../assets/kb/and_emoji_v2.png" alt="Android 萊姆輸入法 Emoji 面板，含搜尋列、Emoji 網格與底部分類列"/>
+        <img data-dark="../assets/kb/c_and_emoji_dark.png" class="themed" src="../assets/kb/c_and_emoji_light.png" alt="Android 萊姆輸入法 Emoji 面板，含搜尋列、Emoji 網格與底部分類列"/>
         <figcaption>Android Emoji 面板，上方是搜尋列，中間是 Emoji 網格，底部是分類列（最左為 ABC，接著是最近使用，再往右是各分類）。</figcaption>
       </figure>
       <figure>
-        <img src="../assets/kb/ios_emoji.png" alt="iOS 萊姆輸入法 Emoji 面板，含搜尋列、Emoji 網格與底部分類列"/>
+        <img data-dark="../assets/kb/c_ios_emoji_dark.png" class="themed" src="../assets/kb/c_ios_emoji_light.png" alt="iOS 萊姆輸入法 Emoji 面板，含搜尋列、Emoji 網格與底部分類列"/>
         <figcaption>iOS Emoji 面板，搜尋列顯示「搜尋表情符號」，底部分類列右側被裁切，代表可向右滑動看到更多分類。</figcaption>
       </figure>
     </div>
@@ -352,5 +354,6 @@
 </div>
 
 
+<script>(function(){function testMode(){try{return !!sessionStorage.getItem("lime-theme-test")||new URLSearchParams(location.search).has("theme")||new URLSearchParams(location.search).has("test");}catch(e){return false;}}function resolve(){try{var st=sessionStorage.getItem("lime-theme-test");if(st)return st;var q=new URLSearchParams(location.search).get("theme");if(q==="dark"||q==="light"){sessionStorage.setItem("lime-theme-test",q);return q;}}catch(e){}return matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";}function apply(){var d=resolve()==="dark";var de=document.documentElement;de.setAttribute("data-theme",d?"dark":"light");if(testMode())de.classList.add("theme-test");document.querySelectorAll("img.themed").forEach(function(im){var lt=im.getAttribute("data-light");if(!lt){lt=im.getAttribute("src");im.setAttribute("data-light",lt);}im.src=d?im.getAttribute("data-dark"):lt;});var b=document.getElementById("theme-toggle");if(b)b.setAttribute("aria-pressed",String(d));}document.addEventListener("DOMContentLoaded",function(){apply();var b=document.getElementById("theme-toggle");if(b)b.addEventListener("click",function(){try{sessionStorage.setItem("lime-theme-test",resolve()==="dark"?"light":"dark");}catch(e){}apply();});try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",function(){if(!testMode())apply();});}catch(e){}});})();</script>
 </body>
 </html>
