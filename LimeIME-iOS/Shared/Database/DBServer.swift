@@ -1,4 +1,5 @@
 ﻿import Foundation
+import GRDB
 import ZIPFoundation
 
 // MARK: - DBServer
@@ -715,6 +716,19 @@ final class DBServer {
         return nil
     }
 
+    private func rawTableHasData(databaseURL: URL, tableName: String) throws -> Bool {
+        let queue = try DatabaseQueue(path: databaseURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            let exists = try Int.fetchOne(db,
+                sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                arguments: [tableName]) ?? 0
+            guard exists > 0 else { return false }
+            return try (Int.fetchOne(db,
+                sql: "SELECT EXISTS(SELECT 1 FROM \(tableName) LIMIT 1)") ?? 0) > 0
+        }
+    }
+
     // MARK: - 16. exportZippedDb
     /// Exports a single IM table to a zipped .db file.
     /// Uses bundled `blank.db` when available, otherwise creates a temporary blank schema.
@@ -728,6 +742,10 @@ final class DBServer {
             print("[DBServer] exportZippedDb: datasource is nil")
             return nil
         }
+        guard ds.isValidTableName(tableName), ds.tableHasData(tableName) else {
+            print("[DBServer] exportZippedDb: table is invalid or empty: \(tableName)")
+            return nil
+        }
         do {
             let cacheDir = FileManager.default.temporaryDirectory
             let dbFile = cacheDir.appendingPathComponent(tableName + DBServer.databaseExt)
@@ -739,11 +757,13 @@ final class DBServer {
 
             if let template = bundledBlankTemplateURL(named: "blank") {
                 try FileManager.default.copyItem(at: template, to: dbFile)
-            } else {
-                _ = try LimeDB(path: dbFile.path)
             }
 
             ds.prepareBackup(targetFile: dbFile, tableNames: [tableName], includeRelated: false)
+            guard try rawTableHasData(databaseURL: dbFile, tableName: "custom") else {
+                try? FileManager.default.removeItem(at: dbFile)
+                return nil
+            }
 
             let archive = try Archive(url: targetDbFile, accessMode: .create)
             try archive.addEntry(with: dbFile.lastPathComponent, fileURL: dbFile)

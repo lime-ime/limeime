@@ -2766,10 +2766,11 @@ final class LimeDB {
                 CREATE TABLE IF NOT EXISTS sourceDB.custom (
                     _id       INTEGER PRIMARY KEY AUTOINCREMENT,
                     code      TEXT,
+                    code3r    TEXT,
                     word      TEXT,
+                    related   TEXT,
                     score     INTEGER DEFAULT 0,
-                    basescore INTEGER DEFAULT 0,
-                    code3r    TEXT
+                    basescore INTEGER DEFAULT 0
                 )
             """)
             try db.execute(sql: """
@@ -2795,13 +2796,35 @@ final class LimeDB {
                 )
             """)
             for t in tableNames where isValidTableName(t) {
-                try? db.execute(sql: "INSERT INTO sourceDB.custom SELECT * FROM \(t)")
+                let cols = try Row.fetchAll(db, sql: "PRAGMA table_info(\(t))").map {
+                    $0["name"] as String? ?? ""
+                }
+                guard cols.contains("code"), cols.contains("word") else { continue }
+                let scoreExpr = cols.contains("score") ? "COALESCE(score, 0)" : "0"
+                let baseScoreExpr = cols.contains("basescore") ? "COALESCE(basescore, 0)" : "0"
+                let code3rExpr = cols.contains("code3r") ? "code3r" : "NULL"
+                let relatedExpr = cols.contains("related") ? "related" : "NULL"
+                try db.execute(sql: """
+                    INSERT INTO sourceDB.custom (code, code3r, word, related, score, basescore)
+                    SELECT code, \(code3rExpr), word, \(relatedExpr), \(scoreExpr), \(baseScoreExpr)
+                    FROM \(t)
+                    WHERE code IS NOT NULL AND word IS NOT NULL
+                """)
             }
             for t in tableNames where isValidTableName(t) {
-                try? db.execute(sql: "INSERT INTO sourceDB.im SELECT * FROM im WHERE code = '\(t)'")
+                try db.execute(sql: """
+                    INSERT INTO sourceDB.im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                    SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle
+                    FROM im
+                    WHERE code = ?
+                """, arguments: [t])
             }
             if includeRelated {
-                try? db.execute(sql: "INSERT INTO sourceDB.related SELECT * FROM related")
+                try db.execute(sql: """
+                    INSERT INTO sourceDB.related (pword, cword, basescore, score)
+                    SELECT pword, cword, COALESCE(basescore, 0), COALESCE(score, 0)
+                    FROM related
+                """)
             }
         }
     }
@@ -2814,6 +2837,54 @@ final class LimeDB {
     func prepareBackupRelatedDb(_ sourcedbfile: String) {
         prepareBackup(targetFile: URL(fileURLWithPath: sourcedbfile),
                       tableNames: [], includeRelated: true)
+    }
+
+    private func tableColumns(_ db: Database, schemaName: String? = nil, tableName: String) throws -> Set<String> {
+        let sql: String
+        if let schemaName {
+            sql = "PRAGMA \(schemaName).table_info(\(tableName))"
+        } else {
+            sql = "PRAGMA table_info(\(tableName))"
+        }
+        let rows = try Row.fetchAll(db, sql: sql)
+        return Set(rows.map { $0["name"] as String? ?? "" })
+    }
+
+    private func importMappingRowsFromAttachedSource(_ db: Database,
+                                                     targetTable: String,
+                                                     sourceTable: String) throws {
+        let targetCols = try tableColumns(db, tableName: targetTable)
+        let sourceCols = try tableColumns(db, schemaName: "sourceDB", tableName: sourceTable)
+        guard targetCols.contains("code"),
+              targetCols.contains("word"),
+              sourceCols.contains("code"),
+              sourceCols.contains("word") else { return }
+
+        var insertCols: [String] = ["code", "word"]
+        var selectExprs: [String] = ["code", "word"]
+        if targetCols.contains("score") {
+            insertCols.append("score")
+            selectExprs.append(sourceCols.contains("score") ? "COALESCE(score, 0)" : "0")
+        }
+        if targetCols.contains("basescore") {
+            insertCols.append("basescore")
+            selectExprs.append(sourceCols.contains("basescore") ? "COALESCE(basescore, 0)" : "0")
+        }
+        if targetCols.contains("code3r") && sourceCols.contains("code3r") {
+            insertCols.append("code3r")
+            selectExprs.append("code3r")
+        }
+        if targetCols.contains("related") {
+            insertCols.append("related")
+            selectExprs.append(sourceCols.contains("related") ? "related" : "NULL")
+        }
+
+        try db.execute(sql: """
+            INSERT INTO \(targetTable) (\(insertCols.joined(separator: ", ")))
+            SELECT \(selectExprs.joined(separator: ", "))
+            FROM sourceDB.\(sourceTable)
+            WHERE code IS NOT NULL AND word IS NOT NULL
+        """)
     }
 
     func importDb(sourceFile: URL, tableNames: [String], overwriteExisting: Bool, includeRelated: Bool) {
@@ -2836,9 +2907,9 @@ final class LimeDB {
                 let hasCustom = (try? Row.fetchOne(db,
                     sql: "SELECT name FROM sourceDB.sqlite_master WHERE type='table' AND name='custom'")) != nil
                 if hasCustom {
-                    try? db.execute(sql: "INSERT INTO \(t) SELECT * FROM sourceDB.custom")
+                    try? importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: "custom")
                 } else {
-                    try? db.execute(sql: "INSERT INTO \(t) SELECT * FROM sourceDB.\(t)")
+                    try? importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: t)
                 }
             }
             let hasImTable = ((try? Int.fetchOne(db,
@@ -2864,7 +2935,15 @@ final class LimeDB {
                 }
             }
             if includeRelated {
-                try? db.execute(sql: "INSERT INTO related SELECT * FROM sourceDB.related")
+                let hasRelatedTable = ((try? Int.fetchOne(db,
+                    sql: "SELECT COUNT(*) FROM sourceDB.sqlite_master WHERE type='table' AND name='related'")) ?? 0) > 0
+                if hasRelatedTable {
+                    try? db.execute(sql: """
+                        INSERT INTO related (pword, cword, basescore, score)
+                        SELECT pword, cword, COALESCE(basescore, 0), COALESCE(score, 0)
+                        FROM sourceDB.related
+                    """)
+                }
             }
         }
     }

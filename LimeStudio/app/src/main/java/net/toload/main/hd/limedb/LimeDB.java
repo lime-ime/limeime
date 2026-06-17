@@ -3318,10 +3318,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                    }
 
                    if (hasCustom) {
-                       db.execSQL("insert into " + tableName + " select * from sourceDB." + LIME.DB_TABLE_CUSTOM);
+                       importMappingRowsFromAttachedSource(db, tableName, LIME.DB_TABLE_CUSTOM);
                    } else {
                        Log.d(TAG, "importDb(): sourceDB.custom not found, using sourceDB." + tableName);
-                       db.execSQL("insert into " + tableName + " select * from sourceDB." + tableName);
+                       importMappingRowsFromAttachedSource(db, tableName, tableName);
                    }
                }
 
@@ -3374,6 +3374,68 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         } finally {
             unHoldDBConnection();
         }
+    }
+
+    private void importMappingRowsFromAttachedSource(SQLiteDatabase database, String targetTable, String sourceTable) {
+        Set<String> targetColumns = tableColumns(database, targetTable);
+        Set<String> sourceColumns = tableColumns(database, "sourceDB." + sourceTable);
+        if (!targetColumns.contains(LIME.DB_COLUMN_CODE) || !targetColumns.contains(LIME.DB_COLUMN_WORD)
+                || !sourceColumns.contains(LIME.DB_COLUMN_CODE) || !sourceColumns.contains(LIME.DB_COLUMN_WORD)) {
+            throw new SQLiteException("Mapping import requires code and word columns");
+        }
+
+        List<String> insertColumns = new ArrayList<>();
+        List<String> selectExpressions = new ArrayList<>();
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                LIME.DB_COLUMN_CODE, LIME.DB_COLUMN_CODE, null);
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                LIME.DB_COLUMN_WORD, LIME.DB_COLUMN_WORD, null);
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                LIME.DB_COLUMN_SCORE, "COALESCE(" + LIME.DB_COLUMN_SCORE + ", 0)", "0");
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                LIME.DB_COLUMN_BASESCORE, "COALESCE(" + LIME.DB_COLUMN_BASESCORE + ", 0)", "0");
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                FIELD_NO_TONE_CODE, FIELD_NO_TONE_CODE, null);
+        addMappingImportColumn(insertColumns, selectExpressions, targetColumns, sourceColumns,
+                LIME.DB_COLUMN_RELATED, LIME.DB_COLUMN_RELATED, null);
+
+        database.execSQL("insert into " + targetTable + " (" + joinSqlList(insertColumns) + ") "
+                + "select " + joinSqlList(selectExpressions)
+                + " from sourceDB." + sourceTable
+                + " where " + LIME.DB_COLUMN_CODE + " is not null and " + LIME.DB_COLUMN_WORD + " is not null");
+    }
+
+    private void addMappingImportColumn(List<String> insertColumns, List<String> selectExpressions,
+                                        Set<String> targetColumns, Set<String> sourceColumns,
+                                        String columnName, String sourceExpression, String defaultExpression) {
+        if (!targetColumns.contains(columnName)) return;
+        if (sourceColumns.contains(columnName)) {
+            insertColumns.add(columnName);
+            selectExpressions.add(sourceExpression);
+        } else if (defaultExpression != null) {
+            insertColumns.add(columnName);
+            selectExpressions.add(defaultExpression);
+        }
+    }
+
+    private Set<String> tableColumns(SQLiteDatabase database, String tableExpression) {
+        Set<String> columns = new HashSet<>();
+        try (Cursor cursor = database.rawQuery("select * from " + tableExpression + " limit 0", null)) {
+            if (cursor == null) return columns;
+            for (String column : cursor.getColumnNames()) {
+                columns.add(column);
+            }
+        }
+        return columns;
+    }
+
+    private String joinSqlList(List<String> values) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < values.size(); i++) {
+            if (i > 0) builder.append(", ");
+            builder.append(values.get(i));
+        }
+        return builder.toString();
     }
 
     /**

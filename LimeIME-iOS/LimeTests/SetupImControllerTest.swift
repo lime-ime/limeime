@@ -5,6 +5,7 @@
 // Uses real LimeDB temp fixtures and a MockSetupImView.
 
 import XCTest
+import GRDB
 import ZIPFoundation
 @testable import LimeIME
 
@@ -61,6 +62,36 @@ final class SetupImControllerTest: XCTestCase {
         return (dbURL, zipURL)
     }
 
+    private func makeAndroidShapeCustomLimedb() throws -> (dbURL: URL, zipURL: URL) {
+        let dbURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".db")
+        let zipURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".limedb")
+        let queue = try DatabaseQueue(path: dbURL.path)
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE custom (
+                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code      TEXT,
+                    code3r    TEXT,
+                    word      TEXT,
+                    related   TEXT,
+                    score     INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0
+                )
+            """)
+            try db.execute(sql: """
+                INSERT INTO custom (code, code3r, word, related, score, basescore)
+                VALUES ('android_cj4', '4jc', '安卓', 'unused', 7, 3)
+            """)
+        }
+        try queue.close()
+
+        let archive = try Archive(url: zipURL, accessMode: .create)
+        try archive.addEntry(with: "cj4.db", fileURL: dbURL)
+        return (dbURL, zipURL)
+    }
+
     private func seedCustomRoundTripRecords(_ db: LimeIME.LimeDB, prefix: String,
                                             scores: [Int]) {
         for (index, score) in scores.enumerated() {
@@ -77,6 +108,41 @@ final class SetupImControllerTest: XCTestCase {
             .filter { $0.code.hasPrefix(prefix + "_") }
             .map { "\($0.code)|\($0.word)|\($0.score)|\($0.baseScore)|\($0.code3r)" }
             .sorted()
+    }
+
+    private func firstDatabaseInArchive(_ archiveURL: URL) throws -> URL {
+        let extractDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: extractDir, withIntermediateDirectories: true)
+        let archive = try Archive(url: archiveURL, accessMode: .read)
+        guard let entry = archive.first(where: { $0.path.hasSuffix(".db") }) else {
+            throw XCTSkip("No database entry in \(archiveURL.lastPathComponent)")
+        }
+        let dbURL = extractDir.appendingPathComponent(URL(fileURLWithPath: entry.path).lastPathComponent)
+        _ = try archive.extract(entry, to: dbURL)
+        return dbURL
+    }
+
+    private func rawTableNames(_ dbURL: URL) throws -> Set<String> {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            let rows = try String.fetchAll(db, sql: """
+                SELECT name FROM sqlite_master
+                WHERE type IN ('table', 'view')
+            """)
+            return Set(rows)
+        }
+    }
+
+    private func rawTableColumns(_ dbURL: URL, tableName: String) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: "PRAGMA table_info(\(tableName))").map {
+                $0["name"] as String? ?? ""
+            }
+        }
     }
 
     // MARK: - importDBFile
@@ -144,6 +210,32 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    func testAsyncImportDBFileImportsAndroidShapeZippedLimedb() async throws {
+        let (url, db) = try makeDB()
+        let zipped = try makeAndroidShapeCustomLimedb()
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: zipped.dbURL)
+            try? FileManager.default.removeItem(at: zipped.zipURL)
+        }
+        let progress = await LimeIME.ProgressManager()
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: progress
+        )
+
+        let result = await controller.importDBFile(url: zipped.zipURL, tableName: "custom")
+
+        if case .failure(let error) = result {
+            XCTFail("Expected Android-shaped .limedb import to succeed, got \(error)")
+        }
+        XCTAssertEqual(db.getRecordList("custom", "android_cj4", searchByCode: true, 0, 0).first?.word,
+                       "安卓")
+        await MainActor.run {
+            XCTAssertFalse(progress.isVisible, "Async DB import must dismiss progress after success")
+        }
+    }
+
     func testDatabaseImportFileAutoDetectImportsZippedLimedb() throws {
         let (url, db) = try makeDB()
         let zipped = try makeZippedCustomLimedb()
@@ -189,6 +281,80 @@ final class SetupImControllerTest: XCTestCase {
             XCTFail("Expected .limedb re-import to succeed, got \(error)")
         }
         XCTAssertEqual(customRecordSnapshot(db, prefix: prefix), before)
+    }
+
+    func testExportLimedbCopiesNonCustomTableRowsIntoArchiveCustomTable() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        db.addOrUpdateMappingRecord("custom", "aa", "測", 11)
+        db.addOrUpdateMappingRecord("custom", "ab", "試", 12)
+        db.renameTableName("custom", "dayi")
+        XCTAssertEqual(db.countRecords("dayi", nil, nil), 2)
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let exportURL = await controller.exportIMAsLimedb(tableNick: "dayi")
+        defer {
+            if let exportURL { try? FileManager.default.removeItem(at: exportURL) }
+        }
+        guard let exportURL else {
+            XCTFail("Expected .limedb export URL")
+            return
+        }
+        let exportedDBURL = try firstDatabaseInArchive(exportURL)
+        defer { try? FileManager.default.removeItem(at: exportedDBURL.deletingLastPathComponent()) }
+        let exportedDB = try LimeIME.LimeDB(path: exportedDBURL.path)
+        _ = exportedDB.openDBConnection(false)
+
+        XCTAssertEqual(try rawTableColumns(exportedDBURL, tableName: "custom"),
+                       ["_id", "code", "code3r", "word", "related", "score", "basescore"])
+        XCTAssertEqual(exportedDB.countRecords("custom", nil, nil), 2)
+        XCTAssertEqual(exportedDB.getRecordList("custom", nil, searchByCode: true, 0, 0)
+            .map { "\($0.code)|\($0.word)|\($0.score)" }
+            .sorted(),
+                       ["aa|測|11", "ab|試|12"])
+    }
+
+    func testExportLimedbDoesNotCreateEmojiTablesInArchive() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        db.addOrUpdateMappingRecord("custom", "emoji_free", "乾淨", 1)
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let exportURL = await controller.exportIMAsLimedb(tableNick: "custom")
+        defer {
+            if let exportURL { try? FileManager.default.removeItem(at: exportURL) }
+        }
+        guard let exportURL else {
+            XCTFail("Expected .limedb export URL")
+            return
+        }
+        let exportedDBURL = try firstDatabaseInArchive(exportURL)
+        defer { try? FileManager.default.removeItem(at: exportedDBURL.deletingLastPathComponent()) }
+
+        let tables = try rawTableNames(exportedDBURL)
+        XCTAssertFalse(tables.contains("emoji_data"))
+        XCTAssertFalse(tables.contains("emoji_fts"))
+        XCTAssertFalse(tables.contains("emoji_user"))
+    }
+
+    func testExportLimedbReturnsNilForEmptyTable() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertEqual(db.countRecords("custom", nil, nil), 0)
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let exportURL = await controller.exportIMAsLimedb(tableNick: "custom")
+
+        XCTAssertNil(exportURL, "Export should not create a .limedb with an empty custom table")
     }
 
     func testExportLimeRemoveAndReimportRestoresSameCustomEntries() async throws {

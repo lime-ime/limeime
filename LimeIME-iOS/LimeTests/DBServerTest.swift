@@ -569,8 +569,7 @@ final class DBServerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: targetURL) }
 
         let result = DBServer.shared.exportZippedDb(tableName: "invalid_table_name_xyz", targetDbFile: targetURL, progressCallback: nil)
-        // Either nil or a file — both acceptable
-        XCTAssertTrue(result == nil || result != nil, "exportZippedDb should handle gracefully for invalid tableName")
+        XCTAssertNil(result, "exportZippedDb should reject invalid tableName")
     }
 
     func testDBServerExportImDatabaseWithProgressCallback() {

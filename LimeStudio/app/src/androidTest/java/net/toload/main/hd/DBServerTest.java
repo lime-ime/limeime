@@ -541,6 +541,68 @@ public class DBServerTest {
     }
 
 
+    @Test(timeout = 15000)
+    public void testDBServerImportCj4FromCustomBackupWithDifferentSchema() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        DBServer dbServer = DBServer.getInstance(appContext);
+        if (!ensureDatabaseReady(dbServer)) {
+            fail("ERROR: Database is still on hold after waiting 10 seconds.");
+        }
+
+        File sourceDb = null;
+        File sourceZip = null;
+        SQLiteDatabase backupDb = null;
+        LimeDB limeDB = null;
+        try {
+            File cacheDir = appContext.getExternalCacheDir();
+            if (cacheDir == null) cacheDir = appContext.getCacheDir();
+            sourceDb = new File(cacheDir, "test_cj4_ios_shape_" + System.currentTimeMillis() + ".db");
+            sourceZip = new File(cacheDir, "test_cj4_ios_shape_" + System.currentTimeMillis() + ".limedb");
+            if (sourceDb.exists() && !sourceDb.delete()) {
+                Log.w(TAG, "Failed to delete existing source db: " + sourceDb.getAbsolutePath());
+            }
+            if (sourceZip.exists() && !sourceZip.delete()) {
+                Log.w(TAG, "Failed to delete existing source zip: " + sourceZip.getAbsolutePath());
+            }
+
+            backupDb = SQLiteDatabase.openOrCreateDatabase(sourceDb, null);
+            backupDb.execSQL("CREATE TABLE custom (_id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT, word TEXT, score INTEGER DEFAULT 0, basescore INTEGER DEFAULT 0, code3r TEXT)");
+            backupDb.execSQL("CREATE TABLE im (_id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT, title TEXT, desc TEXT, keyboard TEXT, disable BOOLEAN, selkey TEXT, endkey TEXT, spacestyle TEXT)");
+            backupDb.execSQL("CREATE TABLE related (_id INTEGER PRIMARY KEY AUTOINCREMENT, pword TEXT, cword TEXT, basescore INTEGER DEFAULT 0, score INTEGER DEFAULT 0)");
+            backupDb.execSQL("INSERT INTO custom (code, word, score, basescore, code3r) VALUES ('aa', '測', 11, 0, NULL)");
+            backupDb.execSQL("INSERT INTO custom (code, word, score, basescore, code3r) VALUES ('ab', '試', 12, 0, NULL)");
+            backupDb.execSQL("INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle) VALUES ('cj4', 'name', '哈哈倉頡', 'cj', 0, '234567890', ',.', '')");
+            backupDb.close();
+            backupDb = null;
+
+            LIMEUtilities.zip(sourceZip.getAbsolutePath(), sourceDb.getAbsolutePath(), true);
+            assertTrue("Source .limedb should be created", sourceZip.exists());
+
+            limeDB = new LimeDB(appContext);
+            assertTrue("LimeDB connection should open", limeDB.openDBConnection(false));
+            limeDB.clearTable(LIME.DB_TABLE_CJ4);
+
+            dbServer.importZippedDb(sourceZip, LIME.DB_TABLE_CJ4);
+
+            assertEquals("cj4 records should import from backup custom table",
+                    2, limeDB.countRecords(LIME.DB_TABLE_CJ4, null, null));
+            assertEquals("哈哈倉頡", dbServer.getImConfig(LIME.DB_TABLE_CJ4, LIME.IM_FULL_NAME));
+        } catch (Exception e) {
+            Log.e(TAG, "ERROR: testDBServerImportCj4FromCustomBackupWithDifferentSchema failed", e);
+            fail("ERROR: cj4 import should handle backup custom schema: " + e.getMessage());
+        } finally {
+            if (backupDb != null) backupDb.close();
+            if (limeDB != null) limeDB.close();
+            if (sourceDb != null && sourceDb.exists() && !sourceDb.delete()) {
+                Log.w(TAG, "Failed to delete source db: " + sourceDb.getAbsolutePath());
+            }
+            if (sourceZip != null && sourceZip.exists() && !sourceZip.delete()) {
+                Log.w(TAG, "Failed to delete source zip: " + sourceZip.getAbsolutePath());
+            }
+        }
+    }
+
+
 
     @Test
     public void testDBServerCompressFile() {

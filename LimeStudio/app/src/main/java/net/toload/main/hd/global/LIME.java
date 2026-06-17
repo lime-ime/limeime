@@ -107,7 +107,7 @@ public class LIME {
 	public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
 	public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
-	public static final String DATABASE_CLOUD_IM_CJ4 = DATABASE_CLOUD_URL_BASED + "cj4.limedb";
+	public static final String DATABASE_CLOUD_IM_CJ4 = DATABASE_CLOUD_URL_BASED + "hahacj.limedb";
 	public static final String DATABASE_CLOUD_IM_CJ4_KEYBOARD = "cj";
 	public static final String DATABASE_CLOUD_IM_CJ_BIG5 = DATABASE_CLOUD_URL_BASED + "cjbig5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ = DATABASE_CLOUD_URL_BASED + "cj.zip";
