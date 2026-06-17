@@ -113,6 +113,13 @@
         <div class="a"><p>先確認鍵盤已啟用、至少安裝一套輸入法且目前為中文模式。詳細排查見「<a href="troubleshooting.html">疑難排解</a>」。</p></div>
       </details>
       <details open>
+        <summary><span class="q">Q</span>為什麼按刪除鍵時，有時會刪掉已送出的文字？</summary>
+        <div class="a">
+          <p>刪除鍵會依目前是否還有組字碼而改變行為。有組字碼時，刪除鍵會先刪除最後一碼組字碼，例如注音輸入碼 <code>su3</code> 會退回 <code>su</code>。沒有組字碼時，刪除鍵就是一般文字刪除鍵，會刪除游標前方已送出的文字。</p>
+          <p><strong>注意：</strong>候選列左側的 X 用來取消目前組字或關閉候選列，作用比較像電腦輸入法的 Esc。</p>
+        </div>
+      </details>
+      <details open>
         <summary><span class="q">Q</span>我想回報問題或貢獻，該去哪裡？</summary>
         <div class="a"><p>歡迎到 <a href="https://github.com/lime-ime/limeime/issues" target="_blank" rel="noopener">GitHub Issues</a> 回報問題或提出建議，也歡迎與開發團隊聯絡參與開發。</p></div>
       </details>
