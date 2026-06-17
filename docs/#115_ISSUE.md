@@ -139,7 +139,7 @@ Results from that comment:
 
 Interpretation:
 
-- The 6.1.20 stale-snapshot invalidation fix did not fully resolve the first-mounted non-`注音` and second-IM initial keyboard paths. At that point, Problems 1 and 2 still required a follow-up source fix; PR #118 later delivered that follow-up and closed #115 from source.
+- The 6.1.20 stale-snapshot invalidation fix did not fully resolve the first-mounted non-`注音` and second-IM initial keyboard paths. At that point, Problems 1 and 2 still required a follow-up source fix; PR #118 later delivered that follow-up. GitHub auto-closed #115 from the PR body, but the issue was reopened for the 6.1.21 reporter retest before the final close after reporter confirmation.
 - Problem 3 is not an active watch after closure because the reporter's latest relevant test says the default keyboard looked normal; reopen only if the reporter reports recurrence or provides new evidence.
 - The improved recovery path is useful evidence: the wrong state remains within the Chinese/IM keyboard switching path and can be corrected by an in-session `EN` -> `中` toggle without restarting the target app.
 
@@ -154,7 +154,7 @@ The source fix targets the remaining Problems 1-2 evidence from the 6.1.20 retes
 - reset startup config version after generic `im.disable` updates so enable/disable changes force a fresh snapshot;
 - add regression coverage for refresh-before-draw ordering and IM-disable invalidation.
 
-Android APK `LIMEHD2026-6.1.21.apk` / versionName `6.1.21` was published by commit `4f4e97069b00005319352f6f5829f9f1602982e5` after PR #118. The verified APK Contents blob SHA is `a8838c47b4186956536cd4c8aa4e3931d579d1da`, size 14055188 bytes. Because this APK contains the PR #118 follow-up fix, #115 was reopened for reporter confirmation and `limeimetw` posted a scoped 6.1.21 retest request at https://github.com/lime-ime/limeime/issues/115#issuecomment-4726813753. Reporter `gontera` confirmed in https://github.com/lime-ime/limeime/issues/115#issuecomment-4732316225 that current tests are normal, then closed the issue. Problem 3 is not actively watched after closure unless it recurs.
+Android APK `LIMEHD2026-6.1.21.apk` / versionName `6.1.21` was published by commit `4f4e97069b00005319352f6f5829f9f1602982e5` after PR #118. The verified APK Contents blob SHA is `a8838c47b4186956536cd4c8aa4e3931d579d1da`, size 14055188 bytes. Because this APK contains the PR #118 follow-up fix, #115 was reopened for reporter confirmation and `limeimetw` posted a scoped 6.1.21 retest request at https://github.com/lime-ime/limeime/issues/115#issuecomment-4726813753. Reporter `gontera` confirmed in https://github.com/lime-ime/limeime/issues/115#issuecomment-4732316225 that current tests are normal, and the issue was closed afterward. Problem 3 is not actively watched after closure unless it recurs.
 
 ## Reporter verification result
 
