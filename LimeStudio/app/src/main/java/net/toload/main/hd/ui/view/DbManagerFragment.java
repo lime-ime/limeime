@@ -116,6 +116,10 @@ public class DbManagerFragment extends Fragment {
     // Backup
     // -----------------------------------------------------------------------
 
+    private String defaultBackupFileName() {
+        return "lime_backup_" + (System.currentTimeMillis() / 1000) + ".zip";
+    }
+
     public void backupLocalDrive() {
         if (backupLauncher == null) {
             showToastMessage(getString(R.string.l3_initial_backup_error), Toast.LENGTH_SHORT);
@@ -125,7 +129,7 @@ public class DbManagerFragment extends Fragment {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/zip");
-            intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+            intent.putExtra(Intent.EXTRA_TITLE, defaultBackupFileName());
 
             PackageManager pm = requireActivity().getPackageManager();
             List<ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
@@ -145,7 +149,7 @@ public class DbManagerFragment extends Fragment {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/zip");
-            intent.putExtra(Intent.EXTRA_TITLE, "limeBackup.zip");
+            intent.putExtra(Intent.EXTRA_TITLE, defaultBackupFileName());
 
             PackageManager pm = requireActivity().getPackageManager();
             List<ResolveInfo> activities = pm.queryIntentActivities(intent, 0);
@@ -170,7 +174,7 @@ public class DbManagerFragment extends Fragment {
         new Thread(() -> {
             try {
                 Uri backupUri;
-                String fileName = "limeBackup.zip";
+                String fileName = defaultBackupFileName();
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
@@ -195,7 +199,7 @@ public class DbManagerFragment extends Fragment {
                     File backupFile = new File(downloadsDir, fileName);
                     int counter = 1;
                     while (backupFile.exists()) {
-                        backupFile = new File(downloadsDir, "limeBackup(" + counter + ").zip");
+                        backupFile = new File(downloadsDir, fileName.replace(".zip", "(" + counter + ").zip"));
                         counter++;
                     }
                     backupUri = FileProvider.getUriForFile(act, pkgName + ".fileprovider", backupFile);
