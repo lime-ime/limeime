@@ -444,23 +444,7 @@ final class KeyboardViewController: UIInputViewController {
         mCompletionOn = false
         clearShiftState()
 
-        // Map keyboard type → mEnglishOnly + mPredictionOn (spec §2 table)
-        switch textDocumentProxy.keyboardType ?? .default {
-        case .numberPad, .decimalPad, .asciiCapableNumberPad:
-            mEnglishOnly = true; mPredictionOn = true
-        case .phonePad:
-            mEnglishOnly = true; mPredictionOn = false
-        case .emailAddress:
-            mEnglishOnly = true; mPredictionOn = false
-        default:
-            // Restore persisted language mode if enabled (spec §15)
-            if mPersistentLanguageMode {
-                mEnglishOnly = sharedDefaults?.bool(forKey: "persisted_english_mode") ?? false
-            } else {
-                mEnglishOnly = false
-            }
-            mPredictionOn = true
-        }
+        updateInputModeForCurrentField()
 
         // Restore last-used LIME IM (mirrors Android mLIMEPref.getActiveIM(), key "keyboard_list")
         if !mEnglishOnly {
@@ -481,6 +465,57 @@ final class KeyboardViewController: UIInputViewController {
             }
         }
 
+        applyLayoutForCurrentInputField()
+
+        clearComposing(force: false)
+        tempEnglishWord = ""
+
+    }
+
+    private func updateInputModeForCurrentField() {
+        // Map keyboard type → mEnglishOnly + mPredictionOn (spec §2 table)
+        switch textDocumentProxy.keyboardType ?? .default {
+        case .numberPad, .decimalPad, .asciiCapableNumberPad:
+            mEnglishOnly = true; mPredictionOn = true
+        case .phonePad:
+            mEnglishOnly = true; mPredictionOn = false
+        case .emailAddress:
+            mEnglishOnly = true; mPredictionOn = false
+        default:
+            // Restore persisted language mode if enabled (spec §15)
+            if mPersistentLanguageMode {
+                mEnglishOnly = sharedDefaults?.bool(forKey: "persisted_english_mode") ?? false
+            } else {
+                mEnglishOnly = false
+            }
+            mPredictionOn = true
+        }
+    }
+
+    static func layoutIdForCurrentInputField(keyboardType: UIKeyboardType,
+                                             isEnglishOnly: Bool,
+                                             hasActivatedIMs: Bool,
+                                             englishLayout: String,
+                                             resolvedActiveLayoutId: String) -> String {
+        if keyboardType == .phonePad {
+            return "phone_number"
+        }
+        if keyboardType == .numberPad
+            || keyboardType == .decimalPad
+            || keyboardType == .asciiCapableNumberPad {
+            // Mirror Android's MODE_TEXT + isSymbol path: route number /
+            // decimal fields to the symbols keyboard (digits + punctuation),
+            // not the English-alphabet layout. `.phonePad` already has its
+            // own restricted T9-style layout above.
+            return "symbols1"
+        }
+        if isEnglishOnly || !hasActivatedIMs {
+            return englishLayout
+        }
+        return resolvedActiveLayoutId
+    }
+
+    private func applyLayoutForCurrentInputField() {
         // Match Apple's keyboard: adapt the Enter key icon/label to the host's
         // returnKeyType (e.g. magnifier for URL/search fields, "Go" / "Send" labels).
         // KeyboardView.didSet skips the rebuild if rowViews are empty (initial load)
@@ -488,36 +523,24 @@ final class KeyboardViewController: UIInputViewController {
         // already-updated returnKeyType, so there is no double-build on field focus.
         keyboardView?.returnKeyType = textDocumentProxy.returnKeyType ?? .default
 
-        let kbType        = textDocumentProxy.keyboardType ?? .default
-        let isPhonePad    = kbType == .phonePad
-        let isNumericPad  = kbType == .numberPad
-                         || kbType == .decimalPad
-                         || kbType == .asciiCapableNumberPad
+        let kbType = textDocumentProxy.keyboardType ?? .default
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
         let englishLayout = numberRowInEnglish ? "lime_english_number" : "lime_english"
-        let layoutName: String
-        if isPhonePad {
-            layoutName = "phone_number"
-        } else if isNumericPad {
-            // Mirror Android's MODE_TEXT + isSymbol path: route number /
-            // decimal fields to the symbols keyboard (digits + punctuation),
-            // not the English-alphabet layout. `.phonePad` already has its
-            // own restricted T9-style layout above.
-            layoutName = "symbols1"
-        } else if mEnglishOnly || activatedIMs.isEmpty {
-            layoutName = englishLayout
-        } else {
-            layoutName = resolvedLayoutId(for: activeIM)
-        }
+        let resolvedActiveLayout = (!mEnglishOnly && !activatedIMs.isEmpty)
+            ? resolvedLayoutId(for: activeIM)
+            : ""
+        let layoutName = Self.layoutIdForCurrentInputField(
+            keyboardType: kbType,
+            isEnglishOnly: mEnglishOnly,
+            hasActivatedIMs: !activatedIMs.isEmpty,
+            englishLayout: englishLayout,
+            resolvedActiveLayoutId: resolvedActiveLayout)
         if let newLayout = LayoutLoader.load(layoutName) ?? LayoutLoader.load(englishLayout),
            newLayout.id != currentLayout.id {
             currentLayout = newLayout
             keyboardView?.setLayout(currentLayout)
             applyHeight()
         }
-
-        clearComposing(force: false)
-        tempEnglishWord = ""
 
         // Record what we just adapted to so textDidChange's field-change
         // detector doesn't re-trigger on the next keystroke.
@@ -598,6 +621,15 @@ final class KeyboardViewController: UIInputViewController {
             self.refreshImKeys()
             self.applyFeedbackSettings()
             self.preloadEmojiCategoryPages()
+
+            // setupDatabase() runs asynchronously and can complete after viewWillAppear()
+            // already chose a layout from stale/empty activatedIMs. Re-read the current
+            // field mode and re-apply the visible layout from the freshly resolved IM
+            // list so first activation after Settings/cloud install does not split
+            // English runtime state from a Chinese IM layout (#121).
+            self.updateInputModeForCurrentField()
+            self.applyLayoutForCurrentInputField()
+            self.updateGlobeAndDismissBindings()
         }
     }
 
