@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/119
 - Reporter/source: `limeimetw` maintainer-created tracking issue
 - Classification: `bug`, `Type-Defect`, `Usability`
-- State at triage: open, not yet assigned when inspected
+- Current state: open and assigned to `jrywu`
 - Public acknowledgement: none needed because this is maintainer-created internal tracking
 
 ## Problem statement
@@ -46,7 +46,7 @@ There is no explicit `scj` or `pinyin` mapping in that block. They currently rea
 
 - `LimeIME-iOS/LimeSettings/Views/IMInstallView.swift#handleFileImport`
 - `LimeIME-iOS/LimeSettings/Controllers/SetupImController.swift#importTxtFile`
-- `LimeIME-iOS/Shared/Database/DBServer.swift#importTxtTable`
+- `LimeIME-iOS/Shared/Database/DBServer.swift#importTxtFile`
 - `LimeIME-iOS/Shared/Database/LimeDB.swift#importTxtFile`
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#resolvedLayoutId`
 
