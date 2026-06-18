@@ -2598,6 +2598,47 @@ final class LimeDBTest: XCTestCase {
         XCTAssertFalse(configs.contains { $0.tableNick == "emoji" })
     }
 
+    func testDefaultKeyboardCodeForImportedIMs() throws {
+        let db = try makeLimeDB()
+        let expected = [
+            "phonetic": "phonetic",
+            "dayi": "dayisym",
+            "cj": "cj",
+            "cj4": "cj",
+            "cj5": "cj",
+            "ecj": "cjnum",
+            "scj": "cjnum",
+            "array": "arraynum",
+            "array10": "phonenum",
+            "wb": "wb",
+            "hs": "hs",
+            "ez": "ez",
+            "pinyin": "limenum",
+            "custom": "lime"
+        ]
+
+        for (table, keyboard) in expected {
+            XCTAssertEqual(db.defaultKeyboardCodeForImportedIM(table), keyboard,
+                           "default keyboard for \(table)")
+            XCTAssertNotNil(db.getKeyboardConfig(keyboard),
+                            "keyboard config should resolve for \(keyboard)")
+        }
+    }
+
+    func testImportTxtFileAssignsDefaultKeyboardRows() throws {
+        let db = try makeLimeDB()
+        let fixture = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        try "%cname 測試輸入法\na\t一\n".write(to: fixture, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: fixture) }
+
+        for (table, keyboard) in [("scj", "cjnum"), ("ecj", "cjnum"), ("pinyin", "limenum"), ("array", "arraynum")] {
+            try db.importTxtFile(at: fixture.path, tableName: table)
+            XCTAssertEqual(db.getImConfigList(table, "keyboard").first?.keyboard, keyboard,
+                           "text import should assign \(keyboard) to \(table)")
+        }
+    }
+
     // MARK: - 36. DB 104 integrated seed / upgrade / restore paths
 
     func testDB103FreshBundledSeedRefreshesEmojiData() throws {
