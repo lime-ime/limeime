@@ -924,6 +924,65 @@ final class KeyboardViewControllerTest: XCTestCase {
                 recordType: Mapping.RecordType.emoji)
     }
 
+    func testLayoutResolverKeepsEnglishRuntimeOnEnglishLayoutAfterIMRefresh() {
+        let layout = KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .default,
+            isEnglishOnly: true,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english_number",
+            resolvedActiveLayoutId: "lime_cj")
+
+        XCTAssertEqual(layout, "lime_english_number")
+    }
+
+    func testLayoutResolverUsesActiveIMOnlyForChineseRuntimeWithActivatedIMs() {
+        let layout = KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .default,
+            isEnglishOnly: false,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj")
+
+        XCTAssertEqual(layout, "lime_cj")
+    }
+
+    func testLayoutResolverUsesEnglishLayoutWhenActivatedIMsAreEmpty() {
+        let layout = KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .default,
+            isEnglishOnly: false,
+            hasActivatedIMs: false,
+            englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj")
+
+        XCTAssertEqual(layout, "lime_english")
+    }
+
+    func testLayoutResolverPreservesNumericAndPhoneFieldOverrides() {
+        XCTAssertEqual(KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .phonePad,
+            isEnglishOnly: false,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj"), "phone_number")
+        XCTAssertEqual(KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .numberPad,
+            isEnglishOnly: false,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj"), "symbols1")
+    }
+
+    func testDatabaseSetupReconcilesInputModeAndLayoutAfterAsyncIMRefresh() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("private func updateInputModeForCurrentField()"))
+        XCTAssertTrue(source.contains("private func applyLayoutForCurrentInputField()"))
+        XCTAssertTrue(source.contains("self.updateInputModeForCurrentField()\n            self.applyLayoutForCurrentInputField()"),
+                      "setupDatabase should re-apply current input mode/layout after activatedIMs refresh")
+        XCTAssertTrue(source.contains("first activation after Settings/cloud install"))
+    }
+
     func testLimeToastStateShowsTrimmedNonEmptyMessage() {
         var state = LimeToastState()
 
