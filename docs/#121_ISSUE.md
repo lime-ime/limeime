@@ -26,13 +26,16 @@ This is separate from #119. #119 tracks text-import `.lime` / `.cin` default-key
 - `LimeIME-iOS/LimeSettings/Controllers/IMStoreView.swift`
 - `LimeIME-iOS/Shared/Database/DBServer.swift`
 - `LimeIME-iOS/Shared/Database/LimeDB.swift`
+- `LimeIME-iOS/Shared/Preferences/LIMEPreferenceManager.swift`
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
 
-`IMDownloadManager.importDownloaded(...)` imports the downloaded database, calls `server.registerIM(imName:tableName:label:keyboardId:)`, then calls `LIMEPreferenceManager.shared.syncIMActivatedState(dbServer: server)` so Settings records the newly available/activated IM for the keyboard extension.
+`IMStoreView`'s private `importDownloaded(...)` helper imports the downloaded database, calls `server.registerIM(imName:tableName:label:keyboardId:)`, then calls `LIMEPreferenceManager.shared.syncIMActivatedState(dbServer: server)` so Settings records enabled IM rows for the keyboard extension.
 
 `LimeDB.registerIM(...)` returns immediately if any `im` rows already exist for the IM code. For cloud-installed IMs this preserves rows merged from the downloaded DB instead of synthesizing a fallback registration row.
 
-`DBServer.prepareKeyboardRuntimeDatabase(...)` builds the keyboard runtime context by reading `getAllImConfigs()`, applying `keyboard_state` from the shared app-group defaults when present, and choosing the first activated IM as the initial runtime table.
+`LIMEPreferenceManager.syncIMActivatedState(...)` rebuilds `keyboard_state` from `getAllImConfigs()` entries whose `enabled` flag is true. Therefore the cloud-install path only makes the new IM part of the runtime activated list if the imported/registered `im` row is enabled.
+
+`DBServer.prepareKeyboardRuntimeDatabase(...)` builds the keyboard runtime context by reading `getAllImConfigs()`, applying `keyboard_state` from the shared app-group defaults when present, and choosing an initial runtime table from `activated.first?.tableNick`, then the first enabled IM, then a `"phonetic"` fallback.
 
 ### Keyboard runtime startup path
 
@@ -42,12 +45,14 @@ This is separate from #119. #119 tracks text-import `.lime` / `.cin` default-key
 - `activatedIMs` starts empty.
 - `mEnglishOnly` starts false, then `initOnStartInput()` maps the host field type and remembered language preference to the runtime mode.
 
-`initOnStartInput()` chooses the visible layout from `mEnglishOnly`, `activatedIMs`, and `activeIM`:
+`initOnStartInput()` chooses the visible layout from the host field type, `mEnglishOnly`, `activatedIMs`, and `activeIM`:
 
-- English-only mode or no activated IMs loads `lime_english` / `lime_english_number`.
-- Chinese mode loads `resolvedLayoutId(for: activeIM)`.
+- Phone fields load `phone_number`.
+- Number, decimal, and ASCII-capable number fields load `symbols1`.
+- Other English-only paths, such as remembered English mode or email-style fields, load `lime_english` / `lime_english_number`.
+- Chinese mode with activated IMs loads `resolvedLayoutId(for: activeIM)`.
 
-`setupDatabase(...)` asynchronously assigns `searchServer`, `activatedIMs`, and either the saved `keyboard_list` IM or the resolved initial IM. If a saved IM is found and `mEnglishOnly` is false, it refreshes the visible layout to that IM's layout. The callback does not currently make the opposite correction: when the runtime was English because the host field or persisted language mode says English, it should ensure the visible layout is English after the cloud-installed IM state is restored.
+`setupDatabase(...)` asynchronously assigns `searchServer`, `activatedIMs`, and either the saved `keyboard_list` IM or the resolved initial IM. If a saved IM is found, `mEnglishOnly` is false, the saved IM layout can be loaded, and that layout differs from the current one, it refreshes the visible layout to that IM's layout. The source does not show a single final layout reconciliation helper that is applied after the async runtime context is restored across all host-field and language-mode cases.
 
 ## Likely root cause
 
@@ -56,7 +61,7 @@ The cloud install path correctly registers/imports the new IM and syncs activate
 1. Settings writing the newly installed IM / activated-state defaults, and
 2. the keyboard extension asynchronously rebuilding `activatedIMs`, `activeIM`, and the visible layout.
 
-`setupDatabase(...)` can refresh the visible layout to the saved Chinese IM when `mEnglishOnly` is false, but it does not explicitly reconcile the final visible layout with `mEnglishOnly` after the async runtime context is applied. That can leave the keyboard showing a Chinese IM layout even when the runtime input mode is English.
+`setupDatabase(...)` gates its saved-IM layout refresh on `!mEnglishOnly`, so this triage should not assume that callback directly installs a Chinese layout while English mode is true. The safer suspected mechanism is a first-start sequencing gap among `initOnStartInput()`, the async database setup callback, field-type adaptation, and later language/field-change hooks, where the final visible layout is not centrally derived from the final field type plus `mEnglishOnly`/active-IM state. That can leave the keyboard showing a Chinese IM layout even when the runtime input mode is English.
 
 This is a source-backed hypothesis from code inspection. It should be validated with an iOS simulator/device reproduction because the report concerns first activation timing after a cloud install.
 
@@ -70,7 +75,7 @@ No Android bug fix or APK retest should be inferred from #121 unless a separate 
 
 ### iOS
 
-Confirmed plausible by code inspection. The issue sits at the boundary between Settings-side cloud IM installation/registration and keyboard-extension runtime startup. A warm or first-launched extension can draw from default/incomplete in-memory state, then asynchronously receive the resolved activated IM list and active IM. The final layout/mode reconciliation is fragile because it only refreshes the saved-IM Chinese layout path and does not centrally reapply the layout from the final `mEnglishOnly` value.
+Confirmed plausible by code inspection. The issue sits at the boundary between Settings-side cloud IM installation/registration and keyboard-extension runtime startup. A warm or first-launched extension can draw from default/incomplete in-memory state, then asynchronously receive the resolved activated IM list and active IM. The final layout/mode reconciliation is fragile because startup, async DB setup, host-field routing, and language switching do not appear to share one final layout resolver derived from field type plus the final `mEnglishOnly` value.
 
 ## Existing test coverage assessment
 
@@ -100,8 +105,10 @@ The specific risk is not that the IM is missing from the installed list. It is t
    - `keyboard_state`
    - resolved `activatedIMs`
    - current visible layout ID before and after `setupDatabase(...)`
-3. Refactor the final layout selection into a small helper shared by `initOnStartInput()`, `setupDatabase(...)`, and `switchChiEng(...)`, so the visible layout is always derived from the final runtime mode:
-   - if `mEnglishOnly` is true, load the English layout;
+3. Refactor the final layout selection into a small helper shared by `initOnStartInput()`, `setupDatabase(...)`, field-change handling, and `switchChiEng(...)`, so the visible layout is always derived from the final field type and runtime mode:
+   - if the host field is phone, load `phone_number`;
+   - else if the host field is number/decimal/ascii-capable number, load `symbols1`;
+   - else if `mEnglishOnly` is true, load the English layout;
    - else if no activated IMs exist, load the English layout;
    - else load `resolvedLayoutId(for: activeIM)`.
 4. After `setupDatabase(...)` applies `activatedIMs` / `activeIM`, call that helper regardless of whether the saved IM path ran. This should prevent an async database callback from leaving an English runtime with a Chinese visible layout.
