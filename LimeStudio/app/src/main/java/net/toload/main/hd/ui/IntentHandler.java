@@ -131,7 +131,7 @@ public class IntentHandler {
         }
         
         // 3. Check if type matches extension
-        if (!isFileTypeValid(type, extension)) {
+        if (!isSupportedImportExtension(extension)) {
             String errorMessage = activity.getResources().getString(R.string.error_file_format);
             Log.w(TAG, errorMessage);
             showToast(errorMessage);
@@ -167,11 +167,11 @@ public class IntentHandler {
         InputStreamToFile(input, importFilepath);
         
         // Handle based on file type
-        if ("text/plain".equals(type) && ("lime".equals(extension) || "cin".equals(extension))) {
+        if ("lime".equals(extension) || "cin".equals(extension)) {
             // 4. For text/plain with .lime or .cin, call handleImportTxt
             handleImportTxt(importFilepath);
-        } else if ("application/zip".equals(type) && "limedb".equals(extension)) {
-            // 5. For .limedb file, handle import
+        } else if ("limedb".equals(extension) || "zip".equals(extension)) {
+            // 5. For zipped .limedb / legacy .zip file, handle import
             String tableName = getFileNameWithoutExtension(fileName);
             handleLimedbImport(fileToImport, tableName);
         }
@@ -323,25 +323,8 @@ public class IntentHandler {
         return fileName;
     }
     
-    /**
-     * Checks if file type matches expected extension.
-     * 
-     * @param mimeType The MIME type
-     * @param extension The file extension
-     * @return true if type matches extension
-     */
-    private boolean isFileTypeValid(String mimeType, String extension) {
-        if (mimeType == null || extension == null) {
-            return false;
-        }
-        
-        if ("text/plain".equals(mimeType)) {
-            return "lime".equals(extension) || "cin".equals(extension);
-        } else if ("application/zip".equals(mimeType)) {
-            return "limedb".equals(extension);
-        }
-        
-        return false;
+    private boolean isSupportedImportExtension(String extension) {
+        return "lime".equals(extension) || "cin".equals(extension) || "limedb".equals(extension) || "zip".equals(extension);
     }
     
     /**

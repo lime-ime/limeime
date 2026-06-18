@@ -81,7 +81,7 @@ final class SetupImController: BaseController {
         return result
     }
 
-    // MARK: - Import binary DB file (.db / .limedb)
+    // MARK: - Import zipped DB file (.limedb / .zip)
 
     func importDBFile(url: URL, tableName: String, view: (any SetupImView)?) {
         progress.show(status: "匯入中…")

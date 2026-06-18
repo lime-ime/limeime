@@ -260,7 +260,7 @@ struct IMInstallView: View {
                 }.value
                 statusMessage = "關聯字庫匯入完成"
                 manageRelatedController.invalidate()
-            } else if ext == "db" || ext == "limedb" {
+            } else if ext == "limedb" || ext == "zip" {
                 let restoreLearning = UserDefaults.standard.object(
                     forKey: "restore_on_import_\(tableName)") as? Bool ?? true
                 let r = await setupController.importDBFile(url: importURL, tableName: tableName,

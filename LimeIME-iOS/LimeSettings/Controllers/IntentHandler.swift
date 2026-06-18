@@ -1,7 +1,7 @@
-// IntentHandler.swift
+﻿// IntentHandler.swift
 // LimeIME-iOS
 //
-// Handles incoming files shared from Files / other apps (.lime, .cin, .limedb).
+// Handles incoming files shared from Files / other apps (.lime, .cin, .limedb, .zip).
 // Mirrors Android IntentHandler. Wire into AppDelegate / LimeSettingsApp.onOpenURL.
 // Spec §3.3.
 
@@ -34,7 +34,7 @@ final class IntentHandler {
         let tableName = DBServer.shared.isValidTableName(rawName) ? rawName : "custom"
 
         switch ext {
-        case "limedb", "db":
+        case "limedb", "zip":
             let result = await setupController.importDBFile(url: url, tableName: tableName)
             if case .failure(let error) = result {
                 view?.onError(error.localizedDescription)
