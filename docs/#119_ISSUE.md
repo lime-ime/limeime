@@ -14,10 +14,10 @@
 
 Text import of `.lime` / `.cin` tables can leave imported IMs with missing or unintended keyboard layouts.
 
-The issue affects Android and iOS differently:
+Before the source fix, the issue affected Android and iOS differently:
 
-- Android text import already writes a `keyboard` config row after import, but `scj` and `pinyin` currently rely on generic fallback instead of an explicit intended mapping.
-- iOS text import stores table data and metadata but does not assign keyboard rows for known imported IMs, so the keyboard can fall back to `lime_<tableNick>` layouts that are missing or not the intended parity layout.
+- Android text import already wrote a `keyboard` config row after import, but `scj` and `pinyin` relied on generic fallback instead of an explicit intended mapping.
+- iOS text import stored table data and metadata but did not assign keyboard rows for known imported IMs, so the keyboard could fall back to `lime_<tableNick>` layouts that were missing or not the intended parity layout.
 
 ## Source evidence inspected
 
@@ -31,7 +31,7 @@ In `LimeDB.importTxtTable()`, after metadata rows are written, Android chooses a
 
 Relevant inspected block: `LimeDB.java` around lines 4248-4304.
 
-Observed mappings in the current Android text-import block:
+Observed mappings in the pre-fix Android text-import block:
 
 - `phonetic` chooses a keyboard based on `phonetic_keyboard_type` and `number_row_in_english`.
 - `dayi` maps to `dayisym`.
@@ -42,7 +42,7 @@ Observed mappings in the current Android text-import block:
 - `hs` maps to `hs`.
 - When no direct keyboard row exists, fallback is `limenum` if `number_row_in_english` is true, otherwise `lime`.
 
-There is no explicit `scj` or `pinyin` mapping in that block. They currently reach the generic fallback path when no keyboard row is found.
+Before the source fix, there was no explicit `scj` or `pinyin` mapping in that block. They reached the generic fallback path when no keyboard row was found.
 
 ### iOS text import path
 
@@ -54,29 +54,29 @@ There is no explicit `scj` or `pinyin` mapping in that block. They currently rea
 
 `IMInstallView.handleFileImport()` calls `setupController.importTxtFile(url:tableName:restoreLearning:)` for text imports. `SetupImController.importTxtFile()` delegates to `DBServer.importTxtFile`, which delegates to `LimeDB.importTxtFile()`.
 
-In `LimeDB.importTxtFile()` around lines 3355-3366, iOS stores source/version/name/amount/import and optional metadata such as `selkey`, `endkey`, `limeendkey`, `spacestyle`, `imkeys`, and `imkeynames`. It does not call `setIMConfigKeyboard(...)` or `registerIM(...)` for known IMs after text import.
+Before the source fix, `LimeDB.importTxtFile()` around lines 3355-3366 stored source/version/name/amount/import and optional metadata such as `selkey`, `endkey`, `limeendkey`, `spacestyle`, `imkeys`, and `imkeynames`, but did not call `setIMConfigKeyboard(...)` or `registerIM(...)` for known IMs after text import.
 
 `getAllImConfigs()` reads the keyboard from the `im` row whose `title == "keyboard"`, falling back to the seed row's keyboard column. If text import never writes either a seed row or a keyboard row for the imported IM, the keyboard ID is empty or unavailable.
 
 At runtime, `KeyboardViewController.resolvedLayoutId(for:)` returns `lime_<tableNick>` when no activated IM config is available or when the keyboard ID cannot resolve to a loadable layout or keyboard-table row. That fallback is incorrect for some imported IMs.
 
-## Likely root cause
+## Root cause before source fix
 
-The Android and iOS text-import flows do not share a complete, explicit IM-to-keyboard mapping after text import.
+The Android and iOS text-import flows did not share a complete, explicit IM-to-keyboard mapping after text import.
 
-Android has a mostly complete post-import keyboard assignment block, but `scj` and `pinyin` are only covered indirectly by the generic fallback. That makes the intended behavior fragile and unclear.
+Android had a mostly complete post-import keyboard assignment block, but `scj` and `pinyin` were only covered indirectly by the generic fallback. That made the intended behavior fragile and unclear.
 
-iOS does not run an equivalent post-import keyboard assignment step for known IMs. It imports the table and metadata but leaves layout selection to runtime fallback, which can produce missing layouts such as `lime_cj4`, `lime_cj5`, `lime_ecj`, `lime_scj`, or `lime_pinyin`, or unintended layouts such as `lime_dayi` / `lime_array` where Android uses `lime_dayi_sym` / `lime_array_number`.
+iOS did not run an equivalent post-import keyboard assignment step for known IMs. It imported the table and metadata but left layout selection to runtime fallback, which could produce missing layouts such as `lime_cj4`, `lime_cj5`, `lime_ecj`, `lime_scj`, or `lime_pinyin`, or unintended layouts such as `lime_dayi` / `lime_array` where Android used `lime_dayi_sym` / `lime_array_number`.
 
 ## Platform impact analysis
 
 ### Android
 
-Confirmed by code inspection. Android text import writes a keyboard row, but `scj` and `pinyin` should be audited and made explicit if the intended mapping is `limenum` / `lime_number` or another pinyin-specific mapping. The current fallback usually avoids a missing-layout crash when `number_row_in_english` is enabled, but it is not self-documenting and can diverge from cloud/database import expectations.
+Pre-fix behavior was confirmed by code inspection. Android text import wrote a keyboard row, but `scj` and `pinyin` needed explicit mappings. The source fix now maps `scj` to `cjnum` and `pinyin` to `limenum`; remaining Android risk is build/device verification after the next APK that contains the fix.
 
 ### iOS
 
-Confirmed by code inspection. iOS text import can leave known imported IMs without a keyboard config row, and runtime fallback can resolve to layouts that are absent or inconsistent with Android/cloud import behavior. This is the higher-risk platform because text import currently lacks the Android-style post-import assignment step.
+Pre-fix behavior was confirmed by code inspection. iOS text import could leave known imported IMs without a keyboard config row, and runtime fallback could resolve to layouts that were absent or inconsistent with Android/cloud import behavior. The source fix now writes the intended keyboard row after text import; remaining iOS risk is simulator/device verification after the next TestFlight/App Store build that contains the fix.
 
 ## Existing test coverage assessment
 
@@ -86,13 +86,13 @@ There are Android instrumentation tests for IM management and database/import be
 
 ### iOS
 
-Existing iOS tests cover `.lime` / `.cin` parsing, metadata import, database import, and IM config reading in several areas, including `LimeDBTest.swift`, `SetupImControllerTest.swift`, and `DBServerTest.swift`. Current focused coverage appears to emphasize `custom` text imports and cloud `.zip` import behavior. The reported known-IM text-import keyboard assignment matrix is not directly gated.
+Existing iOS tests covered `.lime` / `.cin` parsing, metadata import, database import, and IM config reading in several areas, including `LimeDBTest.swift`, `SetupImControllerTest.swift`, and `DBServerTest.swift`. The source fix adds focused known-IM text-import keyboard assignment coverage.
 
 ## Code fragility assessment
 
-The iOS path is fragile because `importTxtFile()` mutates metadata rows but does not centralize keyboard assignment, while runtime layout resolution contains fallback and compatibility redirects in `KeyboardViewController`. This spreads the behavior across Settings import, database metadata, IM list construction, and keyboard runtime.
+Before the source fix, the iOS path was fragile because `importTxtFile()` mutated metadata rows but did not centralize keyboard assignment, while runtime layout resolution contained fallback and compatibility redirects in `KeyboardViewController`. This spread the behavior across Settings import, database metadata, IM list construction, and keyboard runtime.
 
-The Android path is less fragile because one post-import block already assigns keyboards, but missing explicit cases can still cause behavior drift or make future mapping changes hard to audit.
+Before the source fix, the Android path was less fragile because one post-import block already assigned keyboards, but missing explicit cases could still cause behavior drift or make future mapping changes hard to audit.
 
 ## Source fix implemented on `master`
 
@@ -117,26 +117,28 @@ iOS now has `defaultKeyboardCodeForImportedIM(_:)` and `applyDefaultKeyboardForI
 
 ### Android
 
-Add or extend import tests to cover known IM text import and assert the assigned keyboard code after import, especially:
+The merged source fix adds or extends import tests that cover known IM text-import default keyboard assignment, including:
 
 - `scj`
 - `pinyin`
 - `dayi`
 - `array`
 - `array10`
-- `cj4` / `cj5` / `ecj`
+- `cj`, `cj4`, `cj5`, and `ecj`
+
+Remaining Android verification is device/emulator confirmation that switching to these imported IMs shows the intended visible keyboard layouts after a build containing merge commit `66c2b88aede9c1d988a3f76d94af3586c0d8eec3`.
 
 ### iOS
 
-Add unit tests around `LimeDB.importTxtFile()` / `SetupImController.importTxtFile()` or a lower-level helper to assert that known text imports write the expected keyboard row and that `getAllImConfigs()` returns the intended `keyboardId`.
+The merged source fix adds focused coverage for the mapping helper and real `importTxtFile(...)` keyboard-row assignment for representative imported tables.
 
-Priority cases:
+Priority manual/simulator cases remain:
 
-- `cj4`, `cj5`, `ecj` resolve to `cj` / `lime_cj`.
+- `cj4`, `cj5`, `ecj`, and `scj` resolve to `cjnum` / Cangjie number-row layouts.
 - `dayi` resolves to `dayisym` / `lime_dayi_sym`.
 - `array` resolves to `arraynum` / `lime_array_number`.
 - `array10` stays `phonenum` / `phone_simple`.
-- `scj` and `pinyin` resolve to the maintainer-confirmed intended keyboard instead of missing per-table fallback layouts.
+- `pinyin` resolves to `limenum` / `lime_number`.
 - `custom` remains `lime_abc` through the existing custom seeding path.
 
 ## Verification plan
