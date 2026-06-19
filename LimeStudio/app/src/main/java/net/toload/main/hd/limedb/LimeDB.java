@@ -642,6 +642,71 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return false;
     }
 
+    /**
+     * Returns the default soft-keyboard code for a text-imported IM table.
+     * Keep this in sync with the iOS LimeDB defaultKeyboardCodeForImportedIM mapping.
+     */
+    public String getDefaultKeyboardCodeForImportedIM(String tableName) {
+        if (tableName == null || tableName.isEmpty()) {
+            return getFallbackDefaultKeyboardCode();
+        }
+        switch (tableName) {
+            case LIME.DB_TABLE_PHONETIC:
+                return resolvePhoneticKeyboardCode();
+            case LIME.DB_TABLE_DAYI:
+                return "dayisym";
+            case LIME.DB_TABLE_CJ:
+            case LIME.DB_TABLE_CJ4:
+            case LIME.DB_TABLE_CJ5:
+            case LIME.DB_TABLE_ECJ:
+            case LIME.DB_TABLE_SCJ:
+                return "cjnum";
+            case LIME.DB_TABLE_ARRAY:
+                return "arraynum";
+            case LIME.DB_TABLE_ARRAY10:
+                return "phonenum";
+            case LIME.DB_TABLE_WB:
+                return "wb";
+            case LIME.DB_TABLE_HS:
+                return "hs";
+            case LIME.DB_TABLE_EZ:
+                return "ez";
+            case LIME.DB_TABLE_PINYIN:
+                return "limenum";
+            default:
+                return getFallbackDefaultKeyboardCode();
+        }
+    }
+
+    private String resolvePhoneticKeyboardCode() {
+        String selectedPhoneticKeyboardType = mLIMEPref != null
+                ? mLIMEPref.getParameterString("phonetic_keyboard_type", LIME.DB_TABLE_PHONETIC)
+                : LIME.DB_TABLE_PHONETIC;
+        switch (selectedPhoneticKeyboardType) {
+            case LIME.DB_TABLE_PHONETIC:
+                return LIME.DB_TABLE_PHONETIC;
+            case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
+                return "phoneticet41";
+            case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
+            case LIME.IM_PHONETIC_KEYBOARD_HSU:
+                return isNumberRowInEnglishEnabled(false) ? "limenum" : "lime";
+            case "eten26_symbol":
+                return "et26";
+            case "hsu_symbol":
+                return LIME.IM_PHONETIC_KEYBOARD_HSU;
+            default:
+                return LIME.DB_TABLE_PHONETIC;
+        }
+    }
+
+    private String getFallbackDefaultKeyboardCode() {
+        return isNumberRowInEnglishEnabled(true) ? "limenum" : "lime";
+    }
+
+    private boolean isNumberRowInEnglishEnabled(boolean defaultValue) {
+        return mLIMEPref != null ? mLIMEPref.getParameterBoolean("number_row_in_english", defaultValue) : defaultValue;
+    }
+
 
     /**
      * Gets the current table name used for queries.
@@ -4245,63 +4310,14 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         Log.i(TAG, "importTxtTable():update IM info: imkeys:" + imkeys + " imkeynames:" + imkeynames);
 
 
-                    // '11,5,23 by Jeremy: Preset keyboard info. by tablename
-                    Keyboard kConfig = getKeyboardConfig(table);
-                    if (table.equals(LIME.DB_TABLE_PHONETIC)) {
-                        String selectedPhoneticKeyboardType =
-                                mLIMEPref.getParameterString("phonetic_keyboard_type", LIME.DB_TABLE_PHONETIC);
-                        switch (selectedPhoneticKeyboardType) {
-                            case LIME.DB_TABLE_PHONETIC:
-                                kConfig = getKeyboardConfig(LIME.DB_TABLE_PHONETIC);
-                                break;
-                            case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN:
-                                kConfig = getKeyboardConfig("phoneticet41");
-                                break;
-                            case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
-                                if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                    kConfig = getKeyboardConfig("limenum");
-                                } else {
-                                    kConfig = getKeyboardConfig("lime");
-                                }
-                                break;
-                            case "eten26_symbol":
-                                kConfig = getKeyboardConfig("et26");
-                                break;
-                            case LIME.IM_PHONETIC_KEYBOARD_HSU:  //Jeremy '12,7,6 Add HSU english keyboard support
-                                if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                    kConfig = getKeyboardConfig("limenum");
-                                } else {
-                                    kConfig = getKeyboardConfig("lime");
-                                }
-                                break;
-                            case "hsu_symbol":
-                                kConfig = getKeyboardConfig(LIME.IM_PHONETIC_KEYBOARD_HSU);
-                                break;
-                        }
-                    } else if (table.equals(LIME.DB_TABLE_DAYI)) {
-                        kConfig = getKeyboardConfig("dayisym");
-                    } else if (table.equals(LIME.DB_TABLE_CJ4)) {
-                        kConfig = getKeyboardConfig("cj");
-                    } else if (table.equals(LIME.DB_TABLE_CJ5)) {
-                        kConfig = getKeyboardConfig("cj");
-                    } else if (table.equals(LIME.DB_TABLE_ECJ)) {
-                        kConfig = getKeyboardConfig("cj");
-                    } else if (table.equals(LIME.DB_TABLE_ARRAY)) {
-                        kConfig = getKeyboardConfig("arraynum");
-                    } else if (table.equals("array10")) {
-                        kConfig = getKeyboardConfig("phonenum");
-                    } else if (table.equals("wb")) {
-                        kConfig = getKeyboardConfig("wb");
-                    } else if (table.equals("hs")) {
-                        kConfig = getKeyboardConfig("hs");
-                    } else if (kConfig == null) {    //Jeremy '12,5,21 chose english with number keyboard if the optione is on for default keyboard.
-                        if (mLIMEPref.getParameterBoolean("number_row_in_english", true)) {
-                            kConfig = getKeyboardConfig("limenum");
-                        } else {
-                            kConfig = getKeyboardConfig("lime");
-                        }
+                    // '11,5,23 by Jeremy: Preset keyboard info by table name.
+                    Keyboard kConfig = getKeyboardConfig(getDefaultKeyboardCodeForImportedIM(table));
+                    if (kConfig == null) {    // Safety fallback: every imported IM must get a keyboard row.
+                        kConfig = getKeyboardConfig("lime");
                     }
-                    setIMConfigKeyboard(table, kConfig.getDescription(), kConfig.getCode());
+                    if (kConfig != null) {
+                        setIMConfigKeyboard(table, kConfig.getDescription(), kConfig.getCode());
+                    }
                 }
 
                 //finishing

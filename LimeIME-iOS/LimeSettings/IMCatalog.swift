@@ -70,9 +70,9 @@ enum IMCatalog {
             description: "倉頡輸入法，多種字集選擇",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj",     name: "倉頡字根",           filename: "cj.zip",     tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 28_596, compressedKB: 830),
-                .init(id: "cjbig5", name: "倉頡字根 (BIG5字集)", filename: "cjbig5.zip", tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 13_859, compressedKB: 506),
-                .init(id: "cjhk",   name: "倉頡香港字字根",      filename: "cjhk.zip",   tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cj", recordCount: 30_278, compressedKB: 884),
+                .init(id: "cj",     name: "倉頡字根",           filename: "cj.zip",     tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cjnum", recordCount: 28_596, compressedKB: 830),
+                .init(id: "cjbig5", name: "倉頡字根 (BIG5字集)", filename: "cjbig5.zip", tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cjnum", recordCount: 13_859, compressedKB: 506),
+                .init(id: "cjhk",   name: "倉頡香港字字根",      filename: "cjhk.zip",   tableName: "cj", imName: "cj", label: "倉頡五代", keyboardId: "cjnum", recordCount: 30_278, compressedKB: 884),
             ]
         ),
         .init(
@@ -82,7 +82,7 @@ enum IMCatalog {
             description: "四碼倉頡輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj4", name: "哈哈倉頡", filename: "hahacj.limedb", tableName: "cj4", imName: "cj4", label: "哈哈倉頡", keyboardId: "cj", recordCount: 33_021, compressedKB: 598),
+                .init(id: "cj4", name: "哈哈倉頡", filename: "hahacj.limedb", tableName: "cj4", imName: "cj4", label: "哈哈倉頡", keyboardId: "cjnum", recordCount: 33_021, compressedKB: 598),
             ]
         ),
         .init(
@@ -92,7 +92,7 @@ enum IMCatalog {
             description: "倉頡五代輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj5", name: "倉頡五代字根", filename: "cj5.zip", tableName: "cj5", imName: "cj5", label: "倉頡五代", keyboardId: "cj", recordCount: 24_004, compressedKB: 491),
+                .init(id: "cj5", name: "倉頡五代字根", filename: "cj5.zip", tableName: "cj5", imName: "cj5", label: "倉頡五代", keyboardId: "cjnum", recordCount: 24_004, compressedKB: 491),
             ]
         ),
         .init(
@@ -102,7 +102,7 @@ enum IMCatalog {
             description: "快速倉頡輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "scj", name: "快倉字根", filename: "scj.limedb", tableName: "scj", imName: "scj", label: "速成", keyboardId: "limenum", recordCount: 74_250, compressedKB: 1400),
+                .init(id: "scj", name: "快倉字根", filename: "scj.zip", tableName: "scj", imName: "scj", label: "速成", keyboardId: "cjnum", recordCount: 74_250, compressedKB: 1400),
             ]
         ),
         .init(
@@ -112,8 +112,8 @@ enum IMCatalog {
             description: "速成輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "ecj",   name: "簡易速成",       filename: "ecj.zip",   tableName: "ecj", imName: "ecj", label: "ECJ",    keyboardId: "cj", recordCount: 13_119, compressedKB: 136),
-                .init(id: "ecjhk", name: "速成香港字字根", filename: "ecjhk.zip", tableName: "ecj", imName: "ecj", label: "ECJ HK", keyboardId: "cj", recordCount: 27_853, compressedKB: 210),
+                .init(id: "ecj",   name: "簡易速成",       filename: "ecj.zip",   tableName: "ecj", imName: "ecj", label: "ECJ",    keyboardId: "cjnum", recordCount: 13_119, compressedKB: 136),
+                .init(id: "ecjhk", name: "速成香港字字根", filename: "ecjhk.zip", tableName: "ecj", imName: "ecj", label: "ECJ HK", keyboardId: "cjnum", recordCount: 27_853, compressedKB: 210),
             ]
         ),
         .init(

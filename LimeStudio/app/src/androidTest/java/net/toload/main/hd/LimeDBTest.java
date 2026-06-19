@@ -826,6 +826,32 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000)
+    public void testDefaultKeyboardCodeForImportedIMs() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+
+        String[][] expected = new String[][] {
+                {LIME.DB_TABLE_DAYI, "dayisym"},
+                {LIME.DB_TABLE_CJ, "cjnum"},
+                {LIME.DB_TABLE_CJ4, "cjnum"},
+                {LIME.DB_TABLE_CJ5, "cjnum"},
+                {LIME.DB_TABLE_ECJ, "cjnum"},
+                {LIME.DB_TABLE_SCJ, "cjnum"},
+                {LIME.DB_TABLE_ARRAY, "arraynum"},
+                {LIME.DB_TABLE_ARRAY10, "phonenum"},
+                {LIME.DB_TABLE_WB, "wb"},
+                {LIME.DB_TABLE_HS, "hs"},
+                {LIME.DB_TABLE_EZ, "ez"},
+                {LIME.DB_TABLE_PINYIN, "limenum"},
+                {LIME.DB_TABLE_CUSTOM, "limenum"}
+        };
+        for (String[] row : expected) {
+            assertEquals("default keyboard for " + row[0],
+                    row[1], limeDB.getDefaultKeyboardCodeForImportedIM(row[0]));
+        }
+    }
+
+    @Test(timeout = 5000)
     public void testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);

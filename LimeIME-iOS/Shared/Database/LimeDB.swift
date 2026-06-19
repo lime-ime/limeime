@@ -1192,6 +1192,22 @@ final class LimeDB {
     func getKeyboardConfig(_ keyboard: String?) -> KeyboardConfig? {
         guard !checkDBConnection() else { return nil }
         guard let keyboard = keyboard, !keyboard.isEmpty else { return nil }
+        if keyboard == "lime" {
+            return KeyboardConfig(id: 0, code: "lime", name: "LIME", desc: "LIME 預設鍵盤",
+                                  type: "phone", image: "lime_keyboard_preview",
+                                  imkb: "lime", imshiftkb: "lime_shift",
+                                  engkb: "lime", engshiftkb: "lime_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "phonetic" {
+            return KeyboardConfig(id: 0, code: "phonetic", name: "注音", desc: "注音輸入法鍵盤",
+                                  type: "phone", image: "phonetic_keyboard_preview",
+                                  imkb: "lime_phonetic", imshiftkb: "lime_phonetic_shift",
+                                  engkb: "lime", engshiftkb: "lime_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
         // Hardcoded fallbacks for "wb" and "hs"
         if keyboard == "wb" {
             return KeyboardConfig(id: 0, code: "wb", name: "筆順五碼", desc: "筆順五碼輸入法鍵盤",
@@ -1206,6 +1222,54 @@ final class LimeDB {
                                   type: "phone", image: "hs_keyboard_preview",
                                   imkb: "lime_hs", imshiftkb: "lime_hs_shift",
                                   engkb: "lime_abc", engshiftkb: "lime_abc_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "limenum" {
+            return KeyboardConfig(id: 0, code: "limenum", name: "LIMENUM", desc: "LIME+數字列鍵盤",
+                                  type: "phone", image: "lime_keyboard_preview",
+                                  imkb: "lime_number", imshiftkb: "lime_number_shift",
+                                  engkb: "lime_number", engshiftkb: "lime_number_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "cjnum" {
+            return KeyboardConfig(id: 0, code: "cjnum", name: "倉頡數字", desc: "倉頡+數字列鍵盤",
+                                  type: "phone", image: "cj_keyboard_preview",
+                                  imkb: "lime_cj_number", imshiftkb: "lime_cj_number_shift",
+                                  engkb: "lime_number", engshiftkb: "lime_number_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "dayisym" {
+            return KeyboardConfig(id: 0, code: "dayisym", name: "大易字根", desc: "大易字根鍵盤",
+                                  type: "phone", image: "dayi_keyboard_preview",
+                                  imkb: "lime_dayi_sym", imshiftkb: "lime_dayi_sym_shift",
+                                  engkb: "lime", engshiftkb: "lime_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "arraynum" {
+            return KeyboardConfig(id: 0, code: "arraynum", name: "行列", desc: "行列+數字列鍵盤",
+                                  type: "phone", image: "array_keyboard_preview",
+                                  imkb: "lime_array_number", imshiftkb: "lime_array_number_shift",
+                                  engkb: "lime_number", engshiftkb: "lime_number_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "phonenum" {
+            return KeyboardConfig(id: 0, code: "phonenum", name: "電話數字", desc: "電話數字鍵盤",
+                                  type: "phone", image: "phonenum_keyboard_preview",
+                                  imkb: "phone_simple", imshiftkb: "phone_simple",
+                                  engkb: "lime", engshiftkb: "lime_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        if keyboard == "ez" {
+            return KeyboardConfig(id: 0, code: "ez", name: "輕鬆", desc: "輕鬆輸入法鍵盤",
+                                  type: "phone", image: "ez_keyboard_preview",
+                                  imkb: "lime_ez", imshiftkb: "lime_ez_shift",
+                                  engkb: "lime", engshiftkb: "lime_shift",
                                   symbolkb: "symbols", symbolshiftkb: "symbols_shift",
                                   isDisabled: false)
         }
@@ -3364,6 +3428,7 @@ final class LimeDB {
             if !imkeys.isEmpty { setImConfig(tableName, "imkeys", imkeys) }
             if !imkeynamesHeader.isEmpty { setImConfig(tableName, "imkeynames", imkeynamesHeader) }
             else if !imkeynames.isEmpty { setImConfig(tableName, "imkeynames", imkeynames.joined(separator: "|")) }
+            applyDefaultKeyboardForImportedIM(tableName)
         }
     }
 
@@ -3372,6 +3437,39 @@ final class LimeDB {
             return Self.IM_FULL_NAMES[index]
         }
         return fallback
+    }
+
+    /// Returns the default soft-keyboard code for a text-imported IM table.
+    /// Keep this in sync with Android LimeDB.getDefaultKeyboardCodeForImportedIM().
+    func defaultKeyboardCodeForImportedIM(_ tableName: String) -> String {
+        switch tableName {
+        case "phonetic":
+            return "phonetic"
+        case "dayi":
+            return "dayisym"
+        case "cj", "cj4", "cj5", "ecj", "scj":
+            return "cjnum"
+        case "array":
+            return "arraynum"
+        case "array10":
+            return "phonenum"
+        case "wb":
+            return "wb"
+        case "hs":
+            return "hs"
+        case "ez":
+            return "ez"
+        case "pinyin":
+            return "limenum"
+        default:
+            return "lime"
+        }
+    }
+
+    private func applyDefaultKeyboardForImportedIM(_ tableName: String) {
+        let keyboardCode = defaultKeyboardCodeForImportedIM(tableName)
+        let desc = getKeyboardConfig(keyboardCode)?.desc ?? keyboardCode
+        setIMConfigKeyboard(tableName, desc, keyboardCode)
     }
 
     /// Auto-detect field delimiter from a data line (mirrors Java identifyDelimiter()).
