@@ -220,6 +220,8 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 *.iml
+# IDE project settings (per-developer, local-only) — not version controlled.
+.idea/
 LimeStudio/.idea/
 LimeStudio/.idea/misc.xml
 LimeStudio/app/app.iml
