@@ -4,6 +4,10 @@ Public backlog for confirmed pending fixes, active retest watches, and new-featu
 
 Last reviewed: 2026-06-19
 
+## Active issue follow-up
+
+- None currently tracked.
+
 ## Source fixed / awaiting build verification
 
 - #119 Android/iOS: `.lime` / `.cin` text import now has explicit intended keyboard layouts for known IMs on `master`, with iOS writing a keyboard config row after text import and Android making `scj`/`pinyin` mapping intent explicit. Issue #119 is closed; no newer Android APK has been observed after `LIMEHD2026-6.1.21.apk`, so Android APK verification and iOS TestFlight/App Store delivery remain pending as release QA.
