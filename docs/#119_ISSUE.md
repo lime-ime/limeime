@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/119
 - Reporter/source: `limeimetw` maintainer-created tracking issue
 - Classification: `bug`, `Type-Defect`, `Usability`
-- Current state: open and assigned to `jrywu`
+- Current state: closed by `jrywu` on 2026-06-19T04:31:41Z after the source fix reached `master`
 - Source fix status: PR #120 was closed unmerged after branch `fix/119-import-default-keyboards` was merged directly into `master` as commit `66c2b88aede9c1d988a3f76d94af3586c0d8eec3` (`Merge branch 'fix/119-import-default-keyboards'`). The branch head commit `cf1ab6db3c1aaf86e258a560f104eaf8a91e4364` is now an ancestor of `master`.
 - Build/release status: no newer Android APK has been observed after `LIMEHD2026-6.1.21.apk` (GitHub Contents blob SHA `a8838c47b4186956536cd4c8aa4e3931d579d1da`, size 14055188 bytes), so the merged source fix is not yet known to be in a reporter-testable Android APK. iOS delivery still requires normal TestFlight/App Store build verification.
 - Public acknowledgement: none needed because this is maintainer-created internal tracking
@@ -153,4 +153,4 @@ Priority manual/simulator cases remain:
 
 ## Follow-up / retest condition
 
-No community retest request is needed because #119 is maintainer-created from code-path inspection. The source fix is on `master`, but no newer Android APK has been observed after the merge and iOS delivery still needs normal TestFlight/App Store build verification. Close the maintainer-created issue directly after maintainer/local verification or after a build containing the fix is available and verified; do not ask a community reporter to retest.
+No community retest request is needed because #119 is maintainer-created from code-path inspection and is now maintainer-closed. The source fix is on `master`, but no newer Android APK has been observed after the merge and iOS delivery still needs normal TestFlight/App Store build verification. Treat remaining checks as release QA for the next Android APK / iOS TestFlight-App Store build, not as an active public issue watch.
