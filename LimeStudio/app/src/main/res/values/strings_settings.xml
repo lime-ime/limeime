@@ -861,6 +861,4 @@
     <string name="pref_section_english_dictionary">英文鍵盤</string>
     <string name="pref_section_physical_keyboard">外接鍵盤</string>
 
-    <string name="share_format_text">.lime (文字)</string>
-    <string name="share_format_database">.limedb (資料庫)</string>
 </resources>

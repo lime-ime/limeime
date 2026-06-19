@@ -1,5 +1,6 @@
 package net.toload.main.hd.ui;
 
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -536,6 +537,14 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
     @Override
     public void onStart() {
         super.onStart();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (shareManager != null && shareManager.handleActivityResult(requestCode, resultCode, data)) {
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 

@@ -555,20 +555,17 @@ This section provides a quick reference of all test lists organized by phase, si
       - Tests listener callback integration. ✅
       - Mapping: `ImportDialogTest` (listener callbacks)
 
-- **4.6 ShareDialog** (10 tests)
-  - [x] **Test File**: ShareDialogTest.java, ShareManagerTest.java
+- **4.6 IM Share / Export** (ShareManager coverage)
+  - [x] **Test File**: ShareManagerTest.java
     - [x] Share as zipped database (.limedb)
       - Validates sharing IM as zipped database. ✅
-      - Mapping: `ShareDialogTest` (share as .limedb)
+      - Mapping: `ShareManagerTest` (share as .limedb)
     - [x] Share as text file (.lime)
       - Validates sharing IM as text file. ✅
-      - Mapping: `ShareDialogTest` (share as .lime)
+      - Mapping: `ShareManagerTest` (share as .lime)
     - [x] Share Related as zipped database
       - Validates sharing related data as zipped database. ✅
-      - Mapping: `ShareDialogTest` (share related as zipped db)
-    - [x] Share Related as text file
-      - Validates sharing related data as text file. ✅
-      - Mapping: `ShareDialogTest` (share related as text file)
+      - Mapping: `ShareManagerTest` (share related as zipped db)
     - [x] Uses ShareManager and DBServer
       - Ensures ShareManager and DBServer integration for sharing workflows. ✅
       - Mapping: `ShareManagerTest` (manager and DBServer integration)
@@ -1307,7 +1304,6 @@ app/src/androidTest/java/net/toload/main/hd/
     ├── ManageRelatedFragmentTest.java ❌ MISSING
     ├── ManageImKeyboardDialogTest.java ❌ MISSING
     ├── ImportDialogTest.java          ❌ MISSING
-    ├── ShareDialogTest.java           ❌ MISSING
     ├── SetupImLoadDialogTest.java     ❌ MISSING
     └── [Other Dialog Tests]          ❌ MISSING
 ```
@@ -1477,4 +1473,3 @@ The phased approach allows for incremental testing and validation, ensuring the 
 **Document Version**: 1.2  
 **Last Updated**: 2025-12-29  
 **Status**: In Progress - SearchServer tests completed, LimeDB export/import tests completed; Phase 5 IME Logic Tests planned (tests exist in LIMEServiceTest.java, need verification); IME integration tests planned (Section 6.7)
-

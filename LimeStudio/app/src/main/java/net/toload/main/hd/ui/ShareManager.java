@@ -1,14 +1,19 @@
 package net.toload.main.hd.ui;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.Toast;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.ui.controller.SetupImController;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Manages share operations for IM tables and related phrases.
@@ -28,12 +33,16 @@ import java.io.File;
 public class ShareManager {
     
     private static final String TAG = "ShareManager";
+    public static final int REQUEST_SAVE_EXPORT = 0x4C1E;
     
     private final LIMESettings activity;
     private final SetupImController setupImController;
     private final ProgressManager progressManager;
     
     private Thread shareThread;
+    private String pendingSaveTable;
+    private boolean pendingSaveText;
+    private boolean pendingSaveRelated;
     
     /**
      * Creates a new ShareManager.
@@ -188,6 +197,93 @@ public class ShareManager {
             }
         });
         shareThread.start();
+    }
+
+    public void saveImAsText(String tableName) {
+        launchSavePicker(tableName, true, false);
+    }
+
+    public void saveImAsDatabase(String tableName) {
+        launchSavePicker(tableName, false, false);
+    }
+
+    public void saveRelatedAsDatabase() {
+        launchSavePicker(LIME.DB_TABLE_RELATED, false, true);
+    }
+
+    private void launchSavePicker(String tableName, boolean asText, boolean related) {
+        pendingSaveTable = tableName;
+        pendingSaveText = asText;
+        pendingSaveRelated = related;
+
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType(asText ? "text/plain" : "application/octet-stream");
+        intent.putExtra(Intent.EXTRA_TITLE, tableName + (asText ? ".lime" : ".limedb"));
+        activity.startActivityForResult(intent, REQUEST_SAVE_EXPORT);
+    }
+
+    public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode != REQUEST_SAVE_EXPORT) return false;
+        if (pendingSaveTable == null) return true;
+        if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
+            clearPendingSave();
+            return true;
+        }
+
+        Uri targetUri = data.getData();
+        String tableName = pendingSaveTable;
+        boolean asText = pendingSaveText;
+        boolean related = pendingSaveRelated;
+        clearPendingSave();
+
+        shareThread = new Thread(() -> exportAndWriteToUri(tableName, asText, related, targetUri));
+        shareThread.start();
+        return true;
+    }
+
+    private void exportAndWriteToUri(String tableName, boolean asText, boolean related, Uri targetUri) {
+        File cacheDir = activity.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = activity.getCacheDir();
+        }
+        File tempFile = new File(cacheDir, tableName + (asText ? ".lime" : ".limedb"));
+
+        File exported;
+        if (asText) {
+            exported = related
+                    ? setupImController.exportTxtTableRelated(tempFile, null)
+                    : setupImController.exportTxtTable(tableName, tempFile, null);
+        } else {
+            exported = related
+                    ? setupImController.exportZippedDbRelated(tempFile, null)
+                    : setupImController.exportZippedDb(tableName, tempFile, null);
+        }
+
+        if (exported == null) {
+            Log.e(TAG, "Failed to export file for local save: " + tableName);
+            return;
+        }
+
+        try (InputStream in = new FileInputStream(exported);
+             OutputStream out = activity.getContentResolver().openOutputStream(targetUri)) {
+            if (out == null) throw new java.io.IOException("Unable to open output stream");
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = in.read(buffer)) != -1) {
+                out.write(buffer, 0, count);
+            }
+            activity.runOnUiThread(() -> Toast.makeText(activity, R.string.share_save_local_finish, Toast.LENGTH_SHORT).show());
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to save export file", e);
+            activity.runOnUiThread(() -> Toast.makeText(activity, R.string.error_export_table, Toast.LENGTH_LONG).show());
+        }
+    }
+
+    private void clearPendingSave() {
+        pendingSaveTable = null;
+        pendingSaveText = false;
+        pendingSaveRelated = false;
     }
 
     /**

@@ -97,11 +97,10 @@
 **Status:** Comprehensive Coverage
 **Files:** 19
 
-#### Dialog Tests (10 files)
+#### Dialog Tests (9 files)
 - **HelpDialogTest.java** ✅ (3 tests) - Tests class existence, link/button handlers, dialog recreation
 - **NewsDialogTest.java** ✅ (3 tests) - Tests class existence, button handlers, dialog recreation
 - **ImportDialogTest.java** ✅ (6 tests) - Tests IM selection workflow, SearchServer integration
-- **ShareDialogTest.java** ✅ (5 tests) - Tests export lifecycle, file selection, completion callbacks
 - **SetupImLoadDialogTest.java** ✅ (7 tests) - Tests dialog initialization, load operations
 - **ManageImAddDialogTest.java** ✅ (2 tests) - Tests add workflow, validation
 - **ManageImEditDialogTest.java** ✅ (2 tests) - Tests edit workflow, update operations
@@ -210,7 +209,7 @@
 | HelpDialog.java | HelpDialogTest.java | 75% 🟢 | 37% 🟠 | Well tested |
 | NewsDialog.java | NewsDialogTest.java | 68% 🟡 | 40% 🟠 | Partially tested |
 | ImportDialog.java | ImportDialogTest.java | 51% 🟡 | 26% 🔴 | Partially tested |
-| ShareDialog.java | ShareDialogTest.java | 27% 🟠 | 0% 🔴 | Limited testability |
+| ShareManager.java | ShareManagerTest.java | 27% 🟠 | 0% 🔴 | Limited testability |
 | SetupImLoadDialog.java | SetupImLoadDialogTest.java | 0% 🔴 | 0% 🔴 | Not covered |
 | ManageImAddDialog.java | ManageImAddDialogTest.java | 0% 🔴 | 0% 🔴 | Not covered |
 | ManageImEditDialog.java | ManageImEditDialogTest.java | 0% 🔴 | 0% 🔴 | Not covered |

@@ -413,17 +413,33 @@ public class ImDetailFragment extends Fragment {
         if (!(act instanceof LIMESettings)) return;
         final net.toload.main.hd.ui.ShareManager shareManager = ((LIMESettings) act).getShareManager();
         if (shareManager == null) return;
+        final boolean isRelated = LIME.DB_TABLE_RELATED.equals(tableCode);
+        CharSequence[] items = isRelated
+                ? new CharSequence[] {
+                        getString(R.string.share_limedb_action),
+                        getString(R.string.share_limedb_save_local)
+                }
+                : new CharSequence[] {
+                        getString(R.string.share_lime_action),
+                        getString(R.string.share_lime_save_local),
+                        getString(R.string.share_limedb_action),
+                        getString(R.string.share_limedb_save_local)
+                };
 
         new android.app.AlertDialog.Builder(requireContext())
-                .setTitle(R.string.share_dialog_title)
-                .setItems(new CharSequence[] {
-                        getString(R.string.share_format_text),
-                        getString(R.string.share_format_database)
-                }, (d, which) -> {
-                    if (which == 0) {
+                .setTitle(isRelated ? R.string.share_dialog_related_title : R.string.share_dialog_title)
+                .setItems(items, (d, which) -> {
+                    if (isRelated) {
+                        if (which == 0) shareManager.shareRelatedAsDatabase();
+                        else shareManager.saveRelatedAsDatabase();
+                    } else if (which == 0) {
                         shareManager.shareImAsText(tableCode);
-                    } else {
+                    } else if (which == 1) {
+                        shareManager.saveImAsText(tableCode);
+                    } else if (which == 2) {
                         shareManager.exportAndShareImTable(tableCode);
+                    } else {
+                        shareManager.saveImAsDatabase(tableCode);
                     }
                 })
                 .setNegativeButton(R.string.dialog_cancel, null)

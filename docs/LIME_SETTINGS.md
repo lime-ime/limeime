@@ -164,6 +164,12 @@
 >   collapse to zero. In `fragment_im_detail.xml` the value rows set `gravity="center_vertical"` (so
 >   the trailing `›` stays centred when text wraps) and the chevrons use **`20sp`** (was `20dp`) to
 >   grow with the font scale.
+> - **Android IM export — 分享 & 本機儲存.** The IM detail share button keeps the existing export
+>   dialog but expands the choices from format-only to action+format: **分享 `.lime`**,
+>   **本機儲存 `.lime`**, **分享 `.limedb`**, **本機儲存 `.limedb`**. 關聯字庫 still hides text export
+>   and offers only **分享 `.limedb`** / **本機儲存 `.limedb`**. 分享 keeps the existing
+>   `ACTION_SEND` + `FileProvider` path; 本機儲存 uses Android Storage Access Framework
+>   `ACTION_CREATE_DOCUMENT`, so no storage permission or hardcoded Downloads path is needed. See §5.2.
 
 ## 1. Overview
 
@@ -310,7 +316,7 @@ The View layer is the **only layer that deviates** from the Android source. Subs
 | `ManageRelatedFragment` | `RelatedListView(isEmbedded:)` + `AddRelatedView` + `EditRelatedView` | Related phrase CRUD — embedded in IMDetailView via 關聯字庫 entry |
 | `LIMEPreference` Activity + `PrefsFragment` | `PreferencesTabView` with `Form` sections | All 11 preference sections |
 | `ImportDialog` / `SetupImLoadDialog` | SwiftUI `.sheet` + `.fileImporter` | File selection and import options |
-| `ShareDialog` | SwiftUI `.sheet` + `ShareLink` | IM export format selection |
+| `ImDetailFragment.showShareFormatDialog()` | SwiftUI `.sheet` + `ShareLink` | IM export/share and local-save selection |
 | `ManageImAddDialog` / `ManageImEditDialog` | SwiftUI `.sheet` (`AddRecordView` / `EditRecordView`) | Record add/edit forms |
 | `ManageImKeyboardDialog` | `KeyboardPickerView` (Navigation drill-down) | Keyboard layout selection |
 | `ProgressDialogManager` overlay | `ProgressManager` `.overlay(ProgressView(...))` | Progress feedback |
@@ -650,10 +656,14 @@ NavigationStack (continued)
 **Synthetic 關聯字庫 row**: `IMRow(id: -1, imName: "related", label: "關聯字庫", tableNick: "related", ...)` — constructed inline in `IMListView`; `.task` skips keyboard loading for this row.
 
 **Share / Export** (toolbar `square.and.arrow.up` button, all rows including 關聯字庫):
-- Tapping opens a `confirmationDialog` with format choices.
-- Non-related IMs: `.lime（文字）` → `SetupImController.exportIMAsText` → `DBServer.exportTxtTable`; `.limedb（資料庫）` → `exportIMAsLimedb` → `DBServer.exportZippedDb`.
-- 關聯字庫: only `.limedb` → `exportRelatedAsLimedb` → `DBServer.exportZippedDbRelated`.
-- A `ProgressView` overlay shows during export; on success, `ShareSheet` (UIActivityViewController) is presented.
+- Tapping opens a `confirmationDialog` / Android dialog with action+format choices.
+- Non-related IMs: **分享 `.lime`**, **本機儲存 `.lime`**, **分享 `.limedb`**, **本機儲存 `.limedb`**.
+- 關聯字庫: only `.limedb` choices are shown: **分享 `.limedb`** and **本機儲存 `.limedb`**.
+- `.lime（文字）` export path: `SetupImController.exportIMAsText` → `DBServer.exportTxtTable`.
+- `.limedb（資料庫）` export path: `exportIMAsLimedb` / `exportRelatedAsLimedb` → `DBServer.exportZippedDb` / `DBServer.exportZippedDbRelated`.
+- 分享 presents the platform share sheet (`UIActivityViewController` on iOS; Android `ACTION_SEND` with `FileProvider`).
+- 本機儲存 presents a platform save picker (`UIDocumentPicker` / file exporter on iOS; Android `ACTION_CREATE_DOCUMENT`) and writes the exported file to the selected URI. No storage permission or hardcoded Downloads path is required.
+- A progress overlay shows during export. If the user cancels the save picker, no export/save action is taken.
 
 > `keyboard_list` (last-used IM) is **not** cleared after remove — mirrors Android behaviour.
 > The keyboard extension will naturally find no candidates if the cleared IM is still active.

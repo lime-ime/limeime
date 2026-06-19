@@ -248,8 +248,11 @@
     <string name="share_step_initial">準備資料中 ...</string>
     <string name="share_step_write">寫入暫存檔 ...</string>
 
-    <string name="share_lime_cin">純文字格式</string>
-    <string name="share_lime_db">資料庫檔案</string>
+    <string name="share_lime_action">分享 .lime</string>
+    <string name="share_lime_save_local">本機儲存 .lime</string>
+    <string name="share_limedb_action">分享 .limedb</string>
+    <string name="share_limedb_save_local">本機儲存 .limedb</string>
+    <string name="share_save_local_finish">完成本機儲存</string>
 
 
     <string name="import_dialog_related_title">匯入文字至關聯資料庫</string>
