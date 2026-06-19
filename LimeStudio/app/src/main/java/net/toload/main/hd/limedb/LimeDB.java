@@ -658,7 +658,6 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             case LIME.DB_TABLE_CJ:
             case LIME.DB_TABLE_CJ4:
             case LIME.DB_TABLE_CJ5:
-                return "cj";
             case LIME.DB_TABLE_ECJ:
             case LIME.DB_TABLE_SCJ:
                 return "cjnum";

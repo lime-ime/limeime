@@ -2603,9 +2603,9 @@ final class LimeDBTest: XCTestCase {
         let expected = [
             "phonetic": "phonetic",
             "dayi": "dayisym",
-            "cj": "cj",
-            "cj4": "cj",
-            "cj5": "cj",
+            "cj": "cjnum",
+            "cj4": "cjnum",
+            "cj5": "cjnum",
             "ecj": "cjnum",
             "scj": "cjnum",
             "array": "arraynum",
@@ -2632,7 +2632,7 @@ final class LimeDBTest: XCTestCase {
         try "%cname 測試輸入法\na\t一\n".write(to: fixture, atomically: true, encoding: .utf8)
         defer { try? FileManager.default.removeItem(at: fixture) }
 
-        for (table, keyboard) in [("scj", "cjnum"), ("ecj", "cjnum"), ("pinyin", "limenum"), ("array", "arraynum")] {
+        for (table, keyboard) in [("cj", "cjnum"), ("cj4", "cjnum"), ("cj5", "cjnum"), ("scj", "cjnum"), ("ecj", "cjnum"), ("pinyin", "limenum"), ("array", "arraynum")] {
             try db.importTxtFile(at: fixture.path, tableName: table)
             XCTAssertEqual(db.getImConfigList(table, "keyboard").first?.keyboard, keyboard,
                            "text import should assign \(keyboard) to \(table)")

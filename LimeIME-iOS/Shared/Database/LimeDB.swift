@@ -3447,9 +3447,7 @@ final class LimeDB {
             return "phonetic"
         case "dayi":
             return "dayisym"
-        case "cj", "cj4", "cj5":
-            return "cj"
-        case "ecj", "scj":
+        case "cj", "cj4", "cj5", "ecj", "scj":
             return "cjnum"
         case "array":
             return "arraynum"

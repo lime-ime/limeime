@@ -832,9 +832,9 @@ public class LimeDBTest {
 
         String[][] expected = new String[][] {
                 {LIME.DB_TABLE_DAYI, "dayisym"},
-                {LIME.DB_TABLE_CJ, "cj"},
-                {LIME.DB_TABLE_CJ4, "cj"},
-                {LIME.DB_TABLE_CJ5, "cj"},
+                {LIME.DB_TABLE_CJ, "cjnum"},
+                {LIME.DB_TABLE_CJ4, "cjnum"},
+                {LIME.DB_TABLE_CJ5, "cjnum"},
                 {LIME.DB_TABLE_ECJ, "cjnum"},
                 {LIME.DB_TABLE_SCJ, "cjnum"},
                 {LIME.DB_TABLE_ARRAY, "arraynum"},

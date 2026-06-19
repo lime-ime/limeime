@@ -231,15 +231,15 @@ final class SetupImController: BaseController {
         let knownIMs: [(name: String, title: String, keyboard: String)] = [
             ("phonetic", "注音",     "lime_phonetic"),
             ("dayi",     "大易",     "lime_dayi"),
-            ("cj",       "倉頡",     "lime_cj"),
-            ("cj5",      "倉頡五代", "lime_cj"),
+            ("cj",       "倉頡",     "lime_cj_number"),
+            ("cj5",      "倉頡五代", "lime_cj_number"),
             ("array",    "行列",     "lime_array"),
             ("array10",  "行列十",   "phone_simple"),
             ("wb",       "筆順五碼", "lime_wb"),
             ("hs",       "許氏",     "lime_hs"),
             ("ez",       "輕鬆",     "lime_ez"),
-            ("scj",      "速成",     "lime_cj"),
-            ("ecj",      "易倉頡",   "lime_cj"),
+            ("scj",      "速成",     "lime_cj_number"),
+            ("ecj",      "易倉頡",   "lime_cj_number"),
         ]
         let server = self.dbServer
         await Task.detached(priority: .userInitiated) {
