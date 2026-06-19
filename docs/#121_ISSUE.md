@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/121
 - Reporter/source: `limeimetw` maintainer-created tracking issue
 - Classification: `bug`, `Type-Defect`, `Usability`
-- Current state: open and assigned to `jrywu`; source fix prepared in PR workflow
+- Current state: closed by maintainer after the source fix landed on `master` in merge commit `e3aef89cca52b08fd48d68105dce2fe0042f0f19` via PR #122
 - Public acknowledgement: none needed because this is maintainer-created internal tracking
 
 ## Problem statement
@@ -154,4 +154,4 @@ The fix is iOS-only and deliberately leaves #119 text-import layout mapping unto
 
 ## Follow-up / retest condition
 
-No public community retest request is needed because #121 is maintainer-created. After the source fix lands, verify with iOS unit/simulator/device checks. Close the maintainer-created issue directly after maintainer/local verification or after a TestFlight/App Store build containing the targeted fix is validated.
+No public community retest request is needed because #121 is maintainer-created and now closed. Remaining validation is iOS release QA: run unit/simulator/device checks and confirm a future TestFlight/App Store build containing merge commit `e3aef89cca52b08fd48d68105dce2fe0042f0f19` preserves synchronized runtime mode, active IM, and visible layout. No Android APK retest applies unless separate Android evidence appears.
