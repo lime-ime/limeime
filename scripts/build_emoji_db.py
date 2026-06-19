@@ -1,6 +1,6 @@
 ﻿#!/usr/bin/env python3
-# build_emoji_db.py - rebuild Database/emoji.db from Emoji/CLDR source data.
-# Usage: python3 scripts/build_emoji_db.py --output Database/emoji.db
+# build_emoji_db.py - rebuild Android raw emoji.db from Emoji/CLDR source data.
+# Usage: python3 scripts/build_emoji_db.py --output LimeStudio/app/src/main/res/raw/emoji.db
 
 from __future__ import annotations
 
@@ -255,7 +255,7 @@ def build_from_files(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build the LimeIME emoji.db artifact.")
-    parser.add_argument("--output", type=Path, default=Path("Database/emoji.db"))
+    parser.add_argument("--output", type=Path, default=Path("LimeStudio/app/src/main/res/raw/emoji.db"))
     parser.add_argument("--version", default="17.0")
     parser.add_argument("--emoji-test", type=Path, required=True)
     parser.add_argument("--en-json", type=Path, required=True)

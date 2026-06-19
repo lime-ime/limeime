@@ -24,13 +24,13 @@
 #   python3 scripts/build_dictionary_db.py \
 #       --source ngrams \
 #       --out    LimeStudio/app/src/main/res/raw/dictionary.db \
-#       --patch-seeds LimeStudio/app/src/main/res/raw/lime.db Database/lime.db \
+#       --patch-seeds LimeStudio/app/src/main/res/raw/lime.db \
 #       --version 1.0 --limit 100000
 #
 # Bootstrap (no download; uses the committed word list, Zipf-approximated basescore):
 #   python3 scripts/build_dictionary_db.py --source wordlist \
 #       --out LimeStudio/app/src/main/res/raw/dictionary.db \
-#       --patch-seeds LimeStudio/app/src/main/res/raw/lime.db Database/lime.db
+#       --patch-seeds LimeStudio/app/src/main/res/raw/lime.db
 #
 # The two patched seeds are written to be byte-identical (LIME_DB_103/104 contract).
 

@@ -744,6 +744,7 @@
 			buildPhases = (
 				F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */,
 				A103DBE00100000000000001 /* Copy emoji.db to bundle */,
+				A103DBE00100000000000002 /* Copy hanconvertv2.db to bundle */,
 				A2A322193FD1089E054DCD60 /* Sources */,
 				5CDE9B03925CC3482ECA1228 /* Resources */,
 				34D06C4DC6A0297415E88E79 /* Frameworks */,
@@ -991,7 +992,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/../Database/emoji.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/emoji.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
 		A103DBE00100000000000001 /* Copy emoji.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1010,7 +1011,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/../Database/emoji.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/emoji.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+		};
+		A103DBE00100000000000002 /* Copy hanconvertv2.db to bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy hanconvertv2.db to bundle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/hanconvertv2.db",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/hanconvertv2.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/hanconvertv2.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
 		F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1029,7 +1049,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/../Database/lime.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/lime.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/lime.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/lime.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

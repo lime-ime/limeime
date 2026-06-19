@@ -24,13 +24,11 @@ targets:
       - path: LimeIME
       - path: Shared
         excludes:
-          - "Database/lime.db"
-          - "Database/phonetic.db"
-          - "Database/emoji.db"
+          - "Database/*.db"
     preBuildScripts:
       - name: Copy lime.db to bundle
         script: |
-          SRC="${SRCROOT}/../Database/lime.db"
+          SRC="${SRCROOT}/../LimeStudio/app/src/main/res/raw/lime.db"
           DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/lime.db"
           if [ -f "$SRC" ]; then
             cp -f "$SRC" "$DST"
@@ -39,13 +37,22 @@ targets:
           - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/lime.db
       - name: Copy emoji.db to bundle
         script: |
-          SRC="${SRCROOT}/../Database/emoji.db"
+          SRC="${SRCROOT}/../LimeStudio/app/src/main/res/raw/emoji.db"
           DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db"
           if [ -f "$SRC" ]; then
             cp -f "$SRC" "$DST"
           fi
         outputFiles:
           - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/emoji.db
+      - name: Copy hanconvertv2.db to bundle
+        script: |
+          SRC="${SRCROOT}/../LimeStudio/app/src/main/res/raw/hanconvertv2.db"
+          DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/hanconvertv2.db"
+          if [ -f "$SRC" ]; then
+            cp -f "$SRC" "$DST"
+          fi
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/hanconvertv2.db
     dependencies:
       - package: GRDB
       - package: ZIPFoundation
@@ -85,15 +92,13 @@ targets:
       - path: LimeIMEKeyboard
       - path: Shared
         excludes:
-          - "Database/lime.db"
-          - "Database/phonetic.db"
-          - "Database/emoji.db"
+          - "Database/*.db"
     resources:
       - path: LimeIMEKeyboard/Layouts
     preBuildScripts:
       - name: Copy emoji.db to bundle
         script: |
-          SRC="${SRCROOT}/../Database/emoji.db"
+          SRC="${SRCROOT}/../LimeStudio/app/src/main/res/raw/emoji.db"
           DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db"
           if [ -f "$SRC" ]; then
             cp -f "$SRC" "$DST"
