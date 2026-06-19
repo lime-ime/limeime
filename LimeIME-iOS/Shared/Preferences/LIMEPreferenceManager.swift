@@ -385,9 +385,21 @@ final class LIMEPreferenceManager {
     /// Mirrors Android's LIMEPreferenceManager.syncIMActivatedState().
     func syncIMActivatedState(dbServer: DBServer) {
         guard let configs = try? dbServer.getAllImConfigs() else { return }
-        let enabledIndices = configs.enumerated()
+        let enabledConfigs = configs.enumerated()
             .filter { $0.element.enabled }
+        keyboardState = enabledConfigs
             .map { "\($0.offset)" }
-        keyboardState = enabledIndices.joined(separator: ";")
+            .joined(separator: ";")
+
+        // Keep the current IM preference coherent with the newly synced enabled list.
+        // Cloud/download installs run from the Settings process; without this, the
+        // keyboard extension can warm-start with a stale/default keyboard_list value
+        // while setupDatabase() resolves a different active IM from keyboard_state (#121).
+        let enabledTableNicks = Set(enabledConfigs.map { $0.element.tableNick })
+        let current = keyboardList
+        if let firstEnabled = enabledConfigs.first?.element.tableNick,
+           (current.isEmpty || !enabledTableNicks.contains(current)) {
+            keyboardList = firstEnabled
+        }
     }
 }

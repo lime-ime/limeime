@@ -27,6 +27,15 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         super.tearDown()
     }
 
+    func testSyncIMActivatedStateKeepsKeyboardListCoherentWithEnabledIMs() throws {
+        let source = try String(contentsOf: projectFileURL("Shared/Preferences/LIMEPreferenceManager.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("let enabledTableNicks = Set(enabledConfigs.map { $0.element.tableNick })"))
+        XCTAssertTrue(source.contains("current.isEmpty || !enabledTableNicks.contains(current)"))
+        XCTAssertTrue(source.contains("keyboardList = firstEnabled"))
+    }
+
     // MARK: - Default values
 
     func testDefaultKeyboardTheme() {
@@ -306,5 +315,12 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         prefs.syncIMActivatedState(dbServer: DBServer(_testDatasource: db))
         let state = prefs.keyboardState
         XCTAssertNotNil(state)
+    }
+
+    private func projectFileURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // LimeTests
+            .deletingLastPathComponent() // LimeIME-iOS
+            .appendingPathComponent(relativePath)
     }
 }

@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/121
 - Reporter/source: `limeimetw` maintainer-created tracking issue
 - Classification: `bug`, `Type-Defect`, `Usability`
-- Current state: open and assigned to `jrywu`
+- Current state: open and assigned to `jrywu`; source fix prepared in PR workflow
 - Public acknowledgement: none needed because this is maintainer-created internal tracking
 
 ## Problem statement
@@ -135,6 +135,23 @@ If direct `KeyboardViewController` unit coverage is too coupled to UIKit extensi
 6. Switch Chinese ↔ English after the first activation and confirm both the visible layout and composing behavior stay synchronized.
 7. Reopen the keyboard after backgrounding Settings/host app to confirm warm-extension state does not reuse a stale layout.
 
+## Implemented source fix
+
+The focused fix keeps the iOS Settings-side preferences and keyboard-extension runtime snapshot coherent after a cloud/download install:
+
+1. `LIMEPreferenceManager.syncIMActivatedState(...)` still rebuilds `keyboard_state` from enabled `im` rows, and now also repairs `keyboard_list` when the saved/current IM is empty or no longer among the enabled IMs. This prevents a warm keyboard extension from restoring a stale/default active IM while the enabled list points elsewhere.
+2. `KeyboardViewController.initOnStartInput()` now shares its input-mode and layout-selection logic through `updateInputModeForCurrentField()` and `applyLayoutForCurrentInputField()`.
+3. After async `setupDatabase()` refreshes `SearchServer`, `activatedIMs`, settings, and IM keys, it re-reads the current field mode and re-applies the visible layout from the freshly resolved activated IM list. This closes the first-switch race where an earlier `viewWillAppear()` pass selected a layout from stale or empty `activatedIMs`.
+
+The fix is iOS-only and deliberately leaves #119 text-import layout mapping untouched.
+
+## Verification coverage
+
+- Added iOS regression coverage for the pure layout resolver, including English runtime with active IMs, Chinese runtime with active IMs, empty activated IMs, and numeric/phone field overrides.
+- Added iOS source-guard coverage that asserts async DB setup re-applies current input mode/layout after activated IM refresh.
+- Added iOS preference regression/source-guard coverage that asserts `syncIMActivatedState(...)` keeps `keyboard_list` coherent with enabled IMs.
+- Manual/device verification is still needed on iOS for warm-extension and cold-start first activation after cloud/download IM install.
+
 ## Follow-up / retest condition
 
-No public acknowledgement or community retest request is needed because #121 is maintainer-created. After a source fix lands, verify with iOS unit/simulator/device checks. Close the maintainer-created issue after maintainer/local verification or after a TestFlight/App Store build containing the targeted fix is verified; do not announce an Android APK for this iOS-only path.
+No public community retest request is needed because #121 is maintainer-created. After the source fix lands, verify with iOS unit/simulator/device checks. Close the maintainer-created issue directly after maintainer/local verification or after a TestFlight/App Store build containing the targeted fix is validated.
