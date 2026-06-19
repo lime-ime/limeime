@@ -156,7 +156,7 @@ struct PreferencesTabView: View {
                 // MARK: §8.2
                 Section(header: Text("鍵盤回饋")) {
                     Toggle(isOn: $vibrateOnKeypress) {
-                        prefIconLabel("打字震動", systemImage: "bell", tint: Color(red: 0xE0/255, green: 0x88/255, blue: 0x3A/255))
+                        prefIconLabel("打字震動", systemImage: "iphone.radiowaves.left.and.right", tint: SettingsTheme.accent)
                     }
                     Picker("震動強度", selection: $vibrateLevel) {
                         ForEach(0..<vibLevelOptions.count, id: \.self) { i in
@@ -215,7 +215,7 @@ struct PreferencesTabView: View {
 
                 // MARK: §8.7
                 Section(header: Text("英文鍵盤")) {
-                    Toggle(isOn: $englishDictEnable) { prefRow("啟用英文字典", "當使用 英文 輸入模式時，顯示英文建議字", systemImage: "abc", tint: Color(red: 0x0A/255, green: 0x84/255, blue: 0xC4/255)) }
+                    Toggle(isOn: $englishDictEnable) { prefRow("啟用英文字典", "當使用 英文 輸入模式時，顯示英文建議字", systemImage: "abc", tint: SettingsTheme.accent) }
                     Toggle(isOn: $autoCap) { prefRow("首字自動大寫", "在英文模式下，句首字母自動轉為大寫") }
                 }
                 .setupMatchedSectionBlock()
