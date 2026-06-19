@@ -30,8 +30,8 @@
 //
 // Simulator limitation: SRCROOT env is set by Xcode for simulator tests
 // (the test process is a native macOS binary), allowing direct access to
-// IM database files in the source tree. This benchmark does NOT run on
-// physical devices via standard `xcodebuild test` unless the IM DB files
+// IM archive files in the source tree. This benchmark does NOT run on
+// physical devices via standard `xcodebuild test` unless the IM archives
 // are embedded as bundle resources.
 
 import XCTest
@@ -62,7 +62,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     // (e.g. q=石部首, q2i=硃, q3q=硯, q5.=砡)
     private static let dayiStrokes: [String]     = ["q", "q2", "q2i", "q3", "q3q", "q5", "q5.", "1", "1a", "2"]
 
-    // Paths to IM database files in the repo's Database/ folder.
+    // Paths to IM archive files in the repo's Database/ folder.
     // Uses #file (compile-time source path) to navigate up to the repo root.
     // This works on iOS simulator (the test process is a native macOS binary
     // with full filesystem access) but NOT on physical devices.
@@ -98,8 +98,8 @@ final class EngineLatencyBenchmark: XCTestCase {
         try super.tearDownWithError()
     }
 
-    // Create a LimeDB+SearchServer pair seeded with a real IM database.
-    // `imFile`: file name inside Database/ (e.g. "cj.db", "phonetic.db")
+    // Create a LimeDB+SearchServer pair seeded with a real IM archive.
+    // `imFile`: file name inside Database/ (e.g. "cj.zip", "phonetic.zip")
     // `tableName`: IM table to import and query (e.g. "cj", "phonetic")
     private func makeServer(imFile: String, tableName: String) throws -> SearchServer {
         let srcPath = Self.dbDir.appendingPathComponent(imFile).path
@@ -107,8 +107,8 @@ final class EngineLatencyBenchmark: XCTestCase {
             throw XCTSkip("IM database not found at \(srcPath) — only runs on iOS simulator, not physical device")
         }
         limeDB = try LimeDB(path: tempURL.path)
-        // Import the real IM data into the fresh (empty) LimeDB.
-        try limeDB.importFromAttachedDB(sourcePath: srcPath, tableName: tableName)
+        let dbServer = DBServer(_testDatasource: limeDB)
+        dbServer.importZippedDb(sourceDbFile: URL(fileURLWithPath: srcPath), tableName: tableName)
         let ss = SearchServer(db: limeDB)
         ss.setTableName(tableName, hasNumberMapping: false, hasSymbolMapping: false)
         ss.initialCache()
@@ -118,7 +118,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     // MARK: - Cangjie
 
     func testBenchmarkCangjie() throws {
-        server = try makeServer(imFile: "cj.db", tableName: "cj")
+        server = try makeServer(imFile: "cj.zip", tableName: "cj")
 
         // Warm up: fill LimeDB's internal caches and SQLite page cache.
         // The first call per code populates the in-process mapping cache;
@@ -143,7 +143,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     // MARK: - Array30
 
     func testBenchmarkArray() throws {
-        server = try makeServer(imFile: "array.db", tableName: "array")
+        server = try makeServer(imFile: "array.zip", tableName: "array")
 
         for code in Self.arrayStrokes {
             _ = server.getMappingByCode(code, isSoftKeyboard: true)
@@ -162,9 +162,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     // MARK: - Phonetic
 
     func testBenchmarkPhonetic() throws {
-        // Phonetic uses phonetic.db which lives in the LimeKeyboard extension.
-        // On simulator, it can be read from the repo's Database/ folder directly.
-        server = try makeServer(imFile: "phonetic.db", tableName: "phonetic")
+        server = try makeServer(imFile: "phonetic.zip", tableName: "phonetic")
 
         for code in Self.phoneticStrokes {
             _ = server.getMappingByCode(code, isSoftKeyboard: true)
@@ -183,7 +181,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     // MARK: - Dayi
 
     func testBenchmarkDayi() throws {
-        server = try makeServer(imFile: "dayi.db", tableName: "dayi")
+        server = try makeServer(imFile: "dayi.zip", tableName: "dayi")
 
         for code in Self.dayiStrokes {
             _ = server.getMappingByCode(code, isSoftKeyboard: true)
@@ -212,7 +210,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     //   right after Stage 1 on the background thread.
 
     func testBenchmarkArray_coldCache_stage1() throws {
-        server = try makeServer(imFile: "array.db", tableName: "array")
+        server = try makeServer(imFile: "array.zip", tableName: "array")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -226,7 +224,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkArray_coldCache_stage2() throws {
-        server = try makeServer(imFile: "array.db", tableName: "array")
+        server = try makeServer(imFile: "array.zip", tableName: "array")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             // Warm SQLite page cache (mirrors stage 1 running first in production)
@@ -244,7 +242,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkCangjie_coldCache_stage1() throws {
-        server = try makeServer(imFile: "cj.db", tableName: "cj")
+        server = try makeServer(imFile: "cj.zip", tableName: "cj")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -258,7 +256,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkCangjie_coldCache_stage2() throws {
-        server = try makeServer(imFile: "cj.db", tableName: "cj")
+        server = try makeServer(imFile: "cj.zip", tableName: "cj")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -274,7 +272,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkPhonetic_coldCache_stage1() throws {
-        server = try makeServer(imFile: "phonetic.db", tableName: "phonetic")
+        server = try makeServer(imFile: "phonetic.zip", tableName: "phonetic")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -288,7 +286,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkPhonetic_coldCache_stage2() throws {
-        server = try makeServer(imFile: "phonetic.db", tableName: "phonetic")
+        server = try makeServer(imFile: "phonetic.zip", tableName: "phonetic")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -304,7 +302,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkDayi_coldCache_stage1() throws {
-        server = try makeServer(imFile: "dayi.db", tableName: "dayi")
+        server = try makeServer(imFile: "dayi.zip", tableName: "dayi")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
@@ -318,7 +316,7 @@ final class EngineLatencyBenchmark: XCTestCase {
     }
 
     func testBenchmarkDayi_coldCache_stage2() throws {
-        server = try makeServer(imFile: "dayi.db", tableName: "dayi")
+        server = try makeServer(imFile: "dayi.zip", tableName: "dayi")
 
         measure(metrics: [XCTClockMetric(), XCTCPUMetric()]) {
             server.clearAllCaches()
