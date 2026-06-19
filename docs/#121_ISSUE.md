@@ -143,13 +143,14 @@ The focused fix keeps the iOS Settings-side preferences and keyboard-extension r
 2. `KeyboardViewController.initOnStartInput()` now shares its input-mode and layout-selection logic through `updateInputModeForCurrentField()` and `applyLayoutForCurrentInputField()`.
 3. After async `setupDatabase()` refreshes `SearchServer`, `activatedIMs`, settings, and IM keys, it re-reads the current field mode and re-applies the visible layout from the freshly resolved activated IM list. This closes the first-switch race where an earlier `viewWillAppear()` pass selected a layout from stale or empty `activatedIMs`.
 
-The fix is iOS-only and deliberately leaves #119 text-import layout mapping untouched.
+The fix is iOS-only and deliberately leaves #119 text-import layout mapping untouched. The direct fix commit subject includes an `(android, #121)` prefix, but the changed source/test files for this issue are iOS-side; do not infer Android APK coverage from that commit subject.
 
 ## Verification coverage
 
 - Added iOS regression coverage for the pure layout resolver, including English runtime with active IMs, Chinese runtime with active IMs, empty activated IMs, and numeric/phone field overrides.
 - Added iOS source-guard coverage that asserts async DB setup re-applies current input mode/layout after activated IM refresh.
 - Added iOS preference regression/source-guard coverage that asserts `syncIMActivatedState(...)` keeps `keyboard_list` coherent with enabled IMs.
+- No CI checks are configured for PR #122 in GitHub; macOS/Xcode test pass state is not captured in this WSL-authored doc update.
 - Manual/device verification is still needed on iOS for warm-extension and cold-start first activation after cloud/download IM install.
 
 ## Follow-up / retest condition
