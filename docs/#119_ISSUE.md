@@ -6,6 +6,8 @@
 - Reporter/source: `limeimetw` maintainer-created tracking issue
 - Classification: `bug`, `Type-Defect`, `Usability`
 - Current state: open and assigned to `jrywu`
+- Source fix status: PR #120 was closed unmerged after branch `fix/119-import-default-keyboards` was merged directly into `master` as commit `66c2b88aede9c1d988a3f76d94af3586c0d8eec3` (`Merge branch 'fix/119-import-default-keyboards'`). The branch head commit `cf1ab6db3c1aaf86e258a560f104eaf8a91e4364` is now an ancestor of `master`.
+- Build/release status: no newer Android APK has been observed after `LIMEHD2026-6.1.21.apk` (GitHub Contents blob SHA `a8838c47b4186956536cd4c8aa4e3931d579d1da`, size 14055188 bytes), so the merged source fix is not yet known to be in a reporter-testable Android APK. iOS delivery still requires normal TestFlight/App Store build verification.
 - Public acknowledgement: none needed because this is maintainer-created internal tracking
 
 ## Problem statement
@@ -92,23 +94,24 @@ The iOS path is fragile because `importTxtFile()` mutates metadata rows but does
 
 The Android path is less fragile because one post-import block already assigns keyboards, but missing explicit cases can still cause behavior drift or make future mapping changes hard to audit.
 
-## Proposed fix / investigation plan
+## Source fix implemented on `master`
 
-1. Define a shared intended text-import mapping table for known IMs, matching Android/cloud import expectations where practical:
-   - `phonetic` → current phonetic keyboard preference.
-   - `dayi` → `dayisym`.
-   - `cj`, `cj4`, `cj5`, `ecj` → `cj`.
-   - `scj` → intended fast-Cangjie/number fallback, likely `limenum` / `lime_number` unless maintainer confirms `cj` parity.
-   - `array` → `arraynum`.
-   - `array10` → `phonenum` / `phone_simple`.
-   - `wb` → `wb`.
-   - `hs` → `hs`.
-   - `ez` → `ez` when available.
-   - `pinyin` → intended pinyin/default-number mapping, likely `limenum` / `lime_number` unless a dedicated pinyin layout is introduced.
-2. Add explicit Android cases for `scj` and `pinyin` if the maintainer confirms the intended fallback should be durable behavior.
-3. Add an iOS post-text-import assignment step that writes `im.title = "keyboard"` via `setIMConfigKeyboard(...)` or an equivalent helper after successful import of known IMs.
-4. Ensure iOS custom import remains unchanged: `custom` should keep the existing `seedCustomIM()` / `lime_abc` behavior.
-5. Sync the keyboard extension / activated IM state after iOS import so the newly written keyboard row is visible without requiring an app restart.
+The merged source fix defines explicit imported-table default keyboard mappings on both Android and iOS:
+
+- `phonetic` → platform/user phonetic preference on Android; `phonetic` in the iOS helper.
+- `dayi` → `dayisym`.
+- `cj`, `cj4`, `cj5`, `ecj`, and `scj` → `cjnum`.
+- `array` → `arraynum`.
+- `array10` → `phonenum`.
+- `wb` → `wb`.
+- `hs` → `hs`.
+- `ez` → `ez`.
+- `pinyin` → `limenum`.
+- unknown/custom fallback → Android preference-based `limenum`/`lime`; iOS `lime` fallback.
+
+Android now uses `getDefaultKeyboardCodeForImportedIM(table)` before `setIMConfigKeyboard(...)`, with regression coverage for the mapping helper.
+
+iOS now has `defaultKeyboardCodeForImportedIM(_:)` and `applyDefaultKeyboardForImportedIM(_:)`, writing a keyboard config row after text import instead of relying only on runtime `lime_<tableNick>` fallback. The merge also preserved the newer `scj.limedb` catalog artifact while applying the intended `cjnum` keyboard mapping.
 
 ## Suggested regression coverage
 
@@ -148,4 +151,4 @@ Priority cases:
 
 ## Follow-up / retest condition
 
-No community retest request is needed because #119 is maintainer-created from code-path inspection. After a source fix lands, verify via Android instrumentation/unit checks and iOS unit/simulator checks. If an Android APK or iOS TestFlight build later includes the fix, close the maintainer-created issue directly after maintainer/local verification rather than asking a reporter to retest.
+No community retest request is needed because #119 is maintainer-created from code-path inspection. The source fix is on `master`, but no newer Android APK has been observed after the merge and iOS delivery still needs normal TestFlight/App Store build verification. Close the maintainer-created issue directly after maintainer/local verification or after a build containing the fix is available and verified; do not ask a community reporter to retest.
