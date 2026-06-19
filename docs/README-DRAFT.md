@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-LIME 是一套以繁體中文輸入為核心的開源輸入法專案，採用 GPL 授權並持續開源維護，目前支援 Android 與 iOS 兩大平台。
+LIME 是一套以繁體中文輸入為核心的 Android 輸入法專案，採用 GPL 授權並持續開源維護。
 
 本次 2026 版本為相隔多年後的長週期更新，重點包含 Android 新版相容性、架構重整與整體穩定性提升。
 
@@ -48,24 +48,24 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 ### 架構
 
-- [LimeIME 架構總覽](docs/LIMEIME_ARCHITECTURE.md) — 整體架構與模組關係
-- [UI 架構（MVC）](docs/UI_ARCHITECTURE.md) — 介面層的 MVC 設計
-- [IMService 規格](docs/IM_SERVICE.md) — 輸入法服務核心規格
+- [LimeIME 架構總覽](LIMEIME_ARCHITECTURE.md) — 整體架構與模組關係
+- [UI 架構（MVC）](UI_ARCHITECTURE.md) — 介面層的 MVC 設計
+- [IMService 規格](IM_SERVICE.md) — 輸入法服務核心規格
 
 ### 資料與格式
 
-- [`limedb` 規格](docs/LIMEDB_SPEC.md) — LimeDB 資料庫格式
-- [CIN / LIME 檔案格式規格](docs/CIN_LIME_SPEC.md) — 輸入法碼表文字格式
+- [`limedb` 規格](LIMEDB_SPEC.md) — LimeDB 資料庫格式
+- [CIN / LIME 檔案格式規格](CIN_LIME_SPEC.md) — 輸入法碼表文字格式
 
 ### 鍵盤佈局
 
-- [Android / iPhone 鍵盤佈局](docs/ANDROID_IPHONE_KEYBOARD.md) — 跨平台鍵盤佈局與特殊鍵行為
-- [iPad 鍵盤佈局](docs/IPAD_KEYBOARD.md) — iPad 專屬鍵盤佈局與候選列
+- [Android / iPhone 鍵盤佈局](ANDROID_IPHONE_KEYBOARD.md) — 跨平台鍵盤佈局與特殊鍵行為
+- [iPad 鍵盤佈局](IPAD_KEYBOARD.md) — iPad 專屬鍵盤佈局與候選列
 
 ### 設定
 
-- [LIME Settings 規格](docs/LIME_SETTINGS.md) — 設定 App 與喜好設定規格
-- [喜好設定對照表](docs/PREFS_TABLE.md) — iOS 與 Android 各喜好設定項目對照
+- [LIME Settings 規格](LIME_SETTINGS.md) — 設定 App 與喜好設定規格
+- [喜好設定對照表](PREFS_TABLE.md) — iOS 與 Android 各喜好設定項目對照
 
 ## 問題回報
 
@@ -88,4 +88,4 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 ## 聯絡方式
 
-- 萊姆小編 [limeimetw@gmail.com](mailto:limeimetw@gmail.com)
+- 萊姆小編 limeimetw@gmail.com
