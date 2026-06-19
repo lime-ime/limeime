@@ -6,6 +6,9 @@ import android.net.Uri;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
 import net.toload.main.hd.R;
 import net.toload.main.hd.global.LIME;
 import net.toload.main.hd.ui.controller.SetupImController;
@@ -33,20 +36,24 @@ import java.io.OutputStream;
 public class ShareManager {
     
     private static final String TAG = "ShareManager";
-    public static final int REQUEST_SAVE_EXPORT = 0x4C1E;
-    
+
     private final LIMESettings activity;
     private final SetupImController setupImController;
     private final ProgressManager progressManager;
-    
+    private final ActivityResultLauncher<Intent> saveExportLauncher;
+
     private Thread shareThread;
     private String pendingSaveTable;
     private boolean pendingSaveText;
     private boolean pendingSaveRelated;
-    
+
     /**
      * Creates a new ShareManager.
-     * 
+     *
+     * <p>Must be constructed before the activity reaches the STARTED state
+     * (e.g. in {@code onCreate}), since it registers an
+     * {@link ActivityResultLauncher} on the activity.
+     *
      * @param activity The activity context for UI operations
      * @param setupImController The controller for export operations
      * @param progressManager The progress manager for showing export progress
@@ -55,6 +62,9 @@ public class ShareManager {
         this.activity = activity;
         this.setupImController = setupImController;
         this.progressManager = progressManager;
+        this.saveExportLauncher = activity.registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> handleSaveResult(result.getResultCode(), result.getData()));
     }
     
     /**
@@ -131,40 +141,6 @@ public class ShareManager {
     }
 
     /**
-     * Initiates sharing of the related phrases table as a text file.
-     * 
-     * <p>This method starts a background thread that exports the related phrases
-     * table to a text file and then shares it using the Android share intent.
-     */
-    public void shareRelatedAsText() {
-        shareThread = new Thread(() -> {
-            if (progressManager != null) progressManager.show();
-            if (progressManager != null) progressManager.updateProgress(activity.getResources().getString(R.string.share_step_initial));
-
-            File cacheDir = activity.getExternalCacheDir();
-            if (cacheDir == null) {
-                cacheDir = activity.getCacheDir();
-            }
-            File target = new File(cacheDir, "lime.related");
-
-            File exported = setupImController.exportTxtTableRelated(target,
-                    () -> {
-                        if (progressManager != null) {
-                            progressManager.updateProgress(activity.getResources().getString(R.string.share_step_write));
-                        }
-                    });
-
-            if (progressManager != null) progressManager.dismiss();
-            if (exported != null) {
-                shareFile(exported.getAbsolutePath(), "text/plain");
-            } else {
-                Log.e(TAG, "Failed to export related table");
-            }
-        });
-        shareThread.start();
-    }
-
-    /**
      * Initiates sharing of the related phrases table as a compressed database file.
      * 
      * <p>This method starts a background thread that exports the related phrases
@@ -220,15 +196,14 @@ public class ShareManager {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType(asText ? "text/plain" : "application/octet-stream");
         intent.putExtra(Intent.EXTRA_TITLE, tableName + (asText ? ".lime" : ".limedb"));
-        activity.startActivityForResult(intent, REQUEST_SAVE_EXPORT);
+        saveExportLauncher.launch(intent);
     }
 
-    public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode != REQUEST_SAVE_EXPORT) return false;
-        if (pendingSaveTable == null) return true;
+    private void handleSaveResult(int resultCode, Intent data) {
+        if (pendingSaveTable == null) return;
         if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
             clearPendingSave();
-            return true;
+            return;
         }
 
         Uri targetUri = data.getData();
@@ -239,7 +214,6 @@ public class ShareManager {
 
         shareThread = new Thread(() -> exportAndWriteToUri(tableName, asText, related, targetUri));
         shareThread.start();
-        return true;
     }
 
     private void exportAndWriteToUri(String tableName, boolean asText, boolean related, Uri targetUri) {

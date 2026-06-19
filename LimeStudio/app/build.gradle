@@ -31,12 +31,12 @@ android {
     }
     compileSdkVersion 36
     defaultConfig {
-        applicationId "net.toload.main.hd2026"
+        applicationId "org.limeime"
 
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 2026
-        versionName '6.1.21'
+        versionCode 202661221
+        versionName '6.1.22'
 
         //multiDexEnabled = true
 
@@ -50,10 +50,9 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            enableUnitTestCoverage true
-            enableAndroidTestCoverage true
         }
         debug {
             enableUnitTestCoverage true

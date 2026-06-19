@@ -539,14 +539,6 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
         super.onStart();
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (shareManager != null && shareManager.handleActivityResult(requestCode, resultCode, data)) {
-            return;
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }
-
 
     /**
      * Gets the SetupImController instance.

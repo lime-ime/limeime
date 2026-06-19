@@ -4,18 +4,34 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "net.toload.main.hd2026",
+  "applicationId": "org.limeime",
   "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 2026,
-      "versionName": "6.1.21",
-      "outputFile": "LIMEHD2026-6.1.21.apk"
+      "versionCode": 20266122,
+      "versionName": "6.1.22",
+      "outputFile": "LIMEHD20266122-6.1.22.apk"
     }
   ],
   "elementType": "File",
+  "baselineProfiles": [
+    {
+      "minApi": 28,
+      "maxApi": 30,
+      "baselineProfiles": [
+        "baselineProfiles/1/LIMEHD20266122-6.1.22.dm"
+      ]
+    },
+    {
+      "minApi": 31,
+      "maxApi": 2147483647,
+      "baselineProfiles": [
+        "baselineProfiles/0/LIMEHD20266122-6.1.22.dm"
+      ]
+    }
+  ],
   "minSdkVersionForDexing": 21
 }

@@ -228,6 +228,10 @@ LimeStudio/app/app.iml
 LimeStudio/app/release/baselineProfiles
 *.dm
 #output-metadata.json
+
+# App Bundles are build artifacts — publish via GitHub Releases, not the repo.
+# (Release APKs are intentionally kept under app/release/ by the archiveReleaseApk task.)
+*.aab
 LimeStudio/gradle/gradle-daemon-jvm.properties
 /.claude
 /LimeIME-iOS/.claude
