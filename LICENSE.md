@@ -45,6 +45,7 @@ LIME IME 內建或下載多種繁體中文輸入法碼表與字典。特此感�
 | 華象直覺字根 | 感謝華象直覺輸入法發明人／製作者陳華偉授權。 |
 | 筆順五碼字根 | 感謝香港長者資訊天地提供授權。 |
 | 哈哈倉頡字根 | 感謝尹卂提供哈哈倉頡碼表，依 CC BY 4.0 授權釋出。來源與更新網址：https://ejsoon.vip/haha |
+| 快速倉頡第六代字根 | 快倉2000／快速倉頡輸入法第六代（SmartCangJie6）來源為 https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt，Copyright (C) 2002-2009 麥志洪與 Quintus Leung，依 GPL version 3 or later 授權。 |
 
 若您是下載字根表的作者或提供者，希望修正致謝文字，或提出版權異議，請透過
 GitHub Issue 提出，我們會儘快處理。
@@ -65,6 +66,7 @@ Their licenses remain with their respective authors.
 | Data | Source | License |
 |------|--------|---------|
 | English word frequency dictionary (`dictionary.db` `basescore`) | Google Books Ngrams (<https://books.google.com/ngrams>), English 1-grams v3 (2020-02-17) | Creative Commons Attribution 3.0 Unported (CC BY 3.0) |
+| SmartCangJie6 / 快速倉頡第六代 table (`scj`) | SCJ2000 / 快倉2000 (`scj6.txt`, <https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt>) | GNU General Public License version 3 or later (GPL-3.0-or-later) |
 
 The bundled English `basescore` data is derived from Google Books Ngrams English
 1-gram frequency counts, aggregated and log-scaled to a word-frequency score by

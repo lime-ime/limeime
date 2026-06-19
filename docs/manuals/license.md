@@ -36,6 +36,8 @@
 
 | 哈哈倉頡字根 | 感謝尹卂提供哈哈倉頡碼表，依 CC BY 4.0 授權釋出。來源：ejsoon.vip/haha |
 
+| 快速倉頡第六代字根 | 快倉2000／快速倉頡輸入法第六代（SmartCangJie6）來源為 [github.com/scj2000/scj-tables/scj6/scj6.txt](https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt)，Copyright (C) 2002-2009 麥志洪與 Quintus Leung，依 GPL version 3 or later 授權。 |
+
 > 若您是碼表作者或提供者，希望修正致謝文字或提出版權異議，請透過 [GitHub Issue](https://github.com/lime-ime/limeime/issues) 提出，我們會儘快處理。
 
 ## 輸入法碼表版權聲明
@@ -53,6 +55,8 @@
 | --- | --- | --- |
 
 | 英文詞頻字典（dictionary.db 的 basescore） | Google Books Ngrams，English 1-grams v3（2020-02-17） | CC BY 3.0 |
+
+| SmartCangJie6／快速倉頡第六代字根（`scj`） | SCJ2000／快倉2000（`scj6.txt`，[github.com/scj2000/scj-tables/scj6/scj6.txt](https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt)） | GPL v3 or later |
 
 內附的英文 `basescore` 資料衍生自 Google Books Ngrams 英文 1-gram 詞頻，經彙整與對數縮放為詞頻分數，依 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) 重新散布。各使用者的學習分數 `score` 屬本機私人資料，不會內附或散布。
 
