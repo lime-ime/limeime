@@ -102,7 +102,7 @@ enum IMCatalog {
             description: "快速倉頡輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "scj", name: "快倉字根", filename: "scj.zip", tableName: "scj", imName: "scj", label: "速成", keyboardId: "cjnum", recordCount: 74_250, compressedKB: 1400),
+                .init(id: "scj", name: "快倉字根", filename: "scj.limedb", tableName: "scj", imName: "scj", label: "速成", keyboardId: "cjnum", recordCount: 74_250, compressedKB: 1400),
             ]
         ),
         .init(
