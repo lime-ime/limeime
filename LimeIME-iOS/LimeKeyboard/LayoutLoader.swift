@@ -51,6 +51,7 @@ final class LayoutLoader {
     /// Defaults to false; controller updates this before any `load(_:)` call and
     /// again on `traitCollectionDidChange` (also clearing the cache).
     static var hostIsPad: Bool = false
+    static var iPadSizeClass: IPadSizeClass = .large
 
     // MARK: - Public API
 
@@ -65,41 +66,82 @@ final class LayoutLoader {
     /// Load a layout by ID (e.g. "lime_phonetic").
     /// Returns nil if the JSON file is not found or fails to parse.
     static func load(_ id: String) -> LimeKeyLayout? {
-        lock.lock()
-        if let cached = cache[id] { lock.unlock(); return cached }
-        lock.unlock()
+        for resourceId in resourceCandidates(for: id) {
+            lock.lock()
+            if let cached = cache[resourceId] {
+                lock.unlock()
+                return cached
+            }
+            lock.unlock()
 
-        // On iPad, try the generated iPad variants first; fall back to the phone layout.
-        // Use the host app's idiom (set by the controller), not UIDevice — an
-        // iPhone-only app running on iPad must use the iPhone layout.
-        if hostIsPad, !id.contains("_ipad") {
-            for candidate in iPadVariantCandidates(for: id) {
-                if let padLayout = parseFromBundle(id: candidate) {
-                    lock.lock()
-                    cache[id] = padLayout
-                    lock.unlock()
-                    return padLayout
-                }
+            if let layout = parseFromBundle(id: resourceId) {
+                lock.lock()
+                cache[resourceId] = layout
+                lock.unlock()
+                return layout
             }
         }
-
-        guard let layout = parseFromBundle(id: id) else { return nil }
-
-        lock.lock()
-        cache[id] = layout
-        lock.unlock()
-        return layout
+        return nil
     }
 
     static func iPadVariantCandidates(for id: String) -> [String] {
-        if id.hasSuffix("_shift") {
-            let base = String(id.dropLast(6))
-            return [base + "_ipad_shift"]
-        }
-        return [id + "_ipad"]
+        resourceCandidates(for: id).filter { $0.contains("_ipad") }
     }
 
     // MARK: - Private
+
+    private static func resourceParts(for id: String) -> (base: String, shifted: Bool) {
+        var value = id
+        var shifted = false
+
+        if value.hasSuffix("_shift") {
+            shifted = true
+            value = String(value.dropLast("_shift".count))
+        }
+        if value.hasSuffix("_ipad_narrow") {
+            value = String(value.dropLast("_ipad_narrow".count))
+        } else if value.hasSuffix("_ipad") {
+            value = String(value.dropLast("_ipad".count))
+        }
+        if value.hasSuffix("_shift") {
+            shifted = true
+            value = String(value.dropLast("_shift".count))
+        }
+
+        return (value, shifted)
+    }
+
+    private static func resourceId(base: String, iPadSuffix: String?, shifted: Bool) -> String {
+        var value = base
+        if let iPadSuffix {
+            value += iPadSuffix
+        }
+        if shifted {
+            value += "_shift"
+        }
+        return value
+    }
+
+    private static func resourceCandidates(for id: String) -> [String] {
+        let parts = resourceParts(for: id)
+        guard hostIsPad else {
+            return [resourceId(base: parts.base, iPadSuffix: nil, shifted: parts.shifted)]
+        }
+
+        switch iPadSizeClass {
+        case .small, .medium:
+            return [
+                resourceId(base: parts.base, iPadSuffix: "_ipad_narrow", shifted: parts.shifted),
+                resourceId(base: parts.base, iPadSuffix: "_ipad", shifted: parts.shifted),
+                resourceId(base: parts.base, iPadSuffix: nil, shifted: parts.shifted),
+            ]
+        case .large:
+            return [
+                resourceId(base: parts.base, iPadSuffix: "_ipad", shifted: parts.shifted),
+                resourceId(base: parts.base, iPadSuffix: nil, shifted: parts.shifted),
+            ]
+        }
+    }
 
     /// Splits an Android-style label string on the literal two-character sequences
     /// `\n` and `\t` (backslash + letter) that Android XML uses as separators:
@@ -186,7 +228,7 @@ final class LayoutLoader {
                 if resolvedPopup == "popup_template" && popupChars.isEmpty {
                     resolvedPopup = ""
                 }
-                let keyCodes = jk.codes ?? [jk.code]
+                let keyCodes = (jk.codes?.isEmpty == false) ? jk.codes! : [jk.code]
                 return KeyDef(
                     code:             keyCodes[0],
                     codes:            keyCodes,
@@ -212,7 +254,7 @@ final class LayoutLoader {
         let ids = [
             "lime_phonetic", "lime_phonetic_shift",
             "lime_abc", "lime_abc_shift",
-            "lime_number", "symbols1",
+            "lime_number", "symbols1", "symbols2", "symbols3",
         ]
         DispatchQueue.global(qos: .background).async {
             for id in ids { _ = load(id) }

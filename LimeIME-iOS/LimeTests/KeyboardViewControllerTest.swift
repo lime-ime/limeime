@@ -166,8 +166,8 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
-    func testIPadEnglishNumberShiftLayoutShowsShiftedKeys() throws {
-        let layout = try loadKeyboardLayoutFixture("lime_english_number_ipad_shift")
+    func testIPadEnglishShiftLayoutShowsShiftedKeys() throws {
+        let layout = try loadKeyboardLayoutFixture("lime_english_ipad_shift")
         let keys = layout.rows.flatMap(\.keys)
         let tilde = try XCTUnwrap(keys.first { $0.code == 126 })
         let q = try XCTUnwrap(keys.first { $0.code == 113 })
