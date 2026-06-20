@@ -15,13 +15,14 @@ The reporter says that when using LIME IME Array input inside LINE on Android, c
 
 Known public reproduction context:
 
-- Host app: LINE 26.8.0
+- Host apps: LINE 26.8.0, plus reporter follow-up says other bottom-composer apps such as WeChat and Instagram are also affected.
 - Platform: Android 16
 - Device: Asus Zenfone 12 Ultra
 - LIME IME version: 6.1.22-2026
 - IM/table: LIME IME Array
 - Feature: reverse lookup notification after candidate commit
-- Still missing details: whether other apps reproduce it, the exact key sequence / reverse-lookup source setting, and whether any LINE display/fullscreen or keyboard-height setting affects the overlap.
+- Public screenshots in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 show the grey reverse-lookup popup overlapping bottom chat input/composer regions rather than staying inside the IME/candidate area.
+- Still missing details: the exact key sequence / reverse-lookup source setting, which specific WeChat/Instagram screens were tested, and whether display/fullscreen, keyboard-height, or font/display-size settings affect the overlap.
 
 ## Source evidence inspected
 
@@ -50,7 +51,7 @@ Analogous iOS path checked:
 
 ## Likely root cause
 
-The Android reverse-lookup notification was moved to a custom persistent `PopupWindow` anchored around the candidate row. In LINE and possibly other chat apps, the candidate row can sit immediately below or near the host app's message input field. Because `CandidateView.doShowLimeToast(...)` positions the popup above the candidate view without checking the host window's visible input/editor area, the reverse-lookup popup can extend into and cover the app's message input field.
+The Android reverse-lookup notification was moved to a custom persistent `PopupWindow` anchored around the candidate row. In LINE, WeChat, Instagram, and similar bottom-composer apps, the candidate row can sit immediately below or near the host app's message input field. Because `CandidateView.doShowLimeToast(...)` positions the popup above the candidate view without checking the host window's visible input/editor area, the reverse-lookup popup can extend into and cover the app's message input field.
 
 This is a geometry/placement bug in the Android reverse-lookup lime-toast path, not a LINE-specific text-processing bug based on current evidence.
 
@@ -70,22 +71,21 @@ This is a geometry/placement bug in the Android reverse-lookup lime-toast path, 
 
 ## Follow-up questions for the reporter
 
-The reporter has now provided Android version, device model, LINE version, and LIME IME version in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757147733.
+The reporter provided Android version, device model, LINE version, LIME IME version, and confirmed in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 that similar bottom-composer apps such as WeChat and Instagram are affected.
 
 Remaining useful follow-up, if the maintainer needs it before reproducing/fixing:
 
 - Reverse-lookup source setting
 - Exact operation sequence from typing Array roots to showing the floating reverse-lookup window
-- Whether the same issue occurs in other apps with bottom message/input fields
-- Whether LINE display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
+- Whether display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
 
 Because this was reported by email and the issue was created by `limeimetw`, do not post these as a public GitHub question unless the maintainer wants public follow-up. A private email follow-up may be better if the reporter is not using GitHub.
 
 ## Verification plan
 
 - Manual Android verification:
-  - LINE chat input with Array IM and reverse lookup enabled.
-  - A non-LINE app with a bottom-aligned text field, to determine whether this is general geometry or LINE-specific.
+  - LINE, WeChat, Instagram, or another chat-style input with a bottom-aligned composer, using Array IM and reverse lookup enabled.
+  - At least one non-chat app with a bottom-aligned text field, to determine whether this is general bottom-composer geometry or chat-app-specific.
   - At least one normal text editor / notes app to confirm the reverse-lookup display remains visible and readable.
 - Regression checks:
   - Reverse lookup still appears after candidate commit when enabled.
