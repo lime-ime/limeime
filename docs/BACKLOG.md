@@ -2,11 +2,11 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-19
+Last reviewed: 2026-06-20
 
 ## Active issue follow-up
 
-- None currently tracked.
+- #124 Android: reverse-lookup lime-toast / floating popup can cover the LINE message input field when using Array input. Track as an active Android usability bug until the reverse-lookup display is constrained to the IME/candidate area or moved inline; no APK retest request applies until a newer Android build contains the targeted fix.
 
 ## Source fixed / awaiting build verification
 
