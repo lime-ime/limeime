@@ -8,7 +8,7 @@
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public acknowledgement: none needed for now because this tracking issue was created by the project account on behalf of the email reporter.
-- Implementation status: branch `fix/124-android-popup-placement` constrains both Android popup paths to the IME-owned candidate area and is awaiting PR review/merge.
+- Implementation status: PR #126 (`fix/124-android-popup-placement`) constrains both Android popup paths to the IME-owned candidate area and is awaiting review/merge.
 
 ## Problem statement
 
@@ -64,7 +64,7 @@ This is a geometry/placement bug in Android candidate-view popup handling, not a
 
 ## Implemented fix / investigation direction
 
-1. Source fix in branch `fix/124-android-popup-placement` adds a shared Android `CandidateView.clampPopupYToImeArea(...)` helper.
+1. Source fix in PR #126 (`fix/124-android-popup-placement`) adds a shared Android `CandidateView.clampPopupYToImeArea(...)` helper.
 2. The composing/root-key popup path now clamps `mPopupComposingY` so it cannot rise above the candidate row and cover a host bottom-composer input field.
 3. The non-embedded reverse-lookup lime toast path now applies the same clamp, while the embedded composing path keeps its existing in-IME placement.
 4. Expanded candidate popup behavior is intentionally unchanged because it uses a separate bottom-anchored popup path and already hides the composing popup while expanded.
@@ -106,7 +106,7 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 
 ## Backlog / release follow-up
 
-- Track as an active Android usability bug until the branch/PR source fix lands for bottom-composer placement of both composing/root-key and reverse-lookup floating popups.
+- Track as an active Android usability bug until PR #126 lands for bottom-composer placement of both composing/root-key and reverse-lookup floating popups.
 - No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no targeted popup-placement fix has landed after it.
 - No public reporter retest request should be posted until a newer Android APK contains the relevant popup-placement fix.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
