@@ -15,11 +15,13 @@ The reporter says that when using LIME IME Array input inside LINE on Android, c
 
 Known public reproduction context:
 
-- Host app: LINE
-- Platform: Android
+- Host app: LINE 26.8.0
+- Platform: Android 16
+- Device: Asus Zenfone 12 Ultra
+- LIME IME version: 6.1.22-2026
 - IM/table: LIME IME Array
 - Feature: reverse lookup notification after candidate commit
-- Missing details: device model, Android version, LINE version, LIME version, whether other apps reproduce it, and exact key sequence / reverse-lookup source setting.
+- Still missing details: whether other apps reproduce it, the exact key sequence / reverse-lookup source setting, and whether any LINE display/fullscreen or keyboard-height setting affects the overlap.
 
 ## Source evidence inspected
 
@@ -68,15 +70,14 @@ This is a geometry/placement bug in the Android reverse-lookup lime-toast path, 
 
 ## Follow-up questions for the reporter
 
-If the email reporter can provide more details, ask for:
+The reporter has now provided Android version, device model, LINE version, and LIME IME version in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757147733.
 
-- Android version
-- Device model
-- LINE version
-- LIME IME version
+Remaining useful follow-up, if the maintainer needs it before reproducing/fixing:
+
 - Reverse-lookup source setting
 - Exact operation sequence from typing Array roots to showing the floating reverse-lookup window
 - Whether the same issue occurs in other apps with bottom message/input fields
+- Whether LINE display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
 
 Because this was reported by email and the issue was created by `limeimetw`, do not post these as a public GitHub question unless the maintainer wants public follow-up. A private email follow-up may be better if the reporter is not using GitHub.
 
@@ -97,6 +98,6 @@ Because this was reported by email and the issue was created by `limeimetw`, do 
 ## Backlog / release follow-up
 
 - Track as an active Android usability bug until a source fix lands.
-- No Android APK retest request applies yet because the current APK `LIMEHD2026-6.1.21.apk` predates this issue and no targeted fix has landed.
+- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no targeted reverse-lookup placement fix has landed after it.
 - No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup placement fix.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
