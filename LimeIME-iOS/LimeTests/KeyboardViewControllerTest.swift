@@ -583,6 +583,19 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("showEmojiSearchCandidates(loadEmojiSearchFallbackItems())"))
     }
 
+    func testSpacePickerIMSwitchExitsEnglishOnlyModeBeforeLoadingChineseLayout() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let functionRange = try XCTUnwrap(source.range(of: #"private func switchIM\(toIndex i: Int\) \{[\s\S]*?\n    \}"#,
+                                                       options: .regularExpression))
+        let function = String(source[functionRange])
+
+        let modeRange = try XCTUnwrap(function.range(of: "mEnglishOnly = false"))
+        let layoutRange = try XCTUnwrap(function.range(of: "LayoutLoader.load(resolvedLayoutId(for: activeIM))"))
+
+        XCTAssertLessThan(modeRange.lowerBound, layoutRange.lowerBound)
+    }
+
     func testEmojiSearchKeepsTemporaryLanguageModeAndRestoresSourceLayout() throws {
         let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
         let source = try String(contentsOf: sourceURL, encoding: .utf8)

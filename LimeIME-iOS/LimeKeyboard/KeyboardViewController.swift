@@ -3182,6 +3182,12 @@ extension KeyboardViewController: KeyboardViewDelegate {
         sharedDefaults?.set(activeIM, forKey: "keyboard_list")
         clearShiftState()
         clearComposing(force: false)
+        mEnglishOnly = false
+        if mPersistentLanguageMode {
+            sharedDefaults?.set(false, forKey: "persisted_english_mode")
+        }
+        clearSuggestions()
+        resetTempEnglishWord()
         let caps = searchServer?.detectIMCapabilities(tableName: activeIM)
             ?? (hasNumber: false, hasSymbol: false)
         searchServer?.setTableName(activeIM, hasNumberMapping: caps.hasNumber,
@@ -3391,12 +3397,17 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 if let iconName = icon, !isLast {
                     // Android-style row: leading icon + left-aligned title.
                     let cfg = UIImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
-                    btn.setImage(UIImage(systemName: iconName, withConfiguration: cfg), for: .normal)
+                    var config = UIButton.Configuration.plain()
+                    var titleAttributes = AttributeContainer()
+                    titleAttributes.font = UIFont.systemFont(ofSize: LayoutMetrics.InlineMenu.buttonFontSize)
+                    config.attributedTitle = AttributedString(title, attributes: titleAttributes)
+                    config.image = UIImage(systemName: iconName, withConfiguration: cfg)
+                    config.imagePlacement = .leading
+                    config.imagePadding = 12
+                    config.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16)
+                    config.baseForegroundColor = .label
+                    btn.configuration = config
                     btn.contentHorizontalAlignment = .leading
-                    btn.imageEdgeInsets = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 12)
-                    btn.titleEdgeInsets = UIEdgeInsets(top: 0, left: 28, bottom: 0, right: 0)
-                    btn.contentEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 16)
-                    btn.tintColor = .label
                 } else {
                     btn.contentHorizontalAlignment = .center
                     if isLast { btn.setTitleColor(.systemBlue, for: .normal) }  // 完成
