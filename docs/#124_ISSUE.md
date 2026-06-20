@@ -114,7 +114,7 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 
 ## Backlog / release follow-up
 
-- Source fix is in progress for the scoped Android reverse-lookup timeout/alignment patch. Keep #124 active until the patch lands on `master` and a newer Android build is available for reporter retest.
+- This change set contains the scoped Android reverse-lookup timeout/alignment source fix. Keep #124 active until the fix is on `master` and a newer Android build is available for reporter retest.
 - No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no newer public Android build contains this fix yet.
 - No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup placement and timeout fix.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
