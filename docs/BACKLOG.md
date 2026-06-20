@@ -6,7 +6,7 @@ Last reviewed: 2026-06-20
 
 ## Active issue follow-up
 
-- #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. PR #126 (`fix/124-android-popup-placement`) constrains both popup paths to the IME-owned candidate area and awaits review/merge; no APK retest request applies until a newer Android build contains the targeted fix.
+- #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. PR #126 (`fix/124-android-popup-placement`) clamps both fallback popup paths to start at the candidate row instead of covering the host input field and awaits review/merge; manual device testing should confirm the candidate-row overlap trade-off is acceptable. No APK retest request applies until a newer Android build contains the targeted fix.
 
 ## Source fixed / awaiting build verification
 

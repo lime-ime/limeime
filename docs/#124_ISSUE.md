@@ -8,7 +8,7 @@
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public acknowledgement: none needed for now because this tracking issue was created by the project account on behalf of the email reporter.
-- Implementation status: PR #126 (`fix/124-android-popup-placement`) constrains both Android popup paths to the IME-owned candidate area and is awaiting review/merge.
+- Implementation status: PR #126 (`fix/124-android-popup-placement`) clamps both Android fallback popup paths to start at the candidate row instead of drawing above it into bottom-composer host input fields. This is awaiting review/merge and still needs device UX verification because the fallback popups will overlap the candidate row rather than the host editor area.
 
 ## Problem statement
 
@@ -68,7 +68,8 @@ This is a geometry/placement bug in Android candidate-view popup handling, not a
 2. The composing/root-key popup path now clamps `mPopupComposingY` so it cannot rise above the candidate row and cover a host bottom-composer input field.
 3. The non-embedded reverse-lookup lime toast path now applies the same clamp, while the embedded composing path keeps its existing in-IME placement.
 4. Expanded candidate popup behavior is intentionally unchanged because it uses a separate bottom-anchored popup path and already hides the composing popup while expanded.
-5. Follow-up manual reproduction should still inspect runtime values for:
+5. This is a deliberate containment trade-off: in the affected fallback paths, the popup top will be clamped to the candidate-row top, so manual device testing must confirm the candidate-row overlap is acceptable and less disruptive than covering the host message field.
+6. Follow-up manual reproduction should still inspect runtime values for:
    - candidate view `getLocationInWindow(...)`
    - composing-popup and reverse-lookup toast measured heights
    - root-window visible display frame / IME visible area
