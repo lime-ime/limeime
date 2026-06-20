@@ -653,7 +653,7 @@ public class LIMEServiceTest {
     }
 
     @Test
-    public void reverseLookupUsesPersistentLimeToast() {
+    public void reverseLookupUsesTimedLimeToast() {
         MockInputMethodServiceHelper helper = new MockInputMethodServiceHelper();
         CandidateView candidateView = helper.injectMockCandidateView();
         LIMEService service = helper.getService();
@@ -661,12 +661,13 @@ public class LIMEServiceTest {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() ->
                 service.showReverseLookup("大: k"));
 
-        verify(candidateView).showLimeToastUntilNextKey("大: k");
+        verify(candidateView).showLimeToast("大: k");
+        verify(candidateView, never()).showLimeToastUntilNextKey(any());
         verify(candidateView, never()).setComposingText(anyString());
     }
 
     @Test
-    public void nextKeyClearsPersistentLimeToast() {
+    public void nextKeyClearsLimeToastIfStillVisible() {
         MockInputMethodServiceHelper helper = new MockInputMethodServiceHelper();
         CandidateView candidateView = helper.injectMockCandidateView();
         helper.injectMockInputView();

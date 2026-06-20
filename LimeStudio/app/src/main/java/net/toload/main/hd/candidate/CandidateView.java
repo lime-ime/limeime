@@ -78,6 +78,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
+    static final int LIME_TOAST_TIMEOUT_MS = 1400;
 
     protected static final int OUT_OF_BOUNDS = -1;
 
@@ -477,7 +478,7 @@ public class CandidateView extends View implements View.OnClickListener {
             removeMessages(MSG_SHOW_LIME_TOAST);
             removeMessages(MSG_HIDE_LIME_TOAST);
             sendMessage(obtainMessage(MSG_SHOW_LIME_TOAST, 0, 0, text));
-            sendMessageDelayed(obtainMessage(MSG_HIDE_LIME_TOAST, 0, 0, null), 1400);
+            sendMessageDelayed(obtainMessage(MSG_HIDE_LIME_TOAST, 0, 0, null), LIME_TOAST_TIMEOUT_MS);
         }
 
         public void showLimeToastUntilNextKey(CharSequence text) {
@@ -966,6 +967,12 @@ public class CandidateView extends View implements View.OnClickListener {
         return hasWindowToken && text != null && text.length() > 0;
     }
 
+    static int limeToastYAlignedWithComposingPopup(int anchorTop, int measuredToastHeight,
+                                                   int composingPopupHeight) {
+        int alignmentHeight = composingPopupHeight > 0 ? composingPopupHeight : measuredToastHeight;
+        return anchorTop - alignmentHeight;
+    }
+
     static String dictationDisplayText(DictationState state, String text) {
         if (state == null) {
             return "";
@@ -1025,7 +1032,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
         int baseX = popupBaseXInWindow(offsetInWindow[0]);
         int x = baseX;
-        int y = offsetInWindow[1] - toastHeight;
+        Paint.FontMetrics toastFontMetrics = mLimeToastTextView.getPaint().getFontMetrics();
+        int composingPopupHeight = Math.round(toastFontMetrics.bottom - toastFontMetrics.top);
+        int y = limeToastYAlignedWithComposingPopup(offsetInWindow[1], toastHeight,
+                composingPopupHeight);
         if (embeddedComposing != null && embeddedComposing.getVisibility() == VISIBLE) {
             int[] composingOffset = new int[2];
             embeddedComposing.getLocationInWindow(composingOffset);
