@@ -73,13 +73,18 @@ This is a geometry/placement bug in the Android reverse-lookup lime-toast path, 
 
 The reporter provided Android version, device model, LINE version, LIME IME version, and confirmed in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 that similar bottom-composer apps such as WeChat and Instagram are affected.
 
+Maintainer follow-up already posted:
+
+- `limeimetw` asked in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757301116 whether the composing/root-key display during typing (for example `1-/5⇣`) also overlaps the bottom composer in LINE, WeChat, and Instagram, or whether only the post-commit reverse-lookup grey popup does.
+
 Remaining useful follow-up, if the maintainer needs it before reproducing/fixing:
 
 - Reverse-lookup source setting
 - Exact operation sequence from typing Array roots to showing the floating reverse-lookup window
+- Whether composing/root-key display and post-commit reverse lookup overlap in the same place, or whether only one display path is affected
 - Whether display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
 
-Because this was reported by email and the issue was created by `limeimetw`, do not post these as a public GitHub question unless the maintainer wants public follow-up. A private email follow-up may be better if the reporter is not using GitHub.
+Because this was reported by email and the issue was created by `limeimetw`, avoid posting duplicate public GitHub questions. A private email follow-up may be better if the reporter is not using GitHub.
 
 ## Verification plan
 
