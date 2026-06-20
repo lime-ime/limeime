@@ -8,7 +8,7 @@
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public acknowledgement: none needed for now because this tracking issue was created by the project account on behalf of the email reporter.
-- Source fix status: PR #125 merged to `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`, covering the scoped reverse-lookup timeout/alignment fix. PR #126 remains open for the broader Android composing/root-key and reverse-lookup popup placement clamp.
+- Source fix status: PR #125 merged to `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`, covering the scoped reverse-lookup timeout/alignment fix. PR #126 was closed unmerged by `jrywu` in favor of maintainer commit `9fc84f97`, but that commit was not GitHub-visible when checked on 2026-06-20T23:19:06+08:00, so the broader Android composing/root-key and reverse-lookup popup placement clamp remains pending until the commit reaches `master`.
 
 ## Problem statement
 
@@ -79,7 +79,7 @@ PR #125 merged a scoped Android source fix to `master`:
 
 ## Remaining broader fix direction
 
-Reporter evidence already shows both reverse lookup and composing/root-key hints can overlap bottom-composer input regions. After PR #125, the remaining Android follow-up is a shared popup safe-area strategy for both reverse lookup and composing/root-key hints. PR #126 is the current open candidate fix for that broader placement clamp. Candidate approaches remain:
+Reporter evidence already shows both reverse lookup and composing/root-key hints can overlap bottom-composer input regions. After PR #125, the remaining Android follow-up is a shared popup safe-area strategy for both reverse lookup and composing/root-key hints. PR #126 carried a candidate clamp for that broader placement issue, but it was closed unmerged by `jrywu` with a note that commit `9fc84f97` supersedes it. That commit was not GitHub-visible when checked on 2026-06-20T23:19:06+08:00, so the source-of-truth status remains: keep #124 active until the broader placement commit is visible on `master` and a newer Android build is available. Candidate approaches remain:
 
 - Prefer rendering these short hints inside the existing candidate/input view area when possible, similar to the iOS candidate-bar path.
 - If a `PopupWindow` remains necessary, use a shared helper to clamp or flip its Y position to stay within the IME-owned/candidate area instead of drawing into the host editor area.
@@ -118,7 +118,7 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 ## Backlog / release follow-up
 
 - PR #125's scoped Android reverse-lookup timeout/alignment source fix is now on `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`.
-- Keep #124 active because the broader composing/root-key safe-area fix is still pending in PR #126, and no newer Android build is available for reporter retest.
-- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no newer public Android build contains the #124 fixes yet.
+- Keep #124 active because the broader composing/root-key safe-area fix is no longer on an open PR after #126 was closed unmerged, the referenced replacement commit `9fc84f97` was not GitHub-visible when checked, and no newer Android build is available for reporter retest.
+- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD202661221-6.1.22.apk` line and no newer public Android build contains the #124 fixes yet.
 - No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup and composing/root-key popup placement fixes.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
