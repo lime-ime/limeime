@@ -6,7 +6,7 @@ Last reviewed: 2026-06-20
 
 ## Active issue follow-up
 
-- #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. The scoped reverse-lookup source fix keeps the key-name display unchanged, restores the reverse-lookup lime-toast timeout, and aligns reverse-lookup Y placement to the key-name / composing popup height. Keep this active until the scoped fix is on `master`, a newer Android build is available for reporter retest, and any remaining composing/root-key safe-area follow-up is decided.
+- #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. PR #125 merged the scoped reverse-lookup timeout/alignment fix to `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`; keep this active because broader composing/root-key safe-area placement remains pending in PR #126, no newer Android build is available for reporter retest, and manual LINE/WeChat/Instagram device verification is still needed.
 
 ## Source fixed / awaiting build verification
 

@@ -8,6 +8,7 @@
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public acknowledgement: none needed for now because this tracking issue was created by the project account on behalf of the email reporter.
+- Source fix status: PR #125 merged to `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`, covering the scoped reverse-lookup timeout/alignment fix. PR #126 remains open for the broader Android composing/root-key and reverse-lookup popup placement clamp.
 
 ## Problem statement
 
@@ -67,16 +68,18 @@ The reverse-lookup lime-toast path also had two narrower regressions relative to
 
 This is a geometry and lifetime bug in Android candidate-view popup handling, not a LINE-specific text-processing bug based on current evidence.
 
-## Concrete fix direction for this patch
+## Merged scoped fix from PR #125
 
-1. Do not touch the key-name / composing display path in this patch. It is the reference behavior for reverse-lookup alignment, even though the broader issue may still need a later shared safe-area treatment for both popup paths.
-2. Route `showReverseLookup(...)` through the existing timed `showLimeToast(...)` path instead of the persistent `showLimeToastUntilNextKey(...)` path. This restores the original short timeout behavior while preserving next-key early dismissal.
-3. Keep the lime-toast popup visual style, target selection, and X clamping unchanged. Only lower the default above-candidate-row Y placement by aligning it to the composing/key-name popup text height, with measured toast height as fallback.
-4. Lock the behavior with focused Android instrumentation-test coverage for reverse-lookup routing, timeout constant, and the Y-position helper.
+PR #125 merged a scoped Android source fix to `master`:
+
+1. It deliberately leaves the key-name / composing display path unchanged as the reference behavior for reverse-lookup alignment, while keeping the broader shared safe-area treatment for both popup paths as follow-up work.
+2. `showReverseLookup(...)` now routes through the existing timed `showLimeToast(...)` path instead of the persistent `showLimeToastUntilNextKey(...)` path. This restores the original short timeout behavior while preserving next-key early dismissal.
+3. The lime-toast popup visual style, target selection, and X clamping remain unchanged. The default above-candidate-row Y placement is lowered by aligning it to the composing/key-name popup text height, with measured toast height as fallback.
+4. Focused Android instrumentation-test coverage locks reverse-lookup routing, the timeout constant, and the Y-position helper.
 
 ## Remaining broader fix direction
 
-If reporter/device verification still shows unacceptable overlap after this scoped reverse-lookup fix, the next step should be a shared popup safe-area strategy for both reverse lookup and composing/root-key hints. Candidate approaches:
+Reporter evidence already shows both reverse lookup and composing/root-key hints can overlap bottom-composer input regions. After PR #125, the remaining Android follow-up is a shared popup safe-area strategy for both reverse lookup and composing/root-key hints. PR #126 is the current open candidate fix for that broader placement clamp. Candidate approaches remain:
 
 - Prefer rendering these short hints inside the existing candidate/input view area when possible, similar to the iOS candidate-bar path.
 - If a `PopupWindow` remains necessary, use a shared helper to clamp or flip its Y position to stay within the IME-owned/candidate area instead of drawing into the host editor area.
@@ -114,7 +117,8 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 
 ## Backlog / release follow-up
 
-- This change set contains the scoped Android reverse-lookup timeout/alignment source fix. Keep #124 active until the fix is on `master` and a newer Android build is available for reporter retest.
-- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no newer public Android build contains this fix yet.
-- No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup placement and timeout fix.
+- PR #125's scoped Android reverse-lookup timeout/alignment source fix is now on `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`.
+- Keep #124 active because the broader composing/root-key safe-area fix is still pending in PR #126, and no newer Android build is available for reporter retest.
+- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no newer public Android build contains the #124 fixes yet.
+- No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup and composing/root-key popup placement fixes.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
