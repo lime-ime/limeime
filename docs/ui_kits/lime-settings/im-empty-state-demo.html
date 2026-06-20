@@ -1,0 +1,231 @@
+<!-- @dsCard group="LIME Settings" viewport="430x760" name="IM list — empty state + FAB nudge" subtitle="Radar-pulse halo on the + FAB with a bobbing arrow when no IM is installed" -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IM Empty State — FAB nudge</title>
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  html, body { margin: 0; height: 100%; background: #c9ccd2; font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased; }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  #device {
+    width: 393px; height: 852px; flex: 0 0 auto; transform-origin: center center;
+    background: #fff; border-radius: 54px; position: relative; overflow: hidden;
+    box-shadow: 0 1px 0 4px #1c1d22, 0 0 0 14px #2b2d34, 0 30px 80px rgba(0,0,0,.45);
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
+  .statusbar { height: 54px; flex: 0 0 auto; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 0 32px 6px; position: relative; z-index: 5; }
+  .statusbar .time { font: 600 16px/1 var(--font-sans); letter-spacing: .3px; }
+  .statusbar .right { display: flex; align-items: center; gap: 6px; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 36px; background: #000; border-radius: 20px; z-index: 6; }
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
+  .scroll::-webkit-scrollbar { width: 0; }
+  .tabhost { flex: 0 0 auto; padding-bottom: 22px; }
+
+  /* ── Empty state ───────────────────────────────────────────── */
+  .empty-wrap { display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 40px 24px 32px; gap: 16px; }
+  .empty-mark {
+    width: 96px; height: 96px; border-radius: 28px; display: flex; align-items: center; justify-content: center;
+    color: var(--accent); background: var(--fill-quaternary);
+  }
+  .empty-title { font: 600 20px/26px var(--font-sans); color: var(--text-primary); }
+  .empty-body { font: 400 15px/21px var(--font-sans); color: var(--text-secondary); max-width: 250px; }
+
+  /* ── FAB ───────────────────────────────────────────────────── */
+  .fab-zone { position: absolute; right: 20px; bottom: 20px; width: 52px; height: 52px; z-index: 20; }
+  .fab {
+    position: absolute; inset: 0; width: 52px; height: 52px; border-radius: 50%; border: none;
+    background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-fab); cursor: pointer; z-index: 2;
+  }
+  /* Radar pulse — two staggered rings expanding out of the FAB */
+  .fab-zone .ring {
+    position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px;
+    border-radius: 50%; background: var(--accent); opacity: 0; z-index: 1;
+    animation: fab-pulse 2.4s cubic-bezier(.22,.61,.36,1) infinite;
+  }
+  .fab-zone .ring.r2 { animation-delay: 1.2s; }
+  @keyframes fab-pulse {
+    0%   { transform: scale(1);   opacity: .45; }
+    70%  { opacity: 0; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  /* FAB itself gives a tiny periodic "breath" so it reads as the target */
+  .fab.attn { animation: fab-breath 2.4s ease-in-out infinite; }
+  @keyframes fab-breath {
+    0%, 62%, 100% { transform: scale(1); }
+    72%           { transform: scale(1.08); }
+    82%           { transform: scale(.98); }
+  }
+
+  /* ── Callout pill pointing at the FAB ──────────────────────── */
+  .nudge-callout {
+    position: absolute; right: 20px; bottom: 84px; z-index: 15; pointer-events: none;
+    animation: callout-bob 1.8s ease-in-out infinite;
+  }
+  .nudge-callout .pill {
+    position: relative; background: var(--accent); color: #fff;
+    font: 600 14px/1 var(--font-sans); padding: 9px 13px; border-radius: 11px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18); white-space: nowrap;
+  }
+  .nudge-callout .caret {
+    position: absolute; right: 16px; bottom: -5px; width: 12px; height: 12px;
+    background: var(--accent); transform: rotate(45deg); border-radius: 2px;
+  }
+  @keyframes callout-bob {
+    0%, 100% { transform: translateY(0); opacity: .95; }
+    50%      { transform: translateY(4px); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fab-zone .ring { animation: none; opacity: .18; transform: scale(1.9); }
+    .fab.attn, .nudge-callout { animation: none; }
+  }
+
+  /* ── Demo control (outside the phone) ──────────────────────── */
+  .demo-toggle {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 100;
+    display: flex; gap: 6px; background: rgba(255,255,255,.9); backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 5px; box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  }
+  .demo-toggle button {
+    border: none; background: none; cursor: pointer; padding: 8px 16px; border-radius: 999px;
+    font: 600 13px/1 var(--font-sans); color: #5b5e66;
+  }
+  .demo-toggle button.on { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="device"><div id="root"></div></div></div>
+<div class="demo-toggle">
+  <button id="btn-empty" class="on">Empty list</button>
+  <button id="btn-filled">After install</button>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script>document.write('<scr'+'ipt src="../../_ds_bundle.js?v='+Date.now()+'"><\/scr'+'ipt>');</script>
+<script>(function(){var v='?v='+Date.now();['icons.jsx'].forEach(function(m){document.write('<scr'+'ipt type="text/babel" src="'+m+v+'"><\/scr'+'ipt>');});})();</script>
+<script type="text/babel">
+  const { TabBar, ListGroup, ListRow, Switch } = window.LIMEDesignSystem_6ca3c0;
+  const I = window.LimeIcons;
+
+  function StatusBar() {
+    return (
+      <div className="statusbar">
+        <span className="time">9:41</span>
+        <span className="right">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="#000"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+          <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="3" stroke="#000" strokeOpacity=".4"/><rect x="2.5" y="2.5" width="16" height="7" rx="1.6" fill="#000"/><rect x="23.5" y="4" width="1.5" height="4" rx=".7" fill="#000" fillOpacity=".4"/></svg>
+        </span>
+      </div>
+    );
+  }
+
+  function CharAvatar({ glyph }) {
+    return <span style={{ width: 30, height: 30, flex: "0 0 auto", borderRadius: 7, background: "var(--icon-tile)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", font: "500 15px/1 var(--font-sans)" }}>{glyph}</span>;
+  }
+
+  const SEED = [
+    { id: "phonetic", label: "注音", glyph: "ㄅ", on: true },
+    { id: "cj", label: "倉頡", glyph: "倉", on: true },
+    { id: "ecj", label: "速成", glyph: "速", on: true },
+  ];
+
+  function EmptyState() {
+    return (
+      <div className="empty-wrap">
+        <div className="empty-mark">{I.keyboard ? I.keyboard({ size: 46 }) : "⌨"}</div>
+        <div className="empty-title">尚未安裝任何輸入法</div>
+        <div className="empty-body">點選右下角的 <b style={{color:"var(--accent)"}}>＋</b> 下載或匯入輸入法字根，即可開始使用。</div>
+      </div>
+    );
+  }
+
+  // Callout pill that points at the FAB
+  function NudgeArrow() {
+    return (
+      <div className="nudge-callout">
+        <div className="pill">安裝輸入法<div className="caret" /></div>
+      </div>
+    );
+  }
+
+  function IMTab({ empty }) {
+    const [ims, setIms] = React.useState(SEED);
+    const toggle = (id) => setIms((s) => s.map((m) => m.id === id ? { ...m, on: !m.on } : m));
+    return (
+      <div style={{ position: "relative", minHeight: "100%" }}>
+        <div style={{ padding: "0 24px 28px", display: "flex", flexDirection: "column", gap: 22 }}>
+          <div style={{ font: "700 34px/41px var(--font-sans)", letterSpacing: "-.4px", padding: "8px 0 0" }}>管理輸入法</div>
+          {empty ? <EmptyState /> : (
+            <ListGroup header="已安裝的輸入法">
+              {ims.map((m) => (
+                <ListRow key={m.id} leading={<CharAvatar glyph={m.glyph} />} title={m.label}
+                  style={{ opacity: m.on ? 1 : 0.55 }} chevron
+                  trailing={<span onClick={(e) => e.stopPropagation()}><Switch checked={m.on} onChange={() => toggle(m.id)} /></span>} />
+              ))}
+            </ListGroup>
+          )}
+          <ListGroup header="關聯字庫">
+            <ListRow leading={<span style={{ width: 30, height: 30, flex: "0 0 auto", borderRadius: 7, background: "var(--icon-tile)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ width: 17, height: 17, display: "inline-flex" }}>{I.bubble({ size: 17 })}</span></span>} title="關聯字庫" chevron />
+          </ListGroup>
+        </div>
+        {empty && <NudgeArrow />}
+        <div className="fab-zone">
+          {empty && <span className="ring" />}
+          {empty && <span className="ring r2" />}
+          <button type="button" className={"fab" + (empty ? " attn" : "")}>{I.plus({ size: 26 })}</button>
+        </div>
+      </div>
+    );
+  }
+
+  const TABS = [
+    { key: "setup", label: "設定", icon: I.gear({ size: 25 }) },
+    { key: "im", label: "輸入法", icon: I.list({ size: 25 }) },
+    { key: "prefs", label: "喜好設定", icon: I.sliders({ size: 25 }) },
+    { key: "db", label: "資料庫", icon: I.archive({ size: 25 }) },
+  ];
+
+  function App() {
+    const [empty, setEmpty] = React.useState(true);
+    React.useEffect(() => {
+      document.getElementById("btn-empty").onclick = () => setEmpty(true);
+      document.getElementById("btn-filled").onclick = () => setEmpty(false);
+    }, []);
+    React.useEffect(() => {
+      document.getElementById("btn-empty").classList.toggle("on", empty);
+      document.getElementById("btn-filled").classList.toggle("on", !empty);
+    }, [empty]);
+    return (
+      <div className="screen">
+        <div className="island" />
+        <StatusBar />
+        <div className="scroll">
+          <IMTab empty={empty} />
+        </div>
+        <div className="tabhost">
+          <TabBar items={TABS} active="im" onChange={() => {}} />
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+  function fit() {
+    const pad = 24;
+    const s = Math.min((window.innerWidth - pad) / 393, (window.innerHeight - pad) / 852, 1);
+    document.getElementById("device").style.transform = "scale(" + s + ")";
+  }
+  window.addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>
