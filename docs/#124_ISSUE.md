@@ -1,4 +1,4 @@
-# Issue #124: Android reverse-lookup toast overlaps LINE message input field
+# Issue #124: Android root/reverse-lookup popups overlap bottom message input fields
 
 ## Current status
 
@@ -11,7 +11,7 @@
 
 ## Problem statement
 
-The reporter says that when using LIME IME Array input inside LINE on Android, committing a candidate can trigger the reverse-lookup display and the grey floating reverse-lookup window appears near the LINE message input field. In the attached email screenshot described by the issue, that floating window covers the active message input area, interfering with reading and continuing to type.
+The reporter says that when using LIME IME Array input inside LINE on Android, committing a candidate can trigger the reverse-lookup display and the grey floating reverse-lookup window appears near the LINE message input field. In the attached email screenshot described by the issue, that floating window covers the active message input area, interfering with reading and continuing to type. Reporter follow-up screenshots now also show the composing/root-key display during typing overlapping bottom-composer input regions, so the issue likely covers both Android floating popup paths rather than only the post-commit reverse-lookup toast.
 
 Known public reproduction context:
 
@@ -20,8 +20,9 @@ Known public reproduction context:
 - Device: Asus Zenfone 12 Ultra
 - LIME IME version: 6.1.22-2026
 - IM/table: LIME IME Array
-- Feature: reverse lookup notification after candidate commit
+- Feature: reverse lookup notification after candidate commit, and composing/root-key display during typing.
 - Public screenshots in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 show the grey reverse-lookup popup overlapping bottom chat input/composer regions rather than staying inside the IME/candidate area.
+- Public screenshots in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757356156 answer the maintainer follow-up by showing the composing/root-key display also appears in the same bottom-composer area in LINE/Instagram-style screens.
 - Still missing details: the exact key sequence / reverse-lookup source setting, which specific WeChat/Instagram screens were tested, and whether display/fullscreen, keyboard-height, or font/display-size settings affect the overlap.
 
 ## Source evidence inspected
@@ -35,8 +36,13 @@ Android:
   - `onKey(...)` hides the lime toast at the start of the next key event, so reverse lookup is intentionally persistent until the next LIME key press rather than a short system toast.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
   - `doShowLimeToast(...)` creates a custom `PopupWindow` (`mLimeToastPopup`) with `setClippingEnabled(false)` and positions it with `showAtLocation(this, Gravity.NO_GRAVITY, x, y)`.
-  - The current Y position is `offsetInWindow[1] - toastHeight`, with optional alignment to `embeddedComposing`/`mComposingTextView`. There is no visible-frame / host-editor overlap check before showing the popup.
-  - X is clamped to the candidate row right edge, but Y is not clamped or flipped relative to the visible app/edit field area.
+  - The reverse-lookup Y position is `offsetInWindow[1] - toastHeight`, with optional alignment to `embeddedComposing`/`mComposingTextView`. There is no visible-frame / host-editor overlap check before showing the popup.
+  - `doSetComposing(...)` / `doUpdateComposing(...)` can also create `mComposingTextPopup` when no embedded composing view is available, using `mPopupComposingY = offsetInWindow[1] - popupHeight` and `showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY)` without visible-frame / host-editor overlap checks.
+  - X is clamped for the reverse-lookup popup to the candidate row right edge, but Y is not clamped or flipped relative to the visible app/edit field area. The composing popup path similarly anchors above the candidate view.
+- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
+  - The normal in-keyboard candidate row initializes `R.id.candidatesView` but does not wire an `embeddedComposing` view, so composing/root-key display can fall back to `mComposingTextPopup` in the active input-view path.
+- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateViewContainer.java` and `LimeStudio/app/src/main/res/layout/candidates.xml`
+  - The expanded/floating candidate container has `R.id.embeddedComposing` and calls `setEmbeddedComposingView(...)`, so popup behavior can differ between the normal in-keyboard row and expanded/floating candidate container.
 - `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
   - `reverseLookupUsesPersistentLimeToast()` verifies reverse lookup uses `showLimeToastUntilNextKey(...)` and does not reuse composing text.
   - `nextKeyClearsPersistentLimeToast()` verifies the next key hides the persistent toast.
@@ -51,58 +57,54 @@ Analogous iOS path checked:
 
 ## Likely root cause
 
-The Android reverse-lookup notification was moved to a custom persistent `PopupWindow` anchored around the candidate row. In LINE, WeChat, Instagram, and similar bottom-composer apps, the candidate row can sit immediately below or near the host app's message input field. Because `CandidateView.doShowLimeToast(...)` positions the popup above the candidate view without checking the host window's visible input/editor area, the reverse-lookup popup can extend into and cover the app's message input field.
+Android has two relevant floating-popup paths anchored around the candidate row: the persistent reverse-lookup lime toast (`mLimeToastPopup`) and the composing/root-key popup (`mComposingTextPopup`) used when the active input-view candidate row lacks an embedded composing view. In LINE, WeChat, Instagram, and similar bottom-composer apps, the candidate row can sit immediately below or near the host app's message input field. Because both popup paths position themselves above the candidate view without checking the host window's visible input/editor area, either popup can extend into and cover the app's message input field.
 
-This is a geometry/placement bug in the Android reverse-lookup lime-toast path, not a LINE-specific text-processing bug based on current evidence.
+This is a geometry/placement bug in Android candidate-view popup handling, not a LINE-specific text-processing bug based on current evidence.
 
 ## Proposed fix / investigation direction
 
-1. Reproduce on Android with LINE and Array IM, reverse lookup enabled, and a committed candidate that produces reverse-lookup text.
+1. Reproduce on Android with LINE and Array IM, covering both the composing/root-key popup while typing and the reverse-lookup popup after committing a candidate.
 2. Inspect the runtime values for:
    - candidate view `getLocationInWindow(...)`
-   - toast measured height
+   - composing-popup and reverse-lookup toast measured heights
    - root-window visible display frame / IME visible area
    - whether LINE uses fullscreen/extract mode, insets, or adjusted resize/pan behavior on the affected device.
-3. Change the Android reverse-lookup display so it avoids covering the host input field. Candidate approaches:
-   - Prefer rendering reverse-lookup text inside the existing candidate/input view area when possible, similar to the iOS candidate-bar path.
-   - If a `PopupWindow` remains necessary, clamp or flip its Y position to stay within the IME-owned/candidate area instead of drawing into the host editor area.
-   - Add a small fallback for constrained layouts: use candidate-bar inline text or a short in-keyboard toast when there is not enough safe space above the candidate row.
-4. Add focused tests for the geometry helper(s), especially when the candidate row is adjacent to the visible host editor area and the popup would otherwise overlap it.
+3. Change the Android popup display strategy so both reverse lookup and composing/root-key hints avoid covering the host input field. Candidate approaches:
+   - Prefer rendering these short hints inside the existing candidate/input view area when possible, similar to the iOS candidate-bar path.
+   - If a `PopupWindow` remains necessary, use a shared helper to clamp or flip its Y position to stay within the IME-owned/candidate area instead of drawing into the host editor area.
+   - Add a small fallback for constrained layouts: use candidate-bar inline text or a short in-keyboard hint when there is not enough safe space above the candidate row.
+4. Add focused tests for the geometry helper(s), especially when the candidate row is adjacent to the visible host editor area and either popup would otherwise overlap it.
 
 ## Follow-up questions for the reporter
 
-The reporter provided Android version, device model, LINE version, LIME IME version, and confirmed in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 that similar bottom-composer apps such as WeChat and Instagram are affected.
-
-Maintainer follow-up already posted:
-
-- `limeimetw` asked in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757301116 whether the composing/root-key display during typing (for example `1-/5⇣`) also overlaps the bottom composer in LINE, WeChat, and Instagram, or whether only the post-commit reverse-lookup grey popup does.
+The reporter provided Android version, device model, LINE version, LIME IME version, confirmed in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 that similar bottom-composer apps such as WeChat and Instagram are affected, and answered the maintainer's composing/root-key display question in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757356156 with screenshots showing the composing/root-key popup also near the bottom composer.
 
 Remaining useful follow-up, if the maintainer needs it before reproducing/fixing:
 
 - Reverse-lookup source setting
 - Exact operation sequence from typing Array roots to showing the floating reverse-lookup window
-- Whether composing/root-key display and post-commit reverse lookup overlap in the same place, or whether only one display path is affected
 - Whether display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
 
-Because this was reported by email and the issue was created by `limeimetw`, avoid posting duplicate public GitHub questions. A private email follow-up may be better if the reporter is not using GitHub.
+Because this was reported by email and the issue was created by `limeimetw`, avoid posting duplicate public GitHub questions. A private email follow-up may be better if the maintainer needs more device/settings details and the reporter is not using GitHub.
 
 ## Verification plan
 
 - Manual Android verification:
-  - LINE, WeChat, Instagram, or another chat-style input with a bottom-aligned composer, using Array IM and reverse lookup enabled.
+  - LINE, WeChat, Instagram, or another chat-style input with a bottom-aligned composer, using Array IM, composing/root-key display, and reverse lookup enabled.
   - At least one non-chat app with a bottom-aligned text field, to determine whether this is general bottom-composer geometry or chat-app-specific.
   - At least one normal text editor / notes app to confirm the reverse-lookup display remains visible and readable.
 - Regression checks:
+  - Composing/root-key hints remain visible and readable while typing.
   - Reverse lookup still appears after candidate commit when enabled.
   - Reverse lookup still hides on the next LIME key press.
   - Candidate bar, expanded candidate popup, and clear-code/dismiss controls remain usable.
 - Automated checks:
-  - Add unit/helper coverage for toast Y-position selection and no-overlap fallback.
-  - Keep or update existing `reverseLookupUsesPersistentLimeToast()` / `nextKeyClearsPersistentLimeToast()` expectations according to the chosen UI path.
+  - Add unit/helper coverage for popup Y-position selection and no-overlap fallback.
+  - Keep or update existing composing-popup and `reverseLookupUsesPersistentLimeToast()` / `nextKeyClearsPersistentLimeToast()` expectations according to the chosen UI path.
 
 ## Backlog / release follow-up
 
-- Track as an active Android usability bug until a source fix lands.
-- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no targeted reverse-lookup placement fix has landed after it.
-- No public reporter retest request should be posted until a newer Android APK contains the relevant reverse-lookup placement fix.
+- Track as an active Android usability bug until a source fix lands for bottom-composer placement of both composing/root-key and reverse-lookup floating popups.
+- No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no targeted popup-placement fix has landed after it.
+- No public reporter retest request should be posted until a newer Android APK contains the relevant popup-placement fix.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
