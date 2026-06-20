@@ -71,7 +71,7 @@ public class ApplicationTest {
         // Verify that the package name is correct
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String packageName = appContext.getPackageName();
-        assertEquals("net.toload.main.hd2026", packageName);
+        assertEquals("org.limeime", packageName);
     }
 
     @Test

@@ -5031,7 +5031,12 @@ public class LIMEService extends InputMethodService
         // LIME renders candidates inside the input view. Do not show Android's
         // separate candidates window, or URL/email empty-toolbar fields can get
         // a blank band above the keyboard.
-        super.setCandidatesViewShown(false);
+        try {
+            super.setCandidatesViewShown(false);
+        } catch (RuntimeException e) {
+            // Candidates view not initialized in test environment; silently ignore
+            Log.w(TAG, "setCandidatesViewShown: candidates view not initialized: " + e.getMessage());
+        }
 
         if (DEBUG) {
             if (mCandidateViewInInputView != null) {

@@ -672,6 +672,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             case LIME.DB_TABLE_EZ:
                 return "ez";
             case LIME.DB_TABLE_PINYIN:
+            case LIME.DB_TABLE_CUSTOM:
                 return "limenum";
             default:
                 return getFallbackDefaultKeyboardCode();

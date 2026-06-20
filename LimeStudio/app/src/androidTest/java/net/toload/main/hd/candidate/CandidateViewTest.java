@@ -66,6 +66,36 @@ public class CandidateViewTest {
     }
 
     @Test
+    public void clampPopupYKeepsToastFromRisingAboveCandidateRowIntoHostInput() {
+        // Issue #124: the reverse-lookup toast / composing popup naturally anchor at
+        // (candidateTop - popupHeight), i.e. above the candidate row. In bottom-composer apps
+        // (LINE/WeChat/Instagram) that area is the host message input field, so the popup must be
+        // clamped down to the candidate row top (start of the IME-owned area).
+        int candidateTopInWindow = 0;
+        int popupHeight = 80;
+        int desiredY = candidateTopInWindow - popupHeight; // -80, above the candidate row
+
+        assertEquals(candidateTopInWindow,
+                CandidateView.clampPopupYToImeArea(desiredY, candidateTopInWindow));
+    }
+
+    @Test
+    public void clampPopupYLeavesNaturalPositionWhenAlreadyInsideImeArea() {
+        // When the candidate row is not at the window top (e.g. floating candidate bar) and the
+        // popup already sits at/below the row top, the clamp must not push it down further.
+        int candidateTopInWindow = 40;
+        int desiredY = 120;
+
+        assertEquals(120, CandidateView.clampPopupYToImeArea(desiredY, candidateTopInWindow));
+    }
+
+    @Test
+    public void clampPopupYAtCandidateTopIsUnchanged() {
+        // Boundary: a popup already flush with the candidate row top stays put.
+        assertEquals(50, CandidateView.clampPopupYToImeArea(50, 50));
+    }
+
+    @Test
     public void setSuggestionsWithoutHighlightLeavesNoSelectedCandidate() {
         CandidateView candidateView = new CandidateView(
                 InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
