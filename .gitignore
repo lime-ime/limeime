@@ -12,6 +12,10 @@ tmp/
 *.swp
 *~.nib
 local.properties
+# Release signing credentials — never commit
+keystore.properties
+*.jks
+*.keystore
 .classpath
 .settings/
 .loadpath

@@ -25,9 +25,27 @@ plugins {
     id 'com.android.application'
 }
 
+// Load release signing credentials from keystore.properties (gitignored).
+// Absent file -> release builds go unsigned (repo still builds for everyone else).
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+def hasReleaseSigning = false
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+    hasReleaseSigning = keystoreProps['storeFile'] && keystoreProps['storePassword'] != 'CHANGE_ME'
+}
+
 android {
     namespace 'net.toload.main.hd'
     signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
     }
     compileSdkVersion 36
     defaultConfig {
@@ -50,6 +68,9 @@ android {
     }
     buildTypes {
         release {
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
