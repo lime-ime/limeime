@@ -25,15 +25,16 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 ### 最新正式版（GitHub Release）
 
-- 版本：v6.1.21
-- APK：[LIMEHD2026-6.1.21.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.21/LIMEHD2026-6.1.21.apk)
+- 版本：v6.1.22
+- APK：[LIMEHD202661221-6.1.22.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.22/LIMEHD202661221-6.1.22.apk)
 
 ## 版本與相容性
 
-- 套件名稱：net.toload.main.hd2026
+- 套件名稱：org.limeime
 - 目標 SDK：36
 - 最低支援 SDK：21
-- 與舊版可並存安裝
+- 與 v6.1.21 以前使用舊套件名稱的版本可並存安裝
+- GitHub Release APK 與 Google Play 版本使用不同簽署金鑰，切換安裝來源前請先備份資料，再解除安裝原版本後重新安裝
 
 ## 開發
 
@@ -73,7 +74,7 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 - 裝置品牌與型號（例如：Samsung Galaxy S23 / iPhone 15）
 - 系統版本（例如：Android 14 / API 34，或 iOS 17）
-- App 版本（例如：v6.1.21）
+- App 版本（例如：v6.1.22）
 - 安裝來源（GitHub Release 或歷史版本 APK）
 - 問題發生步驟與預期結果
 - 實際結果與錯誤訊息（若有）

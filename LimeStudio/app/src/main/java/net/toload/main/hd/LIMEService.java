@@ -4949,23 +4949,6 @@ public class LIMEService extends InputMethodService
         }
     }
 
-    private void showPersistentLimeToast(CharSequence text) {
-        if (text == null || text.length() == 0) return;
-        try {
-            if (Looper.myLooper() != null) {
-                CandidateView toastTarget = mCandidateView;
-                if (mCandidateViewInInputView != null && mCandidateViewInInputView.getWindowToken() != null) {
-                    toastTarget = mCandidateViewInInputView;
-                }
-                if (toastTarget != null) {
-                    toastTarget.showLimeToastUntilNextKey(text);
-                }
-            }
-        } catch (RuntimeException e) {
-            Log.w(TAG, "Cannot show persistent lime_toast: " + e.getMessage());
-        }
-    }
-
     private void hideLimeToast() {
         try {
             if (mCandidateView != null) {
@@ -4981,7 +4964,7 @@ public class LIMEService extends InputMethodService
 
     public void showReverseLookup(CharSequence text) {
         if (text == null || text.length() == 0) return;
-        showPersistentLimeToast(text);
+        showLimeToast(text);
     }
 
 

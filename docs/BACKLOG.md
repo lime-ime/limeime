@@ -6,7 +6,7 @@ Last reviewed: 2026-06-20
 
 ## Active issue follow-up
 
-- #124 Android: reverse-lookup lime-toast / floating popup can cover the LINE message input field when using Array input. Track as an active Android usability bug until the reverse-lookup display is constrained to the IME/candidate area or moved inline; no APK retest request applies until a newer Android build contains the targeted fix.
+- #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. PR #125 merged the scoped reverse-lookup timeout/alignment fix to `master` as commit `c7a0959fbe316cb432629bb181ca6ef700ca6983`; keep this active because PR #126 was closed unmerged, maintainer-referenced replacement commit `9fc84f97` was not GitHub-visible when checked, no newer Android build is available for reporter retest, and manual LINE/WeChat/Instagram device verification is still needed.
 
 ## Source fixed / awaiting build verification
 

@@ -34,6 +34,17 @@ public class CandidateViewTest {
     }
 
     @Test
+    public void limeToastYAlignsWithComposingPopupHeight() {
+        assertEquals(80, CandidateView.limeToastYAlignedWithComposingPopup(100, 32, 20));
+        assertEquals(68, CandidateView.limeToastYAlignedWithComposingPopup(100, 32, 0));
+    }
+
+    @Test
+    public void limeToastKeepsShortTimeout() {
+        assertEquals(1400, CandidateView.LIME_TOAST_TIMEOUT_MS);
+    }
+
+    @Test
     public void candidateActionButtonsStayTransparentOnThemedRow() {
         int darkCandidateBackground = Color.rgb(16, 16, 16);
 
