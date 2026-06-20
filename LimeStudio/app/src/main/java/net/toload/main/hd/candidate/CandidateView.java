@@ -863,6 +863,9 @@ public class CandidateView extends View implements View.OnClickListener {
         int mPopupComposingX = popupBaseXInWindow(offsetInWindow[0]);
 
         mPopupComposingY -= popupHeight;
+        // Issue #124: never let the composing/root-key popup rise above the candidate row into a
+        // host bottom-composer input field.
+        mPopupComposingY = clampPopupYToImeArea(mPopupComposingY, offsetInWindow[1]);
 
 
         if (DEBUG)
@@ -1026,13 +1029,19 @@ public class CandidateView extends View implements View.OnClickListener {
         int baseX = popupBaseXInWindow(offsetInWindow[0]);
         int x = baseX;
         int y = offsetInWindow[1] - toastHeight;
-        if (embeddedComposing != null && embeddedComposing.getVisibility() == VISIBLE) {
+        boolean embedded = embeddedComposing != null && embeddedComposing.getVisibility() == VISIBLE;
+        if (embedded) {
             int[] composingOffset = new int[2];
             embeddedComposing.getLocationInWindow(composingOffset);
             x = composingOffset[0] + embeddedComposing.getWidth() + dpToPx(8);
             y = composingOffset[1];
-        } else if (mComposingTextView != null && mComposingTextView.getVisibility() == VISIBLE) {
-            x = baseX + mComposingTextView.getWidth() + dpToPx(8);
+        } else {
+            if (mComposingTextView != null && mComposingTextView.getVisibility() == VISIBLE) {
+                x = baseX + mComposingTextView.getWidth() + dpToPx(8);
+            }
+            // Issue #124: the reverse-lookup toast anchors above the candidate row; clamp it down
+            // so it stays in the IME-owned area instead of covering a host bottom-composer input.
+            y = clampPopupYToImeArea(y, offsetInWindow[1]);
         }
 
         int rightEdge = offsetInWindow[0] + Math.max(getWidth(), 0);
@@ -1096,6 +1105,26 @@ public class CandidateView extends View implements View.OnClickListener {
 
     static int popupContentHeight(int popHeight) {
         return popHeight;
+    }
+
+    /**
+     * Issue #124: keep the in-keyboard floating popups (the composing/root-key hint and the
+     * reverse-lookup lime toast) from rising above the candidate row into a host app's
+     * bottom-composer input field.
+     *
+     * Both popups naturally anchor at {@code candidateTopInWindow - popupHeight}, i.e. above the
+     * candidate row, and disable clipping so they can draw outside the IME window. In
+     * bottom-composer apps (LINE/WeChat/Instagram) that area is the host message input field, so
+     * clamping the top down to the candidate row keeps the popup inside the IME-owned area
+     * (candidate row + keyboard) instead of covering the host input. The embedded composing view
+     * and the expanded candidate popup use separate paths and are unaffected.
+     *
+     * @param desiredY             the popup's natural top in window coordinates
+     * @param candidateTopInWindow the candidate row's top edge in window coordinates
+     * @return a top no higher (smaller) than the candidate row's top
+     */
+    static int clampPopupYToImeArea(int desiredY, int candidateTopInWindow) {
+        return Math.max(desiredY, candidateTopInWindow);
     }
 
     static int popupHeight(int availableSpace, int measuredContentHeight, boolean keyboardViewHidden) {

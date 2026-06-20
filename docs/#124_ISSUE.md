@@ -8,6 +8,7 @@
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public acknowledgement: none needed for now because this tracking issue was created by the project account on behalf of the email reporter.
+- Implementation status: branch `fix/124-android-popup-placement` constrains both Android popup paths to the IME-owned candidate area and is awaiting PR review/merge.
 
 ## Problem statement
 
@@ -61,19 +62,18 @@ Android has two relevant floating-popup paths anchored around the candidate row:
 
 This is a geometry/placement bug in Android candidate-view popup handling, not a LINE-specific text-processing bug based on current evidence.
 
-## Proposed fix / investigation direction
+## Implemented fix / investigation direction
 
-1. Reproduce on Android with LINE and Array IM, covering both the composing/root-key popup while typing and the reverse-lookup popup after committing a candidate.
-2. Inspect the runtime values for:
+1. Source fix in branch `fix/124-android-popup-placement` adds a shared Android `CandidateView.clampPopupYToImeArea(...)` helper.
+2. The composing/root-key popup path now clamps `mPopupComposingY` so it cannot rise above the candidate row and cover a host bottom-composer input field.
+3. The non-embedded reverse-lookup lime toast path now applies the same clamp, while the embedded composing path keeps its existing in-IME placement.
+4. Expanded candidate popup behavior is intentionally unchanged because it uses a separate bottom-anchored popup path and already hides the composing popup while expanded.
+5. Follow-up manual reproduction should still inspect runtime values for:
    - candidate view `getLocationInWindow(...)`
    - composing-popup and reverse-lookup toast measured heights
    - root-window visible display frame / IME visible area
    - whether LINE uses fullscreen/extract mode, insets, or adjusted resize/pan behavior on the affected device.
-3. Change the Android popup display strategy so both reverse lookup and composing/root-key hints avoid covering the host input field. Candidate approaches:
-   - Prefer rendering these short hints inside the existing candidate/input view area when possible, similar to the iOS candidate-bar path.
-   - If a `PopupWindow` remains necessary, use a shared helper to clamp or flip its Y position to stay within the IME-owned/candidate area instead of drawing into the host editor area.
-   - Add a small fallback for constrained layouts: use candidate-bar inline text or a short in-keyboard hint when there is not enough safe space above the candidate row.
-4. Add focused tests for the geometry helper(s), especially when the candidate row is adjacent to the visible host editor area and either popup would otherwise overlap it.
+6. If manual device testing shows the candidate-row overlay is still too intrusive, the next UI refinement should move these short hints fully inline inside the candidate/input view area, similar to the iOS candidate-bar path.
 
 ## Follow-up questions for the reporter
 
@@ -99,12 +99,14 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
   - Reverse lookup still hides on the next LIME key press.
   - Candidate bar, expanded candidate popup, and clear-code/dismiss controls remain usable.
 - Automated checks:
-  - Add unit/helper coverage for popup Y-position selection and no-overlap fallback.
+  - `./gradlew :app:compileDebugJavaWithJavac`
+  - `./gradlew :app:compileDebugAndroidTestJavaWithJavac`
+  - Add helper coverage for popup Y-position clamping when a popup would otherwise rise above the candidate row.
   - Keep or update existing composing-popup and `reverseLookupUsesPersistentLimeToast()` / `nextKeyClearsPersistentLimeToast()` expectations according to the chosen UI path.
 
 ## Backlog / release follow-up
 
-- Track as an active Android usability bug until a source fix lands for bottom-composer placement of both composing/root-key and reverse-lookup floating popups.
+- Track as an active Android usability bug until the branch/PR source fix lands for bottom-composer placement of both composing/root-key and reverse-lookup floating popups.
 - No Android APK retest request applies yet because the observed `6.1.22-2026` report is on the current `LIMEHD2026-6.1.22.apk` line and no targeted popup-placement fix has landed after it.
 - No public reporter retest request should be posted until a newer Android APK contains the relevant popup-placement fix.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
