@@ -6,7 +6,7 @@ Last reviewed: 2026-06-21
 
 ## Active issue follow-up
 
-- #127 Android: `快倉` root installation fails because the Android cloud catalog still points to missing `Database/scj.zip` while the maintained artifact is `Database/scj.limedb`. The source tree now restores `Database/scj.zip`, but the v6.1.23 APK was built before that artifact was merged and does not contain `scj.zip`; ask the reporter to retest only after a newer APK contains the restored artifact or a catalog/download fix.
+- #127 Android: the v6.1.23 release line restores `Database/scj.zip`, which the Android `快倉` root download path still requests at runtime. Retest request posted at https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280. Keep the issue open pending reporter confirmation that `快倉` roots install successfully on Samsung A55.
 - #128 Android: Samsung A55 report says `喜好設定 / 打字震動` is enabled but soft-key presses produce no vibration. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
 
 ## Source fixed / awaiting build verification
