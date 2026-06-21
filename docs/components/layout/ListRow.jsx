@@ -40,7 +40,7 @@ export function ListRow({
           style={{
             width: 29, height: 29, flex: "0 0 auto",
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            borderRadius: 6.5, background: iconColor, color: "#fff",
+            borderRadius: 6.5, background: "var(--icon-tile)", color: "#fff",
           }}
         >
           <span style={{ width: 18, height: 18, display: "inline-flex" }}>{icon}</span>

@@ -25,7 +25,7 @@ export function Stepper({ value = 0, min = 0, max = 9999, onChange, style = {} }
   );
   return (
     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-sans)", ...style }}>
-      {circ("−", () => set(value - 1), "minus")}
+      {circ("\u2212", () => set(value - 1), "minus")}
       <input
         type="text"
         inputMode="numeric"

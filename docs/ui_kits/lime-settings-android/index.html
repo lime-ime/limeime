@@ -91,6 +91,18 @@
     font: 500 12px/1 "Roboto", sans-serif; color: #5f6368; }
   #systheme .st-seg button[aria-pressed="true"] { background: #fff; color: #202124; box-shadow: 0 1px 3px rgba(0,0,0,.16); }
   @media (max-width: 720px) { #systheme, #formfactor { display: none; } }
+  /* IM-state chooser — demo control in the device environment (preview the 輸入法
+     tab empty / all-disabled / with installed IMs). */
+  #imchooser { position: fixed; right: 20px; bottom: 20px; z-index: 20; width: 224px;
+    background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.18);
+    border: 1px solid rgba(0,0,0,.06); font-family: "Roboto", var(--font-sans); }
+  #imchooser .ic-os { display: flex; align-items: center; gap: 6px; color: #1a73e8; font: 600 11px/1 "Roboto", sans-serif;
+    letter-spacing: .3px; text-transform: uppercase; margin-bottom: 9px; }
+  #imchooser .ic-seg { display: flex; background: #f1f3f4; border-radius: 9px; padding: 3px; }
+  #imchooser .ic-seg button { flex: 1; height: 30px; border: 0; border-radius: 7px; background: transparent; cursor: pointer;
+    font: 500 11.5px/1 "Roboto", sans-serif; color: #5f6368; white-space: nowrap; }
+  #imchooser .ic-seg button[aria-pressed="true"] { background: #fff; color: #202124; box-shadow: 0 1px 3px rgba(0,0,0,.16); }
+  @media (max-width: 720px) { #imchooser { display: none; } }
   /* Form-factor switch — environment chrome, like #systheme. */
   #formfactor { position: fixed; right: 20px; top: 20px; z-index: 20; background: #fff; border-radius: 14px;
     padding: 12px 14px; box-shadow: 0 6px 24px rgba(0,0,0,.18); border: 1px solid rgba(0,0,0,.06);
@@ -107,6 +119,7 @@
 <div id="stage"><div id="device"><div id="root"></div></div></div>
 <div id="systheme"></div>
 <div id="formfactor"></div>
+<div id="imchooser"></div>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -141,9 +154,13 @@
     const [detail, setDetail] = React.useState(null);     // phone: slide-over IM
     const [selected, setSelected] = React.useState(null);  // tablet: two-pane IM
     const [ff, setFf] = React.useState("phone");
+    const [imMode, setImMode] = React.useState("installed"); // 'installed' | 'empty' | 'disabled'
     const scrollRef = React.useRef(null);
     React.useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 0; }, [tab]);
     React.useEffect(() => { window.__setFF = setFf; }, []);
+    React.useEffect(() => { window.__setIM = setImMode; }, []);
+    const isEmpty = imMode === "empty";
+    const imStatus = imMode === "empty" ? "none" : imMode === "disabled" ? "disabled" : "ok";
     const active = TABS.find((t) => t.key === tab);
     const Comp = active.Comp;
     const navItems = TABS.map(({ key, label, icon }) => ({ key, label, icon }));
@@ -164,7 +181,7 @@
               {tab === "im" ? (
                 <React.Fragment>
                   <div className="pane-list">
-                    <Comp onOpen={(im) => setSelected(im)} selectedId={selected && selected.id} hideFab />
+                    <Comp key={imMode} onOpen={(im) => setSelected(im)} selectedId={selected && selected.id} startEmpty={isEmpty} allDisabled={imMode === "disabled"} hideFab />
                   </div>
                   <div className="pane-detail">
                     <Detail im={selected} embedded onClose={() => setSelected(null)} />
@@ -172,7 +189,7 @@
                 </React.Fragment>
               ) : (
                 <div className="scroll" ref={scrollRef} style={{ maxWidth: 720, margin: "0 auto", width: "100%" }}>
-                  {tab === "setup" && <Comp />}
+                  {tab === "setup" && <Comp imStatus={imStatus} imCount={6} onManageIM={() => setTab("im")} />}
                   {tab === "prefs" && <Comp />}
                   {tab === "db" && <Comp />}
                 </div>
@@ -190,8 +207,8 @@
         <div className="punch" />
         <SysBar />
         <div className="scroll" ref={scrollRef}>
-          {tab === "setup" && <Comp />}
-          {tab === "im" && <Comp onOpen={(im) => setDetail(im)} />}
+          {tab === "setup" && <Comp imStatus={imStatus} imCount={6} onManageIM={() => setTab("im")} />}
+          {tab === "im" && <Comp key={imMode} startEmpty={isEmpty} allDisabled={imMode === "disabled"} onOpen={(im) => setDetail(im)} />}
           {tab === "prefs" && <Comp />}
           {tab === "db" && <Comp />}
         </div>
@@ -272,6 +289,27 @@
           x.setAttribute("aria-pressed", x.getAttribute("data-ff") === ff ? "true" : "false"));
         if (window.__setFF) window.__setFF(ff);
         fit();
+      };
+    });
+  })();
+
+  // ── IM-state chooser (device environment) ───────────────────────────
+  (function buildIMChooser() {
+    const host = document.getElementById("imchooser");
+    if (!host) return;
+    host.innerHTML =
+      '<div class="ic-os"><span class="msr" style="font-size:15px">tune</span>預覽：輸入法清單</div>' +
+      '<div class="ic-seg">' +
+        '<button data-im="installed" aria-pressed="true">已安裝</button>' +
+        '<button data-im="empty" aria-pressed="false">空清單</button>' +
+        '<button data-im="disabled" aria-pressed="false">全關閉</button>' +
+      '</div>';
+    host.querySelectorAll("button[data-im]").forEach((b) => {
+      b.onclick = () => {
+        const mode = b.getAttribute("data-im");
+        if (window.__setIM) window.__setIM(mode);
+        host.querySelectorAll("button[data-im]").forEach((x) =>
+          x.setAttribute("aria-pressed", x.getAttribute("data-im") === mode ? "true" : "false"));
       };
     });
   })();

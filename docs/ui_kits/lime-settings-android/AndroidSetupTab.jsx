@@ -37,20 +37,69 @@
     );
   }
 
+  // §4.3 — Installed-IM status. Mirrors the IM tab so Setup can surface a problem
+  // and route the user to fix it (iOS parity):
+  //   none → error (red), disabled → warning (orange), ok → success (green).
+  const IM_STATUS = {
+    none:     { fg: "var(--md-error)", icon: "error",        text: "尚未安裝任何輸入法",      cta: "安裝輸入法" },
+    disabled: { fg: "#b56500",         icon: "warning",      text: "已安裝輸入法，但全部已停用", cta: "啟用輸入法" },
+    ok:       { fg: FG_GREEN,          icon: "check_circle", text: "輸入法已就緒，隨時可用",   cta: null }, // text overridden with installed count
+  };
+
+  // §4 — LIME inline-dictation microphone permission. Optional section shown when
+  // inline dictation is enabled; three RECORD_AUDIO permission states (md spec).
+  const VOICE_STATUS = {
+    granted: { fg: FG_GREEN,          icon: "mic",     text: "萊姆內建語音輸入已啟用",   note: "可直接在萊姆鍵盤內使用語音輸入。", cta: null },
+    askable: { fg: "var(--md-error)", icon: "mic_off", text: "萊姆內建語音輸入尚未啟用", note: "若要在萊姆鍵盤內直接語音輸入，請允許麥克風權限；也可略過，改用 Google 語音輸入。", cta: "允許麥克風權限" },
+    denied:  { fg: "#b56500",         icon: "warning", text: "需至系統設定開啟麥克風權限", note: "Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。", cta: "前往系統設定" },
+  };
+
+  function VoiceSection({ voiceStatus = "askable", onAllowMic }) {
+    const m = VOICE_STATUS[voiceStatus] || VOICE_STATUS.askable;
+    return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12, paddingTop: 4 } },
+      React.createElement("div", { style: { height: 1, background: "var(--md-outline-variant)", margin: "0 -24px 4px" } }),
+      React.createElement("div", {
+        style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, background: STATUS_BG },
+      },
+        React.createElement(Icon, { name: m.icon, size: 20, fill: true, color: m.fg }),
+        React.createElement("span", { style: { font: "500 15px/20px 'Roboto', var(--font-sans)", color: m.fg } }, m.text)
+      ),
+      React.createElement("div", { style: { font: "400 13px/19px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", padding: "0 2px" } }, m.note),
+      m.cta && React.createElement(Button, { variant: "filled", full: true, onClick: onAllowMic }, m.cta)
+    );
+  }
+
+  function IMStatusSection({ imStatus = "none", imCount = 0, onManageIM }) {
+    const m = IM_STATUS[imStatus] || IM_STATUS.none;
+    const text = imStatus === "ok" ? ("已安裝 " + imCount + " 個輸入法")
+      : imStatus === "disabled" ? ("已安裝 " + imCount + " 個輸入法，但全部停用")
+      : m.text;
+    return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingTop: 4 } },
+      React.createElement("div", { style: { height: 1, background: "var(--md-outline-variant)", margin: "0 -24px 4px" } }),
+      React.createElement("div", {
+        style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 12, background: STATUS_BG },
+      },
+        React.createElement(Icon, { name: m.icon, size: 20, fill: true, color: m.fg }),
+        React.createElement("span", { style: { font: "500 15px/20px 'Roboto', var(--font-sans)", color: m.fg } }, text)
+      ),
+      m.cta && React.createElement(Button, { variant: "filled", full: true, onClick: onManageIM }, m.cta)
+    );
+  }
+
   // Compact link chip aligned to the iOS footer: equal-width, rounded, tonal fill,
   // icon over label + external glyph.
-  function LinkChip({ href, icon, children }) {
+  function LinkChip({ href, icon, external, children }) {
     return React.createElement("a", { href, target: "_blank", rel: "noopener noreferrer",
       style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 7,
         padding: "15px 8px 13px", borderRadius: 14, background: "var(--md-surface-container-high)",
         color: "var(--md-primary)", textDecoration: "none", WebkitTapHighlightColor: "transparent" } },
       React.createElement(Icon, { name: icon, size: 22, color: "var(--md-primary)" }),
       React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3, font: "500 14px/18px 'Roboto', var(--font-sans)" } },
-        children, React.createElement(Icon, { name: "open_in_new", size: 13, style: { opacity: .7 } }))
+        children, external && React.createElement(Icon, { name: "open_in_new", size: 13, style: { opacity: .7 } }))
     );
   }
 
-  function AndroidSetupTab() {
+  function AndroidSetupTab({ imStatus, imCount, voiceStatus, onManageIM, onAllowMic }) {
     return React.createElement("div", { style: { padding: "8px 24px 28px", display: "flex", flexDirection: "column", gap: 24 } },
       // Brand hero — plain logo + wordmark, horizontal (aligned to iOS)
       React.createElement("div", { style: { display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16, paddingTop: 20 } },
@@ -69,13 +118,17 @@
       React.createElement(Button, { variant: "filled", full: true }, "前往設定"),
       React.createElement("div", { style: { font: "400 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", textAlign: "center" } },
         "若設定未直接顯示萊姆輸入法，請到「設定」>「系統」>「語言與輸入」>「螢幕鍵盤」開啟。"),
+      // §4.3 — Installed-IM status section.
+      React.createElement(IMStatusSection, { imStatus, imCount, onManageIM }),
+      // §4 — LIME inline-dictation microphone permission section.
+      React.createElement(VoiceSection, { voiceStatus, onAllowMic }),
       // About footer — three equal-width chips + one-line copyright (aligned to iOS)
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingTop: 10 } },
         React.createElement("div", { style: { height: 1, background: "var(--md-outline-variant)", margin: "0 -24px" } }),
         React.createElement("div", { style: { display: "flex", gap: 10 } },
           React.createElement(LinkChip, { href: MANUAL_URL, icon: "menu_book" }, "使用手冊"),
           React.createElement(LinkChip, { href: LICENSE_URL, icon: "description" }, "版權說明"),
-          React.createElement(LinkChip, { href: GITHUB_URL, icon: "code" }, "原始碼")
+          React.createElement(LinkChip, { href: GITHUB_URL, icon: "code", external: true }, "原始碼")
         ),
         React.createElement("div", { style: { font: "400 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", textAlign: "center", paddingTop: 6 } },
           "© LIME 萊姆輸入法 6.1.15 - 2026")
