@@ -9,10 +9,13 @@ Issue: https://github.com/lime-ime/limeime/issues/128
 ## Reporter environment and reproduction
 
 - Device: Samsung A55 (`SamSung A55` in the report)
+- LIME version: 6.1.22
+- Android / One UI version: Android 16 / One UI 8.5
 - Platform: Android soft keyboard path
 - Reported setting: **喜好設定 / 打字震動** is enabled
+- System haptics: Samsung `觸控震動` is enabled
+- Control path: LIME `打字音效` works when enabled, so the soft-key `onPress(...)` / sound-feedback path is firing
 - Observed behavior: pressing keyboard keys produces no vibration response
-- Missing details: Android / One UI version, current LIME version, whether Samsung system keyboard vibration or system touch vibration is enabled, and whether `打字音效` works on the same key presses
 
 ## Relevant Android code path
 
@@ -38,13 +41,13 @@ For older Android versions, it falls back to `Vibrator.vibrate(...)` / `Vibratio
 
 This is a plausible Android haptic-feedback compatibility bug rather than a missing preference wiring issue. The preference, manifest permission (`android.permission.VIBRATE`), and soft-keyboard `onPress` path are wired, but the Android 12+ path delegates to `View.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)`. On Samsung / One UI devices, that path may still be gated by Samsung's system keyboard/touch vibration settings, device haptic policy, or the specific feedback constant. The reporter's Samsung A55 behavior suggests the app-level `打字震動` switch can be enabled while the actual system haptic call produces no vibration.
 
-This root cause is not confirmed yet because the report does not include Android version, LIME version, system vibration settings, or logcat output showing whether `performHapticFeedback(...)` returns `false`.
+This root cause is not confirmed yet because there is no logcat or local reproduction showing whether `performHapticFeedback(...)` returns `false`, but the reporter's follow-up narrows the problem to Android 16 / One UI 8.5 with Samsung `觸控震動` enabled and LIME keypress sound working.
 
 ## Platform impact
 
 ### Android
 
-Confirmed reporter platform. Current Android source contains an intended vibration path for soft-key presses, but Android 12+ devices use the view haptic pipeline instead of direct `Vibrator.vibrate(...)`. The Samsung A55 report is enough to track as a plausible Android bug requiring device/settings verification and possibly a fallback or device-compatible haptic strategy.
+Confirmed reporter platform. Current Android source contains an intended vibration path for soft-key presses, but Android 12+ devices use the view haptic pipeline instead of direct `Vibrator.vibrate(...)`. The Samsung A55 / Android 16 / One UI 8.5 report is enough to track as a plausible Android bug requiring device/settings verification and possibly a fallback or device-compatible haptic strategy. Since keypress sound works, the investigation should prioritize the vibration branch / platform haptic call rather than assuming soft-key events are missing.
 
 ### iOS
 
@@ -52,13 +55,14 @@ No direct iOS impact is expected from this report. The referenced preference key
 
 ## Follow-up questions for the reporter
 
-Ask for:
+Already answered by the reporter:
 
-1. Android version and One UI version on the Samsung A55.
-2. LIME IME version/build being tested.
-3. Whether Samsung system settings for keyboard/touch vibration are enabled.
-4. Whether LIME `打字音效` works when enabled.
-5. If possible, a short logcat around LIME key presses with filters for `LIMEService`, `Vibrator`, and `HapticFeedback`.
+1. LIME 6.1.22.
+2. Android 16 / One UI 8.5.
+3. Samsung `觸控震動` is enabled.
+4. LIME `打字音效` works when enabled.
+
+Still useful if needed: a short logcat around LIME key presses with filters for `LIMEService`, `Vibrator`, and `HapticFeedback`, or maintainer reproduction on a Samsung / One UI 8.5 device.
 
 ## Proposed investigation / fix direction
 
@@ -82,6 +86,7 @@ Ask for:
 ## Current status
 
 - Classified as plausible Android bug.
-- Awaiting device/version/system-setting details and/or maintainer reproduction.
+- Reporter supplied device/version/system-setting details in https://github.com/lime-ime/limeime/issues/128#issuecomment-4761943111: LIME 6.1.22, Android 16, One UI 8.5, Samsung `觸控震動` enabled, and LIME keypress sound works.
+- Awaiting maintainer reproduction, diagnostic logcat, or a haptic-feedback implementation change.
 - Do not ask the reporter to retest until a newer Android APK contains a relevant haptic-feedback change.
 - No iOS/TestFlight retest is implied by this Android report.

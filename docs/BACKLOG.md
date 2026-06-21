@@ -6,7 +6,7 @@ Last reviewed: 2026-06-21
 
 ## Active issue follow-up
 
-- #128 Android: Samsung A55 report says `喜好設定 / 打字震動` is enabled but soft-key presses produce no vibration. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
+- #128 Android: Samsung A55 / Android 16 / One UI 8.5 report says `喜好設定 / 打字震動` is enabled and Samsung `觸控震動` is enabled, but soft-key presses produce no vibration while LIME `打字音效` works. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
 
 ## Source fixed / awaiting build verification
 
