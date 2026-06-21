@@ -2,12 +2,13 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-20
+Last reviewed: 2026-06-21
 
 ## Active issue follow-up
 
 - #124 Android: composing/root-key and reverse-lookup floating popups can cover bottom chat-app message input fields when using Array input. PR #126 (`fix/124-android-popup-placement`) clamps both fallback popup paths to start at the candidate row instead of covering the host input field and awaits review/merge; manual device testing should confirm the candidate-row overlap trade-off is acceptable. No APK retest request applies until a newer Android build contains the targeted fix.
 - #127 Android: `快倉` root installation fails because the Android cloud catalog still points to missing `Database/scj.zip` while the maintained artifact is `Database/scj.limedb`. Fix the Android catalog/download path, then ask the reporter to retest after a newer APK contains the fix.
+- #128 Android: Samsung A55 report says `喜好設定 / 打字震動` is enabled but soft-key presses produce no vibration. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
 
 ## Source fixed / awaiting build verification
 
