@@ -24,12 +24,19 @@ Android's `快倉` download catalog was left on the legacy `scj.zip` filename af
 
 This is separate from #111's `scj` table-data issue (`x` / `z` -> `1991` rows), although both involve the `快倉` artifact. #127 blocks installation before candidate data can be tested.
 
-## Proposed solution / investigation plan
+## Proposed solution / implemented source fix
 
-1. Update the Android `快倉` cloud download source to the existing maintained artifact, likely `Database/scj.limedb`.
-2. Add or update a focused Android regression check so every `ImInstallFragment` cloud variant points to a repository artifact that exists and can be imported by the matching `.zip` / `.limedb` path.
-3. Consider improving the download path so GitHub 404/HTML responses are rejected by status or file signature before reaching the generic database-import failure.
-4. Verify whether `DATABASE_CLOUD_IM_SCJ_KEYBOARD` should remain `limenum` or align with the newer imported-table/default-catalog mapping (`cjnum`) recorded for `scj` in #119 and iOS catalog metadata.
+The first source-side fix restored the legacy `Database/scj.zip` artifact on `master` so the existing Android `快倉` cloud download constant can resolve to a valid database package again. This is a minimal compatibility fix for the current app code path, rather than a broader catalog migration to `scj.limedb`.
+
+However, Android APK v6.1.23 was built before the restored `Database/scj.zip` artifact was merged, so the public follow-up corrected the earlier retest wording and asked the reporter not to retest #127 with v6.1.23.
+
+Follow-up opportunities remain:
+
+1. Verify the next Android APK/build line contains or can reach the restored `Database/scj.zip` artifact before asking the reporter to retest.
+2. Consider migrating the Android `快倉` cloud download source to the maintained `Database/scj.limedb` artifact in a later cleanup if that is preferred over preserving the legacy ZIP route.
+3. Add or update a focused Android regression check so every `ImInstallFragment` cloud variant points to a repository artifact that exists and can be imported by the matching `.zip` / `.limedb` path.
+4. Consider improving the download path so GitHub 404/HTML responses are rejected by status or file signature before reaching the generic database-import failure.
+5. Verify whether `DATABASE_CLOUD_IM_SCJ_KEYBOARD` should remain `limenum` or align with the newer imported-table/default-catalog mapping (`cjnum`) recorded for `scj` in #119 and iOS catalog metadata.
 
 ## Follow-up questions
 
@@ -46,7 +53,7 @@ No additional reporter data is required to confirm the broken Android catalog UR
 
 ### Android
 
-Confirmed affected path. Android `LIME.java` points `快倉` to `scj.zip`, `ImInstallFragment.java` uses that value for the `快倉字根` cloud install button, and the remote `Database/scj.zip` file is missing. A newer Android APK is needed before asking the reporter to retest.
+Confirmed affected path. Android `LIME.java` points `快倉` to `scj.zip`, `ImInstallFragment.java` uses that value for the `快倉字根` cloud install button, and the remote `Database/scj.zip` file was missing when the issue was triaged. The source tree now restores `Database/scj.zip`, but v6.1.23 was built before that source-side artifact restoration was merged. Do not ask the reporter to retest until the next Android APK/build line is verified for this fix.
 
 ### iOS
 
@@ -54,4 +61,7 @@ No confirmed iOS impact from this specific broken URL. `LimeIME-iOS/LimeSettings
 
 ## Current status
 
-- 2026-06-21: Classified as a confirmed Android catalog/download bug. No public retest request is appropriate until a newer Android APK contains the fix.
+- 2026-06-21: Classified as a confirmed Android catalog/download bug.
+- 2026-06-21: Commit `2f0ecdf58a1f` restored `Database/scj.zip` on `master`, but v6.1.23 was built before that restored artifact was merged.
+- Public correction: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280 tells the reporter not to retest #127 with v6.1.23 and says a follow-up retest request should wait for the next Android APK that is verified to contain the fix.
+- Keep the issue open pending a newer verified APK/build and reporter confirmation from the Samsung A55 install path.
