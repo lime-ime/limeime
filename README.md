@@ -26,15 +26,16 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 ### 最新正式版（GitHub Release）
 
 - 版本：v6.1.23
-- APK：[LIMEHD202661230-6.1.23.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.23/LIMEHD202661230-6.1.23.apk)
+- APK：[LIMEHD2026-6.1.23.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.23/LIMEHD2026-6.1.23.apk)
 
 ## 版本與相容性
 
-- 套件名稱：org.limeime
+- 套件名稱：net.toload.main.hd2026
+- 顯示名稱：萊姆輸入法A
 - 目標 SDK：36
 - 最低支援 SDK：21
-- 與 v6.1.21 以前使用舊套件名稱的版本可並存安裝
-- GitHub Release APK 與 Google Play 版本使用不同簽署金鑰，切換安裝來源前請先備份資料，再解除安裝原版本後重新安裝
+- GitHub Release APK 與 Google Play 版本使用不同套件名稱與簽署金鑰，可以同時安裝並共存，但不能互相直接更新或升級
+- Google Play 封閉測試使用者請從 Google Play 更新。若要在 GitHub APK 與 Google Play 版本之間切換使用，請先備份輸入法資料
 
 ## 開發
 
