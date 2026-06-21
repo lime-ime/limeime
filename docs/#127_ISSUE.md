@@ -32,7 +32,7 @@ This is separate from #111's `scj` table-data issue (`x` / `z` -> `1991` rows), 
 ## Fix / remaining hardening plan
 
 1. The immediate repository artifact problem is source-side fixed by commit `2f0ecdf58a1f8854636456c8fcaae355e40442df`, which restored `Database/scj.zip` at the URL Android already uses.
-2. The reporter confirmed v6.1.23 can install `快倉` after the artifact restore, so the community-reported failure is resolved for the Samsung A55 path.
+2. The reporter confirmed v6.1.23 can install `快倉` after the artifact restore, so the community-reported failure is resolved for the reported Android install path.
 3. Add or update a focused Android regression check so every `ImInstallFragment` cloud variant points to a repository artifact that exists and can be imported by the matching `.zip` / `.limedb` path.
 4. Consider improving the download path so GitHub 404/HTML responses are rejected by status or file signature before reaching the generic database-import failure.
 5. Separately verify whether `DATABASE_CLOUD_IM_SCJ_KEYBOARD` should remain `limenum` or align with the newer imported-table/default-catalog mapping (`cjnum`) recorded for `scj` in #119 and iOS catalog metadata.
@@ -43,7 +43,7 @@ No active reporter question remains after the v6.1.23 confirmation. If related f
 
 ## Verification plan
 
-- Android: reporter confirmed v6.1.23 can install `快倉` on the Samsung A55 path.
+- Android: reporter confirmed v6.1.23 can install `快倉` for the reported Android install path.
 - Android regression: install/update `快倉字根` from the in-app IM install screen on a clean profile and confirm the table imports successfully, appears in the IM list, and can enter basic `快倉` candidates.
 - Artifact check: verify `Database/scj.zip` exists on `master`, is a valid ZIP archive, and contains `scj.db`.
 - Regression check: ensure missing GitHub artifact URLs fail before import with a clearer download/error state.
@@ -52,7 +52,7 @@ No active reporter question remains after the v6.1.23 confirmation. If related f
 
 ### Android
 
-Confirmed affected path before the restore. Android `LIME.java` points `快倉` to `scj.zip`, `ImInstallFragment.java` uses that value for the `快倉字根` cloud install button, and the remote `Database/scj.zip` file was missing. The artifact is now restored on `master`, and the reporter confirmed v6.1.23 can install `快倉`.
+Confirmed affected path before the restore. Android `LIME.java` points `快倉` to `scj.zip`, `ImInstallFragment.java` uses that value for the `快倉字根` cloud install button, and the remote `Database/scj.zip` file was missing. The artifact is now restored on `master`, and the reporter confirmed v6.1.23 can install `快倉` for the reported Android path.
 
 ### iOS
 
@@ -61,5 +61,5 @@ No confirmed iOS impact from this specific broken URL. `LimeIME-iOS/LimeSettings
 ## Current status
 
 - 2026-06-21: Classified as a confirmed Android catalog/download bug. `bug` + `Usability` labels and `jrywu` assignment were applied, and acknowledgement was posted at https://github.com/lime-ime/limeime/issues/127#issuecomment-4761878700.
-- 2026-06-21: Commit `2f0ecdf58a1f8854636456c8fcaae355e40442df` restored `Database/scj.zip`; Hermes verified the restored artifact is a valid ZIP containing `scj.db`. Release `v6.1.23` was published with APK `LIMEHD202661230-6.1.23.apk`, and the retained public retest request is https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280.
+- 2026-06-21: Commit `2f0ecdf58a1f8854636456c8fcaae355e40442df` restored `Database/scj.zip`; Hermes verified the restored artifact is a valid ZIP containing `scj.db`. Release `v6.1.23` was published with APK `LIMEHD202661230-6.1.23.apk`, and the historical public retest request was https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280.
 - 2026-06-21: Reporter confirmed v6.1.23 can install `快倉` in https://github.com/lime-ime/limeime/issues/127#issuecomment-4761960147. `limeimetw` acknowledged and closed the issue as completed in https://github.com/lime-ime/limeime/issues/127#issuecomment-4761961639. Remove #127 from active watch unless reopened or new related evidence appears.
