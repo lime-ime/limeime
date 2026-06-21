@@ -1,4 +1,4 @@
-# 萊姆中文輸入法 - LIME IME v6.1.22
+# 萊姆中文輸入法 - LIME IME v6.1.23
 
 **套件名稱：** `org.limeime`
 
@@ -6,61 +6,49 @@
 
 **最低 SDK：** 21
 
-**前一正式版本：** [v6.1.21](https://github.com/lime-ime/limeime/releases/tag/v6.1.21)
+**前一正式版本：** [v6.1.22](https://github.com/lime-ime/limeime/releases/tag/v6.1.22)
 
-這版 `6.1.22` APK 是 LIME IME 首次上傳至 Google Play 封閉測試（alpha testing）並同步發行的 APK。這次整理上架封閉測試所需的 Android release build 設定，Android applicationId 更新為 `org.limeime`，App 顯示名稱調整為「萊姆輸入法」。由於 6.1.22 APK 使用新的套件名稱與不同簽章，可以和 6.1.21 以前的 APK 同時安裝在同一台裝置上。這版也收錄 v6.1.21 之後合併到 `master` 的 Android 與 iOS 來源修正。GitHub Release 附上的安裝檔是 Android APK。iOS 使用者仍需等待後續 TestFlight／App Store 發布。
+這版 `6.1.23` 持續整理 Android 與 iOS 的輸入體驗。Android 主要改善在 LINE、WeChat、Instagram 這類下方訊息輸入欄 App 內的字根顯示與字根反查浮動視窗位置，也讓設定頁在尚未安裝輸入法時有更清楚的提示。iOS 來源則加入 iPad 11 吋與 iPad mini 的較窄鍵盤尺寸支援，讓小尺寸 iPad 上的按鍵比例更接近方形。
 
-> **注意：** Google Play 版本與 GitHub Release APK 使用不同簽署金鑰。兩者不能互相直接更新或升級。如果要從 GitHub APK 改用 Google Play 版本，或從 Google Play 版本改用 GitHub APK，請先備份輸入法資料，再解除安裝原本版本後重新安裝。
+GitHub Release 附上的安裝檔是 Android APK。iOS 使用者仍需等待後續 TestFlight 或 App Store 發布。
+
+> **注意：** Google Play 版本與 GitHub Release APK 使用不同簽署金鑰。兩者不能互相直接更新或升級。Google Play 封閉測試使用者請從 Google Play 更新。若要在 Google Play 版本與 GitHub APK 之間切換，請先備份輸入法資料，解除安裝原本版本後再重新安裝。
 
 ## 更新內容
 
-### Android release 與 Google Play 封閉測試準備
+### Android
 
-- **Release build 改善**
-  - 移除 release build 的測試覆蓋率插樁，避免 Play Console 判定上傳套件為 debuggable。
-  - 啟用 R8 minify 與資源 shrink，縮小 release build 體積，並保留可用於 crash de-obfuscation 的必要資訊。
-  - 補上 ProGuard keep rules，保留 XML 載入的自訂 View、Preference、billing AIDL 與 View 建構子。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/8e7ce6e40c522cd7cdb3b987cf8431e3fcf323b1>
+- **#124 — 改善下方訊息輸入欄 App 內的字根浮動視窗顯示**
+  - 改善 LINE、WeChat、Instagram 等下方對話框 App 中，行列輸入時字根顯示與選字後字根反查浮動視窗的位置一致性。
+  - 字根反查恢復短時間顯示，仍可在下一次 LIME 按鍵時提前消失，避免選字後灰色提示停留過久。
+  - 候選列相關浮動提示改為一致地依候選列上方位置顯示，降低字根顯示與字根反查兩種提示彼此錯位的情況。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/124>
+  - 相關 PR：<https://github.com/lime-ime/limeime/pull/125>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/61cf87b65f03f69486e112bf1dc1383c9974a125>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/9fc84f97eaddfea5f550268e950695dadbb3fea5>
 
-- **Android 匯出儲存流程更新**
-  - 更新本機儲存選擇流程，從舊的 `startActivityForResult` / `onActivityResult` 改為 AndroidX Activity Result API。
-  - 這項調整用於輸入法表格與相關資料匯出／儲存流程，讓設定頁的匯出流程更符合新版 Android API。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/8e7ce6e40c522cd7cdb3b987cf8431e3fcf323b1>
+- **設定頁輸入法清單空狀態改善**
+  - 當尚未安裝任何輸入法時，輸入法清單頁會顯示較清楚的空狀態說明，協助使用者找到新增輸入法的操作入口。
+  - 設定流程的輸入法安裝狀態顯示同步更新，讓初次設定時更容易判斷目前是否已安裝輸入法。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/adf370494d30786ff34d339775252c18b5c87502>
 
-### Android / iOS 來源修正與改善
+- **#127 — 恢復快倉字根下載檔案**
+  - 恢復 Android 內建下載路徑仍會使用的 `Database/scj.zip` 檔案，避免快倉字根安裝時下載到不存在的檔案後顯示匯入失敗。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/127>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/2f0ecdf58a1f8854636456c8fcaae355e40442df>
 
-- **#119 — `.lime` / `.cin` 匯入後預設鍵盤配置補強**
-  - Android / iOS 皆補上已知輸入法匯入後的明確預設鍵盤配置，讓 `.lime` / `.cin` 文字匯入後更容易取得正確鍵盤 layout。
-  - Android 讓 `scj` 與 `pinyin` 等匯入表格的鍵盤對應更明確。iOS 文字匯入後會寫入鍵盤設定列，避免依賴 runtime fallback。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/119>
-  - 相關 PR：<https://github.com/lime-ime/limeime/pull/120>
-  - 分析文件：[#119_ISSUE.md](https://github.com/lime-ime/limeime/blob/master/docs/%23119_ISSUE.md)
+### iOS
 
-- **#121 — iOS 雲端／下載輸入法首次切換時 layout 與輸入模式同步**
-  - 修正 iOS 從下載來源安裝輸入法後，首次切換到該輸入法時，鍵盤可視 layout 與實際中文／英文模式可能不同步的問題。
-  - 設定端同步已啟用輸入法狀態時會維持 `keyboard_list` 一致，鍵盤 extension 在資料庫初始化後也會重新套用目前欄位模式與 layout。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/121>
-  - 相關 PR：<https://github.com/lime-ime/limeime/pull/122>
-  - 分析文件：[#121_ISSUE.md](https://github.com/lime-ime/limeime/blob/master/docs/%23121_ISSUE.md)
+- **iPad 11 吋與 iPad mini 鍵盤尺寸支援**
+  - 新增較窄 iPad 鍵盤配置，讓 iPad 11 吋與 iPad mini 上的按鍵高度與寬度更接近方形，降低按鍵過高的視覺問題。
+  - 保留五列鍵盤配置，避免小尺寸 iPad 為了縮高度而失去常用數字列。
+  - iPad 13 吋與 iPhone 既有配置維持原本路徑，不受這次窄版 iPad 配置影響。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a318e8c578d7241c875dd28c2806a750c4a0a620>
 
-- **#115 後續 iOS layout 同步修正**
-  - iOS 鍵盤資料庫 setup 完成後，會重新套用 resolved IM layout，降低首次啟用或切換後顯示舊 layout 的風險。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/1f0d6715860eb9b540697f81ac118e555edc0444>
+## APK 資訊
 
-### 文件與專案整理
-
-- **README 重新整理**
-  - README 改為偏向開發者導覽，使用者文件改導向 GitHub Pages 使用手冊。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/78b07ef88ac5d6a43d3ea76d616d7d4b16110496>
-
-- **iOS 偏好設定截圖更新**
-  - 更新 iOS 偏好設定頁的亮色與深色截圖資產。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/65508d084c3e3bca6f0306bcaaae47f2a01adf7d>
-
-- **IDE 專案檔整理**
-  - 停止追蹤 `.idea` IDE 工作區檔案，降低開發環境產生的雜訊。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/a61f67eb02c7a1128e283e0196431096273069c4>
-
-- APK manifest：package `org.limeime`，versionName `6.1.22`，versionCode `202661221`，minSdk 21，targetSdk 36
-- APK 檔案大小：7,399,211 bytes
-- APK SHA-256：`d156ac959c87312b3d5a20783117b8a1c1014b0f1313e3feeff6c6db8d1a96e5`
+- APK manifest：package `org.limeime`，versionName `6.1.23`，versionCode `202661230`，minSdk 21，targetSdk 36
+- APK 檔案：`LIMEHD202661230-6.1.23.apk`
+- APK 檔案大小：7,406,573 bytes
+- APK SHA-256：`e64db9d33118dfc4bf127f951f5a0f873d939918496a54cc89254c71fe31eb95`
+- APK 簽署憑證：LIME IME upload key，`C=TW, ST=Taiwan, L=Taipei, O=LIME IME Team, OU=LIME IME Team, CN=LIME IME`
