@@ -6,7 +6,6 @@ Last reviewed: 2026-06-21
 
 ## Active issue follow-up
 
-- #127 Android: `快倉` root installation failed because Android requested missing `Database/scj.zip`. Commit `2f0ecdf58a1f8854636456c8fcaae355e40442df` restored the legacy ZIP artifact on `master`; the current v6.1.23 APK can be used to retest because this install path downloads that restored artifact at runtime. Retest request https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280 asks the reporter to retry `快倉` installation. Keep open pending reporter confirmation.
 - #128 Android: Samsung A55 report says `喜好設定 / 打字震動` is enabled but soft-key presses produce no vibration. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
 
 ## Source fixed / awaiting build verification
