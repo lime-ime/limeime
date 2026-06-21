@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "安裝輸入法" callout pill that points at the install FAB on the empty IM
+     list. Solid primary fill, rounded corners; the downward caret is drawn by a
+     separate rotated square view. Mirrors .nudge-callout .pill in
+     im-empty-state-demo.html. §5.1.1. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorPrimary" />
+    <corners android:radius="12dp" />
+</shape>

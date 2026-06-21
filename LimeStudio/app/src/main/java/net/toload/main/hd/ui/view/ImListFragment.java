@@ -1,11 +1,17 @@
 package net.toload.main.hd.ui.view;
 
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -43,6 +49,16 @@ public class ImListFragment extends Fragment {
     private ImNavigationViewModel vm;
     private ImRowAdapter adapter;
 
+    // Empty-IM-list FAB nudge (§5.1.1): a bobbing callout pill + two radar-pulse
+    // rings + a breathing FAB, shown only while no IM is installed. Mirrors the
+    // lime-settings-android im-empty-state-demo.html.
+    private FloatingActionButton fabInstall;
+    private View nudgeRing1;
+    private View nudgeRing2;
+    private View nudgeCallout;
+    private AnimatorSet nudgeAnimators;
+    private boolean nudgeActive;
+
     public static ImListFragment newInstance() {
         return new ImListFragment();
     }
@@ -67,16 +83,30 @@ public class ImListFragment extends Fragment {
         FloatingActionButton fab = rootView.findViewById(R.id.fab_install);
         fab.setOnClickListener(v -> vm.showInstall.setValue(true));
 
-        // Push FAB above the activity's BottomNavigationView (fragment container fills full screen)
+        // Empty-state FAB-nudge views (hidden until the installed list is empty).
+        fabInstall = fab;
+        nudgeRing1 = rootView.findViewById(R.id.nudge_ring_1);
+        nudgeRing2 = rootView.findViewById(R.id.nudge_ring_2);
+        nudgeCallout = rootView.findViewById(R.id.nudge_callout);
+
+        // Push FAB above the activity's BottomNavigationView (fragment container fills full screen).
+        // The nudge rings sit at the FAB's position; the callout floats one FAB-height + gap above
+        // it so the caret points down at the FAB. All must track the same bottom-nav offset, else
+        // the overlays land lower than the lifted FAB and overlap it.
         View bottomNav = requireActivity().findViewById(R.id.main_bottom_nav);
         if (bottomNav != null) {
             bottomNav.post(() -> {
+                if (!isAdded()) return;
                 int navHeight = bottomNav.getHeight();
-                if (navHeight > 0 && fab.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
-                    ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
-                    lp.bottomMargin = navHeight + (int) (16 * getResources().getDisplayMetrics().density);
-                    fab.setLayoutParams(lp);
-                }
+                if (navHeight <= 0) return;
+                float density = getResources().getDisplayMetrics().density;
+                int fabBottom = navHeight + (int) (16 * density);
+                setBottomMargin(fab, fabBottom);
+                // Rings align with the FAB (same bottom margin → concentric).
+                setBottomMargin(nudgeRing1, fabBottom);
+                setBottomMargin(nudgeRing2, fabBottom);
+                // Callout floats above the 56dp FAB with a 12dp gap.
+                setBottomMargin(nudgeCallout, fabBottom + (int) ((56 + 12) * density));
             });
         }
 
@@ -119,6 +149,139 @@ public class ImListFragment extends Fragment {
         }).start();
     }
 
+    private static void setBottomMargin(View v, int marginPx) {
+        if (v == null || !(v.getLayoutParams() instanceof ViewGroup.MarginLayoutParams)) return;
+        ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+        lp.bottomMargin = marginPx;
+        v.setLayoutParams(lp);
+    }
+
+    // -------- Empty-list FAB nudge (§5.1.1) --------
+
+    /**
+     * Show or hide the FAB nudge (callout pill + radar-pulse rings + breathing
+     * FAB) based on whether the installed list is empty. The empty-state
+     * placeholder itself is rendered by the adapter; this only drives the FAB
+     * affordance. Honours the system "Remove animations" setting by holding a
+     * static resting state instead of running the loops. Mirrors the
+     * lime-settings-android im-empty-state-demo.html.
+     */
+    private void updateEmptyNudge(boolean empty) {
+        if (nudgeCallout == null || nudgeRing1 == null || nudgeRing2 == null || fabInstall == null) {
+            return;
+        }
+        if (empty == nudgeActive && empty) {
+            return; // already running for the empty state
+        }
+        nudgeActive = empty;
+
+        int vis = empty ? View.VISIBLE : View.GONE;
+        nudgeCallout.setVisibility(vis);
+        nudgeRing1.setVisibility(vis);
+        nudgeRing2.setVisibility(vis);
+
+        stopNudgeAnimators();
+        if (!empty) {
+            // Reset the FAB to its resting state when leaving the empty state.
+            fabInstall.setScaleX(1f);
+            fabInstall.setScaleY(1f);
+            return;
+        }
+
+        if (isReduceMotionEnabled()) {
+            // Static fallback: a faint, mid-expansion ring halo, no looping.
+            applyRingReducedMotion(nudgeRing1);
+            applyRingReducedMotion(nudgeRing2);
+            fabInstall.setScaleX(1f);
+            fabInstall.setScaleY(1f);
+            return;
+        }
+
+        startNudgeAnimators();
+    }
+
+    private boolean isReduceMotionEnabled() {
+        if (activity == null) return false;
+        try {
+            // Animator duration scale 0 ⇒ user has disabled animations system-wide.
+            float scale = Settings.Global.getFloat(
+                    activity.getContentResolver(),
+                    Settings.Global.ANIMATOR_DURATION_SCALE, 1f);
+            return scale == 0f;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static void applyRingReducedMotion(View ring) {
+        ring.setScaleX(1.9f);
+        ring.setScaleY(1.9f);
+        ring.setAlpha(0.18f);
+    }
+
+    /** A single expanding/fading radar ring (scale 1 → 2.6, alpha .45 → 0). */
+    private Animator buildRingAnimator(View ring, long startDelay) {
+        ring.setPivotX(ring.getLayoutParams().width / 2f);
+        ring.setPivotY(ring.getLayoutParams().height / 2f);
+        ValueAnimator a = ValueAnimator.ofFloat(0f, 1f);
+        a.setDuration(2400);
+        a.setStartDelay(startDelay);
+        a.setRepeatCount(ValueAnimator.INFINITE);
+        a.setInterpolator(new LinearInterpolator());
+        a.addUpdateListener(anim -> {
+            float t = (float) anim.getAnimatedValue();
+            float scale = 1f + t * (2.6f - 1f);
+            ring.setScaleX(scale);
+            ring.setScaleY(scale);
+            // Fade out over the first 70% of the cycle, then hold transparent.
+            float alpha = t < 0.7f ? (0.45f * (1f - t / 0.7f)) : 0f;
+            ring.setAlpha(alpha);
+        });
+        return a;
+    }
+
+    /** Gentle "breath" on the FAB so it reads as the nudge target. */
+    private Animator buildFabBreathAnimator() {
+        ObjectAnimator sx = ObjectAnimator.ofFloat(fabInstall, View.SCALE_X, 1f, 1.08f);
+        ObjectAnimator sy = ObjectAnimator.ofFloat(fabInstall, View.SCALE_Y, 1f, 1.08f);
+        for (ObjectAnimator o : new ObjectAnimator[]{sx, sy}) {
+            o.setDuration(1200);
+            o.setRepeatCount(ValueAnimator.INFINITE);
+            o.setRepeatMode(ValueAnimator.REVERSE);
+        }
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(sx, sy);
+        return set;
+    }
+
+    /** Callout pill bobs toward the FAB (translateY 0 → 4dp). */
+    private Animator buildCalloutBobAnimator() {
+        float dy = 4f * (activity != null ? activity.getResources().getDisplayMetrics().density : 2f);
+        ObjectAnimator a = ObjectAnimator.ofFloat(nudgeCallout, View.TRANSLATION_Y, 0f, dy);
+        a.setDuration(900);
+        a.setRepeatCount(ValueAnimator.INFINITE);
+        a.setRepeatMode(ValueAnimator.REVERSE);
+        return a;
+    }
+
+    private void startNudgeAnimators() {
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(
+                buildRingAnimator(nudgeRing1, 0L),
+                buildRingAnimator(nudgeRing2, 1200L),
+                buildFabBreathAnimator(),
+                buildCalloutBobAnimator());
+        nudgeAnimators = set;
+        set.start();
+    }
+
+    private void stopNudgeAnimators() {
+        if (nudgeAnimators != null) {
+            nudgeAnimators.cancel();
+            nudgeAnimators = null;
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -137,11 +300,17 @@ public class ImListFragment extends Fragment {
                 rv.setAdapter(null);
             }
         }
+        stopNudgeAnimators();
         super.onDestroyView();
         activity = null;
         manageImController = null;
         vm = null;
         adapter = null;
+        fabInstall = null;
+        nudgeRing1 = null;
+        nudgeRing2 = null;
+        nudgeCallout = null;
+        nudgeActive = false;
     }
 
     /**
@@ -170,6 +339,7 @@ public class ImListFragment extends Fragment {
         private static final int TYPE_IM = 0;
         private static final int TYPE_RELATED = 1;
         private static final int TYPE_HEADER = 2;
+        private static final int TYPE_EMPTY = 3;
 
         private List<ImConfig> imList;
 
@@ -181,6 +351,10 @@ public class ImListFragment extends Fragment {
             return imList;
         }
 
+        boolean isEmptyInstalled() {
+            return imList.isEmpty();
+        }
+
         void setData(List<ImConfig> data) {
             this.imList = data != null ? data : new ArrayList<>();
             notifyDataSetChanged();
@@ -188,19 +362,27 @@ public class ImListFragment extends Fragment {
             if (root != null) {
                 ScrollableTabHelper.refreshRecyclerViewScrollbar(root.findViewById(R.id.im_list_recycler));
             }
+            // Empty installed list → swap in the placeholder and run the FAB nudge.
+            updateEmptyNudge(imList.isEmpty());
+        }
+
+        // When no IM is installed, a single empty-state placeholder stands in for
+        // the IM rows (the 關聯字庫 section still follows). Otherwise one row per IM.
+        private int installedItemCount() {
+            return imList.isEmpty() ? 1 : imList.size();
         }
 
         @Override
         public int getItemCount() {
-            // header(installed) + IM rows + header(related) + related row
-            return 1 + imList.size() + 1 + 1;
+            // header(installed) + (placeholder | IM rows) + header(related) + related row
+            return 1 + installedItemCount() + 1 + 1;
         }
 
         @Override
         public int getItemViewType(int position) {
             if (position == 0) return TYPE_HEADER; // installed header
-            int imEnd = 1 + imList.size();
-            if (position < imEnd) return TYPE_IM;
+            int imEnd = 1 + installedItemCount();
+            if (position < imEnd) return imList.isEmpty() ? TYPE_EMPTY : TYPE_IM;
             if (position == imEnd) return TYPE_HEADER; // related header
             return TYPE_RELATED;
         }
@@ -213,10 +395,19 @@ public class ImListFragment extends Fragment {
                 tv.setPadding(32, 24, 32, 8);
                 tv.setTypeface(null, android.graphics.Typeface.BOLD);
                 tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+                // Section headers use the accent colour (matches the demo's
+                // --md-primary header label). §5.1.
+                tv.setTextColor(resolveColorAttr(parent.getContext(),
+                        com.google.android.material.R.attr.colorPrimary, 0xFF2196F3));
                 tv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
                 return new HeaderViewHolder(tv);
+            }
+            if (viewType == TYPE_EMPTY) {
+                View ev = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.item_im_empty_state, parent, false);
+                return new EmptyViewHolder(ev);
             }
             View v = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.item_im_row, parent, false);
@@ -233,11 +424,30 @@ public class ImListFragment extends Fragment {
                 ((HeaderViewHolder) holder).bind(labelRes);
             } else if (holder instanceof RelatedViewHolder) {
                 ((RelatedViewHolder) holder).bind();
+            } else if (holder instanceof EmptyViewHolder) {
+                // Static placeholder; nothing to bind.
             } else if (holder instanceof ImViewHolder) {
                 // position 0 is header, so IM data starts at position 1
                 ((ImViewHolder) holder).bind(imList.get(position - 1));
             }
         }
+    }
+
+    /** Static empty-state placeholder shown when no IM is installed (§5.1.1). */
+    private static class EmptyViewHolder extends RecyclerView.ViewHolder {
+        EmptyViewHolder(@NonNull View itemView) {
+            super(itemView);
+            // Tile container colour comes from @color/im_empty_mark_background
+            // (day/night aware) via the drawable — nothing to do at bind time.
+        }
+    }
+
+    private static int resolveColorAttr(android.content.Context ctx, int attr, int fallback) {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        if (ctx.getTheme().resolveAttribute(attr, tv, true)) {
+            return tv.data != 0 ? tv.data : fallback;
+        }
+        return fallback;
     }
 
     private class HeaderViewHolder extends RecyclerView.ViewHolder {

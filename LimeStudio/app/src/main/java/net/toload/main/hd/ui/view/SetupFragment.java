@@ -54,7 +54,10 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 
 import net.toload.main.hd.R;
+import net.toload.main.hd.data.ImConfig;
 import net.toload.main.hd.global.LIMEUtilities;
+import net.toload.main.hd.ui.LIMESettings;
+import net.toload.main.hd.ui.controller.ManageImController;
 import net.toload.main.hd.voice.VoicePermissionHelper;
 import net.toload.main.hd.voice.VoicePermissionState;
 
@@ -89,6 +92,13 @@ public class SetupFragment extends Fragment {
     private TextView voicePermissionTitle;
     private TextView voicePermissionDetail;
     private MaterialButton voicePermissionButton;
+
+    // §4.3 Installed-IM status block.
+    private View imStatusCard;
+    private View imStatusBanner;
+    private ImageView imStatusIcon;
+    private TextView imStatusText;
+    private MaterialButton imStatusButton;
 
     public static SetupFragment newInstance() {
         return new SetupFragment();
@@ -125,6 +135,16 @@ public class SetupFragment extends Fragment {
                 LIMEUtilities.showInputMethodPicker(requireActivity().getApplicationContext()));
         if (voicePermissionButton != null) {
             voicePermissionButton.setOnClickListener(v -> openVoicePermissionSettings());
+        }
+
+        // §4.3 Installed-IM status block.
+        imStatusCard = rootView.findViewById(R.id.imStatusCard);
+        imStatusBanner = rootView.findViewById(R.id.imStatusBanner);
+        imStatusIcon = rootView.findViewById(R.id.imStatusIcon);
+        imStatusText = rootView.findViewById(R.id.imStatusText);
+        imStatusButton = rootView.findViewById(R.id.imStatusButton);
+        if (imStatusButton != null) {
+            imStatusButton.setOnClickListener(v -> openImTab());
         }
 
         // One-line copyright banner in the About footer:
@@ -194,6 +214,7 @@ public class SetupFragment extends Fragment {
         boolean enabled = LIMEUtilities.isLIMEEnabled(ctx);
         boolean active = LIMEUtilities.isLIMEActive(ctx);
         refreshVoicePermissionStatus();
+        refreshImStatus();
 
         // Banner: status glyph + text in the ink colour over the matching
         // subtle status tint (design StatusBanner / color-status card).
@@ -233,6 +254,87 @@ public class SetupFragment extends Fragment {
             setupStep2Description.setVisibility(View.GONE);
             btnSystemSettings.setVisibility(View.VISIBLE);
             btnImePicker.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * §4.3 Installed-IM status. Mirrors the 輸入法 tab so Setup can surface a
+     * problem and route the user to fix it:
+     *   none     → danger  (no IM installed)     → 「安裝輸入法」
+     *   disabled → warning (installed, all off)  → 「啟用輸入法」
+     *   ok       → ≥1 installed & enabled        → card hidden (nothing to fix)
+     * Reads the same IM config list as the IM tab. Identical states to iOS.
+     */
+    private void refreshImStatus() {
+        if (imStatusCard == null || activity == null || !isAdded()) {
+            return;
+        }
+        ManageImController ctrl = null;
+        if (activity instanceof LIMESettings) {
+            ctrl = ((LIMESettings) activity).getManageImController();
+        }
+        if (ctrl == null) {
+            imStatusCard.setVisibility(View.GONE);
+            return;
+        }
+
+        int installed = 0;
+        int enabled = 0;
+        for (ImConfig im : ctrl.getImConfigFullNameList()) {
+            if (im == null || "emoji".equals(im.getCode())) continue; // skip internal emoji set
+            installed++;
+            if (!im.isDisable()) enabled++;
+        }
+
+        // The card is ALWAYS shown — it reports the IM state in all three cases
+        // (none → red, disabled → orange, ok → green). Only none/disabled carry a CTA.
+        imStatusCard.setVisibility(View.VISIBLE);
+        if (installed == 0) {
+            // none → danger (red), CTA 安裝輸入法
+            int fg = ContextCompat.getColor(activity, R.color.setup_status_fg_red);
+            imStatusBanner.setBackgroundColor(ContextCompat.getColor(activity, R.color.status_tint_red));
+            imStatusIcon.setImageResource(R.drawable.ic_status_error);
+            imStatusIcon.setColorFilter(fg);
+            imStatusText.setTextColor(fg);
+            imStatusText.setText(R.string.im_list_empty_title);
+            imStatusButton.setVisibility(View.VISIBLE);
+            imStatusButton.setText(R.string.im_list_empty_nudge);
+        } else if (enabled == 0) {
+            // disabled → warning (orange), CTA 啟用輸入法
+            int fg = ContextCompat.getColor(activity, R.color.setup_status_fg_yellow);
+            imStatusBanner.setBackgroundColor(ContextCompat.getColor(activity, R.color.status_tint_yellow));
+            imStatusIcon.setImageResource(R.drawable.ic_status_warning);
+            imStatusIcon.setColorFilter(fg);
+            imStatusText.setTextColor(fg);
+            imStatusText.setText(getString(R.string.setup_im_status_disabled, installed));
+            imStatusButton.setVisibility(View.VISIBLE);
+            imStatusButton.setText(R.string.setup_im_status_enable);
+        } else {
+            // ok → success (green), no CTA
+            int fg = ContextCompat.getColor(activity, R.color.setup_status_fg_green);
+            imStatusBanner.setBackgroundColor(ContextCompat.getColor(activity, R.color.status_tint_green));
+            imStatusIcon.setImageResource(R.drawable.ic_status_check);
+            imStatusIcon.setColorFilter(fg);
+            imStatusText.setTextColor(fg);
+            imStatusText.setText(getString(R.string.setup_im_status_ok, installed));
+            imStatusButton.setVisibility(View.GONE);
+        }
+    }
+
+    /** Route to the 輸入法 tab (install / enable an IM). */
+    private void openImTab() {
+        if (activity == null) return;
+        com.google.android.material.bottomnavigation.BottomNavigationView bottomNav =
+                activity.findViewById(R.id.main_bottom_nav);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.nav_im);
+            return;
+        }
+        // Tablet: navigation rail instead of bottom nav.
+        com.google.android.material.navigationrail.NavigationRailView navRail =
+                activity.findViewById(R.id.main_nav_rail);
+        if (navRail != null) {
+            navRail.setSelectedItemId(R.id.nav_im);
         }
     }
 

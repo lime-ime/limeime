@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Empty-IM-list placeholder (§5.1.1). Rendered in place of the installed-IM
+     rows when no IM is installed: a soft-green tile holding the primary-tinted
+     keyboard glyph, a title, and one-line guidance pointing at the + FAB. The
+     關聯字庫 section still follows below. Mirrors the .empty-wrap block in the
+     lime-settings-android im-empty-state-demo.html. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="32dp">
+
+    <FrameLayout
+        android:id="@+id/im_empty_mark"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:background="@drawable/bg_im_empty_mark">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_keyboard_24"
+            app:tint="?attr/colorPrimary"
+            android:contentDescription="@null" />
+
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/im_list_empty_title"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:maxWidth="260dp"
+        android:gravity="center"
+        android:text="@string/im_list_empty_body"
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="15sp" />
+
+</LinearLayout>

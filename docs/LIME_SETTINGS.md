@@ -368,7 +368,9 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 **Brand block**: `VStack(spacing: 8)` — `appIconUIImage()` reads `CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles` from the bundle (80×80pt, `cornerRadius: 18`); fallback is `Image(systemName: "keyboard.fill")` in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.largeTitle.bold()` directly below.
 
-**Status banner**: color-coded `Label` in a `secondarySystemBackground` rounded card. See §4.2 for detection logic and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
+**Setup title**: `Text("設定萊姆輸入法")` `.largeTitle.bold()`, leading-aligned. Leads the setup section — the status banner sits **below** it (not between the brand block and the title).
+
+**Status banner**: color-coded `Label` in a `secondarySystemBackground` rounded card, placed directly under the 設定萊姆輸入法 title. See §4.2 for detection logic and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
 
 **Setup steps** — three `SetupStepRow` rows (icon 32pt left, label `.body` right):
 
@@ -418,14 +420,14 @@ NavigationStack (.navigationBarHidden(true))
         │   }
         │   .padding(.top, 32)
         │
-        ├── // ── Status banner ────────────────────────────────────────
-        │   statusBanner              // see §4.2
-        │       .padding(.horizontal, 24)
-        │
         ├── // ── Setup title ──────────────────────────────────────────
         │   Text("設定萊姆輸入法")
         │       .font(.largeTitle).bold()
         │       .frame(maxWidth: .infinity, alignment: .leading)
+        │       .padding(.horizontal, 24)
+        │
+        ├── // ── Status banner (below the title) ─────────────────────
+        │   statusBanner              // see §4.2
         │       .padding(.horizontal, 24)
         │
         ├── // ── Step list ────────────────────────────────────────────
@@ -518,9 +520,9 @@ private func openLimeKeyboardSettings() {
 
 #### Android (`fragment_setup.xml` + `SetupImFragment.java`)
 
-Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: `ImageView` (logo, 120×120dp) + `TextView("萊姆輸入法")`.
+Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: `ImageView` (logo, 120×120dp) + `TextView("萊姆輸入法")`. The `設定萊姆輸入法` heading (`setupHeading`) follows the brand block and **leads** the setup section; the status card sits directly below it (matching iOS and the lime-settings-android demo).
 
-**Status card** (`statusCard`): `MaterialCardView` with `statusIcon` + `statusText` set dynamically by Java based on IME state.
+**Status card** (`statusCard`): `MaterialCardView` with `statusIcon` + `statusText` set dynamically by Java based on IME state. Placed below the 設定萊姆輸入法 heading.
 
 **Three-state machine** (`refreshButtonState()`, driven by `LIMEUtilities.isLIMEEnabled()` / `isLIMEActive()`):
 

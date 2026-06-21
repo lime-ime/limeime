@@ -38,7 +38,17 @@
 
         </LinearLayout>
 
-        <!-- Status Card: neutral background; icon + text carry state color (iOS parity) -->
+        <!-- Setup heading + step descriptions (restored from prior Android implementation) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/setupHeading"
+            android:textAppearance="@style/LIME.Title1"
+            android:text="@string/setup_im_system_settings"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Status Card: neutral background; icon + text carry state color (iOS parity).
+             Sits BELOW the 啟動萊姆輸入法 heading so the heading leads the section. -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/statusCard"
             android:layout_width="match_parent"
@@ -70,15 +80,6 @@
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
-
-        <!-- Setup heading + step descriptions (restored from prior Android implementation) -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/setupHeading"
-            android:textAppearance="@style/LIME.Title1"
-            android:text="@string/setup_im_system_settings"
-            android:layout_marginBottom="8dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -115,6 +116,57 @@
             android:layout_height="wrap_content"
             android:text="@string/setup_im_system_selectLIME"
             android:layout_marginBottom="24dp" />
+
+        <!-- §4.3 Installed-IM status block. Mirrors the IM tab's reality so Setup
+             can surface "no IM installed" / "all disabled" and route the user to
+             the 輸入法 tab. Same tinted-banner + button pattern as the voice card.
+             See docs/LIME_SETTINGS.md §4.3. -->
+        <LinearLayout
+            android:id="@+id/imStatusCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/imStatusBanner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/status_tint_red"
+                android:padding="12dp">
+
+                <ImageView
+                    android:id="@+id/imStatusIcon"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_status_error"
+                    android:contentDescription="@null"
+                    android:layout_marginEnd="10dp" />
+
+                <TextView
+                    android:id="@+id/imStatusText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/im_list_empty_title"
+                    android:textAppearance="@style/LIME.Subheadline" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/imStatusButton"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                app:backgroundTint="@color/button_tint_primary"
+                android:textColor="?attr/colorPrimary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/im_list_empty_nudge"
+                android:layout_marginTop="12dp" />
+
+        </LinearLayout>
 
         <!-- Voice permission block: a tinted status BANNER (icon + title only),
              then the description and action button on the plain page background. -->

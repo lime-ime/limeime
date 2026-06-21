@@ -98,8 +98,9 @@
           style: { width: 92, height: 92, objectFit: "contain" } }),
         React.createElement("div", { style: { font: "700 30px/36px var(--font-sans)", letterSpacing: "-.4px", color: "var(--text-primary)" } }, "萊姆輸入法")
       ),
-      React.createElement(StatusBanner, { status: "success" }, "萊姆輸入法已啟用"),
+      // Heading leads the section; the activation status banner sits BELOW it.
       React.createElement("div", { style: { font: "700 28px/34px var(--font-sans)", letterSpacing: "-.4px" } }, "設定萊姆輸入法"),
+      React.createElement(StatusBanner, { status: "success" }, "萊姆輸入法已啟用"),
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
         React.createElement(StepRow, { icon: I.keyboard({ size: 22 }), text: "輕觸「鍵盤」" }),
         React.createElement(StepRow, { icon: React.createElement(GreenToggle), text: "開啟萊姆輸入法" }),

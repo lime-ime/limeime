@@ -131,6 +131,12 @@
     <color name="im_badge_background">#FF8E8E93</color>
     <color name="im_badge_foreground">#FFFFFFFF</color>
 
+    <!-- Empty-IM-list keyboard-glyph tile (§5.1.1). A soft tint of the blue
+         accent behind the ?attr/colorPrimary glyph (matches the demo's
+         secondary-container .empty-mark, adapted to the app's blue accent).
+         Day value: ~12% blue over white. Dark variant in values-night. -->
+    <color name="im_empty_mark_background">#FFE3F0FB</color>
+
     <!-- Status-banner subtle tints — TRANSLUCENT versions of each status colour
          so they read as a faint wash over whatever surface is behind them and
          adapt to light/dark (a dark override is in values-night). The banner

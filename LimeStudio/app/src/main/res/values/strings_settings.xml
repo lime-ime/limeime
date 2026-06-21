@@ -845,6 +845,14 @@
     <string name="im_detail_edit_metadata_failed">無法儲存輸入法資訊</string>
     <string name="im_list_header_installed">已安裝的輸入法</string>
     <string name="im_list_header_related">關聯字庫</string>
+    <!-- Empty IM-list state + FAB nudge (§5.1.1). Shown when no IM is installed. -->
+    <string name="im_list_empty_title">尚未安裝任何輸入法</string>
+    <string name="im_list_empty_body">點選右下角的 ＋ 下載或匯入輸入法表格，即可開始使用。</string>
+    <string name="im_list_empty_nudge">安裝輸入法</string>
+    <!-- §4.3 Setup-tab Installed-IM status block. -->
+    <string name="setup_im_status_disabled">已安裝 %1$d 個輸入法，但全部停用</string>
+    <string name="setup_im_status_ok">已安裝 %1$d 個輸入法</string>
+    <string name="setup_im_status_enable">啟用輸入法</string>
     <string name="db_status_backup_ok">✅ 備份完成</string>
     <string name="db_status_restore_ok">✅ 還原完成</string>
     <string name="db_status_default_ok">✅ 已還原預設資料庫</string>

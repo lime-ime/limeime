@@ -106,8 +106,9 @@
         React.createElement("img", { src: "../../assets/lime-logo-android.png", alt: "LIME", style: { width: 92, height: 92, objectFit: "contain" } }),
         React.createElement("div", { style: { font: "700 30px/36px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" } }, "萊姆輸入法")
       ),
-      React.createElement(StatusCard),
+      // Heading leads the section; the activation status banner sits BELOW it.
       React.createElement("div", { style: { font: "700 28px/34px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" } }, "設定萊姆輸入法"),
+      React.createElement(StatusCard),
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
         React.createElement(StepRow, { icon: React.createElement(Icon, { name: "keyboard", size: 24, color: "var(--md-primary)" }), text: "輕觸「鍵盤」" }),
         React.createElement(StepRow, { icon: React.createElement(GreenToggle), text: "開啟萊姆輸入法" }),

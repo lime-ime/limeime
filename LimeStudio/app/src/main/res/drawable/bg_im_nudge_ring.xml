@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A single radar-pulse ring that expands out of the install FAB when the IM
+     list is empty. Filled primary circle; the fragment animates scale + alpha.
+     Mirrors .fab-zone .ring in im-empty-state-demo.html. §5.1.1. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/colorPrimary" />
+</shape>

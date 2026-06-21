@@ -66,4 +66,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <!-- Trailing chevron (matches the demo's chevron_right after the toggle).
+         Shown on IM rows and on the 關聯字庫 row; both drill into a detail. -->
+    <ImageView
+        android:id="@+id/iv_im_chevron"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_marginStart="8dp"
+        android:src="@drawable/ic_chevron_right"
+        app:tint="?android:attr/textColorSecondary"
+        android:contentDescription="@null" />
+
 </LinearLayout>
