@@ -1,6 +1,6 @@
 # 萊姆中文輸入法 - LIME IME v6.1.23
 
-**套件名稱：** `org.limeime`
+**套件名稱：** `net.toload.main.hd2026`
 
 **目標 SDK：** 36
 
@@ -8,11 +8,13 @@
 
 **前一正式版本：** [v6.1.22](https://github.com/lime-ime/limeime/releases/tag/v6.1.22)
 
+這次更新主要是替換 GitHub Release 附上的 Android APK，讓 GitHub 測試版回到舊版 GitHub APK 使用的套件名稱與簽署金鑰，並在系統輸入法清單中顯示為「萊姆輸入法A」。已經安裝舊版 GitHub APK 的使用者，可以用這個 APK 繼續同一條測試版更新路徑，不會和 Google Play 版本混在一起。
+
+> **相容性注意：** Google Play 版本與 GitHub Release APK 使用不同套件名稱與簽署金鑰，兩者會被 Android 視為不同 App，可以同時安裝並共存，但不能互相直接更新或升級。Google Play 封閉測試使用者請從 Google Play 更新。若要在 Google Play 版本與 GitHub APK 之間切換使用，請先備份輸入法資料，再依需要啟用另一個版本。若要改成只保留其中一個版本，請確認資料已備份後再解除安裝不使用的版本。
+
 這版 `6.1.23` 持續整理 Android 與 iOS 的輸入體驗。Android 主要改善在 LINE、WeChat、Instagram 這類下方訊息輸入欄 App 內的字根顯示與字根反查浮動視窗位置，也讓設定頁在尚未安裝輸入法時有更清楚的提示。iOS 來源則加入 iPad 11 吋與 iPad mini 的較窄鍵盤尺寸支援，讓小尺寸 iPad 上的按鍵比例更接近方形。
 
-GitHub Release 附上的安裝檔是 Android APK。iOS 使用者仍需等待後續 TestFlight 或 App Store 發布。
-
-> **注意：** Google Play 版本與 GitHub Release APK 使用不同簽署金鑰。兩者不能互相直接更新或升級。Google Play 封閉測試使用者請從 Google Play 更新。若要在 Google Play 版本與 GitHub APK 之間切換，請先備份輸入法資料，解除安裝原本版本後再重新安裝。
+GitHub Release 附上的安裝檔是 Android APK，使用套件名稱 `net.toload.main.hd2026`、versionCode `2026` 與舊 GitHub APK 相容簽署金鑰。iOS 使用者仍需等待後續 TestFlight 或 App Store 發布。
 
 ## 更新內容
 
@@ -47,8 +49,9 @@ GitHub Release 附上的安裝檔是 Android APK。iOS 使用者仍需等待後�
 
 ## APK 資訊
 
-- APK manifest：package `org.limeime`，versionName `6.1.23`，versionCode `202661230`，minSdk 21，targetSdk 36
-- APK 檔案：`LIMEHD202661230-6.1.23.apk`
-- APK 檔案大小：7,406,573 bytes
-- APK SHA-256：`e64db9d33118dfc4bf127f951f5a0f873d939918496a54cc89254c71fe31eb95`
-- APK 簽署憑證：LIME IME upload key，`C=TW, ST=Taiwan, L=Taipei, O=LIME IME Team, OU=LIME IME Team, CN=LIME IME`
+- APK manifest：package `net.toload.main.hd2026`，versionName `6.1.23`，versionCode `2026`，minSdk 21，targetSdk 36
+- APK 顯示名稱：`萊姆輸入法A`
+- APK 檔案：`LIMEHD2026-6.1.23.apk`
+- APK 檔案大小：7,406,598 bytes
+- APK SHA-256：`644e9744af24a97d4f0ae67a5537992808ae2fbc6c4dcdb70fc1c44736225eca`
+- APK 簽署憑證：舊 GitHub APK 相容簽署金鑰，`C=TW, ST=NA, L=Taipei, O=LIME IME, OU=LIME IME, CN=Jeremy Wu`

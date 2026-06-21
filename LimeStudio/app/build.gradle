@@ -49,11 +49,11 @@ android {
     }
     compileSdkVersion 36
     defaultConfig {
-        applicationId "org.limeime"
+        applicationId "net.toload.main.hd2026"
 
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 202661230
+        versionCode 2026
         versionName '6.1.23'
 
         //multiDexEnabled = true
