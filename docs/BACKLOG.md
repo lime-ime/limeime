@@ -6,6 +6,7 @@ Last reviewed: 2026-06-21
 
 ## Active issue follow-up
 
+- #124 Android: v6.1.23 includes the targeted LINE/WeChat/Instagram bottom-composer composing/root-key and reverse-lookup popup placement fixes. Retained comment https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 now tells the Google Play closed-test reporter to update from Google Play, and the issue was reopened with https://github.com/lime-ime/limeime/issues/124#issuecomment-4761963945 pending reporter confirmation.
 - #128 Android: Samsung A55 / Android 16 / One UI 8.5 report says `喜好設定 / 打字震動` is enabled and Samsung `觸控震動` is enabled, but soft-key presses produce no vibration while LIME `打字音效` works. Inspect the Android 12+ haptic feedback path and Samsung/One UI system-vibration gating, then ask the reporter to retest only after a newer APK contains a relevant haptic-feedback change.
 
 ## Source fixed / awaiting build verification

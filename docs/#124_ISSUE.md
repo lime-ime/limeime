@@ -3,13 +3,13 @@
 ## Current status
 
 - Live issue: https://github.com/lime-ime/limeime/issues/124
-- Status: **CLOSED / fix delivered in v6.1.23, awaiting optional reporter verification** (2026-06-21)
+- Status: **OPEN / fix delivered in v6.1.23, awaiting reporter verification** (reopened 2026-06-21)
 - Classification: `bug` + `Usability`
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
-- Public follow-up: `limeimetw` posted the retained v6.1.23 update / optional retest comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236, then the issue was closed as completed.
-- Implementation status: **Released in v6.1.23.** The Android popup lifetime/alignment and placement follow-up fixes are on `master` via commits `61cf87b65f03f69486e112bf1dc1383c9974a125` and `9fc84f97eaddfea5f550268e950695dadbb3fea5`, and the issue was closed after v6.1.23 was published.
-- Reporter verification: the retained comment asks the reporter to check LINE, WeChat, and Instagram bottom-composer screens on v6.1.23.
+- Public follow-up: `limeimetw` edited the retained v6.1.23 update comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 to use Google Play closed-test wording, then reopened the issue with https://github.com/lime-ime/limeime/issues/124#issuecomment-4761963945 so the reporter can confirm the result after updating.
+- Implementation status: **Released in v6.1.23.** The Android popup lifetime/alignment and placement follow-up fixes are on `master` via commits `61cf87b65f03f69486e112bf1dc1383c9974a125` and `9fc84f97eaddfea5f550268e950695dadbb3fea5`.
+- Reporter verification: pending. The retained comment asks the Google Play closed-test reporter to update from Google Play and check LINE, WeChat, and Instagram bottom-composer screens on v6.1.23.
 
 ## Problem statement
 
@@ -122,7 +122,7 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 ## Backlog / release follow-up
 
 - Android APK v6.1.23 (`LIMEHD202661230-6.1.23.apk`) contains the targeted #124 popup-position/alignment fix. The GitHub Contents APK blob SHA is `2e7fee05de15139119db5a3ea1908bd7f2b611ec`, size `7406573` bytes; downloaded SHA-256 was `e64db9d33118dfc4bf127f951f5a0f873d939918496a54cc89254c71fe31eb95`.
-- `limeimetw` posted the retained v6.1.23 update / optional retest comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 and closed the maintainer-created tracking issue as completed.
-- Removed #124 from active backlog/watch tracking unless the reporter replies with negative 6.1.23 feedback or a maintainer reopens it.
-- If the reporter says v6.1.23 still overlaps the bottom input field, reopen or create the next focused follow-up with screenshots/video and the exact app/key sequence.
+- `limeimetw` edited the retained v6.1.23 update comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 to tell the Google Play closed-test reporter to update from Google Play, not from a raw APK link.
+- The issue is reopened and should remain open pending reporter confirmation on Google Play v6.1.23.
+- If the reporter says v6.1.23 still overlaps the bottom input field, continue the focused follow-up with screenshots/video and the exact app/key sequence.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
