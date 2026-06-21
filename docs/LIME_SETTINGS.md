@@ -368,7 +368,9 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 **Brand block**: `VStack(spacing: 8)` — `appIconUIImage()` reads `CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles` from the bundle (80×80pt, `cornerRadius: 18`); fallback is `Image(systemName: "keyboard.fill")` in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.largeTitle.bold()` directly below.
 
-**Status banner**: color-coded `Label` in a `secondarySystemBackground` rounded card. See §4.2 for detection logic and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
+**Setup title**: `Text("設定萊姆輸入法")` `.largeTitle.bold()`, leading-aligned. Leads the setup section — the status banner sits **below** it (not between the brand block and the title).
+
+**Status banner**: color-coded `Label` in a `secondarySystemBackground` rounded card, placed directly under the 設定萊姆輸入法 title. See §4.2 for detection logic and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
 
 **Setup steps** — three `SetupStepRow` rows (icon 32pt left, label `.body` right):
 
@@ -418,14 +420,14 @@ NavigationStack (.navigationBarHidden(true))
         │   }
         │   .padding(.top, 32)
         │
-        ├── // ── Status banner ────────────────────────────────────────
-        │   statusBanner              // see §4.2
-        │       .padding(.horizontal, 24)
-        │
         ├── // ── Setup title ──────────────────────────────────────────
         │   Text("設定萊姆輸入法")
         │       .font(.largeTitle).bold()
         │       .frame(maxWidth: .infinity, alignment: .leading)
+        │       .padding(.horizontal, 24)
+        │
+        ├── // ── Status banner (below the title) ─────────────────────
+        │   statusBanner              // see §4.2
         │       .padding(.horizontal, 24)
         │
         ├── // ── Step list ────────────────────────────────────────────
@@ -518,9 +520,9 @@ private func openLimeKeyboardSettings() {
 
 #### Android (`fragment_setup.xml` + `SetupImFragment.java`)
 
-Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: `ImageView` (logo, 120×120dp) + `TextView("萊姆輸入法")`.
+Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: `ImageView` (logo, 120×120dp) + `TextView("萊姆輸入法")`. The `設定萊姆輸入法` heading (`setupHeading`) follows the brand block and **leads** the setup section; the status card sits directly below it (matching iOS and the lime-settings-android demo).
 
-**Status card** (`statusCard`): `MaterialCardView` with `statusIcon` + `statusText` set dynamically by Java based on IME state.
+**Status card** (`statusCard`): `MaterialCardView` with `statusIcon` + `statusText` set dynamically by Java based on IME state. Placed below the 設定萊姆輸入法 heading.
 
 **Three-state machine** (`refreshButtonState()`, driven by `LIMEUtilities.isLIMEEnabled()` / `isLIMEActive()`):
 
@@ -548,6 +550,40 @@ Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a
 | `notEnabled` | `.red` | `xmark.circle.fill` | `"尚未啟用萊姆輸入法鍵盤"` |
 
 Banner renders as `Label(text, systemImage:)` in `.subheadline` font, inside a `secondarySystemBackground` rounded-rect card (`.cornerRadius(10)`).
+
+### 4.3 Installed-IM Status
+
+A second status block below the About footer separator that mirrors the **輸入法**
+tab's reality, so a problem surfaces on the first screen the user lands on and the
+Setup tab can route them straight to the fix. The §4.2 banner reports whether the
+*keyboard* is enabled; §4.3 reports whether any *input method table* is actually
+installed and active — a keyboard with no IM still cannot type.
+
+It derives one of three states from the IM list (`im.enabled` across all installed
+IMs) and renders a §4.2-style status banner plus an optional prominent CTA that
+deep-links into the IM Manager (§5):
+
+| State | Condition | Color | iOS SF Symbol / Android icon | Banner text | CTA |
+| --- | --- | --- | --- | --- | --- |
+| `none` | no IM table installed | danger / red (`var(--md-error)`) | `error` | `"尚未安裝任何輸入法"` | `"安裝輸入法"` |
+| `disabled` | ≥1 installed, all disabled | warning / orange (`#b56500`) | `warning` | `"已安裝 N 個輸入法，但全部停用"` | `"啟用輸入法"` |
+| `ok` | ≥1 installed & enabled | success / green | `check_circle` | `"已安裝 N 個輸入法"` | none |
+
+- **`N`** is the installed-IM count; the `ok` and `disabled` rows substitute it into
+  the text, so the `none` text is the only fully-static string.
+- **CTA** is shown only for `none` / `disabled`. Tapping it navigates to the **輸入法**
+  tab — to the IM install flow (§5.3) for `none`, or to the IM list (§5.1) for
+  `disabled` so the user can re-enable.
+- The block is preceded by a full-bleed separator (`0 -24px` inset), matching the
+  About footer divider, so it reads as its own section.
+- iOS renders the banner via the shared `StatusBanner` component (same as §4.2);
+  Android renders an icon + label row (`fill: true`, tinted to the state colour)
+  over the `STATUS_BG` tonal fill, with a `filled` Material button for the CTA.
+
+> Implemented in `SetupTabView.swift` (iOS) / `AndroidSetupTab.jsx` (Android) as
+> `IMStatusSection`. The empty-installed-list experience this CTA leads to — the
+> keyboard-glyph empty state, the bobbing "安裝輸入法" callout pill, and the FAB's
+> radar-pulse + breath nudge — is specified in §5.1.
 
 ---
 
@@ -586,8 +622,48 @@ NavigationStack
 ```
 
 - **Enable / disable**: writes `im.enabled` via `db.updateIMEnabled(id:enabled:)` and updates `keyboard_state` preference string.
-- **Drag to reorder**: writes `im.sortOrder` via `db.updateIMSortOrder(id:sortOrder:)`.
 - Enabled rows display at full opacity; disabled rows display at half opacity (matching Android's `HALF_ALPHA_VALUE` / italic style).
+
+> **Add control / no reorder (revision §0).** Per the 4-tab re-layout, drag-to-reorder
+> and the `EditButton` were removed — the installed list is not editable. The add
+> affordance is a **round FAB showing only `+`** (no label), bottom-trailing, that opens
+> the install flow (§5.3). The `.toolbar` block in the tree above is superseded by this
+> FAB; `im.sortOrder` is still honoured for display order but is no longer user-editable
+> from this screen.
+
+#### 5.1.1 Empty state + FAB nudge
+
+When **no IM is installed**, the 已安裝的輸入法 section is replaced by an empty-state
+placeholder and the `+` FAB is animated to draw the eye to the only way forward. The
+關聯字庫 section stays present below it. The whole nudge is gated on the installed list
+being empty and disappears once the first IM is installed.
+
+| iOS | Android |
+|---|---|
+| ![iPhone 17 Pro Max simulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_ios_im_list_empty.png) | ![Android emulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_android_im_list_empty.png) |
+
+**Placeholder** (centered, in place of the IM rows):
+
+- A 96×96 rounded tile (corner radius 28) holding a 46pt `keyboard` glyph — accent
+  foreground (brand green) on a quaternary fill (`var(--fill-quaternary)` / iOS
+  `quaternarySystemFill`; Android `--md-secondary-container`).
+- Title `"尚未安裝任何輸入法"` (20/26 semibold).
+- Body `"點選右下角的 ＋ 下載或匯入輸入法表格，即可開始使用。"` (15/21, secondary, max-width
+  ~250pt), with the `＋` glyph tinted to the accent to tie it to the FAB.
+
+**FAB nudge** — three coordinated cues, all accent-coloured and **Reduce-Motion safe**:
+
+| Cue | Behavior | Reduced-motion fallback |
+|---|---|---|
+| Radar pulse | Two staggered rings expand out of the FAB and fade (scale 1 → 2.6, opacity .45 → 0; 2.4s loop, second ring delayed 1.2s) | rings parked static at scale ≈1.9, opacity .18 |
+| FAB breath | A periodic scale "breath" (≈1.08) so the FAB reads as the target (2.4s loop) | no animation |
+| Callout pill | A bobbing `"安裝輸入法"` pill above the FAB with a downward caret pointing at it (translateY 0 → 4px, 1.8s loop) | static, no bob |
+
+iOS implements these with `withAnimation(...).repeatForever` honouring
+`@Environment(\.accessibilityReduceMotion)`; the kit reference encodes the same
+behaviour as the `imtab-ring` / `imtab-fab-attn` / `imtab-callout` CSS classes under a
+`@media (prefers-reduced-motion: reduce)` guard. This is the destination the Setup
+tab's §4.3 `none`-state CTA (`安裝輸入法`) routes to.
 
 ### 5.2 IM Detail Screen
 

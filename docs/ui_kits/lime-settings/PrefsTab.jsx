@@ -26,7 +26,7 @@
       ),
 
       React.createElement(ListGroup, { header: "鍵盤回饋" },
-        React.createElement(ListRow, { icon: I.bell({ size: 17 }), iconColor: "#e0883a", title: "打字震動", trailing: sw("vibrate") }),
+        React.createElement(ListRow, { icon: I.vibrate({ size: 17 }), iconColor: "#e0883a", title: "打字震動", trailing: sw("vibrate") }),
         React.createElement(ListRow, { title: "震動強度", value: "中", chevron: true, style: { opacity: s.vibrate ? 1 : 0.5 } }),
         React.createElement(ListRow, { title: "打字音效", trailing: sw("sound") })
       ),

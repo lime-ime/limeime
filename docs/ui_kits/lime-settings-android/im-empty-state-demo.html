@@ -1,0 +1,278 @@
+<!-- @dsCard group="LIME Settings (Android)" viewport="412x760" name="IM list — empty state + FAB nudge (Android)" subtitle="Material 3: radar-pulse halo on the + FAB with a bobbing arrow when no IM is installed" -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>IM Empty State — Android FAB nudge</title>
+<link rel="stylesheet" href="../../styles.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..0&family=Roboto:wght@400;500;700&display=block" rel="stylesheet" />
+<style>
+  html, body { margin: 0; height: 100%; background: #babfc7; font-family: "Roboto", var(--font-sans); -webkit-font-smoothing: antialiased; }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  /* Pixel-style device — Material You light-scheme roles (green seed). */
+  #device {
+    --md-primary: #386a20; --md-on-primary: #ffffff;
+    --md-primary-container: #b7f397; --md-on-primary-container: #042100;
+    --md-secondary-container: #d7e8c8; --md-on-secondary-container: #121f0d;
+    --md-surface: #f8faf0; --md-surface-container-low: #f2f5e9;
+    --md-surface-container: #ecefe3; --md-surface-container-high: #e6e9de;
+    --md-surface-container-highest: #e0e4d8;
+    --md-on-surface: #1a1c16; --md-on-surface-variant: #44483b;
+    --md-outline: #75796c; --md-outline-variant: #c5c8b9;
+    --md-error: #ba1a1a;
+
+    width: 412px; height: 915px; flex: 0 0 auto; transform-origin: center center;
+    background: var(--md-surface); border-radius: 44px; position: relative; overflow: hidden;
+    box-shadow: 0 0 0 3px #15161a, 0 0 0 13px #23252b, 0 28px 70px rgba(0,0,0,.42);
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--md-surface); }
+  /* Android status bar */
+  .sysbar { height: 32px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px 0 24px; color: var(--md-on-surface); position: relative; z-index: 6; }
+  .sysbar .clock { font: 500 14px/1 "Roboto"; }
+  .sysbar .icons { display: flex; align-items: center; gap: 7px; }
+  .punch { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 13px; height: 13px;
+    background: #060708; border-radius: 50%; z-index: 7; }
+  /* App bar */
+  .appbar { flex: 0 0 auto; height: 64px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 16px;
+    background: var(--md-surface); color: var(--md-on-surface); position: relative; z-index: 5; }
+  .appbar .title { font: 500 22px/28px "Roboto", var(--font-sans); flex: 1; }
+  /* Scroll body */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; position: relative; }
+  .scroll::-webkit-scrollbar { width: 0; }
+  /* Bottom navigation */
+  .navhost { flex: 0 0 auto; }
+  /* Gesture nav pill */
+  .gesture { height: 22px; flex: 0 0 auto; display: flex; align-items: center; justify-content: center; background: var(--md-surface-container); }
+  .gesture::after { content: ""; width: 130px; height: 5px; border-radius: 3px; background: var(--md-on-surface); opacity: .85; }
+  /* Material Symbols */
+  .msr { font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; line-height: 1;
+    letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal;
+    direction: ltr; -webkit-font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; user-select: none;
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+  .msr.fill { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
+
+  /* ── Empty state ───────────────────────────────────────────── */
+  .empty-wrap { display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 44px 24px 32px; gap: 18px; }
+  .empty-mark {
+    width: 100px; height: 100px; border-radius: 28px; display: flex; align-items: center; justify-content: center;
+    color: var(--md-primary); background: var(--md-secondary-container);
+  }
+  .empty-title { font: 500 22px/28px "Roboto", var(--font-sans); color: var(--md-on-surface); }
+  .empty-body { font: 400 15px/21px "Roboto", var(--font-sans); color: var(--md-on-surface-variant); max-width: 260px; }
+
+  /* ── FAB (M3 primary-container, rounded-square 56) ─────────── */
+  .fab-zone { position: absolute; right: 16px; bottom: 16px; width: 56px; height: 56px; z-index: 20; }
+  .fab {
+    position: absolute; inset: 0; width: 56px; height: 56px; border-radius: 18px; border: none;
+    background: var(--md-primary-container); color: var(--md-on-primary-container); display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,.2); cursor: pointer; z-index: 2;
+  }
+  /* Radar pulse — two staggered rounded-square rings expanding out of the FAB */
+  .fab-zone .ring {
+    position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px;
+    border-radius: 18px; background: var(--md-primary); opacity: 0; z-index: 1;
+    animation: fab-pulse 2.4s cubic-bezier(.22,.61,.36,1) infinite;
+  }
+  .fab-zone .ring.r2 { animation-delay: 1.2s; }
+  @keyframes fab-pulse {
+    0%   { transform: scale(1);   opacity: .35; }
+    70%  { opacity: 0; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+  /* FAB itself gives a tiny periodic "breath" so it reads as the target */
+  .fab.attn { animation: fab-breath 2.4s ease-in-out infinite; }
+  @keyframes fab-breath {
+    0%, 62%, 100% { transform: scale(1); }
+    72%           { transform: scale(1.08); }
+    82%           { transform: scale(.98); }
+  }
+
+  /* ── Callout pill pointing at the FAB ──────────────────────── */
+  .nudge-callout {
+    position: absolute; right: 16px; bottom: 82px; z-index: 15; pointer-events: none;
+    animation: callout-bob 1.8s ease-in-out infinite;
+  }
+  .nudge-callout .pill {
+    position: relative; background: var(--md-primary); color: var(--md-on-primary);
+    font: 500 14px/1 "Roboto", var(--font-sans); padding: 10px 14px; border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.22); white-space: nowrap;
+  }
+  .nudge-callout .caret {
+    position: absolute; right: 18px; bottom: -5px; width: 12px; height: 12px;
+    background: var(--md-primary); transform: rotate(45deg); border-radius: 2px;
+  }
+  @keyframes callout-bob {
+    0%, 100% { transform: translateY(0); opacity: .95; }
+    50%      { transform: translateY(4px); opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fab-zone .ring { animation: none; opacity: .16; transform: scale(1.9); }
+    .fab.attn, .nudge-callout { animation: none; }
+  }
+
+  /* ── Demo control (outside the phone) ──────────────────────── */
+  .demo-toggle {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 100;
+    display: flex; gap: 6px; background: rgba(255,255,255,.92); backdrop-filter: blur(8px);
+    border-radius: 999px; padding: 5px; box-shadow: 0 6px 24px rgba(0,0,0,.18);
+  }
+  .demo-toggle button {
+    border: none; background: none; cursor: pointer; padding: 8px 16px; border-radius: 999px;
+    font: 500 13px/1 "Roboto", var(--font-sans); color: #5f6368;
+  }
+  .demo-toggle button.on { background: #386a20; color: #fff; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="device"><div id="root"></div></div></div>
+<div class="demo-toggle">
+  <button id="btn-empty" class="on">Empty list</button>
+  <button id="btn-filled">After install</button>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script>(function(){var v='?v='+Date.now();['m3.jsx'].forEach(function(m){document.write('<scr'+'ipt type="text/babel" src="'+m+v+'"><\/scr'+'ipt>');});})();</script>
+<script type="text/babel">
+  const { NavBar, Icon, Switch } = window.LimeM3;
+
+  // ── Android status bar ───────────────────────────────────────
+  function SysBar() {
+    return (
+      <div className="sysbar">
+        <span className="clock">9:41</span>
+        <span className="icons">
+          <span className="msr" style={{ fontSize: 17 }}>signal_cellular_alt</span>
+          <span className="msr" style={{ fontSize: 17 }}>wifi</span>
+          <span className="msr fill" style={{ fontSize: 18 }}>battery_full</span>
+        </span>
+      </div>
+    );
+  }
+
+  function Avatar({ glyph }) {
+    return <span style={{ width: 40, height: 40, flex: "0 0 auto", borderRadius: 11, background: "#8e8e93", color: "#fff",
+      display: "flex", alignItems: "center", justifyContent: "center", font: "500 18px/1 'Noto Sans TC', var(--font-sans)" }}>{glyph}</span>;
+  }
+
+  const SEED = [
+    { id: "phonetic", label: "注音", glyph: "ㄅ", on: true },
+    { id: "cj", label: "倉頡", glyph: "倉", on: true },
+    { id: "ecj", label: "速成", glyph: "速", on: true },
+  ];
+
+  function EmptyState() {
+    return (
+      <div className="empty-wrap">
+        <div className="empty-mark"><span className="msr" style={{ fontSize: 52 }}>keyboard</span></div>
+        <div className="empty-title">尚未安裝任何輸入法</div>
+        <div className="empty-body">點選右下角的 <b style={{ color: "var(--md-primary)" }}>＋</b> 下載或匯入輸入法字根，即可開始使用。</div>
+      </div>
+    );
+  }
+
+  // Callout pill that points at the FAB
+  function NudgeArrow() {
+    return (
+      <div className="nudge-callout">
+        <div className="pill">安裝輸入法<div className="caret" /></div>
+      </div>
+    );
+  }
+
+  function IMRow({ m, onToggle }) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 16, minHeight: 64, padding: "8px 8px",
+        opacity: m.on ? 1 : 0.55, borderRadius: 16 }}>
+        <Avatar glyph={m.glyph} />
+        <div style={{ flex: 1, minWidth: 0, font: "500 17px/22px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" }}>{m.label}</div>
+        <span onClick={(e) => e.stopPropagation()}><Switch checked={m.on} onChange={() => onToggle(m.id)} /></span>
+        <Icon name="chevron_right" size={22} color="var(--md-on-surface-variant)" />
+      </div>
+    );
+  }
+
+  function IMTab({ empty }) {
+    const [ims, setIms] = React.useState(SEED);
+    const toggle = (id) => setIms((s) => s.map((m) => m.id === id ? { ...m, on: !m.on } : m));
+    return (
+      <div style={{ position: "relative", minHeight: "100%", paddingBottom: 24 }}>
+        <div style={{ padding: "4px 16px 0" }}>
+          {empty ? <EmptyState /> : (
+            <React.Fragment>
+              <div style={{ font: "500 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-primary)", padding: "8px 8px 6px" }}>已安裝的輸入法</div>
+              {ims.map((m) => <IMRow key={m.id} m={m} onToggle={toggle} />)}
+              <div style={{ height: 1, background: "var(--md-outline-variant)", margin: "10px 8px 8px" }} />
+            </React.Fragment>
+          )}
+          <div style={{ font: "500 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-primary)", padding: "8px 8px 6px" }}>關聯字庫</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, minHeight: 64, padding: "8px", borderRadius: 16 }}>
+            <span style={{ width: 40, height: 40, borderRadius: 11, background: "#8e8e93", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Icon name="chat" size={22} fill={true} />
+            </span>
+            <div style={{ flex: 1, font: "500 17px/22px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" }}>關聯字庫</div>
+            <Icon name="chevron_right" size={22} color="var(--md-on-surface-variant)" />
+          </div>
+        </div>
+        {empty && <NudgeArrow />}
+        <div className="fab-zone">
+          {empty && <span className="ring" />}
+          {empty && <span className="ring r2" />}
+          <button type="button" className={"fab" + (empty ? " attn" : "")}><Icon name="add" size={26} /></button>
+        </div>
+      </div>
+    );
+  }
+
+  const TABS = [
+    { key: "setup", label: "設定", icon: "settings" },
+    { key: "im", label: "輸入法", icon: "format_list_bulleted" },
+    { key: "prefs", label: "喜好設定", icon: "tune" },
+    { key: "db", label: "資料庫", icon: "inventory_2" },
+  ];
+
+  function App() {
+    const [empty, setEmpty] = React.useState(true);
+    React.useEffect(() => {
+      document.getElementById("btn-empty").onclick = () => setEmpty(true);
+      document.getElementById("btn-filled").onclick = () => setEmpty(false);
+    }, []);
+    React.useEffect(() => {
+      document.getElementById("btn-empty").classList.toggle("on", empty);
+      document.getElementById("btn-filled").classList.toggle("on", !empty);
+    }, [empty]);
+    return (
+      <div className="screen">
+        <div className="punch" />
+        <SysBar />
+        <div className="appbar"><span className="title">管理輸入法</span></div>
+        <div className="scroll">
+          <IMTab empty={empty} />
+        </div>
+        <div className="navhost">
+          <NavBar items={TABS} active="im" onChange={() => {}} />
+        </div>
+        <div className="gesture" />
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+  function fit() {
+    const pad = 24;
+    const dev = document.getElementById("device");
+    const s = Math.min((window.innerWidth - pad) / dev.offsetWidth, (window.innerHeight - pad) / dev.offsetHeight, 1);
+    dev.style.transform = "scale(" + s + ")";
+  }
+  window.addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>

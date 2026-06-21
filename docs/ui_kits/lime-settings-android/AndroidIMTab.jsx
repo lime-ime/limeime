@@ -3,6 +3,25 @@
 (function () {
   const { Icon, Switch, Button } = window.LimeM3;
 
+  // One-time keyframe injection for the empty-state FAB nudge (radar pulse + bob).
+  if (!document.getElementById("androidimtab-nudge-css")) {
+    const css = document.createElement("style");
+    css.id = "androidimtab-nudge-css";
+    css.textContent = `
+      @keyframes aim-pulse { 0%{transform:scale(1);opacity:.38} 70%{opacity:0} 100%{transform:scale(2.5);opacity:0} }
+      @keyframes aim-breath { 0%,62%,100%{transform:scale(1)} 72%{transform:scale(1.08)} 82%{transform:scale(.98)} }
+      @keyframes aim-bob { 0%,100%{transform:translateY(0);opacity:.95} 50%{transform:translateY(4px);opacity:1} }
+      .aim-ring { animation: aim-pulse 2.4s cubic-bezier(.22,.61,.36,1) infinite; }
+      .aim-ring.r2 { animation-delay: 1.2s; }
+      .aim-fab.attn { animation: aim-breath 2.4s ease-in-out infinite; }
+      .aim-callout { animation: aim-bob 1.8s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        .aim-ring { animation: none; opacity: .14; transform: scale(1.9); }
+        .aim-fab.attn, .aim-callout { animation: none; }
+      }`;
+    document.head.appendChild(css);
+  }
+
   const IMS = [
     { id: "phonetic", label: "注音", glyph: "ㄅ", color: "#5b8a2c", on: true },
     { id: "cj",       label: "倉頡", glyph: "倉", color: "#36618e", on: true },
@@ -34,14 +53,54 @@
     );
   }
 
-  function AndroidIMTab({ onOpen, selectedId, hideFab }) {
-    const [ims, setIms] = React.useState(IMS);
+  // Empty state shown in place of the installed-IM list when none is installed.
+  function EmptyState() {
+    return React.createElement("div", {
+      style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        textAlign: "center", padding: "40px 24px 28px", gap: 16 },
+    },
+      React.createElement("span", { style: { width: 96, height: 96, borderRadius: 28, display: "flex", alignItems: "center", justifyContent: "center",
+        background: "var(--md-surface-container-high)", color: "var(--md-primary)" } },
+        React.createElement(Icon, { name: "keyboard", size: 46 })),
+      React.createElement("div", { style: { font: "500 22px/28px 'Roboto', 'Noto Sans TC', var(--font-sans)", color: "var(--md-on-surface)" } }, "尚未安裝任何輸入法"),
+      React.createElement("div", { style: { font: "400 15px/21px 'Roboto', 'Noto Sans TC', var(--font-sans)", color: "var(--md-on-surface-variant)", maxWidth: 260 } },
+        "點選右下角的 ＋ 下載或匯入輸入法表格，即可開始使用。")
+    );
+  }
+
+  // Round FAB with radar pulse + bobbing 「安裝輸入法」 callout (empty only).
+  function FabNudge({ empty }) {
+    return React.createElement("div", { style: { position: "absolute", right: 16, bottom: 16, width: 56, height: 56, zIndex: 20 } },
+      empty && React.createElement("span", { className: "aim-callout", style: { position: "absolute", right: 0, bottom: 66, zIndex: 5, pointerEvents: "none" } },
+        React.createElement("span", { style: { position: "relative", display: "block", background: "var(--md-primary)", color: "var(--md-on-primary)",
+          font: "500 14px/1 'Roboto', 'Noto Sans TC', var(--font-sans)", padding: "9px 13px", borderRadius: 11, boxShadow: "0 4px 14px rgba(0,0,0,.2)", whiteSpace: "nowrap" } },
+          "安裝輸入法",
+          React.createElement("span", { style: { position: "absolute", right: 18, bottom: -5, width: 12, height: 12, background: "var(--md-primary)", transform: "rotate(45deg)", borderRadius: 2 } }))),
+      empty && React.createElement("span", { className: "aim-ring", style: { position: "absolute", left: "50%", top: "50%", width: 56, height: 56, margin: "-28px 0 0 -28px", borderRadius: "50%", background: "var(--md-primary)", opacity: 0, zIndex: 1 } }),
+      empty && React.createElement("span", { className: "aim-ring r2", style: { position: "absolute", left: "50%", top: "50%", width: 56, height: 56, margin: "-28px 0 0 -28px", borderRadius: "50%", background: "var(--md-primary)", opacity: 0, zIndex: 1 } }),
+      React.createElement("button", {
+        type: "button",
+        className: "aim-fab" + (empty ? " attn" : ""),
+        style: { position: "absolute", inset: 0, width: 56, height: 56, borderRadius: "50%", border: 0,
+          background: "var(--md-primary-container)", color: "var(--md-on-primary-container)", display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 3px 8px rgba(0,0,0,.2)", cursor: "pointer", zIndex: 2 },
+      }, React.createElement(Icon, { name: "add", size: 26 }))
+    );
+  }
+
+  function AndroidIMTab({ onOpen, selectedId, hideFab, startEmpty, allDisabled }) {
+    const [ims, setIms] = React.useState(
+      startEmpty ? [] : (allDisabled ? IMS.map((m) => ({ ...m, on: false })) : IMS)
+    );
     const toggle = (id) => setIms((s) => s.map((m) => (m.id === id ? { ...m, on: !m.on } : m)));
+    const isEmpty = ims.length === 0;
     return React.createElement("div", { style: { position: "relative", minHeight: "100%", paddingBottom: 24 } },
       React.createElement("div", { style: { padding: "4px 16px 0" } },
         React.createElement("div", { style: { font: "700 34px/41px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)", padding: "12px 8px 10px" } }, "管理輸入法"),
         React.createElement("div", { style: { font: "500 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-primary)", padding: "8px 8px 6px" } }, "已安裝的輸入法"),
-        ...ims.map((m) => React.createElement(Row, { key: m.id, m, onToggle: toggle, onOpen, selected: selectedId === m.id })),
+        isEmpty
+          ? React.createElement(EmptyState)
+          : ims.map((m) => React.createElement(Row, { key: m.id, m, onToggle: toggle, onOpen, selected: selectedId === m.id })),
         React.createElement("div", { style: { height: 1, background: "var(--md-outline-variant)", margin: "10px 8px 8px" } }),
         React.createElement("div", { style: { font: "500 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-primary)", padding: "8px 8px 6px" } }, "關聯字庫"),
         React.createElement("div", {
@@ -55,13 +114,7 @@
           React.createElement(Icon, { name: "chevron_right", size: 22, color: "var(--md-on-surface-variant)" })
         )
       ),
-      // Compact round FAB — + only, no label
-      !hideFab && React.createElement("button", {
-        type: "button",
-        style: { position: "absolute", right: 16, bottom: 16, width: 56, height: 56, borderRadius: "50%", border: 0,
-          background: "var(--md-primary-container)", color: "var(--md-on-primary-container)", display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 3px 8px rgba(0,0,0,.2)", cursor: "pointer" },
-      }, React.createElement(Icon, { name: "add", size: 26 }))
+      !hideFab && React.createElement(FabNudge, { empty: isEmpty })
     );
   }
 

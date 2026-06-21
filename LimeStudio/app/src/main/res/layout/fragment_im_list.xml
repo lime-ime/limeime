@@ -29,6 +29,70 @@
         android:scrollbars="vertical"
         android:scrollbarStyle="insideOverlay" />
 
+    <!-- ── Empty-IM-list FAB nudge (§5.1.1) ──────────────────────────────
+         Radar-pulse rings, the install FAB, and a bobbing "安裝輸入法" callout
+         pill — all gated on the installed list being empty and driven from
+         ImListFragment. Mirrors the lime-settings-android empty-state demo.
+         The rings sit behind the FAB; the FAB is declared last so it draws
+         on top. The callout is anchored bottom|end and lifted above the FAB. -->
+
+    <View
+        android:id="@+id/nudge_ring_1"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_im_nudge_ring"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/nudge_ring_2"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_im_nudge_ring"
+        android:visibility="gone" />
+
+    <!-- Callout pill + downward caret, lifted above the FAB. The caret is a
+         rotated square sharing the pill's primary fill. -->
+    <LinearLayout
+        android:id="@+id/nudge_callout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="84dp"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/nudge_callout_pill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_im_nudge_callout"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:text="@string/im_list_empty_nudge"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_marginEnd="18dp"
+            android:layout_marginTop="-6dp"
+            android:background="@drawable/bg_im_nudge_callout"
+            android:rotation="45" />
+
+    </LinearLayout>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_install"
         android:layout_width="wrap_content"

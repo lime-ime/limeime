@@ -29,7 +29,7 @@
 
   // A compact iOS-style link chip for the optimized About footer: equal-width,
   // rounded, subtle fill, icon + brand-blue label + external arrow.
-  function LinkChip({ href, icon, children }) {
+  function LinkChip({ href, icon, external, children }) {
     return React.createElement("a", {
       href, target: "_blank", rel: "noopener noreferrer",
       style: {
@@ -41,7 +41,7 @@
       React.createElement("span", { style: { color: "var(--accent)", display: "flex" } }, icon),
       React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 3, font: "500 14px/18px var(--font-sans)" } },
         children,
-        React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 12 12", fill: "none", style: { opacity: .6 } },
+        external && React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 12 12", fill: "none", style: { opacity: .6 } },
           React.createElement("path", { d: "M3.5 2.5h6v6M9.5 2.5L2.5 9.5", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" }))
       )
     );
@@ -67,7 +67,30 @@
     );
   }
 
-  function SetupTab() {
+  // §4.3 — Installed-IM status. Mirrors the IM tab's reality so the Setup tab
+  // can surface a problem and route the user to fix it:
+  //   none     → danger  (no IM table installed)   → 「安裝輸入法」
+  //   disabled → warning (installed but all off)    → 「啟用輸入法」
+  //   ok       → success (≥1 installed & enabled)   → no action
+  const IM_STATUS = {
+    none:     { status: "danger",  text: "尚未安裝任何輸入法",      cta: "安裝輸入法" },
+    disabled: { status: "warning", text: "已安裝輸入法，但全部已停用", cta: "啟用輸入法" },
+    ok:       { status: "success", text: "輸入法已就緒，隨時可用",   cta: null }, // text overridden with the installed count
+  };
+
+  function IMStatusSection({ imStatus = "none", imCount = 0, onManageIM }) {
+    const m = IM_STATUS[imStatus] || IM_STATUS.none;
+    const text = imStatus === "ok" ? ("已安裝 " + imCount + " 個輸入法")
+      : imStatus === "disabled" ? ("已安裝 " + imCount + " 個輸入法，但全部停用")
+      : m.text;
+    return React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingTop: 4 } },
+      React.createElement("div", { style: { height: 1, background: "var(--separator)", margin: "0 -24px 4px" } }),
+      React.createElement(StatusBanner, { status: m.status }, text),
+      m.cta && React.createElement(Button, { variant: "prominent", size: "large", fullWidth: true, onClick: onManageIM }, m.cta)
+    );
+  }
+
+  function SetupTab({ imStatus, imCount, onManageIM }) {
     return React.createElement("div", { style: { padding: "8px 24px 28px", display: "flex", flexDirection: "column", gap: 24 } },
       // Brand hero — Android style: plain logo (no white rounded-rect tile), horizontal row
       React.createElement("div", { style: { display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 16, paddingTop: 20 } },
@@ -75,8 +98,9 @@
           style: { width: 92, height: 92, objectFit: "contain" } }),
         React.createElement("div", { style: { font: "700 30px/36px var(--font-sans)", letterSpacing: "-.4px", color: "var(--text-primary)" } }, "萊姆輸入法")
       ),
-      React.createElement(StatusBanner, { status: "success" }, "萊姆輸入法已啟用"),
+      // Heading leads the section; the activation status banner sits BELOW it.
       React.createElement("div", { style: { font: "700 28px/34px var(--font-sans)", letterSpacing: "-.4px" } }, "設定萊姆輸入法"),
+      React.createElement(StatusBanner, { status: "success" }, "萊姆輸入法已啟用"),
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } },
         React.createElement(StepRow, { icon: I.keyboard({ size: 22 }), text: "輕觸「鍵盤」" }),
         React.createElement(StepRow, { icon: React.createElement(GreenToggle), text: "開啟萊姆輸入法" }),
@@ -87,6 +111,8 @@
       React.createElement(Button, { variant: "prominent", size: "large", fullWidth: true }, "前往設定"),
       React.createElement("div", { style: { font: "400 13px/18px var(--font-sans)", color: "var(--text-secondary)", textAlign: "center" } },
         "若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」開啟。"),
+      // §4.3 — Installed-IM status section.
+      React.createElement(IMStatusSection, { imStatus, imCount, onManageIM }),
       // About — optimized footer: app identity + version, then three equal-width
       // link chips (使用手冊 / 版權說明 / 原始碼) laid out consistently. Replaces the
       // old grouped list whose lone left-aligned GitHub row looked inconsistent.
@@ -95,7 +121,7 @@
         React.createElement("div", { style: { display: "flex", gap: 10 } },
           React.createElement(LinkChip, { href: MANUAL_URL, icon: I.book({ size: 21 }) }, "使用手冊"),
           React.createElement(LinkChip, { href: LICENSE_URL, icon: I.doc({ size: 21 }) }, "版權說明"),
-          React.createElement(LinkChip, { href: GITHUB_URL, icon: I.code({ size: 21 }) }, "原始碼")
+          React.createElement(LinkChip, { href: GITHUB_URL, icon: I.code({ size: 21 }), external: true }, "原始碼")
         ),
         // One-line copyright banner at the very bottom.
         React.createElement("div", { style: { font: "400 13px/18px var(--font-sans)", color: "var(--text-secondary)", textAlign: "center", paddingTop: 6 } },

@@ -18,4 +18,8 @@
 
     <!-- Neutral status-card / chip background on dark. -->
     <color name="setup_status_bg">#1FFFFFFF</color>
+
+    <!-- Empty-IM-list glyph tile on dark: a translucent blue wash that reads on
+         a dark surface (vs. the opaque light-blue used in light mode). §5.1.1. -->
+    <color name="im_empty_mark_background">#332196F3</color>
 </resources>
