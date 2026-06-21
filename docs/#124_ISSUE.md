@@ -3,12 +3,13 @@
 ## Current status
 
 - Live issue: https://github.com/lime-ime/limeime/issues/124
-- Status: **CLOSED / fix delivered in v6.1.23** (2026-06-21)
+- Status: **CLOSED / fix delivered in v6.1.23, awaiting optional reporter verification** (2026-06-21)
 - Classification: `bug` + `Usability`
 - Assignee: `jrywu`
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public follow-up: `limeimetw` posted the retained v6.1.23 update / optional retest comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236, then the issue was closed as completed.
-- Implementation status: **Fix applied, packaged, and released in Android APK v6.1.23.** The composing/keynamed popup and reverse-lookup toast no longer have conflicting clamps. Both now display above the candidate row at their natural positions, properly aligned with each other.
+- Implementation status: **Released in v6.1.23.** The Android popup lifetime/alignment and placement follow-up fixes are on `master` via commits `61cf87b65f03f69486e112bf1dc1383c9974a125` and `9fc84f97eaddfea5f550268e950695dadbb3fea5`, and the issue was closed after v6.1.23 was published.
+- Reporter verification: the retained comment asks the reporter to check LINE, WeChat, and Instagram bottom-composer screens on v6.1.23.
 
 ## Problem statement
 
@@ -32,14 +33,14 @@ Android:
 
 - `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
   - `commitTyped(...)` calls `SearchSrv.getCodeListStringFromWord(committedCandidate.getWord())` after a candidate commit when reverse lookup is enabled.
-  - Before this fix, `showReverseLookup(CharSequence)` forwarded the result through `showPersistentLimeToast(...)`, which called `CandidateView.showLimeToastUntilNextKey(...)`. The popup stayed visible until the next LIME key event.
-  - The fix routes reverse lookup through `showLimeToast(...)` again, restoring the existing short `LIME_TOAST_TIMEOUT_MS` timeout while still allowing the next key event to hide the popup early if it is still visible.
+  - Before the first #124 fix, `showReverseLookup(CharSequence)` forwarded the result through `showPersistentLimeToast(...)`, which called `CandidateView.showLimeToastUntilNextKey(...)`. The popup stayed visible until the next LIME key event.
+  - Commit `61cf87b65f03f69486e112bf1dc1383c9974a125` routes reverse lookup through `showLimeToast(...)` again, restoring the existing short `LIME_TOAST_TIMEOUT_MS` timeout while still allowing the next key event to hide the popup early if it is still visible.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
   - `doShowLimeToast(...)` creates a custom `PopupWindow` (`mLimeToastPopup`) with `setClippingEnabled(false)` and positions it with `showAtLocation(this, Gravity.NO_GRAVITY, x, y)`.
-  - Before this fix, the reverse-lookup popup used `offsetInWindow[1] - toastHeight`, where `toastHeight` included lime-toast padding. The separate key-name / composing popup uses the composing text height. That made the reverse-lookup box sit higher than the key-name display.
-  - `doSetComposing(...)` / `doUpdateComposing(...)` can also create `mComposingTextPopup` when no embedded composing view is available, using `mPopupComposingY = offsetInWindow[1] - popupHeight` and `showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY)` without visible-frame / host-editor overlap checks.
-  - The fix deliberately keeps the key-name / composing path untouched and changes only lime-toast placement: when the toast is anchored above the candidate row, its Y value is aligned to the composing/key-name text height, with measured toast height as a fallback. Existing embedded-composing alignment still wins when that view is visible.
-  - X clamping is unchanged. This scoped fix reduces reverse-lookup overlap and drift without changing key-name display behavior.
+  - Before the first #124 fix, the reverse-lookup popup used `offsetInWindow[1] - toastHeight`, where `toastHeight` included lime-toast padding. The separate key-name / composing popup uses the composing text height. That made the reverse-lookup box sit higher than the key-name display.
+  - `doSetComposing(...)` / `doUpdateComposing(...)` can also create `mComposingTextPopup` when no embedded composing view is available, using `mPopupComposingY = offsetInWindow[1] - popupHeight` and `showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY)`.
+  - Commit `61cf87b65f03f69486e112bf1dc1383c9974a125` first narrowed the reverse-lookup timeout/alignment regression. Follow-up commit `9fc84f97eaddfea5f550268e950695dadbb3fea5` superseded the unmerged PR #126 path and adjusted the composing/key-name and reverse-lookup popup placement together, with additional test fixes.
+  - Existing embedded-composing alignment still wins when that view is visible; the expanded candidate popup uses a separate path.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
   - The normal in-keyboard candidate row initializes `R.id.candidatesView` but does not wire an `embeddedComposing` view, so composing/root-key display can fall back to `mComposingTextPopup` in the active input-view path.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateViewContainer.java` and `LimeStudio/app/src/main/res/layout/candidates.xml`
@@ -68,29 +69,24 @@ The reverse-lookup lime-toast path also had two narrower regressions relative to
 
 This is a geometry and lifetime bug in Android candidate-view popup handling, not a LINE-specific text-processing bug based on current evidence.
 
-## Implemented fix
+## Implemented changes in v6.1.23
 
-The fix removes conflicting Y-position clamps that were breaking the alignment between the composing/keynamed popup and the reverse-lookup toast:
+The released #124 work was split across two GitHub-visible commits and should be read as a combined Android popup maintenance fix rather than as a single one-line geometry change:
 
-1. **Composing popup fix** (`doUpdateComposing()` in `CandidateView.java`):
-   - Removed the inappropriate clamp that was pushing `mPopupComposingY` down to the candidate row top.
-   - The composing popup now displays at its natural position: `offsetInWindow[1] - popupHeight`, which is above the candidate row.
-   - This restores the correct keynamed popup position for all input methods.
+1. **Reverse-lookup lifetime fix** (`61cf87b65f03f69486e112bf1dc1383c9974a125`):
+   - Routed reverse lookup back through the timed lime-toast path instead of leaving the popup visible until the next key.
+   - Restored the short `LIME_TOAST_TIMEOUT_MS` behavior while preserving early hide on the next LIME key if the toast is still visible.
 
-2. **Reverse-lookup toast fix** (`doShowLimeToast()` in `CandidateView.java`):
-   - Removed the clamp that was preventing the reverse-lookup toast from staying above the candidate row.
-   - The toast now anchors above the candidate row and aligns naturally with the composing popup position.
-   - Both popups share the same Y anchor, eliminating vertical drift and misalignment.
+2. **Reverse-lookup alignment fix** (`61cf87b65f03f69486e112bf1dc1383c9974a125`):
+   - Reduced vertical drift between reverse-lookup toast and key-name/composing popup by aligning the reverse-lookup Y calculation with the composing/key-name popup height rather than relying only on the padded toast height.
 
-3. **Behavior**:
-   - Both popups remain above the candidate row (no overlap with the candidate bar itself).
-   - The popups may extend above the keyboard into the host app's visible area in bottom-composer apps like LINE, but this is a host-app UI geometry issue that cannot be solved by clamping popups inside the IME area without losing visibility.
-   - The embedded composing path (expanded candidate container) is unaffected and continues to work as designed.
+3. **Popup placement / test follow-up** (`9fc84f97eaddfea5f550268e950695dadbb3fea5`):
+   - Superseded the unmerged PR #126 path and adjusted the composing/key-name and reverse-lookup popup placement work together.
+   - Included related Android test fixes and reported `connectedAndroidTest` as passing in the commit message.
 
-4. **Trade-off acceptance**:
-   - The fix prioritizes **alignment and consistency** (popups at the same Y level) over **containment** (popups clamped to candidate row).
-   - This follows the principle that the IME should display the information clearly rather than hide it due to host-app layout constraints.
-   - Users can adjust keyboard height or switch input methods if popups conflict with their app's UI.
+4. **Remaining verification scope**:
+   - Build and test checks support the source change, but bottom-composer behavior still needs real-device/user verification in LINE, WeChat, Instagram, or similar apps because the original symptom depends on host-app window geometry and device/display settings.
+   - The v6.1.23 public comment therefore asks the reporter to confirm whether the popup no longer covers the input field, or at least whether it improved compared with 6.1.22.
 
 ## Follow-up questions for the reporter
 
@@ -104,17 +100,16 @@ Remaining useful follow-up, if the maintainer needs it before reproducing/fixing
 
 Because this was reported by email and the issue was created by `limeimetw`, avoid posting duplicate public GitHub questions. A private email follow-up may be better if the maintainer needs more device/settings details and the reporter is not using GitHub.
 
-## Verification plan (completed 2026-06-20)
+## Verification plan / release verification
 
 ✓ **Build verification**:
   - `./gradlew assembleDebug` — **PASSED**, no compilation errors.
-  - Both `doUpdateComposing()` and `doShowLimeToast()` compile and run correctly without the incorrect clamps.
+  - The affected composing/key-name and reverse-lookup popup code paths compile after the #124 fixes.
 
 ✓ **Code review**:
-  - Composing popup path: clamp removed, popup returns to natural `offsetInWindow[1] - popupHeight` calculation.
-  - Reverse-lookup toast path: clamp removed, toast anchors above candidate row at `offsetInWindow[1] - toastHeight`.
-  - Both popups now display at the same Y anchor, eliminating vertical misalignment.
-  - Embedded composing path remains unaffected.
+  - Reverse-lookup toast path: timed toast behavior is restored and placement/alignment is adjusted relative to the composing/key-name popup path.
+  - Composing/key-name and reverse-lookup popup paths were reviewed together after the follow-up placement commit.
+  - Embedded composing path remains a separate path.
 
 **Pending manual Android verification** (requires device testing):
   - LINE, WeChat, Instagram, or another chat-style app with bottom-aligned composer, using Array IM.
@@ -122,11 +117,12 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
   - Reverse lookup appears after candidate commit and displays above candidate bar, aligned with key-name popup.
   - Reverse lookup times out per `LIME_TOAST_TIMEOUT_MS` and hides early on next LIME key press.
   - Candidate bar, expanded popup, and controls remain usable and responsive.
-  - Popups no longer have conflicting clamps that offset them relative to each other.
+  - Composing/key-name and reverse-lookup displays remain aligned consistently enough for bottom-composer testing.
 
 ## Backlog / release follow-up
 
 - Android APK v6.1.23 (`LIMEHD202661230-6.1.23.apk`) contains the targeted #124 popup-position/alignment fix. The GitHub Contents APK blob SHA is `2e7fee05de15139119db5a3ea1908bd7f2b611ec`, size `7406573` bytes; downloaded SHA-256 was `e64db9d33118dfc4bf127f951f5a0f873d939918496a54cc89254c71fe31eb95`.
 - `limeimetw` posted the retained v6.1.23 update / optional retest comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 and closed the maintainer-created tracking issue as completed.
-- Remove #124 from active backlog/watch tracking unless the reporter replies with negative 6.1.23 feedback or a maintainer reopens it.
+- Removed #124 from active backlog/watch tracking unless the reporter replies with negative 6.1.23 feedback or a maintainer reopens it.
+- If the reporter says v6.1.23 still overlaps the bottom input field, reopen or create the next focused follow-up with screenshots/video and the exact app/key sequence.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
