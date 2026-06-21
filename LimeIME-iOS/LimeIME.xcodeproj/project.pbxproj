@@ -197,6 +197,39 @@
 		FB79C88DB4D99018F75EEAFA /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91652FC0787DE834F53E57B3 /* Record.swift */; };
 		FC4F73BB12D8F2E1EC9F48EF /* lime_et_41_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = EDDD136F5375CC1B486B368C /* lime_et_41_shift.json */; };
 		FCA812D43A63E366AD8F5A4D /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9144DD8AA02C0B8B5188F542 /* IntentHandler.swift */; };
+		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
+		1557228BBB4695CC8E90E4B4 /* lime_abc_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */; };
+		A50F41FC5D0554F4CFE90F6A /* lime_array_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */; };
+		626F627EBB3DBBF4B25CFE1F /* lime_array_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */; };
+		31B68C754082DAF28F62F8EB /* lime_array_number_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */; };
+		04FD6465CA5C3B8D4745906A /* lime_array_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */; };
+		90199B0711EF7B2F82891CC0 /* lime_cj_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */; };
+		34F5700641BBCA122EB192A9 /* lime_cj_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */; };
+		FDBC80A783B29A4F0B1BFAB6 /* lime_cj_number_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */; };
+		DCBA0C3F95D20C1DC8A83526 /* lime_cj_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */; };
+		2DEDAF027C3FBD6D85D51D46 /* lime_dayi_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */; };
+		FB29EEBEA2EBCBB6960A2A71 /* lime_dayi_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */; };
+		F79D47ED27AC97AEA8F94FF6 /* lime_dayi_sym_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */; };
+		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
+		744094926E991E6E5A70982E /* lime_english_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */; };
+		DE8B2B13F8827A37F6E6B831 /* lime_english_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */; };
+		434167C6894E1E5140BF4C54 /* lime_et26_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */; };
+		E50AC6E93FFCB8A2A34382ED /* lime_et26_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */; };
+		4D7AB16337D27EF59060B40C /* lime_et_41_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */; };
+		D36A2228BC96F0923712B3D5 /* lime_et_41_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */; };
+		AA9AEC42D8B5C49EC4AE3005 /* lime_ez_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */; };
+		FBCDDE242CED24F42B59A354 /* lime_ez_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */; };
+		5DD92C8B2C002D0BE7C6211F /* lime_hs_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */; };
+		C7F8AEC7599AF24FA7285AC7 /* lime_hs_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */; };
+		DB0541372AD17780AECEDC55 /* lime_hsu_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */; };
+		AC138032F6EC16EAD9A3E0FB /* lime_hsu_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */; };
+		CA31F6B44CA272DB35952CB1 /* lime_phonetic_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */; };
+		382F91D955F34119283D111D /* lime_phonetic_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */; };
+		20711211C46BEC07A565CD7C /* lime_wb_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */; };
+		E8A3855955816FCF47E10781 /* lime_wb_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */; };
+		E3280D7CCBF1F4F69B7F280B /* symbols1_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */; };
+		FB71EFE9F3B9BDF7C3E2ACD3 /* symbols2_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */; };
+		A2F3C4D5E6B7890123456701 /* symbols3_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -400,6 +433,39 @@
 		FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_symbol_mode.json; sourceTree = "<group>"; };
 		FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBProtocol.swift; sourceTree = "<group>"; };
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
+		7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow.json; sourceTree = "<group>"; };
+		ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow.json; sourceTree = "<group>"; };
+		02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow.json; sourceTree = "<group>"; };
+		119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow.json; sourceTree = "<group>"; };
+		45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow.json; sourceTree = "<group>"; };
+		4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow.json; sourceTree = "<group>"; };
+		867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow.json; sourceTree = "<group>"; };
+		3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow.json; sourceTree = "<group>"; };
+		15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow.json; sourceTree = "<group>"; };
+		5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow.json; sourceTree = "<group>"; };
+		986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow.json; sourceTree = "<group>"; };
+		6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow.json; sourceTree = "<group>"; };
+		C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow.json; sourceTree = "<group>"; };
+		72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow.json; sourceTree = "<group>"; };
+		AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow.json; sourceTree = "<group>"; };
+		9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols1_ipad_narrow.json; sourceTree = "<group>"; };
+		75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2_ipad_narrow.json; sourceTree = "<group>"; };
+		A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols3_ipad_narrow.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -650,6 +716,39 @@
 				CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */,
 				FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */,
 				955B457572A329E2A1ADEA50 /* popup_template.json */,
+				7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */,
+				ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */,
+				5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */,
+				02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */,
+				DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */,
+				119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */,
+				E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */,
+				45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */,
+				5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */,
+				4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */,
+				8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */,
+				867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */,
+				4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */,
+				3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */,
+				BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */,
+				15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */,
+				3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */,
+				5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */,
+				8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */,
+				986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */,
+				5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */,
+				6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */,
+				E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */,
+				C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */,
+				BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */,
+				72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */,
+				D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */,
+				AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */,
+				0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */,
+				9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */,
+				BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */,
+				75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */,
+				A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */,
 				86957E4A2DDA8D483FC30D94 /* symbols1.json */,
 				7F0F8E41B7DF4E76BBE389DC /* symbols1_ipad.json */,
 				F0787C19D84A228F8B9731E4 /* symbols2.json */,
@@ -958,6 +1057,39 @@
 				DA9A42F3158C4D3799B3A533 /* symbols3_ipad.json in Resources */,
 				DD3E5C49341843C98E8EF274 /* lime_dayi_sym_ipad.json in Resources */,
 				E68290E9CFAB4C8BBCB99709 /* lime_english_number_ipad.json in Resources */,
+				094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */,
+				1557228BBB4695CC8E90E4B4 /* lime_abc_ipad_narrow_shift.json in Resources */,
+				A50F41FC5D0554F4CFE90F6A /* lime_array_ipad_narrow.json in Resources */,
+				626F627EBB3DBBF4B25CFE1F /* lime_array_ipad_narrow_shift.json in Resources */,
+				31B68C754082DAF28F62F8EB /* lime_array_number_ipad_narrow.json in Resources */,
+				04FD6465CA5C3B8D4745906A /* lime_array_number_ipad_narrow_shift.json in Resources */,
+				90199B0711EF7B2F82891CC0 /* lime_cj_ipad_narrow.json in Resources */,
+				34F5700641BBCA122EB192A9 /* lime_cj_ipad_narrow_shift.json in Resources */,
+				FDBC80A783B29A4F0B1BFAB6 /* lime_cj_number_ipad_narrow.json in Resources */,
+				DCBA0C3F95D20C1DC8A83526 /* lime_cj_number_ipad_narrow_shift.json in Resources */,
+				2DEDAF027C3FBD6D85D51D46 /* lime_dayi_ipad_narrow.json in Resources */,
+				FB29EEBEA2EBCBB6960A2A71 /* lime_dayi_ipad_narrow_shift.json in Resources */,
+				F79D47ED27AC97AEA8F94FF6 /* lime_dayi_sym_ipad_narrow.json in Resources */,
+				F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */,
+				744094926E991E6E5A70982E /* lime_english_ipad_narrow.json in Resources */,
+				DE8B2B13F8827A37F6E6B831 /* lime_english_ipad_narrow_shift.json in Resources */,
+				434167C6894E1E5140BF4C54 /* lime_et26_ipad_narrow.json in Resources */,
+				E50AC6E93FFCB8A2A34382ED /* lime_et26_ipad_narrow_shift.json in Resources */,
+				4D7AB16337D27EF59060B40C /* lime_et_41_ipad_narrow.json in Resources */,
+				D36A2228BC96F0923712B3D5 /* lime_et_41_ipad_narrow_shift.json in Resources */,
+				AA9AEC42D8B5C49EC4AE3005 /* lime_ez_ipad_narrow.json in Resources */,
+				FBCDDE242CED24F42B59A354 /* lime_ez_ipad_narrow_shift.json in Resources */,
+				5DD92C8B2C002D0BE7C6211F /* lime_hs_ipad_narrow.json in Resources */,
+				C7F8AEC7599AF24FA7285AC7 /* lime_hs_ipad_narrow_shift.json in Resources */,
+				DB0541372AD17780AECEDC55 /* lime_hsu_ipad_narrow.json in Resources */,
+				AC138032F6EC16EAD9A3E0FB /* lime_hsu_ipad_narrow_shift.json in Resources */,
+				CA31F6B44CA272DB35952CB1 /* lime_phonetic_ipad_narrow.json in Resources */,
+				382F91D955F34119283D111D /* lime_phonetic_ipad_narrow_shift.json in Resources */,
+				20711211C46BEC07A565CD7C /* lime_wb_ipad_narrow.json in Resources */,
+				E8A3855955816FCF47E10781 /* lime_wb_ipad_narrow_shift.json in Resources */,
+				E3280D7CCBF1F4F69B7F280B /* symbols1_ipad_narrow.json in Resources */,
+				FB71EFE9F3B9BDF7C3E2ACD3 /* symbols2_ipad_narrow.json in Resources */,
+				A2F3C4D5E6B7890123456701 /* symbols3_ipad_narrow.json in Resources */,
 				F3D439C5929342D486D38BAA /* lime_hs_ipad.json in Resources */,
 				F458F33997B04DDAB0EEDB14 /* lime_et_41_ipad_shift.json in Resources */,
 				F9313B9EA3B349E48F90C958 /* lime_wb_ipad.json in Resources */,

@@ -215,7 +215,7 @@ final class CandidateBarView: UIView {
         return UIFont(name: "PingFangTC-Regular", size: size)
             ?? UIFont.systemFont(ofSize: size, weight: .regular)
     }
-    private let candidateHPad: CGFloat = LayoutMetrics.CandidateBar.candidateHPad
+    private var candidateHPad: CGFloat { LayoutMetrics.CandidateBar.candidateHPad(isPad: isPad) }
     private let dividerWidth:  CGFloat = LayoutMetrics.CandidateBar.dividerWidth
     private var composingStripReserved = true
     private var emptyDismissChromeEnabled = false

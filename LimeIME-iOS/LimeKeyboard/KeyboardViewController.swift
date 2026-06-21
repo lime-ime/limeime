@@ -181,6 +181,30 @@ final class KeyboardViewController: UIInputViewController {
     /// (`UIDevice.current.userInterfaceIdiom` is the wrong signal here.)
     private var isOnPad: Bool { traitCollection.userInterfaceIdiom == .pad }
 
+    @discardableResult
+    private func syncLayoutEnvironmentFromTraits() -> Bool {
+        let oldHostIsPad = LayoutLoader.hostIsPad
+        let oldTier = LayoutLoader.iPadSizeClass
+
+        LayoutLoader.hostIsPad = isOnPad
+        if isOnPad {
+            let screen = UIScreen.main.bounds
+            LayoutLoader.iPadSizeClass = IPadSizeClass.resolve(shortSideExtent: min(screen.width, screen.height))
+        } else {
+            LayoutLoader.iPadSizeClass = .large
+        }
+
+        let changed = oldHostIsPad != LayoutLoader.hostIsPad || oldTier != LayoutLoader.iPadSizeClass
+        if changed {
+            LayoutLoader.clearCache()
+        }
+        return changed
+    }
+
+    private func englishLayoutId() -> String {
+        isOnPad ? "lime_english" : (numberRowInEnglish ? "lime_english_number" : "lime_english")
+    }
+
     /// True when iOS reports it cannot supply a globe key for us (legacy
     /// home-button iPhones: SE 2/3, 8). Drives the in-keyboard globe affordance
     /// (spec: docs/IPHONE_LEGACY_KB.md). Excludes iPad and any `_ipad` layout
@@ -235,14 +259,14 @@ final class KeyboardViewController: UIInputViewController {
         super.viewDidLoad()
         // Tell LayoutLoader whether the **host app** is iPad-class BEFORE any
         // load() call. iPhone-only apps running on iPad must use phone layouts.
-        LayoutLoader.hostIsPad = isOnPad
+        _ = syncLayoutEnvironmentFromTraits()
         LayoutLoader.clearCache()
         // Load size/font prefs from UserDefaults synchronously so candidateFontScale
         // and keyboardSize are correct when setupKeyboardUI() creates its height
         // constraints. searchServer is nil here so applyPrefsToSearchEngine() is a no-op.
         loadSettings()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
-        let _initLayout = numberRowInEnglish ? "lime_english_number" : "lime_english"
+        let _initLayout = englishLayoutId()
         if let loaded = LayoutLoader.load(_initLayout) { currentLayout = loaded }
         LayoutLoader.prefetchCommonLayouts()
         setupKeyboardUI()
@@ -309,10 +333,7 @@ final class KeyboardViewController: UIInputViewController {
         // view and the trait collection reflects the host. Used by LayoutLoader
         // for `_ipad` variant gating; KeyboardView/CandidateBarView size
         // themselves from UIDevice (real iPad hardware) and are not pushed here.
-        let nowPad = isOnPad
-        if LayoutLoader.hostIsPad != nowPad {
-            LayoutLoader.hostIsPad = nowPad
-            LayoutLoader.clearCache()
+        if syncLayoutEnvironmentFromTraits() {
             if currentLayout.id != "__unset__",
                let reloaded = LayoutLoader.load(currentLayout.id) {
                 currentLayout = reloaded
@@ -340,10 +361,7 @@ final class KeyboardViewController: UIInputViewController {
         // Host idiom may flip when the user moves an iPhone-only app between
         // iPad multitasking modes; resync LayoutLoader so the next load() picks
         // the correct iPad/iPhone variant, and push the new value into the views.
-        let newHostIsPad = isOnPad
-        if LayoutLoader.hostIsPad != newHostIsPad {
-            LayoutLoader.hostIsPad = newHostIsPad
-            LayoutLoader.clearCache()
+        if syncLayoutEnvironmentFromTraits() {
             if let reloaded = LayoutLoader.load(currentLayout.id) {
                 currentLayout = reloaded
                 keyboardView?.setLayout(reloaded)
@@ -525,7 +543,7 @@ final class KeyboardViewController: UIInputViewController {
 
         let kbType = textDocumentProxy.keyboardType ?? .default
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
-        let englishLayout = numberRowInEnglish ? "lime_english_number" : "lime_english"
+        let englishLayout = englishLayoutId()
         let resolvedActiveLayout = (!mEnglishOnly && !activatedIMs.isEmpty)
             ? resolvedLayoutId(for: activeIM)
             : ""
@@ -671,17 +689,14 @@ final class KeyboardViewController: UIInputViewController {
 
     private func resolvedLayoutId(for tableNick: String) -> String {
         // For phonetic IMs, keyboard type determines the visible layout.
-        // Mirrors Android: eten26/hsu → "lime" (English QWERTY, remap transparent);
-        //                  eten26_symbol → "et26" layout; hsu_symbol → "hsu" layout.
+        // Mirrors Android: eten26/hsu use QWERTY-shaped Chinese layouts so the
+        // mode key changes to abc while composing stays in the active IM.
         if tableNick == "phonetic" {
             let kbType = phoneticKeyboardType
-            if kbType == "eten26_symbol" || kbType == "et26" {
+            if kbType.hasPrefix("eten26") || kbType == "et26" {
                 if LayoutLoader.load("lime_et26") != nil { return "lime_et26" }
-            } else if kbType == "hsu_symbol" {
+            } else if kbType.hasPrefix("hsu") {
                 if LayoutLoader.load("lime_hsu") != nil { return "lime_hsu" }
-            } else if kbType.hasPrefix("eten26") || kbType.hasPrefix("hsu") {
-                let engLayout = numberRowInEnglish ? "lime_english_number" : "lime_english"
-                if LayoutLoader.load(engLayout) != nil { return engLayout }
             }
         }
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
@@ -2082,7 +2097,7 @@ final class KeyboardViewController: UIInputViewController {
             let btn = UIButton(type: .system)
             btn.setTitle(text, for: .normal)
             btn.titleLabel?.font = btnFont
-            let cellHPad = LayoutMetrics.CandidateBar.candidateHPad
+            let cellHPad = LayoutMetrics.CandidateBar.candidateHPad(isPad: onPad)
             // Width is determined by horizontal insets only (vertical insets
             // don't change intrinsicContentSize.width), so set H insets
             // first to read btnW. The vertical (rowBias) insets are
@@ -2598,7 +2613,7 @@ final class KeyboardViewController: UIInputViewController {
         clearSuggestions()
         resetTempEnglishWord()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
-        let layoutName = toEnglish ? (numberRowInEnglish ? "lime_english_number" : "lime_english") : resolvedLayoutId(for: activeIM)
+        let layoutName = toEnglish ? englishLayoutId() : resolvedLayoutId(for: activeIM)
         if let loaded = LayoutLoader.load(layoutName) { currentLayout = loaded }
         keyboardView.setLayout(currentLayout)
         applyHeight()
@@ -2650,6 +2665,12 @@ final class KeyboardViewController: UIInputViewController {
         mEnglishOnly       = true   // disable CJK composing while in symbol mode
         symbolPageIndex    = 0
         preSymbolLayout    = currentLayout
+        if isOnPad {
+            symbolLayouts = ["symbols1", "symbols2", "symbols3"]
+            clearComposing(force: false)
+            loadSymbolLayout(page: 0)
+            return
+        }
         // Resolve IM-specific symbol layout (mirrors Android KeyboardConfig.symbolkb).
         // Android stores "symbols"/"symbols_shift" as resource refs — map these to iOS JSON IDs.
         // English mode always uses the generic symbols1.
@@ -3757,7 +3778,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
         mEnglishOnly = toEnglish
         clearShiftState()
         let layoutName = toEnglish
-            ? (numberRowInEnglish ? "lime_english_number" : "lime_english")
+            ? englishLayoutId()
             : resolvedLayoutId(for: activeIM)
         guard let layout = LayoutLoader.load(layoutName) else { return }
         currentLayout = layout

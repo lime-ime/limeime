@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+**Execution workflow:**
+
+1. Use `superpowers:subagent-driven-development` to execute this plan in one continuous run. Use `superpowers:executing-plans` only if subagents are unavailable.
+2. Run each task through its required implementation, build/test, and review checkpoint before marking it complete.
+3. Run `ponytail-review` after all implementation/doc tasks and before final verification; cut unnecessary abstractions or complexity it identifies.
+4. Run final build/behavior verification only after `ponytail-review` is clean or all accepted simplifications are applied.
+
 **Goal:** Add orientation-stable iPad size tiers so iPad 11" and iPad mini get square-ish keys while phone behavior and current iPad 13" behavior remain unchanged.
 
 **Architecture:** `LayoutLoader` owns the host iPad flag, the current iPad size tier, and layout filename resolution. `LayoutMetrics`, `KeyboardView`, `CandidateBarView`, and `KeyboardViewController` read tier-aware metric selectors instead of a two-way phone/iPad split. A new Python trimmer generates optional `*_ipad_narrow*.json` files from the finished full iPad JSON files; medium and small tiers use the narrow file when present, then fall back.
@@ -26,10 +33,10 @@ The source spec is `docs/IPAD_KB_SIZE_TIERS.md`. Treat these as implementation-t
 - Modify `LimeIME-iOS/LimeKeyboard/LayoutLoader.swift`: add `iPadSizeClass`, resolve `_ipad_narrow` for small/medium, cache by resolved resource id, prefetch narrow candidates.
 - Modify `LimeIME-iOS/LimeKeyboard/KeyboardView.swift`: use tier-aware row heights, gaps, corner radius, key fonts, and icon size.
 - Modify `LimeIME-iOS/LimeKeyboard/CandidateBarView.swift`: use tier-aware candidate fonts, composing strip metrics, candidate padding, chevron metrics if needed.
-- Modify `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`: update `LayoutLoader.iPadSizeClass` during lifecycle/layout changes, reload when tier changes, redirect iPad English-family layout requests, force one iPad symbol page.
-- Modify `scripts/build_ipad_layouts.py`: add the ET_41 source swap from the spec.
+- Modify `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`: update `LayoutLoader.iPadSizeClass` during lifecycle/layout changes and reload when tier changes. Do not add production English-family redirects or production symbol-page reductions in this scope.
 - Create `scripts/trim_ipad_layout.py`: generate optional `*_ipad_narrow*.json` layout files.
-- Modify `LimeIME-iOS/LimeKeyboard/Layouts/*.json`: regenerate affected full iPad layouts and add generated narrow layouts.
+- Add only `LimeIME-iOS/LimeKeyboard/Layouts/*_ipad_narrow*.json`: generate narrow siblings and hand-author `symbols1_ipad_narrow.json` / `symbols2_ipad_narrow.json`.
+- Do not modify, delete, regenerate, or reformat any production layout file whose filename does not contain `_ipad_narrow`.
 - Modify `LimeIME-iOS/project.yml`: only if XcodeGen resource inclusion does not already copy `LimeIMEKeyboard/Layouts` as a folder resource. Current config already includes that folder.
 - Optional modify `LimeIME-iOS/LimeTests/*.swift`: add tests only where constructors and bundle resources make them practical; otherwise rely on script verification and build.
 
@@ -467,7 +474,7 @@ static func prefetchCommonLayouts() {
     let ids = [
         "lime_phonetic", "lime_phonetic_shift",
         "lime_abc", "lime_abc_shift",
-        "lime_number", "symbols1",
+        "lime_number", "symbols1", "symbols2",
     ]
     DispatchQueue.global(qos: .background).async {
         for id in ids { _ = load(id) }
@@ -659,97 +666,29 @@ Expected: `** BUILD SUCCEEDED **`.
 
 ---
 
-### Task 6: Collapse iPad English-Family Layout Selection
+### Task 6: Keep Production Layout Selection Unchanged
 
 **Files:**
-- Modify: `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
+- Read-only audit: `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
+- Read-only audit: `LimeIME-iOS/LimeKeyboard/Layouts/*`
 
-- [ ] **Step 1: Add a layout canonicalizer**
+- [ ] **Step 1: Confirm no English-family production collapse**
 
-Add near `resolvedLayoutId(for:)`:
+Do not add a controller canonicalizer that redirects production iPad
+English-family layouts to a smaller set of full `_ipad` files. That is
+outside the narrow-keyboard scope.
 
-```swift
-private func canonicalLayoutIdForCurrentHost(_ id: String, abcToggle: Bool = false) -> String {
-    guard isOnPad else { return id }
-    let base = id
-        .replacingOccurrences(of: "_ipad_narrow", with: "")
-        .replacingOccurrences(of: "_ipad", with: "")
-    let isShift = base.hasSuffix("_shift") || base == "lime_shift"
-    let englishFamily: Set<String> = [
-        "lime_english",
-        "lime_email",
-        "lime_url",
-        "lime_english_number",
-        "lime_number",
-        "lime_shift",
-        "lime_english_shift",
-        "lime_english_number_shift",
-        "lime_number_shift"
-    ]
-    if abcToggle || base == "lime_abc" || base == "lime_abc_shift" {
-        return isShift ? "lime_abc_shift" : "lime_abc"
-    }
-    if englishFamily.contains(base) {
-        return isShift ? "lime_english_shift" : "lime_english"
-    }
-    return id
-}
-```
+Run: `rg -n "canonicalLayoutIdForCurrentHost|lime_email_ipad|lime_url_ipad|lime_english_number_ipad|lime_number_ipad|lime_shift_ipad" LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
 
-- [ ] **Step 2: Apply canonicalization at layout load points**
+Expected: No new production-layout collapse logic.
 
-For every `LayoutLoader.load(layoutName)`, `LayoutLoader.load(preferredLayout)`, `LayoutLoader.load(targetId)`, and `LayoutLoader.load(id)` call in `KeyboardViewController.swift` that loads a visible keyboard layout, pass the id through `canonicalLayoutIdForCurrentHost(...)` first.
+- [ ] **Step 2: Confirm production English layouts remain present**
 
-Use this concrete pattern for non-shift load sites:
+Run: `rg --files LimeIME-iOS/LimeKeyboard/Layouts | rg "lime_(email|url|english_number|number|shift)_ipad.*\\.json$"`
 
-```swift
-let resolvedId = canonicalLayoutIdForCurrentHost(layoutName)
-if let loaded = LayoutLoader.load(resolvedId) {
-    currentLayout = loaded
-}
-```
-
-For the abc/Chinese toggle path, use:
-
-```swift
-let resolvedId = canonicalLayoutIdForCurrentHost(layoutName, abcToggle: true)
-```
-
-- [ ] **Step 3: Confirm no deleted iPad English resources are required**
-
-Run: `rg -n "lime_email_ipad|lime_url_ipad|lime_english_number_ipad|lime_number_ipad|lime_shift_ipad" LimeIME-iOS/LimeKeyboard`
-
-Expected before deletion: matches only in layout resource filenames if `rg --files` is used, and no hardcoded Swift dependency remains.
-
-- [ ] **Step 4: Build the extension**
-
-Run: `xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeKeyboard -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath .Codex/DerivedData build`
-
-Expected: `** BUILD SUCCEEDED **`.
-
----
-
-### Task 7: Collapse iPad Symbol Pages to One Page
-
-**Files:**
-- Modify: `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-
-- [ ] **Step 1: Force one symbol layout on iPad**
-
-At the top of `switchToSymbol()`, after setting `preSymbolLayout`, insert:
-
-```swift
-if isOnPad {
-    symbolLayouts = ["symbols1"]
-    clearComposing(force: false)
-    loadSymbolLayout(page: 0)
-    return
-}
-```
-
-- [ ] **Step 2: Keep cycling harmless**
-
-No code change is required in `cycleSymbolPage()` because modulo `symbolLayouts.count` with count `1` reloads `symbols1`.
+Expected: Existing production layout files are still present if they
+were present before this work. Missing files are out of scope and must
+be restored manually.
 
 - [ ] **Step 3: Build the extension**
 
@@ -759,88 +698,66 @@ Expected: `** BUILD SUCCEEDED **`.
 
 ---
 
-### Task 8: Implement ET_41 Full iPad Source Swap
+### Task 7: Add Narrow Symbol Pages Only
 
 **Files:**
-- Modify: `scripts/build_ipad_layouts.py`
-- Modify generated: `LimeIME-iOS/LimeKeyboard/Layouts/lime_et_41_ipad.json`
-- Modify generated: `LimeIME-iOS/LimeKeyboard/Layouts/lime_et_41_ipad_shift.json`
+- Add: `LimeIME-iOS/LimeKeyboard/Layouts/symbols1_ipad_narrow.json`
+- Add: `LimeIME-iOS/LimeKeyboard/Layouts/symbols2_ipad_narrow.json`
 
-- [ ] **Step 1: Locate the ET_41 transform point**
+- [ ] **Step 1: Add iPad 11-style narrow symbol pages**
 
-Run: `rg -n "lime_et_41|augment_im_digit_row|transform_qwerty_row|def build" scripts/build_ipad_layouts.py`
+Create `symbols1_ipad_narrow.json` and `symbols2_ipad_narrow.json`
+by hand. Do not generate them with the generic trimmer.
 
-Expected: Find the main generation loop and the row transform pipeline.
+Required visible layout:
 
-- [ ] **Step 2: Add an ET_41-specific row adjustment function**
+```text
+symbols1_ipad_narrow
+r0: [Tab] 1 2 3 4 5 6 7 8 9 0 [⌫]
+r1: [中] @ # $ & * ( ) ' " [↩]
+r2: [#+=] % - + = / ; : ! ? [#+=]
+bottom: SYMBOL_BOTTOM_NARROW
 
-Add this function after `_DIGIT_SYMBOL`:
-
-```python
-def move_et41_equals_component_to_qwerty(layout_id, rows):
-    """For ET41 iPad layouts, move the =/ㄦ component out of the digit row and
-    place it at the qwerty tail. This balances narrow-tier row counts while
-    preserving the root component.
-    """
-    if layout_id not in ("lime_et_41", "lime_et_41_shift"):
-        return rows
-
-    moved = None
-    for row in rows:
-        if row.get("isBottomRow", False):
-            continue
-        kept = []
-        for key in row.get("keys", []):
-            if moved is None and key.get("code") in (61, 43) and "ㄦ" in key.get("sublabel", "") + key.get("label", ""):
-                moved = copy.deepcopy(key)
-                continue
-            kept.append(key)
-        row["keys"] = kept
-
-    if moved is None:
-        return rows
-
-    for row in rows:
-        if row.get("isBottomRow", False):
-            continue
-        keys = row.get("keys", [])
-        codes = [key.get("code") for key in keys]
-        if 112 in codes or 80 in codes:
-            moved["widthPercent"] = 7.0
-            insert_at = len(keys)
-            if keys and keys[-1].get("code") == -5:
-                insert_at = len(keys) - 1
-            keys.insert(insert_at, moved)
-            break
-
-    return rows
+symbols2_ipad_narrow
+r0: [Tab] 1 2 3 4 5 6 7 8 9 0 [⌫]
+r1: [中] € £ ¥ _ ^ [ ] { } [↩]
+r2: [123] § | ~ … \ < > ! ? [123]
+bottom: SYMBOL_BOTTOM_NARROW
 ```
 
-- [ ] **Step 3: Call it before row width normalization**
+Apple's leading `undo` / `redo` slot is replaced with the mode `[中]`
+key. Use the existing IM-toggle key code/behavior, not a new command.
 
-In the generation pipeline, after all row transforms have added iPad keys and before any final `scale_row_to_100`/normalization pass, call:
+- [ ] **Step 2: Confirm production symbol pages are untouched**
 
-```python
-rows = move_et41_equals_component_to_qwerty(layout_id, rows)
-```
+Run: `git diff --name-only -- LimeIME-iOS/LimeKeyboard/Layouts | rg "symbols[0-9]+_ipad\\.json" || true`
 
-Use the actual layout id variable name from the script's main loop.
+Expected: No output. Production symbol pages are not part of this scope.
 
-- [ ] **Step 4: Regenerate full iPad layouts**
+- [ ] **Step 3: Build the extension**
 
-Run: `python3 scripts/build_ipad_layouts.py`
+Run: `xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeKeyboard -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath .Codex/DerivedData build`
 
-Expected: The script completes without traceback and rewrites the generated `*_ipad.json` files.
+Expected: `** BUILD SUCCEEDED **`.
 
-- [ ] **Step 5: Verify ET_41 generated structure**
+---
 
-Run: `python3 -m json.tool LimeIME-iOS/LimeKeyboard/Layouts/lime_et_41_ipad.json >/dev/null`
+### Task 8: Audit Production Layout Scope Before Narrow Generation
 
-Expected: Exit code `0`.
+**Files:**
+- Read-only audit: `LimeIME-iOS/LimeKeyboard/Layouts/*`
 
-Run: `python3 -m json.tool LimeIME-iOS/LimeKeyboard/Layouts/lime_et_41_ipad_shift.json >/dev/null`
+- [ ] **Step 1: Confirm production layouts are clean before generation**
 
-Expected: Exit code `0`.
+Run: `git diff --name-only -- LimeIME-iOS/LimeKeyboard/Layouts | rg -v "_ipad_narrow" || true`
+
+Expected: No output. Any changed layout file whose filename does not contain `_ipad_narrow` is out of scope and must be manually restored before continuing.
+
+- [ ] **Step 2: Confirm the narrow generator only writes narrow files**
+
+Run: `rg -n "write_text|unlink|remove|rename|replace" scripts/trim_ipad_layout.py`
+
+Expected: Any write path must resolve to a filename containing `_ipad_narrow`. The script may read production `_ipad` layouts as inputs, but must not modify them.
 
 ---
 
@@ -877,6 +794,8 @@ DROP_QUOTA_NARROW = {
     "zxcv": 1,
 }
 
+SYMBOL_LAYOUTS = {"symbols1", "symbols2", "symbols3"}
+
 IM_ROOTS = {
     "lime_phonetic": "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-",
     "lime_cj": "qwertyuiopasdfghjklzxcvbnm",
@@ -905,10 +824,19 @@ IM_ROOTS = {
 
 BOTTOM_NARROW = [
     {"code": -200, "label": "globe", "sublabel": "", "widthPercent": 9.0, "icon": "globe", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
-    {"code": -2, "label": "@string/label_symbol_key", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
-    {"code": -99, "label": "", "sublabel": "", "widthPercent": 7.0, "icon": "mic", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
-    {"code": 32, "label": "", "sublabel": "", "widthPercent": 56.0, "icon": "space.bar", "isModifier": False, "isRepeatable": True, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
-    {"code": -2, "label": "@string/label_symbol_key", "sublabel": "", "widthPercent": 9.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -9, "label": "abc", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -201, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "face.smiling", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": 32, "label": "", "sublabel": "", "widthPercent": 53.0, "icon": "space.bar", "isModifier": False, "isRepeatable": True, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -2, "label": ".?123", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -3, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "keyboard.chevron.compact.down", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
+]
+
+SYMBOL_BOTTOM_NARROW = [
+    {"code": -200, "label": "globe", "sublabel": "", "widthPercent": 9.0, "icon": "globe", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
+    {"code": -2, "label": "abc", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -201, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "face.smiling", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": 32, "label": "", "sublabel": "", "widthPercent": 53.0, "icon": "space.bar", "isModifier": False, "isRepeatable": True, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -2, "label": "abc", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": -3, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "keyboard.chevron.compact.down", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
 ]
 ```
@@ -1106,6 +1034,8 @@ def main():
     for path in input_paths:
         if path.name.endswith("_ipad_narrow.json"):
             continue
+        if base_id(path.stem) in SYMBOL_LAYOUTS:
+            continue
         source = json.loads(path.read_text(encoding="utf-8-sig"))
         trimmed, changed = trim_layout(source)
         out_path = path.with_name(trimmed["id"] + ".json")
@@ -1133,7 +1063,7 @@ Expected: It prints `wrote N narrow iPad layouts` where `N` is greater than `0`.
 
 - [ ] **Step 7: Verify generated JSON parses**
 
-Run: `find LimeIME-iOS/LimeKeyboard/Layouts -name '*_ipad_narrow*.json' -print0 | xargs -0 -n 1 python3 -m json.tool >/dev/null`
+Run: `python3 -c 'import json,pathlib; [json.loads(p.read_text(encoding="utf-8-sig")) for p in pathlib.Path("LimeIME-iOS/LimeKeyboard/Layouts").glob("*_ipad_narrow*.json")]'`
 
 Expected: Exit code `0`.
 
@@ -1179,13 +1109,23 @@ def main():
             total = sum(float(key["widthPercent"]) for key in row["keys"])
             if abs(total - 100.0) > 0.01:
                 raise SystemExit(f"{path.name} row {index} width sum {total}")
-            if not row.get("isBottomRow", False) and visible_count(row) > 14:
+            if not row.get("isBottomRow", False) and visible_count(row) > 13:
                 raise SystemExit(f"{path.name} row {index} has too many visible cells")
         bottom_rows = [row for row in data["rows"] if row.get("isBottomRow", False)]
         if len(bottom_rows) != 1:
             raise SystemExit(f"{path.name} has {len(bottom_rows)} bottom rows")
-        bottom_codes = [key["code"] for key in bottom_rows[0]["keys"]]
-        if bottom_codes != [-200, -2, -99, 32, -2, -3]:
+        bottom = bottom_rows[0]["keys"]
+        bottom_codes = [key["code"] for key in bottom]
+        bottom_icons = [key.get("icon", "") for key in bottom]
+        bottom_labels = [key.get("label", "") for key in bottom]
+        if -99 in bottom_codes or "mic" in bottom_icons:
+            raise SystemExit(f"{path.name} bottom row contains mic")
+        if -201 not in bottom_codes or "face.smiling" not in bottom_icons:
+            raise SystemExit(f"{path.name} bottom row is missing emoji")
+        if data["id"] in {"symbols1_ipad_narrow", "symbols2_ipad_narrow"}:
+            if bottom_labels != ["globe", "abc", "", "", "abc", ""]:
+                raise SystemExit(f"{path.name} symbol bottom labels {bottom_labels}")
+        elif bottom_codes != [-200, -2, -201, 32, -2, -3]:
             raise SystemExit(f"{path.name} bottom row codes {bottom_codes}")
 
     print(f"verified {len(files)} narrow iPad layouts")
@@ -1203,29 +1143,22 @@ Expected: It prints `verified N narrow iPad layouts`.
 
 ---
 
-### Task 11: Remove Deleted iPad-Only Layout Resources
+### Task 11: Audit Production Layouts Are Untouched
 
 **Files:**
-- Delete generated/hand iPad resources only:
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_email_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_url_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_english_number_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_english_number_ipad_shift.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_number_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_number_ipad_shift.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/lime_shift_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/symbols2_ipad.json`
-  - `LimeIME-iOS/LimeKeyboard/Layouts/symbols3_ipad.json`
+- No planned edits.
 
-- [ ] **Step 1: Confirm Swift no longer names deleted resources**
+- [ ] **Step 1: Confirm no non-narrow layout files changed**
 
-Run: `rg -n "lime_email_ipad|lime_url_ipad|lime_english_number_ipad|lime_number_ipad|lime_shift_ipad|symbols2_ipad|symbols3_ipad" LimeIME-iOS/LimeKeyboard scripts docs`
+Run: `git diff --name-only -- LimeIME-iOS/LimeKeyboard/Layouts | rg -v "_ipad_narrow" || true`
 
-Expected: Matches in docs only. No Swift or script runtime dependency remains.
+Expected: No output.
 
-- [ ] **Step 2: Delete the iPad-only resources manually**
+- [ ] **Step 2: Confirm no production layout deletions**
 
-Use file deletion only for the exact paths listed above. Do not delete phone layouts such as `lime_email.json`, `lime_url.json`, `symbols2.json`, or `symbols3.json`.
+Run: `git status --short LimeIME-iOS/LimeKeyboard/Layouts | rg "^ D|^D" || true`
+
+Expected: No output. Production `_ipad`, phone, symbol, and other shipped layout files are read-only for this plan.
 
 - [ ] **Step 3: Build resource bundle**
 
@@ -1250,30 +1183,47 @@ In both sibling docs, add a short note near their iPad layout sections:
 For per-device iPad size tiers and `_ipad_narrow` fallback behavior, see `IPAD_KB_SIZE_TIERS.md`.
 ```
 
-- [ ] **Step 2: Remove stale references to deleted iPad English/symbol variants**
+- [ ] **Step 2: Verify docs references**
 
-Run: `rg -n "lime_email_ipad|lime_url_ipad|lime_english_number_ipad|lime_number_ipad|lime_shift_ipad|symbols2_ipad|symbols3_ipad" docs`
+Run: `rg -n "_ipad_narrow|IPadSizeClass|symbols3_ipad|lime_email_ipad" docs/IPAD_KEYBOARD.md docs/IPAD_KB_LAYOUT_COVERTER.md docs/IPAD_KB_SIZE_TIERS.md`
 
-Expected: Update any references so they explain these files are intentionally not shipped on iPad after the size-tier rollout.
-
-- [ ] **Step 3: Verify docs references**
-
-Run: `rg -n "_ipad_narrow|IPadSizeClass|symbols2_ipad|lime_email_ipad" docs/IPAD_KEYBOARD.md docs/IPAD_KB_LAYOUT_COVERTER.md docs/IPAD_KB_SIZE_TIERS.md`
-
-Expected: `_ipad_narrow` and `IPadSizeClass` are documented; deleted file names appear only in "not shipped" context.
+Expected: `_ipad_narrow` and `IPadSizeClass` are documented. Any production `_ipad` layout reference must describe an existing read-only source/fallback layout, not a delete/modify target.
 
 ---
 
-### Task 13: Final Build and Behavior Verification
+### Task 13: Ponytail Review Before Verification
+
+**Files:**
+- No planned edits unless review finds unnecessary complexity.
+
+- [ ] **Step 1: Run `ponytail-review` on the implementation diff**
+
+Review the full branch diff for over-engineering only. Findings should use
+the `ponytail-review` format: one line per finding, with what to cut and what
+replaces it.
+
+- [ ] **Step 2: Apply accepted simplifications**
+
+Use targeted edits only. Do not add abstractions, do not rewrite files from
+scratch, and do not use git revert commands.
+
+- [ ] **Step 3: Re-run focused checks for changed files**
+
+Run the smallest command that verifies each simplification. If no findings
+exist, record `Lean already. Ship.` and continue.
+
+---
+
+### Task 14: Final Build and Behavior Verification
 
 **Files:**
 - No planned edits.
 
-- [ ] **Step 1: Run JSON pipeline from scratch**
+- [ ] **Step 1: Run narrow JSON pipeline only**
 
-Run: `python3 scripts/build_ipad_layouts.py`
+Run: `git diff --name-only -- LimeIME-iOS/LimeKeyboard/Layouts | rg -v "_ipad_narrow" || true`
 
-Expected: No traceback.
+Expected: No output. Any non-narrow layout diff is out of scope.
 
 Run: `python3 scripts/trim_ipad_layout.py`
 
@@ -1282,6 +1232,10 @@ Expected: Prints generated narrow layout count.
 Run: `python3 .Codex/scripts/verify_ipad_narrow_layouts.py`
 
 Expected: Prints verified narrow layout count.
+
+Run: `git status --short LimeIME-iOS/LimeKeyboard/Layouts | rg "^ D|^D" || true`
+
+Expected: No output. No production layout files are deleted.
 
 - [ ] **Step 2: Build app and keyboard schemes**
 
@@ -1348,12 +1302,12 @@ git commit -m "docs: plan iPad keyboard size tiers"
 git add LimeIME-iOS/LimeKeyboard/LayoutMetrics.swift LimeIME-iOS/LimeKeyboard/LayoutLoader.swift LimeIME-iOS/LimeKeyboard/KeyboardView.swift LimeIME-iOS/LimeKeyboard/CandidateBarView.swift LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift
 git commit -m "feat: add iPad keyboard size tiers"
 
-git add scripts/build_ipad_layouts.py scripts/trim_ipad_layout.py LimeIME-iOS/LimeKeyboard/Layouts
+git add scripts/trim_ipad_layout.py LimeIME-iOS/LimeKeyboard/Layouts/*_ipad_narrow*.json
 git commit -m "feat: generate narrow iPad keyboard layouts"
 ```
 
 ## Self-Review Notes
 
-- Spec coverage: Tasks 1-5 cover tier detection, metrics, phone unchanged, and iPad 13 unchanged. Tasks 6-7 cover English/symbol collapse. Tasks 8-10 cover ET_41 and narrow trimming. Tasks 11-12 cover bundle cleanup and docs. Task 13 covers final verification.
+- Spec coverage: Tasks 1-5 cover tier detection, metrics, phone unchanged, and iPad 13 unchanged. Tasks 6-7 cover iPad English/symbol narrow behavior. Tasks 8-10 cover production-layout audit and narrow trimming. Tasks 11-12 cover non-narrow layout audit and docs. Task 13 covers ponytail review. Task 14 covers final verification.
 - Placeholder scan: No implementation step is left as "TBD"; where a codebase location must be found, the plan provides the exact search command and the exact code to insert.
 - Type consistency: The shared type is `IPadSizeClass`; the shared state is `LayoutLoader.iPadSizeClass`; all metric selectors read that same state.

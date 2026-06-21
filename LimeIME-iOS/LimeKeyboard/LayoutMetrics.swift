@@ -19,6 +19,18 @@
 //     centralized in `KeyboardPalette` (KeyboardView.swift). Only the
 //     palette-independent overlay/effect colors (touch-trap fill, dark-pill
 //     override) live here.
+enum IPadSizeClass: Equatable {
+    case small
+    case medium
+    case large
+
+    static func resolve(shortSideExtent: CGFloat) -> IPadSizeClass {
+        if shortSideExtent >= 870 { return .large }
+        if shortSideExtent >= 750 { return .medium }
+        return .small
+    }
+}
+
 enum LayoutMetrics {
 
     // MARK: - Touch trap (custom-keyboard hit gate)
@@ -43,8 +55,14 @@ enum LayoutMetrics {
     // under `ComposingPopup` below — that section holds the per-idiom
     // values together.
     enum CandidateBar {
-        // Per-cell horizontal padding inside each candidate button.
-        static let candidateHPad: CGFloat = 10
+        static func candidateHPad(isPad: Bool) -> CGFloat {
+            guard isPad else { return 10 }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return 12
+            case .medium: return 14
+            case .large: return 10
+            }
+        }
 
         // Width of the thin moreSep divider just left of the chevron.
         static let dividerWidth: CGFloat = 1
@@ -126,7 +144,23 @@ enum LayoutMetrics {
         }
 
         /// Sizes used on iPad hardware / pad-class host.
-        enum Pad {
+        enum PadSmall {
+            static let stripHeight: CGFloat = 24
+            static let stripFontSize: CGFloat = 17
+            static let candidateFontSize: CGFloat = 26
+            static let composingCodeFontSize: CGFloat = 19
+            static let barBaseHeight: CGFloat = 50
+        }
+
+        enum PadMedium {
+            static let stripHeight: CGFloat = 26
+            static let stripFontSize: CGFloat = 18
+            static let candidateFontSize: CGFloat = 28
+            static let composingCodeFontSize: CGFloat = 21
+            static let barBaseHeight: CGFloat = 54
+        }
+
+        enum PadLarge {
             static let stripHeight: CGFloat = 28
             static let stripFontSize: CGFloat = 18
             static let candidateFontSize: CGFloat = 26
@@ -146,19 +180,44 @@ enum LayoutMetrics {
 
         // Per-idiom selectors used by the controller and the bar view.
         static func stripHeight(isPad: Bool) -> CGFloat {
-            isPad ? Pad.stripHeight : Phone.stripHeight
+            guard isPad else { return Phone.stripHeight }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.stripHeight
+            case .medium: return PadMedium.stripHeight
+            case .large: return PadLarge.stripHeight
+            }
         }
         static func stripFontSize(isPad: Bool) -> CGFloat {
-            isPad ? Pad.stripFontSize : Phone.stripFontSize
+            guard isPad else { return Phone.stripFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.stripFontSize
+            case .medium: return PadMedium.stripFontSize
+            case .large: return PadLarge.stripFontSize
+            }
         }
         static func candidateFontSize(isPad: Bool) -> CGFloat {
-            isPad ? Pad.candidateFontSize : Phone.candidateFontSize
+            guard isPad else { return Phone.candidateFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.candidateFontSize
+            case .medium: return PadMedium.candidateFontSize
+            case .large: return PadLarge.candidateFontSize
+            }
         }
         static func composingCodeFontSize(isPad: Bool) -> CGFloat {
-            isPad ? Pad.composingCodeFontSize : Phone.composingCodeFontSize
+            guard isPad else { return Phone.composingCodeFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.composingCodeFontSize
+            case .medium: return PadMedium.composingCodeFontSize
+            case .large: return PadLarge.composingCodeFontSize
+            }
         }
         static func barBaseHeight(isPad: Bool) -> CGFloat {
-            isPad ? Pad.barBaseHeight : Phone.barBaseHeight
+            guard isPad else { return Phone.barBaseHeight }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.barBaseHeight
+            case .medium: return PadMedium.barBaseHeight
+            case .large: return PadLarge.barBaseHeight
+            }
         }
     }
 
@@ -185,7 +244,27 @@ enum LayoutMetrics {
         }
 
         /// Sizes used on iPad hardware / pad-class host (native iPad app).
-        enum Pad {
+        enum PadSmall {
+            static let portraitRow: CGFloat = 52
+            static let portraitBottomRow: CGFloat = 56
+            static let landscapeRow: CGFloat = 52
+            static let landscapeBottomRow: CGFloat = 56
+            static let keyHGap: CGFloat = 5
+            static let keyVGap: CGFloat = 3
+            static let keyCornerRadius: CGFloat = 6
+        }
+
+        enum PadMedium {
+            static let portraitRow: CGFloat = 58
+            static let portraitBottomRow: CGFloat = 62
+            static let landscapeRow: CGFloat = 58
+            static let landscapeBottomRow: CGFloat = 62
+            static let keyHGap: CGFloat = 6
+            static let keyVGap: CGFloat = 3
+            static let keyCornerRadius: CGFloat = 7
+        }
+
+        enum PadLarge {
             static let portraitRow: CGFloat = 64
             static let portraitBottomRow: CGFloat = 68
             static let landscapeRow: CGFloat = 60
@@ -214,14 +293,57 @@ enum LayoutMetrics {
         static let fallbackRowHeight: CGFloat = 54
 
         // Per-idiom selectors used by the keyboard view.
+        static func rowHeight(isPadHardware: Bool, isPad: Bool, isLandscape: Bool) -> CGFloat {
+            if isPadHardware && !isPad {
+                return isLandscape ? PadCompat.landscapeRow : PadCompat.portraitRow
+            }
+            guard isPad else {
+                return isLandscape ? Phone.landscapeRow : Phone.portraitRow
+            }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return isLandscape ? PadSmall.landscapeRow : PadSmall.portraitRow
+            case .medium: return isLandscape ? PadMedium.landscapeRow : PadMedium.portraitRow
+            case .large: return isLandscape ? PadLarge.landscapeRow : PadLarge.portraitRow
+            }
+        }
+
+        static func bottomRowHeight(isPadHardware: Bool, isPad: Bool, isLandscape: Bool) -> CGFloat {
+            if isPadHardware && !isPad {
+                return isLandscape ? PadCompat.landscapeBottomRow : PadCompat.portraitBottomRow
+            }
+            guard isPad else {
+                return isLandscape ? Phone.landscapeBottomRow : Phone.portraitBottomRow
+            }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return isLandscape ? PadSmall.landscapeBottomRow : PadSmall.portraitBottomRow
+            case .medium: return isLandscape ? PadMedium.landscapeBottomRow : PadMedium.portraitBottomRow
+            case .large: return isLandscape ? PadLarge.landscapeBottomRow : PadLarge.portraitBottomRow
+            }
+        }
+
         static func keyHGap(isPad: Bool) -> CGFloat {
-            isPad ? Pad.keyHGap : Phone.keyHGap
+            guard isPad else { return Phone.keyHGap }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.keyHGap
+            case .medium: return PadMedium.keyHGap
+            case .large: return PadLarge.keyHGap
+            }
         }
         static func keyVGap(isPad: Bool) -> CGFloat {
-            isPad ? Pad.keyVGap : Phone.keyVGap
+            guard isPad else { return Phone.keyVGap }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.keyVGap
+            case .medium: return PadMedium.keyVGap
+            case .large: return PadLarge.keyVGap
+            }
         }
         static func keyCornerRadius(isPad: Bool) -> CGFloat {
-            isPad ? Pad.keyCornerRadius : Phone.keyCornerRadius
+            guard isPad else { return Phone.keyCornerRadius }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.keyCornerRadius
+            case .medium: return PadMedium.keyCornerRadius
+            case .large: return PadLarge.keyCornerRadius
+            }
         }
     }
 
@@ -245,7 +367,21 @@ enum LayoutMetrics {
         }
 
         /// Sizes used on iPad hardware / pad-class host (native iPad app).
-        enum Pad {
+        enum PadSmall {
+            static let singleLabelFontSize: CGFloat = 21
+            static let primaryLabelFontSize: CGFloat = 18
+            static let sublabelFontSize: CGFloat = 21
+            static let iconSize: CGFloat = 23
+        }
+
+        enum PadMedium {
+            static let singleLabelFontSize: CGFloat = 22
+            static let primaryLabelFontSize: CGFloat = 19
+            static let sublabelFontSize: CGFloat = 22
+            static let iconSize: CGFloat = 24
+        }
+
+        enum PadLarge {
             static let singleLabelFontSize: CGFloat = 24
             static let primaryLabelFontSize: CGFloat = 20
             static let sublabelFontSize: CGFloat = 24
@@ -281,16 +417,40 @@ enum LayoutMetrics {
         // Per-idiom selectors used by the keyboard view.
         // isPadCompat takes priority over isPad when both are provided.
         static func singleLabelFontSize(isPad: Bool, isPadCompat: Bool = false) -> CGFloat {
-            isPad ? Pad.singleLabelFontSize : isPadCompat ? PadCompat.singleLabelFontSize : Phone.singleLabelFontSize
+            if isPadCompat && !isPad { return PadCompat.singleLabelFontSize }
+            guard isPad else { return Phone.singleLabelFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.singleLabelFontSize
+            case .medium: return PadMedium.singleLabelFontSize
+            case .large: return PadLarge.singleLabelFontSize
+            }
         }
         static func primaryLabelFontSize(isPad: Bool, isPadCompat: Bool = false) -> CGFloat {
-            isPad ? Pad.primaryLabelFontSize : isPadCompat ? PadCompat.primaryLabelFontSize : Phone.primaryLabelFontSize
+            if isPadCompat && !isPad { return PadCompat.primaryLabelFontSize }
+            guard isPad else { return Phone.primaryLabelFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.primaryLabelFontSize
+            case .medium: return PadMedium.primaryLabelFontSize
+            case .large: return PadLarge.primaryLabelFontSize
+            }
         }
         static func sublabelFontSize(isPad: Bool, isPadCompat: Bool = false) -> CGFloat {
-            isPad ? Pad.sublabelFontSize : isPadCompat ? PadCompat.sublabelFontSize : Phone.sublabelFontSize
+            if isPadCompat && !isPad { return PadCompat.sublabelFontSize }
+            guard isPad else { return Phone.sublabelFontSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.sublabelFontSize
+            case .medium: return PadMedium.sublabelFontSize
+            case .large: return PadLarge.sublabelFontSize
+            }
         }
         static func iconSize(isPad: Bool, isPadCompat: Bool = false) -> CGFloat {
-            isPad ? Pad.iconSize : isPadCompat ? PadCompat.iconSize : Phone.iconSize
+            if isPadCompat && !isPad { return PadCompat.iconSize }
+            guard isPad else { return Phone.iconSize }
+            switch LayoutLoader.iPadSizeClass {
+            case .small: return PadSmall.iconSize
+            case .medium: return PadMedium.iconSize
+            case .large: return PadLarge.iconSize
+            }
         }
     }
 

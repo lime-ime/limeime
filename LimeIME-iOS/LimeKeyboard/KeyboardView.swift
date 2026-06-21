@@ -268,18 +268,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     // Controls the PadCompat font tier — taller than phone to fill the extra row
     // height, but not as wide as iPad since key columns stay phone-narrow.
     private var isPadCompat: Bool { isPadHardware && !isPad }
-    private let rowHeightPortrait:              CGFloat = LayoutMetrics.KeyboardRow.Phone.portraitRow
-    private let bottomRowHeightPortrait:        CGFloat = LayoutMetrics.KeyboardRow.Phone.portraitBottomRow
-    private let rowHeightLandscape:             CGFloat = LayoutMetrics.KeyboardRow.Phone.landscapeRow
-    private let bottomRowHeightLandscape:       CGFloat = LayoutMetrics.KeyboardRow.Phone.landscapeBottomRow
-    private let rowHeightPortraitIPad:          CGFloat = LayoutMetrics.KeyboardRow.Pad.portraitRow
-    private let bottomRowHeightPortraitIPad:    CGFloat = LayoutMetrics.KeyboardRow.Pad.portraitBottomRow
-    private let rowHeightLandscapeIPad:         CGFloat = LayoutMetrics.KeyboardRow.Pad.landscapeRow
-    private let bottomRowHeightLandscapeIPad:   CGFloat = LayoutMetrics.KeyboardRow.Pad.landscapeBottomRow
-    private let rowHeightPortraitCompat:        CGFloat = LayoutMetrics.KeyboardRow.PadCompat.portraitRow
-    private let bottomRowHeightPortraitCompat:  CGFloat = LayoutMetrics.KeyboardRow.PadCompat.portraitBottomRow
-    private let rowHeightLandscapeCompat:       CGFloat = LayoutMetrics.KeyboardRow.PadCompat.landscapeRow
-    private let bottomRowHeightLandscapeCompat: CGFloat = LayoutMetrics.KeyboardRow.PadCompat.landscapeBottomRow
     private let keyShadowOpacity: Float = LayoutMetrics.Key.shadowOpacity
     private var keyHGap:         CGFloat { LayoutMetrics.KeyboardRow.keyHGap(isPad: isPad) }
     private var keyVGap:         CGFloat { LayoutMetrics.KeyboardRow.keyVGap(isPad: isPad) }
@@ -358,22 +346,18 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private var rowHeight: CGFloat {
-        let base: CGFloat
-        switch (isPadHardware, isPad) {
-        case (true, false): base = isLandscape ? rowHeightLandscapeCompat : rowHeightPortraitCompat
-        case (true, true):  base = isLandscape ? rowHeightLandscapeIPad   : rowHeightPortraitIPad
-        default:            base = isLandscape ? rowHeightLandscape        : rowHeightPortrait
-        }
-        return base * keySizeScale
+        LayoutMetrics.KeyboardRow.rowHeight(
+            isPadHardware: isPadHardware,
+            isPad: isPad,
+            isLandscape: isLandscape
+        ) * keySizeScale
     }
     private var bottomRowHeight: CGFloat {
-        let base: CGFloat
-        switch (isPadHardware, isPad) {
-        case (true, false): base = isLandscape ? bottomRowHeightLandscapeCompat : bottomRowHeightPortraitCompat
-        case (true, true):  base = isLandscape ? bottomRowHeightLandscapeIPad   : bottomRowHeightPortraitIPad
-        default:            base = isLandscape ? bottomRowHeightLandscape        : bottomRowHeightPortrait
-        }
-        return base * keySizeScale
+        LayoutMetrics.KeyboardRow.bottomRowHeight(
+            isPadHardware: isPadHardware,
+            isPad: isPad,
+            isLandscape: isLandscape
+        ) * keySizeScale
     }
 
     // MARK: - Theme
