@@ -12,7 +12,7 @@ The report is for the Android IM install/download path. The initial failure was 
 
 - Live issue: https://github.com/lime-ime/limeime/issues/127
 - Current reporter retest request: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280
-- Latest public follow-up: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761945146 asks the reporter to confirm their LIME version and to provide LIME/Android versions plus an error screenshot if a newer LIME version still cannot install `快倉` roots.
+- A later version/screenshot clarification comment was deleted by `limeimetw`; the current live public state keeps only the acknowledgement and the v6.1.23 runtime-artifact retest request.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java` defines `DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip"`.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java` uses `LIME.DATABASE_CLOUD_IM_SCJ` for the `快倉字根` install button.
 - Initial GitHub Contents API check during triage:
@@ -38,7 +38,7 @@ This is separate from #111's `scj` table-data issue (`x` / `z` -> `1991` rows), 
 
 ## Follow-up questions
 
-If the reporter still sees the failure after retrying, use the latest public follow-up as the active question: confirm their LIME version, Android version, and whether the failure happens through the in-app `快倉字根` download button or from a manually selected file. Ask for or inspect the error screenshot if provided.
+If the reporter still sees the failure after retrying, ask them to confirm their LIME version, Android version, and whether the failure happens through the in-app `快倉字根` download button or from a manually selected file. Ask for or inspect an error screenshot if provided.
 
 ## Verification plan
 
@@ -60,4 +60,4 @@ No confirmed iOS impact from this specific broken URL. `LimeIME-iOS/LimeSettings
 ## Current status
 
 - 2026-06-21: Classified as a confirmed Android catalog/download bug. `bug` + `Usability` labels and `jrywu` assignment were applied, and acknowledgement was posted at https://github.com/lime-ime/limeime/issues/127#issuecomment-4761878700.
-- 2026-06-21: Commit `2f0ecdf58a1f8854636456c8fcaae355e40442df` restored `Database/scj.zip`; Hermes verified the restored artifact is a valid ZIP containing `scj.db`. Release `v6.1.23` was published with APK `LIMEHD202661230-6.1.23.apk`, and the retained public retest request is https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280. Latest follow-up https://github.com/lime-ime/limeime/issues/127#issuecomment-4761945146 asks the reporter to confirm their current LIME version, and if a newer LIME version still fails, provide LIME/Android versions plus an error screenshot. Issue remains open pending reporter confirmation.
+- 2026-06-21: Commit `2f0ecdf58a1f8854636456c8fcaae355e40442df` restored `Database/scj.zip`; Hermes verified the restored artifact is a valid ZIP containing `scj.db`. Release `v6.1.23` was published with APK `LIMEHD202661230-6.1.23.apk`, and the retained public retest request is https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280. A later version/screenshot clarification comment was deleted, so do not cite or recreate it. Issue remains open pending reporter confirmation.
