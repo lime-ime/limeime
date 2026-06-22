@@ -53,29 +53,6 @@ public class LIME {
 	//public static final String DATABASE_OPENFOUNDRY_URL_BASED = "https://www.openfoundry.org/websvn/filedetails.php?repname=limeime&path=%2F";
 	public static final String DATABASE_CLOUD_URL_BASED = "https://github.com/lime-ime/limeime/raw/master/Database/";
 
-	// Database Source File Names
-	public static final String DATABASE_SOURCE_DAYI = "dayi.cin";
-	public static final String DATABASE_SOURCE_PHONETIC = "phonetic.lime";
-	public static final String DATABASE_SOURCE_PHONETIC_CNS = "bopomofo.cin";
-	public static final String DATABASE_SOURCE_PHONETICADV = "phonetic_adv_CJK.lime";
-	public static final String DATABASE_SOURCE_CJ = "cj.lime";
-	public static final String DATABASE_SOURCE_CJ_CNS = "cangjie.cin";
-	public static final String DATABASE_SOURCE_CJ5 = "cj5.lime";
-	public static final String DATABASE_SOURCE_ECJ = "ecj.lime";
-	public static final String DATABASE_SOURCE_SCJ = "scj.lime";
-	public static final String DATABASE_SOURCE_ARRAY = "array.lime";
-	public static final String DATABASE_SOURCE_ARRAY10 = "array10.lime";
-	public static final String DATABASE_SOURCE_WB = "stroke5.cin";
-	public static final String DATABASE_SOURCE_EZ = "ez.lime";
-	public static final String DATABASE_SOURCE_PINYIN_BIG5 = "pinyinbig5.cin";
-	public static final String DATABASE_SOURCE_PINYIN_GB = "pinyin.cin";
-	public static final String DATABASE_SOURCE_PINYIN_LIME = "pinyin_CJK.cin";
-	public static final String DATABASE_SOURCE_CJ_LIME = "cj_CJK.lime";
-	public static final String DATABASE_SOURCE_ECJ_LIME = "ecj_CJK.lime";
-	public static final String DATABASE_SOURCE_PHONETIC_LIME = "phonetic_CJK.lime";
-	public static final String DATABASE_SOURCE_FILENAME = "lime.zip";
-	public static final String DATABASE_SOURCE_FILENAME_EMPTY = "empty.zip";
-	
 	// Database Cloud URLs
 
 	public static final String DATABASE_CLOUD_IM_WB = DATABASE_CLOUD_URL_BASED + "wb.zip";
@@ -103,7 +80,7 @@ public class LIME {
 	public static final String DATABASE_CLOUD_IM_DAYI_KEYBOARD = "dayisym";
 	public static final String DATABASE_CLOUD_IM_CJHK = DATABASE_CLOUD_URL_BASED + "cjhk.zip";
 	public static final String DATABASE_CLOUD_IM_CJHK_KEYBOARD = "cj";
-	public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip";
+	public static final String DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.limedb";
 	public static final String DATABASE_CLOUD_IM_SCJ_KEYBOARD = "limenum";
 	public static final String DATABASE_CLOUD_IM_CJ5 = DATABASE_CLOUD_URL_BASED + "cj5.zip";
 	public static final String DATABASE_CLOUD_IM_CJ5_KEYBOARD = "cj";
