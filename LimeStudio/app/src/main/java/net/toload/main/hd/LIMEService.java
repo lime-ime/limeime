@@ -5912,16 +5912,17 @@ public class LIMEService extends InputMethodService
         }
     }
 
+    static boolean shouldUseDirectVibrationFallbackForSdk(int sdkInt, boolean viewHapticPerformed) {
+        return sdkInt >= android.os.Build.VERSION_CODES.S && !viewHapticPerformed;
+    }
+
     /**
      * Vibrate with specified duration, compatible with all API levels.
-     * API 31+: uses performHapticFeedback on the keyboard view — Vibrator.vibrate() from
-     *          an InputMethodService suffers USAGE_UNKNOWN classification on Android 12+
-     *          (API 31+) because the system treats services as background processes, which
-     *          restricts vibration. The View haptic pipeline avoids this: mInputView is
-     *          attached to the IME window (user-interactive context) so it is not subject
-     *          to background restrictions. VibrationAttributes.USAGE_TOUCH would be the
-     *          alternative, but vibrate(VibrationEffect, VibrationAttributes) requires API 33,
-     *          making performHapticFeedback the only clean solution for API 31-32 as well.
+     * API 31+: first uses performHapticFeedback on the keyboard view. Some OEM builds can
+     *          decline KEYBOARD_TAP view haptics even while system touch vibration is enabled;
+     *          when that path returns false, fall back to a direct Vibrator call tagged as
+     *          USAGE_TOUCH so Android 12+ does not treat the IME service vibration as unknown
+     *          background feedback.
      * API 29-30: uses predefined VibrationEffect (hardware-optimized for Pixel LRA motors).
      * API 26-28: uses VibrationEffect.createOneShot().
      * API <26: uses deprecated vibrate(long).
@@ -5933,20 +5934,19 @@ public class LIMEService extends InputMethodService
             return;
         }
 
-        // API 31+: use performHapticFeedback on the keyboard view.
-        // Vibrator.vibrate() from a service is classified as USAGE_UNKNOWN on Android 12+,
-        // making it subject to background vibration restrictions. Lowering the threshold from
-        // API 33 to API 31 (where restrictions began) covers API 31-32 with the reliable path.
+        boolean viewHapticPerformed = false;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             if (mInputView != null) {
                 // FLAG_IGNORE_VIEW_SETTING: fire even if the view's hapticFeedbackEnabled is off.
                 // FLAG_IGNORE_GLOBAL_SETTING is deprecated on API 33+ and has no effect;
                 // the system always respects the global haptic setting on API 33+.
-                mInputView.performHapticFeedback(
+                viewHapticPerformed = mInputView.performHapticFeedback(
                         android.view.HapticFeedbackConstants.KEYBOARD_TAP,
                         android.view.HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
             }
-            return;
+            if (!shouldUseDirectVibrationFallbackForSdk(android.os.Build.VERSION.SDK_INT, viewHapticPerformed)) {
+                return;
+            }
         }
 
         Vibrator vibrator = getVibrator();
@@ -5956,7 +5956,14 @@ public class LIMEService extends InputMethodService
         }
 
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                int effectId = mapDurationToVibrationEffect(duration);
+                android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
+                android.os.VibrationAttributes attributes = new android.os.VibrationAttributes.Builder()
+                        .setUsage(android.os.VibrationAttributes.USAGE_TOUCH)
+                        .build();
+                vibrator.vibrate(effect, attributes);
+            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 // API 29-30: use predefined effects optimized for device haptic hardware
                 int effectId = mapDurationToVibrationEffect(duration);
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
