@@ -43,6 +43,8 @@ This is a plausible Android haptic-feedback compatibility bug rather than a miss
 
 The source-level fix hypothesis is to keep the Android 12+ view haptic path as the first attempt, but use its boolean return value. If the view haptic call returns `false`, fall back to direct `Vibrator.vibrate(...)`; Android 13+ can tag that fallback with `VibrationAttributes.USAGE_TOUCH`, while Android 12 / 12L use the available predefined-effect vibrator call. This keeps successful devices on the existing path while giving Samsung/One UI devices a second haptic route without calling newer APIs on older Android versions.
 
+This root cause is still not fully confirmed because there is no logcat or local reproduction showing whether the reporter's Samsung A55 path returns `false` from `performHapticFeedback(...)` rather than returning `true` while producing no perceptible vibration. The PR is therefore a safe plausible fallback that still needs Samsung / One UI hardware confirmation after a newer build contains it.
+
 ## Platform impact
 
 ### Android
