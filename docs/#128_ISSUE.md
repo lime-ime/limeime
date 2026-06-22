@@ -33,7 +33,7 @@ Before this fix, `LIMEService.vibrate(...)` on Android 12+ / API 31+ called `mIn
 
 ## Root cause (confirmed on hardware)
 
-Confirmed by on-device debugging on a Samsung **SM-A1760** (Android 16 / API 36, One UI), the same device family as the report. The cause is **not** what the first fix hypothesis assumed.
+Confirmed by on-device debugging on a Samsung **SM-A1760** (Android 16 / API 36, One UI). This is a different Samsung Galaxy A-series device from the reporter's Samsung A55, so it is strong same-platform evidence but not reporter-device retest confirmation. The cause is **not** what the first fix hypothesis assumed.
 
 Two facts were verified from live `logcat` and `dumpsys vibrator_manager` while pressing keys:
 
@@ -75,13 +75,13 @@ The `performHapticFeedback` view-haptic path, the `shouldUseDirectVibrationFallb
 
 ### Caveat — API 31–32 (Android 12 / 12L)
 
-The root-cause fix (`createOneShot`) applies to all API levels, but only API 33+ can tag the call `USAGE_TOUCH`. On API 31–32 the direct `Vibrator.vibrate()` from an IME service is still subject to `USAGE_UNKNOWN` background classification, and there is no attributes overload to avoid it. No Android 12 / 12L device was available to test, and the reporter is on API 36, so the 31–32 path is improved (raw pulse instead of an unsupported predefined effect) but **not verified**.
+The root-cause fix (`createOneShot`) applies to all API levels, but only API 33+ can tag the call `USAGE_TOUCH`. On API 31–32 the direct `Vibrator.vibrate()` from an IME service is still subject to `USAGE_UNKNOWN` background classification, and there is no attributes overload to avoid it. No Android 12 / 12L device was available to test, and the reporter is on API 36, so the 31–32 path is **not verified** and could still need follow-up if Android 12 / 12L evidence appears.
 
 ## Platform impact
 
 ### Android
 
-Confirmed and fixed on the reporter platform (Samsung SM-A1760 / Android 16). The fix replaces predefined `VibrationEffect`s — which this device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+. Since keypress sound always worked, the issue was scoped to the vibration primitive, not soft-key event delivery.
+Confirmed and fixed in source on a maintainer-tested Samsung SM-A1760 / Android 16 device. The reporter's exact Samsung A55 has not yet retested a build containing the fix. The fix replaces predefined `VibrationEffect`s — which the tested Samsung device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+. Since keypress sound always worked, the issue was scoped to the vibration primitive, not soft-key event delivery.
 
 ### iOS
 
