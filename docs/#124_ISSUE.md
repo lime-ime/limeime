@@ -121,7 +121,7 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 
 ## Backlog / release follow-up
 
-- Android APK v6.1.23 (`LIMEHD202661230-6.1.23.apk`) contains the targeted #124 popup-position/alignment fix. The GitHub Contents APK blob SHA is `2e7fee05de15139119db5a3ea1908bd7f2b611ec`, size `7406573` bytes; downloaded SHA-256 was `e64db9d33118dfc4bf127f951f5a0f873d939918496a54cc89254c71fe31eb95`.
+- Android v6.1.23 contains the targeted #124 popup-position/alignment fix. The reporter is on the Google Play closed-test channel, so the public retest request correctly asks them to update from Google Play. The retained GitHub Release/sideload APK was later replaced as `LIMEHD2026-6.1.23.apk` for the old GitHub package family (`net.toload.main.hd2026`); verified GitHub Contents blob SHA `7315b2d88bf13327d2f16343ddd2c8d1f843be84`, size `7406598` bytes, downloaded SHA-256 `644e9744af24a97d4f0ae67a5537992808ae2fbc6c4dcdb70fc1c44736225eca`.
 - `limeimetw` edited the retained v6.1.23 update comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 to tell the Google Play closed-test reporter to update from Google Play, not from a raw APK link.
 - The issue is reopened and should remain open pending reporter confirmation on Google Play v6.1.23.
 - If the reporter says v6.1.23 still overlaps the bottom input field, continue the focused follow-up with screenshots/video and the exact app/key sequence.
