@@ -4,7 +4,7 @@
 
 Community reporter `s9228034david-spec` reports that on a Samsung A55, enabling **喜好設定 / 打字震動** does not produce any vibration while typing with the LIME Android soft keyboard.
 
-**Status: resolved.** Root cause confirmed on a Samsung SM-A1760 (Android 16 / API 36): the device vibrator reports an empty supported-effects table, so the predefined `VibrationEffect`s the code used were silently dropped at the HAL. Fixed by switching to `VibrationEffect.createOneShot(...)`; vibration verified on hardware. See Root cause and Fix below.
+**Status: closed / source-fixed.** PR #132 merged to `master` as merge commit `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the issue on 2026-06-22. Root cause was confirmed on a Samsung SM-A1760 (Android 16 / API 36): the device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were silently dropped at the HAL. The merged fix switches keypress vibration to `VibrationEffect.createOneShot(...)`; vibration was verified on hardware. The reporter should still retest after a newer Android APK / Google Play build contains this merge commit.
 
 Issue: https://github.com/lime-ime/limeime/issues/128
 
@@ -116,7 +116,7 @@ Removed as part of the fix (all tied to the disproven "view haptic returns false
 
 ## Current status
 
-- **Fixed and verified on the reporter's device family (Samsung / Android 16 / API 36).**
+- **Closed / source-fixed on `master`.** PR #132 merged as `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the community issue before reporter retest.
 - Root cause: device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were dropped at the HAL. The original "Samsung returns `false` from `performHapticFeedback`" hypothesis was disproven on hardware (it returns `true`).
-- Reporter retest should wait until a newer APK / Play build contains the merged `createOneShot` change.
+- Current Android APK metadata still points to `LIMEHD2026-6.1.23.apk` (blob SHA `7315b2d88bf13327d2f16343ddd2c8d1f843be84`, size 7,406,598 bytes), which predates PR #132. Do not ask the reporter to retest until a newer APK / Google Play build contains the merged `createOneShot` change.
 - No iOS/TestFlight retest is implied by this Android report.
