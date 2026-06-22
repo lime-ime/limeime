@@ -5920,9 +5920,9 @@ public class LIMEService extends InputMethodService
      * Vibrate with specified duration, compatible with all API levels.
      * API 31+: first uses performHapticFeedback on the keyboard view. Some OEM builds can
      *          decline KEYBOARD_TAP view haptics even while system touch vibration is enabled;
-     *          when that path returns false, fall back to a direct Vibrator call tagged as
-     *          USAGE_TOUCH so Android 12+ does not treat the IME service vibration as unknown
-     *          background feedback.
+     *          when that path returns false, fall back to a direct Vibrator call. API 33+
+     *          tags the direct fallback as USAGE_TOUCH so Android 13+ does not treat the IME
+     *          service vibration as unknown background feedback.
      * API 29-30: uses predefined VibrationEffect (hardware-optimized for Pixel LRA motors).
      * API 26-28: uses VibrationEffect.createOneShot().
      * API <26: uses deprecated vibrate(long).
