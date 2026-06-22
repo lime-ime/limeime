@@ -76,7 +76,7 @@ public class SetupImController extends BaseController implements ImportDialog.On
      * Callback method called when user selects a IM table for import in ImportDialog.
      * 
      * <p>This method is called after the user selects which IM table to import the
-     * file into. It directly calls importTxtTable with the selected parameters.
+     * file into. It imports .lime/.cin as text mappings and .limedb/.zip as zipped DB.
      * 
      * @param tableName The IM table selected for import
      * @param restoreUserRecords If true, restores user-learned records from backup table after import
@@ -89,7 +89,19 @@ public class SetupImController extends BaseController implements ImportDialog.On
             handleError(settingsView, "No file selected for import", null);
             return;
         }
-        importTxtTable(fileToImport, tableName, restoreUserRecords);
+        if (isZippedImportFile(fileToImport.getName())) {
+            importZippedDb(fileToImport, tableName, restoreUserRecords);
+        } else {
+            importTxtTable(fileToImport, tableName, restoreUserRecords);
+        }
+    }
+
+    public static boolean isZippedImportFile(String fileName) {
+        if (fileName == null) {
+            return false;
+        }
+        String lowerName = fileName.toLowerCase(java.util.Locale.US);
+        return lowerName.endsWith(".limedb") || lowerName.endsWith(".zip");
     }
 
     public void loadNavigationMenu() {

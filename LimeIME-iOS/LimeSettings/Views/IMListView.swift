@@ -76,8 +76,14 @@ struct IMListView: View {
             .navigationDestination(for: DetailSelection.self) { sel in
                 destination(for: sel)
             }
-            .onAppear { loadIMs() }
+            .onAppear {
+                loadIMs()
+                if pendingLimeExternalImportURL != nil { showInstallScreenForExternalImport() }
+            }
             .onChange(of: manageImController.refreshToken) { _ in loadIMs() }
+            .onReceive(NotificationCenter.default.publisher(for: .limeExternalImport)) { _ in
+                showInstallScreenForExternalImport()
+            }
         }
     }
 
@@ -204,6 +210,13 @@ struct IMListView: View {
     /// IM list root so the deleted IM's detail pane no longer shows.
     private func popToRoot() {
         path.removeAll()
+    }
+
+    private func showInstallScreenForExternalImport() {
+        if path.last != .install {
+            path.removeAll()
+            path.append(.install)
+        }
     }
 
     // MARK: - Helpers

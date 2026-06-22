@@ -922,6 +922,42 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"), "ㄅ|ㄆ")
     }
 
+    func testArrayImportAppliesDefaultMetadataByTableNotFilename() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("renamed-array-\(UUID().uuidString).lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        @version@|Renamed Array Fixture
+        @cname@|Renamed Array Fixture
+        q|一
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_ARRAY)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_ARRAY, "source"), importURL.lastPathComponent)
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_ARRAY, "selkey"), "1234567890")
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_ARRAY, "imkeys"), "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0")
+        XCTAssertTrue(db.getImConfig(LIME.DB_TABLE_ARRAY, "imkeynames")?.contains("5⇣") == true)
+    }
+
+    func testImportTargetUsesSelectedTableNotFilename() throws {
+        let db = try makeLimeDB()
+        db.clearTable(LIME.DB_TABLE_CUSTOM)
+        db.clearTable(LIME.DB_TABLE_ARRAY)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("array-\(UUID().uuidString).lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "q|一\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertGreaterThan(db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil), 0)
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_ARRAY, nil, nil), 0)
+    }
+
     func testExportTxtTableWritesLimeTextV2WhenFieldsNeedEscaping() throws {
         let db = try makeLimeDB()
         db.setTableName(LIME.DB_TABLE_CUSTOM)

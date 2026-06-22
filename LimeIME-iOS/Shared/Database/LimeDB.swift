@@ -3425,9 +3425,18 @@ final class LimeDB {
             if !endkey.isEmpty { setImConfig(tableName, "endkey", endkey) }
             if !limeendkey.isEmpty { setImConfig(tableName, "limeendkey", limeendkey) }
             if !spacestyle.isEmpty { setImConfig(tableName, "spacestyle", spacestyle) }
+
+            let hasImportedImkeys = !imkeys.isEmpty
+            let hasImportedImkeynames = !imkeynamesHeader.isEmpty || !imkeynames.isEmpty
+
             if !imkeys.isEmpty { setImConfig(tableName, "imkeys", imkeys) }
             if !imkeynamesHeader.isEmpty { setImConfig(tableName, "imkeynames", imkeynamesHeader) }
             else if !imkeynames.isEmpty { setImConfig(tableName, "imkeynames", imkeynames.joined(separator: "|")) }
+            applyDefaultMetadataForStandardIM(tableName,
+                                              hasSelkey: !selkey.isEmpty,
+                                              hasEndkey: !endkey.isEmpty,
+                                              hasImportedImkeys: hasImportedImkeys,
+                                              hasImportedImkeynames: hasImportedImkeynames)
             applyDefaultKeyboardForImportedIM(tableName)
         }
     }
@@ -3437,6 +3446,36 @@ final class LimeDB {
             return Self.IM_FULL_NAMES[index]
         }
         return fallback
+    }
+
+    /// Fill default metadata by destination table, not by the imported filename.
+    /// Imported metadata/keyname blocks always win. Defaults only fill missing fields.
+    private func applyDefaultMetadataForStandardIM(_ tableName: String,
+                                                    hasSelkey: Bool,
+                                                    hasEndkey: Bool,
+                                                    hasImportedImkeys: Bool,
+                                                    hasImportedImkeynames: Bool) {
+        switch tableName {
+        case "array":
+            if !hasSelkey { setImConfig(tableName, "selkey", "1234567890") }
+            if !hasImportedImkeys {
+                setImConfig(tableName, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0")
+            }
+            if !hasImportedImkeynames {
+                setImConfig(tableName, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0")
+            }
+        case "phonetic":
+            if !hasSelkey { setImConfig(tableName, "selkey", "123456789") }
+            if !hasEndkey { setImConfig(tableName, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+") }
+            if !hasImportedImkeys {
+                setImConfig(tableName, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+")
+            }
+            if !hasImportedImkeynames {
+                setImConfig(tableName, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋")
+            }
+        default:
+            break
+        }
     }
 
     /// Returns the default soft-keyboard code for a text-imported IM table.

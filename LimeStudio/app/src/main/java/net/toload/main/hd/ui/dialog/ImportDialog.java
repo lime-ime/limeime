@@ -84,7 +84,7 @@ public class ImportDialog extends DialogFragment {
 	
 	// Import mode constants
 	public static final int IMPORT_MODE_TEXT = 0; // For handleSendText: show non-empty tables + related
-	public static final int IMPORT_MODE_FILE = 1; // For handleImportTxt: show empty tables only
+	public static final int IMPORT_MODE_FILE = 1; // For external files: user selects destination table
 	
 	private static final String IMPORT_TEXT = "import_text"; // Bundle key for import text
 	private static final String FILE_PATH = "file_path"; // Bundle key for file path
@@ -237,8 +237,10 @@ public class ImportDialog extends DialogFragment {
 				}
 			}
 		} else if (importMode == IMPORT_MODE_FILE) {
-            // Only show empty tables in IMPORT_MODE_FILE
-			shouldShow = (manageImController.countRecords(tableName) == 0);
+            // File imports already have explicit user table selection. Allow
+            // non-empty tables too; the restore-learning checkbox controls
+            // whether learned records are backed up and restored.
+			shouldShow = true;
 		} else {
 			shouldShow = false;
 		}

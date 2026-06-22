@@ -335,6 +335,62 @@ public class LimeDBTest {
         }
     }
 
+    @Test(timeout = 15000)
+    public void arrayImportAppliesDefaultMetadataByTableNotFilename() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue(initializeDatabase(limeDB));
+
+        File fixture = new File(appContext.getCacheDir(), "renamed_array_fixture.lime");
+        try {
+            writeUtf8(fixture,
+                    "@version@|Renamed Array Fixture\n" +
+                    "@cname@|Renamed Array Fixture\n" +
+                    "q|\u4E00\n");
+
+            limeDB.setFilename(fixture);
+            limeDB.importTxtTable(LIME.DB_TABLE_ARRAY, null);
+            waitForImportThread(limeDB);
+
+            assertEquals("renamed_array_fixture.lime", limeDB.getImConfig(LIME.DB_TABLE_ARRAY, "source"));
+            assertEquals("1234567890", limeDB.getImConfig(LIME.DB_TABLE_ARRAY, "selkey"));
+            assertEquals("abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0",
+                    limeDB.getImConfig(LIME.DB_TABLE_ARRAY, "imkeys"));
+            assertTrue(limeDB.getImConfig(LIME.DB_TABLE_ARRAY, "imkeynames").contains("5⇣"));
+        } finally {
+            if (fixture.exists() && !fixture.delete()) {
+                Log.w(TAG, "Failed to delete renamed array fixture");
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
+    public void importTargetUsesSelectedTableNotFilename() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue(initializeDatabase(limeDB));
+
+        File fixture = new File(appContext.getCacheDir(), "array.lime");
+        try {
+            limeDB.clearTable(LIME.DB_TABLE_CUSTOM);
+            limeDB.clearTable(LIME.DB_TABLE_ARRAY);
+            writeUtf8(fixture, "q|\u4E00\n");
+
+            limeDB.setFilename(fixture);
+            limeDB.importTxtTable(LIME.DB_TABLE_CUSTOM, null);
+            waitForImportThread(limeDB);
+
+            assertTrue("Selected custom table should receive renamed array.lime records",
+                    limeDB.countRecords(LIME.DB_TABLE_CUSTOM, null, null) > 0);
+            assertEquals("Filename-derived array table must not receive records",
+                    0, limeDB.countRecords(LIME.DB_TABLE_ARRAY, null, null));
+        } finally {
+            if (fixture.exists() && !fixture.delete()) {
+                Log.w(TAG, "Failed to delete selected-table fixture");
+            }
+        }
+    }
+
     @Test
     public void testLimeDBInitialization() {
         // Test LimeDB initialization

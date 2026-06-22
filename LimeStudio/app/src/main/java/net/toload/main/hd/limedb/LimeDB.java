@@ -4286,26 +4286,38 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         Log.i("limedb:loadfile()", "Fianlly section: source:"
                                 + getImConfig(table, "source") + " amount:" + getImConfig(table, "amount"));
 
-                    // If user download from LIME Default IM SET then fill in related information
-                    if (filename.getName().equals("phonetic.lime") || filename.getName().equals("phonetic_adv.lime")) {
-                        setImConfig(LIME.DB_TABLE_PHONETIC, "selkey", "123456789");
-                        setImConfig(LIME.DB_TABLE_PHONETIC, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-                        setImConfig(LIME.DB_TABLE_PHONETIC, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-                        setImConfig(LIME.DB_TABLE_PHONETIC, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋");
-                    }
-                    if (filename.getName().equals("array.lime")) {
-                        setImConfig(LIME.DB_TABLE_ARRAY, "selkey", "1234567890");
-                        setImConfig(LIME.DB_TABLE_ARRAY, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
-                        setImConfig(LIME.DB_TABLE_ARRAY, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0");
-                    } else {
-                        if (!selkey.isEmpty()) setImConfig(table, "selkey", selkey);
-                        if (!endkey.isEmpty()) setImConfig(table, "endkey", endkey);
-                        if (!limeendkey.isEmpty()) setImConfig(table, LIME.IM_LIME_ENDKEY, limeendkey);
-                        if (!spacestyle.isEmpty()) setImConfig(table, "spacestyle", spacestyle);
-                        if (!imkeysHeader.isEmpty()) setImConfig(table, "imkeys", imkeysHeader);
-                        else if (!imkeys.toString().isEmpty()) setImConfig(table, "imkeys", imkeys.toString());
-                        if (!imkeynamesHeader.isEmpty()) setImConfig(table, "imkeynames", imkeynamesHeader);
-                        else if (!imkeynames.toString().isEmpty()) setImConfig(table, "imkeynames", imkeynames.toString());
+                    // Fill standard IM defaults by destination table, not by source filename.
+                    // Imported metadata/keyname blocks always win. Defaults only fill missing fields.
+                    if (!selkey.isEmpty()) setImConfig(table, "selkey", selkey);
+                    if (!endkey.isEmpty()) setImConfig(table, "endkey", endkey);
+                    if (!limeendkey.isEmpty()) setImConfig(table, LIME.IM_LIME_ENDKEY, limeendkey);
+                    if (!spacestyle.isEmpty()) setImConfig(table, "spacestyle", spacestyle);
+
+                    boolean hasImportedImkeys = !imkeysHeader.isEmpty() || !imkeys.toString().isEmpty();
+                    boolean hasImportedImkeynames = !imkeynamesHeader.isEmpty() || !imkeynames.toString().isEmpty();
+
+                    if (!imkeysHeader.isEmpty()) setImConfig(table, "imkeys", imkeysHeader);
+                    else if (!imkeys.toString().isEmpty()) setImConfig(table, "imkeys", imkeys.toString());
+                    if (!imkeynamesHeader.isEmpty()) setImConfig(table, "imkeynames", imkeynamesHeader);
+                    else if (!imkeynames.toString().isEmpty()) setImConfig(table, "imkeynames", imkeynames.toString());
+
+                    if (table.equals(LIME.DB_TABLE_PHONETIC)) {
+                        if (selkey.isEmpty()) setImConfig(table, "selkey", "123456789");
+                        if (endkey.isEmpty()) setImConfig(table, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+                        if (!hasImportedImkeys) {
+                            setImConfig(table, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
+                        }
+                        if (!hasImportedImkeynames) {
+                            setImConfig(table, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋");
+                        }
+                    } else if (table.equals(LIME.DB_TABLE_ARRAY)) {
+                        if (selkey.isEmpty()) setImConfig(table, "selkey", "1234567890");
+                        if (!hasImportedImkeys) {
+                            setImConfig(table, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
+                        }
+                        if (!hasImportedImkeynames) {
+                            setImConfig(table, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0");
+                        }
                     }
                     if (DEBUG)
                         Log.i(TAG, "importTxtTable():update IM info: imkeys:" + imkeys + " imkeynames:" + imkeynames);

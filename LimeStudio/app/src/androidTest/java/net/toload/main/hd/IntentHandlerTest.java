@@ -3,6 +3,8 @@ package net.toload.main.hd;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
+import android.view.View;
+import android.widget.CheckBox;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -23,6 +25,7 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Smoke tests for IntentHandler routing of external ACTION_VIEW imports.
@@ -109,27 +112,52 @@ public class IntentHandlerTest {
     }
 
     @Test
-    public void processZipIntent_doesNotCrash() {
-        try (ActivityScenario<LIMESettings> scenario = ActivityScenario.launch(LIMESettings.class)) {
-            scenario.onActivity(activity -> {
-                try {
-                    File tmp = new File(activity.getCacheDir(), "array.limedb");
-                    try (FileOutputStream fos = new FileOutputStream(tmp)) {
-                        fos.write(new byte[]{0x50, 0x4B, 0x03, 0x04}); // minimal zip signature
+    public void processSupportedFileIntents_showImportDialogInsteadOfUsingFilename() {
+        String[][] fixtures = new String[][]{
+                {"renamed_db.limedb", "application/zip"},
+                {"renamed_db.zip", "application/zip"},
+                {"array.lime", "text/plain"},
+                {"array.cin", "text/plain"}
+        };
+
+        for (String[] fixture : fixtures) {
+            try (ActivityScenario<LIMESettings> scenario = ActivityScenario.launch(LIMESettings.class)) {
+                scenario.onActivity(activity -> {
+                    try {
+                        File tmp = new File(activity.getCacheDir(), fixture[0]);
+                        try (FileOutputStream fos = new FileOutputStream(tmp)) {
+                            if (fixture[0].endsWith(".limedb") || fixture[0].endsWith(".zip")) {
+                                fos.write(new byte[]{0x50, 0x4B, 0x03, 0x04}); // minimal zip signature
+                            } else {
+                                fos.write("q|一\n".getBytes(StandardCharsets.UTF_8));
+                            }
+                        }
+
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(Uri.fromFile(tmp), fixture[1]);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                        IntentHandler handler = new IntentHandler(activity, activity.getSetupImController());
+                        handler.processIntent(intent);
+
+                        activity.getSupportFragmentManager().executePendingTransactions();
+                        androidx.fragment.app.Fragment dialog = activity.getSupportFragmentManager().findFragmentByTag("ImportDialog");
+                        assertNotNull("IntentHandler should ask user to choose destination IM for " + fixture[0], dialog);
+                        View dialogView = dialog.getView();
+                        assertNotNull("ImportDialog view should be created", dialogView);
+                        CheckBox restore = dialogView.findViewById(R.id.chkImportRestoreLearning);
+                        assertNotNull("File import dialog should expose restore-learning option", restore);
+                        assertTrue("Restore-learning option should be visible for file imports", restore.getVisibility() == View.VISIBLE);
+                        assertTrue("Restore-learning should default on so non-empty table imports preserve learned data", restore.isChecked());
+                        assertTrue("File import should allow selecting existing/non-empty destination tables", dialogView.findViewById(R.id.btnImportCustom).isEnabled());
+                        if (dialog instanceof net.toload.main.hd.ui.dialog.ImportDialog) {
+                            ((net.toload.main.hd.ui.dialog.ImportDialog) dialog).dismissAllowingStateLoss();
+                        }
+                    } catch (Exception e) {
+                        throw new AssertionError("IntentHandler crashed processing supported file intent " + fixture[0], e);
                     }
-
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.fromFile(tmp), "application/zip");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    IntentHandler handler = new IntentHandler(activity, activity.getSetupImController());
-                    handler.processIntent(intent);
-
-                    assertTrue("IntentHandler should process zip without crashing", true);
-                } catch (Exception e) {
-                    throw new AssertionError("IntentHandler crashed processing zip intent", e);
-                }
-            });
+                });
+            }
         }
     }
 

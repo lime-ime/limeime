@@ -14,35 +14,35 @@ final class IntentHandler {
 
     static let shared = IntentHandler()
 
-    private let setupController: SetupImController
-
-    private init() {
-        setupController = SetupImController(progress: ProgressManager())
-    }
+    private init() {}
 
     // MARK: - Handle incoming URL
 
     /// Route an incoming file URL to the appropriate import path.
+    /// External open-in/share URLs do not carry a user-selected destination IM.
+    /// Copy the source into app-local temporary storage, then route to the
+    /// import UI so the user chooses the target IM explicitly.
     /// - Parameters:
     ///   - url: The file URL received from the system (share sheet / document picker).
     ///   - view: Optional SetupImView to receive error callbacks.
+    @MainActor
     func handle(url: URL, view: (any SetupImView)?) async {
         let ext = url.pathExtension.lowercased()
-        // Sanitise: only accept names that pass the DB identifier allowlist.
-        let rawName = url.deletingPathExtension().lastPathComponent
-            .components(separatedBy: .init(charactersIn: "-_")).first ?? "custom"
-        let tableName = DBServer.shared.isValidTableName(rawName) ? rawName : "custom"
 
         switch ext {
-        case "limedb", "zip":
-            let result = await setupController.importDBFile(url: url, tableName: tableName)
-            if case .failure(let error) = result {
-                view?.onError(error.localizedDescription)
-            }
-        case "lime", "cin":
-            let result = await setupController.importTxtFile(url: url, tableName: tableName)
-            if case .failure(let error) = result {
-                view?.onError(error.localizedDescription)
+        case "limedb", "zip", "lime", "cin":
+            let importURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("\(UUID().uuidString)_\(url.lastPathComponent)")
+            do {
+                try? FileManager.default.removeItem(at: importURL)
+                try FileManager.default.copyItem(at: url, to: importURL)
+                if let oldPendingURL = pendingLimeExternalImportURL {
+                    try? FileManager.default.removeItem(at: oldPendingURL)
+                }
+                pendingLimeExternalImportURL = importURL
+                NotificationCenter.default.post(name: .limeExternalImport, object: importURL)
+            } catch {
+                view?.onError("匯入失敗：\(error.localizedDescription)")
             }
         default:
             view?.onError("不支援的檔案格式：.\(ext)")
