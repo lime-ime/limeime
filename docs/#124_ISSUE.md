@@ -9,7 +9,7 @@
 - Source: maintainer-created issue from a private email report. The public issue intentionally withholds the reporter email address.
 - Public follow-up: `limeimetw` edited the retained v6.1.23 update comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 to use Google Play closed-test wording, then reopened the issue with https://github.com/lime-ime/limeime/issues/124#issuecomment-4761963945 so the reporter can confirm the result after updating.
 - Implementation status: **Released in v6.1.23.** The Android popup lifetime/alignment and placement follow-up fixes are on `master` via commits `61cf87b65f03f69486e112bf1dc1383c9974a125` and `9fc84f97eaddfea5f550268e950695dadbb3fea5`.
-- Reporter verification: pending. The retained comment asks the Google Play closed-test reporter to update from Google Play and check LINE, WeChat, and Instagram bottom-composer screens on v6.1.23.
+- Reporter verification: pending. After the v6.1.23 Google Play retest request, the reporter uploaded two screen recordings in https://github.com/lime-ime/limeime/issues/124#issuecomment-4765529644 and https://github.com/lime-ime/limeime/issues/124#issuecomment-4765655167 without explicitly stating the tested app version in the comments or sampled frames. `limeimetw` followed up in https://github.com/lime-ime/limeime/issues/124#issuecomment-4766516641 to ask whether the current temporary reverse-lookup display duration and placement are acceptable, using public wording that describes the expected disappearance as roughly five seconds, or whether the reporter prefers a shorter duration or further inward keyboard placement. Source/tests still pin the timed reverse-lookup lime-toast timeout to `1400` ms, so any reporter-observed longer display should be clarified against the exact tested build/path.
 
 ## Problem statement
 
@@ -25,7 +25,7 @@ Known public reproduction context:
 - Feature: reverse lookup notification after candidate commit, and composing/root-key display during typing.
 - Public screenshots in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 show the grey reverse-lookup popup overlapping bottom chat input/composer regions rather than staying inside the IME/candidate area.
 - Public screenshots in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757356156 answer the maintainer follow-up by showing the composing/root-key display also appears in the same bottom-composer area in LINE/Instagram-style screens.
-- Still missing details: the exact key sequence / reverse-lookup source setting, which specific WeChat/Instagram screens were tested, and whether display/fullscreen, keyboard-height, or font/display-size settings affect the overlap.
+- Public recordings in https://github.com/lime-ime/limeime/issues/124#issuecomment-4765529644 and https://github.com/lime-ime/limeime/issues/124#issuecomment-4765655167 show current interaction examples after the retest request. Sampled frames show root/composing and reverse-lookup hints around the keyboard/candidate row, and the second recording's post-10-second sampled frames no longer show the grey hint; the recording comments/sampled frames do not visibly confirm the tested LIME version.
 
 ## Source evidence inspected
 
@@ -92,11 +92,11 @@ The released #124 work was split across two GitHub-visible commits and should be
 
 The reporter provided Android version, device model, LINE version, LIME IME version, confirmed in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757262176 that similar bottom-composer apps such as WeChat and Instagram are affected, and answered the maintainer's composing/root-key display question in https://github.com/lime-ime/limeime/issues/124#issuecomment-4757356156 with screenshots showing the composing/root-key popup also near the bottom composer.
 
-Remaining useful follow-up, if the maintainer needs it before reproducing/fixing:
+Current follow-up is narrowed to reporter confirmation on the live v6.1.23 Google Play closed-test build:
 
-- Reverse-lookup source setting
-- Exact operation sequence from typing Array roots to showing the floating reverse-lookup window
-- Whether display/fullscreen mode, keyboard height, or font/display-size settings change the overlap
+- Whether the current temporary reverse-lookup display time and placement are acceptable. The public follow-up describes the expected disappearance as roughly five seconds, but source/tests still pin the timed reverse-lookup lime-toast timeout to `1400` ms, so any longer observed display should be clarified against the exact tested build/path.
+- If not acceptable, whether the preferred direction is a shorter display duration or moving the hint farther inside the keyboard area.
+- If the reporter reports continued overlap, ask them to state the tested LIME version/build and keep any additional evidence scoped to the exact app, key sequence, and display/keyboard/font-size settings.
 
 Because this was reported by email and the issue was created by `limeimetw`, avoid posting duplicate public GitHub questions. A private email follow-up may be better if the maintainer needs more device/settings details and the reporter is not using GitHub.
 
@@ -124,5 +124,6 @@ Because this was reported by email and the issue was created by `limeimetw`, avo
 - Android v6.1.23 contains the targeted #124 popup-position/alignment fix. The reporter is on the Google Play closed-test channel, so the public retest request correctly asks them to update from Google Play. The retained GitHub Release/sideload APK was later replaced as `LIMEHD2026-6.1.23.apk` for the old GitHub package family (`net.toload.main.hd2026`); verified GitHub Contents blob SHA `7315b2d88bf13327d2f16343ddd2c8d1f843be84`, size `7406598` bytes, downloaded SHA-256 `644e9744af24a97d4f0ae67a5537992808ae2fbc6c4dcdb70fc1c44736225eca`.
 - `limeimetw` edited the retained v6.1.23 update comment at https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 to tell the Google Play closed-test reporter to update from Google Play, not from a raw APK link.
 - The issue is reopened and should remain open pending reporter confirmation on Google Play v6.1.23.
-- If the reporter says v6.1.23 still overlaps the bottom input field, continue the focused follow-up with screenshots/video and the exact app/key sequence.
+- After two reporter recordings, `limeimetw` posted the current narrowed follow-up at https://github.com/lime-ime/limeime/issues/124#issuecomment-4766516641 asking whether the temporary reverse-lookup hint duration and placement are acceptable, using public wording that describes disappearance as roughly five seconds, or whether the reporter prefers a shorter duration or further inward keyboard placement; source/tests still pin the timed reverse-lookup lime-toast timeout to `1400` ms, so longer observed duration should be clarified against the exact build/path.
+- If the reporter says v6.1.23 still overlaps the bottom input field or remains unacceptable, continue the focused follow-up with tested version/build, screenshots/video, exact app/key sequence, and display/keyboard/font-size settings.
 - iOS/TestFlight retest is not required for the Android `PopupWindow` overlap path unless separate iOS reverse-lookup layout evidence appears.
