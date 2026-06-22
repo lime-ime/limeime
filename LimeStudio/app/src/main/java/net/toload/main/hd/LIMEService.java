@@ -5892,61 +5892,24 @@ public class LIMEService extends InputMethodService
     }
 
     /**
-     * Map vibration duration preference to a predefined VibrationEffect for API 29-30.
-     * Predefined effects are optimized for device haptic hardware (especially Pixel LRA motors).
-     * Vibrate level mapping:
-     *   20ms (Very Weak)    -> EFFECT_TICK        (light tap)
-     *   30ms (Weak)         -> EFFECT_TICK        (light tap)
-     *   40ms (Medium)       -> EFFECT_CLICK       (standard click)
-     *   50ms (Strong)       -> EFFECT_HEAVY_CLICK (strong thud)
-     *   60ms (Very Strong)  -> EFFECT_HEAVY_CLICK (strong thud)
-     */
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private int mapDurationToVibrationEffect(long duration) {
-        if (duration <= 30) {
-            return android.os.VibrationEffect.EFFECT_TICK;        // light tap
-        } else if (duration <= 40) {
-            return android.os.VibrationEffect.EFFECT_CLICK;       // standard click
-        } else {
-            return android.os.VibrationEffect.EFFECT_HEAVY_CLICK; // strong thud
-        }
-    }
-
-    static boolean shouldUseDirectVibrationFallbackForSdk(int sdkInt, boolean viewHapticPerformed) {
-        return sdkInt >= android.os.Build.VERSION_CODES.S && !viewHapticPerformed;
-    }
-
-    /**
      * Vibrate with specified duration, compatible with all API levels.
-     * API 31+: first uses performHapticFeedback on the keyboard view. Some OEM builds can
-     *          decline KEYBOARD_TAP view haptics even while system touch vibration is enabled;
-     *          when that path returns false, fall back to a direct Vibrator call. API 33+
-     *          tags the direct fallback as USAGE_TOUCH so Android 13+ does not treat the IME
-     *          service vibration as unknown background feedback.
-     * API 29-30: uses predefined VibrationEffect (hardware-optimized for Pixel LRA motors).
+     * API 33+:   uses VibrationEffect.createOneShot() with VibrationAttributes(USAGE_TOUCH).
+     *            performHapticFeedback(KEYBOARD_TAP) and createPredefined() effects are
+     *            unreliable: some OEM builds (e.g. Samsung One UI on SM-A1760) report an empty
+     *            supported-effects table, so the system accepts those calls but drops them at
+     *            the HAL as "ignored_unsupported" and nothing vibrates. A raw timed one-shot
+     *            with DEFAULT_AMPLITUDE is rendered on any device with a basic vibrator, and
+     *            USAGE_TOUCH keeps the IME-service vibration out of background classification.
+     * API 29-32: uses createOneShot() without VibrationAttributes (the attributes overload is
+     *            API 33+ only), for the same reason — predefined effects can be unsupported.
      * API 26-28: uses VibrationEffect.createOneShot().
-     * API <26: uses deprecated vibrate(long).
+     * API <26:   uses deprecated vibrate(long).
      */
     @SuppressWarnings("deprecation")
     private void vibrate(long duration) {
         if (duration <= 0) {
             Log.w(TAG, "vibrate() called with invalid duration: " + duration);
             return;
-        }
-
-        boolean viewHapticPerformed = false;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            if (mInputView != null) {
-                // FLAG_IGNORE_VIEW_SETTING: fire even if the view's hapticFeedbackEnabled is off.
-                // FLAG_IGNORE_GLOBAL_SETTING is deprecated on API 33+ and has no effect;
-                // the system always respects the global haptic setting on API 33+.
-                viewHapticPerformed = mInputView.performHapticFeedback(
-                        android.view.HapticFeedbackConstants.KEYBOARD_TAP,
-                        android.view.HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
-            }
-            if (!shouldUseDirectVibrationFallbackForSdk(android.os.Build.VERSION.SDK_INT, viewHapticPerformed)) {
-                return;
-            }
         }
 
         Vibrator vibrator = getVibrator();
@@ -5957,21 +5920,16 @@ public class LIMEService extends InputMethodService
 
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                int effectId = mapDurationToVibrationEffect(duration);
-                android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
+                android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(
+                        duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
                 android.os.VibrationAttributes attributes = new android.os.VibrationAttributes.Builder()
                         .setUsage(android.os.VibrationAttributes.USAGE_TOUCH)
                         .build();
                 vibrator.vibrate(effect, attributes);
-            } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // API 29-32: use predefined effects optimized for device haptic hardware.
-                // The VibrationAttributes overload is only available on API 33+, so Android
-                // 12/12L fallback must use the attribute-less call to avoid runtime crashes.
-                int effectId = mapDurationToVibrationEffect(duration);
-                android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
-                vibrator.vibrate(effect);
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                // API 26-28: use createOneShot
+                // API 26-32: createOneShot without VibrationAttributes (attributes overload is
+                // API 33+ only). Predefined effects can be unsupported on some devices, so a raw
+                // timed amplitude pulse is the reliable choice here too.
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createOneShot(duration, android.os.VibrationEffect.DEFAULT_AMPLITUDE);
                 vibrator.vibrate(effect);
             } else {

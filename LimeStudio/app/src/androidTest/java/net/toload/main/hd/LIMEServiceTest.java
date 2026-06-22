@@ -1530,21 +1530,6 @@ public class LIMEServiceTest {
     }
 
     /**
-     * Tests Android 12+ keypress haptic fallback decision for OEM view-haptic failures.
-     */
-    @Test
-    public void android12PlusKeypressHapticFallsBackWhenViewHapticReturnsFalse() {
-        assertTrue("Samsung/One UI may return false for keyboard-tap view haptics, so API 31+ must try a direct touch-usage fallback",
-                LIMEService.shouldUseDirectVibrationFallbackForSdk(android.os.Build.VERSION_CODES.S, false));
-        assertTrue("Android 16/API 36 must also use the fallback when view haptics decline KEYBOARD_TAP",
-                LIMEService.shouldUseDirectVibrationFallbackForSdk(36, false));
-        assertFalse("Successful view haptics should not duplicate direct vibration on Android 16/API 36",
-                LIMEService.shouldUseDirectVibrationFallbackForSdk(36, true));
-        assertFalse("Older API paths already use direct Vibrator calls",
-                LIMEService.shouldUseDirectVibrationFallbackForSdk(android.os.Build.VERSION_CODES.R, false));
-    }
-
-    /**
      * Tests vibration feedback triggers on key press.
      */
     @Test

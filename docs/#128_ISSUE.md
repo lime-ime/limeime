@@ -4,6 +4,8 @@
 
 Community reporter `s9228034david-spec` reports that on a Samsung A55, enabling **喜好設定 / 打字震動** does not produce any vibration while typing with the LIME Android soft keyboard.
 
+**Status: resolved.** Root cause confirmed on a Samsung SM-A1760 (Android 16 / API 36): the device vibrator reports an empty supported-effects table, so the predefined `VibrationEffect`s the code used were silently dropped at the HAL. Fixed by switching to `VibrationEffect.createOneShot(...)`; vibration verified on hardware. See Root cause and Fix below.
+
 Issue: https://github.com/lime-ime/limeime/issues/128
 
 ## Reporter environment and reproduction
@@ -27,29 +29,59 @@ The Android preference UI exposes the key-feedback settings in `LimeStudio/app/s
 
 `LIMEPreferenceManager.getVibrateOnKeyPressed()` reads `vibrate_on_keypress`, and `LIMEService.loadSettings()` copies it into `hasVibration`. The soft-keyboard press path calls `LIMEService.onPress(...)`, which calls `doVibrateSound(...)`. When `hasVibration` is true, `doVibrateSound(...)` calls `vibrate(vibrateLevel)`.
 
-For Android 12+ / API 31+, `LIMEService.vibrate(...)` currently calls:
+Before this fix, `LIMEService.vibrate(...)` on Android 12+ / API 31+ called `mInputView.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` and, on the direct-vibrator path, used `VibrationEffect.createPredefined(EFFECT_TICK / CLICK / HEAVY_CLICK)`. Both of those are predefined effects, which is exactly what fails on the reporter's device — see Root cause below. After this fix, `vibrate(...)` uses `VibrationEffect.createOneShot(...)` on all API levels.
 
-```java
-mInputView.performHapticFeedback(
-        HapticFeedbackConstants.KEYBOARD_TAP,
-        HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
-```
+## Root cause (confirmed on hardware)
 
-For older Android versions, it falls back to `Vibrator.vibrate(...)` / `VibrationEffect`.
+Confirmed by on-device debugging on a Samsung **SM-A1760** (Android 16 / API 36, One UI), the same device family as the report. The cause is **not** what the first fix hypothesis assumed.
 
-## Root cause / fix hypothesis
+Two facts were verified from live `logcat` and `dumpsys vibrator_manager` while pressing keys:
 
-This is a plausible Android haptic-feedback compatibility bug rather than a missing preference wiring issue. The preference, manifest permission (`android.permission.VIBRATE`), and soft-keyboard `onPress` path are wired, but the Android 12+ path delegates only to `View.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` and then returns without checking whether the view haptic call was actually performed. On Samsung / One UI devices, that path may still be gated by Samsung's system keyboard/touch vibration settings, device haptic policy, or the specific feedback constant. The reporter's Samsung A55 / Android 16 / One UI 8.5 behavior suggests the app-level `打字震動` switch can be enabled while the view haptic path produces no vibration.
+1. **`performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` returns `true`, not `false`.** The system reports the haptic as performed. So any fix that only falls back "when the view haptic returns `false`" never runs on this device — the original fix premise was wrong.
 
-The source-level fix hypothesis is to keep the Android 12+ view haptic path as the first attempt, but use its boolean return value. If the view haptic call returns `false`, fall back to direct `Vibrator.vibrate(...)`; Android 13+ can tag that fallback with `VibrationAttributes.USAGE_TOUCH`, while Android 12 / 12L use the available predefined-effect vibrator call. This keeps successful devices on the existing path while giving Samsung/One UI devices a second haptic route without calling newer APIs on older Android versions.
+2. **The device's vibrator reports an empty supported-effects table.** `dumpsys vibrator_manager` shows:
 
-This root cause is still not fully confirmed because there is no logcat or local reproduction showing whether the reporter's Samsung A55 path returns `false` from `performHapticFeedback(...)` rather than returning `true` while producing no perceptible vibration. The PR is therefore a safe plausible fallback that still needs Samsung / One UI hardware confirmation after a newer build contains it.
+   ```
+   VibratorInfo:
+     capabilities = []
+     supportedEffects = []
+     supportedPrimitives = []
+   ```
+
+   Because of this, every predefined effect — `VibrationEffect.createPredefined(EFFECT_TICK / EFFECT_CLICK / EFFECT_HEAVY_CLICK)` and the `KEYBOARD_TAP` view haptic — is **accepted by the framework but dropped at the HAL** with status `ignored_unsupported`:
+
+   ```
+   ignored_unsupported | usage: UNKNOWN | net.toload.main.hd2026 |
+   reason: performHapticFeedback(constant=3) ... | played: null
+   ```
+
+   The original code (and the first fix attempt) used `createPredefined(...)`, so the keypress vibration was silently discarded — the call "succeeds," nothing buzzes.
+
+The Samsung `觸控震動` / `打字震動` preference wiring, `android.permission.VIBRATE`, and the `onPress → doVibrateSound → vibrate` path were all correct. The defect was the choice of vibration primitive, not the preference plumbing.
+
+## Fix (implemented and verified)
+
+Stop using predefined effects. Use `VibrationEffect.createOneShot(duration, DEFAULT_AMPLITUDE)` — a raw timed amplitude pulse the framework renders on any device with a basic vibrator (it falls back to a generic waveform when the effects table is empty). On API 33+, tag it with `VibrationAttributes.USAGE_TOUCH` so the IME-service vibration is not classified as background `USAGE_UNKNOWN`.
+
+`LIMEService.vibrate(long)` now does:
+
+- **API 33+ (Android 13+):** `createOneShot(duration, DEFAULT_AMPLITUDE)` + `VibrationAttributes(USAGE_TOUCH)`.
+- **API 26–32 (Android 8–12L):** `createOneShot(duration, DEFAULT_AMPLITUDE)` without attributes (the `VibrationAttributes` overload is API 33+ only).
+- **API <26:** legacy `vibrate(long)`.
+
+The `performHapticFeedback` view-haptic path, the `shouldUseDirectVibrationFallbackForSdk` helper, and the `mapDurationToVibrationEffect` predefined-effect mapper were all removed — they were tied to the disproven hypothesis.
+
+**Verification result:** after the fix, the same device's `dumpsys vibrator_manager` history shows the keypress pulses as `finished` / `played: CLICK(MEDIUM, with fallback)` / `usage: TOUCH` instead of `ignored_unsupported`, and vibration is felt on every keypress. Confirmed on SM-A1760 / Android 16.
+
+### Caveat — API 31–32 (Android 12 / 12L)
+
+The root-cause fix (`createOneShot`) applies to all API levels, but only API 33+ can tag the call `USAGE_TOUCH`. On API 31–32 the direct `Vibrator.vibrate()` from an IME service is still subject to `USAGE_UNKNOWN` background classification, and there is no attributes overload to avoid it. No Android 12 / 12L device was available to test, and the reporter is on API 36, so the 31–32 path is improved (raw pulse instead of an unsupported predefined effect) but **not verified**.
 
 ## Platform impact
 
 ### Android
 
-Confirmed reporter platform. Current Android source contains an intended vibration path for soft-key presses, but Android 12+ devices use the view haptic pipeline before any direct `Vibrator.vibrate(...)` fallback. The proposed Android change adds a guarded direct-vibrator fallback only when the view haptic call declines the keypress feedback, with API-specific handling for Android 12 / 12L versus Android 13+. Since keypress sound works, the issue remains scoped to the vibration branch / platform haptic call rather than soft-key events.
+Confirmed and fixed on the reporter platform (Samsung SM-A1760 / Android 16). The fix replaces predefined `VibrationEffect`s — which this device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+. Since keypress sound always worked, the issue was scoped to the vibration primitive, not soft-key event delivery.
 
 ### iOS
 
@@ -66,32 +98,25 @@ Already answered by the reporter:
 
 Still useful if needed: a short logcat around LIME key presses with filters for `LIMEService`, `Vibrator`, and `HapticFeedback`, or maintainer reproduction on a Samsung / One UI 8.5 device.
 
-## Implemented source change in PR workflow
+## Implemented source change
 
-The bug-fix branch for #128 changes `LIMEService.vibrate(...)` so Android 12+ soft-key vibration:
+`LIMEService.vibrate(long)` now uses `VibrationEffect.createOneShot(duration, DEFAULT_AMPLITUDE)` on every API level instead of predefined effects or `performHapticFeedback`:
 
-1. Calls `mInputView.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` as before.
-2. Reads the boolean return value.
-3. If the view haptic call returns `false`, gets the default vibrator and calls `Vibrator.vibrate(...)` with a predefined keypress effect. Android 13+ adds `VibrationAttributes.USAGE_TOUCH`; Android 12 / 12L use the attribute-less predefined-effect call because the attributes overload is not available there.
-4. Avoids duplicate feedback when the view haptic call succeeds.
+1. **API 33+:** `createOneShot(...)` + `VibrationAttributes(USAGE_TOUCH)`.
+2. **API 26–32:** `createOneShot(...)` without attributes (overload is API 33+ only).
+3. **API <26:** legacy `vibrate(long)`.
 
-The branch adds instrumentation compile coverage for the fallback decision. Actual vibration strength/feel still needs manual verification on Android 12+ hardware, ideally the reporter's Samsung / One UI 8.5 family.
+Removed as part of the fix (all tied to the disproven "view haptic returns false" hypothesis): the `performHapticFeedback` view-haptic branch, the `shouldUseDirectVibrationFallbackForSdk` helper, the `mapDurationToVibrationEffect` predefined-effect mapper, and the `android12PlusKeypressHapticFallsBackWhenViewHapticReturnsFalse` unit test.
 
-## Verification plan
+## Verification
 
-- Android instrumentation compile coverage for the fallback decision: API 31+ falls back only when view haptics return `false`, and does not duplicate direct vibration after a successful view haptic call.
-- Java compile gates: `:app:compileDebugJavaWithJavac` and `:app:compileDebugAndroidTestJavaWithJavac`.
-- Manual Android verification on API 31+:
-  - Samsung A55 / One UI if available
-  - a non-Samsung Android 12+ device or emulator for comparison
-  - `打字震動` on/off
-  - system touch/keyboard vibration on/off when available
-  - `打字音效` on/off as a control path
-- Confirm no haptic attempt is made for physical-keyboard-only input, because `onPress(...)` is only the soft-keyboard path.
+- **On-device (SM-A1760 / Android 16, API 36):** confirmed via `dumpsys vibrator_manager` that keypress pulses changed from `ignored_unsupported` / `played: null` (before) to `finished` / `played: CLICK(MEDIUM, with fallback)` / `usage: TOUCH` (after). Vibration is felt on every keypress. ✅
+- **Java compile gates:** `:app:compileDebugJavaWithJavac` and `:app:compileDebugAndroidTestJavaWithJavac` both pass.
+- **Not verified:** API 31–32 (Android 12 / 12L) — no device available; see the API 31–32 caveat above. Pixel / non-Samsung API 33+ comparison is optional follow-up.
 
 ## Current status
 
-- Classified as plausible Android bug.
-- Reporter supplied device/version/system-setting details in https://github.com/lime-ime/limeime/issues/128#issuecomment-4761943111: LIME 6.1.22, Android 16, One UI 8.5, Samsung `觸控震動` enabled, and LIME keypress sound works.
-- Bug-fix PR workflow started for an Android haptic fallback change. Reporter retest should wait until the PR is merged and a newer Android APK/Play build contains the change.
+- **Fixed and verified on the reporter's device family (Samsung / Android 16 / API 36).**
+- Root cause: device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were dropped at the HAL. The original "Samsung returns `false` from `performHapticFeedback`" hypothesis was disproven on hardware (it returns `true`).
+- Reporter retest should wait until a newer APK / Play build contains the merged `createOneShot` change.
 - No iOS/TestFlight retest is implied by this Android report.
