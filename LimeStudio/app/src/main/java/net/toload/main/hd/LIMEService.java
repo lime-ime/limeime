@@ -5956,7 +5956,7 @@ public class LIMEService extends InputMethodService
         }
 
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                 int effectId = mapDurationToVibrationEffect(duration);
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
                 android.os.VibrationAttributes attributes = new android.os.VibrationAttributes.Builder()
@@ -5964,7 +5964,9 @@ public class LIMEService extends InputMethodService
                         .build();
                 vibrator.vibrate(effect, attributes);
             } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                // API 29-30: use predefined effects optimized for device haptic hardware
+                // API 29-32: use predefined effects optimized for device haptic hardware.
+                // The VibrationAttributes overload is only available on API 33+, so Android
+                // 12/12L fallback must use the attribute-less call to avoid runtime crashes.
                 int effectId = mapDurationToVibrationEffect(duration);
                 android.os.VibrationEffect effect = android.os.VibrationEffect.createPredefined(effectId);
                 vibrator.vibrate(effect);

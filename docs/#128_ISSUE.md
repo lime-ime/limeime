@@ -41,13 +41,13 @@ For older Android versions, it falls back to `Vibrator.vibrate(...)` / `Vibratio
 
 This is a plausible Android haptic-feedback compatibility bug rather than a missing preference wiring issue. The preference, manifest permission (`android.permission.VIBRATE`), and soft-keyboard `onPress` path are wired, but the Android 12+ path delegates only to `View.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` and then returns without checking whether the view haptic call was actually performed. On Samsung / One UI devices, that path may still be gated by Samsung's system keyboard/touch vibration settings, device haptic policy, or the specific feedback constant. The reporter's Samsung A55 / Android 16 / One UI 8.5 behavior suggests the app-level `打字震動` switch can be enabled while the view haptic path produces no vibration.
 
-The source-level fix hypothesis is to keep the Android 12+ view haptic path as the first attempt, but use its boolean return value. If the view haptic call returns `false`, fall back to direct `Vibrator.vibrate(...)` with `VibrationAttributes.USAGE_TOUCH` so the IME keypress vibration is still tagged as user touch feedback. This keeps successful devices on the existing path while giving Samsung/One UI devices a second haptic route.
+The source-level fix hypothesis is to keep the Android 12+ view haptic path as the first attempt, but use its boolean return value. If the view haptic call returns `false`, fall back to direct `Vibrator.vibrate(...)`; Android 13+ can tag that fallback with `VibrationAttributes.USAGE_TOUCH`, while Android 12 / 12L use the available predefined-effect vibrator call. This keeps successful devices on the existing path while giving Samsung/One UI devices a second haptic route without calling newer APIs on older Android versions.
 
 ## Platform impact
 
 ### Android
 
-Confirmed reporter platform. Current Android source contains an intended vibration path for soft-key presses, but Android 12+ devices use the view haptic pipeline instead of direct `Vibrator.vibrate(...)`. The proposed Android change adds a guarded direct-vibrator fallback only when the view haptic call declines the keypress feedback. Since keypress sound works, the issue remains scoped to the vibration branch / platform haptic call rather than soft-key events.
+Confirmed reporter platform. Current Android source contains an intended vibration path for soft-key presses, but Android 12+ devices use the view haptic pipeline before any direct `Vibrator.vibrate(...)` fallback. The proposed Android change adds a guarded direct-vibrator fallback only when the view haptic call declines the keypress feedback, with API-specific handling for Android 12 / 12L versus Android 13+. Since keypress sound works, the issue remains scoped to the vibration branch / platform haptic call rather than soft-key events.
 
 ### iOS
 
@@ -70,7 +70,7 @@ The bug-fix branch for #128 changes `LIMEService.vibrate(...)` so Android 12+ so
 
 1. Calls `mInputView.performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)` as before.
 2. Reads the boolean return value.
-3. If the view haptic call returns `false`, gets the default vibrator and calls `Vibrator.vibrate(...)` with a predefined keypress effect plus `VibrationAttributes.USAGE_TOUCH`.
+3. If the view haptic call returns `false`, gets the default vibrator and calls `Vibrator.vibrate(...)` with a predefined keypress effect. Android 13+ adds `VibrationAttributes.USAGE_TOUCH`; Android 12 / 12L use the attribute-less predefined-effect call because the attributes overload is not available there.
 4. Avoids duplicate feedback when the view haptic call succeeds.
 
 The branch adds instrumentation compile coverage for the fallback decision. Actual vibration strength/feel still needs manual verification on Android 12+ hardware, ideally the reporter's Samsung / One UI 8.5 family.
