@@ -84,7 +84,7 @@ The root-cause fix (`createOneShot`) applies to all API levels, but only API 33+
 
 Samsung path: confirmed and fixed on a maintainer-tested Samsung SM-A1760 / Android 16 device, and the original reporter later confirmed v6.1.24 restored both vibration and sound on Samsung A55 / Android 16 / One UI 8.5. The Samsung fix replaces predefined `VibrationEffect`s — which the tested Samsung device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+.
 
-Pixel regression path: Jeremy reports Pixel / Android 17 now has both keypress vibration and keypress sound not working after the Samsung fix, while Pixel vibration worked before. Because `doVibrateSound(...)` calls vibration and sound from the same `onPress(...)` path, the Pixel report may indicate a broader keypress feedback path / preference reload / input-view event regression, not only a vibration primitive issue. This is not yet root-caused and needs targeted Pixel/Android 17 debugging against the pre-PR #132 history.
+Pixel regression path: Jeremy reports Pixel / Android 17 now has both keypress vibration and keypress sound not working after the Samsung fix, while Pixel vibration worked before. The follow-up restores the pre-Samsung Google/Pixel API 31+ system keyboard-tap path when `mInputView` exists, while keeping Samsung and unknown OEMs on direct raw pulses. Because sound shares the same `onPress(...)` / `doVibrateSound(...)` path and was not changed by the haptic split, any remaining Pixel sound failure still needs targeted debugging.
 
 ### iOS
 
@@ -103,26 +103,31 @@ Still useful if needed: a short logcat around LIME key presses with filters for 
 
 ## Implemented source change
 
-`LIMEService.vibrate(long)` now uses `VibrationEffect.createOneShot(duration, DEFAULT_AMPLITUDE)` on every API level instead of predefined effects or `performHapticFeedback`:
+`LIMEService.vibrate(long)` now uses a conservative split path:
+
+1. **Google/Pixel API 31+ with `mInputView`:** `performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)`; API 33+ also uses `FLAG_IGNORE_GLOBAL_SETTING`, matching the earlier Pixel-compatible path.
+2. **Samsung and unknown OEMs:** direct raw pulse. Samsung never depends on `performHapticFeedback(...)` returning `false`, because hardware showed it can return `true` while the HAL drops the effect.
+
+Raw pulse behavior remains:
 
 1. **API 33+:** `createOneShot(...)` + `VibrationAttributes(USAGE_TOUCH)`.
 2. **API 26–32:** `createOneShot(...)` without attributes (overload is API 33+ only).
 3. **API <26:** legacy `vibrate(long)`.
 
-Removed as part of the fix (all tied to the disproven "view haptic returns false" hypothesis): the `performHapticFeedback` view-haptic branch, the `shouldUseDirectVibrationFallbackForSdk` helper, the `mapDurationToVibrationEffect` predefined-effect mapper, and the `android12PlusKeypressHapticFallsBackWhenViewHapticReturnsFalse` unit test.
+`vibrate_level` is now hidden only for the Google/Pixel system keyboard-tap path where app duration is not used. It remains visible on Samsung/raw-pulse paths because the duration preference controls the one-shot pulse.
 
 ## Verification
 
 - **Samsung on-device (SM-A1760 / Android 16, API 36):** confirmed via `dumpsys vibrator_manager` that keypress pulses changed from `ignored_unsupported` / `played: null` (before) to `finished` / `played: CLICK(MEDIUM, with fallback)` / `usage: TOUCH` (after). Vibration was felt on every keypress. ✅
 - **Original reporter Samsung A55 / Android 16 / One UI 8.5:** reporter confirmed v6.1.24 made both 打字震動 and 打字音效 work. ✅
 - **Java compile gates:** `:app:compileDebugJavaWithJavac` and `:app:compileDebugAndroidTestJavaWithJavac` both passed during PR #132 verification.
-- **Regression now reported:** Pixel / Android 17 now has both keypress vibration and sound not working after the Samsung fix. Needs device/log verification and comparison against earlier haptic-history commits (`8952c7f`, `4b71b3f`, and PR #132).
+- **Regression follow-up:** Pixel / Android 17 keypress vibration is addressed by restoring Google/Pixel API 31+ view haptics while preserving Samsung raw pulses. Pixel keypress sound, if still failing, remains a separate feedback-path investigation because PR #132 did not change the sound primitive.
 - **Not verified:** API 31–32 (Android 12 / 12L) — no device available; see the API 31–32 caveat above.
 
 ## Current status
 
-- **Open / regression investigation.** #128 is reopened after Jeremy reported Pixel / Android 17 now has both keypress vibration and sound not working after the Samsung fix, even though Pixel vibration worked before.
+- **Open / split-path follow-up.** #128 is reopened after Jeremy reported Pixel / Android 17 now has both keypress vibration and sound not working after the Samsung fix, even though Pixel vibration worked before. The haptic follow-up restores Google/Pixel API 31+ view haptics and keeps Samsung/unknown OEMs on raw pulses.
 - Samsung root cause remains valid for the Samsung path: device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were dropped at the HAL. The original "Samsung returns `false` from `performHapticFeedback`" hypothesis was disproven on hardware (it returns `true`).
 - Android APK `LIMEHD2026-6.1.24.apk` contains the merged `createOneShot` change. Verified GitHub Contents blob SHA `314f6f0d628b8d7e64a3625ca0950a32ee67acf2`, size 7,406,087 bytes, downloaded SHA-256 `33b59c1ced50d179d218807d74e40bd2efa669ef99fa7bf119a6cdfd827963c6`. Retest request for the original Samsung reporter: https://github.com/lime-ime/limeime/issues/128#issuecomment-4778915207.
-- Next debugging should compare Pixel / Android 17 behavior against earlier haptic commits that were introduced for Pixel/API 31+ compatibility, especially `8952c7f` (API 33+ view haptics), `4b71b3f` (API 31+ view haptics), and PR #132 / merge `e0659dac3670e42b0970cae54fdc7fd299c2a19e` (direct `createOneShot`). Because sound is also failing, verify `onPress(...)`, `doVibrateSound(...)`, `hasSound`, `mAudioManager`, and preference reload before changing only the vibrator primitive.
+- If Pixel sound is still failing, verify `onPress(...)`, `doVibrateSound(...)`, `hasSound`, `mAudioManager`, and preference reload; the haptic split does not change the sound effect path.
 - No iOS/TestFlight retest is implied by this Android report.

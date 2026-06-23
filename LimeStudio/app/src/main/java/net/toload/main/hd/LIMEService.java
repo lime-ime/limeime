@@ -61,6 +61,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -5893,22 +5894,27 @@ public class LIMEService extends InputMethodService
 
     /**
      * Vibrate with specified duration, compatible with all API levels.
+     * Google/Pixel API 31+ with an input view uses system keyboard-tap haptics.
+     * Samsung and unknown OEMs stay on raw timed pulses because Samsung One UI can report
+     * performHapticFeedback(KEYBOARD_TAP) success while the HAL drops the predefined effect.
+     * Raw pulse path:
      * API 33+:   uses VibrationEffect.createOneShot() with VibrationAttributes(USAGE_TOUCH).
-     *            performHapticFeedback(KEYBOARD_TAP) and createPredefined() effects are
-     *            unreliable: some OEM builds (e.g. Samsung One UI on SM-A1760) report an empty
-     *            supported-effects table, so the system accepts those calls but drops them at
-     *            the HAL as "ignored_unsupported" and nothing vibrates. A raw timed one-shot
-     *            with DEFAULT_AMPLITUDE is rendered on any device with a basic vibrator, and
-     *            USAGE_TOUCH keeps the IME-service vibration out of background classification.
-     * API 29-32: uses createOneShot() without VibrationAttributes (the attributes overload is
-     *            API 33+ only), for the same reason — predefined effects can be unsupported.
-     * API 26-28: uses VibrationEffect.createOneShot().
+     * API 26-32: uses VibrationEffect.createOneShot() without VibrationAttributes.
      * API <26:   uses deprecated vibrate(long).
      */
     @SuppressWarnings("deprecation")
     private void vibrate(long duration) {
         if (duration <= 0) {
             Log.w(TAG, "vibrate() called with invalid duration: " + duration);
+            return;
+        }
+
+        if (KeypressHapticPolicy.shouldUseSystemKeyboardTapHaptic() && mInputView != null) {
+            int flags = HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                flags |= HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING;
+            }
+            mInputView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, flags);
             return;
         }
 
