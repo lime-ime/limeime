@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		04FD6465CA5C3B8D4745906A /* lime_array_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */; };
 		054C1466956DBE2D8BEA3A34 /* lime_cj.json in Resources */ = {isa = PBXBuildFile; fileRef = 1736168811E753E9330AA481 /* lime_cj.json */; };
 		05655700F55F7F2F05431516 /* KeyboardPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55ACA3BC6FDCE9C013025EB0 /* KeyboardPickerView.swift */; };
 		05CE854A1417A2D45839D8D2 /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
@@ -14,11 +15,13 @@
 		06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
+		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
 		10DB1613D02240168ECB59FA /* lime_phonetic_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 1E074B7B383D4AF7B2C63A4F /* lime_phonetic_ipad_shift.json */; };
 		12187D253A452F9C88E7C3E1 /* lime_et26.json in Resources */ = {isa = PBXBuildFile; fileRef = E291FC497AF0014D898E57FA /* lime_et26.json */; };
 		1230969E78D532747075B0A1 /* lime_cj_number_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = BD9E7EE11221BAE243B120CD /* lime_cj_number_shift.json */; };
 		12383EA9BE71DC6C521BE418 /* lime_array.json in Resources */ = {isa = PBXBuildFile; fileRef = 1C4F9CE98A2F9BFF29641233 /* lime_array.json */; };
 		13652AFA1DEB88089B2BCC8E /* Related.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14502A56A42472FB229360DB /* Related.swift */; };
+		1557228BBB4695CC8E90E4B4 /* lime_abc_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */; };
 		15A7155D44FB31C8E5FA81A7 /* lime_abc.json in Resources */ = {isa = PBXBuildFile; fileRef = 55C6C7CF0775CFE705BB3B43 /* lime_abc.json */; };
 		17766B10C8DE7763C32633C1 /* Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */; };
 		179D101D08689450880985FA /* lime_et_41.json in Resources */ = {isa = PBXBuildFile; fileRef = D0CDCC557DD26055CA872A57 /* lime_et_41.json */; };
@@ -28,6 +31,7 @@
 		1D81EC3041A854E106B5F67F /* KeyLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1C7A1DEDC91A7AF8E2B3C4 /* KeyLayout.swift */; };
 		1DBB21F1304CE6388E830E57 /* LIMEPreferenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7D0A62A4FA590A149AF441 /* LIMEPreferenceManager.swift */; };
 		1F3AF38E0937B9889CAEC6AE /* lime_ez_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = BF5C2CE83CEB146D8C56CA62 /* lime_ez_shift.json */; };
+		20711211C46BEC07A565CD7C /* lime_wb_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */; };
 		246EAA15755121E22608F909 /* lime_array_number.json in Resources */ = {isa = PBXBuildFile; fileRef = AB8617B6EB9EBC4689424A49 /* lime_array_number.json */; };
 		25133E620E364C2B8039FF8B /* lime_wb_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 205AC701934A472091D2DAFB /* lime_wb_ipad_shift.json */; };
 		273FC9499F6AFA5F033213D4 /* LIMEPreferenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7D0A62A4FA590A149AF441 /* LIMEPreferenceManager.swift */; };
@@ -36,12 +40,16 @@
 		2959F91F7A4340F19CCC3385 /* lime_ez_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 134DA71217154B688820EDB4 /* lime_ez_ipad.json */; };
 		2A964733C022A582DDF047D5 /* ManageImController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EA6C96C5A966914D1AFBD9F /* ManageImController.swift */; };
 		2D6B665397277A10660A2280 /* LimeKeyboard.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 782285680D8D9FE97C096F39 /* LimeKeyboard.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2DEDAF027C3FBD6D85D51D46 /* lime_dayi_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */; };
 		2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0757CC0618D9DFE1917DB1 /* ImConfig.swift */; };
 		2FD666E4E6936D6EED00518A /* IMListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D73F6D92EFFE21C79BBE9E /* IMListView.swift */; };
 		30A1639B07058FC030BD00CF /* LIMEPreferenceManagerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616F712F666B45F6A993A5C /* LIMEPreferenceManagerTest.swift */; };
+		31B68C754082DAF28F62F8EB /* lime_array_number_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */; };
+		34F5700641BBCA122EB192A9 /* lime_cj_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */; };
 		3627870C41CBCF6BBC97C35C /* symbols1.json in Resources */ = {isa = PBXBuildFile; fileRef = 86957E4A2DDA8D483FC30D94 /* symbols1.json */; };
 		38127D6AB3F84D52A6210790 /* lime_et26_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = C6CE29DB7AD04748A7032C72 /* lime_et26_ipad.json */; };
 		381F28F38C655529F1922A2A /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = D84706F48CD91AF3D1857A1F /* ZIPFoundation */; };
+		382F91D955F34119283D111D /* lime_phonetic_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */; };
 		392E253AEF3B73034F19766E /* IMStoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D98DEBE9E75F237BEC73B5B /* IMStoreView.swift */; };
 		394FDBA2792355ADDE3ADDB2 /* ShareManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D9C2FB678210C7B4C64424 /* ShareManager.swift */; };
 		3A2F164CC78CD804C67805DE /* SetupTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41390FAC918F440A66942DF3 /* SetupTabView.swift */; };
@@ -51,12 +59,14 @@
 		3E81089E57F6CB90A2BFF152 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75E50434E278FAEF4A4654C /* KeyboardView.swift */; };
 		41CFFB478874C876C611CC47 /* ManageRelatedControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0595186AC824BB0CCF9D15EF /* ManageRelatedControllerTest.swift */; };
 		41F0C74C36F32BE94395EF6C /* Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */; };
+		434167C6894E1E5140BF4C54 /* lime_et26_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */; };
 		453BD82113A04092827A958E /* lime_dayi_sym_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 48FEB852B9A94B23940F61BF /* lime_dayi_sym_ipad_shift.json */; };
 		493AFBCF68750E34559BA2E2 /* ProgressManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60D9E95479778379D903ABB5 /* ProgressManager.swift */; };
 		495495B3EC2756E2FA4BF57A /* lime_english_number_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 45BBFE60A3BC8E3A9EFBFED2 /* lime_english_number_shift.json */; };
 		4B920F8769522781A1177534 /* lime_dayi_sym_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 75D020F016341574B4FF2E84 /* lime_dayi_sym_shift.json */; };
 		4C1012BD29921E3B0201DBBC /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AF70BA22361D8084D34B7F /* Keyboard.swift */; };
 		4D55F7F8166AB9405DB0200D /* SearchServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AD7B903A3658D6EBB77E60 /* SearchServer.swift */; };
+		4D7AB16337D27EF59060B40C /* lime_et_41_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */; };
 		4F6D2960FB65F3973B7DC582 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5F0B1D9966D08427E55DED7 /* SceneDelegate.swift */; };
 		4FCCCC16B9474E5489CC8A1D /* lime_english_number_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 243D5F4DA41C42D0AB2EB76F /* lime_english_number_ipad_shift.json */; };
 		50E96984370C01489813E77A /* lime_abc_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = BA669B17DFE81A3ADB4188FF /* lime_abc_shift.json */; };
@@ -67,7 +77,9 @@
 		5901658D95F74B728230C2B8 /* lime_abc_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 2F8A68300ED643D0B42950FC /* lime_abc_ipad_shift.json */; };
 		59E842FEFEFEA6FEAF6EE663 /* popup_domains.json in Resources */ = {isa = PBXBuildFile; fileRef = 868BBFF2AF500C4B76479AA6 /* popup_domains.json */; };
 		5D1920F9FEA04D59A8EE5F23 /* lime_phonetic_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 086EF4DE9DDC4C8FAB4060D9 /* lime_phonetic_ipad.json */; };
+		5DD92C8B2C002D0BE7C6211F /* lime_hs_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */; };
 		60877D3DCDD874F7F0FE15A6 /* LimeDBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */; };
+		626F627EBB3DBBF4B25CFE1F /* lime_array_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */; };
 		65B48ECD66FBB98FA64DE8CD /* popup_punctuation.json in Resources */ = {isa = PBXBuildFile; fileRef = F04435F2855594DD68DDAB57 /* popup_punctuation.json */; };
 		6A2B456E9E54D00FE08276CB /* lime_dayi_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = FCCC8E71C5E48A1A81AB896E /* lime_dayi_shift.json */; };
 		6B4236631D644D17D3FF0FFC /* popup_c_punctuation.json in Resources */ = {isa = PBXBuildFile; fileRef = F6CE80A85C6FB759A9C33E95 /* popup_c_punctuation.json */; };
@@ -75,6 +87,7 @@
 		6DDCA062AC27D53BE405CECB /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91652FC0787DE834F53E57B3 /* Record.swift */; };
 		73F7D68E669A8B3C3D55AD5E /* lime_dayi.json in Resources */ = {isa = PBXBuildFile; fileRef = 38B13D232556DEB9E4DCA530 /* lime_dayi.json */; };
 		741FF2CFD29A471FB3E7C69B /* lime_hs_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = D24944055DDE47B087AE5B88 /* lime_hs_ipad_shift.json */; };
+		744094926E991E6E5A70982E /* lime_english_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */; };
 		76BEE873AC0F13CDBB4969AF /* lime_english_number.json in Resources */ = {isa = PBXBuildFile; fileRef = 526D1D44C8B349F1C4E03E4A /* lime_english_number.json */; };
 		77F10738CE2887D86C549599 /* PopupKeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC93E8CE0357F72516F8621F /* PopupKeyboardView.swift */; };
 		782E5A3464C0CEE76B8F75D9 /* lime_hsu_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 5D8D9FA3BB7317CC35DCEEE6 /* lime_hsu_shift.json */; };
@@ -100,6 +113,7 @@
 		8D62ED56761A14A0C42204A9 /* KeyLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F1C7A1DEDC91A7AF8E2B3C4 /* KeyLayout.swift */; };
 		8EBAC89F106963E2B9A020A1 /* SearchServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0AD7B903A3658D6EBB77E60 /* SearchServer.swift */; };
 		8F245640844D5E2553C17BF5 /* ReverseLookupSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577CC268BA6F7CF6C121BA1F /* ReverseLookupSettingsView.swift */; };
+		90199B0711EF7B2F82891CC0 /* lime_cj_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */; };
 		90A2992BD492D2D9B8D1ECB5 /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
 		90DA13A3D3504BD7A184F8F0 /* lime_cj_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = BC1664D4B94F45319FEE696C /* lime_cj_ipad.json */; };
 		91114A2E568054305BF86C11 /* ImConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0757CC0618D9DFE1917DB1 /* ImConfig.swift */; };
@@ -123,13 +137,17 @@
 		A27F002BB6B44C5EB2C50399 /* lime_array_number_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 70F693B4FC074BD89C6D8E76 /* lime_array_number_ipad_shift.json */; };
 		A2E7579A48126A3587829923 /* ImConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C0757CC0618D9DFE1917DB1 /* ImConfig.swift */; };
 		A2F219F1CBA53FD575DA827D /* BaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE58AA4A8D7C8C7CAB2DD1B /* BaseController.swift */; };
+		A2F3C4D5E6B7890123456701 /* symbols3_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */; };
 		A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4F8A3C2D6E95F0A3B2C7D8E /* EngineLatencyBenchmark.swift */; };
 		A4621818C72E0671433B8C79 /* IMDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9956767005AF49619EA7AD68 /* IMDetailView.swift */; };
+		A50F41FC5D0554F4CFE90F6A /* lime_array_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */; };
 		A74D09B3AEDBF27CDBBD079E /* lime_phonetic.json in Resources */ = {isa = PBXBuildFile; fileRef = 930EE39E03E98427009BFB60 /* lime_phonetic.json */; };
 		A80635FAE2E8FE18ED2B15A4 /* LIMEPreferenceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D7D0A62A4FA590A149AF441 /* LIMEPreferenceManager.swift */; };
 		A8AF9BBEF924BCFC21672E25 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 6D731A726502199FD73E3CF5 /* ZIPFoundation */; };
 		AA9958D46518A84859225554 /* EditRelatedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3212ABE29FA8702C293DD9 /* EditRelatedView.swift */; };
+		AA9AEC42D8B5C49EC4AE3005 /* lime_ez_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */; };
 		AAB43ADB780D8C94FCFF9D68 /* IMCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C519D06270032D72E51CF613 /* IMCatalog.swift */; };
+		AC138032F6EC16EAD9A3E0FB /* lime_hsu_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */; };
 		AE0032B15FF84C0181501AA1 /* lime_dayi_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 2EB70BDFFF2A4EA8835DDB34 /* lime_dayi_ipad.json */; };
 		AE00566FC68144C48847C14F /* lime_et_41_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 101C9BA303F749C293FD77C3 /* lime_et_41_ipad.json */; };
 		B0B1C2D3E4F5061728394B51 /* KeyboardTypePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B1C2D3E4F5061728394B50 /* KeyboardTypePolicy.swift */; };
@@ -149,11 +167,14 @@
 		C34890B5975149CC9EA3E577 /* symbols1_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 7F0F8E41B7DF4E76BBE389DC /* symbols1_ipad.json */; };
 		C704ECEA2AA4777A7F4F0D52 /* lime_dayi_sym.json in Resources */ = {isa = PBXBuildFile; fileRef = C8CEAFA241DA366CFB51031E /* lime_dayi_sym.json */; };
 		C798DBEA7EC7AAD1D9821E2E /* lime_array_number_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 48A1A8F3D03D778777ACC688 /* lime_array_number_shift.json */; };
+		C7F8AEC7599AF24FA7285AC7 /* lime_hs_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */; };
 		C8B325C7466723E467598705 /* AddRelatedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4F0B69CBAE8FC8C5547350 /* AddRelatedView.swift */; };
 		C8ECC0AE9971356C025A4864 /* lime_array_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 86E3E355AECB6CF44FE1CB4F /* lime_array_shift.json */; };
 		C9C4D445F9D778B1F3CB5102 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E6D814B179560C36A6F65E /* MainViewController.swift */; };
+		CA31F6B44CA272DB35952CB1 /* lime_phonetic_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */; };
 		D028529390E0D4AB93F413FB /* lime_phonetic_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 6D385999861624C778BD7C83 /* lime_phonetic_shift.json */; };
 		D2C99879277543E7994303E2 /* lime_english_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = A4D8DE1874894D628643B31A /* lime_english_ipad_shift.json */; };
+		D36A2228BC96F0923712B3D5 /* lime_et_41_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */; };
 		D3739EC294D3485404012D3B /* lime_number.json in Resources */ = {isa = PBXBuildFile; fileRef = C0A5FC3D6D44CBBA94E88C16 /* lime_number.json */; };
 		D464685F5EEDE297A1308B0D /* phone_simple.json in Resources */ = {isa = PBXBuildFile; fileRef = F4FC8B91EDE5C18040A0DA6F /* phone_simple.json */; };
 		D56F9308DBE0E2982A156EDC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95784239B04D9F726B1DE025 /* AppDelegate.swift */; };
@@ -163,14 +184,20 @@
 		D85527A1D89F1ACD5D86FE5A /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 9D5AC9140B64BE293B4125AC /* GRDB */; };
 		DA9A42F3158C4D3799B3A533 /* symbols3_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 696190C5251543339F4B6C19 /* symbols3_ipad.json */; };
 		DAB0143D532C5A092FAE707C /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91652FC0787DE834F53E57B3 /* Record.swift */; };
+		DB0541372AD17780AECEDC55 /* lime_hsu_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */; };
 		DB7A5B6C8D9E4011A2B3C4D5 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = DB7A5B6C8D9E4011A2B3C4D4 /* Settings.bundle */; };
+		DCBA0C3F95D20C1DC8A83526 /* lime_cj_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */; };
 		DD11223344556677889900EE /* phone_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = CC11223344556677889900DD /* phone_shift.json */; };
 		DD329C69B687BA18D2865041 /* lime_wb.json in Resources */ = {isa = PBXBuildFile; fileRef = 63D7BA593E5AEB581D0E15C5 /* lime_wb.json */; };
 		DD3E5C49341843C98E8EF274 /* lime_dayi_sym_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 85BF89DCF7DE486C8ADBF74C /* lime_dayi_sym_ipad.json */; };
+		DE8B2B13F8827A37F6E6B831 /* lime_english_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */; };
 		E02BE727FF878D591A3D34B5 /* LimeDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */; };
 		E1A1FABDFEEB6C9DF7A93E59 /* popup_symbol_mode.json in Resources */ = {isa = PBXBuildFile; fileRef = FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */; };
+		E3280D7CCBF1F4F69B7F280B /* symbols1_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */; };
+		E50AC6E93FFCB8A2A34382ED /* lime_et26_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */; };
 		E68290E9CFAB4C8BBCB99709 /* lime_english_number_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 54FA7BDA775346D98A780634 /* lime_english_number_ipad.json */; };
 		E6F12A9A974F2C5E8AA0B5EE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7DA2B1BD116A2D6A7E7EEE90 /* Assets.xcassets */; };
+		E8A3855955816FCF47E10781 /* lime_wb_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */; };
 		E8E5B5DA570FE25A0B191DB8 /* EditRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D003E6B950F019B0269750C6 /* EditRecordView.swift */; };
 		EA5199243A781A843C22C763 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */; };
 		EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3A5071216F1AB96116BC3F /* DBServerTest.swift */; };
@@ -179,6 +206,7 @@
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
 		EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
 		F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AF70BA22361D8084D34B7F /* Keyboard.swift */; };
+		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
 		F2B817702A0EB8A2941473F6 /* SearchServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70669219C0D562C4F98D828D /* SearchServerTest.swift */; };
 		F2C8C872E8796234504622A6 /* popup_smileys.json in Resources */ = {isa = PBXBuildFile; fileRef = CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */; };
 		F3D439C5929342D486D38BAA /* lime_hs_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 017BC0E1B4904D1192EEA120 /* lime_hs_ipad.json */; };
@@ -187,49 +215,28 @@
 		F53C2E4E9B7651E92F79D30A /* lime.db in Resources */ = {isa = PBXBuildFile; fileRef = 3F0B16D9D4D0A632C53E2076 /* lime.db */; };
 		F6DC3F8E9D7CB81AB558668A /* lime_english.json in Resources */ = {isa = PBXBuildFile; fileRef = 0A1B5D154B1A949CA010C9CE /* lime_english.json */; };
 		F732111715EF1196B7295C24 /* ChineseSymbol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C791A042EAF0B0D85E4AEC3 /* ChineseSymbol.swift */; };
+		F79D47ED27AC97AEA8F94FF6 /* lime_dayi_sym_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */; };
 		F86AF51C921192791F73AFA9 /* symbols2.json in Resources */ = {isa = PBXBuildFile; fileRef = F0787C19D84A228F8B9731E4 /* symbols2.json */; };
 		F9313B9EA3B349E48F90C958 /* lime_wb_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */; };
 		F96A2D8E2FA5B0A2004124A7 /* Profiling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96A2D8D2FA5B0A2004124A7 /* Profiling.swift */; };
+		F9B5EF6F2FEA64BC00DCC28D /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51309BD0A4AEAF429010BB4F /* KeyboardViewController.swift */; };
+		F9B5EF702FEA674100DCC28D /* Profiling.swift in Sources */ = {isa = PBXBuildFile; fileRef = F96A2D8D2FA5B0A2004124A7 /* Profiling.swift */; };
+		F9B5EF712FEA675800DCC28D /* LayoutMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40E5F6071829304A5 /* LayoutMetrics.swift */; };
+		F9B5EF722FEA677100DCC28D /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75E50434E278FAEF4A4654C /* KeyboardView.swift */; };
+		F9B5EF732FEA678000DCC28D /* CandidateBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B510DDC8A4131A41B66AF682 /* CandidateBarView.swift */; };
+		F9B5EF742FEA678900DCC28D /* PopupKeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC93E8CE0357F72516F8621F /* PopupKeyboardView.swift */; };
+		F9B5EF752FEA679B00DCC28D /* LayoutLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84CB76CFC92DAA008483771 /* LayoutLoader.swift */; };
 		F9BC50C8AD88464EA5674598 /* lime_array_number_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 6CFFF424F22642E59C3180C1 /* lime_array_number_ipad.json */; };
 		F9D73852B20448B404C09BAB /* LimeDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */; };
 		FB1C3B404DFFA9F23F06F7A5 /* CandidateBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B510DDC8A4131A41B66AF682 /* CandidateBarView.swift */; };
+		FB29EEBEA2EBCBB6960A2A71 /* lime_dayi_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */; };
 		FB30ABA5721A413D840B98E7 /* IMInstallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B87B40971A4789BA6F4D7EF9 /* IMInstallView.swift */; };
+		FB71EFE9F3B9BDF7C3E2ACD3 /* symbols2_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */; };
 		FB79C88DB4D99018F75EEAFA /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91652FC0787DE834F53E57B3 /* Record.swift */; };
+		FBCDDE242CED24F42B59A354 /* lime_ez_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */; };
 		FC4F73BB12D8F2E1EC9F48EF /* lime_et_41_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = EDDD136F5375CC1B486B368C /* lime_et_41_shift.json */; };
 		FCA812D43A63E366AD8F5A4D /* IntentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9144DD8AA02C0B8B5188F542 /* IntentHandler.swift */; };
-		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
-		1557228BBB4695CC8E90E4B4 /* lime_abc_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */; };
-		A50F41FC5D0554F4CFE90F6A /* lime_array_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */; };
-		626F627EBB3DBBF4B25CFE1F /* lime_array_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */; };
-		31B68C754082DAF28F62F8EB /* lime_array_number_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */; };
-		04FD6465CA5C3B8D4745906A /* lime_array_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */; };
-		90199B0711EF7B2F82891CC0 /* lime_cj_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */; };
-		34F5700641BBCA122EB192A9 /* lime_cj_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */; };
 		FDBC80A783B29A4F0B1BFAB6 /* lime_cj_number_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */; };
-		DCBA0C3F95D20C1DC8A83526 /* lime_cj_number_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */; };
-		2DEDAF027C3FBD6D85D51D46 /* lime_dayi_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */; };
-		FB29EEBEA2EBCBB6960A2A71 /* lime_dayi_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */; };
-		F79D47ED27AC97AEA8F94FF6 /* lime_dayi_sym_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */; };
-		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
-		744094926E991E6E5A70982E /* lime_english_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */; };
-		DE8B2B13F8827A37F6E6B831 /* lime_english_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */; };
-		434167C6894E1E5140BF4C54 /* lime_et26_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */; };
-		E50AC6E93FFCB8A2A34382ED /* lime_et26_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */; };
-		4D7AB16337D27EF59060B40C /* lime_et_41_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */; };
-		D36A2228BC96F0923712B3D5 /* lime_et_41_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */; };
-		AA9AEC42D8B5C49EC4AE3005 /* lime_ez_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */; };
-		FBCDDE242CED24F42B59A354 /* lime_ez_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */; };
-		5DD92C8B2C002D0BE7C6211F /* lime_hs_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */; };
-		C7F8AEC7599AF24FA7285AC7 /* lime_hs_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */; };
-		DB0541372AD17780AECEDC55 /* lime_hsu_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */; };
-		AC138032F6EC16EAD9A3E0FB /* lime_hsu_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */; };
-		CA31F6B44CA272DB35952CB1 /* lime_phonetic_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */; };
-		382F91D955F34119283D111D /* lime_phonetic_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */; };
-		20711211C46BEC07A565CD7C /* lime_wb_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */; };
-		E8A3855955816FCF47E10781 /* lime_wb_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */; };
-		E3280D7CCBF1F4F69B7F280B /* symbols1_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */; };
-		FB71EFE9F3B9BDF7C3E2ACD3 /* symbols2_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */; };
-		A2F3C4D5E6B7890123456701 /* symbols3_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -273,6 +280,7 @@
 /* Begin PBXFileReference section */
 		00CD73E75A8CF0D717BCDC50 /* lime_ez.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez.json; sourceTree = "<group>"; };
 		017BC0E1B4904D1192EEA120 /* lime_hs_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad.json; sourceTree = "<group>"; };
+		02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		0595186AC824BB0CCF9D15EF /* ManageRelatedControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageRelatedControllerTest.swift; sourceTree = "<group>"; };
 		05956B91D60A7720342125CA /* DBManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBManagerView.swift; sourceTree = "<group>"; };
 		06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTestBackupRestore.swift; sourceTree = "<group>"; };
@@ -280,10 +288,13 @@
 		0A1B5D154B1A949CA010C9CE /* lime_english.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english.json; sourceTree = "<group>"; };
 		0CE58AA4A8D7C8C7CAB2DD1B /* BaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseController.swift; sourceTree = "<group>"; };
 		0D119F9E017971393DE59BAF /* ManageRelatedController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageRelatedController.swift; sourceTree = "<group>"; };
+		0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow.json; sourceTree = "<group>"; };
 		0E65C45A1A2A4198A114D792 /* lime_shift_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_shift_ipad.json; sourceTree = "<group>"; };
 		101C9BA303F749C293FD77C3 /* lime_et_41_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad.json; sourceTree = "<group>"; };
+		119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		134DA71217154B688820EDB4 /* lime_ez_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad.json; sourceTree = "<group>"; };
 		14502A56A42472FB229360DB /* Related.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Related.swift; sourceTree = "<group>"; };
+		15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		1736168811E753E9330AA481 /* lime_cj.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj.json; sourceTree = "<group>"; };
 		1C4F9CE98A2F9BFF29641233 /* lime_array.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array.json; sourceTree = "<group>"; };
 		1D7D0A62A4FA590A149AF441 /* LIMEPreferenceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LIMEPreferenceManager.swift; sourceTree = "<group>"; };
@@ -303,16 +314,21 @@
 		38B13D232556DEB9E4DCA530 /* lime_dayi.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi.json; sourceTree = "<group>"; };
 		3A51E5D0D3AA4C12B67E01A1 /* SettingsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsTheme.swift; sourceTree = "<group>"; };
 		3A51E5D1D3AA4C12B67E01A1 /* SettingsMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsMetrics.swift; sourceTree = "<group>"; };
+		3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow.json; sourceTree = "<group>"; };
+		3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		3F0B16D9D4D0A632C53E2076 /* lime.db */ = {isa = PBXFileReference; lastKnownFileType = file; path = lime.db; sourceTree = "<group>"; };
 		4100A6E7F721B8C08183DAF3 /* RelatedListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedListView.swift; sourceTree = "<group>"; };
 		411FF606F97E46F888D2ECC0 /* lime_hsu_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad.json; sourceTree = "<group>"; };
 		41390FAC918F440A66942DF3 /* SetupTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupTabView.swift; sourceTree = "<group>"; };
 		43AF70BA22361D8084D34B7F /* Keyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		45BBFE60A3BC8E3A9EFBFED2 /* lime_english_number_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_number_shift.json; sourceTree = "<group>"; };
+		45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		46C07357EED170657A3BF133 /* LimeDBTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBTest.swift; sourceTree = "<group>"; };
 		47B9D489710C3F87093FD8EB /* PreferencesTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesTabView.swift; sourceTree = "<group>"; };
 		48A1A8F3D03D778777ACC688 /* lime_array_number_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_shift.json; sourceTree = "<group>"; };
 		48FEB852B9A94B23940F61BF /* lime_dayi_sym_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_shift.json; sourceTree = "<group>"; };
+		4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow.json; sourceTree = "<group>"; };
+		4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		51309BD0A4AEAF429010BB4F /* KeyboardViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewController.swift; sourceTree = "<group>"; };
 		526D1D44C8B349F1C4E03E4A /* lime_english_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_number.json; sourceTree = "<group>"; };
 		54FA7BDA775346D98A780634 /* lime_english_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_number_ipad.json; sourceTree = "<group>"; };
@@ -320,13 +336,18 @@
 		55C6C7CF0775CFE705BB3B43 /* lime_abc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc.json; sourceTree = "<group>"; };
 		5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageImControllerTest.swift; sourceTree = "<group>"; };
 		577CC268BA6F7CF6C121BA1F /* ReverseLookupSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReverseLookupSettingsView.swift; sourceTree = "<group>"; };
+		5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow.json; sourceTree = "<group>"; };
 		5881111DCA9ED12EFE8C4039 /* lime_cj_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number.json; sourceTree = "<group>"; };
+		5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow.json; sourceTree = "<group>"; };
 		5CA64EBB9FF2770C1978FA54 /* lime_et26_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_shift.json; sourceTree = "<group>"; };
 		5D8D9FA3BB7317CC35DCEEE6 /* lime_hsu_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_shift.json; sourceTree = "<group>"; };
+		5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow.json; sourceTree = "<group>"; };
 		5E9EE5BA80907FE7407DC189 /* LimeSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeSettingsView.swift; sourceTree = "<group>"; };
+		5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		60D9E95479778379D903ABB5 /* ProgressManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressManager.swift; sourceTree = "<group>"; };
 		61D9C2FB678210C7B4C64424 /* ShareManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareManager.swift; sourceTree = "<group>"; };
 		63D7BA593E5AEB581D0E15C5 /* lime_wb.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb.json; sourceTree = "<group>"; };
+		6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		696190C5251543339F4B6C19 /* symbols3_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols3_ipad.json; sourceTree = "<group>"; };
 		6A321BAF09034686AC3E2A29 /* lime_number_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad_shift.json; sourceTree = "<group>"; };
 		6B59F0E21DC04867ACF2DF0E /* lime_cj_number_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_shift.json; sourceTree = "<group>"; };
@@ -336,21 +357,27 @@
 		70669219C0D562C4F98D828D /* SearchServerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchServerTest.swift; sourceTree = "<group>"; };
 		70F693B4FC074BD89C6D8E76 /* lime_array_number_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_shift.json; sourceTree = "<group>"; };
 		7114E7123639C57474145B35 /* LimeIME.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LimeIME.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		72D282B6F5D58C2A1211F5DA /* NavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationManager.swift; sourceTree = "<group>"; };
+		75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2_ipad_narrow.json; sourceTree = "<group>"; };
 		75D020F016341574B4FF2E84 /* lime_dayi_sym_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_shift.json; sourceTree = "<group>"; };
 		7739FF41AE20434AABB12224 /* lime_ez_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_shift.json; sourceTree = "<group>"; };
 		782285680D8D9FE97C096F39 /* LimeKeyboard.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LimeKeyboard.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BC49B99C3EAFF81057556EC /* LimeSettings.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LimeSettings.entitlements; sourceTree = "<group>"; };
 		7D40CF2999E24C0E8B7A0FCA /* lime_english_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad.json; sourceTree = "<group>"; };
 		7DA2B1BD116A2D6A7E7EEE90 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow.json; sourceTree = "<group>"; };
 		7F0F8E41B7DF4E76BBE389DC /* symbols1_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols1_ipad.json; sourceTree = "<group>"; };
 		85BF89DCF7DE486C8ADBF74C /* lime_dayi_sym_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad.json; sourceTree = "<group>"; };
+		867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		868BBFF2AF500C4B76479AA6 /* popup_domains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_domains.json; sourceTree = "<group>"; };
 		86957E4A2DDA8D483FC30D94 /* symbols1.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols1.json; sourceTree = "<group>"; };
 		86E3E355AECB6CF44FE1CB4F /* lime_array_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_shift.json; sourceTree = "<group>"; };
 		89D98FE64ECEC8DE0535C88A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8A142D8C48B8080CACC06BF5 /* lime_english_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_shift.json; sourceTree = "<group>"; };
+		8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow.json; sourceTree = "<group>"; };
 		8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewControllerTest.swift; sourceTree = "<group>"; };
+		8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow.json; sourceTree = "<group>"; };
 		8C4D2C17B8A1495297103E43 /* LimeToastState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeToastState.swift; sourceTree = "<group>"; };
 		8D98DEBE9E75F237BEC73B5B /* IMStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMStoreView.swift; sourceTree = "<group>"; };
 		8EA6C96C5A966914D1AFBD9F /* ManageImController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageImController.swift; sourceTree = "<group>"; };
@@ -360,12 +387,15 @@
 		955B457572A329E2A1ADEA50 /* popup_template.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_template.json; sourceTree = "<group>"; };
 		95784239B04D9F726B1DE025 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		958485A480FB42F394E20E93 /* symbols2_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2_ipad.json; sourceTree = "<group>"; };
+		986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		9956767005AF49619EA7AD68 /* IMDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMDetailView.swift; sourceTree = "<group>"; };
+		9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		9B737A52F55888952FFB32FC /* ViewProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewProtocols.swift; sourceTree = "<group>"; };
 		A066ECD24F9A4BF55136EAD8 /* lime_hs_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_shift.json; sourceTree = "<group>"; };
 		A0B1C2D3E4F5061728394A50 /* PreferenceBackupAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceBackupAdapter.swift; sourceTree = "<group>"; };
 		A0B1C2D3E4F5061728394A60 /* PreferenceBackupAdapterTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferenceBackupAdapterTest.swift; sourceTree = "<group>"; };
 		A1B2C3D40E5F6071829304A5 /* LayoutMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutMetrics.swift; sourceTree = "<group>"; };
+		A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols3_ipad_narrow.json; sourceTree = "<group>"; };
 		A4D8DE1874894D628643B31A /* lime_english_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_shift.json; sourceTree = "<group>"; };
 		A4E19D552BFEAA3E2632A221 /* lime_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_shift.json; sourceTree = "<group>"; };
 		A5F0B1D9966D08427E55DED7 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -375,9 +405,11 @@
 		AA11223344556677889900BB /* phone.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone.json; sourceTree = "<group>"; };
 		AB8617B6EB9EBC4689424A49 /* lime_array_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number.json; sourceTree = "<group>"; };
 		AC4F0B69CBAE8FC8C5547350 /* AddRelatedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRelatedView.swift; sourceTree = "<group>"; };
+		ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		AD0AE1C6B0C4ACFF5512A9BF /* lime_cj_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_shift.json; sourceTree = "<group>"; };
 		ADE1BC618A27E7629062FC20 /* DBServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBServer.swift; sourceTree = "<group>"; };
 		AE52203601D04DF6B8669D50 /* lime_array_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad.json; sourceTree = "<group>"; };
+		AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		B0B1C2D3E4F5061728394B50 /* KeyboardTypePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardTypePolicy.swift; sourceTree = "<group>"; };
 		B2E2CC2294E9DD745CA44937 /* lime_hsu.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu.json; sourceTree = "<group>"; };
 		B3C4D5E6F7A8B9C0D1E2F3A4 /* phone_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_number.json; sourceTree = "<group>"; };
@@ -389,12 +421,16 @@
 		BB3212ABE29FA8702C293DD9 /* EditRelatedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRelatedView.swift; sourceTree = "<group>"; };
 		BC1664D4B94F45319FEE696C /* lime_cj_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad.json; sourceTree = "<group>"; };
 		BC7C55BF2A2E802706106E50 /* lime_number_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_shift.json; sourceTree = "<group>"; };
+		BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols1_ipad_narrow.json; sourceTree = "<group>"; };
+		BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow.json; sourceTree = "<group>"; };
+		BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow.json; sourceTree = "<group>"; };
 		BD9E7EE11221BAE243B120CD /* lime_cj_number_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_shift.json; sourceTree = "<group>"; };
 		BF5C2CE83CEB146D8C56CA62 /* lime_ez_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_shift.json; sourceTree = "<group>"; };
 		C0A5FC3D6D44CBBA94E88C16 /* lime_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number.json; sourceTree = "<group>"; };
 		C1367E940D804EA39093602F /* lime_cj_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad.json; sourceTree = "<group>"; };
 		C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDB.swift; sourceTree = "<group>"; };
 		C519D06270032D72E51CF613 /* IMCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMCatalog.swift; sourceTree = "<group>"; };
+		C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow_shift.json; sourceTree = "<group>"; };
 		C6CE29DB7AD04748A7032C72 /* lime_et26_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad.json; sourceTree = "<group>"; };
 		C8CEAFA241DA366CFB51031E /* lime_dayi_sym.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym.json; sourceTree = "<group>"; };
 		CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_smileys.json; sourceTree = "<group>"; };
@@ -405,12 +441,16 @@
 		D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mapping.swift; sourceTree = "<group>"; };
 		D0CDCC557DD26055CA872A57 /* lime_et_41.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41.json; sourceTree = "<group>"; };
 		D24944055DDE47B087AE5B88 /* lime_hs_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_shift.json; sourceTree = "<group>"; };
+		D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow.json; sourceTree = "<group>"; };
 		D75E50434E278FAEF4A4654C /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
 		D7D73F6D92EFFE21C79BBE9E /* IMListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMListView.swift; sourceTree = "<group>"; };
 		DB7A5B6C8D9E4011A2B3C4D4 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Settings.bundle; sourceTree = "<group>"; };
+		DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow.json; sourceTree = "<group>"; };
 		DC93E8CE0357F72516F8621F /* PopupKeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupKeyboardView.swift; sourceTree = "<group>"; };
 		DD94A60A323D4F42A29D307E /* lime_abc_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad.json; sourceTree = "<group>"; };
+		E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow.json; sourceTree = "<group>"; };
 		E291FC497AF0014D898E57FA /* lime_et26.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26.json; sourceTree = "<group>"; };
+		E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow.json; sourceTree = "<group>"; };
 		E84CB76CFC92DAA008483771 /* LayoutLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutLoader.swift; sourceTree = "<group>"; };
 		E95F4D38E0DC06E619BAC1EE /* LimeKeyboard.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LimeKeyboard.entitlements; sourceTree = "<group>"; };
 		ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRecordView.swift; sourceTree = "<group>"; };
@@ -433,39 +473,6 @@
 		FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_symbol_mode.json; sourceTree = "<group>"; };
 		FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBProtocol.swift; sourceTree = "<group>"; };
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
-		7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow.json; sourceTree = "<group>"; };
-		ACED9E1D33F7AF0CCFC091D5 /* lime_abc_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow.json; sourceTree = "<group>"; };
-		02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow.json; sourceTree = "<group>"; };
-		119972450B81878675FCA6AC /* lime_array_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		E4400F224884125CDEDF9000 /* lime_cj_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow.json; sourceTree = "<group>"; };
-		45E1522C81613597BCE44C9E /* lime_cj_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		5AE2EC20DB94B507567E3498 /* lime_cj_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow.json; sourceTree = "<group>"; };
-		4ED2560F4A4E5A77A736ED51 /* lime_cj_number_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow.json; sourceTree = "<group>"; };
-		867CD57B37AB8963AAAB70C2 /* lime_dayi_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		4D1B24ACE9C3B290BB3D48C2 /* lime_dayi_sym_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow.json; sourceTree = "<group>"; };
-		3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_sym_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		BCD5A4265F0CECF0152E94A4 /* lime_english_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow.json; sourceTree = "<group>"; };
-		15D3BCD311614470A4FEE9BF /* lime_english_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow.json; sourceTree = "<group>"; };
-		5F2164FF194E160E750AD7FC /* lime_et26_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et26_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow.json; sourceTree = "<group>"; };
-		986EEF17C71ACB29FE01A014 /* lime_et_41_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		5E1116B7C1F2F6246A6A2FFA /* lime_ez_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow.json; sourceTree = "<group>"; };
-		6639DCB2118ED677E2F61A18 /* lime_ez_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_ez_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow.json; sourceTree = "<group>"; };
-		C597B0CE45D95371F41E7F6E /* lime_hs_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		BC8EA49BDE6D32FB0CFC0EA1 /* lime_hsu_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow.json; sourceTree = "<group>"; };
-		72269DECC5FFA23FAA76F20D /* lime_hsu_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hsu_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		D335FDB6A290654353AABCD7 /* lime_phonetic_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow.json; sourceTree = "<group>"; };
-		AF87518F21BEE3A09C5931A5 /* lime_phonetic_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		0D819B671A1FD0C362ACCE45 /* lime_wb_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow.json; sourceTree = "<group>"; };
-		9A8E7E73EA6195EC504BD1E9 /* lime_wb_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad_narrow_shift.json; sourceTree = "<group>"; };
-		BC82802F7E70F2123ACC34B7 /* symbols1_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols1_ipad_narrow.json; sourceTree = "<group>"; };
-		75148503F53C126DF71E3687 /* symbols2_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2_ipad_narrow.json; sourceTree = "<group>"; };
-		A2F3C4D5E6B7890123456700 /* symbols3_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols3_ipad_narrow.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1190,6 +1197,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F9B5EF752FEA679B00DCC28D /* LayoutLoader.swift in Sources */,
+				F9B5EF742FEA678900DCC28D /* PopupKeyboardView.swift in Sources */,
+				F9B5EF732FEA678000DCC28D /* CandidateBarView.swift in Sources */,
+				F9B5EF722FEA677100DCC28D /* KeyboardView.swift in Sources */,
+				F9B5EF712FEA675800DCC28D /* LayoutMetrics.swift in Sources */,
+				F9B5EF702FEA674100DCC28D /* Profiling.swift in Sources */,
+				F9B5EF6F2FEA64BC00DCC28D /* KeyboardViewController.swift in Sources */,
 				F732111715EF1196B7295C24 /* ChineseSymbol.swift in Sources */,
 				EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */,
 				A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */,
@@ -1572,11 +1586,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = LimeUITests/LimeUITests.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4DXY8QPPAK;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				CODE_SIGN_ENTITLEMENTS = LimeUITests/LimeUITests.entitlements;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
@@ -1604,10 +1618,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = LimeUITests/LimeUITests.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 4DXY8QPPAK;
-				CODE_SIGN_ENTITLEMENTS = LimeUITests/LimeUITests.entitlements;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GENERATE_INFOPLIST_FILE = YES;
