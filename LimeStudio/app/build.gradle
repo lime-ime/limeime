@@ -49,7 +49,7 @@ android {
     }
     compileSdkVersion 36
     defaultConfig {
-        applicationId "net.toload.main.hd2026"
+        applicationId "org.limeime"
 
         minSdkVersion 21
         targetSdkVersion 36
