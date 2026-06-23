@@ -137,6 +137,13 @@ private struct SafariView: UIViewControllerRepresentable {
 struct SetupTabView: View {
 
     @Environment(\.scenePhase) private var scenePhase
+    @EnvironmentObject private var manageImController: ManageImController
+    @EnvironmentObject private var navManager: NavigationManager
+
+    // §4.3 — Installed-IM status. Mirrors the 輸入法 tab so a missing/disabled
+    // IM surfaces on the first screen and the CTA routes straight to the fix.
+    @State private var imCount = 0
+    @State private var imAnyEnabled = false
 
     // keyboardEnabled: checked via UITextInputMode.activeInputModes — this is the
     // same system API iOS uses to build the keyboard switcher.  It updates the
@@ -233,6 +240,10 @@ struct SetupTabView: View {
                         .autocorrectionDisabled(true)
                         .accessibilityHidden(true)
 
+                    // ── Installed-IM status (§4.3) ────────────────────────
+                    imStatusSection
+                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+
                     // ── About footer ──────────────────────────────────────
                     // Three equal-width link chips (使用手冊 / 版權說明 / 原始碼)
                     // above a one-line copyright banner. Replaces the old grouped
@@ -266,6 +277,7 @@ struct SetupTabView: View {
             .navigationBarHidden(true)
             .onAppear {
                 refreshStatus()
+                refreshIMStatus()
                 startPolling()
                 // Auto-focus the invisible probe so the LimeIME extension's
                 // viewWillAppear fires (if LimeIME is the active keyboard)
@@ -275,6 +287,7 @@ struct SetupTabView: View {
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
                     refreshStatus()
+                    refreshIMStatus()
                     startPolling()
                     // Re-trigger each time app comes to foreground — covers the
                     // common case: user grants Full Access in Settings, returns.
@@ -288,6 +301,93 @@ struct SetupTabView: View {
                 if enabled { probeFocused = false }
             }
             .onChange(of: probeText) { _ in refreshStatus() }
+            .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
+        }
+    }
+
+    // MARK: - Installed-IM status (§4.3)
+
+    /// Three states derived from the installed IM list:
+    ///   none     → no IM table installed     → CTA「安裝輸入法」 → IM tab (install)
+    ///   disabled → ≥1 installed, all disabled → CTA「啟用輸入法」 → IM tab (list)
+    ///   ok       → ≥1 installed & enabled     → no CTA
+    private enum IMStatusState { case none, disabled, ok }
+
+    private var imStatusState: IMStatusState {
+        if imCount == 0 { return .none }
+        return imAnyEnabled ? .ok : .disabled
+    }
+
+    @ViewBuilder
+    private var imStatusSection: some View {
+        VStack(spacing: SettingsMetrics.aboutFooterSpacing) {
+            // Full-bleed separator so the block reads as its own section,
+            // matching the About footer divider. Spec §4.3.
+            Divider()
+                .padding(.horizontal, -SettingsMetrics.pageHorizontalPadding)
+
+            Label(imStatusText, systemImage: imStatusSymbol)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(imStatusInk)
+                .padding(.vertical, SettingsMetrics.statusVerticalPadding)
+                .padding(.horizontal, SettingsMetrics.statusHorizontalPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(imStatusTint)
+                .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
+
+            if let cta = imStatusCTA {
+                Button { navManager.selectTab(1) } label: { Text(cta) }
+                    .buttonStyle(LimeTonalButtonStyle())
+            }
+        }
+        .padding(.top, SettingsMetrics.aboutFooterTopPadding)
+    }
+
+    private var imStatusText: String {
+        switch imStatusState {
+        case .none:     return "尚未安裝任何輸入法"
+        case .disabled: return "已安裝 \(imCount) 個輸入法，但全部停用"
+        case .ok:       return "已安裝 \(imCount) 個輸入法"
+        }
+    }
+
+    private var imStatusSymbol: String {
+        switch imStatusState {
+        case .none:     return "xmark.circle.fill"
+        case .disabled: return "exclamationmark.triangle.fill"
+        case .ok:       return "checkmark.circle.fill"
+        }
+    }
+
+    private var imStatusInk: Color {
+        switch imStatusState {
+        case .none:     return SettingsTheme.dangerInk
+        case .disabled: return SettingsTheme.warningInk
+        case .ok:       return SettingsTheme.successInk
+        }
+    }
+
+    private var imStatusTint: Color {
+        switch imStatusState {
+        case .none:     return SettingsTheme.statusTintRed
+        case .disabled: return SettingsTheme.statusTintYellow
+        case .ok:       return SettingsTheme.statusTintGreen
+        }
+    }
+
+    private var imStatusCTA: String? {
+        switch imStatusState {
+        case .none:     return "安裝輸入法"
+        case .disabled: return "啟用輸入法"
+        case .ok:       return nil
+        }
+    }
+
+    private func refreshIMStatus() {
+        Task {
+            let configs = await manageImController.loadIMList()
+            imCount = configs.count
+            imAnyEnabled = configs.contains { $0.enabled }
         }
     }
 

@@ -100,8 +100,10 @@ struct IMListView: View {
                 List {
                     Section(header: Text("已安裝的輸入法")) {
                         if imList.isEmpty {
-                            Text("尚未匯入任何輸入法")
-                                .foregroundColor(.secondary)
+                            IMEmptyState()
+                                .frame(maxWidth: .infinity)
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
                         } else {
                             // NOTE: Use id-based bindings rather than `ForEach($imList)`.
                             // `ForEach($imList)` produces bindings that subscript the
@@ -155,21 +157,10 @@ struct IMListView: View {
                     .setupMatchedSectionBlock()
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    Button {
-                        path.append(.install)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
-                            .foregroundStyle(SettingsTheme.floatingActionForeground)
-                            .padding(SettingsMetrics.floatingActionPadding)
-                            .background(SettingsTheme.floatingActionBackground, in: Circle())
-                            .shadow(color: SettingsTheme.floatingActionShadow,
-                                    radius: SettingsMetrics.floatingActionShadowRadius,
-                                    x: 0,
-                                    y: SettingsMetrics.floatingActionShadowY)
-                    }
-                    .buttonStyle(.plain)
-                    .padding([.bottom, .trailing], SettingsMetrics.floatingActionOuterPadding)
+                    // The + FAB, nudged with a radar pulse + breath and a bobbing
+                    // callout when no IM is installed (§5.1.1). Reduce-Motion safe.
+                    InstallFAB(empty: imList.isEmpty) { path.append(.install) }
+                        .padding([.bottom, .trailing], SettingsMetrics.floatingActionOuterPadding)
                 }
                 .listStyle(.insetGrouped)
                 .setupMatchedGroupedSurface()
@@ -301,5 +292,133 @@ private struct IMBadge: View {
                height: SettingsMetrics.imBadgeSize)
         .background(SettingsTheme.imBadgeBackground,
                     in: RoundedRectangle(cornerRadius: SettingsMetrics.imBadgeCornerRadius))
+    }
+}
+
+// MARK: - IMEmptyState (§5.1.1)
+
+/// Centered placeholder shown in place of the IM rows when none is installed:
+/// a brand-accent keyboard glyph on a quaternary-fill tile, a title, and one
+/// line of guidance whose ＋ glyph is accent-tinted to tie it to the FAB.
+private struct IMEmptyState: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "keyboard")
+                .font(.system(size: 46))
+                .foregroundColor(SettingsTheme.accent)
+                .frame(width: 96, height: 96)
+                .background(Color(.quaternarySystemFill),
+                            in: RoundedRectangle(cornerRadius: 28))
+            Text("尚未安裝任何輸入法")
+                .font(.system(size: 20, weight: .semibold))
+            (Text("點選右下角的 ")
+                + Text("＋").foregroundColor(SettingsTheme.accent)
+                + Text(" 下載或匯入輸入法表格，即可開始使用。"))
+                .font(.system(size: 15))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 250)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .padding(.horizontal, 24)
+    }
+}
+
+// MARK: - InstallFAB (§5.1.1)
+
+/// The + floating action button. When `empty`, it draws the eye with three
+/// coordinated, accent-coloured cues — two staggered radar rings, a periodic
+/// "breath" scale, and a bobbing callout pill above it — all gated on
+/// `accessibilityReduceMotion` so motion-sensitive users get a static fallback.
+private struct InstallFAB: View {
+    let empty: Bool
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var animate = false
+
+    private var motion: Bool { empty && !reduceMotion }
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            // Bobbing callout pill with a downward caret pointing at the FAB.
+            if empty {
+                calloutPill
+                    .offset(y: -70)
+                    .offset(y: motion && animate ? 4 : 0)
+                    .animation(motion
+                        ? .easeInOut(duration: 0.9).repeatForever(autoreverses: true)
+                        : .default, value: animate)
+            }
+
+            ZStack {
+                // Two staggered radar rings. Static parked ring under Reduce Motion.
+                if empty {
+                    ring(delay: 0)
+                    ring(delay: 1.2)
+                }
+                button
+            }
+        }
+        .onAppear { animate = true }
+        .onChange(of: empty) { _ in animate = true }
+    }
+
+    private var button: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(SettingsTheme.floatingActionForeground)
+                .padding(SettingsMetrics.floatingActionPadding)
+                .background(SettingsTheme.floatingActionBackground, in: Circle())
+                .shadow(color: SettingsTheme.floatingActionShadow,
+                        radius: SettingsMetrics.floatingActionShadowRadius,
+                        x: 0,
+                        y: SettingsMetrics.floatingActionShadowY)
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(motion && animate ? 1.08 : 1.0)
+        .animation(motion
+            ? .easeInOut(duration: 1.2).repeatForever(autoreverses: true)
+            : .default, value: animate)
+    }
+
+    @ViewBuilder
+    private func ring(delay: Double) -> some View {
+        if reduceMotion {
+            // Reduced-motion fallback: a single static expanded ring.
+            Circle()
+                .fill(SettingsTheme.accent)
+                .frame(width: 56, height: 56)
+                .scaleEffect(1.9)
+                .opacity(0.18)
+        } else {
+            Circle()
+                .fill(SettingsTheme.accent)
+                .frame(width: 56, height: 56)
+                .scaleEffect(animate ? 2.6 : 1.0)
+                .opacity(animate ? 0 : 0.45)
+                .animation(.easeOut(duration: 2.4).repeatForever(autoreverses: false).delay(delay),
+                           value: animate)
+        }
+    }
+
+    private var calloutPill: some View {
+        Text("安裝輸入法")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.vertical, 9)
+            .padding(.horizontal, 13)
+            .background(SettingsTheme.accent, in: RoundedRectangle(cornerRadius: 11))
+            .overlay(alignment: .bottomTrailing) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(SettingsTheme.accent)
+                    .frame(width: 12, height: 12)
+                    .rotationEffect(.degrees(45))
+                    .offset(x: -16, y: 5)
+            }
+            .shadow(color: Color.black.opacity(0.18), radius: 7, x: 0, y: 4)
+            .fixedSize()
     }
 }
