@@ -442,6 +442,51 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    func testIntentHandlerQueuesExternalImportInsteadOfInferringTableFromFilename() async throws {
+        let mock = await MockSetupImView()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("array_\(UUID().uuidString).lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        defer {
+            Task { @MainActor in
+                if let pending = pendingLimeExternalImportURL {
+                    try? FileManager.default.removeItem(at: pending)
+                    pendingLimeExternalImportURL = nil
+                }
+            }
+        }
+        try "q|一\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        await LimeIME.IntentHandler.shared.handle(url: importURL, view: mock)
+
+        await MainActor.run {
+            XCTAssertEqual(mock.refreshCount, 0, "External URL import must not silently import by filename-derived table")
+            XCTAssertNotNil(pendingLimeExternalImportURL, "External import should wait for explicit user IM selection")
+            XCTAssertTrue(mock.errors.isEmpty, "Queued external import is not an error")
+        }
+    }
+
+    func testIntentHandlerQueuesAllSupportedExternalImportExtensions() async throws {
+        for ext in ["lime", "cin", "limedb", "zip"] {
+            let mock = await MockSetupImView()
+            let importURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("array_\(UUID().uuidString).\(ext)")
+            defer { try? FileManager.default.removeItem(at: importURL) }
+            try "q|一\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+            await LimeIME.IntentHandler.shared.handle(url: importURL, view: mock)
+
+            await MainActor.run {
+                XCTAssertEqual(mock.refreshCount, 0, "External .\(ext) import must wait for explicit user IM selection")
+                XCTAssertNotNil(pendingLimeExternalImportURL, "External .\(ext) import should be queued")
+                if let pending = pendingLimeExternalImportURL {
+                    try? FileManager.default.removeItem(at: pending)
+                    pendingLimeExternalImportURL = nil
+                }
+            }
+        }
+    }
+
     // MARK: - restoreDB
 
     func testRestoreDBFromInvalidURLReportsError() async throws {

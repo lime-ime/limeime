@@ -28,8 +28,17 @@ struct IMInstallView: View {
     @State private var expandedFamilies: Set<String> = []
     @State private var searchText = ""
     @State private var relatedInstalled: Bool = false
+    @State private var hasPendingExternalImport: Bool = false
+    @State private var pendingExternalChoice: PendingExternalImportChoice?
+    @State private var showExternalImportChoiceDialog = false
 
     enum ImportType { case db, txt, relatedDb }
+
+    private struct PendingExternalImportChoice: Identifiable {
+        let id = UUID()
+        let tableName: String
+        let requestedType: ImportType
+    }
 
     init(onRefresh: (() -> Void)? = nil) {
         self.onRefresh = onRefresh
@@ -89,6 +98,11 @@ struct IMInstallView: View {
                     Text(statusMessage)
                         .font(.footnote)
                         .foregroundColor(.secondary)
+                    if hasPendingExternalImport {
+                        Button("取消外部檔案") {
+                            clearPendingExternalImport()
+                        }
+                    }
                 }
                 .setupMatchedSectionBlock()
             }
@@ -111,14 +125,10 @@ struct IMInstallView: View {
                         ),
                         downloadManager: downloadManager,
                         onImportDB: {
-                            pickerType = .db
-                            pendingTableName = family.id
-                            showFilePicker = true
+                            beginImport(for: family.id, requestedType: .db)
                         },
                         onImportTxt: {
-                            pickerType = .txt
-                            pendingTableName = family.id
-                            showFilePicker = true
+                            beginImport(for: family.id, requestedType: .txt)
                         }
                     )
                 }
@@ -134,9 +144,7 @@ struct IMInstallView: View {
                     )
                 ) {
                     Button {
-                        pickerType = .relatedDb
-                        pendingTableName = "related"
-                        showFilePicker = true
+                        beginImport(for: "related", requestedType: .relatedDb)
                     } label: {
                         Label("匯入 .limedb", systemImage: "archivebox")
                             .foregroundColor(.accentColor)
@@ -163,6 +171,10 @@ struct IMInstallView: View {
         .constrainedDetailLayout("下載 / 匯入輸入法")
         .onAppear {
             refreshInstallStates()
+            prepareExternalImportIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .limeExternalImport)) { note in
+            if let url = note.object as? URL { prepareExternalImport(url) }
         }
         .onChange(of: downloadManager.installedTables) { newTables in
             // Expand groups for tables that just became uninstalled
@@ -176,6 +188,23 @@ struct IMInstallView: View {
             allowsMultipleSelection: false
         ) { result in
             handleFileImport(result: result)
+        }
+        .confirmationDialog(
+            "已收到外部檔案",
+            isPresented: $showExternalImportChoiceDialog,
+            titleVisibility: .visible,
+            presenting: pendingExternalChoice
+        ) { choice in
+            Button("匯入外部檔案") {
+                usePendingExternalImport(choice)
+            }
+            Button("選擇其他檔案") {
+                clearPendingExternalImport(message: nil)
+                startManualFilePicker(for: choice.tableName, requestedType: choice.requestedType)
+            }
+            Button("取消", role: .cancel) {}
+        } message: { _ in
+            Text("要使用剛收到的外部檔案，還是改選其他檔案？")
         }
         .overlay {
             if showsLocalImportOverlay {
@@ -216,37 +245,110 @@ struct IMInstallView: View {
         }
     }
 
+    private func beginImport(for tableName: String, requestedType: ImportType) {
+        if pendingLimeExternalImportURL != nil {
+            pendingExternalChoice = PendingExternalImportChoice(tableName: tableName, requestedType: requestedType)
+            showExternalImportChoiceDialog = true
+            return
+        }
+        startManualFilePicker(for: tableName, requestedType: requestedType)
+    }
+
+    private func startManualFilePicker(for tableName: String, requestedType: ImportType) {
+        pickerType = requestedType
+        pendingTableName = tableName
+        showFilePicker = true
+    }
+
+    private func usePendingExternalImport(_ choice: PendingExternalImportChoice) {
+        pendingExternalChoice = nil
+        showExternalImportChoiceDialog = false
+        guard let externalURL = pendingLimeExternalImportURL else {
+            startManualFilePicker(for: choice.tableName, requestedType: choice.requestedType)
+            return
+        }
+        let ext = externalURL.pathExtension.lowercased()
+        if choice.tableName == "related" && ext != "limedb" && ext != "zip" {
+            statusMessage = "關聯字庫只支援匯入 .limedb 檔案。"
+            hasPendingExternalImport = true
+            return
+        }
+        pickerType = importType(for: externalURL, fallback: choice.requestedType)
+        pendingTableName = choice.tableName
+        pendingLimeExternalImportURL = nil
+        hasPendingExternalImport = false
+        handleSelectedImportURL(externalURL)
+    }
+
+    private func prepareExternalImportIfNeeded() {
+        if let url = pendingLimeExternalImportURL { prepareExternalImport(url) }
+    }
+
+    private func prepareExternalImport(_ url: URL) {
+        let ext = url.pathExtension.lowercased()
+        guard ["limedb", "zip", "lime", "cin"].contains(ext) else { return }
+        hasPendingExternalImport = true
+        statusMessage = "已收到外部檔案，請選擇要匯入的輸入法。"
+        showsLocalImportOverlay = false
+    }
+
+    private func clearPendingExternalImport(message: String? = "已取消外部檔案。") {
+        if let url = pendingLimeExternalImportURL {
+            try? FileManager.default.removeItem(at: url)
+        }
+        pendingLimeExternalImportURL = nil
+        pendingExternalChoice = nil
+        showExternalImportChoiceDialog = false
+        hasPendingExternalImport = false
+        if let message { statusMessage = message }
+    }
+
+    private func importType(for url: URL, fallback: ImportType) -> ImportType {
+        let ext = url.pathExtension.lowercased()
+        if ext == "limedb" || ext == "zip" {
+            return fallback == .relatedDb ? .relatedDb : .db
+        }
+        return .txt
+    }
+
     private func handleFileImport(result: Result<[URL], Error>) {
         guard case .success(let urls) = result, let url = urls.first else { return }
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
 
-        isImporting = true
-        showsLocalImportOverlay = pickerType == .relatedDb
-        statusMessage = ""
-
-        let ext = url.pathExtension.lowercased()
         let importURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(UUID().uuidString)_\(url.lastPathComponent)")
         do {
             try? FileManager.default.removeItem(at: importURL)
             try FileManager.default.copyItem(at: url, to: importURL)
+            handleSelectedImportURL(importURL)
         } catch {
             statusMessage = "匯入失敗：\(error.localizedDescription)"
             isImporting = false
             showsLocalImportOverlay = false
             pendingTableName = ""
+        }
+    }
+
+    private func handleSelectedImportURL(_ importURL: URL) {
+        isImporting = true
+        showsLocalImportOverlay = pickerType == .relatedDb
+        statusMessage = ""
+
+        let ext = importURL.pathExtension.lowercased()
+        // Use only the IM selected by the import button that launched the picker.
+        // Source filenames are metadata only and must not decide the import target.
+        guard !pendingTableName.isEmpty else {
+            statusMessage = "請先選擇要匯入的輸入法，再選擇檔案。"
+            isImporting = false
+            showsLocalImportOverlay = false
+            try? FileManager.default.removeItem(at: importURL)
             return
         }
-        // Use pendingTableName (set by the import button that launched the picker);
-        // fall back to deriving from filename for any legacy generic picker path.
-        let tableName = pendingTableName.isEmpty
-            ? (url.deletingPathExtension().lastPathComponent
-                .components(separatedBy: .init(charactersIn: "-_")).first ?? "custom")
-            : pendingTableName
+        let tableName = pendingTableName
         let seedCustomAfter = (tableName == "custom")
 
-        Task {
+        Task { @MainActor in
             defer {
                 try? FileManager.default.removeItem(at: importURL)
                 isImporting = false

@@ -166,15 +166,10 @@ public class IntentHandler {
         // Convert input stream to file
         InputStreamToFile(input, importFilepath);
         
-        // Handle based on file type
-        if ("lime".equals(extension) || "cin".equals(extension)) {
-            // 4. For text/plain with .lime or .cin, call handleImportTxt
-            handleImportTxt(importFilepath);
-        } else if ("limedb".equals(extension) || "zip".equals(extension)) {
-            // 5. For zipped .limedb / legacy .zip file, handle import
-            String tableName = getFileNameWithoutExtension(fileName);
-            handleLimedbImport(fileToImport, tableName);
-        }
+        // Always ask the user which destination IM table to import into.
+        // The selected table is the semantic identity; source filenames are only
+        // kept as metadata and must not decide the import target.
+        handleImportFile(importFilepath);
     }
     
     /**
@@ -185,6 +180,17 @@ public class IntentHandler {
      * @param importFilepath The path to the text file to import
      */
     private void handleImportTxt(String importFilepath) {
+        handleImportFile(importFilepath);
+    }
+
+    /**
+     * Handles mapping/database file import (.lime, .cin, .limedb, or .zip).
+     *
+     * <p>Shows import dialog for user to select target IM table.
+     *
+     * @param importFilepath The path to the file to import
+     */
+    private void handleImportFile(String importFilepath) {
         try {
             File fileToImport = new File(importFilepath);
             setupImController.setFileToImport(fileToImport);  // Store for onImportTypeSelected callback
@@ -197,71 +203,6 @@ public class IntentHandler {
             String errorMessage = activity.getResources().getString(R.string.error_import_db);
             Log.e(TAG, errorMessage, e);
             showToast(errorMessage + ": " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Handles .limedb (compressed database) import.
-     * 
-     * <p>Checks if table is empty before importing. If not empty, shows confirmation dialog.
-     * If empty, proceeds with import. Delegates actual import to controller.
-     * 
-     * @param fileToImport The .limedb file to import
-     * @param tableName The target table name
-     */
-    private void handleLimedbImport(File fileToImport, String tableName) {
-        try {
-            // Check if table is empty before importing
-            int recordCount = setupImController.countRecords(tableName);
-            
-            if (recordCount > 0) {
-                // Table is not empty: show single three-choice dialog (cancel/restore/don't restore)
-                showImportConfirmationDialog(fileToImport, tableName);
-            } else {
-                // Table is empty: proceed with import (default: don't restore)
-                performLimedbImport(fileToImport, tableName, false);
-            }
-        } catch (Exception e) {
-            String errorMessage = activity.getResources().getString(R.string.error_import_db);
-            Log.e(TAG, errorMessage, e);
-            showToast(errorMessage + ": " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Shows confirmation dialog before importing to non-empty table.
-     * 
-     * @param fileToImport The .limedb file
-     * @param tableName The target table name
-     */
-    private void showImportConfirmationDialog(File fileToImport, String tableName) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(activity);
-        // Use the same strings as 1a alert dialog
-        String title = activity.getResources().getString(R.string.setup_im_restore_learning_data);
-        String message = activity.getResources().getString(R.string.setup_im_restore_learning_data_message);
-        builder.setTitle(title);
-        builder.setMessage(message);
-        // Cancel
-        builder.setNeutralButton(activity.getResources().getString(R.string.dialog_cancel),
-            (dialog, which) -> dialog.dismiss());
-        // Restore
-        builder.setPositiveButton(activity.getResources().getString(R.string.dialog_yes),
-            (dialog, which) -> performLimedbImport(fileToImport, tableName, true));
-        // Don't restore
-        builder.setNegativeButton(activity.getResources().getString(R.string.dialog_no),
-            (dialog, which) -> performLimedbImport(fileToImport, tableName, false));
-        builder.show();
-    }
-    
-    /**
-     * Performs the actual .limedb import.
-     * 
-     * @param fileToImport The .limedb file
-     * @param tableName The target table name
-     */
-    private void performLimedbImport(File fileToImport, String tableName, boolean restoreUserRecords) {
-        if (setupImController != null) {
-            setupImController.importZippedDb(fileToImport, tableName, restoreUserRecords);
         }
     }
     
@@ -304,23 +245,6 @@ public class IntentHandler {
             return fileName.substring(lastDot + 1).toLowerCase();
         }
         return "";
-    }
-    
-    /**
-     * Gets filename without extension.
-     * 
-     * @param fileName The filename
-     * @return The filename without extension
-     */
-    private String getFileNameWithoutExtension(String fileName) {
-        if (fileName == null || fileName.isEmpty()) {
-            return "";
-        }
-        int lastDot = fileName.lastIndexOf('.');
-        if (lastDot > 0) {
-            return fileName.substring(0, lastDot);
-        }
-        return fileName;
     }
     
     private boolean isSupportedImportExtension(String extension) {

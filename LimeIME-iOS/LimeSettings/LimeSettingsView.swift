@@ -75,10 +75,18 @@ struct LimeSettingsView: View {
                 pendingLimeDeepLinkURL = nil
                 handleDeepLink(url)
             }
+            if pendingLimeExternalImportURL != nil {
+                navManager.selectTab(1)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .limeDeepLink)) { note in
             // Warm-launch deep link (app already running).
             if let url = note.object as? URL { handleDeepLink(url) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .limeExternalImport)) { _ in
+            // External imports need the IM manager/import screen so the user
+            // chooses the destination IM instead of deriving it from filename.
+            navManager.selectTab(1)
         }
         .overlay {
             if progressManager.isVisible {

@@ -2,10 +2,15 @@ import UIKit
 
 extension Notification.Name {
     static let limeDeepLink = Notification.Name("net.toload.limeime.deepLink")
+    static let limeExternalImport = Notification.Name("net.toload.limeime.externalImport")
 }
 
 /// Stores a deep-link URL received before LimeSettingsView has appeared (cold launch).
-var pendingLimeDeepLinkURL: URL?
+@MainActor var pendingLimeDeepLinkURL: URL?
+
+/// Stores an external import file copied into app-local temporary storage until
+/// the user explicitly chooses the destination IM in the import UI.
+@MainActor var pendingLimeExternalImportURL: URL?
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 

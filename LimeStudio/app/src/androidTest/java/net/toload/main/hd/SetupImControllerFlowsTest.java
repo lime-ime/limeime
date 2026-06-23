@@ -5,8 +5,12 @@
  */
 package net.toload.main.hd;
 
+import net.toload.main.hd.ui.controller.SetupImController;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.File;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -75,6 +79,68 @@ public class SetupImControllerFlowsTest {
         }
         assertTrue("DBServer.importZippedDb(...) present", hasImportZippedDb);
         assertTrue("DBServer.importZippedDbRelated(...) present", hasImportZippedDbRelated);
+    }
+
+    @Test
+    public void selectedFileDispatchUsesExtensionOnlyForFormatNotTableIdentity() {
+        assertTrue(SetupImController.isZippedImportFile("array.limedb"));
+        assertTrue(SetupImController.isZippedImportFile("renamed.ZIP"));
+        assertFalse(SetupImController.isZippedImportFile("array.lime"));
+        assertFalse(SetupImController.isZippedImportFile("array.cin"));
+        assertFalse(SetupImController.isZippedImportFile(null));
+    }
+
+    @Test
+    public void onImportDialogSelectedDispatchesByExtensionAndPreservesRestoreChoice() {
+        RecordingSetupImController controller = new RecordingSetupImController();
+
+        controller.setFileToImport(new File("array.lime"));
+        controller.onImportDialogImSelected("custom", true);
+        assertEquals("txt", controller.lastMode);
+        assertEquals("custom", controller.lastTableName);
+        assertTrue(controller.lastRestoreUserRecords);
+
+        controller.setFileToImport(new File("array.cin"));
+        controller.onImportDialogImSelected("array", false);
+        assertEquals("txt", controller.lastMode);
+        assertEquals("array", controller.lastTableName);
+        assertFalse(controller.lastRestoreUserRecords);
+
+        controller.setFileToImport(new File("array.limedb"));
+        controller.onImportDialogImSelected("custom", true);
+        assertEquals("db", controller.lastMode);
+        assertEquals("custom", controller.lastTableName);
+        assertTrue(controller.lastRestoreUserRecords);
+
+        controller.setFileToImport(new File("renamed.ZIP"));
+        controller.onImportDialogImSelected("array", false);
+        assertEquals("db", controller.lastMode);
+        assertEquals("array", controller.lastTableName);
+        assertFalse(controller.lastRestoreUserRecords);
+    }
+
+    private static class RecordingSetupImController extends SetupImController {
+        String lastMode;
+        String lastTableName;
+        boolean lastRestoreUserRecords;
+
+        RecordingSetupImController() {
+            super(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().getTargetContext(), null, null);
+        }
+
+        @Override
+        public void importZippedDb(File fileToImport, String tableName, boolean restoreUserRecords) {
+            lastMode = "db";
+            lastTableName = tableName;
+            lastRestoreUserRecords = restoreUserRecords;
+        }
+
+        @Override
+        public void importTxtTable(File file, String tableName, boolean restoreUserRecords) {
+            lastMode = "txt";
+            lastTableName = tableName;
+            lastRestoreUserRecords = restoreUserRecords;
+        }
     }
 
     @Test
