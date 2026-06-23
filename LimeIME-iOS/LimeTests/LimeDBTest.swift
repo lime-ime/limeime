@@ -943,6 +943,30 @@ final class LimeDBTest: XCTestCase {
         XCTAssertTrue(db.getImConfig(LIME.DB_TABLE_ARRAY, "imkeynames")?.contains("5⇣") == true)
     }
 
+    func testImportAppliesDefaultImkeynamesByTable() throws {
+        // A metadata-less .lime imported into a known IM must get that IM's canonical
+        // imkeys/imkeynames defaults. Expected values are literals on purpose.
+        let cases: [(table: String, imkeys: String, imnamesPart: String)] = [
+            ("cj",   "qwertyuiopasdfghjklzxcvbnm", "手|田|水"),
+            ("scj",  "qwertyuiopasdfghjklzxcvbnm", "弓|一"),
+            ("dayi", "1234567890qwertyuiopasdfghjkl;zxcvbnm,./", "言|牛|目"),
+            ("ez",   "',-./0123456789;=abcdefghijklmnopqrstuvwxyz[\\`", "⺃|⼃|儿"),
+        ]
+        let db = try makeLimeDB()
+        for c in cases {
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent("metaless-\(c.table)-\(UUID().uuidString).lime")
+            defer { try? FileManager.default.removeItem(at: url) }
+            try "@version@|Metaless\n@cname@|Metaless\nq|一".write(to: url, atomically: true, encoding: .utf8)
+
+            try db.importTxtFile(at: url.path, tableName: c.table)
+
+            XCTAssertEqual(db.getImConfig(c.table, "imkeys"), c.imkeys, "\(c.table) imkeys default")
+            XCTAssertTrue(db.getImConfig(c.table, "imkeynames")?.contains(c.imnamesPart) == true,
+                          "\(c.table) imkeynames default missing \(c.imnamesPart)")
+        }
+    }
+
     func testImportTargetUsesSelectedTableNotFilename() throws {
         let db = try makeLimeDB()
         db.clearTable(LIME.DB_TABLE_CUSTOM)

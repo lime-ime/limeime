@@ -224,8 +224,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static String DAYI_CHAR =
             "言|牛|目|四|王|門|田|米|足|金|石|山|一|工|糸|火|艸|木|口|耳|人|革|日|土|手|鳥|月|立|女|虫|心|水|鹿|禾|馬|魚|雨|力|舟|竹";
     private final static String ARRAY_KEY = "qazwsxedcrfvtgbyhnujmik,ol.p;/";
+    // Arrow glyphs (⇡/⇣) match the array keyboard layout in lime_array.xml.
     private final static String ARRAY_CHAR =
-            "1^|1-|1v|2^|2-|2v|3^|3-|3v|4^|4-|4v|5^|5-|5v|6^|6-|6v|7^|7-|7v|8^|8-|8v|9^|9-|9v|0^|0-|0v|";
+            "1⇡|1-|1⇣|2⇡|2-|2⇣|3⇡|3-|3⇣|4⇡|4-|4⇣|5⇡|5-|5⇣|6⇡|6-|6⇣|7⇡|7-|7⇣|8⇡|8-|8⇣|9⇡|9-|9⇣|0⇡|0-|0⇣";
     private final static String BPMF_KEY = "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-";
     private final static String BPMF_CHAR =
             "ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
@@ -358,6 +359,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private final static String CJ_KEY = "qwertyuiopasdfghjklzxcvbnm";
     private final static String CJ_CHAR = "手|田|水|口|廿|卜|山|戈|人|心|日|尸|木|火|土|竹|十|大|中|重|難|金|女|月|弓|一";
+
+    // EZ (輕鬆輸入法) key→radical map. The 46 character roots from the shipped ez.limedb
+    // im config; symbol/punctuation keys (which carry fullwidth-symbol labels, not roots)
+    // are omitted.
+    private final static String EZ_KEY = "',-./0123456789;=abcdefghijklmnopqrstuvwxyz[\\`";
+    private final static String EZ_CHAR = "⺃|⼃|儿|㇏|⼛|鳥|⼁|車|糸|言|貝|雨|⼧|八|耳|寸|母|日|月|金|木|水|火|土|竹|戈|十|大|中|一|弓|人|心|手|口|尸|廾|山|女|田|乂|⼂|辶|⼕|的|厂";
 
     private final HashMap<String, HashMap<String, String>> keysDefMap = new HashMap<>();
     private final HashMap<String, HashMap<String, String>> keysReMap = new HashMap<>();
@@ -4317,6 +4324,37 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                         }
                         if (!hasImportedImkeynames) {
                             setImConfig(table, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0");
+                        }
+                    } else if (table.equals(LIME.DB_TABLE_CJ) || table.equals(LIME.DB_TABLE_CJ4)
+                            || table.equals(LIME.DB_TABLE_CJ5) || table.equals(LIME.DB_TABLE_ECJ)
+                            || table.equals(LIME.DB_TABLE_SCJ)) {
+                        // Cangjie family (倉頡) shares one canonical key layout (matches
+                        // lime_cj.xml). Reuse CJ_KEY/CJ_CHAR so the labels stay in one place.
+                        // Selkey is left to the imported file / existing config.
+                        if (!hasImportedImkeys) {
+                            setImConfig(table, "imkeys", CJ_KEY);
+                        }
+                        if (!hasImportedImkeynames) {
+                            setImConfig(table, "imkeynames", CJ_CHAR);
+                        }
+                    } else if (table.equals(LIME.DB_TABLE_DAYI)) {
+                        // Dayi (大易). Reuse DAYI_KEY/DAYI_CHAR (the same key→radical map the
+                        // app already uses to render dayi keynames). Selkey is left to the
+                        // imported file / existing config.
+                        if (!hasImportedImkeys) {
+                            setImConfig(table, "imkeys", DAYI_KEY);
+                        }
+                        if (!hasImportedImkeynames) {
+                            setImConfig(table, "imkeynames", DAYI_CHAR);
+                        }
+                    } else if (table.equals(LIME.DB_TABLE_EZ)) {
+                        // EZ (輕鬆輸入法). Reuse EZ_KEY/EZ_CHAR (extracted from ez.limedb).
+                        // Selkey is left to the imported file / existing config.
+                        if (!hasImportedImkeys) {
+                            setImConfig(table, "imkeys", EZ_KEY);
+                        }
+                        if (!hasImportedImkeynames) {
+                            setImConfig(table, "imkeynames", EZ_CHAR);
                         }
                     }
                     if (DEBUG)

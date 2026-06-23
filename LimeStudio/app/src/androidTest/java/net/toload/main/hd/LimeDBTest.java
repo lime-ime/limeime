@@ -364,6 +364,43 @@ public class LimeDBTest {
         }
     }
 
+    @Test(timeout = 30000)
+    public void importAppliesDefaultImkeynamesByTable() throws Exception {
+        // A metadata-less .lime (no @imkeys@/@keyname) imported into a known IM must get
+        // that IM's canonical imkeys/imkeynames defaults. Expected values are literals on
+        // purpose — pinning them here, not reading the same constant the code uses.
+        String[][] cases = {
+            // table, expected imkeys, an imkeynames substring that must be present
+            {LIME.DB_TABLE_CJ,   "qwertyuiopasdfghjklzxcvbnm", "手|田|水"},
+            {LIME.DB_TABLE_SCJ,  "qwertyuiopasdfghjklzxcvbnm", "弓|一"},
+            {LIME.DB_TABLE_DAYI, "1234567890qwertyuiopasdfghjkl;zxcvbnm,./", "言|牛|目"},
+            {LIME.DB_TABLE_EZ,   "',-./0123456789;=abcdefghijklmnopqrstuvwxyz[\\`", "⺃|⼃|儿"},
+        };
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue(initializeDatabase(limeDB));
+
+        for (String[] c : cases) {
+            String table = c[0], expectImkeys = c[1], expectImnamesPart = c[2];
+            File fixture = new File(appContext.getCacheDir(), "metaless_" + table + ".lime");
+            try {
+                writeUtf8(fixture, "@version@|Metaless\n@cname@|Metaless\nq|一\n");
+                limeDB.setFilename(fixture);
+                limeDB.importTxtTable(table, null);
+                waitForImportThread(limeDB);
+
+                assertEquals(table + " imkeys default", expectImkeys,
+                        limeDB.getImConfig(table, "imkeys"));
+                assertTrue(table + " imkeynames default missing " + expectImnamesPart,
+                        limeDB.getImConfig(table, "imkeynames").contains(expectImnamesPart));
+            } finally {
+                if (fixture.exists() && !fixture.delete()) {
+                    Log.w(TAG, "Failed to delete metaless fixture for " + table);
+                }
+            }
+        }
+    }
+
     @Test(timeout = 15000)
     public void importTargetUsesSelectedTableNotFilename() throws Exception {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
