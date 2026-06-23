@@ -4,7 +4,7 @@
 
 Community reporter `s9228034david-spec` reports that on a Samsung A55, enabling **喜好設定 / 打字震動** does not produce any vibration while typing with the LIME Android soft keyboard.
 
-**Status: closed / source-fixed.** PR #132 merged to `master` as merge commit `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the issue on 2026-06-22. Root cause was confirmed on a Samsung SM-A1760 (Android 16 / API 36): the device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were silently dropped at the HAL. The merged fix switches keypress vibration to `VibrationEffect.createOneShot(...)`; vibration was verified on hardware. The reporter should still retest after a newer Android APK / Google Play build contains this merge commit.
+**Status: reporter-confirmed fixed / closed on Android APK v6.1.24.** PR #132 merged to `master` as merge commit `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the issue on 2026-06-22. Root cause was confirmed on a Samsung SM-A1760 (Android 16 / API 36): the device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were silently dropped at the HAL. The merged fix switches keypress vibration to `VibrationEffect.createOneShot(...)`; vibration was verified on hardware. Android APK `LIMEHD2026-6.1.24.apk` contains the fix, and the reporter confirmed that both typing vibration and typing sound work after reinstalling on the original Samsung A55 / Android 16 / One UI 8.5 path.
 
 Issue: https://github.com/lime-ime/limeime/issues/128
 
@@ -81,7 +81,7 @@ The root-cause fix (`createOneShot`) applies to all API levels, but only API 33+
 
 ### Android
 
-Confirmed and fixed in source on a maintainer-tested Samsung SM-A1760 / Android 16 device. The reporter's exact Samsung A55 has not yet retested a build containing the fix. The fix replaces predefined `VibrationEffect`s — which the tested Samsung device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+. Since keypress sound always worked, the issue was scoped to the vibration primitive, not soft-key event delivery.
+Confirmed and fixed in source on a maintainer-tested Samsung SM-A1760 / Android 16 device, then reporter-confirmed on the original Samsung A55 / Android 16 / One UI 8.5 path after installing APK v6.1.24. The fix replaces predefined `VibrationEffect`s — which the tested Samsung device's vibrator HAL silently discards as `ignored_unsupported` — with `createOneShot(...)` raw pulses, tagged `USAGE_TOUCH` on API 33+. Since keypress sound always worked, the issue was scoped to the vibration primitive, not soft-key event delivery.
 
 ### iOS
 
@@ -116,7 +116,7 @@ Removed as part of the fix (all tied to the disproven "view haptic returns false
 
 ## Current status
 
-- **Closed / source-fixed on `master`.** PR #132 merged as `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the community issue before reporter retest.
+- **Reporter-confirmed fixed on APK v6.1.24 / closed.** PR #132 merged as `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and initially auto-closed the community issue before reporter retest. APK v6.1.24 contains the fix, and the reporter confirmed in https://github.com/lime-ime/limeime/issues/128#issuecomment-4779119438 that after reinstalling, both typing vibration and typing sound work normally.
 - Root cause: device vibrator reports an empty supported-effects table, so predefined `VibrationEffect`s were dropped at the HAL. The original "Samsung returns `false` from `performHapticFeedback`" hypothesis was disproven on hardware (it returns `true`).
-- Current Android APK metadata still points to `LIMEHD2026-6.1.23.apk` (blob SHA `7315b2d88bf13327d2f16343ddd2c8d1f843be84`, size 7,406,598 bytes), which predates PR #132. Do not ask the reporter to retest until a newer APK / Google Play build contains the merged `createOneShot` change.
+- Android APK `LIMEHD2026-6.1.24.apk` contains the merged `createOneShot` change. Verified GitHub Contents blob SHA `314f6f0d628b8d7e64a3625ca0950a32ee67acf2`, size 7,406,087 bytes, downloaded SHA-256 `33b59c1ced50d179d218807d74e40bd2efa669ef99fa7bf119a6cdfd827963c6`. Retest request: https://github.com/lime-ime/limeime/issues/128#issuecomment-4778915207. Closing acknowledgement: https://github.com/lime-ime/limeime/issues/128#issuecomment-4779130777.
 - No iOS/TestFlight retest is implied by this Android report.

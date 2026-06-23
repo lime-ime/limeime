@@ -2,7 +2,7 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-22
+Last reviewed: 2026-06-23
 
 ## Active issue follow-up
 
@@ -10,9 +10,7 @@ Last reviewed: 2026-06-22
 
 ## Source fixed / awaiting build verification
 
-- #128 Android: PR #132 merged to `master` as `e0659dac3670e42b0970cae54fdc7fd299c2a19e` and auto-closed the community issue. The fix replaces predefined keypress haptic effects with `VibrationEffect.createOneShot(...)` after Samsung Android 16 hardware showed predefined effects were dropped at the HAL despite framework success. Current APK metadata still points to `LIMEHD2026-6.1.23.apk` (blob SHA `7315b2d88bf13327d2f16343ddd2c8d1f843be84`, size 7,406,598 bytes), which predates PR #132; ask the reporter to retest only after a newer APK / Google Play build contains this merge.
-
-- #119 iOS: `.lime` / `.cin` text import now has explicit intended keyboard layouts for known IMs, with iOS writing a keyboard config row after text import. Android source delivery is covered by newer APKs through v6.1.23; remaining release QA is iOS TestFlight/App Store delivery unless new Android evidence appears.
+- #119 iOS: `.lime` / `.cin` text import now has explicit intended keyboard layouts for known IMs, with iOS writing a keyboard config row after text import. Android source delivery is covered through GitHub APK v6.1.24, including the PR #131 metadata-preservation follow-up; remaining release QA is iOS TestFlight/App Store delivery unless new Android evidence appears.
 - #121 iOS: cloud/download IM first-switch sync fix landed on `master` in merge commit `e3aef89cca52b08fd48d68105dce2fe0042f0f19` and the maintainer-created issue is closed. Remaining validation is iOS unit/simulator/device and TestFlight/App Store release QA; no Android APK retest applies.
 
 ## Unfiled release-QA follow-up
