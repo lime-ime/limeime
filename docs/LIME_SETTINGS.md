@@ -641,6 +641,7 @@ being empty and disappears once the first IM is installed.
 | iOS | Android |
 |---|---|
 | ![iPhone 17 Pro Max simulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_ios_im_list_empty.png) | ![Android emulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_android_im_list_empty.png) |
+| ![iPhone 17 Pro Max simulator dark-mode screenshot of the empty IM list with FAB nudge](assets/lime_settings_ios_im_list_empty_dark.png) | ![Android emulator dark-mode screenshot of the empty IM list with FAB nudge](assets/lime_settings_android_im_list_empty_dark.png) |
 
 **Placeholder** (centered, in place of the IM rows):
 
