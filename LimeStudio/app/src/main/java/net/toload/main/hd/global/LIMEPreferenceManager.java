@@ -387,6 +387,11 @@ public class LIMEPreferenceManager {
 		return sp.getBoolean("sound_on_keypress", false);
 	}
 
+	public Float getKeypressSoundVolume(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Float.parseFloat(sp.getString("keypress_sound_volume", "-1"));
+	}
+
 	public Integer getEmojiDisplayPosition(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if (sp.contains("enable_emoji")) {

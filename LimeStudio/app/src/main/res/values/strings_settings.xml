@@ -132,6 +132,7 @@
     <string name="similiar_list">建議字顯示數量</string>
     <string name="vibrate_on_keypress">打字震動</string>
     <string name="sound_on_keypress">打字音效</string>
+    <string name="keypress_sound_volume">打字音量</string>
     <string name="similiar_enable_switch">啟用關聯字庫</string>
     <string name="similiar_enable_switch_summary">啟用關聯字庫功能</string>
     <string name="candidate_switch">滑動選取</string>
@@ -794,6 +795,22 @@
         <item>40</item>
         <item>50</item>
         <item>60</item>
+    </string-array>
+    <string-array name="keypress_sound_volume_options">
+        <item>系統預設</item>
+        <item>10%</item>
+        <item>25%</item>
+        <item>50%</item>
+        <item>75%</item>
+        <item>100%</item>
+    </string-array>
+    <string-array name="keypress_sound_volume_values">
+        <item>-1</item>
+        <item>0.10</item>
+        <item>0.25</item>
+        <item>0.50</item>
+        <item>0.75</item>
+        <item>1.00</item>
     </string-array>
 
 

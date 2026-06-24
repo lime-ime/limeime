@@ -5952,7 +5952,7 @@ public class LIMEService extends InputMethodService
 
         if (hasVibration) {
             //Jeremy '11,9,1 add preference on vibrate level
-            long vibrateLevel = mLIMEPref.getVibrateLevel();
+            long vibrateLevel = mapKeypressVibrateDuration(mLIMEPref.getVibrateLevel());
             //Log.i(TAG, "doVibrateSound() - hasVibration=true, vibrateLevel: " + vibrateLevel + "ms");
             vibrate(vibrateLevel);
         }
@@ -5970,10 +5970,30 @@ public class LIMEService extends InputMethodService
                     sound = AudioManager.FX_KEYPRESS_SPACEBAR;
                     break;
             }
-            float FX_VOLUME = 1.0f;
-            mAudioManager.playSoundEffect(sound, FX_VOLUME);
+            float soundVolume = mLIMEPref.getKeypressSoundVolume();
+            if (soundVolume < 0) {
+                mAudioManager.playSoundEffect(sound);
+            } else {
+                mAudioManager.playSoundEffect(sound, soundVolume);
+            }
             //Log.i(TAG, "doVibrateSound() - sound played, sound code: " + sound);
         }
+    }
+
+    static long mapKeypressVibrateDuration(long preferenceValue) {
+        if (preferenceValue <= 20) {
+            return 30;
+        }
+        if (preferenceValue <= 30) {
+            return 40;
+        }
+        if (preferenceValue <= 40) {
+            return 50;
+        }
+        if (preferenceValue <= 50) {
+            return 60;
+        }
+        return 70;
     }
 
     /**
