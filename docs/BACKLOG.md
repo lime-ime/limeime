@@ -2,16 +2,15 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-23
+Last reviewed: 2026-06-24
 
 ## Active issue follow-up
-
-- #128 Android: Reopened after v6.1.24. The Samsung path is confirmed fixed by the original reporter on Samsung A55 / Android 16 / One UI 8.5, but Jeremy reports a new Pixel / Android 17 regression where both keypress vibration and keypress sound are now not working after PR #132 (`e0659dac3670e42b0970cae54fdc7fd299c2a19e`). Git history shows earlier Pixel/API 31+ compatibility attempts used `performHapticFeedback(KEYBOARD_TAP)` on API 31+ (`8952c7f`, `4b71b3f`) before PR #132 switched to direct `createOneShot(...)` for the Samsung HAL issue. Next investigation should compare Pixel behavior across those commits and verify `onPress(...)` / `doVibrateSound(...)` / `hasSound` / `mAudioManager` because sound fails too.
 
 - #124 Android: v6.1.23 includes the targeted LINE/WeChat/Instagram bottom-composer composing/root-key and reverse-lookup popup placement fixes. Retained comment https://github.com/lime-ime/limeime/issues/124#issuecomment-4761898236 tells the Google Play closed-test reporter to update from Google Play, and the issue was reopened with https://github.com/lime-ime/limeime/issues/124#issuecomment-4761963945. After the reporter uploaded videos, `limeimetw` posted https://github.com/lime-ime/limeime/issues/124#issuecomment-4766516641 asking whether the temporary reverse-lookup hint duration and placement are acceptable, or whether a shorter duration / further inward keyboard placement is preferred; the public comment describes disappearance as roughly five seconds, but source/tests still pin the timed lime-toast timeout to `1400` ms, so any longer observed duration should be clarified against the exact build/path. Keep #124 open pending that reply.
 
 ## Source fixed / awaiting build verification
 
+- #128 Android: PR #133 merged to `master` as `6791f14a06047047c39dc53875ce2ebaebcf1327` and closed the issue. It restores the Google/Pixel API 31+ system keyboard-tap haptic path while preserving Samsung/raw-pulse routing, adds the Samsung keypress-sound volume preference, and maps stored vibration levels to stronger runtime pulses. The current APK `LIMEHD2026-6.1.24.apk` still predates this PR (GitHub Contents blob SHA `314f6f0d628b8d7e64a3625ca0950a32ee67acf2`, size 7,406,087 bytes), so Pixel / Android 17 verification and any reporter-facing retest wait for a newer Android APK/build containing the merge. If Pixel sound still fails after that build, continue with the shared `onPress(...)` / `doVibrateSound(...)` / `hasSound` / `mAudioManager` investigation because the haptic split does not change the sound primitive.
 - #119 iOS: `.lime` / `.cin` text import now has explicit intended keyboard layouts for known IMs, with iOS writing a keyboard config row after text import. Android source delivery is covered through GitHub APK v6.1.24, including the PR #131 metadata-preservation follow-up; remaining release QA is iOS TestFlight/App Store delivery unless new Android evidence appears.
 - #121 iOS: cloud/download IM first-switch sync fix landed on `master` in merge commit `e3aef89cca52b08fd48d68105dce2fe0042f0f19` and the maintainer-created issue is closed. Remaining validation is iOS unit/simulator/device and TestFlight/App Store release QA; no Android APK retest applies.
 
