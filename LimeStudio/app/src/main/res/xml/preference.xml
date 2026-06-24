@@ -110,6 +110,16 @@
             android:defaultValue="false"
             android:key="sound_on_keypress"
             android:title="@string/sound_on_keypress" />
+        <ListPreference
+            android:defaultValue="-1"
+            android:dependency="sound_on_keypress"
+            android:dialogTitle="@string/keypress_sound_volume"
+            android:entries="@array/keypress_sound_volume_options"
+            android:entryValues="@array/keypress_sound_volume_values"
+            android:key="keypress_sound_volume"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_value_chevron"
+            android:title="@string/keypress_sound_volume" />
     </PreferenceCategory>
 
     <!-- 4. 輸入法行為 -->

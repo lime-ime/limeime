@@ -78,6 +78,22 @@ public class KeyboardLayoutResourceTest {
     }
 
     @Test
+    public void vibrateLevelStoredValuesRemainCompatible() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        assertArrayEquals(new String[]{"20", "30", "40", "50", "60"},
+                context.getResources().getStringArray(R.array.vibrate_level_values));
+    }
+
+    @Test
+    public void keypressSoundVolumeIncludesSystemDefaultAndCustomScalars() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        assertArrayEquals(new String[]{"-1", "0.10", "0.25", "0.50", "0.75", "1.00"},
+                context.getResources().getStringArray(R.array.keypress_sound_volume_values));
+    }
+
+    @Test
     public void settingsActionLayoutsUseThemeAccentInsteadOfFixedBlue() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
 

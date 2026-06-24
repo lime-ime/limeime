@@ -162,6 +162,15 @@ public class LIMEServiceTest {
     }
 
     @Test
+    public void keypressVibratePreferenceValuesMapToStrongerPulseDurations() {
+        assertEquals(30, LIMEService.mapKeypressVibrateDuration(20));
+        assertEquals(40, LIMEService.mapKeypressVibrateDuration(30));
+        assertEquals(50, LIMEService.mapKeypressVibrateDuration(40));
+        assertEquals(60, LIMEService.mapKeypressVibrateDuration(50));
+        assertEquals(70, LIMEService.mapKeypressVibrateDuration(60));
+    }
+
+    @Test
     public void endkeyCommitKeyRequiresOptInAndComposing() {
         assertTrue(LIMEService.isEndkeyCommitKey(';', ";/", false, 2, true));
         assertTrue(LIMEService.isEndkeyCommitKey('/', ";/", false, 2, true));
@@ -10356,6 +10365,11 @@ public class LIMEServiceTest {
         } catch (Exception e) {
             // May fail but initializes fields
         }
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .remove("keypress_sound_volume")
+                .commit();
         ensureLIMEPrefInitialized(service);
 
         // Create and inject mock AudioManager
@@ -10375,8 +10389,7 @@ public class LIMEServiceTest {
             // Test with regular key - line 3726 (FX_KEYPRESS_STANDARD)
             service.doVibrateSound(android.view.KeyEvent.KEYCODE_A);
             
-            // Verify playSoundEffect was called
-            verify(mockAudioManager, atLeastOnce()).playSoundEffect(anyInt(), anyFloat());
+            verify(mockAudioManager, atLeastOnce()).playSoundEffect(anyInt());
         } catch (Exception e) {
             // Expected
         }
@@ -10384,7 +10397,7 @@ public class LIMEServiceTest {
         // Test with DELETE key - line 3718 (FX_KEYPRESS_DELETE)
         try {
             service.doVibrateSound(LIMEBaseKeyboard.KEYCODE_DELETE);
-            verify(mockAudioManager, atLeast(2)).playSoundEffect(anyInt(), anyFloat());
+            verify(mockAudioManager, atLeast(2)).playSoundEffect(anyInt());
         } catch (Exception e) {
             // Expected
         }
@@ -10402,6 +10415,32 @@ public class LIMEServiceTest {
         } catch (Exception e) {
             // Expected
         }
+    }
+
+    @Test
+    public void doVibrateSoundUsesCustomKeypressSoundVolumeWhenConfigured() throws Exception {
+        LIMEService service = new LIMEService();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .putString("keypress_sound_volume", "0.25")
+                .commit();
+        ensureLIMEPrefInitialized(service);
+
+        AudioManager mockAudioManager = createMockAudioManager();
+        injectMockComponents(service, null, null, null, mockAudioManager);
+
+        Field hasSoundField = LIMEService.class.getDeclaredField("hasSound");
+        hasSoundField.setAccessible(true);
+        hasSoundField.setBoolean(service, true);
+
+        service.doVibrateSound(android.view.KeyEvent.KEYCODE_A);
+
+        verify(mockAudioManager).playSoundEffect(anyInt(), eq(0.25f));
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .remove("keypress_sound_volume")
+                .commit();
     }
 
     /**

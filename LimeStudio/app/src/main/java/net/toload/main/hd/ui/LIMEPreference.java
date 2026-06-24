@@ -46,6 +46,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
 import androidx.preference.ListPreference;
 
+import net.toload.main.hd.KeypressHapticPolicy;
 import net.toload.main.hd.R;
 import net.toload.main.hd.SearchServer;
 import net.toload.main.hd.data.ImConfig;
@@ -234,9 +235,9 @@ public class LIMEPreference extends AppCompatActivity {
 			SearchSrv = new SearchServer(ctx);
 			configureReverseLookupPreferenceEntries();
 
-			// On API 31+, vibration intensity is controlled by the system via performHapticFeedback.
-			// The vibrate_level duration preference has no effect, so hide it to avoid confusion.
-			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+			// Hide duration only when keypress vibration uses system keyboard-tap haptics.
+			// Raw-pulse devices, including Samsung, still use vibrate_level as duration.
+			if (KeypressHapticPolicy.shouldHideVibrateLevelPreference()) {
 				androidx.preference.Preference vibrateLevelPref = findPreference("vibrate_level");
 				if (vibrateLevelPref != null) {
 					vibrateLevelPref.setVisible(false);

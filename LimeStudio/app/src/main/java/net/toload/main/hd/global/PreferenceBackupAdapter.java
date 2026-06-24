@@ -48,6 +48,7 @@ public final class PreferenceBackupAdapter {
         add("vibrate_on_keypress", Type.BOOLEAN);
         add("vibrate_level", Type.INTEGER_AS_STRING);
         add("sound_on_keypress", Type.BOOLEAN);
+        add("keypress_sound_volume", Type.STRING);
         add("smart_chinese_input", Type.BOOLEAN);
         add("auto_chinese_symbol", Type.BOOLEAN);
         add("candidate_switch", Type.BOOLEAN);

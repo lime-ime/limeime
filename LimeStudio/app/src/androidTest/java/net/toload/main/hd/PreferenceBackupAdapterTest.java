@@ -196,6 +196,7 @@ public class PreferenceBackupAdapterTest {
         values.put("vibrate_on_keypress", false);
         values.put("vibrate_level", 80);
         values.put("sound_on_keypress", true);
+        values.put("keypress_sound_volume", "0.25");
         values.put("smart_chinese_input", false);
         values.put("auto_chinese_symbol", true);
         values.put("candidate_switch", true);

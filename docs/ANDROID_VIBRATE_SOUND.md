@@ -12,18 +12,22 @@ Primary code path:
 - Sound depends on `hasSound`, `mAudioManager`, and `AudioManager.playSoundEffect(...)`.
 - Because vibration and sound share `onPress(...)` and `doVibrateSound(...)`, a device where both fail should be debugged as a feedback-path or preference-state problem before changing only the vibration primitive.
 
-## Current open regression
+## Current split-path follow-up
 
 Samsung path is confirmed fixed on v6.1.24. The original Samsung A55 / Android 16 / One UI 8.5 reporter confirmed that both `打字震動` and `打字音效` work after reinstalling v6.1.24.
 
 Jeremy then reported a Pixel / Android 17 regression after the Samsung fix: both keypress vibration and keypress sound now do not work. Pixel vibration worked before the Samsung-oriented change.
+
+The follow-up keeps Samsung and unknown OEMs on the direct `createOneShot(...)` raw-pulse path, but restores Google/Pixel API 31+ to system keyboard-tap view haptics when `mInputView` exists. This intentionally does not use a fallback based on `performHapticFeedback(...)` returning `false`, because Samsung hardware showed that call can return `true` while the HAL still drops the effect.
+
+`vibrate_level` is now hidden only for devices using system keyboard-tap view haptics. It remains visible for Samsung/raw-pulse devices where the setting controls the one-shot duration.
 
 For the Pixel / Android 17 regression, first verify:
 
 - `onPress(...)` is called for soft-key presses.
 - `doVibrateSound(...)` is called from `onPress(...)`.
 - `hasVibration` and `hasSound` are loaded from preferences as expected.
-- `vibrate_level` state is understood. `LIMEPreference.java` still hides `vibrate_level` on API 31+ with a comment that assumes `performHapticFeedback(...)`, but current `master` now uses direct `createOneShot(duration, ...)` on API 31+, so the hidden duration preference is no longer obviously ineffective.
+- `vibrate_level` state is understood. It is hidden only on the Google/Pixel API 31+ system keyboard-tap path, and visible on Samsung/raw-pulse paths where app duration is used.
 - `mAudioManager` is non-null when `hasSound` is true.
 - `mInputView` is present when view haptics are tested.
 - `getVibrator()` returns a usable vibrator.
@@ -198,11 +202,11 @@ mInputView.performHapticFeedback(
 - API <26 used legacy `vibrate(duration)`.
 - `vibrate_level` preference was hidden on API 31+ because view haptics are system-controlled and app duration is not directly used on that path.
 
-Current stale-state note:
+Resolved stale-state note:
 
-- The API 31+ hiding remains in `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMEPreference.java` even after PR #132 removed the API 31+ `performHapticFeedback(...)` path.
-- The code comment still says vibration intensity is controlled by the system through `performHapticFeedback(...)`.
-- Current `LIMEService.vibrate(long)` uses `createOneShot(duration, ...)` on API 31+, and `doVibrateSound(...)` passes `mLIMEPref.getVibrateLevel()` into that duration. That means the hidden preference may now matter again on API 31+ devices.
+- The old API 31+ unconditional hiding in `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMEPreference.java` was stale after PR #132 removed the universal API 31+ `performHapticFeedback(...)` path.
+- `vibrate_level` is now hidden only for the Google/Pixel system keyboard-tap path.
+- Raw-pulse paths keep `vibrate_level` visible because `doVibrateSound(...)` passes `mLIMEPref.getVibrateLevel()` into the one-shot duration.
 
 Expected benefit:
 
@@ -242,7 +246,7 @@ Why it was rejected:
 - The fallback never ran on the Samsung failure mode because the framework return value was true.
 - The fallback still used predefined effects, which were the unsupported primitive on that Samsung HAL.
 
-### 8. Current Samsung fix: direct `createOneShot(...)` everywhere
+### 8. Samsung fix: direct `createOneShot(...)` everywhere
 
 Commits:
 
@@ -275,6 +279,16 @@ Current concern:
 
 - Pixel / Android 17 now reports both vibration and sound not working after this change.
 - Since sound did not change in PR #132, the Pixel regression may involve `onPress(...)`, preference state, `mInputView`, `mAudioManager`, or platform feedback routing rather than only the vibration primitive.
+
+### 9. Split follow-up: Pixel view haptics, Samsung raw pulse
+
+Behavior:
+
+- Google/Pixel API 31+ with `mInputView` uses `performHapticFeedback(KEYBOARD_TAP, FLAG_IGNORE_VIEW_SETTING)`.
+- Google/Pixel API 33+ also uses `FLAG_IGNORE_GLOBAL_SETTING`, matching the earlier Pixel-compatible path.
+- Samsung and unknown OEMs continue to use direct raw pulses.
+- The Samsung branch never depends on the boolean result from `performHapticFeedback(...)`.
+- `vibrate_level` is hidden only for the system keyboard-tap view-haptic path; it remains visible for Samsung/raw-pulse devices.
 
 ## Sound combinations tried
 
@@ -338,8 +352,8 @@ Current Pixel implication:
 4. Test the same Pixel against `8952c7f`, the API 33+ view-haptic version with ignore-global flag.
 5. If sound fails only on current `master`, compare feedback preference load and `onPress(...)` behavior.
 6. If sound works but vibration fails on a view-haptic commit, compare `dumpsys vibrator_manager` entries for `KEYBOARD_TAP`, direct `createOneShot`, usage `TOUCH`, and usage `UNKNOWN`.
-7. If a split path is needed, consider Pixel/API 31+ view haptics and Samsung direct `createOneShot(...)`, but only after the sound-path failure is explained.
+7. If Pixel sound still fails on the split path, continue debugging the shared feedback path; the haptic branch does not change `AudioManager.playSoundEffect(...)`.
 
 ## Short conclusion
 
-The history is not a simple linear improvement. Pixel compatibility pushed the code toward `performHapticFeedback(...)` on API 31+ because direct service vibration can be restricted. Samsung Android 16 pushed the code away from view haptics and predefined effects because its HAL accepted those calls but dropped them as unsupported. The current Pixel / Android 17 report affects both vibration and sound, so it should be debugged as a shared keypress feedback regression first, then split into device-specific haptic branches only if logs prove that is necessary.
+The history is not a simple linear improvement. Pixel compatibility pushed the code toward `performHapticFeedback(...)` on API 31+ because direct service vibration can be restricted. Samsung Android 16 pushed the code away from view haptics and predefined effects because its HAL accepted those calls but dropped them as unsupported. The current code therefore uses a conservative split: Google/Pixel API 31+ view haptics when an input view exists, and raw pulses for Samsung and unknown OEMs. Any remaining Pixel sound failure should be debugged in the shared keypress feedback path.

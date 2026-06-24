@@ -34,6 +34,7 @@
 | `vibrate_on_keypress` | Toggle / CheckBox | true · 打字震動 · §8.2 鍵盤回饋 | true · 打字震動 · lime_keyboard | true · 打字震動 · pref_section_feedback | Haptic feedback on every keypress. |
 | `vibrate_level` | Picker / ListPreference | 40 · 震動強度 · §8.2 鍵盤回饋 | "40" · 震動強度 · lime_keyboard | "40" · 震動強度 · pref_section_feedback | 10 / 20 / 40 / 60 / 80 ms; hidden on API 31+ (system haptics replace it). |
 | `sound_on_keypress` | Toggle / CheckBox | false · 打字音效 · §8.2 鍵盤回饋 | false · 打字音效 · lime_keyboard | false · 打字音效 · pref_section_feedback | Audible key-click. |
+| `keypress_sound_volume` | Picker / ListPreference | *(Android-only — no iOS counterpart)* | *(new)* | "-1" · 打字音量 · pref_section_feedback · `dependency=sound_on_keypress` | Keypress-sound attenuation. `-1` (系統預設) calls one-arg `playSoundEffect(sound)` — OEM-fixed `config_soundEffectVolumeDb`, which ignores the volume slider and is gated by the system 觸控音效 toggle. `0.10`/`0.25`/`0.50`/`0.75`/`1.00` call two-arg `playSoundEffect(sound, scalar)` at that explicit scalar, bypassing the toggle. Added because Android exposes no slider-following volume for keypress effects, so Samsung/One UI plays them too loud (#128). |
 
 ## 8.4 IM Behaviour (輸入法行為)
 
