@@ -10443,6 +10443,33 @@ public class LIMEServiceTest {
                 .commit();
     }
 
+    @Test
+    public void doVibrateSoundUsesAudibleKeypressEffectForRegularKeys() throws Exception {
+        LIMEService service = new LIMEService();
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .putString("keypress_sound_volume", "1.00")
+                .commit();
+        ensureLIMEPrefInitialized(service);
+
+        AudioManager mockAudioManager = createMockAudioManager();
+        injectMockComponents(service, null, null, null, mockAudioManager);
+
+        Field hasSoundField = LIMEService.class.getDeclaredField("hasSound");
+        hasSoundField.setAccessible(true);
+        hasSoundField.setBoolean(service, true);
+
+        service.doVibrateSound(android.view.KeyEvent.KEYCODE_A);
+
+        verify(mockAudioManager).playSoundEffect(AudioManager.FX_KEYPRESS_SPACEBAR, 1.0f);
+        verify(mockAudioManager, never()).playSoundEffect(eq(AudioManager.FX_KEYPRESS_STANDARD), anyFloat());
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .remove("keypress_sound_volume")
+                .commit();
+    }
+
     /**
      * Tests switchKeyboard with mocked KeyboardSwitcher.
      * Lines 3038-3102 in LIMEService.java

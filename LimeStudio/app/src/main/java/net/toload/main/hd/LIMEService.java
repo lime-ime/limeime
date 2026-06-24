@@ -5958,7 +5958,9 @@ public class LIMEService extends InputMethodService
         }
         
         if (hasSound && mAudioManager != null) {
-            int sound = AudioManager.FX_KEYPRESS_STANDARD;
+            // Use the spacebar effect for regular keys because some Pixel/AOSP builds
+            // ship FX_KEYPRESS_STANDARD at a much lower audible level than other keys.
+            int sound = AudioManager.FX_KEYPRESS_SPACEBAR;
             switch (primaryCode) {
                 case LIMEBaseKeyboard.KEYCODE_DELETE:
                     sound = AudioManager.FX_KEYPRESS_DELETE;
