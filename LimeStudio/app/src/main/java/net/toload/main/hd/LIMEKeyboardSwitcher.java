@@ -46,6 +46,7 @@ public class LIMEKeyboardSwitcher {
 	public static final int MODE_TEXT = 1;
     public static final int MODE_SYMBOLS = 2;
     public static final int MODE_PHONE = 3;
+    public static final int MODE_PHONE_SIMPLE = 7;
     public static final int MODE_URL = 4;
     public static final int MODE_EMAIL = 5;
     public static final int MODE_IM = 6;
@@ -486,6 +487,9 @@ public class LIMEKeyboardSwitcher {
 	            	//Log.i("ART","KBMODE ->: phone");
 	                kid = new KeyboardId(getKeyboardXMLID("phone_number"));
 	                break;
+                case MODE_PHONE_SIMPLE:
+                    kid = new KeyboardId(getKeyboardXMLID("phone_simple"));
+                    break;
 	            case MODE_URL:
 	                //Log.i("ART","KBMODE ->: url");
 	                kid = new KeyboardId(

@@ -2233,6 +2233,8 @@ public class LIMEService extends InputMethodService
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
             switchKeyboard(primaryCode);
+        } else if (primaryCode == LIMEKeyboardView.KEYCODE_PHONE_SIMPLE_LONGPRESS && mInputView != null) {
+            switchKeyboard(primaryCode);
         } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD && mInputView != null) { //->switch symbols1 keyboards
             switchKeyboard(primaryCode);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM) {
@@ -5167,6 +5169,11 @@ public class LIMEService extends InputMethodService
             mEnglishOnly = true;
             mKeyboardSwitcher.toggleSymbols();
             // mFixedCandidateViewOn is always true
+            forceHideCandidateView();
+        } else if (primaryCode == LIMEKeyboardView.KEYCODE_PHONE_SIMPLE_LONGPRESS) {
+            mEnglishOnly = true;
+            mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_PHONE_SIMPLE,
+                    mImeOptions, false, false, false);
             forceHideCandidateView();
         } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD) { //Symbol keyboard
             mEnglishOnly = true;

@@ -43,6 +43,8 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	public static final int KEYCODE_SPACE_LONGPRESS = -102;
     public static final int KEYCODE_NEXT_IM = -104;
     public static final int KEYCODE_PREV_IM = -105;
+    public static final int KEYCODE_PHONE_SIMPLE_LONGPRESS = -106;
+    private static final String ENGLISH_PHONE_SIMPLE_SHORTCUT_LABEL = "...";
     
 	//static final String PREF = "LIMEXY";
 	
@@ -73,6 +75,12 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
         mSpaceCaretStepPx = context.getResources().getDimensionPixelSize(R.dimen.space_caret_step);
 	}
 
+    public static boolean isEnglishPhoneSimpleShortcutKey(int primaryCode, CharSequence label) {
+        return primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE
+                && label != null
+                && ENGLISH_PHONE_SIMPLE_SHORTCUT_LABEL.contentEquals(label);
+    }
+
 	@Override
 	protected boolean onLongPress(Key key) {
 		if(DEBUG)
@@ -83,6 +91,9 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_DONE) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
 			return true;
+        } else if (isEnglishPhoneSimpleShortcutKey(key.codes[0], key.label)) {
+            getOnKeyboardActionListener().onKey(KEYCODE_PHONE_SIMPLE_LONGPRESS, null,0,0);
+            return true;
 		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
 				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);
