@@ -11,3 +11,8 @@ Last reviewed: 2026-06-24
 ## Pending fixes
 
 - None currently tracked.
+
+## New features / product work
+
+- feat#124 Android: from #124 commenter `01disney` in https://github.com/lime-ime/limeime/issues/124#issuecomment-4786153001 / https://github.com/lime-ime/limeime/issues/124#issuecomment-4788945640. On the English keyboard only, long-pressing the `123` key should switch to the phonetic/simple numeric keyboard (`phone_simple`) instead of the first symbol keyboard (`symbols1`). Current state: confirmed feature request, pending Android design/implementation.
+- feat#124 iOS: same #124 request and scope for iOS parity. On the English keyboard only, long-pressing the `123` key should switch to the phonetic/simple numeric keyboard instead of the first symbol keyboard. Current state: confirmed feature request, pending iOS design/implementation.
