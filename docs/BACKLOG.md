@@ -10,7 +10,7 @@ Last reviewed: 2026-06-26
 
 ## Pending fixes
 
-- None currently tracked.
+- fix#136 Android: private email report tracked in #136 says newer LIME HD may have regressed Space/candidate left-right switching and emoji lookup for the reporter's `人(O)` path. Current investigation points at Android `LIMEService` Space/candidate commit behavior, the removed `candidate_switch` previous/next swipe mode, and emoji search's Chinese-candidate-pick path. Next action: reproduce with the reporter's exact version/device/IM table, then add targeted Android regression coverage before a fix. Retest should wait for a newer build with a scoped fix.
 
 ## New features / product work
 
