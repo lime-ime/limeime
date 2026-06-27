@@ -2,7 +2,7 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-26
+Last reviewed: 2026-06-27
 
 ## Active issue follow-up
 
@@ -10,7 +10,7 @@ Last reviewed: 2026-06-26
 
 ## Pending fixes
 
-- fix#136 Android: private email report tracked in #136 says newer LIME HD may have regressed Space/candidate left-right switching and emoji lookup for the reporter's `人(O)` path. Current investigation points at Android `LIMEService` Space/candidate commit behavior, the removed `candidate_switch` previous/next swipe mode, and emoji search's Chinese-candidate-pick path. Next action: reproduce with the reporter's exact version/device/IM table, then add targeted Android regression coverage before a fix. Retest should wait for a newer build with a scoped fix.
+- None currently tracked.
 
 ## New features / product work
 
