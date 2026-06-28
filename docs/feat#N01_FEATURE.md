@@ -2,7 +2,7 @@
 
 ## Source request
 
-Requested directly by Jeremy on 2026-06-28 after #124 commenter `01disney` reinforced that the candidate-strip left `X` is too small/hard to press during thumb typing and asked whether it can be closer to the smiley icon size.
+Requested directly by Jeremy on 2026-06-28 after #124 commenter `01disney` reinforced that the candidate-strip left `X` is too small/hard to press during thumb typing and asked whether it can be made the same size as the smiley icon.
 
 ## Goal
 
