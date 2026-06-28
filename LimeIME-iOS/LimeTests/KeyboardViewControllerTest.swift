@@ -449,6 +449,24 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    func testKeyboardControllerAdvertisesInputClickFeedbackToUIKit() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedback"))
+        XCTAssertTrue(source.contains("var enableInputClicksWhenVisible: Bool { true }"))
+    }
+
+    func testKeyboardSoundFeedbackBypassesSystemInputClickToggle() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("import AudioToolbox"))
+        XCTAssertTrue(source.contains("private func playKeyClickSound()"))
+        XCTAssertTrue(source.contains("AudioServicesPlaySystemSound"))
+        XCTAssertFalse(source.contains("UIDevice.current.playInputClick()"))
+    }
+
     func testCandidateChevronExpansionAllowsEnglishSuggestionsWithoutComposingBuffer() {
         XCTAssertTrue(CandidateExpansionPolicy.shouldExpand(
             hasCandidatesShown: true,
@@ -685,7 +703,13 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(method.contains("overlay.backgroundColor = LayoutMetrics.TouchTrap.fill"))
     }
 
-    func testCandidateBarDismissRoutesThroughForcedComposingClear() throws {
+    // docs/AUTO_CHINESE_PUNC.md cases c/d/g (T-iOS-1): the candidate-bar dismiss (✕)
+    // button hides the auto Chinese-punctuation strip when it is already showing
+    // (case d, via cancelComposing() which does NOT re-enter clearSuggestions), and
+    // otherwise clears the composition through clearComposing(force: true) so
+    // clearSuggestions() can surface the strip (case c = related dismiss, case g =
+    // dismiss during active composing — iOS aligned to Android).
+    func testCandidateBarDismissSurfacesPunctuationStrip() throws {
         let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
         let pattern = #"func candidateBarViewDidRequestDismiss[\s\S]*?\n    \}"#
@@ -694,14 +718,157 @@ final class KeyboardViewControllerTest: XCTestCase {
         let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
         let method = String(source[Range(match.range, in: source)!])
 
-        XCTAssertTrue(method.contains("cancelActiveComposingFromCandidateDismiss()"))
-        XCTAssertFalse(method.contains("cancelComposing()"))
+        // case d: strip already showing → hide without rebuilding it
+        XCTAssertTrue(method.contains("if hasChineseSymbolCandidatesShown {"))
+        XCTAssertTrue(method.contains("cancelComposing()"))
+        // cases c + g: otherwise clear composition and let clearSuggestions surface the strip
+        XCTAssertTrue(method.contains("clearComposing(force: true)"))
+        // must NOT bypass clearSuggestions for the non-strip dismiss (the old case-c/g bug)
+        XCTAssertFalse(method.contains("cancelActiveComposingFromCandidateDismiss()"))
+    }
 
-        let helperPattern = #"func cancelActiveComposingFromCandidateDismiss[\s\S]*?\n    \}"#
-        let helperRegex = try NSRegularExpression(pattern: helperPattern)
-        let helperMatch = try XCTUnwrap(helperRegex.firstMatch(in: source, range: range))
-        let helper = String(source[Range(helperMatch.range, in: source)!])
-        XCTAssertTrue(helper.contains("max(composingLength, mComposing.count)"))
+    // docs/AUTO_CHINESE_PUNC.md §10.3 case (b) (T-iOS-2): after committing a word
+    // with no related phrases, updateRelatedPhrase()'s empty-related branch must
+    // restore hasCandidatesShown (which the commit path reset) to true BEFORE it
+    // calls clearSuggestions(), so the auto Chinese-punctuation strip can surface.
+    func testUpdateRelatedPhraseRestoresHasCandidatesShownForPunctuationStrip() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func updateRelatedPhrase[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        // the empty-related branch exists
+        XCTAssertTrue(method.contains("if related.isEmpty {"))
+        // and it restores hasCandidatesShown before handing off to clearSuggestions
+        let branchRange = try XCTUnwrap(method.range(of: "if related.isEmpty {"))
+        let branch = String(method[branchRange.lowerBound...])
+        let restoreRange = try XCTUnwrap(branch.range(of: "self.hasCandidatesShown = true"))
+        let clearRange = try XCTUnwrap(branch.range(of: "self.clearSuggestions()"))
+        XCTAssertLessThan(restoreRange.lowerBound, clearRange.lowerBound,
+                          "case (b): hasCandidatesShown must be restored before clearSuggestions()")
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §10.3 (T-iOS-3): clearSuggestions() is the single
+    // strip builder. It must carry the full gate
+    // (autoChineseSymbol && !mEnglishOnly && hasCandidatesShown && !hasChineseSymbolCandidatesShown)
+    // and build the strip via chinesePunctuationMappings() — cases a/b/c/g all route here.
+    func testClearSuggestionsHasAutoChinesePunctuationGate() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func clearSuggestions[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        XCTAssertTrue(method.contains("autoChineseSymbol && !mEnglishOnly && hasCandidatesShown && !hasChineseSymbolCandidatesShown"))
+        XCTAssertTrue(method.contains("chinesePunctuationMappings()"))
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §10.3 cases (e)/(f) (T-iOS-4): in handleBackspace(),
+    // the Case-4 branch (hasChineseSymbolCandidatesShown) hides the punctuation strip
+    // by emptying the bar and must NOT delete a character (case e). The browse-only
+    // branch instead dismisses the related bar AND deletes one character (case f).
+    func testHandleBackspaceHidesPunctuationStripWithoutDeletingAndDismissesBrowseList() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func handleBackspace[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        // Case 4 (case e): strip showing → hide via empty bar. Bound the slice to the
+        // NEXT else-if header so it covers only the Case-4 body (the following English
+        // and browse branches legitimately call deleteBackward()).
+        let case4Range = try XCTUnwrap(
+            method.range(of: "else if hasCandidatesShown && hasChineseSymbolCandidatesShown {"))
+        let case5Range = try XCTUnwrap(
+            method.range(of: "else if mEnglishOnly && !tempEnglishWord.isEmpty {"))
+        let browseRange = try XCTUnwrap(
+            method.range(of: "else if isBrowseOnlySuggestionList {"))
+        let case4Branch = String(method[case4Range.lowerBound..<case5Range.lowerBound])
+        XCTAssertTrue(case4Branch.contains("candidateBar.setCandidates([])"))
+        // case e: the strip-hide branch must NOT delete a character
+        XCTAssertFalse(case4Branch.contains("deleteBackward()"))
+
+        // case f: browse-only (related) branch dismisses the bar AND deletes one char
+        let browseBranch = String(method[browseRange.lowerBound...])
+        XCTAssertTrue(browseBranch.contains("dismissBrowseOnlySuggestionBar()"))
+        XCTAssertTrue(browseBranch.contains("textDocumentProxy.deleteBackward()"))
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §2 / §4.4 / §10.4 (T-MODE): the strip is Chinese-mode
+    // only. clearSuggestions()'s build gate must include !mEnglishOnly so the strip
+    // never appears in English-prediction mode even when the pref is ON.
+    func testPunctuationStripGatedToChineseMode() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func clearSuggestions[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        XCTAssertTrue(method.contains("!mEnglishOnly"))
+        XCTAssertTrue(method.contains("autoChineseSymbol && !mEnglishOnly"))
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §4.4 / §10.4 (T-BROWSE): the punctuation strip (and
+    // related/English lists) are browse-only — Space/Enter must insert a literal
+    // space/newline rather than commit the first entry. handleEnterOrSpace consults
+    // isBrowseOnlySuggestionList to suppress the pick.
+    func testBrowseOnlyListsDoNotCommitOnSpaceOrEnter() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func handleEnterOrSpace[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        // it consults the browse-only gate and suppresses the pick for those lists
+        XCTAssertTrue(method.contains("let isAssociatedList = isBrowseOnlySuggestionList"))
+        XCTAssertTrue(method.contains("if isAssociatedList {\n            shouldPick = false"))
+        // browse-only Space/Enter inserts a literal space/newline rather than committing
+        XCTAssertTrue(method.contains("textDocumentProxy.insertText(isEnter ? \"\\n\" : \" \")"))
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §3 / T-SET: the iOS strip must emit the canonical
+    // punctuation set — same symbols, same order as Android ChineseSymbol.chineseSymbols
+    // — so both platforms show an identical strip. (Android side: the matching
+    // LIMEServiceTest T-SET asserts getChineseSymoblList() returns this exact list.)
+    func testChinesePunctuationStripMatchesCanonicalAndroidSet() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"static func chinesePunctuationMappings[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        // Canonical ordered set (mirrors Android ChineseSymbol.chineseSymbols).
+        let canonical = ["，", "。", "、", "？", "！", "：", "；",
+                         "（", "）", "「", "」", "『", "』", "【", "】",
+                         "／", "＼", "－", "＿", "＊", "＆", "︿",
+                         "％", "＄", "＃", "＠", "～",
+                         "｛", "｝", "［", "］", "＜", "＞", "＋", "｜", "‵", "＂"]
+        // each canonical symbol present, and in this exact order
+        var cursor = method.startIndex
+        for s in canonical {
+            guard let r = method.range(of: "\"\(s)\"", range: cursor..<method.endIndex) else {
+                XCTFail("canonical symbol \(s) missing or out of order in the iOS strip")
+                return
+            }
+            cursor = r.upperBound
+        }
+        // the old iOS-only symbols must be gone (strip unified to the Android set)
+        for s in ["〔", "〕", "《", "》", "〈", "〉", "…", "·", "※"] {
+            XCTAssertFalse(method.contains("\"\(s)\""), "removed iOS-only symbol \(s) still present")
+        }
     }
 
     func testCandidateBarIdleToolVisibilityIsDelayedAndSuppressible() throws {

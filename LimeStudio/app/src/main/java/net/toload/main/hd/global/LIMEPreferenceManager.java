@@ -592,7 +592,7 @@ public class LIMEPreferenceManager {
 	public boolean getAutoChineseSymbol(){
 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-		return sp.getBoolean("auto_chinese_symbol", true);
+		return sp.getBoolean("auto_chinese_symbol", false);
 	}
 	
 	

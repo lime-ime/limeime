@@ -2531,6 +2531,12 @@ final class KeyboardViewController: UIInputViewController {
                 if related.isEmpty {
                     // spec §8 step 6: no related results → nil committedCandidate, clear bar
                     self.committedCandidate = nil
+                    // spec §11 case (b): the commit path already reset hasCandidatesShown
+                    // (finishComposing + the mComposing.isEmpty block above), so restore it
+                    // here so clearSuggestions() can surface the auto Chinese-punctuation
+                    // strip. clearSuggestions() still gates on the autoChineseSymbol pref,
+                    // so this is a no-op when the feature is off.
+                    self.hasCandidatesShown = true
                     self.clearSuggestions()
                 } else {
                     self.mCandidateList         = related
@@ -2788,12 +2794,15 @@ final class KeyboardViewController: UIInputViewController {
     // MARK: - Chinese Punctuation List (spec §11)
 
     /// Standard Chinese punctuation set shown after a commit when autoChineseSymbol is on.
+    /// Canonical set — must stay identical (same symbols, same order) to Android's
+    /// `ChineseSymbol.chineseSymbols` so both platforms show the same strip
+    /// (docs/AUTO_CHINESE_PUNC.md §3; locked by the T-SET parity tests).
     static func chinesePunctuationMappings() -> [Mapping] {
-        let symbols = ["，", "。", "、", "；", "：", "？", "！",
-                       "「", "」", "『", "』", "【", "】", "〔", "〕",
-                       "（", "）", "《", "》", "〈", "〉",
-                       "…", "——", "～", "·", "※",
-                       "\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}"]
+        let symbols = ["，", "。", "、", "？", "！", "：", "；",
+                       "（", "）", "「", "」", "『", "』", "【", "】",
+                       "／", "＼", "－", "＿", "＊", "＆", "︿",
+                       "％", "＄", "＃", "＠", "～",
+                       "｛", "｝", "［", "］", "＜", "＞", "＋", "｜", "‵", "＂"]
         return symbols.map {
             Mapping(id: 0, code: "", word: $0, score: 0, baseScore: 0,
                     recordType: Mapping.RecordType.chinesePunctuation)
@@ -3999,7 +4008,22 @@ extension KeyboardViewController: CandidateBarViewDelegate {
             return
         }
         if isExpandedCandidatesVisible { hideExpandedCandidates() }
-        cancelActiveComposingFromCandidateDismiss()
+        // Candidate-bar dismiss (✕) button — see docs/AUTO_CHINESE_PUNC.md.
+        //  • Punctuation strip already showing → put it away WITHOUT rebuilding it
+        //    (case d). cancelComposing() empties the bar via a direct setCandidates([])
+        //    and does not route through clearSuggestions(), so it cannot re-surface.
+        //  • Otherwise — active composing (case g) OR a related-phrase browse list
+        //    (case c) — clear the composition and route through clearSuggestions() so
+        //    the auto Chinese-punctuation strip surfaces, matching Android's
+        //    dismissCandidateComposing → clearComposing(true). clearComposing(force:
+        //    true) deletes any inline composing text, keeps hasCandidatesShown, then
+        //    calls clearSuggestions(), which gates on the autoChineseSymbol pref (so
+        //    the bar simply clears when the feature is off).
+        if hasChineseSymbolCandidatesShown {
+            cancelComposing()
+            return
+        }
+        clearComposing(force: true)
     }
 
     func candidateBarViewDidRequestKeyboardDismiss(_ view: CandidateBarView) {

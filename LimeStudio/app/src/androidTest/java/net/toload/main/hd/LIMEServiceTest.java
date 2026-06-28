@@ -785,6 +785,231 @@ public class LIMEServiceTest {
         assertTrue(((LinkedList<?>) candidateListField.get(service)).isEmpty());
     }
 
+    // ====================================================================================
+    // Auto Chinese punctuation strip (docs/AUTO_CHINESE_PUNC.md §10.1, IDs T-A-*).
+    //
+    // The strip is built in exactly one place — updateChineseSymbol() — which sets
+    // hasChineseSymbolCandidatesShown=true and calls setSuggestions(...) with the fixed
+    // ChineseSymbol.getChineseSymoblList() punctuation list. Every "strip shown" assertion
+    // verifies a non-empty setSuggestions(...) on the injected mock CandidateView, and every
+    // "strip not shown" assertion verifies setSuggestions(...) was never invoked. The
+    // keyDownUp(KEYCODE_DEL,...) signal is observed through the InputConnection's
+    // sendKeyEvent(KeyEvent), since keyDownUp() routes the delete through
+    // getCurrentInputConnection().sendKeyEvent(...). mCandidateViewInInputView is left null
+    // so hideCandidateView() returns before touching the Handler.
+    // ====================================================================================
+
+    /**
+     * Builds a LIMEService whose getCurrentInputConnection() returns the supplied mock and
+     * whose mLIMEPref reads getAutoChineseSymbol() from default SharedPreferences. The
+     * auto_chinese_symbol key is written explicitly so the test controls the pref.
+     */
+    private LIMEService createAutoChinesePuncService(InputConnection inputConnection,
+                                                     boolean autoChineseSymbolOn) throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .putBoolean("auto_chinese_symbol", autoChineseSymbolOn)
+                .commit();
+
+        class TestableLIMEService extends LIMEService {
+            @Override
+            public InputConnection getCurrentInputConnection() {
+                return inputConnection;
+            }
+        }
+
+        LIMEService service = new TestableLIMEService();
+        setPrivateField(service, "mLIMEPref", new LIMEPreferenceManager(appContext));
+        setPrivateField(service, "mComposing", new StringBuilder());
+        setPrivateField(service, "mCandidateList", new LinkedList<Mapping>());
+        setPrivateField(service, "mEnglishOnly", false);
+        return service;
+    }
+
+    private void invokePrivateNoArg(LIMEService service, String methodName) throws Exception {
+        Method method = LIMEService.class.getDeclaredMethod(methodName);
+        method.setAccessible(true);
+        method.invoke(service);
+    }
+
+    /**
+     * T-A-a (case a, pref ON): empty composition + hasCandidatesShown ⇒ clearSuggestions()
+     * routes into updateChineseSymbol() and the punctuation strip is shown.
+     */
+    @Test
+    public void autoChinesePunc_T_A_a_clearSuggestionsShowsStripWhenPrefOn() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", false);
+
+        invokePrivateNoArg(service, "clearSuggestions");
+
+        org.mockito.ArgumentCaptor<List> captor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(candidateView).setSuggestions(captor.capture(), anyBoolean(), anyString());
+        assertFalse("punctuation list should not be empty", captor.getValue().isEmpty());
+        assertTrue("hasChineseSymbolCandidatesShown should be true after strip shown",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    /**
+     * T-A-aOff (case a, pref OFF): same empty-bar transition routes through the
+     * hideCandidateView() branch and NEVER shows the punctuation strip.
+     */
+    @Test
+    public void autoChinesePunc_T_A_aOff_clearSuggestionsHidesWhenPrefOff() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, false);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", false);
+
+        invokePrivateNoArg(service, "clearSuggestions");
+
+        verify(candidateView, never()).setSuggestions(any(), anyBoolean(), anyString());
+        assertFalse("hasChineseSymbolCandidatesShown stays false when pref OFF",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+        assertFalse("hasCandidatesShown cleared by hideCandidateView()",
+                (boolean) getPrivateField(service, "hasCandidatesShown"));
+    }
+
+    /**
+     * T-A-d (case d, pref ON) — MOST IMPORTANT: dismissing while the punctuation strip is
+     * already showing routes through hideCandidateView() and does NOT rebuild the strip
+     * (no further setSuggestions). Locks the Android dismiss fix.
+     */
+    @Test
+    public void autoChinesePunc_T_A_d_dismissOnStripHidesWithoutRebuild() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", true);
+
+        service.dismissCandidateComposing();
+
+        verify(candidateView, never()).setSuggestions(any(), anyBoolean(), anyString());
+        assertFalse("hasChineseSymbolCandidatesShown reset by hideCandidateView()",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+        assertFalse("hasCandidatesShown reset by hideCandidateView()",
+                (boolean) getPrivateField(service, "hasCandidatesShown"));
+    }
+
+    /**
+     * T-A-c (case c, pref ON): dismissing a related-phrase strip
+     * (hasCandidatesShown=true, hasChineseSymbolCandidatesShown=false, empty composing)
+     * routes through clearComposing(true) → clearSuggestions() and DOES surface the
+     * punctuation strip.
+     */
+    @Test
+    public void autoChinesePunc_T_A_c_dismissOnRelatedStripShowsPunctuation() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", false);
+
+        service.dismissCandidateComposing();
+
+        org.mockito.ArgumentCaptor<List> captor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(candidateView).setSuggestions(captor.capture(), anyBoolean(), anyString());
+        assertFalse("punctuation list should not be empty", captor.getValue().isEmpty());
+        assertTrue("hasChineseSymbolCandidatesShown true after strip shown",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    /**
+     * T-A-e (case e): Backspace while the punctuation strip is showing hides it WITHOUT
+     * deleting a character — no keyDownUp(KEYCODE_DEL) (no sendKeyEvent) is issued.
+     */
+    @Test
+    public void autoChinesePunc_T_A_e_backspaceOnStripHidesWithoutDelete() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", true);
+
+        invokePrivateNoArg(service, "handleBackspace");
+
+        verify(inputConnection, never()).sendKeyEvent(any(android.view.KeyEvent.class));
+        verify(candidateView, never()).setSuggestions(any(), anyBoolean(), anyString());
+        assertFalse("hasChineseSymbolCandidatesShown reset by hideCandidateView()",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+        assertFalse("hasCandidatesShown reset by hideCandidateView()",
+                (boolean) getPrivateField(service, "hasCandidatesShown"));
+    }
+
+    /**
+     * T-A-f (case f, #78): Backspace while a related-phrase strip is showing
+     * (hasCandidatesShown=true, hasChineseSymbolCandidatesShown=false, empty composing)
+     * deletes one character — keyDownUp(KEYCODE_DEL) fires a sendKeyEvent — and the
+     * punctuation strip is NOT surfaced (hasCandidatesShown pre-cleared).
+     */
+    @Test
+    public void autoChinesePunc_T_A_f_backspaceOnRelatedStripDeletesNoStrip() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasChineseSymbolCandidatesShown", false);
+
+        invokePrivateNoArg(service, "handleBackspace");
+
+        verify(inputConnection, atLeastOnce()).sendKeyEvent(any(android.view.KeyEvent.class));
+        verify(candidateView, never()).setSuggestions(any(), anyBoolean(), anyString());
+        assertFalse("hasChineseSymbolCandidatesShown stays false",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    /**
+     * T-A-default (§2): after the Task-1 getter change, a LIMEPreferenceManager reading
+     * SharedPreferences with no stored auto_chinese_symbol key returns false.
+     */
+    @Test
+    public void autoChinesePunc_T_A_default_getterDefaultsFalse() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(appContext)
+                .edit()
+                .remove("auto_chinese_symbol")
+                .commit();
+
+        LIMEPreferenceManager pref = new LIMEPreferenceManager(appContext);
+        assertFalse("getAutoChineseSymbol() must default to false with no stored key",
+                pref.getAutoChineseSymbol());
+    }
+
+    // docs/AUTO_CHINESE_PUNC.md §3 / T-SET: the canonical ordered punctuation set both
+    // platforms must emit. iOS chinesePunctuationMappings() mirrors this exact list
+    // (locked on the iOS side by testChinesePunctuationStripMatchesCanonicalAndroidSet).
+    @Test
+    public void autoChinesePunc_T_SET_chineseSymbolListMatchesCanonicalSet() {
+        java.util.List<Mapping> list = net.toload.main.hd.data.ChineseSymbol.getChineseSymoblList();
+        String[] expected = {"，", "。", "、", "？", "！", "：", "；",
+                "（", "）", "「", "」", "『", "』", "【", "】",
+                "／", "＼", "－", "＿", "＊", "＆", "︿",
+                "％", "＄", "＃", "＠", "～",
+                "｛", "｝", "［", "］", "＜", "＞", "＋", "｜", "‵", "＂"};
+        assertEquals("punctuation strip size", expected.length, list.size());
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals("punctuation symbol at index " + i, expected[i], list.get(i).getWord());
+        }
+    }
+
     private static Mapping createCandidate(String code, String word) {
         Mapping mapping = new Mapping();
         mapping.setCode(code);

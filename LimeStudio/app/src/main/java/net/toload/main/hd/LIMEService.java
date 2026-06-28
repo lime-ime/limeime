@@ -4928,6 +4928,18 @@ public class LIMEService extends InputMethodService
         if (mCandidateView != null) {
             mCandidateView.hideCandidatePopup();
         }
+        // When the auto Chinese-punctuation strip itself is showing, the user is
+        // dismissing the strip. clearComposing(true) routes through clearSuggestions(),
+        // which rebuilds the strip (hasCandidatesShown is still true) on the same tap,
+        // making it impossible to dismiss. hideCandidateView() resets both
+        // hasCandidatesShown and hasChineseSymbolCandidatesShown so it stays gone until
+        // the next candidate cycle. Related-phrase dismissal is unaffected
+        // (hasChineseSymbolCandidatesShown == false there), so it still surfaces the
+        // punctuation strip via clearSuggestions().
+        if (hasChineseSymbolCandidatesShown) {
+            hideCandidateView();
+            return;
+        }
         clearComposing(true);
         InputConnection ic = getCurrentInputConnection();
         if (ic != null) ic.finishComposingText();
