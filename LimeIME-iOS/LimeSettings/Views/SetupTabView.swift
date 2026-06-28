@@ -414,13 +414,14 @@ struct SetupTabView: View {
 
     @ViewBuilder
     private var logoImage: some View {
-        if let uiImage = appIconUIImage() {
-            Image(uiImage: uiImage)
+        // Transparent-background brand logo (adapts to light/dark) — NOT the
+        // white-background app icon. Source: Resources/Limeicon/Icon.png.
+        if UIImage(named: "LimeLogo") != nil {
+            Image("LimeLogo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: SettingsMetrics.setupLogoSize,
                        height: SettingsMetrics.setupLogoSize)
-                .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.setupLogoCornerRadius))
         } else {
             Image(systemName: "keyboard.fill")
                 .resizable()
@@ -432,19 +433,6 @@ struct SetupTabView: View {
                 .background(Color(.quaternarySystemFill))
                 .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.setupLogoCornerRadius))
         }
-    }
-
-    /// Returns the app's primary icon from the bundle.
-    /// `UIImage(named: "AppIcon")` does not work for app-icon assets at runtime;
-    /// reading the file name from `CFBundleIcons` is the correct approach.
-    private func appIconUIImage() -> UIImage? {
-        guard
-            let icons   = Bundle.main.infoDictionary?["CFBundleIcons"]         as? [String: Any],
-            let primary = icons["CFBundlePrimaryIcon"]                          as? [String: Any],
-            let files   = primary["CFBundleIconFiles"]                          as? [String],
-            let name    = files.last
-        else { return nil }
-        return UIImage(named: name)
     }
 
     // MARK: - Status banner

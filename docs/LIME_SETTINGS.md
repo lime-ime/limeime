@@ -200,7 +200,7 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 #### iOS (`SetupTabView.swift`)
 
-**Brand hero**: a centered `HStack(spacing: 16)` — the logo **beside** the wordmark. `appIconUIImage()` reads `CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles` from the bundle (92×92pt, `cornerRadius: 18`); fallback is `Image(systemName: "keyboard.fill")` (60pt) in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.system(size: 30, weight: .bold)`. Top padding 20pt.
+**Brand hero**: a centered `HStack(spacing: 16)` — the logo **beside** the wordmark. The logo is the **transparent-background** brand mark `Image("LimeLogo")` (92×92pt, `scaledToFit`, no clip mask — adapts to light/dark; source `Resources/Limeicon/Icon.png`, **not** the white-background app icon); fallback is `Image(systemName: "keyboard.fill")` (60pt) in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.system(size: 30, weight: .bold)`. Top padding 20pt.
 
 **Status banner**: color-coded `Label` over a subtle status tint in a rounded card, placed **between the brand hero and the setup title** (directly below the hero). See §4.2 for detection logic, colours, and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
 
@@ -233,12 +233,11 @@ NavigationStack (.navigationBarHidden(true))
         │
         ├── // ── Brand hero (logo beside wordmark, centered) ──────────
         │   HStack(spacing: 16) {
-        │       logoImage              // appIconUIImage() reads CFBundleIcons/CFBundlePrimaryIcon/
-        │                             // CFBundleIconFiles from bundle; fallback:
-        │                             // Image(systemName: "keyboard.fill") (60pt) in accent tile
+        │       logoImage              // Image("LimeLogo") — transparent-background brand mark
+        │                             // (Resources/Limeicon/Icon.png), adapts to light/dark;
+        │                             // fallback: Image(systemName: "keyboard.fill") (60pt) in accent tile
         │           .resizable().scaledToFit()
         │           .frame(width: 92, height: 92)
-        │           .clipShape(RoundedRectangle(cornerRadius: 18))
         │       Text("萊姆輸入法")
         │           .font(.system(size: 30, weight: .bold))
         │   }
