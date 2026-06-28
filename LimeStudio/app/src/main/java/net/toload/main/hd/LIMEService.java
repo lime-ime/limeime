@@ -5172,18 +5172,17 @@ public class LIMEService extends InputMethodService
             forceHideCandidateView();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_PHONE_SIMPLE_LONGPRESS) {
             mEnglishOnly = true;
-            mKeyboardSwitcher.setKeyboardMode(activeIM, LIMEKeyboardSwitcher.MODE_PHONE_SIMPLE,
-                    mImeOptions, false, false, false);
+            mKeyboardSwitcher.switchToPhoneSimple();
             forceHideCandidateView();
         } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD) { //Symbol keyboard
             mEnglishOnly = true;
             mKeyboardSwitcher.switchSymbols();
             // mFixedCandidateViewOn is always true
             forceHideCandidateView();
-        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi --> Eng
+        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi/phone_simple --> Eng
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
-            mKeyboardSwitcher.toggleChinese();
+            mKeyboardSwitcher.switchToEnglish(); // feat#124: idempotent; fixes phone_simple ABC return
             // mFixedCandidateViewOn is always true
             if (!mPredictionOn) {
                 showEmptyCandidateToolbar();

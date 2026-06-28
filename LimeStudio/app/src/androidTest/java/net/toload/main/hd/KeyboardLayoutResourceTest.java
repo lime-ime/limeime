@@ -253,7 +253,7 @@ public class KeyboardLayoutResourceTest {
 
     private void assertEnglishPhoneShortcutKey(Context context, int layoutId) {
         try {
-            XmlPullParser parser = context.getResources().getXml(layoutId);
+            android.content.res.XmlResourceParser parser = context.getResources().getXml(layoutId);
             int eventType;
             while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT) {
                 if (eventType != XmlPullParser.START_TAG || !"Key".equals(parser.getName())) {
@@ -265,12 +265,21 @@ public class KeyboardLayoutResourceTest {
                     continue;
                 }
 
-                String label = parser.getAttributeValue(LIME_ATTR_NS, "keyLabel");
-                assertEquals("English symbol key should show phone long-press hint in layout "
-                        + context.getResources().getResourceEntryName(layoutId), "...", label);
-                assertTrue("English symbol key long press should use phone_simple shortcut",
+                String name = context.getResources().getResourceEntryName(layoutId);
+                // feat#124: the symbol key keeps its "123" face (a @string resource) ...
+                int labelResId = parser.getAttributeResourceValue(LIME_ATTR_NS, "keyLabel", 0);
+                assertTrue("English symbol key should keep its 123 string-resource face in " + name,
+                        labelResId != 0);
+                assertEquals("English symbol key should keep its 123 face in " + name,
+                        "123", context.getString(labelResId));
+                // ... plus a popupKeyboard so the existing "..." minikeyboard hint renders at the
+                // bottom and marks the key as the phone_simple long-press shortcut.
+                int popupResId = parser.getAttributeResourceValue(LIME_ATTR_NS, "popupKeyboard", 0);
+                assertTrue("English symbol key should carry a popupKeyboard hint in " + name,
+                        popupResId != 0);
+                assertTrue("English symbol key long press should use the phone_simple shortcut",
                         LIMEKeyboardView.isEnglishPhoneSimpleShortcutKey(
-                                LIMEService.KEYCODE_SWITCH_TO_SYMBOL_MODE, label));
+                                LIMEService.KEYCODE_SWITCH_TO_SYMBOL_MODE, popupResId));
                 return;
             }
             fail("English layout should contain the normal symbol-mode key: "
