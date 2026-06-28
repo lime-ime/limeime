@@ -18,7 +18,7 @@ Code: [`KeyboardView.swift:875`](../LimeIME-iOS/LimeKeyboard/KeyboardView.swift)
 
 **Effect without Full Access:** haptic feedback silently stops. No crash, no error — the Taptic Engine is simply never engaged. There is currently no `hasFullAccess` guard before these calls.
 
-Sound feedback (`UIDevice.current.playInputClick()` via the `UIInputViewAudioFeedback` protocol, [`KeyboardView.swift:141`](../LimeIME-iOS/LimeKeyboard/KeyboardView.swift)) is **not** gated by Full Access and works correctly either way.
+Sound feedback (`AudioServicesPlaySystemSound` for system default, or `AVAudioPlayer` for custom volume) is **not** gated by Full Access and works correctly either way.
 
 ### 2. Voice input — mic key (planned, not yet shipped)
 

@@ -34,7 +34,7 @@
 | `vibrate_on_keypress` | Toggle / CheckBox | true · 打字震動 · §8.2 鍵盤回饋 | true · 打字震動 · lime_keyboard | true · 打字震動 · pref_section_feedback | Haptic feedback on every keypress. |
 | `vibrate_level` | Picker / ListPreference | 40 · 震動強度 · §8.2 鍵盤回饋 | "40" · 震動強度 · lime_keyboard | "40" · 震動強度 · pref_section_feedback | 10 / 20 / 40 / 60 / 80 ms; hidden on API 31+ (system haptics replace it). |
 | `sound_on_keypress` | Toggle / CheckBox | false · 打字音效 · §8.2 鍵盤回饋 | false · 打字音效 · lime_keyboard | false · 打字音效 · pref_section_feedback | Audible key-click. |
-| `keypress_sound_volume` | Picker / ListPreference | *(Android-only — no iOS counterpart)* | *(new)* | "-1" · 打字音量 · pref_section_feedback · `dependency=sound_on_keypress` | Keypress-sound attenuation. `-1` (系統預設) calls one-arg `playSoundEffect(sound)` — OEM-fixed `config_soundEffectVolumeDb`, which ignores the volume slider and is gated by the system 觸控音效 toggle. `0.10`/`0.25`/`0.50`/`0.75`/`1.00` call two-arg `playSoundEffect(sound, scalar)` at that explicit scalar, bypassing the toggle. Added because Android exposes no slider-following volume for keypress effects, so Samsung/One UI plays them too loud (#128). |
+| `keypress_sound_volume` | Picker / ListPreference | "-1" · 打字音量 · §8.2 鍵盤回饋 · `dependency=sound_on_keypress` | *(new)* | "-1" · 打字音量 · pref_section_feedback · `dependency=sound_on_keypress` | Keypress-sound attenuation. `-1` (系統預設) keeps the platform default click path. `0.10`/`0.25`/`0.50`/`0.75`/`1.00` use explicit scalar volume: Android calls two-arg `playSoundEffect(sound, scalar)`; iOS uses a LIME-owned click sample through `AVAudioPlayer.volume`. Added because platform keyboard clicks expose no app-level volume slider. |
 
 ## 8.4 IM Behaviour (輸入法行為)
 
@@ -156,7 +156,7 @@ Pre-back-port had **3 flat categories** (`lime_keyboard` / `lime_im` / `lime_map
 | Pre-back-port category | Current category | Items |
 |---|---|---|
 | lime_keyboard (鍵盤) | pref_section_appearance (§8.1) | keyboard_theme, keyboard_size, font_size, number_row_in_english, show_arrow_key, split_keyboard_mode |
-| lime_keyboard | pref_section_feedback (§8.2) | vibrate_on_keypress, vibrate_level, sound_on_keypress |
+| lime_keyboard | pref_section_feedback (§8.2) | vibrate_on_keypress, vibrate_level, sound_on_keypress, keypress_sound_volume |
 | lime_keyboard | pref_section_im_behaviour (§8.4) | enable_emoji_position, persistent_language_mode |
 | lime_keyboard | pref_section_physical_keyboard | hide_software_keyboard_typing_with_physical, switch_english_mode, switch_english_mode_shift |
 | lime_im (輸入法) | pref_section_im_behaviour (§8.4) | smart_chinese_input, auto_chinese_symbol |

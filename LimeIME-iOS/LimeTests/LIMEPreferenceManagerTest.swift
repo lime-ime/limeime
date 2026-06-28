@@ -84,6 +84,10 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         XCTAssertFalse(prefs.soundOnKeypress)
     }
 
+    func testDefaultKeypressSoundVolume() {
+        XCTAssertEqual(prefs.keypressSoundVolume, "-1")
+    }
+
     func testDefaultNumberRowInEnglish() {
         XCTAssertTrue(prefs.numberRowInEnglish)
     }
@@ -198,6 +202,11 @@ final class LIMEPreferenceManagerTest: XCTestCase {
     func testRoundTripVibrateLevel() {
         prefs.vibrateLevel = 60
         XCTAssertEqual(prefs.vibrateLevel, 60)
+    }
+
+    func testRoundTripKeypressSoundVolume() {
+        prefs.keypressSoundVolume = "0.75"
+        XCTAssertEqual(prefs.keypressSoundVolume, "0.75")
     }
 
     func testRoundTripPhoneticKeyboardType() {

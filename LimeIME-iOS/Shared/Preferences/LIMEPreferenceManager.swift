@@ -122,6 +122,11 @@ final class LIMEPreferenceManager {
         set { defaults.set(newValue, forKey: "sound_on_keypress") }
     }
 
+    var keypressSoundVolume: String {
+        get { stringValue("keypress_sound_volume", default: "-1") }
+        set { defaults.set(newValue, forKey: "keypress_sound_volume") }
+    }
+
     // MARK: - §8.4 IM Behaviour
 
     var smartChineseInput: Bool {

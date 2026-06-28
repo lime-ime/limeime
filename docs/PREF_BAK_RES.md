@@ -160,7 +160,7 @@ Recommended allowlist categories:
 | Category | Example keys |
 |---|---|
 | Appearance | `keyboard_theme`, `keyboard_size`, `font_size`, `number_row_in_english`, `show_arrow_key`, `split_keyboard_mode` |
-| Feedback | `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress` |
+| Feedback | `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress`, `keypress_sound_volume` |
 | IM behavior | `smart_chinese_input`, `auto_chinese_symbol`, `persistent_language_mode`, `enable_emoji_position`, `similiar_list` |
 | Han conversion | `han_convert_option` |
 | Related and learning | `similiar_enable`, `candidate_suggestion`, `learn_phrase`, `learning_switch` |

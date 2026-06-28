@@ -3,7 +3,9 @@
 // Full keyboard extension entry point.
 // Implements IMService behavior per IM_SERVICE.md spec.
 
-final class KeyboardViewController: UIInputViewController {
+final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedback {
+
+    var enableInputClicksWhenVisible: Bool { true }
 
     static func isForcedEnglishKeyboardType(_ keyboardType: UIKeyboardType) -> Bool {
         KeyboardTypePolicy.isForcedEnglishKeyboardType(keyboardType)
@@ -84,6 +86,7 @@ final class KeyboardViewController: UIInputViewController {
     private var hasVibration:            Bool = false
     private var vibrateLevel:            Int  = 40   // mapped to UIImpactFeedbackGenerator style
     private var hasSound:                Bool = false
+    private var keypressSoundVolume:     String = "-1"
     private var mPersistentLanguageMode: Bool = false // persist English/Chinese mode
     private var phoneticKeyboardType:    String = "phonetic"
     private var candidateSuggestion:     Bool = true  // gates RP learning (candidate_suggestion)
@@ -754,6 +757,7 @@ final class KeyboardViewController: UIInputViewController {
         hasVibration            = (d?.object(forKey: "vibrate_on_keypress")       as? Bool)     ?? true
         vibrateLevel            = (d?.object(forKey: "vibrate_level")             as? Int)      ?? 40
         hasSound                = d?.bool(forKey: "sound_on_keypress")                          ?? false
+        keypressSoundVolume     = d?.string(forKey: "keypress_sound_volume") ?? "-1"
         mPersistentLanguageMode = d?.bool(forKey: "persistent_language_mode")                   ?? false
         phoneticKeyboardType    = d?.string(forKey: "phonetic_keyboard_type")                   ?? "phonetic"
         autoCommit              = d?.integer(forKey: "auto_commit")                             ?? 0
@@ -797,6 +801,7 @@ final class KeyboardViewController: UIInputViewController {
     private func applyFeedbackSettings() {
         keyboardView?.feedbackVibration = hasVibration
         keyboardView?.feedbackSound     = hasSound
+        keyboardView?.keypressSoundVolume = keypressSoundVolume
         keyboardView?.vibrateLevel      = vibrateLevel
         keyboardView?.showArrowKey      = showArrowKey
         let prevScale = keyboardView?.keySizeScale

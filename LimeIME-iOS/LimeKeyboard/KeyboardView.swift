@@ -1,4 +1,6 @@
 ﻿import UIKit
+import AudioToolbox
+import AVFoundation
 
 // Full keyboard view: renders keys from a LimeKeyLayout.
 // Phase 2: UIButton-based; Phase 3 can switch to UICollectionView for more flexibility.
@@ -141,9 +143,10 @@ protocol KeyboardViewDelegate: AnyObject {
 }
 
 final class KeyboardView: UIView, UIInputViewAudioFeedback {
-    /// Required by UIInputViewAudioFeedback so UIDevice.current.playInputClick() actually plays.
-    /// The system only plays the click sound when the visible input view returns true here.
+    /// Keeps the visible input view eligible for UIKit input-click feedback.
     var enableInputClicksWhenVisible: Bool { true }
+    private static let keyClickSystemSoundID: SystemSoundID = 1104
+    private static let keyClickWavData = makeKeyClickWavData()
 
     static func shouldUseDualRowGesture(isPad: Bool, layoutId: String, keyDef: KeyDef) -> Bool {
         KeyboardGesturePolicy.shouldUseDualRowGesture(isPad: isPad, layoutId: layoutId, keyDef: keyDef)
@@ -192,11 +195,88 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
     var feedbackSound:     Bool = false
+    var keypressSoundVolume: String = "-1"
+    private var keyClickPlayer: AVAudioPlayer?
     var vibrateLevel: Int = 40 {
         didSet {
             guard oldValue != vibrateLevel else { return }
             rebuildHapticGenerator()
         }
+    }
+
+    private func playKeyClickSound() {
+        if let volume = Self.customKeyClickVolume(from: keypressSoundVolume) {
+            playCustomKeyClick(volume: volume)
+            return
+        }
+        AudioServicesPlaySystemSound(Self.keyClickSystemSoundID)
+    }
+
+    static func customKeyClickVolume(from rawValue: String) -> Float? {
+        guard let volume = Float(rawValue), volume >= 0 else { return nil }
+        return min(volume, 1)
+    }
+
+    static func makeKeyClickWavData() -> Data {
+        let sampleRate: UInt32 = 44_100
+        let channelCount: UInt16 = 1
+        let bitsPerSample: UInt16 = 16
+        let sampleCount = Int(Double(sampleRate) * 0.014)
+
+        var samples = Data()
+        samples.reserveCapacity(sampleCount * 2)
+        for i in 0..<sampleCount {
+            let t = Double(i) / Double(sampleRate)
+            let attack = min(1, Double(i) / 6)
+            let decay = exp(-Double(i) / 120)
+            let tone = sin(2 * Double.pi * 3_600 * t) * 0.85
+                + sin(2 * Double.pi * 7_200 * t) * 0.15
+            let clipped = max(-1, min(1, tone * attack * decay))
+            appendLittleEndian(Int16(clipped * Double(Int16.max)), to: &samples)
+        }
+
+        let byteRate = sampleRate * UInt32(channelCount) * UInt32(bitsPerSample / 8)
+        let blockAlign = channelCount * (bitsPerSample / 8)
+        var data = Data()
+        data.reserveCapacity(44 + samples.count)
+        data.append(Data("RIFF".utf8))
+        appendLittleEndian(UInt32(36 + samples.count), to: &data)
+        data.append(Data("WAVE".utf8))
+        data.append(Data("fmt ".utf8))
+        appendLittleEndian(UInt32(16), to: &data)
+        appendLittleEndian(UInt16(1), to: &data)
+        appendLittleEndian(channelCount, to: &data)
+        appendLittleEndian(sampleRate, to: &data)
+        appendLittleEndian(byteRate, to: &data)
+        appendLittleEndian(blockAlign, to: &data)
+        appendLittleEndian(bitsPerSample, to: &data)
+        data.append(Data("data".utf8))
+        appendLittleEndian(UInt32(samples.count), to: &data)
+        data.append(samples)
+        return data
+    }
+
+    private func playCustomKeyClick(volume: Float) {
+        guard let player = keyClickPlayer ?? makeCustomKeyClickPlayer() else { return }
+        player.volume = volume
+        player.currentTime = 0
+        player.play()
+    }
+
+    private func makeCustomKeyClickPlayer() -> AVAudioPlayer? {
+        do {
+            let player = try AVAudioPlayer(data: Self.keyClickWavData)
+            player.prepareToPlay()
+            keyClickPlayer = player
+            return player
+        } catch {
+            return nil
+        }
+    }
+
+    private static func appendLittleEndian<T: FixedWidthInteger>(_ value: T, to data: inout Data) {
+        var littleEndian = value.littleEndian
+        withUnsafeBytes(of: &littleEndian) { data.append(contentsOf: $0) }
     }
 
     // Stored haptic generator. Held across keystrokes and re-prepared after each fire
@@ -806,7 +886,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         btn.onTap = { [weak self] in
             guard let self else { return }
             self.fireHaptic()
-            if self.feedbackSound     { UIDevice.current.playInputClick() }
+            if self.feedbackSound     { self.playKeyClickSound() }
             self.delegate?.keyboardView(self, didPress: keyDef)
         }
         btn.onLongPress = { [weak self] in
@@ -1107,7 +1187,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         // Haptic / audio feedback (spec §15)
         fireHaptic()
-        if feedbackSound     { UIDevice.current.playInputClick() }
+        if feedbackSound     { playKeyClickSound() }
 
         // Show key preview — phone only; iPad keys are large enough that press-state
         // color change is sufficient feedback (matches Apple's stock iPad keyboard).

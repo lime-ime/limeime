@@ -27,6 +27,7 @@ enum PreferenceBackupAdapter {
         Spec(key: "vibrate_on_keypress", type: .bool, iosSupported: true),
         Spec(key: "vibrate_level", type: .int, iosSupported: true),
         Spec(key: "sound_on_keypress", type: .bool, iosSupported: true),
+        Spec(key: "keypress_sound_volume", type: .string, iosSupported: true),
         Spec(key: "smart_chinese_input", type: .bool, iosSupported: true),
         Spec(key: "auto_chinese_symbol", type: .bool, iosSupported: true),
         Spec(key: "candidate_switch", type: .bool, iosSupported: true),

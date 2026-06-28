@@ -1035,7 +1035,8 @@ All user-adjustable settings from `LIMEPreferenceManager`, grouped by category w
 |---------|----------|------|---------|---------|
 | Vibrate on keypress | `vibrate_on_keypress` | boolean | true | Haptic feedback on key press. iOS: `UIImpactFeedbackGenerator` |
 | Vibrate level | `vibrate_level` | int | 40 | Vibration duration in ms. iOS: map to `UIImpactFeedbackGenerator` style — e.g., ≤20ms→`.light`, ≤50ms→`.medium`, >50ms→`.heavy`. Note: iOS does not allow custom duration; only style selection. |
-| Sound on keypress | `sound_on_keypress` | boolean | false | Audio feedback. iOS: use `UIInputViewController.playInputClick()` — the proper API for keyboard click sounds, respects system sound settings |
+| Sound on keypress | `sound_on_keypress` | boolean | false | Audio feedback. iOS: `AudioServicesPlaySystemSound` for system default, or `AVAudioPlayer` for custom volume. |
+| Keypress sound volume | `keypress_sound_volume` | string | "-1" | "-1" uses the system default click path; "0.10" / "0.25" / "0.50" / "0.75" / "1.00" use explicit LIME click volume. |
 
 ### Reverse Lookup
 

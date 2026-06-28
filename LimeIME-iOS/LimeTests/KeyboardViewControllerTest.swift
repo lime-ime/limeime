@@ -1,4 +1,5 @@
 ﻿import XCTest
+import AVFoundation
 @testable import LimeIME
 
 final class KeyboardViewControllerTest: XCTestCase {
@@ -465,6 +466,39 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("private func playKeyClickSound()"))
         XCTAssertTrue(source.contains("AudioServicesPlaySystemSound"))
         XCTAssertFalse(source.contains("UIDevice.current.playInputClick()"))
+    }
+
+    func testKeypressSoundVolumePreferenceMirrorsAndroidOptionsOnIOS() throws {
+        let settings = try String(contentsOf: projectFileURL("LimeSettings/Views/PreferencesTabView.swift"),
+                                  encoding: .utf8)
+        let controller = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                    encoding: .utf8)
+        let keyboard = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
+                                  encoding: .utf8)
+
+        XCTAssertTrue(settings.contains("@AppStorage(\"keypress_sound_volume\""))
+        XCTAssertTrue(settings.contains("Picker(\"打字音量\", selection: $keypressSoundVolume)"))
+        XCTAssertTrue(settings.contains(".disabled(!soundOnKeypress)"))
+        XCTAssertTrue(controller.contains("keypressSoundVolume"))
+        XCTAssertTrue(controller.contains("d?.string(forKey: \"keypress_sound_volume\") ?? \"-1\""))
+        XCTAssertTrue(keyboard.contains("var keypressSoundVolume: String = \"-1\""))
+        XCTAssertTrue(keyboard.contains("AVAudioPlayer"))
+    }
+
+    func testCustomKeyClickVolumeParsingAndGeneratedSoundData() throws {
+        XCTAssertNil(KeyboardView.customKeyClickVolume(from: "-1"))
+        XCTAssertNil(KeyboardView.customKeyClickVolume(from: "bad"))
+        XCTAssertEqual(try XCTUnwrap(KeyboardView.customKeyClickVolume(from: "0.10")),
+                       Float(0.10),
+                       accuracy: Float(0.001))
+        XCTAssertEqual(try XCTUnwrap(KeyboardView.customKeyClickVolume(from: "1.00")),
+                       Float(1.00),
+                       accuracy: Float(0.001))
+
+        let data = KeyboardView.makeKeyClickWavData()
+        XCTAssertEqual(String(data: data.prefix(4), encoding: .ascii), "RIFF")
+        XCTAssertGreaterThan(data.count, 44)
+        XCTAssertNotNil(try AVAudioPlayer(data: data))
     }
 
     func testCandidateChevronExpansionAllowsEnglishSuggestionsWithoutComposingBuffer() {

@@ -1091,6 +1091,7 @@ Use `@AppStorage(key, store: UserDefaults(suiteName: "group.org.limeime"))` (ali
 | `Toggle` "打字震動" | `vibrate_on_keypress` | Bool | true | |
 | `Picker` "震動強度" | `vibrate_level` | Int | 40 | 10=特弱 20=弱 40=中 60=強 80=特強; maps to `UIImpactFeedbackGenerator`: 10–20→`.light`, 40→`.medium`, 60–80→`.heavy` |
 | `Toggle` "打字音效" | `sound_on_keypress` | Bool | false | |
+| `Picker` "打字音量" | `keypress_sound_volume` | String | "-1" | "-1"=系統預設; "0.10"/"0.25"/"0.50"/"0.75"/"1.00"=LIME-owned click volume; disabled unless `sound_on_keypress` |
 
 > Unlike Android API 31+ (which hides `vibrate_level`), iOS must keep this Picker because `UIImpactFeedbackGenerator` intensity is caller-controlled.
 
@@ -1184,6 +1185,7 @@ All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 | `vibrate_on_keypress` | `vibrate_on_keypress` | Bool | true |
 | `vibrate_level` | `vibrate_level` | Int | 40 |
 | `sound_on_keypress` | `sound_on_keypress` | Bool | false |
+| `keypress_sound_volume` | `keypress_sound_volume` | String | "-1" |
 | `number_row_in_english` | `number_row_in_english` | Bool | true |
 | `smart_chinese_input` | `smart_chinese_input` | Bool | true |
 | `auto_chinese_symbol` | `auto_chinese_symbol` | Bool | false |
@@ -1346,7 +1348,7 @@ guard let db = openDB() else {
 
 ### IM Preferences (§8)
 - **Keyboard Appearance** (§8.1): `keyboard_theme` (values 0–5 + **6=系統設定** on both platforms — **§13.2 done**), `keyboard_size`, `font_size`, `number_row_in_english` (iPhone-only), `show_arrow_key`, `split_keyboard_mode` (iPad)
-- **Feedback** (§8.2): `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress`
+- **Feedback** (§8.2): `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress`, `keypress_sound_volume`
 - **IM Behaviour** (§8.4): `smart_chinese_input`, `auto_chinese_symbol`, `enable_emoji_position`, `similiar_list` (建議字顯示數量), `reverse_lookup_screen` (`candidate_switch` is declared but has **no UI** — free-scroll candidate selection is always on)
 - **Array10 detail page** (§5.2): `auto_commit`
 - **Phonetic IM detail page** (§5.2.2): `phonetic_keyboard_type` (6 options) with live IM table update

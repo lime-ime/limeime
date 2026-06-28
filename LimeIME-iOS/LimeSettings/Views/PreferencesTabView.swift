@@ -22,6 +22,7 @@ struct PreferencesTabView: View {
     @AppStorage("vibrate_on_keypress",     store: sharedDefaults) private var vibrateOnKeypress: Bool = true
     @AppStorage("vibrate_level",           store: sharedDefaults) private var vibrateLevel: Int = 40
     @AppStorage("sound_on_keypress",       store: sharedDefaults) private var soundOnKeypress: Bool = false
+    @AppStorage("keypress_sound_volume",   store: sharedDefaults) private var keypressSoundVolume: String = "-1"
 
     // MARK: §8.4 IM Behaviour
     @AppStorage("smart_chinese_input",      store: sharedDefaults) private var smartChineseInput: Bool = true
@@ -60,6 +61,8 @@ struct PreferencesTabView: View {
     private let splitLabels     = ["關閉", "開啟", "僅橫向開啟"]
     private let vibLevelOptions = [10, 20, 40, 60, 80]
     private let vibLevelLabels  = ["特弱", "弱", "中", "強", "特強"]
+    private let soundVolumeOptions = ["-1", "0.10", "0.25", "0.50", "0.75", "1.00"]
+    private let soundVolumeLabels  = ["系統預設", "10%", "25%", "50%", "75%", "100%"]
     private let hanOptions      = [0, 1, 2]
     private let hanLabels       = ["無", "繁轉簡", "簡轉繁"]
     private let similiarOpts    = [0, 10, 20, 30, 40, 50]
@@ -165,6 +168,12 @@ struct PreferencesTabView: View {
                     }
                     .disabled(!vibrateOnKeypress)
                     Toggle("打字音效", isOn: $soundOnKeypress)
+                    Picker("打字音量", selection: $keypressSoundVolume) {
+                        ForEach(0..<soundVolumeOptions.count, id: \.self) { i in
+                            Text(soundVolumeLabels[i]).tag(soundVolumeOptions[i])
+                        }
+                    }
+                    .disabled(!soundOnKeypress)
                 }
                 .setupMatchedSectionBlock()
 

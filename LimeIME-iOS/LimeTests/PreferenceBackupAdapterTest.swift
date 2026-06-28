@@ -186,6 +186,7 @@ final class PreferenceBackupAdapterTest: XCTestCase {
             "vibrate_on_keypress": false,
             "vibrate_level": 80,
             "sound_on_keypress": true,
+            "keypress_sound_volume": "0.75",
             "smart_chinese_input": false,
             "auto_chinese_symbol": true,
             "candidate_switch": true,

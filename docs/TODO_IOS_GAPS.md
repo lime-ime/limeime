@@ -92,7 +92,7 @@ Items are grouped by priority. Check off each item when done.
 ### Feedback: Vibration and Sound (spec §15)
 
 - [x] `hasVibration` wired to `UIImpactFeedbackGenerator` on every key press
-- [x] `hasSound` wired to `UIDevice.current.playInputClick()` on every key press
+- [x] `hasSound` wired to system default click / custom-volume LIME click on every key press
 
 ---
 
