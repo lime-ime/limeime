@@ -43,7 +43,8 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 	public static final int KEYCODE_SPACE_LONGPRESS = -102;
     public static final int KEYCODE_NEXT_IM = -104;
     public static final int KEYCODE_PREV_IM = -105;
-    
+    public static final int KEYCODE_PHONE_SIMPLE_LONGPRESS = -106;
+
 	//static final String PREF = "LIMEXY";
 	
 	//private boolean mLongPressProcessed;
@@ -73,6 +74,14 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
         mSpaceCaretStepPx = context.getResources().getDimensionPixelSize(R.dimen.space_caret_step);
 	}
 
+    // feat#124: the English-layout symbol key keeps its "123" face (@string/label_symbol_key)
+    // but carries a popupKeyboard so the existing "..." minikeyboard hint renders at the bottom.
+    // Only English layouts give the -2 (mode-change) key a popup, so popupResId != 0 uniquely
+    // identifies the phone_simple long-press shortcut.
+    public static boolean isEnglishPhoneSimpleShortcutKey(int primaryCode, int popupResId) {
+        return primaryCode == LIMEBaseKeyboard.KEYCODE_MODE_CHANGE && popupResId != 0;
+    }
+
 	@Override
 	protected boolean onLongPress(Key key) {
 		if(DEBUG)
@@ -83,6 +92,9 @@ public class LIMEKeyboardView extends LIMEKeyboardBaseView {
 		if (key.codes[0] == LIMEBaseKeyboard.KEYCODE_DONE) {
 			getOnKeyboardActionListener().onKey(KEYCODE_OPTIONS, null,0,0);
 			return true;
+        } else if (isEnglishPhoneSimpleShortcutKey(key.codes[0], key.popupResId)) {
+            getOnKeyboardActionListener().onKey(KEYCODE_PHONE_SIMPLE_LONGPRESS, null,0,0);
+            return true;
 		}else if (key.codes[0] == LIMEKeyboard.KEYCODE_SPACE
 				&& Math.abs(((LIMEKeyboard) this.getKeyboard()).getSpaceDragDiff() ) < mKeyHeight/5){ //Jeremy '12,4,23 avoid small move blocking the long press.
 			getOnKeyboardActionListener().onKey(KEYCODE_SPACE_LONGPRESS, null,0,0);

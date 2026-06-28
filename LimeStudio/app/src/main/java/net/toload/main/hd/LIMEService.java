@@ -2233,6 +2233,8 @@ public class LIMEService extends InputMethodService
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
             switchKeyboard(primaryCode);
+        } else if (primaryCode == LIMEKeyboardView.KEYCODE_PHONE_SIMPLE_LONGPRESS && mInputView != null) {
+            switchKeyboard(primaryCode);
         } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD && mInputView != null) { //->switch symbols1 keyboards
             switchKeyboard(primaryCode);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_NEXT_IM) {
@@ -5180,15 +5182,19 @@ public class LIMEService extends InputMethodService
             mKeyboardSwitcher.toggleSymbols();
             // mFixedCandidateViewOn is always true
             forceHideCandidateView();
+        } else if (primaryCode == LIMEKeyboardView.KEYCODE_PHONE_SIMPLE_LONGPRESS) {
+            mEnglishOnly = true;
+            mKeyboardSwitcher.switchToPhoneSimple();
+            forceHideCandidateView();
         } else if (primaryCode == KEYCODE_SWITCH_SYMBOL_KEYBOARD) { //Symbol keyboard
             mEnglishOnly = true;
             mKeyboardSwitcher.switchSymbols();
             // mFixedCandidateViewOn is always true
             forceHideCandidateView();
-        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi --> Eng
+        } else if (primaryCode == KEYCODE_SWITCH_TO_ENGLISH_MODE) { //Chi/phone_simple --> Eng
             mEnglishOnly = true;
             mLIMEPref.setLanguageMode(true);
-            mKeyboardSwitcher.toggleChinese();
+            mKeyboardSwitcher.switchToEnglish(); // feat#124: idempotent; fixes phone_simple ABC return
             // mFixedCandidateViewOn is always true
             if (!mPredictionOn) {
                 showEmptyCandidateToolbar();

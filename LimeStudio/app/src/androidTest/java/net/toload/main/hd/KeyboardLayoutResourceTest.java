@@ -10,6 +10,8 @@ import android.util.Xml;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import net.toload.main.hd.keyboard.LIMEKeyboardView;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -67,6 +69,16 @@ public class KeyboardLayoutResourceTest {
         assertNoSubLabelsOnShiftedSymbolKeys(context, R.xml.lime_ez_shift);
         assertNoSubLabelsOnShiftedSymbolKeys(context, R.xml.lime_et_41_shift);
         assertNoSubLabelsOnShiftedSymbolKeys(context, R.xml.lime_dayi_sym_shift);
+    }
+
+    @Test
+    public void englishSymbolKeyShowsPhoneShortcutHintAndLongPressPolicyKeepsNormalSymbolTap() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        assertEnglishPhoneShortcutKey(context, R.xml.lime_english);
+        assertEnglishPhoneShortcutKey(context, R.xml.lime_english_shift);
+        assertEnglishPhoneShortcutKey(context, R.xml.lime_english_number);
+        assertEnglishPhoneShortcutKey(context, R.xml.lime_english_number_shift);
     }
 
     @Test
@@ -237,6 +249,44 @@ public class KeyboardLayoutResourceTest {
 
         assertTrue("Shifted layout should contain printable symbol keys: " + layoutId, sawSymbolKey);
         assertTrue("Shifted alphabet roots should remain in layout: " + layoutId, sawAlphabetSubLabel);
+    }
+
+    private void assertEnglishPhoneShortcutKey(Context context, int layoutId) {
+        try {
+            android.content.res.XmlResourceParser parser = context.getResources().getXml(layoutId);
+            int eventType;
+            while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT) {
+                if (eventType != XmlPullParser.START_TAG || !"Key".equals(parser.getName())) {
+                    continue;
+                }
+
+                String value = parser.getAttributeValue(LIME_ATTR_NS, "codes");
+                if (!String.valueOf(LIMEService.KEYCODE_SWITCH_TO_SYMBOL_MODE).equals(value)) {
+                    continue;
+                }
+
+                String name = context.getResources().getResourceEntryName(layoutId);
+                // feat#124: the symbol key keeps its "123" face (a @string resource) ...
+                int labelResId = parser.getAttributeResourceValue(LIME_ATTR_NS, "keyLabel", 0);
+                assertTrue("English symbol key should keep its 123 string-resource face in " + name,
+                        labelResId != 0);
+                assertEquals("English symbol key should keep its 123 face in " + name,
+                        "123", context.getString(labelResId));
+                // ... plus a popupKeyboard so the existing "..." minikeyboard hint renders at the
+                // bottom and marks the key as the phone_simple long-press shortcut.
+                int popupResId = parser.getAttributeResourceValue(LIME_ATTR_NS, "popupKeyboard", 0);
+                assertTrue("English symbol key should carry a popupKeyboard hint in " + name,
+                        popupResId != 0);
+                assertTrue("English symbol key long press should use the phone_simple shortcut",
+                        LIMEKeyboardView.isEnglishPhoneSimpleShortcutKey(
+                                LIMEService.KEYCODE_SWITCH_TO_SYMBOL_MODE, popupResId));
+                return;
+            }
+            fail("English layout should contain the normal symbol-mode key: "
+                    + context.getResources().getResourceEntryName(layoutId));
+        } catch (Exception e) {
+            fail("Unable to read keyboard XML resource " + layoutId + ": " + e.getMessage());
+        }
     }
 
     private boolean isPrintableNonAlphabetSymbol(int code) {

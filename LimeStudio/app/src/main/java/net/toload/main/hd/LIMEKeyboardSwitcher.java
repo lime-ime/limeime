@@ -620,6 +620,31 @@ public class LIMEKeyboardSwitcher {
 
 
 	}
+    // feat#124: load the phone_simple numeric keypad directly (English "123" long-press).
+    // Does NOT change mMode, so returning via ABC/123 restores the normal English/symbol
+    // keyboards instead of getting stuck in a phone-simple mode.
+    public void switchToPhoneSimple() {
+        if (mInputView == null) return;
+        mIsSymbols = false;
+        mIsChinese = false;
+        KeyboardId kid = new KeyboardId(getKeyboardXMLID("phone_simple"));
+        LIMEKeyboard keyboard = getKeyboard(kid);
+        if (keyboard == null) return;
+        mInputView.setKeyboard(keyboard);
+        keyboard.setShifted(false);
+        mInputView.setKeyboard(mInputView.getKeyboard());
+        keyboard.setImeOptions(mThemedContext.getResources(), mMode, mImeOptions);
+    }
+
+    // feat#124: idempotently switch to the English text layout regardless of current state
+    // (mirrors iOS switchChiEng(toEnglish:true)). Used by the -9 (ABC/英) handler so
+    // phone_simple's ABC returns to English even when arriving from a non-Chinese state.
+    public void switchToEnglish() {
+        mIsChinese = false;
+        mIsSymbols = false;
+        this.setKeyboardMode(ImCode, MODE_TEXT, mImeOptions, false, false, mIsShifted);
+    }
+
     public boolean isChinese(){
     	return mIsChinese;
     }
