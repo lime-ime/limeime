@@ -1,7 +1,7 @@
 name: LimeIME
 
 options:
-  bundleIdPrefix: net.toload
+  bundleIdPrefix: org.limeime
   deploymentTarget:
     iOS: "16.0"
   createIntermediateGroups: true
@@ -77,10 +77,10 @@ targets:
       path: LimeIME/LimeIME.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.net.toload.limeime
+          - group.org.limeime
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.toload.limeime
+        PRODUCT_BUNDLE_IDENTIFIER: org.limeime
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_TEAM: ""
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -124,10 +124,10 @@ targets:
       path: LimeIMEKeyboard/LimeIMEKeyboard.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.net.toload.limeime
+          - group.org.limeime
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.toload.limeime.keyboard
+        PRODUCT_BUNDLE_IDENTIFIER: org.limeime.keyboard
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_TEAM: ""
 
@@ -143,7 +143,7 @@ targets:
       - target: LimeIME
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: net.toload.limeime.tests
+        PRODUCT_BUNDLE_IDENTIFIER: org.limeime.tests
         SWIFT_VERSION: "5.0"
         DEVELOPMENT_TEAM: ""
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/LimeIME.app/LimeIME

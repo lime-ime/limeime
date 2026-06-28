@@ -1,175 +1,4 @@
-# LIME Settings iOS App — Specification
-
-> ### Revision — 4-tab top-page re-layout (2026-06)
->
-> The four top-level tab pages (設定 · 輸入法 · 喜好設定 · 資料庫) were re-laid-out, the two
-> platforms were brought as visually close as possible, reference links were moved into an in-app
-> browser, and the Android keyboard's long-press options menu was restyled. Only the deltas below
-> change; the MVC mandate (§3), IM Table Editor (§6), and install/download flows (§5.3) are unchanged.
->
-> - **Icons / colour scheme.** Dropped the multi-colour rounded-square icon tiles. List-row
->   leading badges are now a single neutral grey (`systemGray` / `#8E8E93`); accent colour is
->   reserved for interactive controls (switches, buttons, links). See §4.1, §5.1.
-> - **IM rows.** Each installed IM is shown as a **grey badge containing the IM's
->   representative character** (注音→ㄅ, 倉頡→倉, 速成→速, 大易→易, 行列→行, 拼音→拼) — the
->   bopomofo symbol ㄅ for 注音, otherwise the first character of the name — identical on both
->   platforms, replacing the former per-IM coloured icon. Rows are **name only**: no catalog
->   descriptions, record counts, or status subtitle (those live in the IM catalogue, not the
->   installed list); enabled/disabled is conveyed by the switch + opacity. The 關聯字庫 row is
->   likewise a single line (no subtitle). See §5.1.
-> - **IM list — no reorder.** Drag-to-reorder was removed; the list is not editable and has no
->   Edit affordance. The add control is a **round FAB showing only `+`** (no label). See §5.1.
-> - **Type scale.** Android body / list rows / values / buttons were aligned up to the iOS
->   sizes (17px body & values, 17px buttons, 34px bold tab titles); each Android tab carries a
->   single large bold inline title (no duplicate app-bar title). See §5.1, §7.
-> - **Tablet (Android).** The 輸入法 tab implements the real app's tablet layout — a left
->   `NavigationRailView` + a two-pane `TwoPaneHostFragment` (IM list ⇄ detail pane, with a
->   「請從左側選擇輸入法」 empty state); phones keep the bottom nav + full-screen drill-down. See §5.1.
-> - **About section.** Added a **使用手冊** row linking the user manual
->   (`https://lime-ime.github.io/limeime/pages/index.html`), and repointed **版權說明** to the
->   published licence page (`https://lime-ime.github.io/limeime/pages/license.html`) instead of
->   the raw `LICENSE.md`. See §4.1. External links carry a leave-the-app glyph.
-> - **Android Material You.** The Android accent is **inherited from the system** (Dynamic
->   Colors, resolved by `SystemAccentColor.java` from `Settings.Secure`); there is **no in-app
->   theme picker**. iOS keeps the fixed LIME brand palette. See §4.1 (Android).
-> - **Android day/night.** The app follows the system light/dark setting
->   (`MODE_NIGHT_FOLLOW_SYSTEM`); the full M3 light and dark role sets are both modelled and
->   compose with the inherited accent. Like the accent, it is a system setting (no in-app
->   control). See §4.1 (Android).
-> - **IM detail — 移除輸入法.** Rendered as a full-width **bordered destructive button** at the
->   bottom of the detail screen (was a plain destructive list row). See §5.2.
-> - **DB Manager.** Unified to an identical three-section structure on both platforms (only the
->   platform skin differs); the **還原預設資料庫** description is a red warning: 「警告：將清除
->   目前所有輸入法資料表，還原為萊姆內建的空白預設資料庫，此動作無法復原。」 See §7.
-> - **Setup hero.** The app logo is shown plain (no white rounded-rect tile / shadow) **beside**
->   the 萊姆輸入法 wordmark in a centered **horizontal** row (logo ~92pt, wordmark 30pt; the
->   設定萊姆輸入法 step-guide title is 28pt), on both platforms. See §4.1.
-> - **About footer.** The About block is a **full-bleed separator**, then **three equal-width
->   tonal link chips** (使用手冊 / 版權說明 / 原始碼 — icon over label with a leave-the-app
->   glyph), above a **one-line copyright banner** `© LIME 萊姆輸入法 <version> - <year>`. iOS
->   uses brand-green chip labels; Android uses the Material You `colorPrimary`. The chip tap
->   targets and URLs are unchanged from the old row list. See §4.1.
-> - **IM badge shape.** The grey representative-character badge is a **rounded square**
->   (iOS `cornerRadius` 7 on a 30pt tile; Android 11dp corners on a 40dp tile), not a circle.
->   See §5.1.
-> - **IM badge glyph (final rule).** First character of the IM name, with curated exceptions:
->   注音→ㄅ; 大易→**易** (not 大); 倉頡-family (倉頡 / 四碼倉頡 `cj4` / 倉頡五代 `cj5` / 快倉 `scj`)→**倉**;
->   行列10 `array10`→**10** (not 行). Keyed by `tableNick`, identical on both platforms. See §5.1.
-> - **關聯字庫 icon.** The 關聯字庫 row carries the same grey rounded-square tile as the IM badges,
->   with a chat/bubble glyph (iOS `text.bubble`, Android `chat`). Single line, name only. See §5.1.
-> - **Status banner.** iOS renders the filled status glyph (✓/⚠/✕ disc) + label in the design's
->   deep "ink" colour (`--success/warning/danger-ink`) over a subtle **status tint**; Android
->   renders the same filled disc + state ink over the neutral `setup_status_bg`. See §4.2.
-> - **Android bottom navigation.** The 4 tabs (設定/輸入法/喜好設定/資料庫) use authentic Material
->   Symbols (settings / format_list_bulleted / tune / inventory_2), a pill-shaped
->   `colorSecondaryContainer` active indicator, and selected icon fill + bold label — all tracking
->   the system Material You palette. See §2.
-> - **Preference second-level rows.** Every 喜好設定 row that opens a chooser shows its **current
->   value** inline (`useSimpleSummaryProvider`) and a **trailing chevron** (`preference_value_chevron`).
->   **簡繁轉換** is an inline M3 **segmented control** (無 / 繁轉簡 / 簡轉繁) + footer, via
->   `SegmentedHanPreference`, which persists the same `han_convert_option` String — behaviour
->   unchanged. iOS `Picker`/`NavigationLink` rows already show value + chevron. See §8.
-> - **Android colour scheme.** The Android settings chrome **inherits the system Material You
->   palette** (Dynamic Colors + `MODE_NIGHT_FOLLOW_SYSTEM`) — no fixed brand scheme; every accent
->   reads an `?attr/color*` M3 role. Only the neutral IM-badge grey and `setup_status_*` inks are
->   intentionally fixed. iOS uses the fixed LIME brand palette. See §4.1.
-> - **Preference leading icons.** Section-leading rows in 喜好設定 carry a tinted leading icon
->   matching the design kit — 鍵盤外觀 ▸ palette, 鍵盤回饋 ▸ vibration, 輸入法行為 ▸ auto-awesome,
->   字根反查設定 ▸ search, 關聯字與學習 ▸ chat, 英文鍵盤 ▸ abc. iOS uses SF-Symbol `Label`s in the
->   `Form`; Android uses `android:icon` on the matching `preference.xml` rows. Presentational
->   only — no preference key, default, or binding changes. See §8.
-> - **Accent (iOS).** Brand green `#00833E` is the app-wide iOS accent (filled buttons, links,
->   FAB, chevrons), applied once via `.tint()` at the root `TabView`. Android keeps the
->   system-inherited Material You accent. See §4.1.
-> - **In-app browser for hero/About links.** The first two reference links — **使用手冊** and
->   **版權說明** — now open **in-place** in an in-app browser (iOS `SFSafariViewController` via a
->   `UIViewControllerRepresentable`; Android Chrome Custom Tabs, `androidx.browser:browser:1.8.0`,
->   `CustomTabsIntent` with `ACTION_VIEW` fallback). **原始碼** keeps opening **externally** (system
->   browser / GitHub app). On **iPad** the in-app browser is presented **full-screen**
->   (`.fullScreenCover` rather than `.sheet`). URLs are unchanged. See §4.1.
-> - **Long-press keyboard-key options menu (Android keyboard extension).** The in-keyboard
->   long-press options dialog (`LIMEService.handleOptions()`) was reworked to match the 喜好設定
->   page's visual language. Its **title** is now **萊姆輸入法** (was `LIME-HD`; `R.string.ime_name`
->   updated — that string is referenced only here). The plain `setItems` list was replaced by a
->   **custom styled panel** (`keyboard_menu_panel.xml`): every entry is an icon + title (+ optional
->   current value) + trailing-chevron row (`keyboard_menu_row.xml`). Two settings are shown as
->   **inline M3 segmented controls** **at the top level** — no drill-down: **簡繁轉換**
->   (無 / 繁轉簡 / 簡轉繁, persisting `han_convert_option` 0/1/2) and **分離鍵盤**
->   (關閉 / 開啟 / 僅橫向, persisting the 3-state `split_keyboard` enum 0=NEVER / 1=ALWAYS /
->   2=LANDSCAPE_ONLY — exposed directly, replacing the old orientation-aware split⇄merge toggle row;
->   hidden when the split option is unavailable, i.e. landscape + arrow keys on). 反查字根 shows its
->   current table inline. Because inline controls make a "Cancel" button a logic mismatch (select,
->   then cancel), the negative **取消** was replaced by a positive **完成** (`keyboard_menu_done`);
->   the inline choices are recorded as pending and **applied once on dismiss** (完成 / back /
->   outside-tap), so the panel stays stable across multiple changes and the keyboard rebuilds at most
->   once (only if 分離鍵盤 actually changed). New row icons: `ic_swap_24` (簡繁轉換), `ic_language_24`
->   (系統輸入法), `ic_split_24` (分離鍵盤), `ic_mic_24` (語音輸入). This is keyboard-extension UI
->   (parallel to the Settings-app `SegmentedHanPreference` in §8.5); persistence is unchanged.
-> - **Segmented controls — stack vertically when labels clip.** At the *maximum* accessibility
->   sizes (system font scale 2.0 + largest display size) three side-by-side segments physically
->   cannot fit multi-glyph Chinese labels, so the text clips — no horizontal inset/padding/ellipsize
->   tuning can fix the geometry. The fix is **responsive orientation**: a shared helper
->   `SegmentedHanPreference.stackIfClipped(group)` runs after layout, and **if any segment's label is
->   actually ellipsized it flips the `MaterialButtonToggleGroup` to vertical** (each button
->   full-width), so every label shows in full. It reacts to *measured* clipping, so it self-adapts to
->   any font/display scale and label — horizontal segmented look at normal sizes, a 3-row stack only
->   when needed. Applied to the 喜好設定 page (`preference_han_segmented.xml`) and both keyboard-menu
->   controls (簡繁轉換 + 分離鍵盤, `keyboard_menu_panel.xml`). Labels are the arrow form
->   **無 / 繁→簡 / 簡→繁** (was 無 / 繁轉簡 / 簡轉繁; `han_convert_t2s` / `han_convert_s2t`, used only by
->   these two layouts). **Verified at font_scale 2.0 + density 640 (max).** Underlying values
->   (`han_convert_option` 0/1/2) and persistence are unchanged. See §8.5.
-> - **Rows never clip captions or values at large fonts.** Across the Android value/chooser rows
->   (`preference_value_chevron.xml`, `preference_value_right.xml`, `preference_lime_row.xml`, and the
->   keyboard menu's `keyboard_menu_row.xml`) neither the **title/caption** nor the **right-side
->   value/status** is single-line-ellipsized any more — both **wrap** instead of clipping or
->   collapsing. Title and value each take a weighted share (title gets the larger share but never
->   collapses to zero) and wrap to up to 3 lines; the keyboard-menu row stacks title-over-value so
->   both always show in full. Replaces the earlier scheme where a long value could squeeze the
->   weighted title to zero width and make the caption disappear.
-> - **IM detail rows — chevron centering + scale.** In `fragment_im_detail.xml` the value rows
->   (名稱 / 版本 / 結束鍵 / 軟鍵盤 / 字根資料表) now set `gravity="center_vertical"`, so the trailing
->   `›` chevron stays vertically centered when the label/value wraps to two lines (it was
->   top-aligned). The chevron `ImageView`s were changed from `20dp` to **`20sp`** so they grow with
->   the system font scale instead of staying fixed.
-> - **iOS keyboard long-press menu — Android-style icons + inline segmented controls,
->   系統輸入法切換 removed, 完成.** The iOS in-keyboard options menu
->   (`KeyboardViewController.showGlobeMenu`) now gives its action rows **leading SF-Symbol icons with
->   left-aligned titles** (字根反查 ▸ `magnifyingglass`, LIME 輸入法切換 ▸ `list.bullet`), matching the
->   Android themed panel. **漢字轉換** is an **inline `UISegmentedControl`** (無 / 繁→簡 / 簡→繁) and,
->   **on iPad only**, a **分離鍵盤** inline segmented control (關閉 / 開啟 / 僅橫向) is added — replacing
->   the old 漢字轉換 drill-down sub-picker, mirroring the Android keyboard menu. Both record a pending
->   choice and are **applied on dismiss** (完成 / tap-outside): han writes `han_convert_option`, split
->   writes `split_keyboard_mode` and re-runs `viewWillLayoutSubviews` to re-apply `splitMode` live. A
->   new `InlineMenuEntry` enum (`.action` / `.segmented`) lets `showInlineMenu` render both row types;
->   sub-pickers keep the plain centered style. The **系統輸入法切換** item was **removed entirely** —
->   the globe key is always present (App Store policy), so the system-keyboard switcher is always
->   reachable from the keyboard itself (was previously shown only when no globe key was visible). The
->   dismiss item **取消 → 完成**.
-> - **iOS status banner — softer in dark mode.** The status banner's inks and tints
->   (`SettingsTheme.successInk/warningInk/dangerInk`, `statusTintGreen/Yellow/Red`) are now
->   **adaptive**: the opaque pastel tints (#E8F5E9 / #FFF8E1 / #FFEBEE) read far too bright on black,
->   so — like Android's `values-night/colors.xml` — dark mode uses a **lighter ink**
->   (#9CD67D / #FFB951 / #FFB4AB) over a **translucent ≈15% tint** of that ink, while light mode keeps
->   the deep ink over a **≈12%** tint (matching Android's `#26` / `#1F` alpha). Implemented with a
->   `UIColor { traitCollection }` adaptive helper.
-> - **iOS tonal button style (legible in dark).** SwiftUI's `.buttonStyle(.bordered)` renders an
->   almost-invisible dark fill on black (the 資料庫 ▸ 還原資料庫 button). A new shared
->   **`LimeTonalButtonStyle`** uses a stronger, theme-adaptive tonal fill (**14%** of the tint in
->   light, **28%** in dark — paralleling the Android `button_tint_primary` / `button_tint_error`
->   selectors) with accent-coloured text. Applied to 資料庫 ▸ **還原資料庫** (green) and **還原預設資料庫**
->   (red), and the 設定 tab's **前往設定** button; 備份資料庫 stays filled-prominent (primary action).
-> - **Value/chooser rows wrap, never clip; IM-detail chevrons centre + scale.** Across the Android
->   value rows neither caption nor right-side value is single-line-clipped any more — both wrap
->   (weighted shares, up to 3 lines), and the keyboard-menu row stacks title-over-value so neither can
->   collapse to zero. In `fragment_im_detail.xml` the value rows set `gravity="center_vertical"` (so
->   the trailing `›` stays centred when text wraps) and the chevrons use **`20sp`** (was `20dp`) to
->   grow with the font scale.
-> - **Android IM export — 分享 & 本機儲存.** The IM detail share button keeps the existing export
->   dialog but expands the choices from format-only to action+format: **分享 `.lime`**,
->   **本機儲存 `.lime`**, **分享 `.limedb`**, **本機儲存 `.limedb`**. 關聯字庫 still hides text export
->   and offers only **分享 `.limedb`** / **本機儲存 `.limedb`**. 分享 keeps the existing
->   `ACTION_SEND` + `FileProvider` path; 本機儲存 uses Android Storage Access Framework
->   `ACTION_CREATE_DOCUMENT`, so no storage permission or hardcoded Downloads path is needed. See §5.2.
+﻿# LIME Settings iOS App — Specification
 
 ## 1. Overview
 
@@ -255,7 +84,8 @@ Business logic and operation orchestration are ported to Swift **without changin
 |---|---|---|
 | `BaseController` | `BaseController.swift` | `@MainActor` UI dispatch, error handling, progress callbacks — mirrors `mainHandler.post()` with Swift `DispatchQueue.main.async` / `await MainActor.run` |
 | `SetupImController` | `SetupImController.swift` | Import workflow (txt / limedb / remote download), backup/restore, IM menu refresh, button state |
-| `ManageImController` | `ManageImController.swift` | Async record CRUD, related phrase CRUD, search/filter, keyboard selection |
+| `ManageImController` | `ManageImController.swift` | Async record CRUD, search/filter, keyboard selection, clear / remove IM |
+| `ManageRelatedController` | `ManageRelatedController.swift` | Async related-phrase CRUD, search/filter, clear related |
 | `NavigationManager` | `NavigationManager.swift` | Tab/screen selection state, navigation callbacks |
 | `ShareManager` | `ShareManager.swift` | Export IM / related as `.limedb` or `.lime` text, share-sheet invocation |
 | `ProgressManager` | `ProgressManager.swift` | Progress overlay show/update/dismiss — wraps SwiftUI `@Published` state on `@MainActor` |
@@ -292,7 +122,7 @@ protocol SetupImView: ViewUpdateListener {
 }
 
 protocol ManageImView: ViewUpdateListener {
-    func displayRecords(_ records: [Record])
+    func displayRecords(_ records: [LimeRecord])
     func updateRecordCount(_ count: Int)
     func refreshRecordList()
 }
@@ -316,7 +146,7 @@ The View layer is the **only layer that deviates** from the Android source. Subs
 | `ManageRelatedFragment` | `RelatedListView(isEmbedded:)` + `AddRelatedView` + `EditRelatedView` | Related phrase CRUD — embedded in IMDetailView via 關聯字庫 entry |
 | `LIMEPreference` Activity + `PrefsFragment` | `PreferencesTabView` with `Form` sections | All 11 preference sections |
 | `ImportDialog` / `SetupImLoadDialog` | SwiftUI `.sheet` + `.fileImporter` | File selection and import options |
-| `ImDetailFragment.showShareFormatDialog()` | SwiftUI `.sheet` + `ShareLink` | IM export/share and local-save selection |
+| `ImDetailFragment.showShareFormatDialog()` | `.confirmationDialog` + `ShareSheet` (`UIActivityViewController`) | IM export/share format selection |
 | `ManageImAddDialog` / `ManageImEditDialog` | SwiftUI `.sheet` (`AddRecordView` / `EditRecordView`) | Record add/edit forms |
 | `ManageImKeyboardDialog` | `KeyboardPickerView` (Navigation drill-down) | Keyboard layout selection |
 | `ProgressDialogManager` overlay | `ProgressManager` `.overlay(ProgressView(...))` | Progress feedback |
@@ -325,7 +155,7 @@ The View layer is the **only layer that deviates** from the Android source. Subs
 - Use SwiftUI declarative layout instead of XML inflation.
 - Use `NavigationStack` + `TabView` instead of navigation drawer.
 - Use `.sheet`, `.alert`, `.confirmationDialog` instead of `AlertDialog` / `DialogFragment`.
-- Use `.searchable()` instead of a manual search `EditText` + button.
+- Use `.searchable()` **or** a custom inline search bar (`TextField` + clear button) instead of a manual search `EditText` + button. (The record / related lists in §6 use the inline bar.)
 - Use `@StateObject` / `@ObservedObject` for reactive state instead of `notifyDataSetChanged()`.
 - Apply iOS HIG spacing, typography, and colour conventions.
 
@@ -358,6 +188,10 @@ The **Model and Controller layers must achieve the same testability goals** as t
 | ![iPhone 17 Pro Max simulator screenshot of the 設定 tab](assets/lime_settings_ios_setup.png) | ![Android emulator screenshot of the 設定 tab](assets/lime_settings_android_setup.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the 設定 tab](assets/lime_settings_ios_setup_dark.png) | ![Android emulator dark-mode screenshot of the 設定 tab](assets/lime_settings_android_setup_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the 設定 tab](assets/lime_settings_ipad_setup.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the 設定 tab](assets/lime_settings_ipad_setup_dark.png) |
+
 ### 4.1 Layout
 
 Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME logo at top, a visual three-step instruction list, and **one CTA button** that opens the app's system Settings page. The navigation bar is hidden; the screen has no title bar.
@@ -366,11 +200,11 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 #### iOS (`SetupTabView.swift`)
 
-**Brand block**: `VStack(spacing: 8)` — `appIconUIImage()` reads `CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles` from the bundle (80×80pt, `cornerRadius: 18`); fallback is `Image(systemName: "keyboard.fill")` in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.largeTitle.bold()` directly below.
+**Brand hero**: a centered `HStack(spacing: 16)` — the logo **beside** the wordmark. `appIconUIImage()` reads `CFBundleIcons → CFBundlePrimaryIcon → CFBundleIconFiles` from the bundle (92×92pt, `cornerRadius: 18`); fallback is `Image(systemName: "keyboard.fill")` (60pt) in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.system(size: 30, weight: .bold)`. Top padding 20pt.
 
-**Setup title**: `Text("設定萊姆輸入法")` `.largeTitle.bold()`, leading-aligned. Leads the setup section — the status banner sits **below** it (not between the brand block and the title).
+**Status banner**: color-coded `Label` over a subtle status tint in a rounded card, placed **between the brand hero and the setup title** (directly below the hero). See §4.2 for detection logic, colours, and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
 
-**Status banner**: color-coded `Label` in a `secondarySystemBackground` rounded card, placed directly under the 設定萊姆輸入法 title. See §4.2 for detection logic and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
+**Setup title**: `Text("設定萊姆輸入法")` `.system(size: 28, weight: .bold)`, leading-aligned, directly below the status banner.
 
 **Setup steps** — three `SetupStepRow` rows (icon 32pt left, label `.body` right):
 
@@ -379,26 +213,16 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 | 1 | `Image(systemName: "keyboard")` `.title3` `.accentColor` | `"輕觸「鍵盤」"` |
 | 2 | `ToggleSwitchIcon()` (green capsule + white thumb) | `"開啟萊姆輸入法"` |
 | 3 | `ToggleSwitchIcon()` | `"開啟「允許完整取用」"` |
-| 4 | `mic` / `keyboard_voice` | `"允許語音輸入"` |
 
-Step 4 is optional and appears only when Android LIME inline dictation is
-enabled. It requests Android `RECORD_AUDIO` permission for LIME-owned inline
-dictation. Users who skip or deny it still use delegated Google/vendor VoiceIME
-fallback, then `RecognizerIntent` fallback.
+**Explanatory note** (`.subheadline`, `.secondary`, centered): `"萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"` — **hidden once Full Access is granted** (`fullAccessEnabled`), since the note only explains why to turn it on.
 
-| Permission state | Color | State text | Explanation below | Button |
-|---|---|---|---|---|
-| Granted | Green | `萊姆內建語音輸入已啟用 ✓` | `可直接在萊姆鍵盤內使用語音輸入。` | Hidden |
-| Not requested / denied but askable | Red | `萊姆內建語音輸入尚未啟用 ✕` | `若要在萊姆鍵盤內直接語音輸入，請允許麥克風權限；也可略過，改用 Google 語音輸入。` | `允許麥克風權限` requests `RECORD_AUDIO` |
-| Permanently denied | Yellow | `需至系統設定開啟麥克風權限 ⚠` | `Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。` | `前往系統設定` opens app info and shows a short toast guide |
-
-**Explanatory note** (`.subheadline`, `.secondary`, centered): `"萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"`
-
-**CTA**: `Button("前往設定")` `.borderedProminent` `.large` → `openLimeKeyboardSettings()` (§4.1.2).
+**CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). A `.footnote`/`.secondary` hint follows it: `"若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。"` — **hidden once the banner is green** (`detectionState == .fullyEnabled`), since the hint only helps while the keyboard isn't fully enabled yet.
 
 **Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !fullAccessEnabled`; causes the keyboard extension's `viewWillAppear` to write a fresh `keyboard_has_full_access` to the App Group.
 
-**About section** (`GroupBox` styled as form section): `LabeledContent("版本", value: appVersion())` — `CFBundleShortVersionString (build)`; `授權` row shows `Link("版權說明", destination: licenseURL)` pointing to `https://github.com/lime-ime/limeime/blob/master/LICENSE.md`; `Link("原始碼 (GitHub)", destination: githubURL)`.
+**Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders just above the About footer.
+
+**About footer**: a full-bleed `Divider`, then three equal-width `LinkChip`s — **使用手冊** (`manualURL`, in-app), **版權說明** (`licenseURL` = `https://lime-ime.github.io/limeime/pages/license.html`, in-app), **原始碼** (`githubURL`, external) — above a one-line copyright banner `© LIME 萊姆輸入法 \(copyrightLine())` (`CFBundleShortVersionString - <year>`). Detailed in the layout tree below.
 
 Full layout structure:
 
@@ -407,27 +231,27 @@ NavigationStack (.navigationBarHidden(true))
 └── ScrollView
     └── VStack(spacing: 24)
         │
-        ├── // ── Brand block ──────────────────────────────────────────
-        │   VStack(spacing: 8) {
+        ├── // ── Brand hero (logo beside wordmark, centered) ──────────
+        │   HStack(spacing: 16) {
         │       logoImage              // appIconUIImage() reads CFBundleIcons/CFBundlePrimaryIcon/
         │                             // CFBundleIconFiles from bundle; fallback:
-        │                             // Image(systemName: "keyboard.fill") in accent-colored tile
+        │                             // Image(systemName: "keyboard.fill") (60pt) in accent tile
         │           .resizable().scaledToFit()
-        │           .frame(width: 80, height: 80)
+        │           .frame(width: 92, height: 92)
         │           .clipShape(RoundedRectangle(cornerRadius: 18))
         │       Text("萊姆輸入法")
-        │           .font(.largeTitle).bold()
+        │           .font(.system(size: 30, weight: .bold))
         │   }
-        │   .padding(.top, 32)
+        │   .padding(.top, 20)
+        │
+        ├── // ── Status banner (between hero and title) ───────────────
+        │   statusBanner              // see §4.2
+        │       .padding(.horizontal, 24)
         │
         ├── // ── Setup title ──────────────────────────────────────────
         │   Text("設定萊姆輸入法")
-        │       .font(.largeTitle).bold()
+        │       .font(.system(size: 28, weight: .bold))
         │       .frame(maxWidth: .infinity, alignment: .leading)
-        │       .padding(.horizontal, 24)
-        │
-        ├── // ── Status banner (below the title) ─────────────────────
-        │   statusBanner              // see §4.2
         │       .padding(.horizontal, 24)
         │
         ├── // ── Step list ────────────────────────────────────────────
@@ -441,23 +265,35 @@ NavigationStack (.navigationBarHidden(true))
         │   }
         │   .padding(.horizontal, 24)
         │
-        ├── // ── Explanatory note ─────────────────────────────────────
-        │   Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
-        │       .font(.subheadline).foregroundColor(.secondary)
-        │       .multilineTextAlignment(.center)
+        ├── // ── Explanatory note (hidden once Full Access is on) ──────
+        │   if !fullAccessEnabled {
+        │       Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
+        │           .font(.subheadline).foregroundColor(.secondary)
+        │           .multilineTextAlignment(.center)
+        │           .padding(.horizontal, 24)
+        │   }
+        │
+        ├── // ── CTA button (full-width tonal — legible in dark) ───────
+        │   Button("前往設定") { openLimeKeyboardSettings() }
+        │       .buttonStyle(LimeTonalButtonStyle())
         │       .padding(.horizontal, 24)
         │
-        ├── // ── CTA button ───────────────────────────────────────────
-        │   Button("前往設定") { openLimeKeyboardSettings() }
-        │       .buttonStyle(.borderedProminent)
-        │       .controlSize(.large)
-        │       .padding(.horizontal, 24)
+        ├── // ── Settings hint (hidden once banner is green) ──────────
+        │   if detectionState != .fullyEnabled {
+        │       Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」…")
+        │           .font(.footnote).foregroundColor(.secondary)
+        │           .multilineTextAlignment(.center).padding(.horizontal, 24)
+        │   }
         │
         ├── // ── Invisible probe field ────────────────────────────────
         │   TextField("", text: $probeText)   // 1×1 pt, opacity 0.01, accessibilityHidden
         │       .focused($probeFocused)       // auto-focused when keyboard enabled but Full
         │       .frame(width: 1, height: 1)   // Access not confirmed; causes LimeKeyboard's
         │       .opacity(0.01)               // viewWillAppear to write keyboard_has_full_access
+        │
+        ├── // ── Installed-IM status (§4.3) ───────────────────────────
+        │   imStatusSection          // none/disabled/ok banner + optional CTA → 輸入法 tab
+        │       .padding(.horizontal, 24)
         │
         └── // ── About footer ─────────────────────────────────────────
             //   Full-bleed separator, three equal-width tonal link chips, then a
@@ -470,8 +306,8 @@ NavigationStack (.navigationBarHidden(true))
                     LinkChip("原始碼",   icon: "chevron.left.forwardslash.chevron.right",
                                                             url: githubURL,  inApp: false)
                 }
-                Text("© LIME 萊姆輸入法 \(appVersion()) - \(year)")
-                    .font(.footnote).foregroundStyle(.secondary)
+                Text("© LIME 萊姆輸入法 \(copyrightLine())")   // "CFBundleShortVersionString - <year>"
+                    .font(.footnote).foregroundColor(.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
@@ -532,6 +368,18 @@ Layout: `NestedScrollView` → `LinearLayout`. Brand block is a horizontal row: 
 | Enabled, not active | Description `"萊姆輸入法已啟用但尚未被選用，請按下方按鈕後，在系統鍵盤輸入法選擇頁選用萊姆輸入法。"`, outlined button `"選用萊姆輸入法"` → `showInputMethodPicker()` |
 | Enabled and active | Setup heading + buttons hidden; IM list (`SetupImList`) shown |
 
+**Optional 語音輸入 permission element** (Android only; shown only when LIME inline
+dictation is enabled — open parity item, see §12): a `RECORD_AUDIO` permission row
+(icon `keyboard_voice`, label `"允許語音輸入"`) for LIME-owned inline dictation. If the
+user skips or denies it, dictation falls back to delegated Google/vendor VoiceIME, then
+to `RecognizerIntent`. This is **not** part of the iOS setup tab.
+
+| Permission state | Color | State text | Explanation below | Button |
+|---|---|---|---|---|
+| Granted | Green | `萊姆內建語音輸入已啟用 ✓` | `可直接在萊姆鍵盤內使用語音輸入。` | Hidden |
+| Not requested / denied but askable | Red | `萊姆內建語音輸入尚未啟用 ✕` | `若要在萊姆鍵盤內直接語音輸入，請允許麥克風權限；也可略過，改用 Google 語音輸入。` | `允許麥克風權限` requests `RECORD_AUDIO` |
+| Permanently denied | Yellow | `需至系統設定開啟麥克風權限 ⚠` | `Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。` | `前往系統設定` opens app info and shows a short toast guide |
+
 **About footer** (`fragment_setup.xml` + `SetupFragment.java`): a full-bleed separator, then three equal-width tonal link chips (使用手冊 / 版權說明 / 原始碼 — icon over label) above a one-line copyright banner `© LIME 萊姆輸入法 <version> - <year>`. Chip labels use `?attr/colorPrimary` (Material You). **使用手冊** (`https://lime-ime.github.io/limeime/pages/index.html`) and **版權說明** (`https://lime-ime.github.io/limeime/pages/license.html`) open **in-place** via Chrome Custom Tabs (`openInAppTab()` — `CustomTabsIntent.Builder().setShowTitle(true)`, with an `ACTION_VIEW` fallback). **原始碼** (`txtGithubUrl`) opens **externally** via `ACTION_VIEW`.
 
 ### 4.2 Status Banner
@@ -540,8 +388,8 @@ Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a
 
 **Detection logic** (`refreshStatus()`):
 
-- `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"net.toload.limeime"`. Does not use `keyboard_extension_loaded`.
-- `fullAccessEnabled`: reads `keyboard_has_full_access` from `UserDefaults(suiteName: "group.net.toload.limeime")`. If the key is absent (extension has never run), assumes `true` to avoid a false-positive orange banner right after first enable.
+- `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"org.limeime"`. Does not use `keyboard_extension_loaded`.
+- `fullAccessEnabled`: reads `keyboard_has_full_access` from `UserDefaults(suiteName: "group.org.limeime")`. If the key is absent (extension has never run), assumes `true` to avoid a false-positive orange banner right after first enable.
 
 | State | Color | SF Symbol | Banner text |
 | --- | --- | --- | --- |
@@ -600,36 +448,38 @@ Entry point for the **輸入法** tab.
 | ![iPhone 17 Pro Max simulator screenshot of the 輸入法 tab IM list](assets/lime_settings_ios_im_list.png) | ![Android emulator screenshot of the 輸入法 tab IM list](assets/lime_settings_android_im_list.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the 輸入法 tab IM list](assets/lime_settings_ios_im_list_dark.png) | ![Android emulator dark-mode screenshot of the 輸入法 tab IM list](assets/lime_settings_android_im_list_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the 輸入法 tab IM list](assets/lime_settings_ipad_im_list.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the 輸入法 tab IM list](assets/lime_settings_ipad_im_list_dark.png) |
+
 ```
-NavigationStack
-└── List (editable for drag-reorder)
+NavigationStack(path:)
+└── List   (NOT editable — no drag-reorder)
+    ├── Text("管理輸入法").font(.largeTitle.bold())   // in-content title; nav bar hidden
     ├── Section "已安裝的輸入法"
     │   └── ForEach IMRow  (sorted by im.sortOrder)
     │       ├── HStack
-    │       │   ├── Text(im.label).bold  // single line — matches Android sidebar (one line per IM)
-    │       │   │   // ImConfig.fullName holds title="name" config entry (Android LIME.IM_FULL_NAME)
-    │       │   │   // but iOS importTxtFile never parses @version@ so it is always empty; no subtitle shown
-    │       │   └── Toggle("", isOn: $row.enabled)
-    │       │       .onChange → db.updateIMEnabled(id:enabled:)
-    │       └── NavigationLink → IMDetailView(im: row)
+    │       │   ├── IMBadge(character: representativeCharacter(for: row))   // grey rounded tile
+    │       │   ├── Text(row.label).font(.body)   // single line, name only
+    │       │   └── Toggle("", isOn: row.enabled)
+    │       │       .onChange → toggleIM → ManageImController.setIMEnabled(imName:enabled:)
+    │       │                            → DBServer.updateIMEnabled(imName:enabled:) + syncIMActivatedState
+    │       ├── .onTapGesture → navigationDestination → IMDetailView(im: row)
+    │       └── .opacity(row.enabled ? 1.0 : 0.5)
     └── Section "關聯字庫"
-        └── NavigationLink "關聯字庫" → IMDetailView(im: synthetic IMRow(tableNick: "related"))
-.toolbar {
-    ToolbarItem(.navigationBarLeading) { EditButton() }
-    ToolbarItem(.navigationBarTrailing) { NavigationLink → IMInstallView  [+ button] }
-}
-.navigationTitle("管理輸入法")
+        └── IMBadge(systemImage: "text.bubble") + Text("關聯字庫")
+            → IMDetailView(im: synthetic IMRow(tableNick: "related"))
++ InstallFAB (round "+" only, bottom-trailing) → IMInstallView   // §5.3
+.toolbar(.hidden, for: .navigationBar)
 ```
 
-- **Enable / disable**: writes `im.enabled` via `db.updateIMEnabled(id:enabled:)` and updates `keyboard_state` preference string.
-- Enabled rows display at full opacity; disabled rows display at half opacity (matching Android's `HALF_ALPHA_VALUE` / italic style).
+- **Enable / disable**: `toggleIM` → `ManageImController.setIMEnabled(imName:enabled:)` → `DBServer.updateIMEnabled(imName:enabled:)` (keyed by **imName**), then `syncIMActivatedState` rebuilds the `keyboard_state` string.
+- Enabled rows display at full opacity; disabled rows at half opacity (`.opacity(0.5)`). iOS does not italicise (Android's `HALF_ALPHA_VALUE` style).
 
-> **Add control / no reorder (revision §0).** Per the 4-tab re-layout, drag-to-reorder
-> and the `EditButton` were removed — the installed list is not editable. The add
-> affordance is a **round FAB showing only `+`** (no label), bottom-trailing, that opens
-> the install flow (§5.3). The `.toolbar` block in the tree above is superseded by this
-> FAB; `im.sortOrder` is still honoured for display order but is no longer user-editable
-> from this screen.
+> **Add control / no reorder (revision §14).** Drag-to-reorder and the `EditButton` were
+> removed — the list is not editable. Add is the **round `+` FAB** (no label), bottom-trailing,
+> opening the install flow (§5.3). `im.sortOrder` is still honoured for display order but is no
+> longer user-editable here.
 
 #### 5.1.1 Empty state + FAB nudge
 
@@ -642,6 +492,10 @@ being empty and disappears once the first IM is installed.
 |---|---|
 | ![iPhone 17 Pro Max simulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_ios_im_list_empty.png) | ![Android emulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_android_im_list_empty.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the empty IM list with FAB nudge](assets/lime_settings_ios_im_list_empty_dark.png) | ![Android emulator dark-mode screenshot of the empty IM list with FAB nudge](assets/lime_settings_android_im_list_empty_dark.png) |
+
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the empty IM list with FAB nudge](assets/lime_settings_ipad_im_list_empty.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the empty IM list with FAB nudge](assets/lime_settings_ipad_im_list_empty_dark.png) |
 
 **Placeholder** (centered, in place of the IM rows):
 
@@ -675,6 +529,10 @@ Drill-down from any IM row **or** from the synthetic 關聯字庫 entry. Shows m
 | ![iPhone 17 Pro Max simulator screenshot of the IM detail screen](assets/lime_settings_ios_im_detail.png) | ![Android emulator screenshot of the IM detail screen](assets/lime_settings_android_im_detail.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the IM detail screen](assets/lime_settings_ios_im_detail_dark.png) | ![Android emulator dark-mode screenshot of the IM detail screen](assets/lime_settings_android_im_detail_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the IM detail screen](assets/lime_settings_ipad_im_detail.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the IM detail screen](assets/lime_settings_ipad_im_detail_dark.png) |
+
 ```
 NavigationStack (continued)
 └── IMDetailView(im: IMRow)
@@ -691,7 +549,8 @@ NavigationStack (continued)
         │   │       → DBServer.setImConfig(tableNick, "limeendkey", value) → im table row title="limeendkey"
         │   └── LabeledContent "筆數"    manageImController.countRecords(table: im.tableNick) — fetched in .task
         ├── Section "軟鍵盤配置"  (hidden when im.tableNick == "related")
-        │   └── NavigationLink "鍵盤佈局：\(currentKeyboard.name)" → KeyboardPickerView(im:)
+        │   └── NavigationLink → KeyboardPickerView(im:, onSave: onRefresh)
+        │       LabeledContent "鍵盤佈局"  value: keyboardName ("—" if empty)
         │       (resolved via loadKeyboards; falls back to code string if name unavailable)
         ├── Section "注音鍵盤類型"  (shown only when im.tableNick == "phonetic")
         │   └── Picker "鍵盤類型"  pref: phonetic_keyboard_type  default: "standard"
@@ -702,24 +561,28 @@ NavigationStack (continued)
         │   ├── Toggle "數字字根對應"  pref: accept_number_index  default: false  — 允許使用數字為輸入法字根
         │   └── Toggle "符號字根對應"  pref: accept_symbol_index  default: false  — 允許使用符號為輸入法字根
         ├── Section "字根資料表"  (header = "關聯字庫" when im.tableNick == "related")
-        │   ├── [tableNick != "related"] NavigationLink "瀏覽 / 編輯資料表" → RecordListView(table: im.tableNick)
+        │   ├── [tableNick != "related"] NavigationLink "瀏覽 / 編輯資料表" → RecordListView(tableName: im.tableNick, imLabel: displayName)
         │   └── [tableNick == "related"] NavigationLink "瀏覽 / 編輯關聯字庫" → RelatedListView(isEmbedded: true)
         ├── Section "選項"  (hidden when im.tableNick == "related")
         │   └── Toggle "刪除時備份已學習記錄"
         │       pref key: backup_on_delete_{tableNick}  (UserDefaults.standard, per-IM)
         │       default: true
-        └── Section (no header)  (hidden when im.tableNick == "related")
-            └── Button "移除輸入法" role: .destructive
-                → confirmAlert(message varies by toggle state:
-                   true:  "此操作將清除「…」的所有對應資料。\n已學習記錄將先備份，可在重新匯入時還原。確定繼續？"
-                   false: "此操作將清除「…」的所有對應資料，無法還原。確定繼續？")
-                → manageImController.clearTable(tableNick:, backupLearning: backupOnDelete)
-                   ├── [if backupLearning] SearchServer.backupUserRecords(tableNick)
-                   ├── SearchServer.clearTable → LimeDB.clearTable (DELETE records + resetImConfig)
-                   ├── LIMEPreferenceManager.syncIMActivatedState (rebuilds keyboard_state)
-                   ├── markKeyboardCacheDirty
-                   └── invalidate (triggers IMListView reload)
-                → dismiss IMDetailView; onRefresh()
+        ├── Section (no header)  (hidden when im.tableNick == "related")
+        │   └── Button "移除輸入法" role: .destructive
+        │       → confirmAlert(message varies by toggle state:
+        │          true:  "此操作將清除「…」的所有對應資料。\n已學習記錄將先備份，可在重新匯入時還原。確定繼續？"
+        │          false: "此操作將清除「…」的所有對應資料，無法還原。確定繼續？")
+        │       → manageImController.clearTable(tableNick:, backupLearning: backupOnDelete)
+        │          ├── [if backupLearning] SearchServer.backupUserRecords(tableNick)
+        │          ├── SearchServer.clearTable → LimeDB.clearTable (DELETE records + resetImConfig)
+        │          ├── LIMEPreferenceManager.syncIMActivatedState (rebuilds keyboard_state)
+        │          ├── markKeyboardCacheDirty
+        │          └── invalidate (triggers IMListView reload)
+        │       → dismiss IMDetailView; onRefresh()
+        └── Section (no header)  (shown only when im.tableNick == "related")
+            └── Button "清除關聯字庫" role: .destructive
+                → confirmAlert("此操作將清除所有關聯字資料，無法還原。確定繼續？")
+                → manageRelatedController.clearRelated()
 ```
 
 **Editable metadata rows**:
@@ -733,14 +596,11 @@ NavigationStack (continued)
 **Synthetic 關聯字庫 row**: `IMRow(id: -1, imName: "related", label: "關聯字庫", tableNick: "related", ...)` — constructed inline in `IMListView`; `.task` skips keyboard loading for this row.
 
 **Share / Export** (toolbar `square.and.arrow.up` button, all rows including 關聯字庫):
-- Tapping opens a `confirmationDialog` / Android dialog with action+format choices.
-- Non-related IMs: **分享 `.lime`**, **本機儲存 `.lime`**, **分享 `.limedb`**, **本機儲存 `.limedb`**.
-- 關聯字庫: only `.limedb` choices are shown: **分享 `.limedb`** and **本機儲存 `.limedb`**.
+- **iOS**: tapping opens a `confirmationDialog` with **format-only** choices, then presents the iOS share sheet (`ShareSheet` / `UIActivityViewController`) — there is **no** separate 分享-vs-本機儲存 split. Non-related IMs show **`.lime（文字）`** and **`.limedb（資料庫）`**; 關聯字庫 shows only **`.limedb（資料庫）`**.
+- **Android**: the dialog splits each format into **分享** and **本機儲存** (non-related: 分享 `.lime` / 本機儲存 `.lime` / 分享 `.limedb` / 本機儲存 `.limedb`; 關聯字庫: 分享 `.limedb` / 本機儲存 `.limedb`). 分享 uses `ACTION_SEND` + `FileProvider`; 本機儲存 uses SAF `ACTION_CREATE_DOCUMENT` (no storage permission / Downloads path).
 - `.lime（文字）` export path: `SetupImController.exportIMAsText` → `DBServer.exportTxtTable`.
 - `.limedb（資料庫）` export path: `exportIMAsLimedb` / `exportRelatedAsLimedb` → `DBServer.exportZippedDb` / `DBServer.exportZippedDbRelated`.
-- 分享 presents the platform share sheet (`UIActivityViewController` on iOS; Android `ACTION_SEND` with `FileProvider`).
-- 本機儲存 presents a platform save picker (`UIDocumentPicker` / file exporter on iOS; Android `ACTION_CREATE_DOCUMENT`) and writes the exported file to the selected URI. No storage permission or hardcoded Downloads path is required.
-- A progress overlay shows during export. If the user cancels the save picker, no export/save action is taken.
+- A progress overlay shows during export; cancelling the picker performs no export.
 
 > `keyboard_list` (last-used IM) is **not** cleared after remove — mirrors Android behaviour.
 > The keyboard extension will naturally find no candidates if the cleared IM is still active.
@@ -755,14 +615,14 @@ Equivalent to Android's `ManageImKeyboardDialog`.
 
 ```
 NavigationStack (continued)
-└── KeyboardPickerView
+└── KeyboardPickerView(im:, onSave:)
     └── List
         └── ForEach keyboards (from loadKeyboards; filtered to !isDisabled)
-            └── HStack { Text(kb.name), Spacer(),
+            └── HStack { Text(kb.desc), Spacer(),
                         Image(systemName: "checkmark").hidden(!isSelected) }
-               .onTapGesture → manageImController.setKeyboard(forIM:keyboard:); dismiss
+               .onTapGesture → manageImController.setKeyboard(forIM:keyboard:) → onSave?() → dismiss
                selectedCode seeded from im.keyboardId so checkmark shows immediately
-.navigationTitle("選擇鍵盤佈局")
+.constrainedDetailLayout("選擇鍵盤佈局")   // custom large-title layout (not .navigationTitle)
 ```
 
 - Selection is persisted via `db.setIMKeyboard(table:description:code:)`.
@@ -782,10 +642,10 @@ Shown only when `im.tableNick == "phonetic"`. A single `Picker` bound to the `ph
 |---|---|
 | `standard` | 標準 |
 | `et_41` | 倚天 41 鍵 |
-| `eten26` | 倚天 26 鍵 (英文鍵盤) |
-| `eten26_symbol` | 倚天 26 鍵 (符號鍵盤) |
-| `hsu` | 許氏 (英文鍵盤) |
-| `hsu_symbol` | 許氏 (符號鍵盤) |
+| `eten26` | 倚天 26 鍵 (英文) |
+| `eten26_symbol` | 倚天 26 鍵 (符號) |
+| `hsu` | 許氏 (英文) |
+| `hsu_symbol` | 許氏 (符號) |
 
 **Live update**: when this picker value changes, call `DBServer.setImConfigKeyboard("phonetic", kb)` to update the `im` table immediately (mirrors Android's `onSharedPreferenceChanged` in `LIMEPreference`). Use SwiftUI's `.onChange(of: phoneticKeyboardType)`:
 
@@ -814,98 +674,52 @@ Entry point reachable from the "下載 / 匯入輸入法" NavigationLink in §5.
 | ![iPhone 17 Pro Max simulator screenshot of the IM install and import screen](assets/lime_settings_ios_im_install.png) | ![Android emulator screenshot of the IM install and import screen](assets/lime_settings_android_im_install.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the IM install and import screen](assets/lime_settings_ios_im_install_dark.png) | ![Android emulator dark-mode screenshot of the IM install and import screen](assets/lime_settings_android_im_install_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the IM install and import screen](assets/lime_settings_ipad_im_install.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the IM install and import screen](assets/lime_settings_ipad_im_install_dark.png) |
+
+The screen is **data-driven** from `IMCatalog.families` (not a hand-written per-IM list): one
+generic `FamilyInstallGroup` `DisclosureGroup` is rendered per family, and cloud rows come from
+each family's `variants`. The per-variant display labels (e.g. ☁ OpenVanilla 注音字根, ☁ 倉頡香港字字根,
+☁ Unicode 3+4 碼詞庫版) live in `IMCatalog`.
+
 ```
 NavigationStack (continued)
 └── IMInstallView
     └── List
-        ├── DisclosureGroup "注音"
-        │   ├── [if checkBackupTable("phonetic")]
-        │   │   Toggle "還原已學習記錄"
-        │   │   pref key: restore_on_import_phonetic  (UserDefaults.standard)
-        │   │   default: true (when first shown)
-        │   ├── Button "☁ OpenVanilla 注音字根"          → downloadIM(CLOUD_PHONETIC,                 table: "phonetic", restoreLearning: restoreOnImport)
-        │   ├── Button "☁ OpenVanilla 注音字根 (BIG5字集)" → downloadIM(CLOUD_PHONETIC_BIG5,          table: "phonetic", restoreLearning: restoreOnImport)
-        │   ├── Button "☁ 注音連打字根"                  → downloadIM(CLOUD_PHONETIC_COMPLETE,        table: "phonetic", restoreLearning: restoreOnImport)
-        │   ├── Button "☁ 注音連打字根 (BIG5字集)"       → downloadIM(CLOUD_PHONETIC_COMPLETE_BIG5,   table: "phonetic", restoreLearning: restoreOnImport)
-        │   ├── Button "匯入 .limedb"     → fileImporter → importFromAttachedDB(table: "phonetic", restoreLearning: restoreOnImport)
-        │   └── Button "匯入 .cin / .lime"  → fileImporter → importTxtTable(table: "phonetic", restoreLearning: restoreOnImport)
-        │   (同上模式適用於以下所有 built-in IM DisclosureGroup，各 IM 獨立使用 restore_on_import_{tableNick} key；
-        │    checkBackupTable 返回 false 時 Toggle 不顯示；關聯字庫 group 除外)
-        ├── DisclosureGroup "倉頡"
-        │   ├── [if checkBackupTable("cj")] Toggle "還原已學習記錄"  pref: restore_on_import_cj  default: true
-        │   ├── Button "☁ 倉頡字根"           → downloadIM(CLOUD_CJ,      table: "cj", restoreLearning: restoreOnImport)
-        │   ├── Button "☁ 倉頡字根 (BIG5字集)" → downloadIM(CLOUD_CJ_BIG5, table: "cj", restoreLearning: restoreOnImport)
-        │   ├── Button "☁ 倉頡香港字字根"     → downloadIM(CLOUD_CJHK,    table: "cj", restoreLearning: restoreOnImport)
-        │   ├── Button "匯入 .limedb"         → fileImporter → importFromAttachedDB(table: "cj", restoreLearning: restoreOnImport)
-        │   └── Button "匯入 .cin / .lime"      → fileImporter → importTxtTable(table: "cj", restoreLearning: restoreOnImport)
-        ├── DisclosureGroup "倉頡五代"
-        │   ├── Button "☁ 倉頡五代字根"       → downloadIM(CLOUD_CJ5, table: "cj5")
-        │   ├── Button "匯入 .limedb"         → fileImporter → importFromAttachedDB(table: "cj5")
-        │   └── Button "匯入 .cin / .lime"      → fileImporter → importTxtTable(table: "cj5")
-        ├── DisclosureGroup "快倉"
-        │   ├── Button "☁ 快倉字根"           → downloadIM(CLOUD_SCJ, table: "scj")
-        │   ├── Button "匯入 .limedb"         → fileImporter → importFromAttachedDB(table: "scj")
-        │   └── Button "匯入 .cin / .lime"      → fileImporter → importTxtTable(table: "scj")
-        ├── DisclosureGroup "速成"
-        │   ├── Button "☁ 簡易速成"           → downloadIM(CLOUD_ECJ,   table: "ecj")
-        │   ├── Button "☁ 速成香港字字根"     → downloadIM(CLOUD_ECJHK, table: "ecj")
-        │   ├── Button "匯入 .limedb"         → fileImporter → importFromAttachedDB(table: "ecj")
-        │   └── Button "匯入 .cin / .lime"      → fileImporter → importTxtTable(table: "ecj")
-        ├── DisclosureGroup "大易"
-        │   ├── Button "☁ OpenVanilla 大易字根"  → downloadIM(CLOUD_DAYI,      table: "dayi")
-        │   ├── Button "☁ Unicode 3+4 碼單字版" → downloadIM(CLOUD_DAYIUNI,   table: "dayi")
-        │   ├── Button "☁ Unicode 3+4 碼詞庫版" → downloadIM(CLOUD_DAYIUNIP,  table: "dayi")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "dayi")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "dayi")
-        ├── DisclosureGroup "輕鬆"
-        │   ├── Button "☁ 輕鬆字根"             → downloadIM(CLOUD_EZ, table: "ez")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "ez")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "ez")
-        ├── DisclosureGroup "行列"
-        │   ├── Button "☁ 老刀行列字根"         → downloadIM(CLOUD_ARRAY, table: "array")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "array")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "array")
-        ├── DisclosureGroup "行列 10"
-        │   ├── Button "☁ 老刀行列10字根"       → downloadIM(CLOUD_ARRAY10, table: "array10")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "array10")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "array10")
-        ├── DisclosureGroup "拼音"
-        │   ├── Button "☁ 拼音字根"             → downloadIM(CLOUD_PINYIN,    table: "pinyin")
-        │   ├── Button "☁ 拼音字根 (簡體GB)"    → downloadIM(CLOUD_PINYINGB,  table: "pinyin")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "pinyin")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "pinyin")
-        ├── DisclosureGroup "華象直覺"
-        │   ├── Button "☁ 華象完整版"           → downloadIM(CLOUD_HS,    table: "hs")
-        │   ├── Button "☁ 華象一版"             → downloadIM(CLOUD_HS_V1, table: "hs")
-        │   ├── Button "☁ 華象二版"             → downloadIM(CLOUD_HS_V2, table: "hs")
-        │   ├── Button "☁ 華象三版"             → downloadIM(CLOUD_HS_V3, table: "hs")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "hs")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "hs")
-        ├── DisclosureGroup "筆順五碼"
-        │   ├── Button "☁ 筆順五碼字根"         → downloadIM(CLOUD_WB, table: "wb")
-        │   ├── Button "匯入 .limedb"           → fileImporter → importFromAttachedDB(table: "wb")
-        │   └── Button "匯入 .cin / .lime"        → fileImporter → importTxtTable(table: "wb")
-        ├── DisclosureGroup "自建"
-        │   ├── Button "匯入 .limedb"     → fileImporter → importFromAttachedDB(table: "custom") → seedCustomIM()
-        │   └── Button "匯入 .cin / .lime"  → fileImporter → importTxtTable(table: "custom") → seedCustomIM()
+        ├── Section: inline search bar (magnifyingglass + TextField "搜尋輸入法" + clear ✕)
+        │            filters IMCatalog.families → filteredFamilies
+        ├── ForEach(filteredFamilies)   // 13 families: 注音 倉頡 快倉 倉頡五代 速成 大易 輕鬆
+        │   │                           //              行列 行列10 拼音 華象直覺 筆順五碼 自建
+        │   └── FamilyInstallGroup(family)        // a DisclosureGroup
+        │       ├── [if hasBackup] Toggle "還原已學習記錄"
+        │       │     key: restore_on_import_<family.id> (UserDefaults.standard) default: true
+        │       │     hasBackup = checkBackupTable(candidate tableName) OR user_backed_up_<tableNick> flag
+        │       ├── ForEach(family.variants) VariantRow(variant)   // cloud "☁" rows; empty for 自建
+        │       │     → downloadManager.install(variant, restoreLearning: restoreOnImport)
+        │       ├── Button "匯入 .limedb"     → beginImport(for: family.id, requestedType: .db)
+        │       └── Button "匯入 .cin / .lime"  → beginImport(for: family.id, requestedType: .txt)
+        │       // 自建 (custom): no cloud variants; after a successful import → seedCustomIM()
         ├── DisclosureGroup "關聯字庫"  systemImage: "text.bubble"
-        │   └── Button "匯入 .limedb"     → fileImporter → DBServer.importDbRelated(sourcedb:) → manageRelatedController.invalidate()
-        └── Section "狀態"  (visible only when statusMessage is non-empty)
-            └── Text(statusMessage).font(.footnote).foregroundColor(.secondary)
+        │   └── Button "匯入 .limedb" → beginImport(for: "related", .relatedDb)
+        │         → DBServer.importDbRelated → manageRelatedController.invalidate()
+        └── [if statusMessage non-empty] Section "狀態" → Text(statusMessage).font(.footnote).secondary
+    // Import flow: beginImport → .fileImporter → handleSelectedImportURL →
+    //   setupController.importDBFile(...) / importTxtFile(...). pendingTableName fixes the IM code;
+    //   source filenames are metadata only. There are no downloadIM / importFromAttachedDB /
+    //   importTxtTable functions and no CLOUD_* constants — those are illustrative shorthand only.
 ```
 
 #### 5.3.1 Progress Overlay
 
-When import or download is running, show a centred `ProgressView("匯入中…")` overlay with the current status message. Set `.interactiveDismissDisabled(true)` on any surrounding sheet.
+When a **related-DB import** runs (`pickerType == .relatedDb`), show a centred `ProgressView("匯入中…")` overlay. `.db` / `.txt` IM imports surface a status message instead (no blocking overlay), and per-variant cloud downloads show inline progress in the `VariantRow` / `InstallButton`. Import runs via `.fileImporter` (not a sheet), so there is no `interactiveDismissDisabled`.
 
 #### 5.3.2 Download Behaviour
 
-1. Download `.zip` or `.limedb` to `FileManager.default.temporaryDirectory`.
-2. If `.zip`, extract with `ZipArchive` or the `Zip` SPM library.
-3. Route by file extension:
-   - `.cin` / `.lime` → `db.importTxtFile(at:tableName:progress:)`, streaming progress updates.
-   - `.db` / `.limedb` → `db.importFromAttachedDB(sourcePath:tableName:)`.
-4. After import, call `db.seedDefaultIMs()` (or an explicit `insertImConfig`) so the IM appears in the list.
+1. `IMDownloadManager` downloads the `.zip` / `.limedb` to a temp dir and **validates it** (min ~100 KB; anything smaller is treated as a failed download).
+2. If `.zip`, extract it.
+3. Import the database via `importDatabaseFile(server:url:tableName:)`; if restoring learned records, `restoreUserRecords` then `dropBackupTable`.
+4. `server.registerIM(imName:tableName:label:keyboardId:)` inserts the IM row, then `syncIMActivatedState` rebuilds `keyboard_state` so the IM appears in the list. (There is **no** `seedDefaultIMs`.)
 5. Clean up the temp file.
 
 #### 5.3.3 Local File Import
@@ -929,26 +743,29 @@ Reached via NavigationLink from §5.2 ("瀏覽 / 編輯資料表").
 | ![iPhone 17 Pro Max simulator screenshot of the mapping record list](assets/lime_settings_ios_record_list.png) | ![Android emulator screenshot of the mapping record list](assets/lime_settings_android_record_list.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the mapping record list](assets/lime_settings_ios_record_list_dark.png) | ![Android emulator dark-mode screenshot of the mapping record list](assets/lime_settings_android_record_list_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the mapping record list](assets/lime_settings_ipad_record_list.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the mapping record list](assets/lime_settings_ipad_record_list_dark.png) |
+
 ```
 NavigationStack (continued)
-└── RecordListView(table: String)
-    ├── .searchable(text: $query, prompt: "搜尋")
-    ├── Picker "" segmented: ["字根", "文字"]   // search-by selector
+└── RecordListView(tableName: String, imLabel: String)
+    ├── Picker "搜尋模式" segmented: ["字根", "文字"]   // above the search field
+    ├── inline search bar: HStack { magnifyingglass; TextField("搜尋", text: $query); clear ✕ }   // NOT .searchable()
     ├── List
     │   └── ForEach records (page of 100)
-    │       ├── HStack
-    │       │   ├── Text(record.code).monospaced
-    │       │   ├── Spacer()
-    │       │   ├── Text(record.word)
-    │       │   └── Text("\(record.score)").secondary.caption
-    │       └── .swipeActions(edge: .trailing) {
-    │           Button("刪除", role: .destructive) → confirmAlert → db.removeRecord
-    │           Button("編輯")                     → sheet: EditRecordView
+    │       ├── HStack   // three columns, no Spacer
+    │       │   ├── Text(record.code).monospaced   .frame(maxWidth: .infinity, .leading)
+    │       │   ├── Text(record.word)              .frame(maxWidth: .infinity, .leading)
+    │       │   └── Text("\(record.score)").secondary   .frame(width: 48, .trailing)
+    │       ├── .onTapGesture → sheet: EditRecordView          // row tap edits
+    │       └── .swipeActions(edge: .trailing) {              // single delete action
+    │           Button("刪除", role: .destructive) → confirmAlert → deleteRecord(table:id:)
     │       }
     └── HStack "pagination bar" {
         Button("‹ 上頁")   .disabled(page == 0)
         Spacer()
-        Text("第 \(page+1) 頁 / 共 \(totalRecords) 筆")
+        Text("第 \(page+1) / \(totalPages) 頁 · \(totalCount) 筆")
         Spacer()
         Button("下頁 ›")   .disabled(isLastPage)
     }
@@ -957,7 +774,7 @@ NavigationStack (continued)
         Button(systemImage: "plus") → sheet: AddRecordView
     }
 }
-.navigationTitle(im.label)
+.navigationTitle(imLabel)
 ```
 
 **Pagination**: 100 records per page (Android `LIME.IM_MANAGE_DISPLAY_AMOUNT`). Changing page or query resets to page 0.
@@ -979,7 +796,7 @@ Form
 │       └── Button(systemImage: "plus.circle")  → score = min(9999, score + 1)
 └── Section
     └── Button "確認新增" → guard !code.isEmpty && !word.isEmpty
-                          → db.addRecord(table:code:word:score:)
+                          → manageImController.addRecord(table:code:word:score:)
                           → dismiss
 ```
 
@@ -998,9 +815,9 @@ Form
 │   ├── TextField "文字"  binding: word
 │   └── ScoreInputRow "分數"       // same editable score control as AddRecordView
 ├── Section
-│   └── Button("儲存") → confirmAlert → db.updateRecord(id:code:score:word:) → dismiss
+│   └── Button("儲存") → updateRecord(table:id:code:word:score:) → dismiss   // no confirm on save
 └── Section
-    └── Button("刪除", role: .destructive) → confirmAlert → db.removeRecord(id:) → dismiss
+    └── Button("刪除", role: .destructive) → confirmAlert → deleteRecord(table:id:) → dismiss
 ```
 
 Validation on Save: code and word must not be empty.
@@ -1018,16 +835,23 @@ The related-phrase editor is reached via **輸入法 → 關聯字庫 → 瀏覽
 | ![iPhone 17 Pro Max simulator screenshot of the related phrase list](assets/lime_settings_ios_related_list.png) | ![Android emulator screenshot of the related phrase list](assets/lime_settings_android_related_list.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the related phrase list](assets/lime_settings_ios_related_list_dark.png) | ![Android emulator dark-mode screenshot of the related phrase list](assets/lime_settings_android_related_list_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the related phrase list](assets/lime_settings_ipad_related_list.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the related phrase list](assets/lime_settings_ipad_related_list_dark.png) |
+
 ```
 NavigationStack (continued from §5.2)
 └── RelatedListView(isEmbedded: true)
-    ├── .searchable(text: $query, prompt: "搜尋詞彙")
+    ├── inline search bar: HStack { magnifyingglass; TextField("搜尋詞彙", text: $query); clear ✕ }   // NOT .searchable()
     ├── List
     │   └── ForEach relatedList (page of 100)
-    │       ├── HStack { Text(r.word).bold, Spacer(), Text(r.related).secondary }
-    │       └── .swipeActions(edge: .trailing) {
-    │           Button("刪除", role: .destructive) → confirmAlert → db.removeRelated
-    │           Button("編輯")                     → sheet: EditRelatedView
+    │       ├── HStack   // three columns, no bold / no Spacer
+    │       │   ├── Text(r.parentWord)   .frame(maxWidth: .infinity, .leading)
+    │       │   ├── Text(r.childWord)    .frame(maxWidth: .infinity, .leading)
+    │       │   └── Text("\(r.score)").secondary   .frame(width: 48, .trailing)
+    │       ├── .onTapGesture → sheet: EditRelatedView          // row tap edits
+    │       └── .swipeActions(edge: .trailing) {              // single delete action
+    │           Button("刪除", role: .destructive) → confirmAlert → deleteRelated(id:)
     │       }
     └── HStack "pagination bar"  (same pattern as §6.1)
 .toolbar {
@@ -1055,7 +879,7 @@ Form
 │       └── Button(systemImage: "plus.circle")  → score = min(9999, score + 1)
 └── Section
     └── Button("確認新增") → guard both non-empty
-                         → db.addRelated(word:related:score:)
+                         → manageRelatedController.addRelated(parentWord:childWord:score:)
                          → dismiss
 ```
 
@@ -1072,11 +896,10 @@ Form
 │   ├── TextField "關聯字"  binding: related
 │   └── ScoreInputRow "分數"       // initialized from existing related score
 ├── Section
-│   └── Button("儲存", role .none)        → confirmAlert
-│                                        → db.updateRelated(word:related:score:)
-│                                        → dismiss
+│   └── Button("儲存")                    → updateRelated(id:parentWord:childWord:score:)
+│                                        → dismiss   // no confirm on save
 └── Section
-    └── Button("刪除", role: .destructive) → confirmAlert → db.removeRelated → dismiss
+    └── Button("刪除", role: .destructive) → confirmAlert → deleteRelated(id:) → dismiss
 ```
 
 The score field must update the persisted related-row score and the list score
@@ -1138,6 +961,10 @@ added under `docs/` or `assets/screenshots/`.
 | ![iPhone 17 Pro Max simulator screenshot of the 資料庫 tab](assets/lime_settings_ios_database.png) | ![Android emulator screenshot of the 資料庫 tab](assets/lime_settings_android_database.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the 資料庫 tab](assets/lime_settings_ios_database_dark.png) | ![Android emulator dark-mode screenshot of the 資料庫 tab](assets/lime_settings_android_database_dark.png) |
 
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the 資料庫 tab](assets/lime_settings_ipad_database.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the 資料庫 tab](assets/lime_settings_ipad_database_dark.png) |
+
 ### 7.1 Layout
 
 No second-level navigation exists in this tab, so it uses a `ScrollView` + `VStack` layout
@@ -1148,64 +975,61 @@ and a standard full-width layout on iPhone.
 NavigationStack
 └── ScrollView
     └── VStack(alignment: .leading, spacing: 0)   // .padding(.horizontal, 24)
-        │                                           // .frame(maxWidth: 560)
-        │                                           // .frame(maxWidth: .infinity)
+        │                                           // .frame(maxWidth: 560).frame(maxWidth: .infinity)
         │
-        ├── [iPad only] Text("資料庫管理")           // .font(.title2).bold()
-        │   // Nav bar hidden on iPad (.navigationBarHidden(hSize == .regular))
-        │   // so the title is rendered here, left-aligned with the content column.
-        │   // On iPhone the standard navigation large title is used instead.
+        ├── Text("資料庫管理").font(.largeTitle).bold()   // rendered in-content on ALL devices
         │
-        ├── formSection(header: "備份", footer: "備份包含所有字根、關聯字及喜好設定。")
+        ├── dbAction(footer: "備份包含所有字根、關聯字及喜好設定。")     // no section header
         │   └── Button "備份資料庫"  systemImage: "square.and.arrow.up"
+        │       .buttonStyle(.borderedProminent).controlSize(.large)   // filled primary action
         │       → performBackup() → UIActivityViewController (Files, AirDrop, Mail…)
         │
-        ├── formSection(header: "還原", footer: "還原後鍵盤將重新載入資料庫。")
-        │   └── Button "還原資料庫"  systemImage: "arrow.down.circle"  .foregroundColor(.red)
-        │       → confirmAlert("還原後目前所有資料將被取代，確定繼續？")
-        │       → fileImporter([.item])   // pick .db / .limedb
-        │       → performRestore(from:)
+        ├── dbAction(footer: "還原後鍵盤將重新載入資料庫。")
+        │   └── Button "還原資料庫"  systemImage: "arrow.down.circle"
+        │       .buttonStyle(LimeTonalButtonStyle())                   // tonal (NOT red)
+        │       → showRestoreConfirm → alert → fileImporter([.item]) → performRestore(from:)
         │
-        ├── formSection(header: "初始資料庫")
-        │   └── Button "還原預設資料庫"  systemImage: "arrow.counterclockwise.circle"  .foregroundColor(.red)
-        │       → confirmAlert → restoreBundledDatabase()
+        ├── dbAction(footer: "警告：將清除目前所有輸入法資料表，還原為萊姆內建的空白預設資料庫，此動作無法復原。", warning: true)
+        │   └── Button "還原預設資料庫"  systemImage: "arrow.counterclockwise.circle"
+        │       .buttonStyle(LimeTonalButtonStyle(tint: SettingsTheme.destructive))   // red tonal
+        │       → showInitConfirm → alert → restoreBundledDatabase()
         │
-        └── [if statusMessage non-empty] formSection(header: "狀態")
-            └── Text(statusMessage).font(.footnote).foregroundColor(.secondary)
-    .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-    .navigationTitle("資料庫管理")          // iPhone only (nav bar shown)
-    .navigationBarHidden(hSize == .regular) // hide nav bar on iPad; show on iPhone
+        └── [if statusMessage non-empty] Label(statusMessage, systemImage: "info.circle")
+                .font(.footnote).foregroundColor(.secondary)
+    .toolbar(.hidden, for: .navigationBar)   // nav bar hidden on all devices
+    // Both restore actions share ONE alert:
+    //   .alert("確認還原") { Button("還原", role: .destructive); Button("取消", role: .cancel) }
+    //   message: "還原後目前所有資料將被取代，確定繼續？"
 ```
 
-`formSection(header:footer:content:)` is a private `@ViewBuilder` helper that renders a
-`GroupBox` styled with `FormSectionGroupBoxStyle` (shared with `SetupTabView`) with a small
-uppercase header label above and an optional footnote footer below, matching the visual
-language of an `.insetGrouped` List section.
+`dbAction(footer:warning:content:)` is a private `@ViewBuilder` helper that renders a full-width
+button above a footnote footer — **no section header** (the button labels are self-explanatory).
+When `warning: true` the footer is a red warning carrying a leading `exclamationmark.triangle.fill`
+(used by 還原預設資料庫).
 
 **iPad width cap.** The inner `VStack` carries `.frame(maxWidth: 560).frame(maxWidth: .infinity)`
-so the content sits in a centred column. The navigation bar is hidden on iPad and a custom
-`.title2.bold()` title is shown at the top of the column (left-aligned with the GroupBoxes)
-at the same vertical height as the large navigation titles in the IM Manager and Preferences
-tabs. On iPhone the standard navigation large title is used and the custom title is hidden.
+so the content sits in a centred column. The `資料庫管理` title is rendered in-content
+(`.largeTitle.bold()`) on **all** devices and the navigation bar is hidden everywhere, so the
+layout is identical on iPhone and iPad.
 
 ### 7.2 Backup Behaviour
 
 1. Call `DBServer.shared.backupDatabase(uri: tempZip, progress:)` from a `Task.detached(priority: .userInitiated)`. The call is dispatched off the main actor — calling it via `MainActor.run` would block SwiftUI from rendering the progress overlay until the work finished. `DBServer` is a plain class (not `@MainActor`-isolated) and GRDB serializes the queue internally, so background dispatch is safe.
 2. `backupDatabase` zips `lime.db` (+ journal + filtered shared-prefs plist) into a temp `.zip` and accepts an optional `Progress` for ZIPFoundation to update during `addEntry`. The view observes `progress.fractionCompleted` via KVO and republishes to a `@State backupProgress: Double`.
 3. After `closeDatabase()` (required to checkpoint GRDB's WAL into the main file), the `defer` block **must** rebuild the datasource: `datasource = try? LimeDB(path: livePath)`. `LimeDB.openDBConnection()` is a no-op stub on iOS, so without the explicit rebuild every later `dbQueue.write` throws SQLITE_MISUSE 21 ("out of memory" in `sqlite3_errmsg`), the IM list silently empties (`tableHasData` swallows the error via `try?`), and reinstall fails with the same error. Mirror the pattern used by `restoreDatabase()`.
-4. Present via `ShareLink(item: URL(fileURLWithPath: tempZip))` (SwiftUI) or `UIActivityViewController` (UIKit bridge) so the user can save to Files, send via AirDrop, etc.
+4. Present via a `UIActivityViewController` bridge (`ShareSheet`) so the user can save to Files, send via AirDrop, etc.
 5. Clean up temp file after the share sheet is dismissed.
 
 ### 7.3 Restore Behaviour
 
-1. Show a **confirmation alert** before proceeding: "還原後目前所有資料將被取代，確定繼續？".
+1. Show a **confirmation alert** (title `確認還原`, buttons `還原` destructive / `取消`) before proceeding: "還原後目前所有資料將被取代，確定繼續？". Both restore actions share this alert.
 2. On confirm, open a `.fileImporter` restricted to `.item` (to pick `.db` / `.limedb` files).
 3. On file selection:
    a. Stop any in-flight DB access (notify keyboard extension via App Group flag if needed).
    b. Copy the picked file over `lime.db` in the App Group container.
    c. Re-open the DB connection and verify integrity.
    d. Reload the IM list in §5.1 and the related list in §6.2.
-4. Show status: "✅ 資料庫還原完成" or "❌ 還原失敗：\(error)".
+4. Show status (rendered with a leading `info.circle`, no emoji): "資料庫還原完成" or "還原失敗：\(error.localizedDescription)".
 
 ### 7.4 Progress Overlay
 
@@ -1231,7 +1055,7 @@ Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupP
 
 ## 8. Feature: IM Preferences (喜好設定 Tab)
 
-**Purpose**: Replicate all settings from Android's `LIMEPreference` (`preference.xml`). All values persist to `UserDefaults(suiteName: "group.net.toload.limeime")` so the keyboard extension can read them without IPC.
+**Purpose**: Replicate all settings from Android's `LIMEPreference` (`preference.xml`). All values persist to `UserDefaults(suiteName: "group.org.limeime")` so the keyboard extension can read them without IPC.
 
 **Title**: The IM Preferences root screen title is always `喜好設定` on both platforms. This applies to the iOS tab/navigation title, the Android settings tab toolbar title, and the standalone Android `LIMEPreference` Activity launched from the keyboard long-press menu. Do not use an app-level settings title or old keyboard-preferences wording for this screen.
 
@@ -1240,7 +1064,11 @@ Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupP
 | ![iPhone 17 Pro Max simulator screenshot of the 喜好設定 tab](assets/lime_settings_ios_preferences.png) | ![Android emulator screenshot of the 喜好設定 tab](assets/lime_settings_android_preferences.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the 喜好設定 tab](assets/lime_settings_ios_preferences_dark.png) | ![Android emulator dark-mode screenshot of the 喜好設定 tab](assets/lime_settings_android_preferences_dark.png) |
 
-Use `@AppStorage(key, store: UserDefaults(suiteName: "group.net.toload.limeime"))` (aliased as `sharedDefaults` constant) for every value.
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the 喜好設定 tab](assets/lime_settings_ipad_preferences.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the 喜好設定 tab](assets/lime_settings_ipad_preferences_dark.png) |
+
+Use `@AppStorage(key, store: UserDefaults(suiteName: "group.org.limeime"))` (aliased as `sharedDefaults` constant) for every value.
 
 ### 8.1 Section 鍵盤外觀 (Keyboard Appearance)
 
@@ -1248,10 +1076,10 @@ Use `@AppStorage(key, store: UserDefaults(suiteName: "group.net.toload.limeime")
 |---|---|---|---|---|
 | `Picker` "鍵盤樣式" | `keyboard_theme` | Int | 6 | 0=淺色 1=深色 2=粉紅 3=科技藍 4=時尚紫 5=放鬆綠 6=系統設定 |
 | `Picker` "鍵盤大小" | `keyboard_size` | String | "1" | "1.2"=特大 "1.1"=大 "1"=一般 "0.9"=小 "0.8"=特小 |
-| `Picker` "候選字字型大小" | `font_size` | String | "1" | Scale string, same values as `keyboard_size`; also exposed as raw `candidateFontSize` Double (14–28 pt) |
+| `Picker` "字型大小" | `font_size` | String | "1" | 特大/大/一般/小/特小 (same scale values as `keyboard_size`; the derived `candidateFontSize` Double is separate, see §9) |
 | `Toggle` "數字列英文鍵盤" | `number_row_in_english` | Bool | true | 在英文鍵盤顯示數字列(5列鍵盤); **iPhone only** — hidden on iPad (`PreferencesTabView.swift` gates with `userInterfaceIdiom != .pad`) |
-| `Picker` "顯示方向鍵" | `show_arrow_key` | Int | 0 | 0=無 1=鍵盤上方 2=鍵盤下方 |
-| `Picker` "分離鍵盤" | `split_keyboard_mode` | Int | 0 | 0=關閉 1=開啟 2=僅橫向; **iPad only** — hide on iPhone |
+| `Picker` "顯示方向鍵" | `show_arrow_key` | Int | 0 | 0=無 1=軟鍵盤上方 2=軟鍵盤下方 |
+| `Picker` "分離鍵盤" | `split_keyboard_mode` | Int | 0 | 0=關閉 1=開啟 2=僅橫向開啟; **iPad only** — hidden on iPhone |
 
 > The keyboard extension reads `keyboard_theme` at `viewDidLoad`.
 > - Values **0–5**: fixed colour themes regardless of system appearance. 0=淺色, 1=深色, 2=粉紅, 3=科技藍, 4=時尚紫, 5=放鬆綠.
@@ -1272,11 +1100,13 @@ Use `@AppStorage(key, store: UserDefaults(suiteName: "group.net.toload.limeime")
 | UI Control | Pref Key | Type | Default | Values / Notes |
 |---|---|---|---|---|
 | `Toggle` "開啟中文智慧組詞" | `smart_chinese_input` | Bool | true | 部份輸入法可能會影響中英混打功能. |
-| `Toggle` "自動中文標點" | `auto_chinese_symbol` | Bool | false | 無候選字詞時顯示中文標點選項. |
-| `Toggle` "滑動選取候選字" | `candidate_switch` | Bool | true | 開啟：跟手滑動 關閉：滑動翻頁 |
+| `Toggle` "自動中文標點模式" | `auto_chinese_symbol` | Bool | false | 無候選字詞時顯示中文標點選項. |
 | `Toggle` "記憶中英模式" | `persistent_language_mode` | Bool | false | 下次切換前保持中英模式. |
-| `Picker` "Emoji 顯示位置" | `enable_emoji_position` | Int | 6 | 0=不顯示 Emoji 候選字; 2–10=position after Nth candidate |
+| `Picker` "設定 EMOJI 候選列顯示位置" | `enable_emoji_position` | Int | 5 | 0=不顯示 Emoji 候選字; 2–10=第 N 候選字後顯示 |
+| `Picker` "建議字顯示數量" | `similiar_list` | Int | 20 | Options 0 / 10 / 20 / 30 / 40 / 50; disabled unless `similiar_enable` (whose toggle lives in §8.6) |
 | `NavigationLink` "字根反查設定" | `reverse_lookup_screen` | Screen | n/a | Opens §8.4.1. Last item in §8.4. |
+
+> `candidate_switch` is declared (`@AppStorage`) but **bound to no UI control** — free-scroll candidate selection is now always on, so the old "滑動選取候選字" toggle was removed.
 
 #### 8.4.1 字根反查設定 — Sub-screen
 
@@ -1286,6 +1116,10 @@ A `NavigationLink` "字根反查設定" appears as the last row inside §8.4 and
 |---|---|
 | ![iPhone 17 Pro Max simulator screenshot of the 字根反查設定 sub-screen](assets/lime_settings_ios_reverse_lookup.png) | ![Android emulator screenshot of the 字根反查設定 sub-screen](assets/lime_settings_android_reverse_lookup.png) |
 | ![iPhone 17 Pro Max simulator dark-mode screenshot of the 字根反查設定 sub-screen](assets/lime_settings_ios_reverse_lookup_dark.png) | ![Android emulator dark-mode screenshot of the 字根反查設定 sub-screen](assets/lime_settings_android_reverse_lookup_dark.png) |
+
+| iPad (light) | iPad (dark) |
+|---|---|
+| ![iPad Pro 13-inch (M5) simulator screenshot of the 字根反查設定 sub-screen](assets/lime_settings_ipad_reverse_lookup.png) | ![iPad Pro 13-inch (M5) simulator dark-mode screenshot of the 字根反查設定 sub-screen](assets/lime_settings_ipad_reverse_lookup_dark.png) |
 
 ```
 NavigationLink "字根反查設定" → ReverseLookupSettingsView
@@ -1303,11 +1137,11 @@ ReverseLookupSettingsView
 
 All pickers default to `"none"`. Picker rows are dynamic: iOS loads the same enabled IM list used by the IM list tab (`ManageImController.loadIMList()`), preserving that tab's order and display-name fallback. Picker choices are also dynamic: `none` displays as `無`, followed by the same enabled IM display names. Picker tags / stored values remain the table codes (`cj`, `phonetic`, `dayi`, etc.), so existing preferences and reverse-lookup DB logic remain compatible. If the source-choice list is unavailable, the picker choices may fall back to the built-in IM code list, but the visible rows do not fall back to all IMs.
 
-### 8.5 Section 漢字轉換 (Han Conversion)
+### 8.5 Section 簡繁轉換 (Han Conversion)
 
 | UI Control | Pref Key | Type | Default | Notes |
 |---|---|---|---|---|
-| `Picker` "簡繁轉換" (`.segmented`) | `han_convert_option` | Int | 0 | 0=不轉換 1=繁→簡 2=簡→繁 |
+| `Picker` "中文簡/繁體字碼轉換" (`.segmented`) | `han_convert_option` | Int | 0 | 無 / 繁轉簡 / 簡轉繁 (0 / 1 / 2) |
 
 iOS uses a `.segmented` `Picker`. Android renders an inline M3 segmented control (無 / 繁轉簡 / 簡轉繁) via `SegmentedHanPreference` (`preference_han_segmented.xml`), persisting the same `han_convert_option` String. The Android **keyboard extension** exposes the *same* segmented control inline at the top level of its long-press options menu — alongside an inline **分離鍵盤** segmented control (`split_keyboard`) — and applies both on dismiss (see the revision note "Long-press keyboard-key options menu"); all write the same keys as the Settings app.
 
@@ -1317,17 +1151,17 @@ At the maximum accessibility sizes (font scale 2.0 + largest display), three sid
 
 | UI Control | Pref Key | Type | Default | Notes |
 |---|---|---|---|---|
-| `Toggle` "啟用關聯字庫" | `similiar_enable` | Bool | true | 啟用關聯字庫功能 |
-| `Picker` "建議字顯示數量" | `similiar_list` | Int | 20 | Options: 0 / 10 / 20 / 30 / 40 / 50 |
-| `Toggle` "自動學習關聯字" | `candidate_suggestion` | Bool | true | 依輸入文字自動建立關聯字 |
+| `Toggle` "啟用關聯字庫" | `similiar_enable` | Bool | true | 啟用關聯字庫功能 (gates the 建議字顯示數量 picker rendered in §8.4) |
+| `Toggle` "啟動自建關聯字" | `candidate_suggestion` | Bool | true | 依輸入文字自動建立關聯字 |
 | `Toggle` "自動學習新詞" | `learn_phrase` | Bool | true | 從常用關聯字學習新詞 |
 | `Toggle` "啟動選取排序" | `learning_switch` | Bool | true | 依選取次數排序選字清單 |
 
-### 8.7 Section 英文字典 (English Dictionary)
+### 8.7 Section 英文鍵盤 (English Keyboard)
 
 | UI Control | Pref Key | Type | Default | Notes |
 |---|---|---|---|---|
-| `Toggle` "啟用英文建議字" | `english_dictionary_enable` | Bool | true | 當使用英文輸入模式時，顯示英文建議字 |
+| `Toggle` "啟用英文字典" | `english_dictionary_enable` | Bool | true | 當使用英文輸入模式時，顯示英文建議字 |
+| `Toggle` "首字自動大寫" | `auto_cap` | Bool | true | 在英文模式下，句首字母自動轉為大寫 |
 
 > `accept_number_index` and `accept_symbol_index` are surfaced in §5.2 `IMDetailView` under the "字根對應設定" section, shown only when the custom IM is active (`im.tableNick == "custom"`). They are omitted from §8 because all built-in IMs hardcode their own number/symbol mapping behaviour.
 
@@ -1337,12 +1171,12 @@ At the maximum accessibility sizes (font scale 2.0 + largest display), three sid
 
 ## 9. Preference Key Reference
 
-All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
+All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 
 | Pref Key | Android Key | Type | Default |
 |---|---|---|---|
 | `keyboard_theme` | `keyboard_theme` | Int | 6 |
-| `enable_emoji_position` | `enable_emoji_position` | Int | 6 |
+| `enable_emoji_position` | `enable_emoji_position` | Int | 5 |
 | `keyboard_size` | `keyboard_size` | String | "1" |
 | `font_size` | `font_size` | String | "1" |
 | `candidateFontSize` | *(derived)* | Double | 18 |
@@ -1363,7 +1197,7 @@ All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
 | `cj5_im_reverselookup` | `cj5_im_reverselookup` | String | "none" |
 | `ecj_im_reverselookup` | `ecj_im_reverselookup` | String | "none" |
 | `dayi_im_reverselookup` | `dayi_im_reverselookup` | String | "none" |
-| `bpmf_im_reverselookup` | `bpmf_im_reverselookup` | String | "none" |
+| `phonetic_im_reverselookup` | `bpmf_im_reverselookup` | String | "none" *(iOS uses `phonetic_im_reverselookup` for the 注音 IM; `bpmf_im_reverselookup` is the legacy Android key, kept only by the backup adapter for parity)* |
 | `ez_im_reverselookup` | `ez_im_reverselookup` | String | "none" |
 | `array_im_reverselookup` | `array_im_reverselookup` | String | "none" |
 | `array10_im_reverselookup` | `array10_im_reverselookup` | String | "none" |
@@ -1372,7 +1206,7 @@ All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
 | `pinyin_im_reverselookup` | `pinyin_im_reverselookup` | String | "none" |
 | `similiar_list` | `similiar_list` | Int | 20 |
 | `similiar_enable` | `similiar_enable` | Bool | true |
-| `candidate_switch` | `candidate_switch` | Bool | true |
+| `candidate_switch` | `candidate_switch` | Bool | true *(no UI — free-scroll always on; see §8.4)* |
 | `candidate_suggestion` | `candidate_suggestion` | Bool | true |
 | `learn_phrase` | `learn_phrase` | Bool | true |
 | `learning_switch` | `learning_switch` | Bool | true |
@@ -1380,10 +1214,10 @@ All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
 | `accept_number_index` | `accept_number_index` | Bool | false |
 | `accept_symbol_index` | `accept_symbol_index` | Bool | false |
 | `persistent_language_mode` | `persistent_language_mode` | Bool | false |
-| `keyboard_state` | `keyboard_state` | String | "0;1;2;3;…;12" |
+| `keyboard_state` | `keyboard_state` | String | "" *(empty until built dynamically by `syncIMActivatedState`; semicolon-delimited enabled-IM indices)* |
 | `keyboard_list` (active IM) | `keyboard_list` | String | "phonetic" |
 | `language_mode` | `language_mode` | String | `"no"` *(internal storage state; "yes"=English-only, "no"=Chinese; written by `setLanguageMode` when `persistent_language_mode` is on; not user-toggleable)* |
-| `auto_cap` | `auto_cap` | Bool | `true` *(shadow accessor per §10.1; iOS reads `textDocumentProxy.autocapitalizationType` directly — no UI, no callers)* |
+| `auto_cap` | `auto_cap` | Bool | `true` *(surfaced as the 首字自動大寫 toggle in §8.7 英文鍵盤; in English mode, capitalises the first letter of a sentence)* |
 
 **Per-IM backup/restore preference keys** (stored in `UserDefaults.standard`, NOT the App Group — keyboard extension does not read them):
 
@@ -1401,12 +1235,11 @@ All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
 | Android Feature | Reason | iOS Decision |
 |---|---|---|
 | Entire 外接鍵盤 (External Keyboard) section | iOS does not allow 3rd-party keyboard extensions to intercept physical/Bluetooth keyboard input | **Omit entire section** |
-| Google Drive backup | Not available on iOS | **Omit**; use Files / iCloud Drive via `ShareLink` instead |
+| Google Drive backup | Not available on iOS | **Omit**; use Files / iCloud Drive via the iOS share sheet instead |
 | `vibrate_level` hidden on Android API 31+ | iOS `UIImpactFeedbackGenerator` is caller-controlled | **Keep as Picker** with intensity mapping |
 | System notification bar during DB load | Keyboard extensions cannot post system notifications | **Use in-app `ProgressView` overlay** |
 | Android navigation drawer | Platform-specific pattern | **Use `TabView`** + `NavigationStack` |
 | `BroadcastReceiver` for IME change | iOS has no equivalent broadcast | **Poll in `scenePhase` `.active` transition** |
-| `auto_cap` (首字自動大寫) | iOS provides `textDocumentProxy.autocapitalizationType` per text field — no user toggle needed | **Omit**; keyboard extension reads `autocapitalizationType` directly |
 
 ### 10.2 iOS-Only Enhancements
 
@@ -1414,13 +1247,13 @@ All stored in `UserDefaults(suiteName: "group.net.toload.limeime")`.
 |---|---|
 | Three-state status banner | Real-time green / yellow / red detection on scene activation |
 | Split keyboard (iPad-only) | `split_keyboard_mode` row hidden on `UIDevice.current.userInterfaceIdiom == .phone` |
-| `ShareLink` backup | Native share sheet for `.db` output |
+| Share-sheet backup | `UIActivityViewController` bridge (`ShareSheet`) for `.limedb` output |
 | `@AppStorage(store:)` | Shared suite ensures keyboard extension reads prefs without IPC |
 | `UIImpactFeedbackGenerator` | Maps `vibrate_level` → `.light / .medium / .heavy` style |
 
 ### 10.3 Shared UserDefaults
 
-- **Always** use `UserDefaults(suiteName: "group.net.toload.limeime")` — never `UserDefaults.standard`.
+- **Always** use `UserDefaults(suiteName: "group.org.limeime")` — never `UserDefaults.standard`.
 - **Never** use `@AppStorage` without the explicit `store:` parameter.
 - Preferences are **not** synced via iCloud (`NSUbiquitousKeyValueStore`); that is a future opt-in.
 
@@ -1463,60 +1296,59 @@ guard let db = openDB() else {
 ## 12. Feature Parity Checklist
 
 ### App Setup (§4)
-- [ ] Step-by-step keyboard activation guide
-- [ ] Real-time keyboard-enabled status banner (green / yellow / red)
-- [ ] Full Access detection
-- [ ] "前往系統設定" deep-link button
-- [ ] Optional `RECORD_AUDIO` setup step for LIME inline dictation, hidden when
-      inline dictation is disabled; denial falls back to Google/vendor VoiceIME
-- [ ] Bundled IM seeding button (`seedDefaultIMs`)
-- [ ] App version, licence, GitHub link
+- [x] Step-by-step keyboard activation guide
+- [x] Real-time keyboard-enabled status banner (green / yellow / red)
+- [x] Full Access detection
+- [x] "前往系統設定" deep-link button
+- [ ] Optional `RECORD_AUDIO` setup step for LIME inline dictation — Android-only; not part of the iOS setup tab
+- [ ] Bundled IM seeding — *not ported*: the iOS app has no `seedDefaultIMs`; IMs are installed only via the download / import flow (§5.3)
+- [x] App version, licence, GitHub link
 
 ### IM Manager — IM List (§5.1)
-- [ ] List of installed IMs with enable/disable toggle
-- [ ] Toggle persists to `im.enabled` and updates `keyboard_state` preference
-- [ ] Drag-to-reorder persists to `im.sortOrder`
-- [ ] Enabled / disabled visual distinction (full / half opacity)
+- [x] List of installed IMs with enable/disable toggle
+- [x] Toggle persists to `im.enabled` and updates `keyboard_state` preference
+- [ ] Drag-to-reorder persists to `im.sortOrder` — *removed* in the 4-tab re-layout; the list is not reorderable and add is the `+` FAB (§5.1)
+- [x] Enabled / disabled visual distinction (full / half opacity)
 
 ### IM Manager — IM Detail & Soft Keyboard (§5.2)
-- [ ] IM info: source, version, record count, status
-- [ ] Keyboard layout picker (`KeyboardPickerView`)
-- [ ] `phonetic_keyboard_type` live update on keyboard change
+- [x] IM info: source, version, record count, status
+- [x] Keyboard layout picker (`KeyboardPickerView`)
+- [x] `phonetic_keyboard_type` live update on keyboard change
 - [x] "字根對應設定" section with `accept_number_index` / `accept_symbol_index` toggles (shown only when `im.tableNick == "custom"`) — **§13.3 done**
 
 ### IM Manager — Download & Import (§5.3)
-- [ ] Per-IM `DisclosureGroup` list: 注音, 倉頡, 快倉, 倉頡五代, 速成, 大易, 輕鬆, 行列, 行列 10, 拼音, 華象直覺, 筆順五碼, 自建
-- [ ] Cloud download buttons (☁) for each built-in IM; none for 自建
-- [ ] `Button "匯入 .limedb"` + `Button "匯入 .cin / .lime"` for every IM row; all named-IM rows use fixed `tableName`
+- [x] Per-IM `DisclosureGroup` list: 注音, 倉頡, 快倉, 倉頡五代, 速成, 大易, 輕鬆, 行列, 行列 10, 拼音, 華象直覺, 筆順五碼, 自建
+- [x] Cloud download buttons (☁) for each built-in IM; none for 自建
+- [x] `Button "匯入 .limedb"` + `Button "匯入 .cin / .lime"` for every IM row; all named-IM rows use fixed `tableName`
 - [x] Each DisclosureGroup contains cloud variant rows + `Button "匯入 .limedb"` + `Button "匯入 .cin / .lime"` with fixed `tableName = family.id` — **§13.3 done**
 - [x] 自建 group (no cloud variants) appended to catalog; import calls `seedCustomIM()` after — **§13.3 done**
-- [ ] Progress overlay during import / download
-- [ ] Status message on completion
+- [x] Progress overlay during import / download
+- [x] Status message on completion
 
 ### IM Table Editor — Mapping Records (§6.1)
-- [ ] Paginated record list (100/page) with pagination bar
-- [ ] Search by code (prefix)
-- [ ] Search by word (contains)
-- [ ] Add record (code + word + score stepper)
-- [ ] Edit record (code, word, +/- score)
-- [ ] Delete record (swipe action + confirmation)
+- [x] Paginated record list (100/page) with pagination bar
+- [x] Search by code (prefix)
+- [x] Search by word (contains)
+- [x] Add record (code + word + score stepper)
+- [x] Edit record (code, word, +/- score)
+- [x] Delete record (swipe action + confirmation)
 
 ### IM Table Editor — Related Phrases (§6.2)
-- [ ] Paginated related-phrase list (100/page)
-- [ ] Search by word
-- [ ] Add related phrase (word → related)
-- [ ] Edit related phrase
-- [ ] Delete related phrase (swipe + confirmation)
+- [x] Paginated related-phrase list (100/page)
+- [x] Search by word
+- [x] Add related phrase (word → related)
+- [x] Edit related phrase
+- [x] Delete related phrase (swipe + confirmation)
 
 ### DB Manager (§7)
-- [ ] Backup database via share sheet (Files, AirDrop, …)
-- [ ] Restore database from file picker (with confirmation alert)
-- [ ] Progress overlay during backup / restore
+- [x] Backup database via share sheet (Files, AirDrop, …)
+- [x] Restore database from file picker (with confirmation alert)
+- [x] Progress overlay during backup / restore
 
 ### IM Preferences (§8)
 - **Keyboard Appearance** (§8.1): `keyboard_theme` (values 0–5 + **6=系統設定** on both platforms — **§13.2 done**), `keyboard_size`, `font_size`, `number_row_in_english` (iPhone-only), `show_arrow_key`, `split_keyboard_mode` (iPad)
 - **Feedback** (§8.2): `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress`
-- **IM Behaviour** (§8.4): `smart_chinese_input`, `auto_chinese_symbol`, `candidate_switch`, `persistent_language_mode`, `enable_emoji_position`, `reverse_lookup_screen`
+- **IM Behaviour** (§8.4): `smart_chinese_input`, `auto_chinese_symbol`, `enable_emoji_position`, `similiar_list` (建議字顯示數量), `reverse_lookup_screen` (`candidate_switch` is declared but has **no UI** — free-scroll candidate selection is always on)
 - **Array10 detail page** (§5.2): `auto_commit`
 - **Phonetic IM detail page** (§5.2.2): `phonetic_keyboard_type` (6 options) with live IM table update
 - **Han Conversion** (§8.5): `han_convert_option`
@@ -1527,31 +1359,44 @@ guard let db = openDB() else {
 
 ---
 
-## 13. TODO
+## 13. Completed work
 
-### 13.1 Remove Physical Keyboard Dead Code
+All three items previously tracked here have shipped; they are kept as a short record (details live in the referenced sections).
 
-iOS does not allow 3rd-party keyboard extensions to intercept physical/Bluetooth keyboard input. The following must be removed:
+### 13.1 Remove Physical Keyboard Dead Code — ✅ done
 
-- `PreferencesTabView.swift`: `@AppStorage` properties `englishDictPhysical`, `hideSwKbWithPhysical`, `physicalKbSort`, `switchEnglishMode`, `switchEnglishModeShift`, `disablePhysicalSelkey` (lines ~53–60) and the entire "外接鍵盤" `Section` block that renders them (lines ~206–216); also remove the `Toggle` "外接鍵盤英文建議字" from the English Dictionary section (line ~206).
-- `LIMEPreferenceManager.swift`: properties `disablePhysicalSelkey`, `physicalKeyboardType`, `englishDictPhysicalKeyboard`, `hideSwKbTypingWithPhysical`, `physicalKeyboardSort`, `switchEnglishMode`, `switchEnglishModeShift` (and their getters/setters).
-- `LIMEPreferenceManagerTest.swift`: tests `testDefaultSwitchEnglishMode`, `testDefaultSwitchEnglishModeShift`, `testDefaultDisablePhysicalSelkey`.
-- `SearchServerTest.swift`: `test_3_3_5_12_updateScoreCache_physical_keyboard_sort_preference` (currently skipped, can be deleted).
+Physical/Bluetooth-keyboard preferences and their tests were removed from `PreferencesTabView.swift`, `LIMEPreferenceManager.swift`, and the test suite. No "外接鍵盤" section or physical-keyboard pref keys remain.
 
-### 13.2 Implement `keyboard_theme` Value 6 (系統設定)
+### 13.2 `keyboard_theme` Value 6 (系統設定) — ✅ done
 
-Spec §8.1 adds value `6=系統設定` on both platforms. The following code changes are required:
+Implemented: the §8.1 picker offers `6=系統設定` (now the default); `KeyboardViewController` resolves `6` → light/dark from `userInterfaceStyle` and re-applies on appearance change (`traitCollectionDidChange`); `testKeyboardThemeSystemValue()` covers default + round-trip.
 
-- `PreferencesTabView.swift`: Add `6` to the `keyboard_theme` Picker with label "系統設定".
-- `KeyboardViewController.swift` (or the theme-application helper): In the function that applies `keyboard_theme`, add a `case 6` branch that reads `UITraitCollection.current.userInterfaceStyle` and maps `.light` → theme 0 (淺色) and `.dark` → theme 1 (深色). Also override `traitCollectionDidChange(_:)` (or use `registerForTraitChanges` on iOS 17+) so the keyboard re-applies the theme automatically when the system appearance changes at runtime.
-- `LIMEPreferenceManager.swift`: Update the `getKeyboardTheme()` getter's documentation comment to note that value `6` is valid; callers in the keyboard extension must handle it.
-- `LIMEPreferenceManagerTest.swift`: Add `testKeyboardThemeSystemValue()` asserting default is `6` and that setting `6` round-trips correctly.
+### 13.3 Custom IM (自建輸入法) Support — ✅ done
 
-### 13.3 Implement Custom IM (自建輸入法) Support
+Implemented: the `自建` family (import-only, no cloud variants) in `IMCatalog`; `seedCustomIM()` in `LimeDB`/`DBServer` called after a custom import (§5.3); and the "字根對應設定" section (`數字字根對應` / `符號字根對應`, keys `accept_number_index` / `accept_symbol_index`) shown only when `im.tableNick == "custom"` in `IMDetailView` (§5.2).
 
-Android has a "匯入自建輸入法" button in `SetupImFragment` (`btnSetupCustom` / `btnImportCustom` in `ImportDialog`). This flow is missing from the iOS port. The following code changes are required:
+## 14. Revision history
 
-- `IMInstallView.swift` (§5.3): Implement the per-IM `DisclosureGroup` list (13 groups: 注音, 倉頡, 快倉, 倉頡五代, 速成, 大易, 輕鬆, 行列, 行列 10, 拼音, 華象直覺, 筆順五碼, 自建). Each built-in IM group has cloud download button(s) + `Button "匯入 .limedb"` + `Button "匯入 .cin / .lime"`, all with fixed `tableName` from the group's IM code. The 自建 group has only the two local import buttons (no cloud); on file selection call the respective import function with `tableName = "custom"`, then call `db.seedCustomIM()`. No separate screen needed.
-- `IMDetailView.swift` (§5.2): Add a "字根對應設定" `Section` rendered only when `im.tableNick == "custom"`, containing `Toggle "數字字根對應"` (`accept_number_index`) and `Toggle "符號字根對應"` (`accept_symbol_index`). All built-in IMs skip this section.
-- `LimeDB.swift`: Add `seedCustomIM()` that inserts the custom IM `im` row if absent (separate from `seedDefaultIMs` since custom IM requires explicit user action).
-- `LIMEPreferenceManager.swift`: No change needed — `getAllowNumberMapping()` and `getAllowSymbolMapping()` already read `accept_number_index` / `accept_symbol_index` from the shared suite.
+### 4-tab top-page re-layout (2026-06)
+
+The four top-level tabs (設定 · 輸入法 · 喜好設定 · 資料庫) were re-laid-out to bring iOS and
+Android as visually close as possible. The full deltas are folded into the sections above; in brief:
+
+- **Visual system.** Dropped the multi-colour icon tiles for a single neutral-grey rounded-square
+  badge holding each IM's representative glyph (注音→ㄅ, 大易→易, 倉頡-family→倉, 行列10→10, else first
+  char); accent colour reserved for interactive controls. iOS uses the fixed LIME brand green
+  (`#00833E`); Android inherits the system Material You palette (Dynamic Colors +
+  `MODE_NIGHT_FOLLOW_SYSTEM`, no in-app theme picker). Type scale aligned to the iOS sizes.
+- **設定 tab.** Setup hero is a horizontal logo-beside-wordmark row; the About block is three tonal
+  link chips (使用手冊 / 版權說明 / 原始碼) over a one-line copyright banner, with 使用手冊 / 版權說明
+  opening in an in-app browser. Added the §4.3 installed-IM status block.
+- **輸入法 tab.** IM list is name-only and non-reorderable, with a round `+` FAB and an empty-state
+  nudge; Android tablet uses a NavigationRail + two-pane layout. IM detail's 移除輸入法 is a bordered
+  destructive button; Android export offers 分享 / 本機儲存 in `.lime` / `.limedb`.
+- **喜好設定 tab.** Second-level rows show their current value inline + chevron; 簡繁轉換 is an inline
+  segmented control that stacks vertically when labels clip at large fonts; section-leading rows carry
+  tinted icons.
+- **資料庫 tab.** Unified three-section layout; 還原預設資料庫 carries a red irreversible-action warning;
+  tonal buttons use a dark-mode-legible fill.
+- **Keyboard extension.** The long-press options menu was restyled to match 喜好設定 (icons + inline
+  segmented 簡繁轉換 / 分離鍵盤) on both platforms; the menu title is now 萊姆輸入法.

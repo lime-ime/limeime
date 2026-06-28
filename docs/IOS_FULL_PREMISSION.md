@@ -48,7 +48,7 @@ Required `Info.plist` additions when shipping (extension target):
 
 ## Everything else works without Full Access
 
-The common misconception is that the App Group requires Full Access — it does not. App Group access (`FileManager.containerURL(forSecurityApplicationGroupIdentifier:)`) and shared `UserDefaults(suiteName:)` are gated only by the App Group entitlement (`group.net.toload.limeime`), which both LimeKeyboard and LimeSettings already declare.
+The common misconception is that the App Group requires Full Access — it does not. App Group access (`FileManager.containerURL(forSecurityApplicationGroupIdentifier:)`) and shared `UserDefaults(suiteName:)` are gated only by the App Group entitlement (`group.org.limeime`), which both LimeKeyboard and LimeSettings already declare.
 
 Empirically verified with Full Access **off**:
 

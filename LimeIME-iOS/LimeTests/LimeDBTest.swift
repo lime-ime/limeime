@@ -2927,7 +2927,7 @@ final class LimeDBTest: XCTestCase {
     }
 
     private func dbServerLiveDatabaseURLForTest() -> URL {
-        let dataDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.net.toload.limeime")
+        let dataDir = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName)
             ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
                 .first!
                 .appendingPathComponent("LimeIME", isDirectory: true)

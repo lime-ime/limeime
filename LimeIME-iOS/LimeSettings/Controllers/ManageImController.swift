@@ -13,7 +13,7 @@ final class ManageImController: BaseController {
 
     // MARK: - App Group
 
-    private static let appGroupID = "group.net.toload.limeime"
+    private static let appGroupID = LIMEPreferenceManager.suiteName
     private static let cacheResetKey = "needsKeyboardCacheReset"
 
     /// Signal the keyboard extension to clear its in-memory search cache on next activation.

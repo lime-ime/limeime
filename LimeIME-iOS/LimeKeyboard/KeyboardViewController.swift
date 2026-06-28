@@ -291,7 +291,7 @@ final class KeyboardViewController: UIInputViewController {
         super.viewWillAppear(animated)
         // Reload database if Settings app performed a restore while the keyboard was inactive.
         // After restore, the keyboard's DatabaseQueue points to the old (replaced) file.
-        let restoredAt = UserDefaults(suiteName: "group.net.toload.limeime")?
+        let restoredAt = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?
             .double(forKey: "lime_db_restored_at") ?? 0
         if restoredAt > lastKnownRestoreTimestamp {
             lastKnownRestoreTimestamp = restoredAt
@@ -598,7 +598,7 @@ final class KeyboardViewController: UIInputViewController {
             // Restore the last-used IM from keyboard_list (written by cycleIM / switchIM).
             // setupDatabase runs once, async — this is the only reliable place to apply
             // the saved IM because activatedIMs is empty when initOnStartInput runs.
-            let savedIM = UserDefaults(suiteName: "group.net.toload.limeime")?.string(forKey: "keyboard_list") ?? ""
+            let savedIM = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?.string(forKey: "keyboard_list") ?? ""
             if !savedIM.isEmpty, let idx = resolved.firstIndex(where: { $0.tableNick == savedIM }) {
                 self.activeIM      = savedIM
                 self.activeIMIndex = idx
@@ -723,7 +723,7 @@ final class KeyboardViewController: UIInputViewController {
 
     /// Shared UserDefaults for reading settings written by the container app.
     private var sharedDefaults: UserDefaults? {
-        UserDefaults(suiteName: "group.net.toload.limeime")
+        UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
     }
 
     /// Load all user preferences from shared UserDefaults (spec §15).

@@ -1,8 +1,8 @@
 import UIKit
 
 extension Notification.Name {
-    static let limeDeepLink = Notification.Name("net.toload.limeime.deepLink")
-    static let limeExternalImport = Notification.Name("net.toload.limeime.externalImport")
+    static let limeDeepLink = Notification.Name("org.limeime.deepLink")
+    static let limeExternalImport = Notification.Name("org.limeime.externalImport")
 }
 
 /// Stores a deep-link URL received before LimeSettingsView has appeared (cold launch).
@@ -42,7 +42,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidBecomeActive(_ scene: UIScene) {
         // Keyboard extensions cannot open URLs; they write a destination to the shared
         // App Group UserDefaults instead. Consume it here on every foreground activation.
-        let suite = "group.net.toload.limeime"
+        let suite = LIMEPreferenceManager.suiteName
         guard let defaults = UserDefaults(suiteName: suite),
               let destination = defaults.string(forKey: "pending_navigation") else { return }
         defaults.removeObject(forKey: "pending_navigation")

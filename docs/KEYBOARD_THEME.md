@@ -278,7 +278,7 @@ driven by `.claude/scripts/ios_capture_theme_screenshots.sh <UDID> [theme ...]`.
 Two non-obvious mechanics make the capture correct, and must be preserved:
 
 - **Theme + IM reach the keyboard via the host app, not the test runner.** The XCUITest
-  runner is not a member of the `group.net.toload.limeime` app group, so its
+  runner is not a member of the `group.org.limeime` app group, so its
   `UserDefaults(suiteName:)` writes land in the runner's private container and never
   reach the keyboard extension. Instead the test passes `-LimeUITestKeyboardTheme` and
   `-LimeUITestKeyboardList` launch arguments; `AppDelegate.applyUITestKeyboardPrefsIfNeeded`

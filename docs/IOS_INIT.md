@@ -25,7 +25,7 @@ Consequence: once the user has typed with LimeIME once, the banner stays green f
 
 ```
 App-Prefs:root=General&path=Keyboard
-App-Prefs:root=General&path=Keyboard/net.toload.limeime.keyboard
+App-Prefs:root=General&path=Keyboard/org.limeime.keyboard
 ```
 
 These are **private URL schemes**. Apple has progressively disabled them since iOS 11; on iOS 14+ they either no-op, open the Settings app root, or get the app rejected in App Store review. The only supported way to open Settings from an app is `UIApplication.openSettingsURLString`, which opens **the calling app's own Settings page** — not arbitrary deep links.
@@ -73,7 +73,7 @@ No new files. No changes to App Group entitlements, `project.yml`, or the keyboa
 
 ## Reused Existing Code
 
-- `UserDefaults(suiteName: "group.net.toload.limeime")` — already used in both the keyboard and the Settings app; no new infrastructure.
+- `UserDefaults(suiteName: "group.org.limeime")` — already used in both the keyboard and the Settings app; no new infrastructure.
 - `@Environment(\.scenePhase)` — already observed in `SetupTabView.body` at line 54; reuse to drive the "clear on foreground" behavior.
 - `Label(_:systemImage:)` styling — already established in `statusBanner`; extend rather than replace.
 

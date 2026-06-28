@@ -23,7 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         let args = UserDefaults.standard
         guard args.object(forKey: "LimeUITestKeyboardTheme") != nil
             || args.object(forKey: "LimeUITestKeyboardList") != nil,
-              let shared = UserDefaults(suiteName: "group.net.toload.limeime")
+              let shared = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
         else { return }
 
         if args.object(forKey: "LimeUITestKeyboardTheme") != nil {

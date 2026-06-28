@@ -1,4 +1,4 @@
-﻿//
+//
 //  StrokeBenchmark.swift
 //  LimeTests
 //
@@ -28,7 +28,7 @@
 //             - target: LimeIME      # the host app
 //           settings:
 //             base:
-//               PRODUCT_BUNDLE_IDENTIFIER: net.toload.limeime.uitests
+//               PRODUCT_BUNDLE_IDENTIFIER: org.limeime.uitests
 //               TEST_TARGET_NAME: LimeIME
 //
 //       And exclude it from `LimeIMETests`:

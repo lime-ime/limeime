@@ -53,7 +53,7 @@ struct IMDetailView: View {
     @EnvironmentObject private var manageRelatedController: ManageRelatedController
     @EnvironmentObject private var setupController: SetupImController
 
-    private let sharedUD = UserDefaults(suiteName: "group.net.toload.limeime")
+    private let sharedUD = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
 
     // §13.3 — custom IM mapping toggles (only shown when tableNick == "custom")
     @AppStorage("accept_number_index", store: sharedDefaults) private var acceptNumberIndex: Bool = false

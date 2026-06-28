@@ -174,13 +174,13 @@ These were tested as probes only and should not be treated as approved app behav
 ```text
 App-Prefs:root=General&path=Keyboard/KEYBOARDS
 prefs:root=General&path=Keyboard/KEYBOARDS
-App-Prefs:net.toload.limeime
-App-prefs:net.toload.limeime
-App-Prefs:net.toload.limeime.keyboard
-app-settings:net.toload.limeime
-app-settings:/net.toload.limeime
-app-settings://net.toload.limeime
-settings-navigation://com.apple.Settings.Apps/net.toload.limeime
+App-Prefs:org.limeime
+App-prefs:org.limeime
+App-Prefs:org.limeime.keyboard
+app-settings:org.limeime
+app-settings:/org.limeime
+app-settings://org.limeime
+settings-navigation://com.apple.Settings.Apps/org.limeime
 settings-navigation://com.apple.Settings.General/Keyboard/KEYBOARDS
 ```
 

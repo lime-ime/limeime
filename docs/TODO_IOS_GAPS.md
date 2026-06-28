@@ -132,7 +132,7 @@ Items are grouped by priority. Check off each item when done.
 
 ### Settings Wiring (spec §15)
 
-- [x] All settings read from shared `UserDefaults(suiteName: "group.net.toload.limeime")`
+- [x] All settings read from shared `UserDefaults(suiteName: "group.org.limeime")`
 - [x] `hanConvertOption`, `autoChineseSymbol`, `learnPhrase`, `englishPredictionOn`, `selkeyOption`, `phonetic_keyboard_type`, `keyboard_state`, `auto_commit`, `mPersistentLanguageMode` all actively used
 - [x] `sortSuggestions` passed to `SearchServer` and applied to candidate ordering
 - [x] `hasVibration` / `hasSound` wired to `KeyboardView` feedback generators

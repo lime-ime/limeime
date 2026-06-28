@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import UIKit
 
 final class LimeUITests: XCTestCase {
 
@@ -50,6 +51,31 @@ final class LimeUITests: XCTestCase {
         safari.coordinate(withNormalizedOffset: CGVector(dx: 0.035, dy: 0.965))
             .press(forDuration: 2.0)
         wait(for: [globeCapture], timeout: 2.0)
+    }
+
+    // TEMP DIAGNOSTIC (remove after iPad capture work): focus the normal field with
+    // 注音 + Full Access and screenshot whatever renders, with no globe-cycle / candidate
+    // assertion, to confirm whether the LIME candidate bar appears on iPad.
+    @MainActor
+    func testIPadDiagZhuyinNormalField() throws {
+        configureKeyboardThemeCaptureDefaults(theme: 0)
+        let app = XCUIApplication()
+        app.launchArguments += ["-LimeUITestKeyboardTheme", "0", "-LimeUITestKeyboardList", "phonetic"]
+        app.launch()
+        Thread.sleep(forTimeInterval: 0.5)
+        let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
+        safari.activate()
+        XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10), "Safari not foreground")
+        dismissSafariFirstLaunch(in: safari)
+        try? focusKeyboardTestPage(in: safari)
+        Thread.sleep(forTimeInterval: 2.0)
+        try saveScreenshot(named: "ipad_diag_zhuyin_normal")
+        let env = ProcessInfo.processInfo.environment
+        let dir = env["LIME_VISUAL_VERIFY_OUTPUT_DIR"]
+            ?? env["TEST_RUNNER_LIME_VISUAL_VERIFY_OUTPUT_DIR"] ?? NSTemporaryDirectory()
+        try? safari.debugDescription.write(
+            to: URL(fileURLWithPath: dir).appendingPathComponent("ipad_diag_tree.txt"),
+            atomically: true, encoding: .utf8)
     }
 
     @MainActor
@@ -164,7 +190,8 @@ final class LimeUITests: XCTestCase {
         dismissTextEditingMenuIfVisible(in: safari)
         try saveScreenshot(named: "ios_keyboard_zhuyin_\(label)")
 
-        let abcModeKey = safari.descendants(matching: .any)["ABC"]
+        let abcModeKey = safari.descendants(matching: .any)
+            .matching(NSPredicate(format: "label ==[c] 'ABC' OR identifier ==[c] 'ABC'")).firstMatch
         if abcModeKey.waitForExistence(timeout: 1) {
             abcModeKey.tap()
         } else {
@@ -411,7 +438,7 @@ final class LimeUITests: XCTestCase {
             Thread.sleep(forTimeInterval: 0.8)
         }
 
-        if hasLimeCandidateBarEmoji(in: app), hasLimePhoneticLayout(in: app) {
+        if hasLimePhoneticLayout(in: app), hasLimeCandidateBarEmoji(in: app) || isPadIdiom {
             return
         }
 
@@ -424,7 +451,7 @@ final class LimeUITests: XCTestCase {
         }
 
         XCTAssertTrue(
-            hasLimeCandidateBarEmoji(in: app) && hasLimePhoneticLayout(in: app),
+            hasLimePhoneticLayout(in: app) && (hasLimeCandidateBarEmoji(in: app) || isPadIdiom),
             """
             LIME keyboard was active but not on the 注音 Chinese keyboard for \(scenario).
             App tree:
@@ -435,7 +462,7 @@ final class LimeUITests: XCTestCase {
 
     private func ensureLimeEnglishKeyboardVisible(in app: XCUIApplication, scenario: String) throws {
         XCTAssertTrue(
-            hasLimeCandidateBarEmoji(in: app) && hasLimeEnglishLayout(in: app),
+            hasLimeEnglishLayout(in: app) && (hasLimeCandidateBarEmoji(in: app) || isPadIdiom),
             """
             LIME keyboard was active but did not switch to English for \(scenario).
             App tree:
@@ -452,9 +479,20 @@ final class LimeUITests: XCTestCase {
         hasLimeCandidateBarEmoji(in: app)
     }
 
+    private var isPadIdiom: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+
+    /// LIME-active signal. iPhone uses the candidate-bar emoji launcher icon; the iPad
+    /// LIME candidate bar omits that icon, so fall back to LIME-specific key layouts
+    /// (bopomofo / 中 + qwerty) which are present on both platforms.
+    private func hasLimeKeyboardSignal(in app: XCUIApplication) -> Bool {
+        if hasLimeCandidateBarEmoji(in: app) { return true }
+        if isPadIdiom { return hasLimePhoneticLayout(in: app) || hasLimeEnglishLayout(in: app) }
+        return false
+    }
+
     private func cycleToLimeKeyboard(in app: XCUIApplication, scenario: String) throws {
         for _ in 0..<8 {
-            if hasLimeCandidateBarEmoji(in: app) { return }
+            if hasLimeKeyboardSignal(in: app) { return }
             tapGlobeKey(in: app)
             Thread.sleep(forTimeInterval: 0.8)
         }
@@ -499,8 +537,10 @@ final class LimeUITests: XCTestCase {
     }
 
     private func hasLimePhoneticLayout(in app: XCUIApplication) -> Bool {
+        // iPhone labels combine the roman key + bopomofo ('1 ㄅ'); iPad labels the
+        // bopomofo glyph alone ('ㄅ'). Match both so detection works on each idiom.
         let predicate = NSPredicate(format:
-            "label == '1 ㄅ' OR label == 'q ㄆ' OR label == 'w ㄊ'")
+            "label == '1 ㄅ' OR label == 'q ㄆ' OR label == 'w ㄊ' OR label == 'ㄅ' OR label == 'ㄆ' OR label == 'ㄓ'")
         return app.descendants(matching: .any).matching(predicate).firstMatch.exists
     }
 
@@ -520,7 +560,7 @@ final class LimeUITests: XCTestCase {
     }
 
     private func configureKeyboardThemeCaptureDefaults(theme: Int) {
-        guard let defaults = UserDefaults(suiteName: "group.net.toload.limeime") else { return }
+        guard let defaults = UserDefaults(suiteName: "group.org.limeime") else { return }
         defaults.set(theme, forKey: "keyboard_theme")
         defaults.set("phonetic", forKey: "keyboard_list")
         defaults.set("standard", forKey: "phonetic_keyboard_type")

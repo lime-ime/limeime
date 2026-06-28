@@ -10,10 +10,10 @@ Last updated: 2026-04-09 (Phase 1–5 cloud store complete; running in simulator
 
 - Created `LimeIME-iOS/` folder at repo root alongside `LimeStudio/`
 - Installed XcodeGen (`brew install xcodegen 2.45.3`)
-- Authored `LimeIME-iOS/project.yml` — defines both targets, GRDB.swift + ZIPFoundation SPM dependencies, App Group entitlements (`group.net.toload.limeime`), iOS 16.0 deployment target
+- Authored `LimeIME-iOS/project.yml` — defines both targets, GRDB.swift + ZIPFoundation SPM dependencies, App Group entitlements (`group.org.limeime`), iOS 16.0 deployment target
 - Generated `LimeIME.xcodeproj` with two targets:
-  - **LimeIME** — Container App (`net.toload.limeime`)
-  - **LimeIMEKeyboard** — Keyboard Extension (`net.toload.limeime.keyboard`)
+  - **LimeIME** — Container App (`org.limeime`)
+  - **LimeIMEKeyboard** — Keyboard Extension (`org.limeime.keyboard`)
 - Both targets share the `Shared/` source folder (compiled into each separately)
 - App Group entitlement wired via `project.yml` `entitlements.properties` (not entitlements files directly — XcodeGen owns those files)
 - `RequestsOpenAccess: true` on keyboard extension — required for App Group access from the keyboard
@@ -173,7 +173,7 @@ Port of `SearchServer.java` (~1,500 lines). Completed:
 
 - `lime.db` schema is **identical** between Android and iOS — the bundled `Database/lime.db` is copied directly into the App Group on first launch
 - Both targets share `Shared/` source files (compiled separately, no framework overhead)
-- App Group `group.net.toload.limeime` is the shared data channel; requires **Allow Full Access** for the keyboard extension to access it
+- App Group `group.org.limeime` is the shared data channel; requires **Allow Full Access** for the keyboard extension to access it
 - `project.yml` is the source of truth — run `xcodegen generate` after any structural changes
 - Resource files outside the project directory (`../Database/`) must use `preBuildScripts` copy phases — XcodeGen silently drops `../` resource paths
 - `tableHasData()` not `tableExists()` is the correct check for "IM installed" since bundled lime.db pre-creates all mapping tables

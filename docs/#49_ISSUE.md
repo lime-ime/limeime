@@ -138,7 +138,7 @@ iOS `SearchServer.swift` protects its cache with an `NSLock` (`cacheLock`) on al
 
 In iOS, the container app (which runs `ManageImController`) and the keyboard extension (which runs `SearchServer` and its cache) are **separate processes**. The app cannot call `searchServer.clearAllCaches()` directly.
 
-The existing IPC channel is the shared App Group `UserDefaults` (`group.net.toload.limeime`), already used for settings.
+The existing IPC channel is the shared App Group `UserDefaults` (`group.org.limeime`), already used for settings.
 
 **Fix applied:**
 
@@ -146,7 +146,7 @@ In `ManageImController.swift` — after every successful DB mutation (`addRecord
 
 ```swift
 private static func markKeyboardCacheDirty() {
-    UserDefaults(suiteName: "group.net.toload.limeime")?.set(true, forKey: "needsKeyboardCacheReset")
+    UserDefaults(suiteName: "group.org.limeime")?.set(true, forKey: "needsKeyboardCacheReset")
 }
 ```
 

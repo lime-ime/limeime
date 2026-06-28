@@ -28,7 +28,7 @@ final class DBServer {
     }
 
     // MARK: - Constants
-    private static let appGroupID      = "group.net.toload.limeime"
+    private static let appGroupID      = LIMEPreferenceManager.suiteName
     static let databaseName            = "lime.db"
     static let databaseJournal         = "lime.db-journal"
     static let sharedPrefsBackupName   = "shared_prefs.bak"

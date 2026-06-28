@@ -145,7 +145,7 @@ Screenshot captured from that state:
 
 What this proves on iOS 26.4:
 
-- The active keyboard extension was `net.toload.limeime.keyboard`, not Apple's
+- The active keyboard extension was `org.limeime.keyboard`, not Apple's
   system keyboard.
 - The `up / down / done` row was still host/WebKit form-assistant UI above the
   keyboard. It is not the LimeIME bug.

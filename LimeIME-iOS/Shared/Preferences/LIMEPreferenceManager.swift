@@ -23,7 +23,7 @@ final class LIMEPreferenceManager {
 
     // MARK: - Constants
 
-    static let suiteName = "group.net.toload.limeime"
+    static let suiteName = "group.org.limeime"
 
     // MARK: - Storage
 

@@ -11,22 +11,17 @@
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.1.18</string>
-	<key>LSApplicationCategoryType</key>
-	<string></string>
+	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundleGetInfoString</key>
+	<string></string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>6.1.18</string>
-	<key>CFBundleVersion</key>
-	<string>0</string>
-	<key>UILaunchScreen</key>
-	<dict>
-		<key>UIImageName</key>
-		<string></string>
-	</dict>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -36,10 +31,19 @@
 			</array>
 		</dict>
 	</array>
-	<key>UIFileSharingEnabled</key>
-	<true/>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIImageName</key>
+		<string></string>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

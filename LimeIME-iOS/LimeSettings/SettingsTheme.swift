@@ -97,7 +97,7 @@ struct LimeTonalButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(SettingsTheme.tonalFill(tint))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(Capsule())   // round-edge to match the .borderedProminent backup button
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }

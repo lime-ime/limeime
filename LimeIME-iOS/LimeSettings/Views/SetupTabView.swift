@@ -1,4 +1,4 @@
-﻿// SetupTabView.swift
+// SetupTabView.swift
 // LimeIME-iOS
 //
 // App Setup tab — keyboard activation guide, status detection, about.
@@ -162,7 +162,7 @@ struct SetupTabView: View {
     @FocusState private var probeFocused: Bool
 
     // PrimaryLanguage from LimeKeyboard/Info.plist
-    private let groupSuite   = "group.net.toload.limeime"
+    private let groupSuite   = LIMEPreferenceManager.suiteName
     private let githubURL        = URL(string: "https://github.com/lime-ime/limeime")!
     private let manualURL        = URL(string: "https://lime-ime.github.io/limeime/pages/index.html")!
     private let licenseURL       = URL(string: "https://lime-ime.github.io/limeime/pages/license.html")!
@@ -206,12 +206,14 @@ struct SetupTabView: View {
                     }
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
-                    // ── Explanatory note ──────────────────────────────────
-                    Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    // ── Explanatory note (hidden once Full Access is on) ──
+                    if !fullAccessEnabled {
+                        Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    }
 
                     // ── CTA button (full-width tonal — same legible style as the
                     //    資料庫 restore buttons; readable in dark mode). ─────────
@@ -223,11 +225,15 @@ struct SetupTabView: View {
                     .buttonStyle(LimeTonalButtonStyle())
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
-                    Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    // Hidden once fully enabled (green banner) — the hint only
+                    // helps while the user is still hunting for the keyboard.
+                    if detectionState != .fullyEnabled {
+                        Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    }
 
                     // Invisible 1 × 1 probe — preserves heartbeat polling
                     // without showing a text field in the new layout.
@@ -302,6 +308,19 @@ struct SetupTabView: View {
             }
             .onChange(of: probeText) { _ in refreshStatus() }
             .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
+            // scenePhase → .active is unreliable when SwiftUI is hosted in a
+            // UIHostingController under a UIKit SceneDelegate, so the §4.3 IM
+            // count could stay stale (showing 0) after returning from system
+            // Settings. didBecomeActiveNotification fires reliably on every
+            // foreground activation and is delivered on the main actor in the
+            // view context, where the @EnvironmentObject and @State are valid.
+            .onReceive(NotificationCenter.default.publisher(
+                for: UIApplication.didBecomeActiveNotification)) { _ in
+                refreshStatus()
+                refreshIMStatus()
+                startPolling()
+                triggerProbeIfNeeded()
+            }
         }
     }
 
@@ -494,17 +513,29 @@ struct SetupTabView: View {
         //
         // The correct way to identify a specific extension is via the private
         // `identifier` KVC key, which returns the extension's bundle ID
-        // (e.g. "net.toload.limeime.LimeKeyboard"). This pattern is used by
+        // (e.g. "org.limeime.LimeKeyboard"). This pattern is used by
         // Gboard, SwiftKey and other third-party keyboards.
         // We guard with responds(to:) so if Apple ever removes this private
         // property the code degrades gracefully to false rather than crashing.
+        // Method A — private `identifier` KVC on UITextInputMode.activeInputModes.
         let limeSelector = NSSelectorFromString("identifier")
-        keyboardEnabled = UITextInputMode.activeInputModes.contains { mode in
+        let viaInputModes = UITextInputMode.activeInputModes.contains { mode in
             guard mode.responds(to: limeSelector),
                   let id = mode.value(forKey: "identifier") as? String
             else { return false }
-            return id.hasPrefix("net.toload.limeime")
+            return id.hasPrefix("org.limeime")
         }
+
+        // Method B — the system "AppleKeyboards" list of enabled keyboard bundle IDs.
+        // The private KVC in Method A can stop resolving on newer iOS (e.g. iOS 26),
+        // which makes the banner stick on red even when the keyboard IS added. This
+        // list reflects "added in Settings" directly; it lives in the global domain.
+        let appleKeyboards: [String] =
+            (UserDefaults.standard.array(forKey: "AppleKeyboards") as? [String] ?? [])
+            + (UserDefaults(suiteName: ".GlobalPreferences")?.array(forKey: "AppleKeyboards") as? [String] ?? [])
+        let viaAppleKeyboards = appleKeyboards.contains { $0.hasPrefix("org.limeime") }
+
+        keyboardEnabled = viaInputModes || viaAppleKeyboards
 
         if keyboardEnabled {
             let suite = UserDefaults(suiteName: groupSuite)
@@ -527,6 +558,9 @@ struct SetupTabView: View {
 
     // Poll every 1 s while active so enabled state and Full Access both
     // reflect changes made in Settings without requiring a manual refresh.
+    // (IM count is NOT refreshed here — it reads an @EnvironmentObject and writes
+    // @State, which is only valid inside view-lifecycle closures, not a raw Timer.
+    // It refreshes on foreground via .onReceive(didBecomeActive) instead.)
     private func startPolling() {
         guard pollTimer == nil else { return }
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in

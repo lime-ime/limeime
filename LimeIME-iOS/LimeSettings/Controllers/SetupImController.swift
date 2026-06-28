@@ -218,7 +218,7 @@ final class SetupImController: BaseController {
             await reregisterKnownIMs()
             // Signal the keyboard extension to reload its database connection.
             // The keyboard holds a stale DatabaseQueue to the old file after restore.
-            UserDefaults(suiteName: "group.net.toload.limeime")?
+            UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?
                 .set(Date().timeIntervalSince1970, forKey: "lime_db_restored_at")
         }
         await MainActor.run { progress.dismiss() }

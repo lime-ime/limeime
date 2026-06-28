@@ -8,7 +8,7 @@ import SwiftUI
 
 // MARK: - Shared UserDefaults for @AppStorage
 
-let sharedDefaults = UserDefaults(suiteName: "group.net.toload.limeime")!
+let sharedDefaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)!
 
 // MARK: - LimeSettingsView (5-tab root)
 

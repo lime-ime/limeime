@@ -78,7 +78,7 @@ final class DBServerTest: XCTestCase {
     func testDBServerGetDataDirPath() {
         // App Group container URL should be derivable.
         let url = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.net.toload.limeime")
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName)
             ?? FileManager.default.temporaryDirectory
         XCTAssertNotNil(url, "Data directory should be accessible")
     }
@@ -949,7 +949,7 @@ final class DBServerTest: XCTestCase {
         let backupURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: backupURL) }
 
-        let sharedDefaults = UserDefaults(suiteName: "group.net.toload.limeime") ?? UserDefaults.standard
+        let sharedDefaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) ?? UserDefaults.standard
         let standardDefaults = UserDefaults.standard
         let expected = fullIOSPrefsTableFixture()
         let sharedKeys = expected.keys.filter { !isStandardOnlyPreferenceKey($0) }
@@ -994,7 +994,7 @@ final class DBServerTest: XCTestCase {
         let fixtureURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: fixtureURL) }
 
-        let sharedDefaults = UserDefaults(suiteName: "group.net.toload.limeime") ?? UserDefaults.standard
+        let sharedDefaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) ?? UserDefaults.standard
         let standardDefaults = UserDefaults.standard
         let expected = fullIOSPrefsTableFixture()
         let sharedKeys = expected.keys.filter { !isStandardOnlyPreferenceKey($0) }
@@ -1049,7 +1049,7 @@ final class DBServerTest: XCTestCase {
         let backupURL = tempFile(".plist")
         defer { try? FileManager.default.removeItem(at: backupURL) }
 
-        let defaults = UserDefaults(suiteName: "group.net.toload.limeime") ?? UserDefaults.standard
+        let defaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) ?? UserDefaults.standard
         defaults.set("test_value", forKey: "test_key_string")
         defaults.set(42, forKey: "test_key_int")
         defaults.set(true, forKey: "test_key_bool")

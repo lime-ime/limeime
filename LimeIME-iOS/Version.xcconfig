@@ -1,0 +1,7 @@
+// Single source of truth for the app + keyboard version.
+// Bump these two for every App Store upload. Both targets (LimeIME app +
+// LimeKeyboard extension) inherit them via the project-level build config, and
+// the Info.plist files read them through $(MARKETING_VERSION) /
+// $(CURRENT_PROJECT_VERSION). Do not hardcode versions anywhere else.
+MARKETING_VERSION = 6.1.25
+CURRENT_PROJECT_VERSION = 3
