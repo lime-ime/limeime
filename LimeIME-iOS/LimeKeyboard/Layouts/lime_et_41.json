@@ -54,30 +54,6 @@
           "popupCharacters": ""
         },
         {
-          "code": 53,
-          "label": "5",
-          "sublabel": "",
-          "widthPercent": 10.0,
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
-          "code": 54,
-          "label": "6",
-          "sublabel": "",
-          "widthPercent": 10.0,
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
           "code": 55,
           "label": "7",
           "sublabel": "ㄑ",
@@ -124,6 +100,30 @@
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": ""
+        },
+        {
+          "code": 45,
+          "label": "-",
+          "sublabel": "ㄥ",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "5"
+        },
+        {
+          "code": 61,
+          "label": "=",
+          "sublabel": "ㄦ",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "6"
         }
       ]
     },
@@ -381,18 +381,6 @@
       "isBottomRow": false,
       "keys": [
         {
-          "code": -1,
-          "label": "",
-          "sublabel": "",
-          "widthPercent": 10.0,
-          "icon": "shift",
-          "isModifier": true,
-          "isRepeatable": false,
-          "isSticky": true,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
           "code": 122,
           "label": "z",
           "sublabel": "ㄠ",
@@ -477,71 +465,6 @@
           "popupCharacters": ""
         },
         {
-          "code": 39,
-          "label": "'",
-          "sublabel": "ㄘ",
-          "widthPercent": 10.0,
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
-          "code": -5,
-          "label": "",
-          "sublabel": "",
-          "widthPercent": 10.0,
-          "icon": "delete.backward",
-          "isModifier": true,
-          "isRepeatable": true,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        }
-      ]
-    },
-    {
-      "isBottomRow": true,
-      "keys": [
-        {
-          "code": -3,
-          "label": "",
-          "sublabel": "",
-          "widthPercent": 15.0,
-          "icon": "keyboard.chevron.compact.down",
-          "isModifier": true,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
-          "code": -9,
-          "label": "EN",
-          "sublabel": "",
-          "widthPercent": 10.0,
-          "icon": "",
-          "isModifier": true,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
-          "code": 32,
-          "label": "",
-          "sublabel": "",
-          "widthPercent": 15.0,
-          "icon": "space.bar",
-          "isModifier": false,
-          "isRepeatable": true,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": ""
-        },
-        {
           "code": 44,
           "label": ",",
           "sublabel": "ㄓ",
@@ -576,11 +499,64 @@
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": true,
+      "keys": [
+        {
+          "code": -3,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "keyboard.chevron.compact.down",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": ""
         },
         {
-          "code": 45,
-          "label": "-",
-          "sublabel": "ㄥ",
+          "code": -1,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "shift",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": true,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -9,
+          "label": "EN",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 32,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 40.0,
+          "icon": "space.bar",
+          "isModifier": false,
+          "isRepeatable": true,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 39,
+          "label": "'",
+          "sublabel": "ㄘ",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
@@ -590,13 +566,13 @@
           "popupCharacters": ""
         },
         {
-          "code": 61,
-          "label": "=",
-          "sublabel": "ㄦ",
+          "code": -5,
+          "label": "",
+          "sublabel": "",
           "widthPercent": 10.0,
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
+          "icon": "delete.backward",
+          "isModifier": true,
+          "isRepeatable": true,
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": ""
