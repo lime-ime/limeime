@@ -336,6 +336,7 @@
     </style>
 
     <style name="LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_light</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_light</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_light</item>
@@ -360,6 +361,7 @@
         <item name="composingBackgroundColor">@color/composing_background_light</item>
     </style>
     <style name="LIMECandidateView.Light"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_light</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_light</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_light</item>
@@ -384,6 +386,7 @@
         <item name="composingBackgroundColor">@color/composing_background_light</item>
     </style>
     <style name="LIMECandidateView.Dark"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_dark</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_hl</item>
         <item name="voiceInputIcon">@drawable/btn_voice_dark</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_dark</item>
@@ -406,6 +409,7 @@
         <item name="composingBackgroundColor">@color/composing_background_dark</item>
     </style>
     <style name="LIMECandidateView.Pink"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_pink</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_pink</item>
         <item name="voiceInputIcon">@drawable/btn_voice_pink</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_pink</item>
@@ -429,6 +433,7 @@
     </style>
 
     <style name="LIMECandidateView.TechBlue"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_tech_blue</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_tech_blue</item>
         <item name="voiceInputIcon">@drawable/btn_voice_tech_blue</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_tech_blue</item>
@@ -452,6 +457,7 @@
     </style>
 
     <style name="LIMECandidateView.RelaxGreen"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_relax_green</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_relax_green</item>
         <item name="voiceInputIcon">@drawable/btn_voice_relax_green</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_relax_green</item>
@@ -475,6 +481,7 @@
     </style>
 
     <style name="LIMECandidateView.FashionPurple"  parent = "LIMECandidateView">
+        <item name="dismissPillColor">@color/keyboard_background_fashion_purple</item>
         <item name="suggestHighlight">@drawable/ic_suggest_scroll_background_fashion_purple</item>
         <item name="voiceInputIcon">@drawable/btn_voice_fashion_purple</item>
         <item name="emojiButtonIcon">@drawable/btn_emoji_fashion_purple</item>

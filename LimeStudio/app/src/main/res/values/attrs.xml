@@ -211,6 +211,8 @@
         <!-- color of  composing text view above candidate view   -->
         <attr name="composingTextColor" format="color" />
         <attr name="composingBackgroundColor" format="color" />
+        <!-- color of the candidate dismiss (X) button pill; themed keyboard background -->
+        <attr name="dismissPillColor" format="color" />
     </declare-styleable>
 
 

@@ -123,6 +123,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     protected int mColorBackground;
     protected int mColorNormalText;
+    protected int mColorDismissPill;
     protected int mColorNormalTextHighlight;
     protected int mColorInvertedTextTransparent;
 
@@ -211,6 +212,7 @@ public class CandidateView extends View implements View.OnClickListener {
         mLIMEPref = new LIMEPreferenceManager(context);
 
         //Jeremy '16,7,24 get themed objects
+        mColorDismissPill = ContextCompat.getColor(context, R.color.keyboard_background_light);
         try (TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs, R.styleable.LIMECandidateView, defStyle, R.style.LIMECandidateView)) {
 
@@ -253,6 +255,8 @@ public class CandidateView extends View implements View.OnClickListener {
                         mColorSelKey = a.getColor(attr,  ContextCompat.getColor(context, R.color.candidate_selection_keys));
                 } else if (attr == R.styleable.LIMECandidateView_selKeyShiftedColor) {
                         mColorSelKeyShifted = a.getColor(attr,  ContextCompat.getColor(context, R.color.color_common_green_hl));
+                } else if (attr == R.styleable.LIMECandidateView_dismissPillColor) {
+                        mColorDismissPill = a.getColor(attr,  ContextCompat.getColor(context, R.color.keyboard_background_light));
                 }
             }
         }
@@ -617,7 +621,7 @@ public class CandidateView extends View implements View.OnClickListener {
                 popupDismiss.setMinimumWidth(0);
                 popupDismiss.setMinimumHeight(0);
                 popupDismiss.setImageDrawable(makeDismissButtonGlyph());
-                popupDismiss.setBackgroundColor(CandidateInInputViewContainer.dismissButtonBackgroundColor());
+                popupDismiss.setBackground(makeDismissButtonBackground());
                 popupDismiss.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
                         MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
                 storePopupDismissButtonWidth(popupDismiss);
@@ -948,8 +952,10 @@ public class CandidateView extends View implements View.OnClickListener {
 
     public Drawable makeDismissButtonBackground() {
         GradientDrawable background = new GradientDrawable();
-        int color = mColorNormalText & 0x00ffffff;
-        background.setColor(color | 0x1a000000);
+        // feat#N01: iOS-path pill — tint with the themed keyboard-background colour (per theme,
+        // analogous to iOS normalKey) at ~38% so the dismiss button reads as a soft, translucent key.
+        int keyRgb = mColorDismissPill & 0x00ffffff;
+        background.setColor(keyRgb | 0x60000000);
         background.setCornerRadius(dpToPx(6));
         return background;
     }
