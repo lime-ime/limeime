@@ -418,7 +418,7 @@ private struct InstallFAB: View {
                     .rotationEffect(.degrees(45))
                     .offset(x: -16, y: 5)
             }
-            .shadow(color: Color.black.opacity(0.18), radius: 7, x: 0, y: 4)
+            .shadow(color: SettingsTheme.switchShadow, radius: 7, x: 0, y: 4)
             .fixedSize()
     }
 }
