@@ -10,7 +10,7 @@ Last reviewed: 2026-06-28
 
 ## Pending fixes
 
-- None currently tracked.
+- fix#139 iOS: maintainer-created private-email/TestFlight report for Array10 numeric-field routing, bottom-content coverage, and keyboard-size consistency. Current state: `docs/#139_ISSUE.md` records source-backed triage. Investigate iOS numeric-field routing so Array10 can keep an appropriate phone-style numeric layout when possible, verify keyboard-size scaling on `phone_simple`, and distinguish LIME extension-height behavior from private host-app content-inset behavior before asking for TestFlight retest.
 
 ## New features / product work
 
