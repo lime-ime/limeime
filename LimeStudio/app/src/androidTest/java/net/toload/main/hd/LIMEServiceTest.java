@@ -11319,8 +11319,8 @@ public class LIMEServiceTest {
             // Call onPress
             service.onPress(android.view.KeyEvent.KEYCODE_A);
             
-            // Verify sound was played
-            verify(mockAudioManager, atLeastOnce()).playSoundEffect(anyInt(), anyFloat());
+            // Verify sound was played with the default-volume overload.
+            verify(mockAudioManager, atLeastOnce()).playSoundEffect(anyInt());
         } catch (Exception e) {
             // Expected
         }

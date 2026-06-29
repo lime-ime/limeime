@@ -608,7 +608,7 @@ public class IntegrationTestBackupRestore {
     public void test_5_6_10_BackupRestoreDatabasePairRestoresPreferenceCompatibilityManifest() throws Exception {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         java.util.Map<String, Object> expected = fullAndroidPrefsTableFixture();
-        java.util.Map<String, Object> originalValues = snapshotPrefs(prefs, expected.keySet());
+        java.util.Map<String, Object> originalValues = snapshotPrefs(prefs);
 
         java.io.File backupFile = new java.io.File(context.getFilesDir(), "test_pref_backup_" + System.currentTimeMillis() + ".zip");
         android.net.Uri backupUri = androidx.core.content.FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", backupFile);
@@ -644,7 +644,7 @@ public class IntegrationTestBackupRestore {
     public void test_5_6_11_RestoreIosStylePreferenceFixtureThroughAndroidAdapter() throws Exception {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         java.util.Map<String, Object> expected = fullAndroidPrefsTableFixture();
-        java.util.Map<String, Object> originalValues = snapshotPrefs(prefs, expected.keySet());
+        java.util.Map<String, Object> originalValues = snapshotPrefs(prefs);
         java.io.File fixtureFile = new java.io.File(context.getFilesDir(), "test_ios_pref_fixture_" + System.currentTimeMillis() + ".zip");
         android.net.Uri fixtureUri = androidx.core.content.FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", fixtureFile);
 
@@ -761,47 +761,55 @@ public class IntegrationTestBackupRestore {
         return values;
     }
 
-    private java.util.Map<String, Object> snapshotPrefs(SharedPreferences prefs, java.util.Set<String> keys) {
+    private java.util.Map<String, Object> snapshotPrefs(SharedPreferences prefs) {
         java.util.Map<String, ?> all = prefs.getAll();
         java.util.Map<String, Object> snapshot = new java.util.HashMap<>();
-        for (String key : keys) {
-            if (all.containsKey(key)) {
-                snapshot.put(key, all.get(key));
-            }
+        for (java.util.Map.Entry<String, ?> entry : all.entrySet()) {
+            snapshot.put(entry.getKey(), entry.getValue());
         }
         return snapshot;
     }
 
     private void restorePrefs(SharedPreferences prefs, java.util.Map<String, Object> snapshot) {
         SharedPreferences.Editor editor = prefs.edit();
-        for (String key : fullAndroidPrefsTableFixture().keySet()) {
-            if (!snapshot.containsKey(key)) {
-                editor.remove(key);
-                continue;
-            }
-            Object value = snapshot.get(key);
-            if (value instanceof Boolean) {
-                editor.putBoolean(key, (Boolean) value);
-            } else if (value instanceof String) {
-                editor.putString(key, (String) value);
-            }
+        editor.clear();
+        for (java.util.Map.Entry<String, Object> entry : snapshot.entrySet()) {
+            putPrefValue(editor, entry.getKey(), entry.getValue());
         }
         editor.commit();
     }
 
     private void seedPrefs(SharedPreferences prefs, java.util.Map<String, Object> values) {
         SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
         for (java.util.Map.Entry<String, Object> entry : values.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof Boolean) {
-                editor.putBoolean(entry.getKey(), (Boolean) value);
-            } else if (value instanceof Integer && isAndroidStringBackedInteger(entry.getKey())) {
-                editor.putString(entry.getKey(), String.valueOf(value));
-            } else if (value instanceof String) {
-                editor.putString(entry.getKey(), (String) value);
-            }
+            putPrefValue(editor, entry.getKey(), entry.getValue());
         }
         editor.commit();
+    }
+
+    private void putPrefValue(SharedPreferences.Editor editor, String key, Object value) {
+        if (value instanceof Boolean) {
+            editor.putBoolean(key, (Boolean) value);
+        } else if (value instanceof Integer && isAndroidStringBackedInteger(key)) {
+            editor.putString(key, String.valueOf(value));
+        } else if (value instanceof Integer) {
+            editor.putInt(key, (Integer) value);
+        } else if (value instanceof Long) {
+            editor.putLong(key, (Long) value);
+        } else if (value instanceof Float) {
+            editor.putFloat(key, (Float) value);
+        } else if (value instanceof String) {
+            editor.putString(key, (String) value);
+        } else if (value instanceof java.util.Set) {
+            java.util.HashSet<String> set = new java.util.HashSet<>();
+            for (Object item : (java.util.Set<?>) value) {
+                if (item instanceof String) {
+                    set.add((String) item);
+                }
+            }
+            editor.putStringSet(key, set);
+        }
     }
 
     private void assertManifestValues(JSONObject actual, java.util.Map<String, Object> expected) throws Exception {

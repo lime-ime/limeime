@@ -198,7 +198,8 @@ public class IntentHandler {
             androidx.fragment.app.FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
             ImportDialog dialog = ImportDialog.newInstanceForFile(importFilepath);
             dialog.setOnImportTypeSelectedListener(setupImController);
-            dialog.show(ft, "ImportDialog");
+            ft.add(dialog, "ImportDialog");
+            ft.commitAllowingStateLoss();
         } catch (Exception e) {
             String errorMessage = activity.getResources().getString(R.string.error_import_db);
             Log.e(TAG, errorMessage, e);
