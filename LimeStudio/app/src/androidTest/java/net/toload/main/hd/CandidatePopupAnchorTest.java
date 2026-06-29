@@ -52,6 +52,17 @@ public class CandidatePopupAnchorTest {
     }
 
     @Test
+    public void candidateDismissButtonWidthIs1_5xFormerWidth() {
+        // feat#N01: 31.5sp == 1.5 × the former 21sp tap target. height/style unchanged.
+        android.content.res.Resources r =
+                InstrumentationRegistry.getInstrumentation().getTargetContext().getResources();
+        float expectedPx = android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_SP, 31.5f, r.getDisplayMetrics());
+        assertEquals(expectedPx,
+                r.getDimension(net.toload.main.hd.R.dimen.candidate_dismiss_button_width), 1.0f);
+    }
+
+    @Test
     public void expandedPopupDoesNotReserveLegacyBottomCloseButtonHeight() {
         assertEquals(240, CandidateView.popupContentHeight(240));
     }

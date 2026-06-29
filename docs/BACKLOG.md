@@ -2,7 +2,7 @@
 
 Public backlog for confirmed pending fixes, active retest watches, and new-feature/product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; mutable automation state stays outside the repo.
 
-Last reviewed: 2026-06-28
+Last reviewed: 2026-06-29
 
 ## Active issue follow-up
 
@@ -16,4 +16,4 @@ Last reviewed: 2026-06-28
 
 - feat#124 Android: from #124 commenter `01disney` in https://github.com/lime-ime/limeime/issues/124#issuecomment-4786153001 / https://github.com/lime-ime/limeime/issues/124#issuecomment-4788945640. On the English keyboard layout only, the `123` key should visibly show an ellipsis (`...`) affordance. Normal press should continue switching to the first symbol keyboard (`symbols1`), while long-pressing `123` should switch to the phonetic/simple numeric keyboard (`phone_simple`). Current state: source merged in PR #135 as merge commit `f766239526aadf0dc36fea391f76da9a38358902`; pending the next Android APK/build that contains this commit and any needed device verification before public retest or completion.
 - feat#124 iOS: same #124 request and scope for iOS parity. On the English keyboard layout only, the `123` key should visibly show an ellipsis (`...`) affordance. Normal press should continue switching to the first symbol keyboard, while long-pressing `123` should switch to the phonetic/simple numeric keyboard. Current state: confirmed feature request, pending iOS design/implementation.
-- feat#N01 Android: requested by Jeremy after #124 commenter `01disney` reinforced that the candidate-strip left `X` is too small/hard to press during thumb typing and asked whether it can be made the same size as the smiley icon. Widen the candidate-strip dismiss / clear-code button tap target so it is easier to hit during normal typing, while preserving the existing candidate-dismiss / clear-composition behavior and not changing the keyboard delete/backspace key behavior. Current state: confirmed feature request, pending Android design/implementation.
+- feat#N01 Android + iOS: requested by Jeremy after #124 commenter `01disney` reinforced that the candidate-strip left `X` is too small/hard to press during thumb typing and asked whether it can be made the same size as the smiley icon. Jeremy's locked decision (2026-06-29): make the dismiss / clear-code button **1.5× its current width** on both platforms, keeping height, color, corner style, glyph, and tap semantics intact, and not changing the keyboard delete/backspace key. Android = `candidate_dismiss_button_width` 21sp → 31.5sp (one dimen, cascades everywhere); iOS = new `Chevron.dismissButtonWidth(isPad:)` = `buttonWidth/2 * 1.5` (30pt phone / 39pt iPad) across the 3 call sites. Plan + TDD tests in `docs/FEAT_#N01.md`. Current state: planned, pending implementation/verification on both platforms.

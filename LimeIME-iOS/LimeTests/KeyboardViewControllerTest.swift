@@ -608,6 +608,15 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(CandidateBarSystemChrome.usesLightForeground(systemUserInterfaceStyle: .unspecified))
     }
 
+    // feat#N01: the candidate-bar dismiss (✕) button is 1.5× the former half-chevron tap
+    // target — wider hit area only; height/color/corner style unchanged.
+    func testDismissButtonWidthIs1_5xHalfChevron() {
+        XCTAssertEqual(LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: false), 30, accuracy: 0.001)
+        XCTAssertEqual(LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: true), 39, accuracy: 0.001)
+        XCTAssertEqual(LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: false),
+                       LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: false) / 2 * 1.5, accuracy: 0.001)
+    }
+
     func testExpandedCandidateViewUsesCandidateBarSystemChrome() throws {
         let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
         let source = try String(contentsOf: sourceURL, encoding: .utf8)

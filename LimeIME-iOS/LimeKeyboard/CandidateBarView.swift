@@ -420,7 +420,7 @@ final class CandidateBarView: UIView {
             dismissButton.leadingAnchor.constraint(equalTo: leadingAnchor),
             dismissCenterY,
             dismissHeight,
-            dismissButton.widthAnchor.constraint(equalToConstant: LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isPad) / 2),
+            dismissButton.widthAnchor.constraint(equalToConstant: LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: isPad)),
 
             firstColumnGuide.leadingAnchor.constraint(equalTo: leadingAnchor),
             firstColumnGuide.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 0.10),

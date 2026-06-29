@@ -98,6 +98,11 @@ enum LayoutMetrics {
             static func buttonWidth(isPad: Bool) -> CGFloat {
                 isPad ? Pad.buttonWidth : Phone.buttonWidth
             }
+            /// feat#N01: candidate-bar dismiss (✕) button — 1.5× the former half-chevron
+            /// tap target (wider hit area only; height/color/corner style unchanged).
+            static func dismissButtonWidth(isPad: Bool) -> CGFloat {
+                buttonWidth(isPad: isPad) / 2 * 1.5
+            }
         }
 
         // Selection pill (drawn inside CandidateButton).

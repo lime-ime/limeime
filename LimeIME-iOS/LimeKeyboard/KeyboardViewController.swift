@@ -1056,7 +1056,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             dismissBtn.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             dismissCenterY,
             dismissHeight,
-            dismissBtn.widthAnchor.constraint(equalToConstant: LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad) / 2),
+            dismissBtn.widthAnchor.constraint(equalToConstant: LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: isOnPad)),
         ])
         expandedDismissButton = dismissBtn
         expandedDismissCenterYConstraint = dismissCenterY
@@ -2077,7 +2077,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let composingFont = UIFont(name: "PingFangTC-Regular", size: baseCompSize * candidateFontScale)
             ?? UIFont.systemFont(ofSize: baseCompSize * candidateFontScale, weight: .regular)
 
-        let dismissZone = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad) / 2
+        let dismissZone = LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: isOnPad)
         let chevronZone = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad)
         func expandedRowStartX(row: Int) -> CGFloat {
             return row == 0 ? dismissZone + hPad : hPad
