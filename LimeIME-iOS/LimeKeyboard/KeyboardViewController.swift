@@ -521,13 +521,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         if keyboardType == .phonePad {
             return "phone_number"
         }
-        if keyboardType == .numberPad
-            || keyboardType == .decimalPad
-            || keyboardType == .asciiCapableNumberPad {
-            // Mirror Android's MODE_TEXT + isSymbol path: route number /
-            // decimal fields to the symbols keyboard (digits + punctuation),
-            // not the English-alphabet layout. `.phonePad` already has its
-            // own restricted T9-style layout above.
+        if keyboardType == .numberPad || keyboardType == .decimalPad {
+            // #139: pure-number fields get the strict, mode-key-free numeric keypad,
+            // matching Android's TYPE_CLASS_NUMBER → phone_number. `.phonePad` already
+            // returns phone_number above. (Not observable on iOS — iOS system-replaces
+            // numeric fields — but kept for parity/consistency with Android.)
+            return "phone_number"
+        }
+        if keyboardType == .asciiCapableNumberPad {
+            // #139: ASCII-capable number fields may need letters, so keep symbols1 —
+            // its EN / 中 keys reach the letter layouts (it is not letter-trapped).
             return "symbols1"
         }
         if isEnglishOnly || !hasActivatedIMs {

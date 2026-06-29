@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from a private email/TestFlight report. Do not expose reporter identity or private app details in public comments or docs.
-- Current state: open, needs iOS investigation and TestFlight verification.
+- Current state: open. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below). Could not reproduce the reporter's symptom; LIME's numeric-field routing is not reached from web fields. Awaiting the reporter's exact field markup / iOS version (private email) before any code change.
 - Public acknowledgement: not needed. This is a maintainer-created tracking issue for private-email evidence.
 
 ## Problem statement
@@ -91,3 +91,88 @@ The bottom-content coverage portion may be an iOS custom-keyboard height/safe-ar
 ## Follow-up / retest condition
 
 Keep the issue open and assigned for iOS investigation. No public comment or reporter retest request is needed until a newer TestFlight build contains a targeted iOS fix or the maintainer needs additional non-private reproduction details from the email reporter.
+
+## Simulator investigation findings (2026-06-29)
+
+Reproduced field-by-field on an iPhone 17 Pro Max simulator (iOS 26.5) with LIME
+enabled and the 注音 (Zhuyin) IM active, driving Safari via `idb` against
+`docs/keyboard-type-field-test.html` (expanded to a full `type` × `inputmode` ×
+`pattern` matrix, including the reporter's literal `type="num"`). Each web field
+was focused with LIME active and the resulting keyboard observed.
+
+Observed behaviour (web fields in Safari, LIME active):
+
+| Web field | Keyboard shown |
+| --- | --- |
+| `type=text` | LIME IM keyboard (注音; would be `phone_simple` for Array10) |
+| `type="num"` (invalid type → treated as text) | LIME IM keyboard |
+| `type="number"` (bare, no `inputmode`) | **LIME IM keyboard** (= `phone_simple` for Array10) — correct |
+| `type="number" inputmode="numeric"` | **iOS system numeric pad** (LIME replaced) |
+| `inputmode="numeric"` (on a text field) | iOS system numeric pad |
+| `pattern="[0-9]*"` | iOS system numeric pad |
+
+Conclusions:
+
+1. **A bare `type="number"` / `type="num"` field already works.** LIME keeps the
+   active-IM keyboard, which for Array10 is `phone_simple` — exactly the keypad the
+   reporter wants. No bug in this case.
+2. **Fields with `inputmode="numeric"` / `"decimal"` or `pattern="[0-9]*"` are
+   taken over by iOS.** iOS substitutes its own system numeric keyboard for these;
+   the LIME extension is never invoked, so LIME cannot change what is shown. This is
+   Apple platform behaviour (third-party keyboards are not used for number-pad input),
+   independent of LIME's routing.
+3. **No tested web field routes to LIME's `symbols1` or English layout.** The
+   reported "switches to a generic English/symbol keyboard" is therefore **not**
+   produced by LIME's `layoutIdForCurrentInputField` routing. The earlier
+   `.numberPad`/`.decimalPad`/`.asciiCapableNumberPad` → `symbols1`/`phone_number`
+   analysis is **unobservable on iOS** — that code path is not reached from Safari /
+   WebView numeric inputs, nor from native numeric fields (iOS system-replaces both).
+   The `.numberPad`/`.decimalPad` → `phone_number` split is nonetheless **kept in the
+   code** for parity with Android's `TYPE_CLASS_NUMBER → phone_number` (it is the correct
+   behaviour should LIME ever be shown for those types); it simply can't be verified on iOS.
+4. **Could not reproduce the reporter's exact symptom.** Remaining unknowns: the
+   reporter's exact field markup (`inputmode`/`pattern`?) and iOS/Safari version. The
+   test used 注音 rather than Array10, but routing for the numeric branches is
+   IM-independent, so Array10 behaves the same (bare `type=number` → `phone_simple`).
+
+Related platform note (settled during this investigation): LIME's keyboard
+extension `Info.plist` had `IsASCIICapable = false`, so iOS substituted its own
+keyboard for `.asciiCapable` text fields; this was changed to `true` so LIME shows
+for ASCII-capable text fields instead of the iOS built-in keyboard. This is a
+separate behaviour improvement, not the #139 fix.
+
+Tooling left in the tree for this investigation (uncommitted):
+
+- `docs/keyboard-type-field-test.html` — full field matrix (kept).
+- The `.numberPad`/`.decimalPad` → `phone_number` routing split in
+  `KeyboardViewController.layoutIdForCurrentInputField`, plus its unit test
+  `testNumberFieldRoutingSplitsPureNumberFromAsciiCapable`, is **kept** (Android parity;
+  unverifiable on iOS as above).
+- The temporary `NSLog("LIME-KBTYPE …")` instrumentation used during the investigation
+  has been **removed**. Note for next time: the LimeKeyboard extension target does
+  **not** define `DEBUG`, so a `#if DEBUG` guard is compiled out there — leave such a log
+  un-gated, or add `DEBUG` to that target's Debug config.
+
+## What to communicate to the reporter (private email)
+
+Ask (without exposing private app details publicly):
+
+1. The exact numeric field markup — specifically whether it uses
+   `inputmode="numeric"`/`"decimal"` or `pattern="[0-9]*"`, or is a bare
+   `type="number"`/`type="num"` with neither.
+2. iOS version, and whether the field is in Safari or an in-app web view.
+3. If shareable, a frame from the video showing the keyboard.
+
+Explanation to give, depending on the answer:
+
+- **If the field uses `inputmode`/`pattern` (or is a native number-pad field):** iOS
+  shows its own numeric keyboard for those, and third-party keyboards (LIME / Array10)
+  cannot be displayed there. This is an Apple restriction, not a LIME bug, and cannot
+  be fixed in LIME. Suggest a normal text field (or removing `inputmode`/`pattern`) if
+  the host wants the Array10 keypad available.
+- **If the field is a bare `type="number"`/`type="num"`:** LIME keeps the Array10
+  `phone_simple` keypad as expected — this already works in the current build. Ask the
+  reporter to retest on the latest TestFlight build.
+
+(The keyboard-size and bottom-content portions of #139 are separate and not covered
+by this investigation.)

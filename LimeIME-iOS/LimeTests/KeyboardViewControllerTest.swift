@@ -1,5 +1,6 @@
 ﻿import XCTest
 import AVFoundation
+import UIKit
 @testable import LimeIME
 
 final class KeyboardViewControllerTest: XCTestCase {
@@ -615,6 +616,25 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: true), 39, accuracy: 0.001)
         XCTAssertEqual(LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: false),
                        LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: false) / 2 * 1.5, accuracy: 0.001)
+    }
+
+    // #139: pure-number fields (.numberPad/.decimalPad) route to the strict, mode-key-free
+    // `phone_number` keypad (matching Android), while `.asciiCapableNumberPad` keeps `symbols1`
+    // so its EN/中 keys can still reach the letter layouts. (Aligns iOS routing with Android;
+    // not observable on iOS because iOS system-replaces numeric fields.)
+    func testNumberFieldRoutingSplitsPureNumberFromAsciiCapable() {
+        func layout(_ kt: UIKeyboardType) -> String {
+            KeyboardViewController.layoutIdForCurrentInputField(
+                keyboardType: kt,
+                isEnglishOnly: true,
+                hasActivatedIMs: true,
+                englishLayout: "lime_english",
+                resolvedActiveLayoutId: "lime_phonetic")
+        }
+        XCTAssertEqual(layout(.phonePad), "phone_number")
+        XCTAssertEqual(layout(.numberPad), "phone_number")
+        XCTAssertEqual(layout(.decimalPad), "phone_number")
+        XCTAssertEqual(layout(.asciiCapableNumberPad), "symbols1")
     }
 
     func testExpandedCandidateViewUsesCandidateBarSystemChrome() throws {

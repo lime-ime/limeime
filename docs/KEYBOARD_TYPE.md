@@ -234,6 +234,124 @@ input — or from any input into one with a different `enterkeyhint` /
 `returnKeyType` — now updates LIME's keyboard immediately. No need to
 dismiss the keyboard and re-pop.
 
+## #139 — iOS number-field routing refinement (proposed)
+
+> **Update (2026-06-29) — implemented & kept for Android parity (unverifiable on iOS).**
+> A simulator investigation (see `docs/#139_ISSUE.md` → "Simulator investigation findings")
+> showed this routing is **not observable on iOS**: iOS hands numeric web inputs
+> (`inputmode="numeric"` / `pattern`) — and native numeric fields — to its own system
+> keyboard, and a bare `type="number"` keeps LIME's active-IM keyboard (`phone_simple` for
+> Array10). So LIME is never actually shown for `.numberPad`/`.decimalPad`. The
+> `.numberPad`/`.decimalPad` → `phone_number` split below is **kept** anyway, because it
+> aligns iOS routing with Android's `TYPE_CLASS_NUMBER → phone_number`; it simply can't be
+> verified on-device. `.asciiCapableNumberPad` stays on `symbols1`.
+
+Context: GitHub issue [#139](https://github.com/lime-ime/limeime/issues/139)
+(Array10 numeric-field routing). A reporter's video shows a field where LIME
+switches to the symbols keyboard (`symbols1`). The web test page
+[`docs/keyboard-type-field-test.html`](keyboard-type-field-test.html) cannot
+reproduce it, because a web page can only express a *subset* of `UIKeyboardType`
+through `type` / `inputmode`; the keyboard type that drives this case is
+native-only.
+
+### The three iOS "number" keyboard types are not equivalent
+
+`KeyboardViewController.layoutIdForCurrentInputField`
+([KeyboardViewController.swift:524-531](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L524-L531))
+currently routes **all three** number-class types to `symbols1`:
+
+| `UIKeyboardType` | Allows | Pure number? | Web-reproducible? |
+| --- | --- | --- | --- |
+| `.numberPad` | digits 0–9 only (PIN-style) | yes | `inputmode="numeric"` (browser-dependent) |
+| `.decimalPad` | digits + decimal point | yes (decimal) | `inputmode="decimal"` (browser-dependent) |
+| `.asciiCapableNumberPad` | a number pad **that also allows ASCII letters** | **no** | **none — native only** |
+
+`.asciiCapableNumberPad` is the odd one out: it exists precisely because the
+field expects ASCII letters to be reachable (serial numbers, alphanumeric
+codes, some 2FA inputs). Routing it to the letter-less `symbols1` is a poor
+default. It is not a hard trap — `symbols1`'s bottom row carries `EN` (`-2` →
+English layout) and `中` (`-10`), so letters are one tap away — but the field
+opens on the symbol page when letters were the point. The original
+justification ("mirror Android's number handling") does not hold for this type,
+because **Android has no `.asciiCapableNumberPad`**; it was lumped in by name.
+
+### Current cross-platform divergence on number fields
+
+The current iOS `symbols1` routing does **not** actually match Android:
+
+| | Number field → | Mode keys (`123` / `ABC` / `中`)? |
+| --- | --- | --- |
+| **Android** (`TYPE_CLASS_NUMBER`) | `phone_number.xml` | **none** (strict) |
+| **iOS** (`.numberPad` / `.decimalPad`) | `symbols1.json` | **yes** (`EN`, `中`, space) |
+
+Android sends every `TYPE_CLASS_NUMBER` to the locked-down `phone_number.xml`
+([LIMEService.java:924-928](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L924-L928)
+→ `getRestrictedFieldKeyboardMode` returns `MODE_PHONE`,
+[:141-148](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L141-L148)
+→ switcher [:485-487](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java#L485-L487)).
+The iOS code comment claims to "mirror Android's `MODE_TEXT + isSymbol` path",
+but that path is Android's **date/time** fallback, not its number layout — so
+the two platforms already diverge.
+
+### Layout mode-key reference (verified from the shipped assets)
+
+| Layout (`.xml` / `.json`) | Mode keys present | Role |
+| --- | --- | --- |
+| `phone_number` | **none** — `+ - . / ( ) * #`, digits, delete, hide, return only | strict numeric; Android `TYPE_CLASS_NUMBER` / phone target |
+| `symbols1` | `EN` (`-2`), `中` (`-10`) | symbols page; iOS number target today |
+| `phone_simple` | `123` (`-2`), `ABC` (`-9`) | array10 IM keypad (+ Android feat#124 "123" long-press) — **not** a restricted layout |
+
+`phone_number.json` already ships on iOS (today only the `.phonePad` fallback)
+and is key-for-key identical to Android's `phone_number.xml` — **no new asset is
+required**. `phone_simple` is **not** a candidate for restricted number fields:
+it carries `123`/`ABC` switch keys, so it is no more "restricted" than
+`symbols1`, and it is the array10 input keypad rather than a numeric-field
+layout.
+
+### Proposed routing (iOS only)
+
+Split the three types at
+[KeyboardViewController.swift:524-531](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L524-L531):
+
+| iOS keyboard type | Route to | Rationale |
+| --- | --- | --- |
+| `.numberPad`, `.decimalPad` | **`phone_number`** | strict numeric, no escape keys — **aligns iOS with Android** |
+| `.asciiCapableNumberPad` | **`symbols1`** (unchanged) | ASCII-capable — keep `EN` / `中` so letters stay reachable |
+| `.phonePad` | `phone_number` (unchanged) | already restricted, one branch above |
+
+```swift
+if keyboardType == .numberPad || keyboardType == .decimalPad {
+    return "phone_number"        // strict numeric, matches Android
+}
+if keyboardType == .asciiCapableNumberPad {
+    return "symbols1"            // ASCII-capable: EN/中 keep letters reachable
+}
+```
+
+`updateInputModeForCurrentField`
+([KeyboardViewController.swift:498-513](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L498-L513))
+can keep all three as `mEnglishOnly = true`; no change needed there.
+
+**Android:** no change — `TYPE_CLASS_NUMBER` already routes to `phone_number`,
+and Android has no `.asciiCapableNumberPad` equivalent.
+
+### Tests / verification
+
+- iOS unit test (extend `KeyboardViewControllerTest`): assert
+  `layoutIdForCurrentInputField(keyboardType:…)` returns `"phone_number"` for
+  `.numberPad` and `.decimalPad`, and `"symbols1"` for `.asciiCapableNumberPad`.
+- Device test (the part the HTML **cannot** cover): a native field is required.
+  Build a small SwiftUI/UIKit harness with `.keyboardType(.numberPad)`,
+  `.decimalPad`, and `.asciiCapableNumberPad` (or use the real Array10 app) and
+  confirm: numberPad / decimalPad → the strict `phone_number` keypad;
+  asciiCapableNumberPad → `symbols1` with `EN` reaching letters.
+- **Open caveat to settle on device:** confirm iOS actually surfaces the LIME
+  keyboard (not the system numeric pad) for `.numberPad` / `.decimalPad`. If iOS
+  shows its own numeric keyboard for those (as it does for `.phonePad`), the
+  routing is moot for those two types and only `.asciiCapableNumberPad` matters
+  in practice — which would make the split above primarily an
+  `.asciiCapableNumberPad` correctness fix.
+
 ## Open questions (carry over from #74)
 
 1. Should Android number and decimal keep sharing `phone_number.xml`, or should

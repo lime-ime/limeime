@@ -229,6 +229,15 @@ struct PreferencesTabView: View {
                 }
                 .setupMatchedSectionBlock()
 
+                #if DEBUG
+                // #139 debug-only: native keyboard-type test harness (the web test page
+                // cannot express native-only types like .asciiCapableNumberPad).
+                Section(header: Text("除錯")) {
+                    NavigationLink("鍵盤類型測試") { KeyboardTypeTestView() }
+                }
+                .setupMatchedSectionBlock()
+                #endif
+
                 }
                 .setupMatchedGroupedSurface()
             }
@@ -257,3 +266,29 @@ struct PreferencesTabView: View {
     }
 
 }
+
+#if DEBUG
+/// #139 debug harness: one TextField per UIKeyboardType so native-only types (which the
+/// web test page `docs/keyboard-type-field-test.html` cannot express) can be exercised
+/// against LIME on device. Compiled out of Release builds entirely.
+struct KeyboardTypeTestView: View {
+    @State private var text = ""
+    var body: some View {
+        Form {
+            TextField("default", text: $text).keyboardType(.default)
+            TextField("numberPad", text: $text).keyboardType(.numberPad)
+            TextField("decimalPad", text: $text).keyboardType(.decimalPad)
+            TextField("asciiCapableNumberPad", text: $text).keyboardType(.asciiCapableNumberPad)
+            TextField("phonePad", text: $text).keyboardType(.phonePad)
+            TextField("namePhonePad", text: $text).keyboardType(.namePhonePad)
+            TextField("emailAddress", text: $text).keyboardType(.emailAddress)
+            TextField("URL", text: $text).keyboardType(.URL)
+            TextField("webSearch", text: $text).keyboardType(.webSearch)
+            TextField("numbersAndPunctuation", text: $text).keyboardType(.numbersAndPunctuation)
+            TextField("asciiCapable", text: $text).keyboardType(.asciiCapable)
+        }
+        .navigationTitle("鍵盤類型測試")
+        .autocorrectionDisabled()
+    }
+}
+#endif
