@@ -27,10 +27,11 @@ The issue body says the reporter supplied videos in the email thread, but automa
   - `layoutIdForCurrentInputField(...)` then routes:
     - `.phonePad` to `phone_number`
     - `.numberPad`, `.decimalPad`, and `.asciiCapableNumberPad` to `symbols1`
-    - only non-forced-Chinese fields can use `resolvedActiveLayoutId`
+    - English-only non-numeric fields to the configured English layout
+    - Chinese mode with at least one activated IM to `resolvedActiveLayoutId`
   - `applyLayoutForCurrentInputField()` uses that static routing and therefore cannot currently choose the active IM's Array10 `phone_simple` layout for numeric fields.
-- `LimeIME-iOS/Shared/Models/KeyboardTypePolicy.swift` also classifies number, decimal, ASCII-capable number, phone, and email fields as forced-English keyboard types.
-- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift` currently asserts that `.numberPad` resolves to `symbols1`, so the current test suite protects the behavior the reporter is challenging.
+- `LimeIME-iOS/Shared/Models/KeyboardTypePolicy.swift` mirrors the forced-English category in a separately tested helper. Runtime routing currently uses the inline `KeyboardViewController` switches above rather than calling that helper directly.
+- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift` currently asserts the forced-English categories and the live layout resolver's `.numberPad` -> `symbols1` behavior, so the current test suite protects the behavior the reporter is challenging.
 
 ### Array10 phone-style layout availability
 
