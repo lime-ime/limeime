@@ -1280,6 +1280,78 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    // MARK: - feat#124 English "123" long-press → phone_simple
+
+    private func phoneSimpleSymbolKey(_ longPress: Int) -> KeyDef {
+        KeyDef(code: -2, label: "123", longPressCode: longPress)
+    }
+
+    func testPhoneSimpleKeyCodeMirrorsAndroid() {
+        XCTAssertEqual(LimeKeyCode.switchToPhoneSimple.rawValue, -106)
+    }
+
+    func testIPhoneEnglishSymbolKeyKeeps123AndLongPressesToPhoneSimple() throws {
+        for id in ["lime_english", "lime_english_shift",
+                   "lime_english_number", "lime_english_number_shift"] {
+            let key = try XCTUnwrap(
+                loadKeyboardLayoutFixture(id).rows.flatMap { $0.keys }.first { $0.code == -2 },
+                "\(id) should have a -2 symbol key")
+            XCTAssertEqual(key.label, "@string/label_symbol_key", "\(id): keep the 123 face")
+            XCTAssertEqual(key.longPressCode, -106, "\(id): -2 must long-press to phone_simple")
+        }
+    }
+
+    func testPhoneSimpleOwnSymbolKeyHasNoPhoneSimpleLongPress() throws {
+        let key = try XCTUnwrap(
+            loadKeyboardLayoutFixture("phone_simple").rows.flatMap { $0.keys }.first { $0.code == -2 })
+        XCTAssertNotEqual(key.longPressCode, -106,
+                          "phone_simple's own 123 key must not re-trigger phone_simple")
+    }
+
+    func testGenericLongPressFiresForEnglishSymbolKeyOnIPhone() {
+        XCTAssertTrue(KeyboardView.shouldUseGenericLongPress(
+            keyDef: phoneSimpleSymbolKey(-106), isPad: false,
+            layoutId: "lime_english", legacyGlobeMode: false))
+    }
+
+    func testGenericLongPressIgnoresKeysWithoutLongPressCode() {
+        XCTAssertFalse(KeyboardView.shouldUseGenericLongPress(
+            keyDef: phoneSimpleSymbolKey(0), isPad: false,
+            layoutId: "lime_english", legacyGlobeMode: false))
+    }
+
+    func testGenericLongPressIgnoresGlobeAndDualRowKeys() {
+        // globe/done carries longPressCode -100; iPad dual-row keys carry a glyph code.
+        // Neither is the phone_simple code (-106), so neither gets the generic hint/gesture.
+        XCTAssertFalse(KeyboardView.shouldUseGenericLongPress(
+            keyDef: KeyDef(code: -200, longPressCode: -100), isPad: false,
+            layoutId: "lime_english", legacyGlobeMode: false))
+        XCTAssertFalse(KeyboardView.shouldUseGenericLongPress(
+            keyDef: KeyDef(code: 97, longPressCode: 65), isPad: true,
+            layoutId: "lime_english_ipad", legacyGlobeMode: false))
+    }
+
+    func testKeyboardViewWiresGenericLongPressAndHint() throws {
+        let src = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"), encoding: .utf8)
+        XCTAssertTrue(src.contains("func shouldUseGenericLongPress"))
+        XCTAssertTrue(src.contains("genericLongPressed"))
+        XCTAssertTrue(src.contains("didLongPressKey"))
+    }
+
+    func testControllerLoadsPhoneSimpleAndRoutesLongPress() throws {
+        let src = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"), encoding: .utf8)
+        XCTAssertTrue(src.contains("case LimeKeyCode.switchToPhoneSimple.rawValue"))
+        XCTAssertTrue(src.contains("func switchToPhoneSimple"))
+        XCTAssertTrue(src.contains("LayoutLoader.load(\"phone_simple\")"))
+        XCTAssertTrue(src.contains("didLongPressKey keyDef"))
+    }
+
+    func testPhoneSimpleLayoutReturnsToEnglishViaAbc() throws {
+        let codes = try loadKeyboardLayoutFixture("phone_simple").rows.flatMap { $0.keys.map(\.code) }
+        XCTAssertTrue(codes.contains(LimeKeyCode.switchToEnglish.rawValue), "phone_simple needs ABC (-9)")
+        XCTAssertTrue(codes.contains(LimeKeyCode.switchToSymbol.rawValue), "phone_simple needs 123 (-2)")
+    }
+
     private func projectFileURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

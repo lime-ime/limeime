@@ -1153,6 +1153,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             }
         case LimeKeyCode.switchToSymbol.rawValue:     switchToSymbol()
         case LimeKeyCode.switchSymbolKeyboard.rawValue: cycleSymbolPage()
+        case LimeKeyCode.switchToPhoneSimple.rawValue: switchToPhoneSimple()
         case LimeKeyCode.nextIM.rawValue:      switchToNextActivatedIM(forward: true)
         case LimeKeyCode.prevIM.rawValue:      switchToNextActivatedIM(forward: false)
         case LimeKeyCode.space.rawValue:       handleEnterOrSpace(isEnter: false)
@@ -2746,6 +2747,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         applyHeight()
     }
 
+    /// feat#124: load the phone_simple numeric keypad (English 123 long-press).
+    /// Direct layout swap (no persistent mode). Return to English uses phone_simple's
+    /// existing ABC (-9 → switchChiEng(toEnglish:true), already idempotent on iOS).
+    private func switchToPhoneSimple() {
+        dismissPopupKeyboard()
+        clearShiftState()
+        mEnglishOnly = true
+        let layout = LayoutLoader.load("phone_simple") ?? currentLayout
+        currentLayout = layout
+        keyboardView?.setLayout(layout)
+        applyHeight()
+    }
+
     // MARK: - Globe Key Visibility (spec §10) and Legacy iPhone Dismiss Bindings
 
     /// Single refresh point for all globe-related view state (spec §10 and
@@ -3102,6 +3116,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
         else if keyDef.code == LimeKeyCode.space.rawValue {
             showLimeIMPicker()
         }
+    }
+
+    // feat#124: generic long-press → run its secondary key code (English 123 → phone_simple).
+    func keyboardView(_ view: KeyboardView, didLongPressKey keyDef: KeyDef) {
+        onKey(primaryCode: keyDef.longPressCode)
     }
 
     func keyboardView(_ view: KeyboardView, didLongPressPopupKey keyDef: KeyDef, sourceRect: CGRect) {

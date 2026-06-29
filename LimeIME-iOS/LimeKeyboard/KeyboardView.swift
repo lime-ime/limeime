@@ -129,6 +129,8 @@ protocol KeyboardViewDelegate: AnyObject {
     func keyboardView(_ view: KeyboardView, didRelease keyDef: KeyDef)
     func keyboardView(_ view: KeyboardView, didUpdateShiftHoldActive active: Bool)
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef)
+    /// feat#124: a key with a generic `longPressCode` (e.g. English 123 → phone_simple) was long-pressed.
+    func keyboardView(_ view: KeyboardView, didLongPressKey keyDef: KeyDef)
     /// Called when a key with a non-empty `popupKeyboard` is long-pressed.
     /// `sourceRect` is the key's frame in the KeyboardView's coordinate space.
     func keyboardView(_ view: KeyboardView, didLongPressPopupKey keyDef: KeyDef, sourceRect: CGRect)
@@ -156,6 +158,16 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                                                  legacyGlobeMode: Bool = false) -> Bool {
         KeyboardGesturePolicy.shouldUseLimeOptionsMenuGesture(
             keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
+    }
+
+    /// feat#124: the English "123" key long-presses to phone_simple and shows a "…" hint.
+    /// Scoped precisely to the phone_simple code (-106) so it never touches the globe/done key
+    /// (longPressCode -100) or iPad dual-row keys (which carry their secondary glyph as
+    /// longPressCode) — those keep their own gestures and hint/secondary-glyph rendering.
+    /// (isPad/layoutId/legacyGlobeMode kept for call-site symmetry with the other gesture policies.)
+    static func shouldUseGenericLongPress(keyDef: KeyDef, isPad: Bool,
+                                          layoutId: String, legacyGlobeMode: Bool) -> Bool {
+        keyDef.longPressCode == LimeKeyCode.switchToPhoneSimple.rawValue
     }
 
     weak var delegate: KeyboardViewDelegate?
@@ -829,6 +841,14 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             btn.addGestureRecognizer(lp)
         }
 
+        // feat#124: generic long-press → secondary action (English 123 → phone_simple).
+        if Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
+                                          layoutId: layout.id, legacyGlobeMode: legacyGlobeMode) {
+            let lp = UILongPressGestureRecognizer(target: self, action: #selector(genericLongPressed(_:)))
+            lp.minimumPressDuration = LayoutMetrics.Gesture.specialKeyHoldDuration
+            btn.addGestureRecognizer(lp)
+        }
+
         applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
 
         btn.addTarget(self, action: #selector(keyDown(_:event:)), for: .touchDown)
@@ -847,7 +867,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             keyDef.code == LimeKeyCode.done.rawValue
                 || isKeyboardOptionsKey
                 || (keyDef.code == LimeKeyCode.globe.rawValue && !isSystemGlobe)
-                || !keyDef.popupKeyboard.isEmpty || isDualRowIPadKey) {
+                || !keyDef.popupKeyboard.isEmpty || isDualRowIPadKey
+                || Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
+                                                  layoutId: layout.id, legacyGlobeMode: legacyGlobeMode)) {
             btn.addTarget(self, action: #selector(keyboardKeyTapped(_:)), for: .touchUpInside)
         }
         // iPad dual-row keys: pan gesture for slide-down → secondary glyph; long-press → preview secondary.
@@ -875,6 +897,14 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
         fireHaptic()
         delegate?.keyboardView(self, didLongPressPopupKey: keyBtn.keyDef, sourceRect: keyRect)
+    }
+
+    // feat#124: generic long-press (e.g. English 123 → phone_simple).
+    @objc private func genericLongPressed(_ gr: UILongPressGestureRecognizer) {
+        guard gr.state == .began, let keyBtn = gr.view as? KeyButton else { return }
+        keyBtn.wasLongPressed = true   // suppress any deferred primary tap
+        fireHaptic()
+        delegate?.keyboardView(self, didLongPressKey: keyBtn.keyDef)
     }
 
     /// Build the space key as a SpaceKeyButton so tap/swipe/long-press are mutually exclusive.
@@ -1031,8 +1061,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             btn.setTitleColor(keyLabel, for: .normal)
         }
 
-        // Popup-keyboard indicator: small "…" pinned to bottom-right corner
-        if !keyDef.popupKeyboard.isEmpty {
+        // Popup-keyboard / generic-long-press indicator: small "…" pinned to bottom-right corner.
+        // feat#124: the English 123 key keeps its "123" label and shows this hint (longPressCode set).
+        if !keyDef.popupKeyboard.isEmpty
+            || Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
+                                              layoutId: layout.id, legacyGlobeMode: legacyGlobeMode) {
             let dot = UILabel()
             dot.tag = Self.styledContentTag
             dot.text = "…"
@@ -1213,6 +1246,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                           || keyDef.code == LimeKeyCode.globe.rawValue
                           || !keyDef.popupKeyboard.isEmpty
                           || isDualRowIPad
+                          || Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
+                                                            layoutId: layout.id, legacyGlobeMode: legacyGlobeMode)
         if !deferToTouchUp {
             delegate?.keyboardView(self, didPress: keyDef)
         }

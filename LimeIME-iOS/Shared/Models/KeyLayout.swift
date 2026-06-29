@@ -31,6 +31,7 @@ enum LimeKeyCode: Int {
     case nextIM              = -20  // cycle to next activated IM (spec §10)
     case prevIM              = -21  // cycle to previous activated IM (spec §10)
     case switchSymbolKeyboard = -15  // cycle symbol keyboard pages (spec §10, Android code -15)
+    case switchToPhoneSimple  = -106 // feat#124: English 123 long-press → phone_simple (Android KEYCODE_PHONE_SIMPLE_LONGPRESS)
     case keyboardOptionsMenu = -100 // long-press keyboard key → show options popup menu (spec §10)
     case arrowLeft  = -30
     case arrowRight = -31
