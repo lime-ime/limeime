@@ -41,7 +41,7 @@ public class CandidateViewTest {
 
     @Test
     public void limeToastKeepsShortTimeout() {
-        assertEquals(1400, CandidateView.LIME_TOAST_TIMEOUT_MS);
+        assertEquals(3000, CandidateView.LIME_TOAST_TIMEOUT_MS);
     }
 
     @Test

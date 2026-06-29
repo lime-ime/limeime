@@ -43,8 +43,12 @@ import org.junit.runner.RunWith;
 public class CandidatePopupAnchorTest {
 
     @Test
-    public void popupBaseXAlwaysReservesDismissWidth() {
-        assertEquals(121, CandidateView.popupBaseX(100, 21));
+    public void popupBaseXUsesLeftScreenEdgeNotReservingDismissWidth() {
+        // Issue #124 follow-up: the composing/root-key hint popup and the reverse-lookup lime
+        // toast anchor at the left screen edge; they must NOT be offset by the candidate
+        // dismiss-button width.
+        assertEquals(100, CandidateView.popupBaseX(100, 21));
+        assertEquals(0, CandidateView.popupBaseX(0, 21));
     }
 
     @Test

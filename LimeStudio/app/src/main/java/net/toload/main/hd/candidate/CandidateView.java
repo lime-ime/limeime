@@ -78,7 +78,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
-    static final int LIME_TOAST_TIMEOUT_MS = 1400;
+    static final int LIME_TOAST_TIMEOUT_MS = 3000;
 
     protected static final int OUT_OF_BOUNDS = -1;
 
@@ -491,6 +491,15 @@ public class CandidateView extends View implements View.OnClickListener {
             removeMessages(MSG_SHOW_LIME_TOAST);
             removeMessages(MSG_HIDE_LIME_TOAST);
             sendMessage(obtainMessage(MSG_HIDE_LIME_TOAST, 0, 0, null));
+        }
+
+        // Issue #124: synchronously drop composing (cancel its pending delayed show/hide and
+        // hide it now) so the reverse-lookup toast never races a still-visible composing popup.
+        public void forceHideComposing() {
+            removeMessages(MSG_UPDATE_COMPOSING);
+            removeMessages(MSG_HIDE_COMPOSING);
+            CandidateView candiInstance = mCandidateViewWeakReference.get();
+            if (candiInstance != null) candiInstance.doHideComposing();
         }
 
     }
@@ -996,17 +1005,20 @@ public class CandidateView extends View implements View.OnClickListener {
     private void doShowLimeToast(CharSequence text) {
         if (!shouldShowLimeToast(getWindowToken() != null, text)) return;
 
+        // Issue #124: the reverse-lookup toast shows immediately after a commit, but composing's
+        // dismiss is posted with a delay, so the composing popup can still be visible here and
+        // offset the toast by its stale width. Force-dismiss composing now so the toast always
+        // anchors at the left screen edge (popupBaseXInWindow → rowLeft).
+        mHandler.forceHideComposing();
+
         if (mLimeToastTextView == null) {
             mLimeToastTextView = new TextView(mContext);
             mLimeToastTextView.setSingleLine(true);
+            // Issue #124: match the composing popup's flat background + height (0 vertical padding),
+            // but keep the original horizontal padding — without it longer reverse-lookup results clip.
             int hPad = dpToPx(8);
-            int vPad = dpToPx(3);
-            mLimeToastTextView.setPadding(hPad, vPad, hPad, vPad);
-
-            GradientDrawable background = new GradientDrawable();
-            background.setColor(mColorComposingBackground);
-            background.setCornerRadius(dpToPx(6));
-            mLimeToastTextView.setBackground(background);
+            mLimeToastTextView.setPadding(hPad, 0, hPad, 0);
+            mLimeToastTextView.setBackgroundColor(mColorComposingBackground);
             mLimeToastTextView.setTextColor(mColorComposingText);
         }
 
@@ -1100,8 +1112,11 @@ public class CandidateView extends View implements View.OnClickListener {
         return popupBaseX(rowLeft, mPopupDismissButtonWidth);
     }
 
+    // Issue #124 follow-up: the composing/root-key hint popup and the reverse-lookup lime toast
+    // anchor at the left screen edge — they must NOT reserve the candidate dismiss-button width.
+    // (The dismiss-button reservation belongs to the candidate row layout, not the floating popups.)
     static int popupBaseX(int rowLeft, int dismissWidth) {
-        return rowLeft + dismissWidth;
+        return rowLeft;
     }
 
     static int popupContentHeight(int popHeight) {
