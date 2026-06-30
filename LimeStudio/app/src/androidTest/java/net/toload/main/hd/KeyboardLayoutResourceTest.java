@@ -140,6 +140,47 @@ public class KeyboardLayoutResourceTest {
                 java.util.Collections.singletonList(48), digitsPerRow.get(3));
     }
 
+    @Test
+    public void et41PopupDigitsShowOnLongPressKeyLabels() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        assertEt41LongPressDigitHint(context, '-', "5", "- 5\\nㄥ");
+        assertEt41LongPressDigitHint(context, '=', "6", "= 6\\nㄦ");
+    }
+
+    private void assertEt41LongPressDigitHint(Context context, char code, String popupDigit,
+                                              String expectedLabel) {
+        try {
+            XmlPullParser parser = context.getResources().getXml(R.xml.lime_et_41);
+            int eventType;
+            while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT) {
+                if (eventType != XmlPullParser.START_TAG || !"Key".equals(parser.getName())) {
+                    continue;
+                }
+
+                String value = parser.getAttributeValue(LIME_ATTR_NS, "codes");
+                if (!String.valueOf((int) code).equals(value)) {
+                    continue;
+                }
+
+                String normalizedLabel = parser.getAttributeValue(LIME_ATTR_NS, "keyLabel")
+                        .replace("\\n", "\n");
+                assertEquals("ET41 long-press digit should be visible on key label",
+                        expectedLabel.replace("\\n", "\n"), normalizedLabel);
+                assertEquals("ET41 key should keep popup digit",
+                        popupDigit, parser.getAttributeValue(LIME_ATTR_NS, "popupCharacters"));
+                AttributeSet attrs = Xml.asAttributeSet(parser);
+                assertEquals("ET41 key should keep popup_template long-press",
+                        R.xml.popup_template,
+                        attrs.getAttributeResourceValue(LIME_ATTR_NS, "popupKeyboard", 0));
+                return;
+            }
+            fail("ET41 should contain key code " + (int) code);
+        } catch (Exception e) {
+            fail("Unable to read ET41 keyboard XML resource: " + e.getMessage());
+        }
+    }
+
     // Returns, per <Row>, the codes of single-code digit keys (0-9). Also asserts every
     // digit key's keyLabel matches its code, so a key can't show "7" yet type something else.
     private List<List<Integer>> readDigitCodesPerRow(Context context, int layoutId) {

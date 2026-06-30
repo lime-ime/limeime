@@ -19,6 +19,8 @@ final class KeyboardViewControllerTest: XCTestCase {
         let label: String
         let sublabel: String
         let widthPercent: Double
+        let popupKeyboard: String
+        let popupCharacters: String
         let longPressCode: Int?
     }
 
@@ -205,6 +207,23 @@ final class KeyboardViewControllerTest: XCTestCase {
             XCTAssertEqual(key.code, (Int(key.label) ?? -1) + 48,
                            "digit key labelled \(key.label) must emit its matching ASCII code")
         }
+    }
+
+    func testET41PopupDigitsShowOnPhoneLongPressKeyLabels() throws {
+        let layout = try loadKeyboardLayoutFixture("lime_et_41")
+        let keys = layout.rows.flatMap(\.keys)
+        let minus = try XCTUnwrap(keys.first { $0.code == 45 })
+        let equals = try XCTUnwrap(keys.first { $0.code == 61 })
+
+        XCTAssertEqual(minus.label, "- 5")
+        XCTAssertEqual(minus.sublabel, "ㄥ")
+        XCTAssertEqual(minus.popupCharacters, "5")
+        XCTAssertEqual(minus.popupKeyboard, "@xml/popup_template")
+
+        XCTAssertEqual(equals.label, "= 6")
+        XCTAssertEqual(equals.sublabel, "ㄦ")
+        XCTAssertEqual(equals.popupCharacters, "6")
+        XCTAssertEqual(equals.popupKeyboard, "@xml/popup_template")
     }
 
     func testHSLayoutsUseLowercaseUnshiftedAndUppercaseShiftedLetterCodesAndLabels() throws {
@@ -1528,6 +1547,21 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(rewritten.sublabel, ";")
         XCTAssertEqual(rewritten.longPressCode, 39)
         XCTAssertEqual(rewritten.widthPercent, 7)
+    }
+
+    // A fullwidth-punctuation cell (slim advance) must still get a Han-sized
+    // tap target: one em (font point size) + both side pads. Regression guard
+    // for the auto-Chinese-punc strip touch-area bug (docs/AUTO_CHINESE_PUNC.md,
+    // docs/CANDI_LAYOUT.md §1).
+    func testCandidateCellWidthFlooredAtOneEmPlusSidePads() {
+        XCTAssertEqual(
+            CandidateBarView.minCandidateCellWidth(fontPointSize: 26, hPad: 10),
+            46, accuracy: 0.001,
+            "26pt em + 2×10pt pad — narrow punctuation must tap as wide as a Han char")
+        // Floor scales with font size (font_size pref) and idiom hPad.
+        XCTAssertEqual(
+            CandidateBarView.minCandidateCellWidth(fontPointSize: 28, hPad: 14),
+            56, accuracy: 0.001)
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {

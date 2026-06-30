@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "lime_et_41",
   "defaultWidthPercent": 10.0,
   "rows": [
@@ -103,7 +103,7 @@
         },
         {
           "code": 45,
-          "label": "-",
+          "label": "- 5",
           "sublabel": "ㄥ",
           "widthPercent": 10.0,
           "icon": "",
@@ -115,7 +115,7 @@
         },
         {
           "code": 61,
-          "label": "=",
+          "label": "= 6",
           "sublabel": "ㄦ",
           "widthPercent": 10.0,
           "icon": "",
@@ -509,7 +509,7 @@
           "code": -3,
           "label": "",
           "sublabel": "",
-          "widthPercent": 10.0,
+          "widthPercent": 15.0,
           "icon": "keyboard.chevron.compact.down",
           "isModifier": true,
           "isRepeatable": false,
@@ -521,7 +521,7 @@
           "code": -1,
           "label": "",
           "sublabel": "",
-          "widthPercent": 10.0,
+          "widthPercent": 15.0,
           "icon": "shift",
           "isModifier": true,
           "isRepeatable": false,
@@ -545,7 +545,7 @@
           "code": 32,
           "label": "",
           "sublabel": "",
-          "widthPercent": 40.0,
+          "widthPercent": 20.0,
           "icon": "space.bar",
           "isModifier": false,
           "isRepeatable": true,
@@ -569,7 +569,7 @@
           "code": -5,
           "label": "",
           "sublabel": "",
-          "widthPercent": 10.0,
+          "widthPercent": 15.0,
           "icon": "delete.backward",
           "isModifier": true,
           "isRepeatable": true,
@@ -581,7 +581,7 @@
           "code": 10,
           "label": "",
           "sublabel": "",
-          "widthPercent": 10.0,
+          "widthPercent": 15.0,
           "icon": "return",
           "isModifier": true,
           "isRepeatable": false,
