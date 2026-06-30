@@ -223,12 +223,16 @@ final class KeyboardViewControllerTest: XCTestCase {
         let layoutIDs = [
             "lime_phonetic_shift",
             "lime_phonetic_ipad_shift",
+            "lime_phonetic_ipad_narrow_shift",
             "lime_ez_shift",
             "lime_ez_ipad_shift",
+            "lime_ez_ipad_narrow_shift",
             "lime_et_41_shift",
             "lime_et_41_ipad_shift",
+            "lime_et_41_ipad_narrow_shift",
             "lime_dayi_sym_shift",
             "lime_dayi_sym_ipad_shift",
+            "lime_dayi_sym_ipad_narrow_shift",
         ]
 
         for layoutID in layoutIDs {
@@ -1303,9 +1307,13 @@ final class KeyboardViewControllerTest: XCTestCase {
 
     private func containsChineseRootSublabel(_ sublabel: String) -> Bool {
         sublabel.unicodeScalars.contains { scalar in
-            (0x3100...0x312F).contains(Int(scalar.value))
-                || (0x31A0...0x31BF).contains(Int(scalar.value))
-                || (0x4E00...0x9FFF).contains(Int(scalar.value))
+            let value = Int(scalar.value)
+            return (0x02CA...0x02CB).contains(value)
+                || value == 0x02C7
+                || value == 0x02D9
+                || (0x3100...0x312F).contains(value)
+                || (0x31A0...0x31BF).contains(value)
+                || (0x4E00...0x9FFF).contains(value)
         }
     }
 

@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "lime_et_41_ipad_shift",
   "defaultWidthPercent": 7.0,
   "rows": [
@@ -21,7 +21,7 @@
         {
           "code": 33,
           "label": "!",
-          "sublabel": "˙",
+          "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",
           "isModifier": false,
@@ -34,7 +34,7 @@
         {
           "code": 64,
           "label": "@",
-          "sublabel": "ˊ",
+          "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",
           "isModifier": false,
@@ -47,7 +47,7 @@
         {
           "code": 35,
           "label": "#",
-          "sublabel": "ˇ",
+          "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",
           "isModifier": false,
@@ -60,7 +60,7 @@
         {
           "code": 36,
           "label": "$",
-          "sublabel": "ˋ",
+          "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",
           "isModifier": false,

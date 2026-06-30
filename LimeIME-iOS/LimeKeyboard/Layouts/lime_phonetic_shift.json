@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "lime_phonetic_shift",
   "defaultWidthPercent": 10.0,
   "rows": [
@@ -32,7 +32,7 @@
         {
           "code": 35,
           "label": "#",
-          "sublabel": "ˇ",
+          "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
@@ -44,7 +44,7 @@
         {
           "code": 36,
           "label": "$",
-          "sublabel": "ˋ",
+          "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
@@ -68,7 +68,7 @@
         {
           "code": 94,
           "label": "^",
-          "sublabel": "ˊ",
+          "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
@@ -80,7 +80,7 @@
         {
           "code": 38,
           "label": "&",
-          "sublabel": "˙",
+          "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
