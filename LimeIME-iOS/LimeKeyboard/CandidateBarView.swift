@@ -777,6 +777,20 @@ final class CandidateBarView: UIView {
         return showIdleTools && allowOptions
     }
 
+    /// Minimum width (tap target) for a candidate cell.
+    ///
+    /// A cell's intrinsic width is `glyph advance + 2×hPad`. Fullwidth CJK
+    /// punctuation (，。、？！… — the auto-Chinese-punc strip) renders with a
+    /// much narrower advance than a Han ideograph under the system font, so
+    /// without a floor those cells collapse to a sliver and become nearly
+    /// untappable. Flooring every cell at one em (the font point size, == a
+    /// Han ideograph's full-width advance) plus both side pads gives a narrow
+    /// glyph the same tap width as a single Han candidate, while wider
+    /// multi-char cells stay at their (larger) intrinsic width.
+    static func minCandidateCellWidth(fontPointSize: CGFloat, hPad: CGFloat) -> CGFloat {
+        fontPointSize + hPad * 2
+    }
+
     private func updateIdleToolsRevealState(hadCandidates: Bool) {
         if !candidates.isEmpty {
             cancelIdleToolsReveal()
@@ -844,13 +858,26 @@ final class CandidateBarView: UIView {
         let isComposingCode = mapping.isComposingCodeRecord
 
         btn.setTitle(mapping.word, for: .normal)
+        let cellFont: UIFont
         if isComposingCode {
-            btn.titleLabel?.font = composingCodeFont
+            cellFont = composingCodeFont
+            btn.titleLabel?.font = cellFont
             btn.setTitleColor(effectiveCandiText.withAlphaComponent(LayoutMetrics.CandidateBar.composingCodeDimAlpha), for: .normal)
         } else {
-            btn.titleLabel?.font = candidateFont
+            cellFont = candidateFont
+            btn.titleLabel?.font = cellFont
             btn.setTitleColor(effectiveCandiText, for: .normal)
         }
+
+        // Floor the cell width at one em + side pads so a narrow glyph (e.g. the
+        // auto-Chinese-punc strip ，。、？!…) keeps a Han-sized tap target rather
+        // than collapsing to the punctuation's slim advance. References only
+        // `btn`, so it is safe to activate before the view joins the hierarchy.
+        btn.widthAnchor.constraint(
+            greaterThanOrEqualToConstant:
+                CandidateBarView.minCandidateCellWidth(fontPointSize: cellFont.pointSize,
+                                                        hPad: candidateHPad)
+        ).isActive = true
         return btn
     }
 
