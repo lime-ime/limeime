@@ -252,3 +252,4 @@ LimeStudio/gradle/gradle-daemon-jvm.properties
 /LimeStudio/.idea
 /LimeStudio/.omc
 /LimeIME-iOS/.claude
+/LimeIME-iOS/.Codex
