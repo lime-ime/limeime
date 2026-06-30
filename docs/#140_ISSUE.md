@@ -8,7 +8,18 @@
   Cangjie layout is currently fixed (bottom row: comma / space / period / symbol-switch),
   with no `;` key and no layout-customization feature; the need was added to the authors'
   evaluation list.
-- Current state: design agreed (this doc). Implementation pending.
+- Current state: source merged on `master` in merge commit `be156c4c15fd` after
+  implementation commit `1004453b8682`; Android source is now `v6.1.27`, but the live
+  GitHub APK metadata still points to `LIMEHD2026-6.1.26.apk`, so reporter-visible GitHub
+  APK / Google Play delivery remains pending.
+- Later product feedback in the same issue:
+  - `awei1976` asked for broader keyboard customization, especially hiding or moving the
+    keyboard-hide / `EN` keys to make Boshiamy Space wider.
+  - `admit888` reported that the Dayi keyboard layout differs between their GitHub APK and
+    Google Play installs, and that the Google Play build does not switch input methods from
+    the space-key gesture in the way they expected.
+  These are related layout/channel/gesture feedback items, not part of the confirmed cj4
+  semicolon-key scope unless a maintainer separately confirms them.
 
 ## Request
 
@@ -46,12 +57,11 @@ change:
 When **off**: layouts are untouched (no `;` on phone; `；|：` stays on iPad) and cj4 keeps its
 table-default symbol mapping.
 
-> **Blocked on [INIMKEYS_UNIFICATION.md](INIMKEYS_UNIFICATION.md) — decision 2026-06-30: #140 does
-> not ship before that unification.** The forced `hasSymbolMapping`, the `SearchServer.setSymbolMapping`
-> API, and the iOS-iPad `refreshImKeys` `;` append on the current branch are a **placeholder** that
-> made `;` work standalone — they will **not** ship. Once acceptance is unified on `inImKeys`, cj4's
-> `;` comes from its keymap (`CJ_KEY` + the cj4 table's symbol roots) on every surface and those three mechanisms are
-> reworked out. The branch holds until the unification lands; the two ship together.
+> **Resolved by implementation:** the branch did not ship with the temporary
+> `hasSymbolMapping` / `setSymbolMapping` / `refreshImKeys` append approach. The final
+> implementation landed after [INIMKEYS_UNIFICATION.md](INIMKEYS_UNIFICATION.md): cj4's
+> `;` comes from the table-primary `imKeys` path, so Android and iOS accept the table's own
+> roots consistently.
 
 ## Scope
 
@@ -102,9 +112,10 @@ All programmatic; gated on the cj4 toggle. No new layout files.
    (`; ；`) and appears in **10,055** `%chardef` codes (e.g. `; ；`, `; ：`, `''; ”`). So with
    `hasSymbolMapping` on, `;` composes as a root. (Each user's own table must likewise map `;`;
    this confirms a real `;`-using Cangjie table does.)
-3. Android: per-IM preference storage location + the exact programmatic key-injection point in
-   `LIMEKeyboard` (insert key + re-layout the asdf row).
-4. **Applying on pref change — `setSymbolMapping` setter.** Add
+3. **Android injection point (RESOLVED).** The merged Android implementation builds the cj4
+   semicolon variant in `LIMEKeyboard` / `LIMEKeyboardSwitcher`, gated by the cj4 preference,
+   without static layout-file copies.
+4. **Applying on pref change — superseded.** The earlier plan was to add
    `SearchServer.setSymbolMapping(boolean)` (Android; iOS equivalent) that just sets
    `hasSymbolMapping`. No full `setTableName` reload is needed: the `;` lookup works on a cache
    miss anyway, and the Android prefetch list already includes `;` (`",./;"`,
@@ -113,7 +124,8 @@ All programmatic; gated on the cj4 toggle. No new layout files.
    applies the cj4 layout, reading the current cj4 pref. The **settings / IM-details UI does
    not call it directly** — it is a different process/context from the live keyboard's
    `SearchServer`; the pref change propagates via shared prefs and is applied on the next
-   keyboard appearance / `onStartInput`, alongside the layout rebuild.
+   keyboard appearance / `onStartInput`, alongside the layout rebuild. The merged implementation
+   no longer uses this setter path because table-primary `imKeys` acceptance replaced it.
 
 ## Verification plan
 
