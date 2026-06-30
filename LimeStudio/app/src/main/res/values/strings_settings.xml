@@ -854,6 +854,9 @@
     <string name="im_detail_keyboard_picker_title">選擇鍵盤佈局</string>
     <string name="im_detail_label_version">版本</string>
     <string name="im_detail_label_endkey">結束鍵</string>
+    <string name="cj4_semicolon_section_title">倉頡鍵盤選項</string>
+    <string name="cj4_semicolon_switch_label">顯示分號（；）鍵</string>
+    <string name="cj4_semicolon_summary">在倉頡鍵盤加上分號（；）字根鍵，需自備含分號字根的倉頡碼表。</string>
     <string name="im_detail_edit_metadata_title">編輯輸入法資訊</string>
     <string name="im_detail_edit_name_title">編輯名稱</string>
     <string name="im_detail_edit_version_title">編輯版本</string>

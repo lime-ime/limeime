@@ -559,6 +559,10 @@ NavigationStack (continued)
         ├── Section "字根對應設定"  (shown only when im.tableNick == "custom")
         │   ├── Toggle "數字字根對應"  pref: accept_number_index  default: false  — 允許使用數字為輸入法字根
         │   └── Toggle "符號字根對應"  pref: accept_symbol_index  default: false  — 允許使用符號為輸入法字根
+        ├── Section "倉頡鍵盤選項"  (shown only when im.tableNick == "cj4")
+        │   └── Toggle "顯示分號（；）鍵"  pref: cj4_semicolon_key  default: false  (sharedDefaults — App Group)
+        │       subtext: 在倉頡鍵盤加上分號（；）字根鍵，需自備含分號字根的倉頡碼表。
+        │       When on, programmatically adds a `;` key to the cj/cj_number asdf row (iPad rewrites `；|：` to `:|;`) and forces `searchServer.hasSymbolMapping = true` for cj4.
         ├── Section "字根資料表"  (header = "關聯字庫" when im.tableNick == "related")
         │   ├── [tableNick != "related"] NavigationLink "瀏覽 / 編輯資料表" → RecordListView(tableName: im.tableNick, imLabel: displayName)
         │   └── [tableNick == "related"] NavigationLink "瀏覽 / 編輯關聯字庫" → RelatedListView(isEmbedded: true)
@@ -605,6 +609,8 @@ NavigationStack (continued)
 > The keyboard extension will naturally find no candidates if the cleared IM is still active.
 
 > The "字根對應設定" section is exclusive to the custom IM (`im.tableNick == "custom"`). All built-in IMs hardcode their own `hasNumberMapping` / `hasSymbolMapping` values in `initializeIMKeyboard()` and ignore these prefs.
+
+> The "倉頡鍵盤選項" section is exclusive to cj4 (`im.tableNick == "cj4"`). The `cj4_semicolon_key` pref lives in the shared App-Group prefs because the keyboard extension reads it.
 
 > The "注音鍵盤類型" section is exclusive to the phonetic IM (`im.tableNick == "phonetic"`). It lives on the IM detail page (not the global 喜好設定 tab) because `phonetic_keyboard_type` only affects the phonetic IM — both the DB-level letter-to-bopomofo remap and the visible keyboard layout. See §5.2.2 for details.
 

@@ -122,6 +122,7 @@ final class LimeDB {
     private static let DAYI_KEY  = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./"
     private static let DAYI_CHAR = "言|牛|目|四|王|門|田|米|足|金|石|山|一|工|糸|火|艸|木|口|耳|人|革|日|土|手|鳥|月|立|女|虫|心|水|鹿|禾|馬|魚|雨|力|舟|竹"
     private static let ARRAY_KEY  = "qazwsxedcrfvtgbyhnujmik,ol.p;/"
+    private static let ARRAY10_KEY = "1234567890"
     // Arrow glyphs (⇡/⇣) match the array keyboard layout in lime_array.xml.
     private static let ARRAY_CHAR = "1⇡|1-|1⇣|2⇡|2-|2⇣|3⇡|3-|3⇣|4⇡|4-|4⇣|5⇡|5-|5⇣|6⇡|6-|6⇣|7⇡|7-|7⇣|8⇡|8-|8⇣|9⇡|9-|9⇣|0⇡|0-|0⇣"
     private static let IM_CODES = [
@@ -3779,10 +3780,9 @@ final class LimeDB {
     // MARK: - IM Capability Detection
 
     /// Literal characters the IM accepts as composing input.
-    /// For IMs with hardcoded keymaps (phonetic family, cj, dayi, array) returns
-    /// the corresponding constant; the phonetic family resolves further via the
-    /// active `phoneticKeyboardType` (BPMF / ETEN26 / HSU / ETEN). For unknown
-    /// IMs falls back to the `imkeys` field in the im table.
+    /// The phonetic family resolves via the active `phoneticKeyboardType`
+    /// (BPMF / ETEN26 / HSU / ETEN). Other IMs prefer the table's stored
+    /// `imkeys`/`imkeynames`; hardcoded keymaps are fallback only.
     /// Used by the iOS keyboard controller to route iPad dual-sliding punctuation /
     /// full-shape codes (which are guaranteed not to be in any IM's key set) to
     /// the direct-output path instead of corrupting the composing buffer.
@@ -3794,14 +3794,23 @@ final class LimeDB {
             if kbType.hasPrefix("hsu")                        { return LimeDB.HSU_KEY }
             if kbType == "et_41" || kbType == "eten"          { return LimeDB.ETEN_KEY }
             return LimeDB.BPMF_KEY
-        case "cj", "cj4", "scj", "cj5", "ecj":
-            return LimeDB.CJ_KEY
-        case "dayi":
-            return LimeDB.DAYI_KEY
-        case "array", "array10":
-            return LimeDB.ARRAY_KEY
         default:
-            return getImConfig(tableName, "imkeys") ?? ""
+            let stored = getImConfig(tableName, "imkeys") ?? ""
+            let storedNames = getImConfig(tableName, "imkeynames") ?? ""
+            if !stored.isEmpty && !storedNames.isEmpty { return stored }
+
+            switch tableName {
+            case "cj", "cj4", "scj", "cj5", "ecj":
+                return LimeDB.CJ_KEY
+            case "dayi":
+                return LimeDB.DAYI_KEY
+            case "array":
+                return LimeDB.ARRAY_KEY
+            case "array10":
+                return LimeDB.ARRAY10_KEY
+            default:
+                return ""
+            }
         }
     }
 

@@ -34,6 +34,8 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 
+import java.util.List;
+
 /**
  * @author Art Hung
  */
@@ -67,6 +69,10 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
 
     private static Drawable mSearchKeyIcon;
     private static int mSpaceKeyVerticalCorrection;
+
+    private static final int[] CJ_HOME_ROW_CODES = {97, 115, 100, 102, 103, 104, 106, 107, 108};
+    private static final int[] CJ_HOME_ROW_SHIFT_CODES = {65, 83, 68, 70, 71, 72, 74, 75, 76};
+    private static final int CJ_HOME_ROW_KEY_COUNT = 9;
 
     
 
@@ -330,8 +336,74 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
     
     
     public int getSpaceDragDiff() {
-     	return mSpaceDragLastDiff;
+        return mSpaceDragLastDiff;
+    }
+
+    public void addCj4SemicolonKey() {
+        List<Key> keys = getKeys();
+        int homeStart = findCjHomeRowStart(keys, CJ_HOME_ROW_CODES);
+        if (homeStart < 0) homeStart = findCjHomeRowStart(keys, CJ_HOME_ROW_SHIFT_CODES);
+        if (homeStart < 0) return;
+
+        int insertIndex = homeStart + CJ_HOME_ROW_KEY_COUNT;
+        Key lastHomeKey = keys.get(insertIndex - 1);
+        if (insertIndex < keys.size() && keys.get(insertIndex).y == lastHomeKey.y
+                && hasPrimaryCode(keys.get(insertIndex), ';')) {
+            return;
         }
+
+        int totalWidth = getMinWidth();
+        if (totalWidth <= 0) return;
+
+        for (int i = 0; i < CJ_HOME_ROW_KEY_COUNT; i++) {
+            Key key = keys.get(homeStart + i);
+            int left = Math.round((float) totalWidth * i / 10);
+            int right = Math.round((float) totalWidth * (i + 1) / 10);
+            key.x = left;
+            key.width = right - left;
+            key.gap = 0;
+        }
+
+        Row row = new Row(this);
+        Key semicolonKey = new Key(row, lastHomeKey);
+        semicolonKey.x = Math.round((float) totalWidth * 9 / 10);
+        semicolonKey.width = totalWidth - semicolonKey.x;
+        semicolonKey.gap = 0;
+        semicolonKey.codes = new int[]{';'};
+        semicolonKey.label = "'\n;";
+        semicolonKey.icon = null;
+        semicolonKey.iconPreview = null;
+        semicolonKey.text = null;
+        semicolonKey.popupCharacters = "'";
+        semicolonKey.popupResId = R.xml.popup_template;
+        semicolonKey.modifier = false;
+        semicolonKey.sticky = false;
+        semicolonKey.repeatable = false;
+        semicolonKey.pressed = false;
+        semicolonKey.on = false;
+        lastHomeKey.edgeFlags &= ~EDGE_RIGHT;
+        semicolonKey.edgeFlags = lastHomeKey.edgeFlags | EDGE_RIGHT;
+        keys.add(insertIndex, semicolonKey);
+    }
+
+    private int findCjHomeRowStart(List<Key> keys, int[] rowCodes) {
+        for (int i = 0; i <= keys.size() - rowCodes.length; i++) {
+            boolean matches = true;
+            for (int j = 0; j < rowCodes.length; j++) {
+                if (!hasPrimaryCode(keys.get(i + j), rowCodes[j])) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) return i;
+        }
+        return -1;
+    }
+
+    private boolean hasPrimaryCode(Key key, int code) {
+        return key.codes != null && key.codes.length > 0 && key.codes[0] == code;
+    }
+
     class LIMEKey extends LIMEBaseKeyboard.Key {
        
     	private boolean mShiftLockEnabled;

@@ -38,8 +38,10 @@ import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.preference.PreferenceManager;
+
 public class LIMEKeyboardSwitcher {
-	
+
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboardSwitcher";
     
@@ -230,11 +232,17 @@ public class LIMEKeyboardSwitcher {
         public int mXml;
         public int mMode;
         public boolean mEnableShiftLock;
+        public boolean mCj4SemicolonKey;
 
         public KeyboardId(int xml, int mode, boolean enableShiftLock) {
+            this(xml, mode, enableShiftLock, false);
+        }
+
+        public KeyboardId(int xml, int mode, boolean enableShiftLock, boolean cj4SemicolonKey) {
             this.mXml = xml;
             this.mMode = mode;
             this.mEnableShiftLock = enableShiftLock;
+            this.mCj4SemicolonKey = cj4SemicolonKey;
         }
 
         public KeyboardId(int xml) {
@@ -246,12 +254,17 @@ public class LIMEKeyboardSwitcher {
         }
 
         public boolean equals(KeyboardId other) {
-            return other.mXml == this.mXml && other.mMode == this.mMode;
+            return other.mXml == this.mXml && other.mMode == this.mMode
+                    && other.mEnableShiftLock == this.mEnableShiftLock
+                    && other.mCj4SemicolonKey == this.mCj4SemicolonKey;
         }
 
-        
         public int hashCode() {
-            return (mXml + 1) * (mMode + 1) * (mEnableShiftLock ? 2 : 1);
+            int result = mXml;
+            result = 31 * result + mMode;
+            result = 31 * result + (mEnableShiftLock ? 1 : 0);
+            result = 31 * result + (mCj4SemicolonKey ? 2 : 1);
+            return result;
         }
     }
     
@@ -272,11 +285,14 @@ public class LIMEKeyboardSwitcher {
 						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
 	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
-	                );
-	        	keyboard.setKeyboardSwitcher(this);
-	            if (id.mEnableShiftLock) {
-	                keyboard.enableShiftLock();
-	            }
+                );
+                keyboard.setKeyboardSwitcher(this);
+                if (id.mCj4SemicolonKey) {
+                    keyboard.addCj4SemicolonKey();
+                }
+                if (id.mEnableShiftLock) {
+                    keyboard.enableShiftLock();
+                }
 	            mKeyboards.put(id, keyboard);
 	        }
 	        return mKeyboards.get(id);
@@ -429,7 +445,21 @@ public class LIMEKeyboardSwitcher {
 				return 0;
 		}
     }
-    
+
+    private boolean shouldAddCj4SemicolonKey(String imCode, int keyboardXml) {
+        return LIME.DB_TABLE_CJ4.equals(imCode)
+                && isCjKeyboardXml(keyboardXml)
+                && PreferenceManager.getDefaultSharedPreferences(mService)
+                        .getBoolean("cj4_semicolon_key", false);
+    }
+
+    private static boolean isCjKeyboardXml(int keyboardXml) {
+        return keyboardXml == R.xml.lime_cj
+                || keyboardXml == R.xml.lime_cj_shift
+                || keyboardXml == R.xml.lime_cj_number
+                || keyboardXml == R.xml.lime_cj_number_shift;
+    }
+
 	public void setKeyboardMode(String imCode, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
     		Log.i(TAG, "setKeyboardMode () imCode:"+imCode + ", mode:"+mode + ", imOptions:"+imeOptions+
@@ -498,17 +528,21 @@ public class LIMEKeyboardSwitcher {
 	                        getKeyboardXMLID(resolveEnglishLayoutId(kConfig, mLIMEPref.getShowNumberRowInEnglish(), isShift)),
                             KEYBOARD_MODE_EMAIL, true);
 	                break;
-	            default:
-	            	if(isIm){  // Chinese IM keyboards
-	            		if(isShift){
-	    	            	//Log.i("ART","KBMODE ->: " + kConfig.getImshiftkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kConfig.getImshiftkb()), KEYBOARD_MODE_NORMAL, true );
-	            		}else{
-	    	            	//Log.i("ART","KBMODE ->: " + kConfig.getImkb());
-	                    	kid = new KeyboardId(getKeyboardXMLID(kConfig.getImkb()), KEYBOARD_MODE_NORMAL, true );
-	            		}
-		                mIsChinese = true;
-	            	}else {//if(!isIm){  //English normal keyboard
+                default:
+                    if(isIm){  // Chinese IM keyboards
+                        if(isShift){
+                            //Log.i("ART","KBMODE ->: " + kConfig.getImshiftkb());
+                            int xml = getKeyboardXMLID(kConfig.getImshiftkb());
+                            kid = new KeyboardId(xml, KEYBOARD_MODE_NORMAL, true,
+                                    shouldAddCj4SemicolonKey(imCode, xml));
+                        }else{
+                            //Log.i("ART","KBMODE ->: " + kConfig.getImkb());
+                            int xml = getKeyboardXMLID(kConfig.getImkb());
+                            kid = new KeyboardId(xml, KEYBOARD_MODE_NORMAL, true,
+                                    shouldAddCj4SemicolonKey(imCode, xml));
+                        }
+                        mIsChinese = true;
+                    }else {//if(!isIm){  //English normal keyboard
 	                    kid = new KeyboardId(
 	                            getKeyboardXMLID(resolveEnglishLayoutId(kConfig, mLIMEPref.getShowNumberRowInEnglish(), isShift)),
                                 KEYBOARD_MODE_NORMAL, true );

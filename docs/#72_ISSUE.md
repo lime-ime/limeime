@@ -69,7 +69,7 @@ Reporter explanation:
 - 哈哈倉頡 is based on 尹卂倉頡.
 - 尹卂倉頡 is based on open-source Yahoo Kimo Cangjie.
 - Yahoo Kimo Cangjie is based on open-source 中標倉頡（三代）.
-- Reporter says this lineage avoids the copyright concerns associated with 大新倉頡-derived four-code Cangjie tables.
+- Reporter says this lineage avoids the copyright concerns associated with certain proprietary four-code Cangjie tables.
 
 Before publishing, verify the upstream page still states the same license and that CC BY 4.0 attribution requirements can be satisfied in LIME's database/catalog documentation.
 

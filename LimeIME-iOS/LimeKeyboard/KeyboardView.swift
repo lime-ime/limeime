@@ -134,6 +134,9 @@ protocol KeyboardViewDelegate: AnyObject {
     /// Called when a key with a non-empty `popupKeyboard` is long-pressed.
     /// `sourceRect` is the key's frame in the KeyboardView's coordinate space.
     func keyboardView(_ view: KeyboardView, didLongPressPopupKey keyDef: KeyDef, sourceRect: CGRect)
+    /// Called when a single-key popup is released: dismiss the popup, and if `commit` is true, type
+    /// the lone alternate (the key the panel would have fired on tap).
+    func keyboardView(_ view: KeyboardView, didReleasePopupKey keyDef: KeyDef, commit: Bool)
     /// Called on touchDown for non-modifier keys — host should show a key-preview popup.
     /// `keyRect` is the key's frame in the KeyboardView's coordinate space.
     func keyboardView(_ view: KeyboardView, showPreviewFor keyDef: KeyDef, keyRect: CGRect)
@@ -838,6 +841,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         if !keyDef.popupKeyboard.isEmpty {
             let lp = UILongPressGestureRecognizer(target: self, action: #selector(popupKeyLongPressed(_:)))
             lp.minimumPressDuration = LayoutMetrics.Gesture.popupKeyboardHoldDuration
+            // Keep the default cancelsTouchesInView == true: when the long-press fires, UIKit cancels
+            // the button touch so touchUpInside (the deferred primary tap) never fires — the long-press
+            // commits only its alternate, never the primary. Setting it false lets BOTH fire (the
+            // "6=" / "';" double-output bug).
             btn.addGestureRecognizer(lp)
         }
 
@@ -848,6 +855,18 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             lp.minimumPressDuration = LayoutMetrics.Gesture.specialKeyHoldDuration
             btn.addGestureRecognizer(lp)
         }
+
+        // Edge-touch fix (SO 61227987 / blog.kulman.sk): in the screen-edge strip iOS delays the
+        // button's touchDown on a held press, so keyDown's press feedback (preview + haptic) is eaten
+        // there. A gesture recognizer still gets .began with NO edge delay, so we drive the press
+        // feedback from this 0-duration long-press instead of keyDown. cancelsTouchesInView=false and
+        // simultaneous recognition so it never interferes with the button's tracking, the popup
+        // long-press, or any other key gesture.
+        let pressFeedback = UILongPressGestureRecognizer(target: self, action: #selector(pressFeedbackGesture(_:)))
+        pressFeedback.minimumPressDuration = 0
+        pressFeedback.cancelsTouchesInView = false
+        pressFeedback.delegate = self
+        btn.addGestureRecognizer(pressFeedback)
 
         applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
 
@@ -891,12 +910,56 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         return btn
     }
 
+    // Drives the press feedback (haptic / sound / key preview) off a 0-duration long-press recognizer
+    // so it still fires in the screen-edge strip, where iOS eats the button's touchDown on a held press.
+    @objc private func pressFeedbackGesture(_ gr: UILongPressGestureRecognizer) {
+        guard let keyBtn = gr.view as? KeyButton else { return }
+        let keyDef = keyBtn.keyDef
+        switch gr.state {
+        case .began:
+            fireHaptic()
+            if feedbackSound { playKeyClickSound() }
+            // Same gating as the old keyDown preview: phone only, non-modifier, non-space, no icon.
+            if keyDef.icon.isEmpty && !keyDef.isModifier
+                && keyDef.code != LimeKeyCode.space.rawValue
+                && !isPad {
+                let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
+                delegate?.keyboardView(self, showPreviewFor: keyDef, keyRect: keyRect)
+            }
+        case .ended, .cancelled, .failed:
+            delegate?.keyboardViewDismissPreview(self)
+        default:
+            break
+        }
+    }
+
     @objc private func popupKeyLongPressed(_ gr: UILongPressGestureRecognizer) {
-        guard gr.state == .began, let keyBtn = gr.view as? KeyButton else { return }
-        keyBtn.wasLongPressed = true
-        let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
-        fireHaptic()
-        delegate?.keyboardView(self, didLongPressPopupKey: keyBtn.keyDef, sourceRect: keyRect)
+        guard let keyBtn = gr.view as? KeyButton else { return }
+        let keyDef = keyBtn.keyDef
+
+        switch gr.state {
+        case .began:
+            // Show the mini-keyboard popup — identical for single- and multi-key. Dismiss the press
+            // preview explicitly: pressFeedbackGesture owns it now, and at the screen edge the button's
+            // keyCancel that used to dismiss it is itself eaten. (The button touch is still cancelled
+            // by this recognizer's default cancelsTouchesInView, so the deferred primary tap never fires.)
+            keyBtn.wasLongPressed = true
+            fireHaptic()
+            delegate?.keyboardViewDismissPreview(self)
+            let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
+            delegate?.keyboardView(self, didLongPressPopupKey: keyDef, sourceRect: keyRect)
+        case .ended:
+            // Multi-key: leave the popup on screen to tap-select. Single-key: dismiss it + send the key.
+            if keyDef.popupCharacters.count == 1 {
+                delegate?.keyboardView(self, didReleasePopupKey: keyDef, commit: true)
+            }
+        case .cancelled, .failed:
+            if keyDef.popupCharacters.count == 1 {
+                delegate?.keyboardView(self, didReleasePopupKey: keyDef, commit: false)
+            }
+        default:
+            break
+        }
     }
 
     // feat#124: generic long-press (e.g. English 123 → phone_simple).
@@ -1218,18 +1281,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let keyDef = keyBtn.keyDef
         updateShiftHoldTracking(for: keyDef, event: event)
 
-        // Haptic / audio feedback (spec §15)
-        fireHaptic()
-        if feedbackSound     { playKeyClickSound() }
-
-        // Show key preview — phone only; iPad keys are large enough that press-state
-        // color change is sufficient feedback (matches Apple's stock iPad keyboard).
-        if keyDef.icon.isEmpty && !keyDef.isModifier
-            && keyDef.code != LimeKeyCode.space.rawValue
-            && !isPad {
-            let keyRect = btn.convert(btn.bounds, to: self)
-            delegate?.keyboardView(self, showPreviewFor: keyDef, keyRect: keyRect)
-        }
+        // Press feedback (haptic / sound / key preview) is driven by pressFeedbackGesture, NOT here —
+        // a gesture recognizer still fires in the screen-edge strip where iOS eats this touchDown on a
+        // held press, so the edge keys get the same feedback as inner keys.
 
         // Keyboard dismiss key (code -3) and globe key (code -200): defer didPress to
         // touchUpInside so the long-press GR can fire before the action runs (spec §10).
@@ -1537,4 +1591,14 @@ private class KeyButton: UIButton {
         super.init(frame: .zero)
     }
     required init?(coder: NSCoder) { fatalError("not used") }
+}
+
+extension KeyboardView: UIGestureRecognizerDelegate {
+    // The pressFeedback recognizer is the only one with this delegate set, so returning true here lets
+    // it coexist with the button's own touch tracking and every other key gesture (popup long-press,
+    // dual-row, generic long-press) without altering their mutual behavior.
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer,
+                           shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+        true
+    }
 }

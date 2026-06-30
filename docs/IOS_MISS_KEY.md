@@ -302,3 +302,35 @@ Multi-touch enable is **per-view, not inherited** — setting only the root is i
 6. If hypothesis (1) lights up — `keyDown` count < taps — investigate gesture recognizers on candidate-bar pan / dual-row iPad / popup long-press; check `cancelsTouchesInView` settings.
 7. If `touchCancel` lines appear during drops, that's hypothesis (3) — UIKit pre-empted; trace gesture-recognizer arbitration.
 8. **Hypothesis (4) diagnostic signature** (if re-investigating after revert): `keyDown` count **< taps**, and **no `touchCancel`** lines. That distinguishes container-level multi-touch rejection from (1)/(2)/(3) at the probe layer.
+
+### 2026-06-30 — Screen-edge `touchDown` eating: CONFIRMED with hard data, and FIXED (same swallowed-touchDown family)
+
+While wiring the cj4 `;`-key long-press ([#140](%23140_ISSUE.md)), hit — and fully diagnosed — a concrete, reproducible instance of the "button never sees the press" outcome this doc is about, plus a fix that works **inside** a keyboard extension. Different trigger from the fast-typing drops (this one is the **screen edge**, not main-thread starvation), but the same end state: `keyDown` < presses, no `touchCancel`.
+
+**Symptom.** The **rightmost keys** — `=` in the et_41 phonetic number row, and the cj4 `;` appended to the home row, both sitting at the screen's right edge (x = 100%) — drop their `keyDown` on a **held** press: no key preview, no haptic. Quick **taps** fire `keyDown` normally. The user pinpointed it precisely: pressing the **left portion** of the same key = normal; the **right portion near the bezel** = eaten.
+
+**Diagnosis (hard data, not theory).** Console never surfaced the extension's logs on this device (same wall as the 2026-05 probe attempt). Worked around it with a **file logger → the extension's own container Documents**, pulled off the device with `devicectl` (see recipe below). Per-key trace:
+
+```
+-  (inner, code 45):  keyDown 45 → keyDown->showPreview 45 → showPreviewFor (hasWindow=1) → [~0.40s] → popupLP began
+=  (edge,  code 61):  popupLP began 61            ← NO keyDown / showPreview before it
+=  (edge)  tapped:    keyDown 61 → showPreview → keyUp → keyTapped   ← taps fire keyDown fine
+```
+
+So iOS holds the touch in the thin **screen-edge strip** to disambiguate its own edge gestures; on a **held** press that delay outlasts the long-press recognition, and the button's `touchDown` UIControl event is cancelled before it ever fires. The long-press **gesture recognizer still fires** (`popupLP began`) — that's the key asymmetry.
+
+**`preferredScreenEdgesDeferringSystemGestures` does NOT help a keyboard extension.** It's queried on the **host app's** VC, not the input VC. Overriding it on `KeyboardViewController` (`return .all` + `setNeedsUpdateOfScreenEdgesDeferringSystemGestures()`) changed nothing on device. Confirmed by [SO 61227987](https://stackoverflow.com/questions/61227987/) and [blog.kulman.sk](https://blog.kulman.sk/why-ios-gestures-lag-at-the-screen-edges/).
+
+**The fix (works in the extension).** Gesture recognizers — and `hitTest` / `point(inside:)` — get `.began` / are invoked **without** the edge delay, even when the button's `touchDown` is being eaten. So drive the press feedback off a recognizer instead of `touchDown`:
+
+- Added a `UILongPressGestureRecognizer(minimumPressDuration: 0)` to **every key button** (`pressFeedbackGesture`), with `cancelsTouchesInView = false` and a `UIGestureRecognizerDelegate` returning `shouldRecognizeSimultaneouslyWith = true` so it never fights the button's own tracking, the popup long-press, the dual-row pan, or the generic long-press.
+- **Moved haptic / sound / key-preview off `keyDown` onto that recognizer's `.began`**; dismiss the preview on `.ended/.cancelled`, and in `popupKeyLongPressed`'s `.began` (the edge eats the `keyCancel` that used to dismiss it). `keyDown` keeps only its non-feedback work (press color, `didPress` deferral, repeat timer).
+- Verified on the WJIP17: edge `=` / `;` now show preview + haptic on a held press, identical to inner keys. 102/0 keyboard unit tests still green.
+
+**Why this matters for the fast-typing drops.** The screen-edge case is a *different trigger* (system edge-gesture disambiguation, not `rebuildButtons()` main-thread block) but the **same failure shape** as hypotheses (1)/(4): the button never gets the press, `keyDown` < presses, no `touchCancel`. The takeaway for the fast-typing thread: **a gesture recognizer (or `hitTest`/`point(inside:)`) sees touches UIKit is delaying** — so if the drops are about events not reaching the button (rather than the *commit* being lost downstream), driving the keypress off a recognizer is a candidate fix there too, not just for the edge.
+
+**Reusable Console-independent device-diagnostics recipe** (Console genuinely doesn't show this extension's `NSLog`/`os_log` here — stop fighting it):
+
+- **Log to a file** in the extension's own container: `FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first` → append lines (reset on `viewDidLoad`).
+- **Pull it:** `xcrun devicectl device copy from --device <id> --domain-type appDataContainer --domain-identifier org.limeime.keyboard --source Documents/<file> --destination <local>`. ⚠️ The `appGroupDataContainer` domain is **broken** (bogus `File paths cannot contain '..'` error) — use the extension's own `appDataContainer` instead.
+- **Build + install from CLI** (eliminates Xcode stale-binary doubt): `xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS,id=<dev>' -allowProvisioningUpdates -derivedDataPath <dd> build`, then `xcrun devicectl device install app --device <dev> <…/LimeIME.app>`. `devicectl device uninstall app … org.limeime` first to force a fresh extension binary; a plain reinstall keeps the keyboard enabled but may keep the **cached** running process (a device reboot busts it for sure).

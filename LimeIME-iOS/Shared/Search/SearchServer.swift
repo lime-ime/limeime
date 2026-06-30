@@ -90,6 +90,10 @@ final class SearchServer {
         triggerPrefetch()
     }
 
+    func setSymbolMapping(_ value: Bool) {
+        hasSymbolMapping = value
+    }
+
     /// Backwards-compatible alias used by database setup.
     func setCurrentIM(tableName: String) { setTableName(tableName) }
 

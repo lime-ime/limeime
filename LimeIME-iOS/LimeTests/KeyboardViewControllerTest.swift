@@ -1227,6 +1227,18 @@ final class KeyboardViewControllerTest: XCTestCase {
             isEnglishOnly: false,
             hasActivatedIMs: true,
             englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj"), "phone_number")
+        XCTAssertEqual(KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .decimalPad,
+            isEnglishOnly: false,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english",
+            resolvedActiveLayoutId: "lime_cj"), "phone_number")
+        XCTAssertEqual(KeyboardViewController.layoutIdForCurrentInputField(
+            keyboardType: .asciiCapableNumberPad,
+            isEnglishOnly: false,
+            hasActivatedIMs: true,
+            englishLayout: "lime_english",
             resolvedActiveLayoutId: "lime_cj"), "symbols1")
     }
 
@@ -1389,11 +1401,129 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(codes.contains(LimeKeyCode.switchToSymbol.rawValue), "phone_simple needs 123 (-2)")
     }
 
+    // MARK: - isKeyInImkeys unification characterization
+
+    @MainActor
+    func testAcceptsIntoComposingCharacterizesCangjiePhoneAcceptance() {
+        let controller = KeyboardViewController()
+        controller.currentImKeys = "qwertyuiopasdfghjklzxcvbnm"
+        func accepts(_ code: Int) -> Bool {
+            controller.acceptsIntoComposing(code: code,
+                                            hasSymbol: false,
+                                            hasNumber: false,
+                                            isPhonetic: false)
+        }
+
+        XCTAssertTrue(accepts(97))  // a
+        XCTAssertTrue(accepts(65))  // A
+        XCTAssertTrue(accepts(44))  // ,
+        XCTAssertTrue(accepts(46))  // .
+        XCTAssertFalse(accepts(59)) // ;
+        XCTAssertFalse(accepts(47)) // /
+    }
+
+    @MainActor
+    func testAcceptsIntoComposingCharacterizesDayiPhoneAcceptance() {
+        let controller = KeyboardViewController()
+        controller.currentImKeys = "1234567890qwertyuiopasdfghjkl;zxcvbnm,./"
+        func accepts(_ code: Int) -> Bool {
+            controller.acceptsIntoComposing(code: code,
+                                            hasSymbol: true,
+                                            hasNumber: true,
+                                            isPhonetic: false)
+        }
+
+        for code in [97, 65, 48, 57, 44, 46, 59, 47] {
+            XCTAssertTrue(accepts(code), "code \(code)")
+        }
+        XCTAssertFalse(accepts(64)) // @
+    }
+
+    @MainActor
+    func testAcceptsIntoComposingCharacterizesArray10PhoneAcceptance() {
+        let controller = KeyboardViewController()
+        controller.currentImKeys = "1234567890"
+        func accepts(_ code: Int) -> Bool {
+            controller.acceptsIntoComposing(code: code,
+                                            hasSymbol: false,
+                                            hasNumber: true,
+                                            isPhonetic: false)
+        }
+
+        for code in [48, 57, 44, 46] {
+            XCTAssertTrue(accepts(code), "code \(code)")
+        }
+        XCTAssertFalse(accepts(97)) // a
+        XCTAssertFalse(accepts(59)) // ;
+    }
+
+    @MainActor
+    func testAcceptsIntoComposingCharacterizesIPadCangjieAcceptance() {
+        let controller = KeyboardViewController()
+        controller.currentImKeys = "qwertyuiopasdfghjklzxcvbnm"
+        func accepts(_ code: Int) -> Bool {
+            controller.acceptsIntoComposing(code: code,
+                                            hasSymbol: false,
+                                            hasNumber: false,
+                                            isPhonetic: false)
+        }
+
+        XCTAssertTrue(accepts(97))   // a
+        XCTAssertTrue(accepts(122))  // z
+        XCTAssertTrue(accepts(65))   // A
+        XCTAssertFalse(accepts(48))  // 0
+        XCTAssertTrue(accepts(44))   // ,
+        XCTAssertTrue(accepts(46))   // .
+        XCTAssertFalse(accepts(59))  // ;
+    }
+
+    // MARK: - feat#140 cj4 semicolon key
+
+    func testCj4SemicolonTransformAddsPhoneKeyAndRewritesIPadDualKey() throws {
+        let phoneLayout = LayoutLoader.applyingCj4Semicolon(to: try loadKeyLayoutFixture("lime_cj"))
+        let cangjieHomeRowCodes = [97, 115, 100, 102, 103, 104, 106, 107, 108]
+        let phoneHomeRow = try XCTUnwrap(phoneLayout.rows.first {
+            Array($0.keys.prefix(cangjieHomeRowCodes.count).map(\.code)) == cangjieHomeRowCodes
+        })
+
+        XCTAssertEqual(phoneHomeRow.keys.map(\.code), cangjieHomeRowCodes + [59])
+        XCTAssertEqual(phoneHomeRow.keys.last?.label, "'")
+        XCTAssertEqual(phoneHomeRow.keys.last?.sublabel, ";")
+        XCTAssertEqual(phoneHomeRow.keys.last?.longPressCode, 39)
+        XCTAssertEqual(phoneHomeRow.keys.last?.widthPercent, 10)
+
+        let iPadLayout = LayoutLoader.applyingCj4Semicolon(to: try loadKeyLayoutFixture("lime_cj_ipad"))
+        let iPadKeys = iPadLayout.rows.flatMap(\.keys)
+        let rewritten = try XCTUnwrap(iPadKeys.first {
+            $0.code == 59 && $0.longPressCode == 39 && $0.widthPercent == 7
+        })
+
+        XCTAssertFalse(iPadKeys.contains { $0.code == 65306 })
+        XCTAssertEqual(rewritten.label, "'")
+        XCTAssertEqual(rewritten.sublabel, ";")
+        XCTAssertEqual(rewritten.longPressCode, 39)
+        XCTAssertEqual(rewritten.widthPercent, 7)
+    }
+
     private func projectFileURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent(relativePath)
+    }
+
+    private func loadKeyLayoutFixture(_ layoutID: String) throws -> LimeKeyLayout {
+        let fixture = try loadKeyboardLayoutFixture(layoutID)
+        let rows = fixture.rows.map { row in
+            KeyRow(keys: row.keys.map { key in
+                KeyDef(code: key.code,
+                       label: key.label,
+                       sublabel: key.sublabel,
+                       widthPercent: CGFloat(key.widthPercent),
+                       longPressCode: key.longPressCode ?? 0)
+            }, isBottomRow: row.isBottomRow)
+        }
+        return LimeKeyLayout(id: layoutID, rows: rows)
     }
 
 }
