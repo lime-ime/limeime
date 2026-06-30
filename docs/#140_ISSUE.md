@@ -9,9 +9,14 @@
   with no `;` key and no layout-customization feature; the need was added to the authors'
   evaluation list.
 - Current state: source merged on `master` in merge commit `be156c4c15fd` after
-  implementation commit `1004453b8682`; Android source is now `v6.1.27`, but the live
-  GitHub APK metadata still points to `LIMEHD2026-6.1.26.apk`, so reporter-visible GitHub
-  APK / Google Play delivery remains pending.
+  implementation commit `1004453b8682`. GitHub Release / APK `v6.1.27` is now live as
+  `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
+  `297a2ffe40e5ab3a6361f9cae8cf301d40bd8292`, size 7410887 bytes) and contains the
+  cj4 semicolon-key / imKeys-unification work. `limeimetw` posted the scoped reporter
+  update at https://github.com/lime-ime/limeime/issues/140#issuecomment-4846962860,
+  asking GitHub APK testers to update to v6.1.27 and Google Play users to wait for the
+  Google Play test update. The issue remains open for reporter confirmation and broader
+  keyboard-customization evaluation.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
