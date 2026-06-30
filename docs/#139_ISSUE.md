@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from a private email/TestFlight report. Do not expose reporter identity or private app details in public comments or docs.
-- Current state: open. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below). Could not reproduce the reporter's symptom; LIME's numeric-field routing is not reached from web fields. Awaiting the reporter's exact field markup / iOS version (private email) before any code change.
+- Current state: open. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below). Could not reproduce the reporter's exact symptom; LIME's numeric-field routing is not reached from web fields. Source changes kept on `master` split pure number routing for Android parity and make the keyboard extension ASCII-capable, but reporter retest still waits for a TestFlight/App Store build and may need the reporter's exact field markup / iOS version by private email.
 - Public acknowledgement: not needed. This is a maintainer-created tracking issue for private-email evidence.
 
 ## Problem statement
@@ -90,7 +90,7 @@ The bottom-content coverage portion may be an iOS custom-keyboard height/safe-ar
 
 ## Follow-up / retest condition
 
-Keep the issue open and assigned for iOS investigation. No public comment or reporter retest request is needed until a newer TestFlight build contains a targeted iOS fix or the maintainer needs additional non-private reproduction details from the email reporter.
+Keep the issue open and assigned for iOS investigation. No public comment or reporter retest request is needed from the Android GitHub APK v6.1.27 because the relevant delivery path is iOS TestFlight/App Store. Ask for reporter retest only after a TestFlight/App Store build contains the kept iOS changes, or ask privately for additional non-sensitive field details if the maintainer needs them.
 
 ## Simulator investigation findings (2026-06-29)
 
