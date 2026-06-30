@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <!--
   ~ /*
@@ -29,10 +29,10 @@
 	limehd:verticalGap="0px" limehd:keyHeight="@dimen/key_height">
 
 	<Row>
-		<Key limehd:codes="33" limehd:keyLabel="!\n˙"  limehd:keyEdgeFlags="left" />
-		<Key limehd:codes="64" limehd:keyLabel="\@\nˊ" />
-		<Key limehd:codes="35" limehd:keyLabel="\#\nˇ" />
-		<Key limehd:codes="36" limehd:keyLabel="$\nˋ" />
+		<Key limehd:codes="33" limehd:keyLabel="!"  limehd:keyEdgeFlags="left" />
+		<Key limehd:codes="64" limehd:keyLabel="\@" />
+		<Key limehd:codes="35" limehd:keyLabel="\#" />
+		<Key limehd:codes="36" limehd:keyLabel="$" />
 		<Key limehd:codes="38" limehd:keyLabel="&amp;" />
 		<Key limehd:codes="42" limehd:keyLabel="*" />
 		<Key limehd:codes="40" limehd:keyLabel="(" />
@@ -100,4 +100,3 @@
 				limehd:keyEdgeFlags="right" />
 	</Row>
 </Keyboard>
-

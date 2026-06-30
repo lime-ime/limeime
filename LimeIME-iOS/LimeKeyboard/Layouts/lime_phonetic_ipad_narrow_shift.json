@@ -34,7 +34,7 @@
         {
           "code": 35,
           "label": "#",
-          "sublabel": "ˇ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -47,7 +47,7 @@
         {
           "code": 36,
           "label": "$",
-          "sublabel": "ˋ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -73,7 +73,7 @@
         {
           "code": 94,
           "label": "^",
-          "sublabel": "ˊ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -86,7 +86,7 @@
         {
           "code": 38,
           "label": "&",
-          "sublabel": "˙",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
