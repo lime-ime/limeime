@@ -332,7 +332,9 @@ public class LIMEKeyboardSwitcher {
 				return R.xml.phone_shift;
 			case "phone_simple":
 				return R.xml.phone_simple;
-			
+			case "computer_simple": // feat#N02: computer-numpad variant (7 8 9 on top)
+				return R.xml.computer_simple;
+
 			// English keyboards
 			case "lime_english_number_shift":
 				return R.xml.lime_english_number_shift;

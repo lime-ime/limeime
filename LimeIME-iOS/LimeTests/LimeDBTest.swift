@@ -2722,6 +2722,17 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    // feat#N02: the computer-numpad keyboard is seeded into the global keyboard list on
+    // open (insert-if-absent in ensureCurrentDatabase, which init(path:) runs), so every
+    // IM's keyboard picker can choose it. It points at the computer_simple layout.
+    func testComputerNumKeyboardIsSeededAndPointsAtComputerSimpleLayout() throws {
+        let db = try makeLimeDB()
+        let kb = db.getKeyboardConfig("computernum")
+        XCTAssertNotNil(kb, "computernum keyboard row should be seeded into the keyboard table")
+        XCTAssertEqual(kb?.imkb, "computer_simple", "computernum must load the computer_simple layout")
+        XCTAssertEqual(kb?.imshiftkb, "computer_simple")
+    }
+
     func testImportTxtFileAssignsDefaultKeyboardRows() throws {
         let db = try makeLimeDB()
         let fixture = FileManager.default.temporaryDirectory

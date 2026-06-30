@@ -182,6 +182,31 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(lessThan.label, "<")
     }
 
+    // feat#N02: computer_simple is phone_simple with the digit grid in computer-numpad
+    // order — 7 8 9 on top, 4 5 6, 1 2 3, then 0 on the bottom row. The framing modifier
+    // keys (123, ABC, ⌫, +-*/=, space, ↵) stay put; only the digit keys move.
+    func testComputerSimpleLayoutUsesComputerNumpadDigitOrder() throws {
+        let layout = try loadKeyboardLayoutFixture("computer_simple")
+
+        func digitLabels(_ rowIndex: Int) -> [String] {
+            layout.rows[rowIndex].keys.filter { (48...57).contains($0.code) }.map(\.label)
+        }
+
+        XCTAssertEqual(digitLabels(0), ["7", "8", "9"], "top row should read 7 8 9")
+        XCTAssertEqual(digitLabels(1), ["4", "5", "6"], "middle row unchanged: 4 5 6")
+        XCTAssertEqual(digitLabels(2), ["1", "2", "3"], "third row should read 1 2 3")
+        let bottom = try XCTUnwrap(layout.rows.first(where: { $0.isBottomRow }))
+        XCTAssertEqual(bottom.keys.filter { (48...57).contains($0.code) }.map(\.label), ["0"],
+                       "0 stays on the bottom row")
+
+        // Every digit key must emit the ASCII code matching its label (label "7" → code 55),
+        // otherwise the key would type the wrong number.
+        for key in layout.rows.flatMap(\.keys) where (48...57).contains(key.code) {
+            XCTAssertEqual(key.code, (Int(key.label) ?? -1) + 48,
+                           "digit key labelled \(key.label) must emit its matching ASCII code")
+        }
+    }
+
     func testHSLayoutsUseLowercaseUnshiftedAndUppercaseShiftedLetterCodesAndLabels() throws {
         try assertLetterKeyCodes(in: "lime_hs", shouldBeUppercase: false)
         try assertLetterKeyCodes(in: "lime_hs_ipad", shouldBeUppercase: false)

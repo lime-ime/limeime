@@ -944,6 +944,24 @@ public class LimeDBTest {
         }
     }
 
+    // feat#N02: the computer-numpad keyboard is seeded into the global keyboard list on
+    // open (insert-if-absent in ensureCurrentDatabase, run from the LimeDB constructor),
+    // so every IM's keyboard picker can choose it. It points at the computer_simple layout.
+    @Test(timeout = 5000)
+    public void testComputerNumKeyboardIsSeededAndPointsAtComputerSimpleLayout() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+
+        if (!initializeDatabase(limeDB)) {
+            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
+        }
+
+        Keyboard kb = limeDB.getKeyboardConfig("computernum");
+        assertNotNull("computernum keyboard row should be seeded into the keyboard table", kb);
+        assertEquals("computernum must load the computer_simple layout", "computer_simple", kb.getImkb());
+        assertEquals("computer_simple", kb.getImshiftkb());
+    }
+
     @Test(timeout = 5000)
     public void testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();

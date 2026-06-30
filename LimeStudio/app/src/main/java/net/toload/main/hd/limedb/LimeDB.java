@@ -973,6 +973,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
         ensureCj4Schema(db);
+        ensureComputerNumKeyboard(db);
         if (db.getVersion() < DATABASE_VERSION) {
             db.setVersion(DATABASE_VERSION);
         }
@@ -5658,6 +5659,39 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 "'basescore' type integer)");
         targetDb.execSQL("CREATE INDEX IF NOT EXISTS cj4_idx_code ON " + LIME.DB_TABLE_CJ4 + " (code)");
         targetDb.delete(LIME.DB_TABLE_KEYBOARD, LIME.DB_KEYBOARD_COLUMN_CODE + " = ?", new String[]{LIME.DB_TABLE_CJ4});
+    }
+
+    /**
+     * feat#N02: seed the computer-numpad keyboard into the global keyboard list if absent,
+     * so every IM's keyboard picker can choose it (it loads the computer_simple layout —
+     * phone_simple with 7 8 9 on top). Mirrors phonenum exactly except imkb points at
+     * computer_simple. Insert-if-absent only: this method is the sole writer of the
+     * computernum row, so a present row is by definition correct and is left untouched
+     * (a user-chosen assignment is never overwritten). Mirrors iOS ensureComputerNumKeyboard.
+     */
+    private static void ensureComputerNumKeyboard(SQLiteDatabase targetDb) {
+        try (Cursor cursor = targetDb.query(LIME.DB_TABLE_KEYBOARD,
+                new String[]{LIME.DB_KEYBOARD_COLUMN_CODE},
+                LIME.DB_KEYBOARD_COLUMN_CODE + " = ?", new String[]{"computernum"},
+                null, null, null, "1")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return;
+            }
+        }
+        ContentValues cv = new ContentValues();
+        cv.put(LIME.DB_KEYBOARD_COLUMN_CODE, "computernum");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_NAME, "電腦數字");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DESC, "電腦數字鍵盤");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_TYPE, "phone");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, "phone_simple_preview");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMKB, "computer_simple");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB, "computer_simple");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_ENGKB, "lime");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB, "lime_shift");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB, "symbols");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB, "symbols_shift");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DISABLE, false);
+        targetDb.insert(LIME.DB_TABLE_KEYBOARD, null, cv);
     }
 
     private static boolean tableExists(SQLiteDatabase targetDb, String tableName) {

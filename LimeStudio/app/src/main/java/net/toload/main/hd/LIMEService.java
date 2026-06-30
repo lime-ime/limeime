@@ -2309,7 +2309,8 @@ public class LIMEService extends InputMethodService
             // Art 11, 9, 26 Check if need to auto commit composing
             if (auto_commit > 0 && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
                 if (mComposing != null && mComposing.length() == auto_commit &&
-                        currentSoftKeyboard != null && currentSoftKeyboard.contains("phone")) {
+                        currentSoftKeyboard != null &&
+                        (currentSoftKeyboard.contains("phone") || currentSoftKeyboard.contains("computernum"))) { // feat#N02: array10 computer numpad keeps auto-commit
                     InputConnection ic = getCurrentInputConnection();
                     commitTyped(ic);
 

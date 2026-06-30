@@ -121,6 +121,63 @@ public class KeyboardLayoutResourceTest {
         assertLayoutDoesNotReferenceColor(context, R.layout.sheet_manage_related_edit, R.color.material_blue);
     }
 
+    @Test
+    public void computerSimpleLayoutUsesComputerNumpadDigitOrder() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        // feat#N02: computer_simple is phone_simple with the digit grid in computer-numpad
+        // order — 7 8 9 on top, then 4 5 6, then 1 2 3, with 0 on the bottom row. The
+        // framing modifier keys (123, ABC, delete, +-*/=, space, done, return) stay put.
+        List<List<Integer>> digitsPerRow = readDigitCodesPerRow(context, R.xml.computer_simple);
+
+        assertEquals("computer_simple should have 4 rows", 4, digitsPerRow.size());
+        assertEquals("top row should read 7 8 9",
+                java.util.Arrays.asList(55, 56, 57), digitsPerRow.get(0));
+        assertEquals("second row unchanged: 4 5 6",
+                java.util.Arrays.asList(52, 53, 54), digitsPerRow.get(1));
+        assertEquals("third row should read 1 2 3",
+                java.util.Arrays.asList(49, 50, 51), digitsPerRow.get(2));
+        assertEquals("0 stays on the bottom row",
+                java.util.Collections.singletonList(48), digitsPerRow.get(3));
+    }
+
+    // Returns, per <Row>, the codes of single-code digit keys (0-9). Also asserts every
+    // digit key's keyLabel matches its code, so a key can't show "7" yet type something else.
+    private List<List<Integer>> readDigitCodesPerRow(Context context, int layoutId) {
+        List<List<Integer>> rows = new ArrayList<>();
+        try {
+            XmlPullParser parser = context.getResources().getXml(layoutId);
+            int eventType;
+            List<Integer> current = null;
+            while ((eventType = parser.next()) != XmlPullParser.END_DOCUMENT) {
+                if (eventType != XmlPullParser.START_TAG) {
+                    continue;
+                }
+                if ("Row".equals(parser.getName())) {
+                    current = new ArrayList<>();
+                    rows.add(current);
+                } else if ("Key".equals(parser.getName())) {
+                    String value = parser.getAttributeValue(LIME_ATTR_NS, "codes");
+                    if (value == null || value.isEmpty() || value.contains(",")) {
+                        continue;
+                    }
+                    int code = Integer.parseInt(value);
+                    if (code >= '0' && code <= '9') {
+                        String label = parser.getAttributeValue(LIME_ATTR_NS, "keyLabel");
+                        assertEquals("digit key label must match its code in layout "
+                                        + context.getResources().getResourceEntryName(layoutId),
+                                String.valueOf((char) code), label);
+                        if (current != null) {
+                            current.add(code);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            fail("Unable to read keyboard XML resource " + layoutId + ": " + e.getMessage());
+        }
+        return rows;
+    }
+
     private void assertLayoutContainsTextResource(Context context, int layoutId, int textResId) throws Exception {
         XmlPullParser parser = context.getResources().getLayout(layoutId);
         while (parser.next() != XmlPullParser.END_DOCUMENT) {

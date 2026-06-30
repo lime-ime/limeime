@@ -310,6 +310,7 @@ final class LimeDB {
             try dbQueue.write { db in
                 try LimeDB.createEmojiTables(db, forceRecreate: false)
                 try LimeDB.ensureCj4Schema(db)
+                try LimeDB.ensureComputerNumKeyboard(db)
                 let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
                 if version < LimeDB.CURRENT_DB_VERSION {
                     try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
@@ -2658,6 +2659,27 @@ final class LimeDB {
         """)
         try db.execute(sql: "CREATE INDEX IF NOT EXISTS cj4_idx_code ON cj4 (code)")
         try db.execute(sql: "DELETE FROM keyboard WHERE code = ?", arguments: ["cj4"])
+    }
+
+    /// feat#N02: seed the computer-numpad keyboard into the global keyboard list if absent,
+    /// so every IM's keyboard picker can choose it (it loads the computer_simple layout —
+    /// phone_simple with 7 8 9 on top). Insert-if-absent only: this helper is the sole
+    /// writer of the computernum row, so a present row is by definition correct and is left
+    /// untouched (a user-chosen assignment is never overwritten). Mirrors Android's
+    /// ensureCurrentDatabase() seeding.
+    private static func ensureComputerNumKeyboard(_ db: Database) throws {
+        let exists = (try Int.fetchOne(db,
+            sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'computernum'") ?? 0) > 0
+        guard !exists else { return }
+        try db.execute(sql: """
+            INSERT INTO keyboard (code, name, desc, type, image,
+                imkb, imshiftkb, engkb, engshiftkb,
+                symbolkb, symbolshiftkb, defaultkb, defaultshiftkb,
+                extendedkb, extendedshiftkb, disable)
+            VALUES ('computernum', '電腦數字', '電腦數字鍵盤', 'phone', 'phone_simple_preview',
+                'computer_simple', 'computer_simple', 'lime', 'lime_shift',
+                'symbols', 'symbols_shift', '', '', '', '', 0)
+        """)
     }
 
     private static func rebuildEmojiFTS(_ db: Database) throws {
