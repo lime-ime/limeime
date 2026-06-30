@@ -49,6 +49,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.preference.PreferenceManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -146,6 +147,11 @@ public class LIMEService extends InputMethodService
 
     static boolean getRestrictedFieldSymbolFlag(int inputType) {
         return (inputType & EditorInfo.TYPE_MASK_CLASS) != EditorInfo.TYPE_CLASS_NUMBER;
+    }
+
+    private boolean isCj4SemicolonKeyEnabled() {
+        return PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean("cj4_semicolon_key", false);
     }
 
     static boolean isForcedEnglishTextVariation(int variation) {
@@ -2124,6 +2130,31 @@ public class LIMEService extends InputMethodService
         return code < 256 && checkCode.matches(".*?[^A-Z]")
                 && checkCode.matches(".*?[^a-z]")
                 && checkCode.matches(".*?[^0-9]") && code != 32;
+    }
+
+    static boolean acceptsIntoComposing(int code, boolean hasSymbol, boolean hasNumber, boolean isPhonetic) {
+        boolean isLetter = Character.isLetter(code);
+        boolean isDigit = Character.isDigit(code);
+        boolean isSymbol = code < 256
+                && (code < 'A' || code > 'Z')
+                && (code < 'a' || code > 'z')
+                && (code < '0' || code > '9')
+                && code != MY_KEYCODE_SPACE;
+        boolean isPhoneticSpace = code == MY_KEYCODE_SPACE && isPhonetic;
+
+        if (!hasSymbol && (code == ',' || code == '.')) {
+            return true;
+        }
+        if (!hasSymbol && !hasNumber) {
+            return isLetter || isPhoneticSpace;
+        }
+        if (!hasSymbol) {
+            return isLetter || isDigit;
+        }
+        if (!hasNumber) {
+            return isLetter || isSymbol || isPhoneticSpace;
+        }
+        return isSymbol || isPhoneticSpace || isLetter || isDigit;
     }
 
     /**
@@ -5327,6 +5358,7 @@ public class LIMEService extends InputMethodService
                 hasSymbolMapping = mLIMEPref.getAllowSymoblMapping();
                 break;
             case LIME.IM_CJ:
+            case LIME.IM_CJ4:
             case LIME.IM_SCJ:
             case LIME.IM_CJ5:
             case LIME.IM_ECJ:
@@ -5393,6 +5425,10 @@ public class LIMEService extends InputMethodService
             Log.i(TAG, "switchKeyboard() current keyboard:" +
                     tablename + " hasnumbermapping:" + hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
         SearchSrv.setTableName(tablename, hasNumberMapping, hasSymbolMapping);
+        if (LIME.DB_TABLE_CJ4.equals(tablename) && isCj4SemicolonKeyEnabled()) {
+            hasSymbolMapping = true;
+            SearchSrv.setSymbolMapping(true);
+        }
     }
 
     private boolean handleSelkey(int primaryCode) {
@@ -5490,6 +5526,7 @@ public class LIMEService extends InputMethodService
         if (!mEnglishOnly) {
 
             InputConnection ic = getCurrentInputConnection();
+            boolean isPhonetic = activeIM.equals(LIME.IM_PHONETIC);
 
             if (DEBUG)
                 Log.i(TAG, "HandleCharacter():"
@@ -5499,40 +5536,11 @@ public class LIMEService extends InputMethodService
                         + " isValidSymbol:" + isValidSymbol(primaryCode)
                         + " hasSymbolMapping:" + hasSymbolMapping
                         + " hasNumberMapping:" + hasNumberMapping
-                        + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))
+                        + " (primaryCode== MY_KEYCODE_SPACE && keyboardSelection.equals(phonetic):" + (primaryCode == MY_KEYCODE_SPACE && isPhonetic)
                         + " mEnglishOnly:" + mEnglishOnly);
 
 
-            if ((!hasSymbolMapping) && (primaryCode == ',' || primaryCode == '.')) { // Chinese , and . processing //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (!hasSymbolMapping && !hasNumberMapping  //Jeremy '11,10.19 fixed to bypass number key in et26 and hsu
-                    && (isValidLetter(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))) //Jeremy '11,9,6 for et26 and hsu
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                //Log.i(TAG,"handlecharacter(), onIM and no number and no symbol mapping");
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (!hasSymbolMapping
-                    && hasNumberMapping
-                    && (isValidLetter(primaryCode) || isValidDigit(primaryCode))
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping
-                    && !hasNumberMapping
-                    && (isValidLetter(primaryCode) || isValidSymbol(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))) //Jeremy '11,9,6 for chacha
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
+            if (acceptsIntoComposing(primaryCode, hasSymbolMapping, hasNumberMapping, isPhonetic)) {
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
@@ -5550,17 +5558,6 @@ public class LIMEService extends InputMethodService
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping
-                    && hasNumberMapping
-                    && (isValidSymbol(primaryCode)
-                    || (primaryCode == MY_KEYCODE_SPACE && activeIM.equals(LIME.IM_PHONETIC))
-                    || isValidLetter(primaryCode) || isValidDigit(primaryCode)) && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                mComposing.append((char) primaryCode);
-                //InputConnection ic=getCurrentInputConnection();
-                if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
-                updateCandidates();
-                //misMatched = mComposing.toString();
-
             } else {
 
 

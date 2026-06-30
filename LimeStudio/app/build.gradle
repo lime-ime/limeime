@@ -54,7 +54,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         versionCode 202661260
-        versionName 'v6.1.26'
+        versionName 'v6.1.27'
 
         //multiDexEnabled = true
 
@@ -200,6 +200,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
 
     // AndroidX Test dependencies
+    testImplementation "junit:junit:4.13.2"
+
     androidTestImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
     androidTestImplementation 'androidx.test:runner:1.7.0'

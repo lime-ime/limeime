@@ -44,10 +44,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var lastShiftTapTime: TimeInterval = 0
     private var activeIM:     String = "phonetic"
     /// Cached `imkeys` for the active IM (refreshed on every setTableName).
-    /// On iPad layouts, characters whose code is NOT in this string are routed to
-    /// the direct-output path so iPad dual-sliding punctuation/full-shape keys do
-    /// not corrupt Chinese composition.
-    private var currentImKeys: String = ""
+    /// When present, characters outside this string route to direct output; empty
+    /// keeps the legacy hasSymbol/hasNumber fallback for unaudited IMs.
+    var currentImKeys: String = ""
     // Sentinel ID "__unset__" ensures initOnStartInput always loads the JSON layout on first call,
     // even when the JSON id matches the hardcoded fallback id ("lime_phonetic").
     private var currentLayout: LimeKeyLayout = LimeKeyLayout(id: "__unset__", rows: [])
@@ -270,7 +269,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         loadSettings()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
         let _initLayout = englishLayoutId()
-        if let loaded = LayoutLoader.load(_initLayout) { currentLayout = loaded }
+        if let loaded = LayoutLoader.load(_initLayout) { currentLayout = cj4SemicolonAdjusted(loaded) }
         LayoutLoader.prefetchCommonLayouts()
         setupKeyboardUI()
         applyHeight()
@@ -339,8 +338,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         if syncLayoutEnvironmentFromTraits() {
             if currentLayout.id != "__unset__",
                let reloaded = LayoutLoader.load(currentLayout.id) {
-                currentLayout = reloaded
-                keyboardView?.setLayout(reloaded)
+                let adjusted = cj4SemicolonAdjusted(reloaded)
+                currentLayout = adjusted
+                keyboardView?.setLayout(adjusted)
             }
         }
         // Use screen bounds to detect orientation — NOT view.bounds.
@@ -366,8 +366,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // the correct iPad/iPhone variant, and push the new value into the views.
         if syncLayoutEnvironmentFromTraits() {
             if let reloaded = LayoutLoader.load(currentLayout.id) {
-                currentLayout = reloaded
-                keyboardView?.setLayout(reloaded)
+                let adjusted = cj4SemicolonAdjusted(reloaded)
+                currentLayout = adjusted
+                keyboardView?.setLayout(adjusted)
             }
             updateGlobeAndDismissBindings()
             applyHeight()
@@ -480,6 +481,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     searchServer?.setTableName(activeIM,
                         hasNumberMapping: caps.hasNumber,
                         hasSymbolMapping: caps.hasSymbol)
+                    if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+                        searchServer?.setSymbolMapping(true)
+                    }
                     searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
                     refreshImKeys()
                 }
@@ -559,11 +563,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             hasActivatedIMs: !activatedIMs.isEmpty,
             englishLayout: englishLayout,
             resolvedActiveLayoutId: resolvedActiveLayout)
-        if let newLayout = LayoutLoader.load(layoutName) ?? LayoutLoader.load(englishLayout),
-           newLayout.id != currentLayout.id {
-            currentLayout = newLayout
-            keyboardView?.setLayout(currentLayout)
-            applyHeight()
+        if let newLayout = LayoutLoader.load(layoutName) ?? LayoutLoader.load(englishLayout) {
+            let adjusted = cj4SemicolonAdjusted(newLayout)
+            if adjusted != currentLayout {
+                currentLayout = adjusted
+                keyboardView?.setLayout(currentLayout)
+                applyHeight()
+            }
         }
 
         // Record what we just adapted to so textDidChange's field-change
@@ -610,10 +616,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 self.activeIMIndex = idx
                 let savedCaps = ss.detectIMCapabilities(tableName: savedIM)
                 ss.setTableName(savedIM, hasNumberMapping: savedCaps.hasNumber, hasSymbolMapping: savedCaps.hasSymbol)
+                if self.activeIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+                    ss.setSymbolMapping(true)
+                }
                 self.applyResolvedActiveIMLayout()
             } else {
                 self.activeIM      = resolvedIM
                 self.activeIMIndex = resolved.firstIndex { $0.tableNick == resolvedIM } ?? 0
+                if self.activeIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+                    ss.setSymbolMapping(true)
+                }
                 self.applyResolvedActiveIMLayout()
             }
 
@@ -641,11 +653,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func applyResolvedActiveIMLayout() {
         guard !mEnglishOnly else { return }
         let layoutName = resolvedLayoutId(for: activeIM)
-        guard let layout = LayoutLoader.load(layoutName),
-              layout.id != currentLayout.id else { return }
+        guard let layout = LayoutLoader.load(layoutName) else { return }
+        let adjusted = cj4SemicolonAdjusted(layout)
+        guard adjusted != currentLayout else { return }
         clearShiftState()
-        currentLayout = layout
-        keyboardView?.setLayout(layout)
+        currentLayout = adjusted
+        keyboardView?.setLayout(adjusted)
         applyHeight()
     }
 
@@ -685,8 +698,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // If the phonetic IM is currently active, swap the visible layout immediately.
         if activeIM == "phonetic", !mEnglishOnly {
             let newLayoutId = resolvedLayoutId(for: "phonetic")
-            if let newLayout = LayoutLoader.load(newLayoutId), newLayout.id != currentLayout.id {
-                currentLayout = newLayout
+            if let newLayout = LayoutLoader.load(newLayoutId) {
+                let adjusted = cj4SemicolonAdjusted(newLayout)
+                guard adjusted != currentLayout else { return }
+                currentLayout = adjusted
                 keyboardView?.setLayout(currentLayout)
                 applyHeight()
             }
@@ -730,6 +745,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Shared UserDefaults for reading settings written by the container app.
     private var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
+    }
+
+    private func cj4SemicolonAdjusted(_ layout: LimeKeyLayout) -> LimeKeyLayout {
+        guard activeIM == "cj4",
+              sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true,
+              layout.id.hasPrefix("lime_cj") else {
+            return layout
+        }
+        return LayoutLoader.applyingCj4Semicolon(to: layout)
     }
 
     /// Load all user preferences from shared UserDefaults (spec §15).
@@ -855,11 +879,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Refresh the cached `imkeys` for the active IM. Called after every
     /// SearchServer.setTableName / setPhoneticKeyboardType so handleCharacter
     /// can use it as the authoritative input-acceptance check on iPad layouts.
-    /// Reads through `SearchServer.imKeysForTable` which uses hardcoded keymaps for
-    /// known IMs (phonetic / cj / dayi / array) and falls back to the im
-    /// table's `imkeys` field for unknown ones — the im table row may be
-    /// missing for IMs that have a hardcoded keymap, so getImConfig alone
-    /// returns "" for them on iOS.
+    /// Reads through `SearchServer.imKeysForTable`, which prefers stored table
+    /// metadata and uses hardcoded keymaps only as fallback.
     private func refreshImKeys() {
         currentImKeys = searchServer?.imKeysForTable(activeIM) ?? ""
     }
@@ -1316,6 +1337,47 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - Character Handling (spec §5 handleCharacter / Character Acceptance Rules)
 
+    func isKeyInImkeys(_ code: Int) -> Bool {
+        if code == 44 || code == 46 { return true }
+        guard let scalar = Unicode.Scalar(code) else { return false }
+        let s = String(Character(scalar))
+        return currentImKeys.contains(s) || currentImKeys.contains(s.lowercased())
+    }
+
+    func acceptsIntoComposing(code: Int,
+                              hasSymbol: Bool,
+                              hasNumber: Bool,
+                              isPhonetic: Bool) -> Bool {
+        guard code > 0, Unicode.Scalar(code) != nil else { return false }
+        let isLetter = (code >= 97 && code <= 122) || (code >= 65 && code <= 90)
+        let isDigit = code >= 48 && code <= 57
+        let isSpace = code == 32
+        let isComma = code == 44
+        let isPeriod = code == 46
+
+        if !currentImKeys.isEmpty {
+            return isKeyInImkeys(code) || (isPhonetic && isSpace)
+        } else if !hasSymbol && (isComma || isPeriod) {
+            // Chinese , and . processing (mirrors Android LIMEService.handleCharacter
+            // line 5354): whenever the IM has no symbol mapping, ',' and '.' are
+            // accepted into composing so the full-width 「，」/「。」 candidate is
+            // auto-inserted. This is a general rule independent of hasNumber, so it
+            // also covers Array10 / Pinyin (hasNumber=true, hasSymbol=false), which
+            // the hasNumber branch below would otherwise route to direct output.
+            return true
+        } else if !hasSymbol && !hasNumber {
+            return isLetter || (isPhonetic && isSpace)
+        } else if !hasSymbol && hasNumber {
+            return isLetter || isDigit
+        } else if hasSymbol && !hasNumber {
+            let isSymbol = !isLetter && !isDigit && code > 32
+            return isLetter || isSymbol || (isPhonetic && isSpace)
+        } else {
+            let isSymbol = !isLetter && !isDigit && code > 32
+            return isLetter || isDigit || isSymbol || (isPhonetic && isSpace)
+        }
+    }
+
     private func handleCharacter(_ code: Int) {
         guard code > 0, let scalar = Unicode.Scalar(code) else { return }
         let char      = Character(scalar)
@@ -1329,51 +1391,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let hasSymbol  = searchServer?.hasSymbolMapping ?? false
         let hasNumber  = searchServer?.hasNumberMapping ?? false
         let isPhonetic = searchServer?.isPhoneticTable ?? false
-        let isLetter   = (code >= 97 && code <= 122) || (code >= 65 && code <= 90)
-        let isDigit    = code >= 48 && code <= 57
         let isSpace    = code == 32
-        let isComma    = code == 44
-        let isPeriod   = code == 46
 
-        // Acceptance rules.
-        // iPad layouts: tighter rule driven by the IM table's `imkeys` field.
-        // iPad dual-sliding keys output codes that are NOT in any IM's imkeys
-        // (full-shape Chinese punct 65292/12290/65306/65307, half-shape 60/62/63/58,
-        // CJK brackets 12300-12303/12289, top-row symbols 33-41, etc.). With the
-        // legacy hasSymbol/hasNumber heuristic those codes get accepted into
-        // mComposing because hasSymbol=true on most Chinese IMs (phonetic, array,
-        // dayi, et26, et_41, hsu, hs all use ASCII codes in the symbol range as
-        // IM-input keys). That corrupts the composing buffer and breaks the next
-        // candidate lookup. Using `imkeys` membership routes those codes to the
-        // direct-output branch (commit current candidate + insertText + finishComposing).
-        // Phone layouts retain the legacy heuristic to avoid behavior changes.
-        let isIPadLayout = isOnPad && currentLayout.id.contains("_ipad")
-        let accepted: Bool
-        if isIPadLayout && !currentImKeys.isEmpty {
-            // Compare both the literal char and its lowercase form so a-z and A-Z
-            // both match an imkeys entry stored as lowercase (the convention).
-            let inImKeys = currentImKeys.contains(charStr)
-                        || currentImKeys.contains(charStr.lowercased())
-            accepted = isLetter || inImKeys || (isPhonetic && isSpace)
-        } else if !hasSymbol && (isComma || isPeriod) {
-            // Chinese , and . processing (mirrors Android LIMEService.handleCharacter
-            // line 5354): whenever the IM has no symbol mapping, ',' and '.' are
-            // accepted into composing so the full-width 「，」/「。」 candidate is
-            // auto-inserted. This is a general rule independent of hasNumber, so it
-            // also covers Array10 / Pinyin (hasNumber=true, hasSymbol=false), which
-            // the hasNumber branch below would otherwise route to direct output.
-            accepted = true
-        } else if !hasSymbol && !hasNumber {
-            accepted = isLetter || (isPhonetic && isSpace)
-        } else if !hasSymbol && hasNumber {
-            accepted = isLetter || isDigit
-        } else if hasSymbol && !hasNumber {
-            let isSymbol = !isLetter && !isDigit && code > 32
-            accepted = isLetter || isSymbol || (isPhonetic && isSpace)
-        } else {
-            let isSymbol = !isLetter && !isDigit && code > 32
-            accepted = isLetter || isDigit || isSymbol || (isPhonetic && isSpace)
-        }
+        let accepted = acceptsIntoComposing(
+            code: code,
+            hasSymbol: hasSymbol,
+            hasNumber: hasNumber,
+            isPhonetic: isPhonetic)
 
         if accepted {
             let insertChar = (isShiftOn && !isSpace) ? charStr.uppercased() : charStr
@@ -1664,11 +1688,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let targetId  = wantShift ? "\(base)_shift" : base
         if targetId != currentLayout.id,
            let newLayout = LayoutLoader.load(targetId) {
+            let adjusted = cj4SemicolonAdjusted(newLayout)
             if isShiftKeyHeld {
-                keyboardView?.previewLayout(newLayout)
+                keyboardView?.previewLayout(adjusted)
                 return
             }
-            currentLayout = newLayout
+            currentLayout = adjusted
             keyboardView?.setLayout(currentLayout)
             applyHeight()
         } else if !wantShift {
@@ -2629,7 +2654,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         resetTempEnglishWord()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
         let layoutName = toEnglish ? englishLayoutId() : resolvedLayoutId(for: activeIM)
-        if let loaded = LayoutLoader.load(layoutName) { currentLayout = loaded }
+        if let loaded = LayoutLoader.load(layoutName) { currentLayout = cj4SemicolonAdjusted(loaded) }
         keyboardView.setLayout(currentLayout)
         applyHeight()
     }
@@ -2655,15 +2680,21 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Reconfigure SearchServer for the new IM
         let caps = ss.detectIMCapabilities(tableName: activeIM)
         ss.setTableName(activeIM, hasNumberMapping: caps.hasNumber, hasSymbolMapping: caps.hasSymbol)
+        if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+            ss.setSymbolMapping(true)
+        }
         ss.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
 
         // Update keyboard layout to match the new IM if available
         let preferredLayout = resolvedLayoutId(for: activeIM)
-        if let newLayout = LayoutLoader.load(preferredLayout), newLayout.id != currentLayout.id {
-            currentLayout = newLayout
-            keyboardView?.setLayout(currentLayout)
-            applyHeight()
+        if let newLayout = LayoutLoader.load(preferredLayout) {
+            let adjusted = cj4SemicolonAdjusted(newLayout)
+            if adjusted != currentLayout {
+                currentLayout = adjusted
+                keyboardView?.setLayout(currentLayout)
+                applyHeight()
+            }
         }
         showLimeToast(displayName(for: im))
     }
@@ -2731,7 +2762,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         dismissPopupKeyboard()
         clearShiftState()
         let id = symbolLayouts[page]
-        let layout = LayoutLoader.load(id) ?? currentLayout
+        let layout = cj4SemicolonAdjusted(LayoutLoader.load(id) ?? currentLayout)
         currentLayout = layout
         keyboardView?.setLayout(layout)
         applyHeight()
@@ -2757,7 +2788,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         dismissPopupKeyboard()
         clearShiftState()
         mEnglishOnly = true
-        let layout = LayoutLoader.load("phone_simple") ?? currentLayout
+        let layout = cj4SemicolonAdjusted(LayoutLoader.load("phone_simple") ?? currentLayout)
         currentLayout = layout
         keyboardView?.setLayout(layout)
         applyHeight()
@@ -3131,6 +3162,16 @@ extension KeyboardViewController: KeyboardViewDelegate {
         showPopupKeyboard(for: keyDef, sourceRect: srcInView)
     }
 
+    /// Single-key popup released: dismiss the panel, and on commit type the lone alternate — the
+    /// same key the panel would have fired on tap.
+    func keyboardView(_ view: KeyboardView, didReleasePopupKey keyDef: KeyDef, commit: Bool) {
+        dismissPopupKeyboard()
+        guard commit,
+              let popupLayout = resolvePopupLayout(for: keyDef),
+              let popupKey = popupLayout.rows.first?.keys.first else { return }
+        firePopupKey(popupKey)
+    }
+
     // MARK: - Popup Keyboard
 
 
@@ -3139,12 +3180,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
         guard let popupLayout = resolvePopupLayout(for: keyDef),
               !popupLayout.rows.isEmpty else { return }
 
-        // Single-key popup: fire the action directly without showing the popup UI.
-        let allKeys = popupLayout.rows.flatMap { $0.keys }
-        if allKeys.count == 1 {
-            firePopupKey(allKeys[0])
-            return
-        }
+        // Single-key popups show the mini-keyboard too (like multi-key): popupKeyLongPressed opens it
+        // on hold and, on release, dismisses it + sends the lone key via didReleasePopupKey.
 
         // Tap-outside overlay placed below the popup
         let overlay = UIControl()
@@ -3249,12 +3286,18 @@ extension KeyboardViewController: KeyboardViewDelegate {
             ?? (hasNumber: false, hasSymbol: false)
         searchServer?.setTableName(activeIM, hasNumberMapping: caps.hasNumber,
                                    hasSymbolMapping: caps.hasSymbol)
+        if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+            searchServer?.setSymbolMapping(true)
+        }
         searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
-        if let layout = LayoutLoader.load(resolvedLayoutId(for: activeIM)), layout.id != currentLayout.id {
-            currentLayout = layout
-            keyboardView?.setLayout(currentLayout)
-            applyHeight()
+        if let layout = LayoutLoader.load(resolvedLayoutId(for: activeIM)) {
+            let adjusted = cj4SemicolonAdjusted(layout)
+            if adjusted != currentLayout {
+                currentLayout = adjusted
+                keyboardView?.setLayout(currentLayout)
+                applyHeight()
+            }
         }
         showLimeToast(displayName(for: im))
     }
@@ -3817,8 +3860,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
             ? englishLayoutId()
             : resolvedLayoutId(for: activeIM)
         guard let layout = LayoutLoader.load(layoutName) else { return }
-        currentLayout = layout
-        keyboardView.setLayout(layout)
+        let adjusted = cj4SemicolonAdjusted(layout)
+        currentLayout = adjusted
+        keyboardView.setLayout(adjusted)
         updateEmojiSearchHeaderMetrics()
         candidateBarHeightConstraint?.constant = activeCandidateBarHeight
         expandedCollapseHeightConstraint?.constant = activeCandidateBarHeight

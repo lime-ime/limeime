@@ -967,6 +967,43 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    func testImKeysForTableUsesStoredImkeysWhenNamesPresent() throws {
+        let db = try makeLimeDB()
+        db.setImConfig(LIME.DB_TABLE_CJ, "imkeys", "abc;'")
+        db.setImConfig(LIME.DB_TABLE_CJ, "imkeynames", "a|b|c|;|'")
+
+        XCTAssertEqual(db.imKeysForTable(LIME.DB_TABLE_CJ), "abc;'")
+    }
+
+    func testImKeysForTableFallsBackToCjKeyWhenStoredMetadataMissing() throws {
+        let db = try makeLimeDB()
+        db.removeImConfig("cj4", "imkeys")
+        db.removeImConfig("cj4", "imkeynames")
+
+        XCTAssertEqual(db.imKeysForTable("cj4"), "qwertyuiopasdfghjklzxcvbnm")
+    }
+
+    func testImKeysForTableUsesStoredCj4SymbolRoots() throws {
+        let db = try makeLimeDB()
+        let stored = "abcdefghijklmnopqrstuvwxyz;',."
+        db.setImConfig("cj4", "imkeys", stored)
+        db.setImConfig("cj4", "imkeynames", stored.map(String.init).joined(separator: "|"))
+
+        let imkeys = db.imKeysForTable("cj4")
+        XCTAssertTrue(imkeys.contains(";"))
+        XCTAssertTrue(imkeys.contains("'"))
+    }
+
+    func testImKeysForTableKeepsPhoneticKeyboardTypeDriven() throws {
+        let db = try makeLimeDB()
+        db.phoneticKeyboardType = "phonetic"
+        db.setImConfig(LIME.DB_TABLE_PHONETIC, "imkeys", "abc;'")
+        db.setImConfig(LIME.DB_TABLE_PHONETIC, "imkeynames", "a|b|c|;|'")
+
+        XCTAssertEqual(db.imKeysForTable(LIME.DB_TABLE_PHONETIC),
+                       "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-")
+    }
+
     func testImportTargetUsesSelectedTableNotFilename() throws {
         let db = try makeLimeDB()
         db.clearTable(LIME.DB_TABLE_CUSTOM)

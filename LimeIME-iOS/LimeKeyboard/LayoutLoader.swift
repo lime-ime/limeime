@@ -88,6 +88,47 @@ final class LayoutLoader {
         resourceCandidates(for: id).filter { $0.contains("_ipad") }
     }
 
+    static func applyingCj4Semicolon(to layout: LimeKeyLayout) -> LimeKeyLayout {
+        let iPadSemicolonCodes: Set<Int> = layout.id.contains("_ipad") ? [65306, 65307] : [65306]
+        if layout.rows.contains(where: { $0.keys.contains { iPadSemicolonCodes.contains($0.code) } }) {
+            let rows = layout.rows.map { row in
+                KeyRow(keys: row.keys.map { key in
+                    guard iPadSemicolonCodes.contains(key.code) else { return key }
+                    return KeyDef(
+                        code: 59,
+                        label: "'",
+                        sublabel: ";",
+                        widthPercent: key.widthPercent,
+                        icon: key.icon,
+                        isRepeatable: key.isRepeatable,
+                        isModifier: key.isModifier,
+                        isSticky: key.isSticky,
+                        longPressCode: 39,
+                        popupKeyboard: key.popupKeyboard,
+                        popupCharacters: key.popupCharacters
+                    )
+                }, isBottomRow: row.isBottomRow)
+            }
+            return LimeKeyLayout(id: layout.id, rows: rows)
+        }
+
+        guard !layout.id.contains("_ipad") else { return layout }
+        var didAppend = false
+        let rows = layout.rows.map { row -> KeyRow in
+            guard !didAppend,
+                  row.keys.last?.code == 108 || row.keys.last?.code == 76 else {
+                return row
+            }
+            didAppend = true
+            return KeyRow(keys: row.keys + [KeyDef(code: 59, label: "'", sublabel: ";", widthPercent: 10,
+                                                   longPressCode: 39,
+                                                   popupKeyboard: "popup_template",
+                                                   popupCharacters: "'")],
+                          isBottomRow: row.isBottomRow)
+        }
+        return didAppend ? LimeKeyLayout(id: layout.id, rows: rows) : layout
+    }
+
     // MARK: - Private
 
     private static func resourceParts(for id: String) -> (base: String, shifted: Bool) {

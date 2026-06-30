@@ -231,7 +231,7 @@ enum EmojiPanelScrollLayout {
 }
 
 // MARK: - Key definition
-struct KeyDef {
+struct KeyDef: Equatable {
     let code: Int            // Key code. Positive = Unicode codepoint; negative = special
     let codes: [Int]         // All codes for multi-tap cycling (mirrors Android Key.codes[])
     let label: String        // Primary label (top half of key)
@@ -284,7 +284,7 @@ struct KeyDef {
 }
 
 // MARK: - Key row
-struct KeyRow {
+struct KeyRow: Equatable {
     let keys: [KeyDef]
     let isBottomRow: Bool
 
@@ -295,7 +295,7 @@ struct KeyRow {
 }
 
 // MARK: - Keyboard layout
-struct LimeKeyLayout {
+struct LimeKeyLayout: Equatable {
     let id: String
     let rows: [KeyRow]
 

@@ -58,6 +58,7 @@ struct IMDetailView: View {
     // §13.3 — custom IM mapping toggles (only shown when tableNick == "custom")
     @AppStorage("accept_number_index", store: sharedDefaults) private var acceptNumberIndex: Bool = false
     @AppStorage("accept_symbol_index", store: sharedDefaults) private var acceptSymbolIndex: Bool = false
+    @AppStorage("cj4_semicolon_key", store: sharedDefaults) private var cj4SemicolonKey: Bool = false
 
     // array10 phone-numpad auto-commit (only shown when tableNick == "array10")
     @AppStorage("auto_commit", store: sharedDefaults) private var autoCommit: Int = 0
@@ -207,6 +208,19 @@ struct IMDetailView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("符號字根對應")
                             Text("允許使用符號為輸入法字根")
+                                .font(.caption).foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .setupMatchedSectionBlock()
+            }
+
+            if im.tableNick == "cj4" {
+                Section(header: Text("倉頡鍵盤選項")) {
+                    Toggle(isOn: $cj4SemicolonKey) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("顯示分號（；）鍵")
+                            Text("在倉頡鍵盤加上分號（；）字根鍵，需自備含分號字根的倉頡碼表。")
                                 .font(.caption).foregroundColor(.secondary)
                         }
                     }

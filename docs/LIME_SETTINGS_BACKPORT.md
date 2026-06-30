@@ -219,6 +219,8 @@ Sections (visibility identical to iOS spec):
 7. **選項** — `SwitchMaterial` "刪除時備份已學習記錄" bound to `backup_on_delete_{tableNick}` (use `SharedPreferences` default file, mirroring iOS `UserDefaults.standard` exception — these are settings-app-only and must not pollute the keyboard's shared prefs).
 8. **無 header** — `MaterialButton` "移除輸入法" with `?attr/colorError` text → `MaterialAlertDialog` confirm → existing `manageImController.clearTable(...)`.
 
+Note: `cj4_semicolon_key` is a NEW per-IM preference surfaced in the IM detail page on BOTH platforms (iOS `IMDetailView`, Android `ImDetailFragment`). Android stores it in default `SharedPreferences` so the keyboard reads it, unlike `auto_commit` / `phonetic_keyboard_type` / `accept_*`, which Android keeps in the global `preference.xml`.
+
 Toolbar overflow menu has a single "分享/匯出" item that opens the existing `ShareDialog` unchanged — preserves all current sharing behaviour (constraint #2).
 
 ### 5.3 ImInstallFragment

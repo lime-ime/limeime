@@ -166,7 +166,7 @@ Recommended allowlist categories:
 | Related and learning | `similiar_enable`, `candidate_suggestion`, `learn_phrase`, `learning_switch` |
 | English keyboard | `english_dictionary_enable`, `auto_cap` |
 | Reverse lookup | `custom_im_reverselookup`, `cj_im_reverselookup`, `bpmf_im_reverselookup`, etc. |
-| Per-IM options | `accept_number_index`, `accept_symbol_index`, `auto_commit`, `phonetic_keyboard_type`, `backup_on_delete_<table>`, `restore_on_import_<table>` |
+| Per-IM options | `accept_number_index`, `accept_symbol_index`, `auto_commit`, `phonetic_keyboard_type`, `backup_on_delete_<table>`, `restore_on_import_<table>`, `cj4_semicolon_key` |
 
 Do not restore payment, entitlement, license, server URL, debug, migration, or internal feature-flag keys from backups.
 

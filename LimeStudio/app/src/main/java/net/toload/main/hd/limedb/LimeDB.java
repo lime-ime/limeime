@@ -945,9 +945,13 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         if (force_reload) {
             try {
-                if (db != null && db.isOpen()) {
-                    db.close();
-                }
+                // Use the helper's own close() rather than a raw db.close(): a raw close
+                // leaves this SQLiteOpenHelper holding a stale handle, so a later
+                // getWritableDatabase() (e.g. restoredToDefault deletes + recreates the DB
+                // file) can hand back a dead connection and throw "attempt to re-open an
+                // already-closed object". close() drops the cached connection so the
+                // getWritableDatabase() below opens the (new) file fresh.
+                close();
             } catch (Exception e) {
                 Log.e(TAG, "Error in database operation", e);
             }
@@ -960,6 +964,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     public void ensureCurrentDatabase() {
         if (checkDBConnection()) {
             return;
+        }
+
+        // Guard against a stale handle (restoredToDefault deletes + recreates the DB file):
+        // make sure we hold a live, open connection before issuing the cj4 DDL below.
+        if (db == null || !db.isOpen()) {
+            db = this.getWritableDatabase();
         }
 
         ensureCj4Schema(db);

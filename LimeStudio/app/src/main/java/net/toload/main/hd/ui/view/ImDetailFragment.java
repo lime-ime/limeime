@@ -232,6 +232,14 @@ public class ImDetailFragment extends Fragment {
                     sp.edit().putBoolean("accept_symbol_index", c).apply());
         }
 
+        if ("cj4".equals(tableCode)) {
+            rootView.findViewById(R.id.section_cj4_semicolon).setVisibility(View.VISIBLE);
+            SwitchMaterial sCj4Semicolon = rootView.findViewById(R.id.switch_cj4_semicolon);
+            sCj4Semicolon.setChecked(sp.getBoolean("cj4_semicolon_key", false));
+            sCj4Semicolon.setOnCheckedChangeListener((b, c) ->
+                    sp.edit().putBoolean("cj4_semicolon_key", c).apply());
+        }
+
         if ("array10".equals(tableCode)) {
             rootView.findViewById(R.id.section_array10).setVisibility(View.VISIBLE);
             // TODO §7 backport — spinner wiring for auto_commit (full array-adapter binding)

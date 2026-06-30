@@ -250,6 +250,10 @@ public class SearchServer {
         }
     }
 
+    public void setSymbolMapping(boolean symbolMapping) {
+        hasSymbolMapping = symbolMapping;
+    }
+
     private static Thread prefetchThread;
     private static Thread emojiPreloadThread;
 
