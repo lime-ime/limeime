@@ -196,6 +196,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
     private var shiftHoldTrackingActive = false
+    private var touchTrackers: [ObjectIdentifier: TouchTracker] = [:]
+    private var plainTouchTargets: [ObjectIdentifier: PlainKeyTouchTarget] = [:]
     private static let styledContentTag = 92731
     /// Set by KeyboardViewController so globe button uses the system keyboard picker.
     weak var inputModeViewController: UIInputViewController? {
@@ -682,7 +684,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let halfPercent = halfKeys.reduce(0) { $0 + $1.widthPercent }
             let halfFraction = (halfPercent / total) * (1 - splitGapFraction)
 
-            let contentView = UIView()
+            let contentView = KeyTouchLayer(owner: self)
             contentView.backgroundColor = .clear
             contentView.isMultipleTouchEnabled = true
             contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -734,7 +736,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let totalPercent = row.keys.reduce(0) { $0 + $1.widthPercent }
         let widthMultiplier = min(1.0, totalPercent / 100.0)
 
-        let contentView = UIView()
+        let contentView = KeyTouchLayer(owner: self)
         contentView.backgroundColor = .clear
         contentView.isMultipleTouchEnabled = true
         contentView.translatesAutoresizingMaskIntoConstraints = false
@@ -795,6 +797,22 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
         let isSystemGlobe = keyDef.code == LimeKeyCode.globe.rawValue
             && inputModeViewController != nil
+        let isDualRowIPadKey = Self.shouldUseDualRowGesture(isPad: isPad,
+                                                             layoutId: layout.id,
+                                                             keyDef: keyDef)
+        let usesGenericLongPress = Self.shouldUseGenericLongPress(keyDef: keyDef,
+                                                                  isPad: isPad,
+                                                                  layoutId: layout.id,
+                                                                  legacyGlobeMode: legacyGlobeMode)
+        let legacyOwnedByIVC = keyDef.code == LimeKeyCode.done.rawValue
+            && legacyGlobeMode
+            && inputModeViewController != nil
+        let routeBasicTapThroughOwner = shouldRouteBasicTapThroughOwner(
+            keyDef: keyDef,
+            isKeyboardOptionsKey: isKeyboardOptionsKey,
+            isDualRowIPadKey: isDualRowIPadKey,
+            usesGenericLongPress: usesGenericLongPress,
+            legacyOwnedByIVC: legacyOwnedByIVC)
 
         // Keyboard options keys:
         //   - single tap (touchUpInside): primary key action
@@ -849,8 +867,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         // feat#124: generic long-press → secondary action (English 123 → phone_simple).
-        if Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
-                                          layoutId: layout.id, legacyGlobeMode: legacyGlobeMode) {
+        if usesGenericLongPress {
             let lp = UILongPressGestureRecognizer(target: self, action: #selector(genericLongPressed(_:)))
             lp.minimumPressDuration = LayoutMetrics.Gesture.specialKeyHoldDuration
             btn.addGestureRecognizer(lp)
@@ -862,33 +879,31 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         // feedback from this 0-duration long-press instead of keyDown. cancelsTouchesInView=false and
         // simultaneous recognition so it never interferes with the button's tracking, the popup
         // long-press, or any other key gesture.
-        let pressFeedback = UILongPressGestureRecognizer(target: self, action: #selector(pressFeedbackGesture(_:)))
-        pressFeedback.minimumPressDuration = 0
-        pressFeedback.cancelsTouchesInView = false
-        pressFeedback.delegate = self
-        btn.addGestureRecognizer(pressFeedback)
+        if !routeBasicTapThroughOwner {
+            let pressFeedback = UILongPressGestureRecognizer(target: self, action: #selector(pressFeedbackGesture(_:)))
+            pressFeedback.minimumPressDuration = 0
+            pressFeedback.cancelsTouchesInView = false
+            pressFeedback.delegate = self
+            btn.addGestureRecognizer(pressFeedback)
+        }
 
         applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
 
-        btn.addTarget(self, action: #selector(keyDown(_:event:)), for: .touchDown)
-        btn.addTarget(self, action: #selector(keyUp(_:)), for: [.touchUpInside, .touchUpOutside])
-        btn.addTarget(self, action: #selector(keyCancel(_:)), for: .touchCancel)
+        btn.isUserInteractionEnabled = !routeBasicTapThroughOwner
+        if !routeBasicTapThroughOwner {
+            btn.addTarget(self, action: #selector(keyDown(_:event:)), for: .touchDown)
+            btn.addTarget(self, action: #selector(keyUp(_:)), for: [.touchUpInside, .touchUpOutside])
+            btn.addTarget(self, action: #selector(keyCancel(_:)), for: .touchCancel)
+        }
         // Done, globe, and popup keys fire didPress on touchUpInside (deferred so long-press can intercept)
-        let isDualRowIPadKey = Self.shouldUseDualRowGesture(isPad: isPad,
-                                                             layoutId: layout.id,
-                                                             keyDef: keyDef)
         // In legacy iPhone globe mode the `-3` key is owned by iOS' input-mode
         // picker — we must not also fire our own touchUpInside dismiss/menu.
-        let legacyOwnedByIVC = keyDef.code == LimeKeyCode.done.rawValue
-            && legacyGlobeMode
-            && inputModeViewController != nil
-        if !legacyOwnedByIVC && (
+        if !routeBasicTapThroughOwner && !legacyOwnedByIVC && (
             keyDef.code == LimeKeyCode.done.rawValue
                 || isKeyboardOptionsKey
                 || (keyDef.code == LimeKeyCode.globe.rawValue && !isSystemGlobe)
                 || !keyDef.popupKeyboard.isEmpty || isDualRowIPadKey
-                || Self.shouldUseGenericLongPress(keyDef: keyDef, isPad: isPad,
-                                                  layoutId: layout.id, legacyGlobeMode: legacyGlobeMode)) {
+                || usesGenericLongPress) {
             btn.addTarget(self, action: #selector(keyboardKeyTapped(_:)), for: .touchUpInside)
         }
         // iPad dual-row keys: pan gesture for slide-down → secondary glyph; long-press → preview secondary.
@@ -908,6 +923,24 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         return btn
+    }
+
+    private func shouldRouteBasicTapThroughOwner(keyDef: KeyDef,
+                                                 isKeyboardOptionsKey: Bool,
+                                                 isDualRowIPadKey: Bool,
+                                                 usesGenericLongPress: Bool,
+                                                 legacyOwnedByIVC: Bool) -> Bool {
+        guard keyDef.code != LimeKeyCode.space.rawValue,
+              keyDef.code != LimeKeyCode.done.rawValue,
+              keyDef.code != LimeKeyCode.globe.rawValue,
+              keyDef.popupKeyboard.isEmpty,
+              !isKeyboardOptionsKey,
+              !isDualRowIPadKey,
+              !usesGenericLongPress,
+              !legacyOwnedByIVC else {
+            return false
+        }
+        return true
     }
 
     // Drives the press feedback (haptic / sound / key preview) off a 0-duration long-press recognizer
@@ -1272,6 +1305,142 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         return stack
     }
 
+    fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
+                                   touchesBegan touches: Set<UITouch>,
+                                   with event: UIEvent?) {
+        let entries = plainKeyEntries(in: layer)
+        let detector = KeyDetector(keys: entries.map(\.model))
+
+        for touch in touches {
+            let touchID = ObjectIdentifier(touch)
+            let key = detector.keyAt(touch.location(in: layer))
+            touchTrackers[touchID] = TouchTracker(downKey: key)
+            guard let key,
+                  let entry = entries.first(where: { $0.model == key }) else {
+                continue
+            }
+            plainTouchTargets[touchID] = PlainKeyTouchTarget(button: entry.button, keyDef: entry.keyDef)
+            beginPlainKeyTouch(button: entry.button, keyDef: entry.keyDef)
+        }
+    }
+
+    fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
+                                   touchesMoved touches: Set<UITouch>,
+                                   with event: UIEvent?) {
+        // P1 keeps touches pinned to their down key. P2 adds live move switching.
+    }
+
+    fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
+                                   touchesEnded touches: Set<UITouch>,
+                                   with event: UIEvent?) {
+        for touch in touches {
+            let touchID = ObjectIdentifier(touch)
+            touchTrackers.removeValue(forKey: touchID)
+            guard let target = plainTouchTargets.removeValue(forKey: touchID) else { continue }
+            endPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+        }
+    }
+
+    fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
+                                   touchesCancelled touches: Set<UITouch>,
+                                   with event: UIEvent?) {
+        for touch in touches {
+            let touchID = ObjectIdentifier(touch)
+            touchTrackers.removeValue(forKey: touchID)
+            guard let target = plainTouchTargets.removeValue(forKey: touchID) else { continue }
+            cancelPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+        }
+    }
+
+    private func beginPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
+        button.wasLongPressed = false
+        button.backgroundColor = pressedKeyColor
+        updateShiftHoldTrackingFromTrackers(for: keyDef)
+        fireHaptic()
+        if feedbackSound { playKeyClickSound() }
+        if keyDef.icon.isEmpty && !keyDef.isModifier
+            && keyDef.code != LimeKeyCode.space.rawValue
+            && !isPad {
+            let keyRect = button.convert(button.bounds, to: self)
+            delegate?.keyboardView(self, showPreviewFor: keyDef, keyRect: keyRect)
+        }
+        delegate?.keyboardView(self, didPress: keyDef)
+
+        if keyDef.isRepeatable {
+            repeatKeyDef = keyDef
+            repeatTimer = Timer.scheduledTimer(withTimeInterval: LayoutMetrics.Gesture.repeatStartDelay,
+                                               repeats: false) { [weak self] _ in
+                self?.startRepeating()
+            }
+        }
+    }
+
+    private func endPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
+        if keyDef.code == LimeKeyCode.shift.rawValue {
+            shiftHoldTrackingActive = false
+        }
+        button.backgroundColor = restoredKeyBackgroundColor(for: keyDef)
+        delegate?.keyboardViewDismissPreview(self)
+        delegate?.keyboardView(self, didRelease: keyDef)
+        stopRepeating()
+        button.wasSlideDown = false
+    }
+
+    private func cancelPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
+        if keyDef.code == LimeKeyCode.shift.rawValue {
+            shiftHoldTrackingActive = false
+        }
+        button.backgroundColor = restoredKeyBackgroundColor(for: keyDef)
+        delegate?.keyboardViewDismissPreview(self)
+        stopRepeating()
+        button.wasSlideDown = false
+    }
+
+    private func updateShiftHoldTrackingFromTrackers(for keyDef: KeyDef) {
+        if keyDef.code == LimeKeyCode.shift.rawValue {
+            shiftHoldTrackingActive = true
+            return
+        }
+
+        guard shiftHoldTrackingActive else { return }
+        let active = ShiftHoldTouchPolicy.isShiftStillHeld(activeTouchCount: touchTrackers.count,
+                                                           wasShiftAlreadyHeld: shiftHoldTrackingActive)
+        if !active {
+            shiftHoldTrackingActive = false
+        }
+        delegate?.keyboardView(self, didUpdateShiftHoldActive: active)
+    }
+
+    private func plainKeyEntries(in layer: KeyTouchLayer) -> [PlainKeyEntry] {
+        allSubviews(of: layer).compactMap { view in
+            guard let button = view as? KeyButton,
+                  !button.isUserInteractionEnabled,
+                  !button.isHidden else {
+                return nil
+            }
+            let keyDef = button.keyDef
+            let frame = button.convert(button.bounds, to: layer)
+            guard frame.width > 0, frame.height > 0 else { return nil }
+            return PlainKeyEntry(model: keyModel(for: keyDef, frame: frame),
+                                 button: button,
+                                 keyDef: keyDef)
+        }
+    }
+
+    private func keyModel(for keyDef: KeyDef, frame: CGRect) -> KeyModel {
+        KeyModel(frame: frame,
+                 codes: keyDef.codes,
+                 primaryLabel: keyDef.label,
+                 secondaryLabel: keyDef.sublabel,
+                 isRepeatable: keyDef.isRepeatable,
+                 isModifier: keyDef.isModifier,
+                 hasPopup: !keyDef.popupKeyboard.isEmpty,
+                 isDualRow: Self.shouldUseDualRowGesture(isPad: isPad,
+                                                          layoutId: layout.id,
+                                                          keyDef: keyDef),
+                 isSpace: keyDef.code == LimeKeyCode.space.rawValue)
+    }
+
     // MARK: - Touch handling
     @objc private func keyDown(_ btn: UIButton, event: UIEvent) {
         guard let keyBtn = btn as? KeyButton else { return }
@@ -1474,6 +1643,45 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             primaryLbl.font = (kd.longPressCode != 0 && !kd.sublabel.isEmpty)
                 ? keyDualSlidingFont : keyLabelFont
         }
+    }
+}
+
+private struct PlainKeyEntry {
+    let model: KeyModel
+    let button: KeyButton
+    let keyDef: KeyDef
+}
+
+private struct PlainKeyTouchTarget {
+    let button: KeyButton
+    let keyDef: KeyDef
+}
+
+fileprivate final class KeyTouchLayer: UIView {
+    private weak var owner: KeyboardView?
+
+    init(owner: KeyboardView) {
+        self.owner = owner
+        super.init(frame: .zero)
+        isMultipleTouchEnabled = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        owner?.keyTouchLayer(self, touchesBegan: touches, with: event)
+    }
+
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        owner?.keyTouchLayer(self, touchesMoved: touches, with: event)
+    }
+
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        owner?.keyTouchLayer(self, touchesEnded: touches, with: event)
+    }
+
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        owner?.keyTouchLayer(self, touchesCancelled: touches, with: event)
     }
 }
 

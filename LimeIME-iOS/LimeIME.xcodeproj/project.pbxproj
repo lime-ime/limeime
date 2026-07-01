@@ -59,6 +59,7 @@
 		3E81089E57F6CB90A2BFF152 /* KeyboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75E50434E278FAEF4A4654C /* KeyboardView.swift */; };
 		F0BEEF0011223344556677B1 /* KeyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677A1 /* KeyModel.swift */; };
 		F0BEEF0011223344556677B2 /* KeyDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677A2 /* KeyDetector.swift */; };
+		F0BEEF0011223344556677D1 /* TouchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677D0 /* TouchTracker.swift */; };
 		41CFFB478874C876C611CC47 /* ManageRelatedControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0595186AC824BB0CCF9D15EF /* ManageRelatedControllerTest.swift */; };
 		41F0C74C36F32BE94395EF6C /* Mapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */; };
 		434167C6894E1E5140BF4C54 /* lime_et26_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 3AC78AC5CB39D49E4AB23964 /* lime_et26_ipad_narrow.json */; };
@@ -109,8 +110,10 @@
 		8B72D83300CAD566BFCF3FE1 /* KeyboardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51309BD0A4AEAF429010BB4F /* KeyboardViewController.swift */; };
 		8B72D83300CAD566BFCF3FE2 /* KeyboardViewControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */; };
 		F0BEEF0011223344556677B5 /* KeyDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */; };
+		F0BEEF0011223344556677C5 /* TouchTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */; };
 		F0BEEF0011223344556677B3 /* KeyModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677A1 /* KeyModel.swift */; };
 		F0BEEF0011223344556677B4 /* KeyDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677A2 /* KeyDetector.swift */; };
+		F0BEEF0011223344556677D2 /* TouchTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677D0 /* TouchTracker.swift */; };
 		8B8D5CEFF8EB0D19EEB0F35C /* LimeDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */; };
 		8C4D2C17B8A1495297103E44 /* LimeToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4D2C17B8A1495297103E43 /* LimeToastState.swift */; };
 		8C4D2C17B8A1495297103E45 /* LimeToastState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C4D2C17B8A1495297103E43 /* LimeToastState.swift */; };
@@ -386,6 +389,7 @@
 		8A7EB8BA1CCBCCC24B7CD35F /* lime_et_41_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_et_41_ipad_narrow.json; sourceTree = "<group>"; };
 		8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardViewControllerTest.swift; sourceTree = "<group>"; };
 		F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyDetectorTests.swift; sourceTree = "<group>"; };
+		F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchTrackerTests.swift; sourceTree = "<group>"; };
 		8C3811D1BE7A092EC27AD5F2 /* lime_dayi_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_dayi_ipad_narrow.json; sourceTree = "<group>"; };
 		8C4D2C17B8A1495297103E43 /* LimeToastState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeToastState.swift; sourceTree = "<group>"; };
 		8D98DEBE9E75F237BEC73B5B /* IMStoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMStoreView.swift; sourceTree = "<group>"; };
@@ -455,6 +459,7 @@
 		D75E50434E278FAEF4A4654C /* KeyboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardView.swift; sourceTree = "<group>"; };
 		F0BEEF0011223344556677A1 /* KeyModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyModel.swift; sourceTree = "<group>"; };
 		F0BEEF0011223344556677A2 /* KeyDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyDetector.swift; sourceTree = "<group>"; };
+		F0BEEF0011223344556677D0 /* TouchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchTracker.swift; sourceTree = "<group>"; };
 		D7D73F6D92EFFE21C79BBE9E /* IMListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IMListView.swift; sourceTree = "<group>"; };
 		DB7A5B6C8D9E4011A2B3C4D4 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Settings.bundle; sourceTree = "<group>"; };
 		DC5ECF6D5A70826768C351E8 /* lime_array_number_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_narrow.json; sourceTree = "<group>"; };
@@ -560,6 +565,7 @@
 				CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
+				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
 				8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */,
 				46C07357EED170657A3BF133 /* LimeDBTest.swift */,
 				A616F712F666B45F6A993A5C /* LIMEPreferenceManagerTest.swift */,
@@ -601,6 +607,7 @@
 				F485D645136F28A3B5AFED04 /* Info.plist */,
 				F0BEEF0011223344556677A2 /* KeyDetector.swift */,
 				F0BEEF0011223344556677A1 /* KeyModel.swift */,
+				F0BEEF0011223344556677D0 /* TouchTracker.swift */,
 				D75E50434E278FAEF4A4654C /* KeyboardView.swift */,
 				51309BD0A4AEAF429010BB4F /* KeyboardViewController.swift */,
 				E84CB76CFC92DAA008483771 /* LayoutLoader.swift */,
@@ -1225,6 +1232,7 @@
 				F9B5EF722FEA677100DCC28D /* KeyboardView.swift in Sources */,
 				F0BEEF0011223344556677B3 /* KeyModel.swift in Sources */,
 				F0BEEF0011223344556677B4 /* KeyDetector.swift in Sources */,
+				F0BEEF0011223344556677D2 /* TouchTracker.swift in Sources */,
 				F9B5EF712FEA675800DCC28D /* LayoutMetrics.swift in Sources */,
 				F9B5EF702FEA674100DCC28D /* Profiling.swift in Sources */,
 				F9B5EF6F2FEA64BC00DCC28D /* KeyboardViewController.swift in Sources */,
@@ -1240,6 +1248,7 @@
 				30A1639B07058FC030BD00CF /* LIMEPreferenceManagerTest.swift in Sources */,
 				8B72D83300CAD566BFCF3FE2 /* KeyboardViewControllerTest.swift in Sources */,
 				F0BEEF0011223344556677B5 /* KeyDetectorTests.swift in Sources */,
+				F0BEEF0011223344556677C5 /* TouchTrackerTests.swift in Sources */,
 				8C4D2C17B8A1495297103E44 /* LimeToastState.swift in Sources */,
 				06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */,
 				E02BE727FF878D591A3D34B5 /* LimeDB.swift in Sources */,
@@ -1325,6 +1334,7 @@
 				3E81089E57F6CB90A2BFF152 /* KeyboardView.swift in Sources */,
 				F0BEEF0011223344556677B1 /* KeyModel.swift in Sources */,
 				F0BEEF0011223344556677B2 /* KeyDetector.swift in Sources */,
+				F0BEEF0011223344556677D1 /* TouchTracker.swift in Sources */,
 				8B72D83300CAD566BFCF3FE1 /* KeyboardViewController.swift in Sources */,
 				273FC9499F6AFA5F033213D4 /* LIMEPreferenceManager.swift in Sources */,
 				8C4D2C17B8A1495297103E46 /* LimeToastState.swift in Sources */,
