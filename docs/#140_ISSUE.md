@@ -8,21 +8,22 @@
   Cangjie layout is currently fixed (bottom row: comma / space / period / symbol-switch),
   with no `;` key and no layout-customization feature; the need was added to the authors'
   evaluation list.
-- Current state: source merged on `master` in merge commit `be156c4c15fd` after
-  implementation commit `1004453b8682`. GitHub Release / APK v6.1.27 is now live as
-  `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
+- Current state: closed/completed by `limeimetw` on 2026-07-01 after the scoped cj4
+  semicolon-key / imKeys-unification work shipped in v6.1.27. Source merged on `master` in
+  merge commit `be156c4c15fd` after implementation commit `1004453b8682`. GitHub Release /
+  APK v6.1.27 is live as `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
   `297a2ffe40e5ab3a6361f9cae8cf301d40bd8292`, size 7410887 bytes, downloaded SHA-256
-  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`) and contains the cj4 semicolon-key / imKeys-unification work for Android/GitHub APK testers.
-  `limeimetw` posted the scoped reporter update at
-  https://github.com/lime-ime/limeime/issues/140#issuecomment-4846962860, asking GitHub
-  APK testers to update to v6.1.27 and Google Play users to wait for the Google Play test
-  update. The original reporter later clarified in
-  https://github.com/lime-ime/limeime/issues/140#issuecomment-4851381332 that they are an
-  iOS tester, so their validation depends on TestFlight/App Store delivery rather than the
-  Android GitHub APK. `limeimetw` then replied in
+  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`) and contains the
+  Android/GitHub APK delivery. `limeimetw` posted the scoped Android/GitHub APK update at
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4846962860. The original
+  reporter later clarified in https://github.com/lime-ime/limeime/issues/140#issuecomment-4851381332
+  that they are an iOS tester, so their validation depends on TestFlight/App Store delivery
+  rather than the Android GitHub APK. `limeimetw` replied in
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4851628067 that iOS v6.1.27
-  has been submitted to Apple review and should reach TestFlight after approval. The issue
-  remains open for iOS reporter confirmation and broader keyboard-customization evaluation.
+  had been submitted to Apple review, then closed the issue with
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4852416109 after noting the
+  scoped semicolon-key support is handled and broader keyboard appearance/layout adjustments
+  will remain lower-priority future evaluation.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
