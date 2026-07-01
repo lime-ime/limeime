@@ -118,12 +118,93 @@ final class PopupKeyboardView: UIView {
         sender.backgroundColor = palette.normalKey
     }
 
+    func key(at point: CGPoint, slideAllowance: CGFloat) -> KeyDef? {
+        PopupKeyDetector(targets: keyHitTargets(), slideAllowance: slideAllowance).key(at: point)
+    }
+
+    func setHighlightedKey(_ highlightedKey: KeyDef?) {
+        for button in popupKeyButtons() {
+            guard let buttonKey = keyDef(for: button) else { continue }
+            button.backgroundColor = buttonKey == highlightedKey ? palette.pressedKey : palette.normalKey
+        }
+    }
+
     // MARK: - Helpers
+
+    private func keyHitTargets() -> [PopupKeyHitTarget] {
+        popupKeyButtons().compactMap { button in
+            guard let keyDef = keyDef(for: button) else { return nil }
+            return PopupKeyHitTarget(keyDef: keyDef, frame: button.frame)
+        }
+    }
+
+    private func popupKeyButtons() -> [UIButton] {
+        subviews.compactMap { $0 as? UIButton }
+    }
+
+    private func keyDef(for button: UIButton) -> KeyDef? {
+        let ri = button.tag / 1000
+        let ki = button.tag % 1000
+        guard ri < layout.rows.count, ki < layout.rows[ri].keys.count else { return nil }
+        return layout.rows[ri].keys[ki]
+    }
 
     /// Strip Android XML escape prefixes: \' → ', \? → ?, \@ → @, \\ → \
     private func cleanLabel(_ label: String) -> String {
         guard label.hasPrefix("\\"), label.count > 1 else { return label }
         let rest = String(label.dropFirst())
         return rest == "\\" ? "\\" : rest
+    }
+}
+
+struct PopupKeyHitTarget: Equatable {
+    let keyDef: KeyDef
+    let frame: CGRect
+}
+
+struct PopupKeyDetector {
+    let targets: [PopupKeyHitTarget]
+    let slideAllowance: CGFloat
+
+    func key(at point: CGPoint) -> KeyDef? {
+        if let direct = targets.first(where: { $0.frame.standardized.contains(point) }) {
+            return direct.keyDef
+        }
+
+        var nearest: PopupKeyHitTarget?
+        var nearestDistance = CGFloat.greatestFiniteMagnitude
+        for target in targets {
+            let frame = target.frame.standardized
+            let distance = squareDistance(from: point, to: frame)
+            let allowance = point.y < frame.minY
+                ? slideAllowance * slideAllowance * 2
+                : slideAllowance * slideAllowance
+            guard distance <= allowance, distance < nearestDistance else { continue }
+            nearest = target
+            nearestDistance = distance
+        }
+        return nearest?.keyDef
+    }
+
+    private func squareDistance(from point: CGPoint, to rect: CGRect) -> CGFloat {
+        let dx: CGFloat
+        if point.x < rect.minX {
+            dx = rect.minX - point.x
+        } else if point.x > rect.maxX {
+            dx = point.x - rect.maxX
+        } else {
+            dx = 0
+        }
+
+        let dy: CGFloat
+        if point.y < rect.minY {
+            dy = rect.minY - point.y
+        } else if point.y > rect.maxY {
+            dy = point.y - rect.maxY
+        } else {
+            dy = 0
+        }
+
+        return dx * dx + dy * dy
     }
 }

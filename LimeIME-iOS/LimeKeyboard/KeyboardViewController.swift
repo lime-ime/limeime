@@ -3128,6 +3128,38 @@ extension KeyboardViewController: KeyboardViewDelegate {
         textDocumentProxy.adjustTextPosition(byCharacterOffset: steps)
     }
 
+    func keyboardViewHasOpenPopup(_ view: KeyboardView) -> Bool {
+        currentPopupView != nil
+    }
+
+    func keyboardView(_ view: KeyboardView, popupKeyAtKeyboardPoint point: CGPoint) -> KeyDef? {
+        guard let popup = currentPopupView else { return nil }
+        let pointInView = view.convert(point, to: self.view)
+        let pointInPopup = popup.convert(pointInView, from: self.view)
+        return popup.key(at: pointInPopup, slideAllowance: LayoutMetrics.PopupKeyboard.keyHeight * 0.25)
+    }
+
+    func keyboardView(_ view: KeyboardView, highlightPopupKey keyDef: KeyDef?) {
+        currentPopupView?.setHighlightedKey(keyDef)
+    }
+
+    func keyboardView(_ view: KeyboardView, didSelectPopupKey keyDef: KeyDef) {
+        dismissPopupKeyboard()
+        firePopupKey(keyDef)
+    }
+
+    func keyboardViewDidCancelPopupSlide(_ view: KeyboardView) {
+        dismissPopupKeyboard()
+    }
+
+    func keyboardViewDidSwipeLeft(_ view: KeyboardView) {
+        handleBackspace()
+    }
+
+    func keyboardViewDidSwipeRight(_ view: KeyboardView) {
+        _ = pickHighlightedCandidate()
+    }
+
     func keyboardViewDismissPreview(_ view: KeyboardView) {
         guard let preview = keyPreviewView else { return }
         keyPreviewView = nil

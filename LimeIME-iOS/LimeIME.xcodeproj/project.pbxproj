@@ -214,6 +214,7 @@
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
 		EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
+		F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */; };
 		F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AF70BA22361D8084D34B7F /* Keyboard.swift */; };
 		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
 		F2B817702A0EB8A2941473F6 /* SearchServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70669219C0D562C4F98D828D /* SearchServerTest.swift */; };
@@ -475,6 +476,7 @@
 		F04435F2855594DD68DDAB57 /* popup_punctuation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_punctuation.json; sourceTree = "<group>"; };
 		F0787C19D84A228F8B9731E4 /* symbols2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2.json; sourceTree = "<group>"; };
 		F0AD7B903A3658D6EBB77E60 /* SearchServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchServer.swift; sourceTree = "<group>"; };
+		F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchLayerGestureTests.swift; sourceTree = "<group>"; };
 		F485D645136F28A3B5AFED04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F4FC8B91EDE5C18040A0DA6F /* phone_simple.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_simple.json; sourceTree = "<group>"; };
 		FEA702000000000000000001 /* computer_simple.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = computer_simple.json; sourceTree = "<group>"; };
@@ -566,6 +568,7 @@
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
+				F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */,
 				8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */,
 				46C07357EED170657A3BF133 /* LimeDBTest.swift */,
 				A616F712F666B45F6A993A5C /* LIMEPreferenceManagerTest.swift */,
@@ -1249,6 +1252,7 @@
 				8B72D83300CAD566BFCF3FE2 /* KeyboardViewControllerTest.swift in Sources */,
 				F0BEEF0011223344556677B5 /* KeyDetectorTests.swift in Sources */,
 				F0BEEF0011223344556677C5 /* TouchTrackerTests.swift in Sources */,
+				F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */,
 				8C4D2C17B8A1495297103E44 /* LimeToastState.swift in Sources */,
 				06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */,
 				E02BE727FF878D591A3D34B5 /* LimeDB.swift in Sources */,
