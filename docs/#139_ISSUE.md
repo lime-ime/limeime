@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from a private email/TestFlight report. Do not expose reporter identity or private app details in public comments or docs.
-- Current state: open. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below). Could not reproduce the reporter's exact symptom; LIME's numeric-field routing is not reached from web fields. Source changes kept on `master` split pure number routing for Android parity and make the keyboard extension ASCII-capable, but reporter retest still waits for a TestFlight/App Store build and may need the reporter's exact field markup / iOS version by private email.
+- Current state: closed by maintainer/project-account on 2026-07-01 after maintainer confirmation that the email-reported issue was fixed in a newer version. Retained closure comments: https://github.com/lime-ime/limeime/issues/139#issuecomment-4849077209 and https://github.com/lime-ime/limeime/issues/139#issuecomment-4849080116. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below) could not reproduce the reporter's exact numeric-field symptom; LIME's numeric-field routing is not reached from web fields. Source changes kept on `master` split pure number routing for Android parity and make the keyboard extension ASCII-capable. No active public retest/watch remains; if the private reporter still sees the Array10 numeric-keyboard, bottom-coverage, or keyboard-size symptoms in a newer TestFlight build, reopen or create a fresh follow-up with the TestFlight version, iOS version, and non-sensitive field details.
 - Public acknowledgement: not needed. This is a maintainer-created tracking issue for private-email evidence.
 
 ## Problem statement
@@ -90,7 +90,7 @@ The bottom-content coverage portion may be an iOS custom-keyboard height/safe-ar
 
 ## Follow-up / retest condition
 
-Keep the issue open and assigned for iOS investigation. No public comment or reporter retest request is needed from the Android GitHub APK v6.1.27 because the relevant delivery path is iOS TestFlight/App Store. Ask for reporter retest only after a TestFlight/App Store build contains the kept iOS changes, or ask privately for additional non-sensitive field details if the maintainer needs them.
+The issue is closed after maintainer/project-account confirmation. Do not post another public acknowledgement or Android APK retest request for this private-email/TestFlight report. If the private reporter later says a newer TestFlight build still has the Array10 numeric-keyboard, bottom-coverage, or keyboard-size problem, reopen or create a fresh follow-up and ask privately for the TestFlight version, iOS version, exact field markup when available, and a non-sensitive screenshot/video frame.
 
 ## Simulator investigation findings (2026-06-29)
 
@@ -152,6 +152,13 @@ Tooling left in the tree for this investigation (uncommitted):
   has been **removed**. Note for next time: the LimeKeyboard extension target does
   **not** define `DEBUG`, so a `#if DEBUG` guard is compiled out there — leave such a log
   un-gated, or add `DEBUG` to that target's Debug config.
+
+## Closure notes (2026-07-01)
+
+- Live issue state: closed at 2026-07-01T00:22:50Z by `limeimetw`; labels remain `bug` and `Usability`, assignee remains `jrywu`.
+- Retained project-account comments say the issue is closed per maintainer confirmation, and that if a newer TestFlight build still shows the Array10 numeric-keyboard, bottom-coverage, or keyboard-size symptoms, the reporter should provide the test version plus screen/steps and the team can track it again.
+- Source/fix evidence visible on GitHub: commit `0863e6f2233518fb7cd23f406ddae94d867a4f7d` (`#139: iOS numeric-field routing investigation + Android-parity split`) updated the iOS keyboard extension routing, ASCII-capable setting, related tests, and this investigation doc.
+- Backlog state: remove `fix#139 iOS` from active pending fixes; treat any remaining validation as normal TestFlight/App Store release QA or a new follow-up if the private reporter reproduces the problem again.
 
 ## What to communicate to the reporter (private email)
 
