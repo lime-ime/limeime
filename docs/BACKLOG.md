@@ -10,7 +10,7 @@ Last reviewed: 2026-07-01
 
 ## Pending fixes
 
-- fix#139 iOS: maintainer-created private-email/TestFlight report for Array10 numeric-field routing, bottom-content coverage, and keyboard-size consistency. Current state: `docs/#139_ISSUE.md` records the simulator investigation and source changes on `master`, including the kept numeric-routing parity split and ASCII-capable keyboard behavior improvement. No reporter retest request applies until a TestFlight/App Store build contains the iOS changes, and the private reporter may still need field-markup details for the remaining bottom-content/keyboard-size scope.
+None currently tracked.
 
 ## New features / product work
 
