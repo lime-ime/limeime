@@ -511,10 +511,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         self.layout = layout
         super.init(frame: .zero)
         backgroundColor = .clear
-        // Allow two simultaneous touches on the keyboard so a second key-down isn't
-        // silently dropped when a prior key-up is still queued behind heavy main-thread
-        // work (e.g. CandidateBarView.rebuildButtons during compose). See docs/IOS_MISS_KEY.md.
-        isMultipleTouchEnabled = true
         buildKeys()
     }
     required init?(coder: NSCoder) { fatalError("not used") }
@@ -606,6 +602,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     /// Show or hide the globe key based on needsInputModeSwitchKey (spec §10).
     func setGlobeKeyVisible(_ visible: Bool) {
         globeButton?.isHidden = !visible
+        refreshAccessibilityElements(containing: globeButton)
     }
 
     private func configureGlobeButtonForSystemPicker() {
@@ -698,7 +695,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func makeSplitRow(row: KeyRow, rowHeight: CGFloat) -> UIView {
         let rowView = UIView()
         rowView.backgroundColor = .clear
-        rowView.isMultipleTouchEnabled = true
 
         let keys = row.keys
         guard !keys.isEmpty else { return rowView }
@@ -726,7 +722,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
             let contentView = KeyTouchLayer(owner: self)
             contentView.backgroundColor = .clear
-            contentView.isMultipleTouchEnabled = true
             contentView.translatesAutoresizingMaskIntoConstraints = false
             rowView.addSubview(contentView)
             NSLayoutConstraint.activate([
@@ -769,7 +764,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func makeRow(row: KeyRow, rowIndex: Int, rowHeight: CGFloat) -> UIView {
         let rowView = UIView()
         rowView.backgroundColor = .clear
-        rowView.isMultipleTouchEnabled = true
 
         // Total width percent for this row. When < 100, the keys are narrower than the
         // full row — center them with equal left/right whitespace via a content container.
@@ -778,7 +772,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         let contentView = KeyTouchLayer(owner: self)
         contentView.backgroundColor = .clear
-        contentView.isMultipleTouchEnabled = true
         contentView.translatesAutoresizingMaskIntoConstraints = false
         rowView.addSubview(contentView)
         NSLayoutConstraint.activate([
@@ -826,6 +819,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         let btn = KeyButton(keyDef: keyDef)
+        btn.accessibilityOwner = self
 
         let isKeyboardOptionsKey = Self.shouldUseLimeOptionsMenuGesture(
             keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
@@ -847,16 +841,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             isDualRowIPadKey: isDualRowIPadKey,
             usesGenericLongPress: usesGenericLongPress,
             legacyOwnedByIVC: legacyOwnedByIVC)
-
-        // Keyboard options keys:
-        //   - single tap (touchUpInside): primary key action
-        //   - long press: show LIME options menu (globe preview, spec §10)
-        // MUST use touchUpInside so the long-press GR can fire before the primary action runs.
-        if isKeyboardOptionsKey {
-            let lp = UILongPressGestureRecognizer(target: self, action: #selector(specialLongPressed(_:)))
-            lp.minimumPressDuration = LayoutMetrics.Gesture.specialKeyHoldDuration
-            btn.addGestureRecognizer(lp)
-        }
 
         // Shift key: store reference for icon updates (multiple shift keys on iPad layouts).
         if keyDef.code == LimeKeyCode.shift.rawValue {
@@ -887,24 +871,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 btn.addTarget(ivc, action: #selector(UIInputViewController.handleInputModeList(from:with:)),
                               for: .allTouchEvents)
             }
-        }
-
-        // Popup keyboard: long-press shows a mini keyboard panel (e.g. accent variants, punctuation)
-        if !keyDef.popupKeyboard.isEmpty {
-            let lp = UILongPressGestureRecognizer(target: self, action: #selector(popupKeyLongPressed(_:)))
-            lp.minimumPressDuration = LayoutMetrics.Gesture.popupKeyboardHoldDuration
-            // Keep the default cancelsTouchesInView == true: when the long-press fires, UIKit cancels
-            // the button touch so touchUpInside (the deferred primary tap) never fires — the long-press
-            // commits only its alternate, never the primary. Setting it false lets BOTH fire (the
-            // "6=" / "';" double-output bug).
-            btn.addGestureRecognizer(lp)
-        }
-
-        // feat#124: generic long-press → secondary action (English 123 → phone_simple).
-        if usesGenericLongPress {
-            let lp = UILongPressGestureRecognizer(target: self, action: #selector(genericLongPressed(_:)))
-            lp.minimumPressDuration = LayoutMetrics.Gesture.specialKeyHoldDuration
-            btn.addGestureRecognizer(lp)
         }
 
         // Edge-touch fix (SO 61227987 / blog.kulman.sk): in the screen-edge strip iOS delays the
@@ -940,22 +906,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 || usesGenericLongPress) {
             btn.addTarget(self, action: #selector(keyboardKeyTapped(_:)), for: .touchUpInside)
         }
-        // iPad dual-row keys: pan gesture for slide-down → secondary glyph; long-press → preview secondary.
-        // cancelsTouchesInView=false lets the button's touchUpInside still fire for normal taps.
-        if isDualRowIPadKey {
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(dualRowPanned(_:)))
-            pan.cancelsTouchesInView = false
-            btn.addGestureRecognizer(pan)
-
-            let lp = UILongPressGestureRecognizer(target: self, action: #selector(dualRowLongPressed(_:)))
-            lp.minimumPressDuration = LayoutMetrics.Gesture.dualRowHoldDuration
-            // Don't cancel the underlying touch — otherwise UIKit fires touchCancel
-            // on the button when the long-press begins, which dismisses the preview
-            // immediately. We need keyUp to fire only on actual finger release.
-            lp.cancelsTouchesInView = false
-            btn.addGestureRecognizer(lp)
-        }
-
         return btn
     }
 
@@ -992,66 +942,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         default:
             break
         }
-    }
-
-    @objc private func popupKeyLongPressed(_ gr: UILongPressGestureRecognizer) {
-        guard let keyBtn = gr.view as? KeyButton else { return }
-        let keyDef = keyBtn.keyDef
-
-        switch gr.state {
-        case .began:
-            // Show the mini-keyboard popup — identical for single- and multi-key. Dismiss the press
-            // preview explicitly: pressFeedbackGesture owns it now, and at the screen edge the button's
-            // keyCancel that used to dismiss it is itself eaten. (The button touch is still cancelled
-            // by this recognizer's default cancelsTouchesInView, so the deferred primary tap never fires.)
-            keyBtn.wasLongPressed = true
-            fireHaptic()
-            delegate?.keyboardViewDismissPreview(self)
-            let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
-            delegate?.keyboardView(self, didLongPressPopupKey: keyDef, sourceRect: keyRect)
-        case .ended:
-            // Multi-key: leave the popup on screen to tap-select. Single-key: dismiss it + send the key.
-            if keyDef.popupCharacters.count == 1 {
-                delegate?.keyboardView(self, didReleasePopupKey: keyDef, commit: true)
-            }
-        case .cancelled, .failed:
-            if keyDef.popupCharacters.count == 1 {
-                delegate?.keyboardView(self, didReleasePopupKey: keyDef, commit: false)
-            }
-        default:
-            break
-        }
-    }
-
-    // feat#124: generic long-press (e.g. English 123 → phone_simple).
-    @objc private func genericLongPressed(_ gr: UILongPressGestureRecognizer) {
-        guard gr.state == .began, let keyBtn = gr.view as? KeyButton else { return }
-        keyBtn.wasLongPressed = true   // suppress any deferred primary tap
-        fireHaptic()
-        delegate?.keyboardView(self, didLongPressKey: keyBtn.keyDef)
-    }
-
-    /// Build the space key as a SpaceKeyButton so tap/swipe/long-press are mutually exclusive.
-    private func makeSpaceButton(keyDef: KeyDef, rowHeight: CGFloat, totalPercent: CGFloat) -> UIButton {
-        let btn = SpaceKeyButton(keyDef: keyDef)
-        btn.restoreColor = normalKeyColor
-        applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
-
-        btn.onTap = { [weak self] in
-            guard let self else { return }
-            self.fireHaptic()
-            if self.feedbackSound     { self.playKeyClickSound() }
-            self.delegate?.keyboardView(self, didPress: keyDef)
-        }
-        btn.onLongPress = { [weak self] in
-            guard let self else { return }
-            self.delegate?.keyboardView(self, didLongPress: keyDef)
-        }
-        btn.onCaretMove = { [weak self] steps in
-            guard let self else { return }
-            self.delegate?.keyboardView(self, didMoveCaretBy: steps)
-        }
-        return btn
     }
 
     /// Apply background color, corner radius and shadow to any key button.
@@ -1120,9 +1010,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
         let renderIcon  = policyIcon ?? override?.icon  ?? keyDef.icon
         let renderLabel = policyIcon == nil ? (override?.label ?? keyDef.label) : ""
-        btn.accessibilityLabel = keyDef.sublabel.isEmpty
-            ? (!renderLabel.isEmpty ? renderLabel : renderIcon)
-            : "\(keyDef.label) \(keyDef.sublabel)"
+        btn.isAccessibilityElement = true
+        btn.accessibilityLabel = accessibilityLabel(for: keyDef,
+                                                    renderIcon: renderIcon,
+                                                    renderLabel: renderLabel)
+        btn.accessibilityTraits = .keyboardKey
         if !renderIcon.isEmpty {
             // SF Symbol icon key — dismiss key uses a larger point size for legibility
             let iconSize: CGFloat = renderIcon == "keyboard.chevron.compact.down"
@@ -1207,6 +1099,30 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
+    private func accessibilityLabel(for keyDef: KeyDef,
+                                    renderIcon: String,
+                                    renderLabel: String) -> String {
+        if !keyDef.sublabel.isEmpty {
+            return [keyDef.label, keyDef.sublabel]
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+        }
+        if !renderLabel.isEmpty { return renderLabel }
+        switch renderIcon {
+        case "delete.left": return "delete"
+        case "shift", "shift.fill", "capslock.fill": return "shift"
+        case "return": return "return"
+        case "globe": return "next keyboard"
+        case "keyboard.chevron.compact.down": return "dismiss keyboard"
+        case "arrow.left": return "left arrow"
+        case "arrow.right": return "right arrow"
+        case "arrow.up": return "up arrow"
+        case "arrow.down": return "down arrow"
+        case "magnifyingglass": return "search"
+        default: return renderIcon
+        }
+    }
+
     private func clearStyledKeyContent(from btn: UIButton) {
         btn.subviews
             .filter { $0.tag == Self.styledContentTag }
@@ -1223,6 +1139,49 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     private func allSubviews(of view: UIView) -> [UIView] {
         view.subviews + view.subviews.flatMap { allSubviews(of: $0) }
+    }
+
+    fileprivate func refreshAccessibilityElements(for layer: KeyTouchLayer) {
+        layer.accessibilityElements = allSubviews(of: layer).compactMap { view in
+            guard let button = view as? KeyButton,
+                  !button.isHidden,
+                  button.bounds.width > 0,
+                  button.bounds.height > 0 else {
+                return nil
+            }
+            return button
+        }
+    }
+
+    private func refreshAccessibilityElements(containing button: UIButton?) {
+        guard let layer = button?.superview as? KeyTouchLayer else { return }
+        refreshAccessibilityElements(for: layer)
+    }
+
+    fileprivate func accessibilityActivateKey(_ button: KeyButton) -> Bool {
+        guard button.isDescendant(of: self),
+              !button.isHidden else {
+            return false
+        }
+        let token = NSObject()
+        let touchID = ObjectIdentifier(token)
+        let point: CGPoint
+        if let layer = button.superview as? KeyTouchLayer {
+            point = button.convert(CGPoint(x: button.bounds.midX, y: button.bounds.midY), to: layer)
+        } else {
+            point = .zero
+        }
+        let target = PlainKeyTouchTarget(button: button, keyDef: button.keyDef)
+        let state = OwnerTouchState(behavior: ownerTouchBehavior(for: button.keyDef),
+                                    target: target,
+                                    startPoint: point,
+                                    lastPoint: point,
+                                    startTime: CACurrentMediaTime())
+        ownerTouchStates[touchID] = state
+        beginOwnerKeyTouch(touchID: touchID, state: state)
+        endOwnerTouch(touchID: touchID, state: ownerTouchStates[touchID] ?? state)
+        cleanupOwnerTouch(touchID)
+        return true
     }
 
     private func renderedKeys(for sourceLayout: LimeKeyLayout) -> [KeyDef] {
@@ -1925,14 +1884,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         // a gesture recognizer still fires in the screen-edge strip where iOS eats this touchDown on a
         // held press, so the edge keys get the same feedback as inner keys.
 
-        // Keyboard dismiss key (code -3) and globe key (code -200): defer didPress to
-        // touchUpInside so the long-press GR can fire before the action runs (spec §10).
-        // Globe key must not fire advanceToNextInputMode() immediately on touchDown or the
-        // keyboard switches before the long-press menu can appear.
-        // All popup-keyboard keys: also deferred so the long-press popup can appear
-        // before the primary action fires (prevents double-insert on non-modifier popup keys).
-        // iPad dual-row top keys: deferred so slide-down gesture can intercept and commit
-        // the secondary glyph (longPressCode) instead of the primary.
+        // Button-owned legacy/system keys defer didPress to touchUpInside so their
+        // native picker/long-press arbitration can complete before the primary action.
         let isDualRowIPad = Self.shouldUseDualRowGesture(isPad: isPad,
                                                           layoutId: layout.id,
                                                           keyDef: keyDef)
@@ -1956,11 +1909,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
-    /// Fires `didPress` for the keyboard dismiss key on touchUpInside (see keyDown comment).
-    /// Suppressed if the key was long-pressed (wasLongPressed flag) to prevent dismissing
-    /// the keyboard immediately after the long-press options menu appears.
-    /// For iPad dual-row keys with a completed slide-down, wasLongPressed is set by
-    /// dualRowPanned so this handler is suppressed (secondary was already committed there).
+    /// Fires `didPress` for button-owned legacy/system keys on touchUpInside.
     @objc private func keyboardKeyTapped(_ btn: UIButton) {
         guard let keyBtn = btn as? KeyButton, !keyBtn.wasLongPressed else { return }
         delegate?.keyboardView(self, didPress: keyBtn.keyDef)
@@ -2020,81 +1969,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         repeatTimer?.invalidate()
         repeatTimer = nil
         repeatKeyDef = nil
-    }
-
-    /// Long-press handler for keyboard dismiss key and legacy globe key.
-    @objc private func specialLongPressed(_ gr: UILongPressGestureRecognizer) {
-        guard gr.state == .began, let keyBtn = gr.view as? KeyButton else { return }
-        // Mark so touchUpInside (keyboardKeyTapped) does NOT fire dismiss/action after long press.
-        keyBtn.wasLongPressed = true
-        delegate?.keyboardView(self, didLongPress: keyBtn.keyDef)
-    }
-
-    /// Long-press handler for iPad dual-row keys: shows a key preview with the sliding char.
-    @objc private func dualRowLongPressed(_ gr: UILongPressGestureRecognizer) {
-        guard isPad, let keyBtn = gr.view as? KeyButton else { return }
-        let keyDef = keyBtn.keyDef
-        guard keyDef.longPressCode != 0 else { return }
-        let slidingDef = KeyDef(code: keyDef.longPressCode,
-                                codes: [keyDef.longPressCode],
-                                label: keyDef.label, sublabel: "",
-                                widthPercent: keyDef.widthPercent,
-                                isRepeatable: false, isModifier: false, isSticky: false,
-                                longPressCode: 0)
-        switch gr.state {
-        case .began:
-            keyBtn.wasLongPressed = true
-            let keyRect = keyBtn.convert(keyBtn.bounds, to: self)
-            delegate?.keyboardView(self, showPreviewFor: slidingDef, keyRect: keyRect)
-        case .ended:
-            delegate?.keyboardView(self, didPress: slidingDef)
-            delegate?.keyboardViewDismissPreview(self)
-        case .cancelled, .failed:
-            delegate?.keyboardViewDismissPreview(self)
-        default:
-            break
-        }
-    }
-
-    /// Pan handler for iPad dual-row top keys.
-    /// A downward slide past the threshold commits the secondary glyph (longPressCode)
-    /// instead of the primary (code). The key label morphs to show only the secondary
-    /// while the slide is active — matches Apple's stock iPad keyboard behavior.
-    @objc private func dualRowPanned(_ gr: UIPanGestureRecognizer) {
-        guard isPad, let keyBtn = gr.view as? KeyButton else { return }
-        let keyDef = keyBtn.keyDef
-        guard keyDef.longPressCode != 0, keyDef.popupKeyboard.isEmpty else { return }
-
-        let translation = gr.translation(in: self)
-        let threshold = LayoutMetrics.Gesture.dualRowSwipeThreshold(landscape: isLandscape)
-
-        switch gr.state {
-        case .changed:
-            if translation.y > threshold && !keyBtn.wasSlideDown {
-                keyBtn.wasSlideDown = true
-                setDualRowLabelSecondaryOnly(keyBtn, secondaryOnly: true)
-            } else if translation.y <= threshold && keyBtn.wasSlideDown {
-                // User slid back up — revert to primary glyph display.
-                keyBtn.wasSlideDown = false
-                setDualRowLabelSecondaryOnly(keyBtn, secondaryOnly: false)
-            }
-        case .ended, .cancelled:
-            if keyBtn.wasSlideDown {
-                setDualRowLabelSecondaryOnly(keyBtn, secondaryOnly: false)
-                keyBtn.wasSlideDown = false
-                // Commit secondary directly here and suppress keyboardKeyTapped via wasLongPressed.
-                let secondaryDef = KeyDef(code: keyDef.longPressCode,
-                                          codes: [keyDef.longPressCode],
-                                          label: keyDef.label, sublabel: "",
-                                          widthPercent: keyDef.widthPercent,
-                                          isRepeatable: false, isModifier: false, isSticky: false,
-                                          longPressCode: 0)
-                delegate?.keyboardView(self, didPress: secondaryDef)
-                keyBtn.wasLongPressed = true
-            }
-        default:
-            break
-        }
     }
 
     /// Morphs a dual-row key's label to show only the secondary glyph (or restores original).
@@ -2168,10 +2042,16 @@ fileprivate final class KeyTouchLayer: UIView {
     init(owner: KeyboardView) {
         self.owner = owner
         super.init(frame: .zero)
+        isAccessibilityElement = false
         isMultipleTouchEnabled = true
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        owner?.refreshAccessibilityElements(for: self)
+    }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         owner?.keyTouchLayer(self, touchesBegan: touches, with: event)
@@ -2190,110 +2070,10 @@ fileprivate final class KeyTouchLayer: UIView {
     }
 }
 
-// MARK: - SpaceKeyButton
-// Handles tap / slide / long-press internally using raw touch tracking.
-// This avoids the UISwipeGestureRecognizer + UIButton.touchDown conflict where a space
-// character fires on touchDown before UIKit has a chance to recognise the swipe direction.
-// Horizontal sliding moves the text cursor one step per spaceCaretStepPx pixels; the initial
-// dead zone is spaceSwipeThreshold so accidental micro-drags don't move the cursor.
-private final class SpaceKeyButton: KeyButton {
-    var onTap:       (() -> Void)?
-    var onLongPress: (() -> Void)?
-    /// Called with a signed step count each time the finger crosses a caret step boundary.
-    var onCaretMove: ((Int) -> Void)?
-    /// Normal (unpressed) background color — set from the active palette when the button is created.
-    var restoreColor: UIColor = .white
-
-    private var touchBeganPoint: CGPoint = .zero
-    private var longPressTimer:  Timer?
-    private var caretFired = false   // true once cursor movement has started
-    private var tapSuppressed = false // true once any action (long-press or caret) fired
-    private var lastCaretStep = 0    // last discrete step emitted
-
-    private static let stepPx:           CGFloat      = LayoutMetrics.Gesture.spaceCaretStepPx
-    private static let deadZone:         CGFloat      = LayoutMetrics.Gesture.spaceSwipeThreshold
-    private static let longPressDuration: TimeInterval = LayoutMetrics.Gesture.spaceLongPressDuration
-
-    // Override all four touch methods WITHOUT calling super so that UIKit never sends
-    // the .touchDown / .touchUpInside control events → keyDown/keyUp never fire for space.
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        touchBeganPoint = touch.location(in: self)
-        caretFired    = false
-        tapSuppressed = false
-        lastCaretStep = 0
-        backgroundColor = UIColor.systemGray5
-        longPressTimer?.invalidate()
-        longPressTimer = Timer.scheduledTimer(
-            withTimeInterval: SpaceKeyButton.longPressDuration, repeats: false
-        ) { [weak self] _ in
-            guard let self, !self.tapSuppressed else { return }
-            self.tapSuppressed = true
-            self.resetBg()
-            self.onLongPress?()
-        }
-    }
-
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, (!tapSuppressed || caretFired) else { return }
-        let dx = touch.location(in: self).x - touchBeganPoint.x
-        guard abs(dx) >= SpaceKeyButton.deadZone else { return }
-
-        // First crossing: cancel long-press and start caret tracking
-        if !caretFired {
-            caretFired = true
-            longPressTimer?.invalidate(); longPressTimer = nil
-            resetBg()
-        }
-        // Emit delta steps since last move event, with acceleration for longer slides
-        let sign = dx < 0 ? -1 : 1
-        let step = sign * SpaceKeyButton.stepsForDisplacement(abs(dx))
-        let delta = step - lastCaretStep
-        if delta != 0 {
-            lastCaretStep = step
-            tapSuppressed = true
-            onCaretMove?(delta)
-        }
-    }
-
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        longPressTimer?.invalidate(); longPressTimer = nil
-        resetBg()
-        if !tapSuppressed { onTap?() }
-    }
-
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        longPressTimer?.invalidate(); longPressTimer = nil
-        resetBg()
-    }
-
-    /// Maps absolute horizontal displacement to a total signed step count.
-    /// Three tiers give progressively faster caret movement for longer slides.
-    private static func stepsForDisplacement(_ absDx: CGFloat) -> Int {
-        let travel = absDx - deadZone
-        guard travel > 0 else { return 0 }
-        // Tier boundaries (pt beyond dead zone) and step sizes per tier
-        let t1: CGFloat = 60            // slow zone: 7pt / step
-        let t2: CGFloat = 140           // medium zone: 3.5pt / step → fast zone: 1.75pt / step
-        let steps: CGFloat
-        if travel <= t1 {
-            steps = travel / stepPx
-        } else if travel <= t2 {
-            steps = t1 / stepPx + (travel - t1) / (stepPx / 2)
-        } else {
-            steps = t1 / stepPx + (t2 - t1) / (stepPx / 2) + (travel - t2) / (stepPx / 4)
-        }
-        return Int(steps)
-    }
-
-    private func resetBg() {
-        backgroundColor = restoreColor
-    }
-}
-
 // MARK: - KeyButton: stores its KeyDef
 private class KeyButton: UIButton {
     let keyDef: KeyDef
+    weak var accessibilityOwner: KeyboardView?
     /// Set to true when a UILongPressGestureRecognizer fires on this button.
     /// Used to suppress the subsequent touchUpInside (e.g. done key dismissing keyboard after long press).
     var wasLongPressed = false
@@ -2304,6 +2084,13 @@ private class KeyButton: UIButton {
         super.init(frame: .zero)
     }
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func accessibilityActivate() -> Bool {
+        if isUserInteractionEnabled {
+            return super.accessibilityActivate()
+        }
+        return accessibilityOwner?.accessibilityActivateKey(self) ?? false
+    }
 }
 
 extension KeyboardView: UIGestureRecognizerDelegate {

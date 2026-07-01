@@ -1,5 +1,6 @@
 ﻿import XCTest
 import CoreGraphics
+import UIKit
 
 final class TouchLayerGestureTests: XCTestCase {
 
@@ -85,6 +86,45 @@ final class TouchLayerGestureTests: XCTestCase {
         XCTAssertEqual(tracker.currentKey, space)
     }
 
+    func testKeyTouchLayerAccessibilityElementsExposeVisibleKeysAndActivateThroughOwner() throws {
+        let layout = LimeKeyLayout(id: "accessibility_test", rows: [
+            KeyRow(keys: [
+                KeyDef(code: 97, label: "a", widthPercent: 20),
+                KeyDef(code: LimeKeyCode.space.rawValue, label: "space", widthPercent: 40),
+                KeyDef(code: LimeKeyCode.delete.rawValue, widthPercent: 20,
+                       icon: "delete.left", isRepeatable: true, isModifier: true),
+                KeyDef(code: LimeKeyCode.shift.rawValue, widthPercent: 20,
+                       icon: "shift", isModifier: true),
+            ])
+        ])
+        let keyboard = KeyboardView(layout: layout)
+        let delegate = RecordingKeyboardDelegate()
+        keyboard.delegate = delegate
+        keyboard.frame = CGRect(x: 0, y: 0, width: 320, height: 64)
+        keyboard.layoutIfNeeded()
+
+        let layer = try XCTUnwrap(keyTouchLayers(in: keyboard).first)
+        let elements = try XCTUnwrap(layer.accessibilityElements as? [UIButton])
+        XCTAssertEqual(elements.map(\.accessibilityLabel), ["a", "space", "delete", "shift"])
+        XCTAssertTrue(elements.allSatisfy { $0.accessibilityTraits == .keyboardKey })
+
+        for label in ["space", "delete", "shift"] {
+            let button = try XCTUnwrap(elements.first { $0.accessibilityLabel == label })
+            XCTAssertTrue(button.accessibilityActivate())
+        }
+        XCTAssertEqual(delegate.pressedCodes, [
+            LimeKeyCode.space.rawValue,
+            LimeKeyCode.delete.rawValue,
+            LimeKeyCode.shift.rawValue,
+        ])
+
+        let splitKeyboard = KeyboardView(layout: layout)
+        splitKeyboard.splitMode = true
+        splitKeyboard.frame = CGRect(x: 0, y: 0, width: 640, height: 64)
+        splitKeyboard.layoutIfNeeded()
+        XCTAssertEqual(accessibilityLabels(in: splitKeyboard), ["a", "space", "delete", "shift"])
+    }
+
     private func makeKey(label: String,
                          code: Int,
                          isRepeatable: Bool,
@@ -99,10 +139,48 @@ final class TouchLayerGestureTests: XCTestCase {
                  isDualRow: false,
                  isSpace: false)
     }
+
+    private func keyTouchLayers(in view: UIView) -> [UIView] {
+        view.subviews.flatMap { subview -> [UIView] in
+            let current = String(describing: type(of: subview)) == "KeyTouchLayer" ? [subview] : []
+            return current + keyTouchLayers(in: subview)
+        }
+    }
+
+    private func accessibilityLabels(in keyboard: KeyboardView) -> [String?] {
+        keyTouchLayers(in: keyboard).flatMap {
+            ($0.accessibilityElements as? [UIButton])?.map(\.accessibilityLabel) ?? []
+        }
+    }
 }
 
 private extension CGRect {
     var center: CGPoint {
         CGPoint(x: midX, y: midY)
     }
+}
+
+private final class RecordingKeyboardDelegate: KeyboardViewDelegate {
+    var pressedCodes: [Int] = []
+
+    func keyboardView(_ view: KeyboardView, didPress keyDef: KeyDef) {
+        pressedCodes.append(keyDef.code)
+    }
+
+    func keyboardView(_ view: KeyboardView, didRelease keyDef: KeyDef) {}
+    func keyboardView(_ view: KeyboardView, didUpdateShiftHoldActive active: Bool) {}
+    func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {}
+    func keyboardView(_ view: KeyboardView, didLongPressKey keyDef: KeyDef) {}
+    func keyboardView(_ view: KeyboardView, didLongPressPopupKey keyDef: KeyDef, sourceRect: CGRect) {}
+    func keyboardView(_ view: KeyboardView, didReleasePopupKey keyDef: KeyDef, commit: Bool) {}
+    func keyboardView(_ view: KeyboardView, showPreviewFor keyDef: KeyDef, keyRect: CGRect) {}
+    func keyboardViewDismissPreview(_ view: KeyboardView) {}
+    func keyboardView(_ view: KeyboardView, didMoveCaretBy steps: Int) {}
+    func keyboardViewHasOpenPopup(_ view: KeyboardView) -> Bool { false }
+    func keyboardView(_ view: KeyboardView, popupKeyAtKeyboardPoint point: CGPoint) -> KeyDef? { nil }
+    func keyboardView(_ view: KeyboardView, highlightPopupKey keyDef: KeyDef?) {}
+    func keyboardView(_ view: KeyboardView, didSelectPopupKey keyDef: KeyDef) {}
+    func keyboardViewDidCancelPopupSlide(_ view: KeyboardView) {}
+    func keyboardViewDidSwipeLeft(_ view: KeyboardView) {}
+    func keyboardViewDidSwipeRight(_ view: KeyboardView) {}
 }

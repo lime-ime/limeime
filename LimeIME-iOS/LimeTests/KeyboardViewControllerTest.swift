@@ -1427,7 +1427,7 @@ final class KeyboardViewControllerTest: XCTestCase {
     func testKeyboardViewWiresGenericLongPressAndHint() throws {
         let src = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"), encoding: .utf8)
         XCTAssertTrue(src.contains("func shouldUseGenericLongPress"))
-        XCTAssertTrue(src.contains("genericLongPressed"))
+        XCTAssertTrue(src.contains("shouldStartDeferredLongPressTimer"))
         XCTAssertTrue(src.contains("didLongPressKey"))
     }
 
