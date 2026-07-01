@@ -1876,10 +1876,13 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func finishPlainTouch(_ touchID: ObjectIdentifier) {
-        guard let layerID = touchLayerIDs.removeValue(forKey: touchID) else { return }
-        if !touchLayerIDs.values.contains(layerID) {
-            plainTouchContexts.removeValue(forKey: layerID)
-        }
+        // ponytail: keep the per-layer KeyDetector context cached across taps (built
+        // once, reused). Dropping it whenever a layer's touches drained rebuilt the
+        // detector — allSubviews walk + per-key frame conversions — on EVERY
+        // touchesBegan, adding work to the latency-critical press path and dropping
+        // keys under fast typing. It is still invalidated on real layout change via
+        // invalidatePlainTouchContexts() in layoutSubviews()/buildKeys().
+        touchLayerIDs.removeValue(forKey: touchID)
     }
 
     private func invalidatePlainTouchContexts() {
