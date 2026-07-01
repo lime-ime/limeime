@@ -20,7 +20,7 @@ final class KeyboardViewControllerTest: XCTestCase {
         let sublabel: String
         let widthPercent: Double
         let popupKeyboard: String
-        let popupCharacters: String
+        let popupCharacters: String?   // absent in simple layouts (computer_simple/phone_simple); app defaults to "" too
         let longPressCode: Int?
     }
 
