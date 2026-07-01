@@ -18,9 +18,11 @@
   APK testers to update to v6.1.27 and Google Play users to wait for the Google Play test
   update. The original reporter later clarified in
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4851381332 that they are an
-  iOS tester, so their validation depends on a future TestFlight/App Store build rather than
-  the Android GitHub APK. The issue remains open for iOS reporter confirmation and broader
-  keyboard-customization evaluation.
+  iOS tester, so their validation depends on TestFlight/App Store delivery rather than the
+  Android GitHub APK. `limeimetw` then replied in
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4851628067 that iOS v6.1.27
+  has been submitted to Apple review and should reach TestFlight after approval. The issue
+  remains open for iOS reporter confirmation and broader keyboard-customization evaluation.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
