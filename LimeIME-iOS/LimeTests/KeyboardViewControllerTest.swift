@@ -507,6 +507,36 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("var enableInputClicksWhenVisible: Bool { true }"))
     }
 
+    func testKeyPreviewIsPersistentAndHiddenInsteadOfRebuiltPerKeypress() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("private var keyPreviewView: UIView?"))
+        XCTAssertFalse(source.contains("private weak var keyPreviewView: UIView?"))
+        XCTAssertTrue(source.contains("private var keyPreviewShapeLayer: CAShapeLayer?"))
+        XCTAssertTrue(source.contains("private var keyPreviewSingleLabel: UILabel?"))
+        XCTAssertTrue(source.contains("private var keyPreviewDualStack: UIStackView?"))
+        XCTAssertTrue(source.contains("private func ensureKeyPreviewView() -> UIView"))
+        XCTAssertTrue(source.contains("private func hideKeyPreview(animated: Bool)"))
+        XCTAssertTrue(source.contains("private func teardownKeyPreview()"))
+
+        let showRange = try XCTUnwrap(source.range(
+            of: #"func keyboardView\(_ view: KeyboardView, showPreviewFor keyDef: KeyDef, keyRect: CGRect\) \{[\s\S]*?\n    \}\n\n    func keyboardView\(_ view: KeyboardView, didMoveCaretBy"#,
+            options: .regularExpression
+        ))
+        let showSource = String(source[showRange])
+        XCTAssertFalse(showSource.contains("removeFromSuperview()"))
+        XCTAssertTrue(showSource.contains("ensureKeyPreviewView()"))
+
+        let dismissRange = try XCTUnwrap(source.range(
+            of: #"func keyboardViewDismissPreview\(_ view: KeyboardView\) \{[\s\S]*?\n    \}"#,
+            options: .regularExpression
+        ))
+        let dismissSource = String(source[dismissRange])
+        XCTAssertFalse(dismissSource.contains("removeFromSuperview()"))
+        XCTAssertTrue(dismissSource.contains("hideKeyPreview(animated: true)"))
+    }
+
     func testKeyboardSoundFeedbackBypassesSystemInputClickToggle() throws {
         let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
                                 encoding: .utf8)

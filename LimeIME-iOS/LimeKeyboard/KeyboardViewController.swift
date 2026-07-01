@@ -175,7 +175,21 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var pickedAutoSpace = false
 
     // MARK: - Key Preview
-    private weak var keyPreviewView: UIView?
+    private enum KeyPreviewContentMode {
+        case single
+        case dual
+    }
+
+    private var keyPreviewView: UIView?
+    private var keyPreviewShapeLayer: CAShapeLayer?
+    private var keyPreviewSingleLabel: UILabel?
+    private var keyPreviewDualStack: UIStackView?
+    private var keyPreviewDualPrimaryLabel: UILabel?
+    private var keyPreviewDualSubLabel: UILabel?
+    private var keyPreviewSingleWidthConstraint: NSLayoutConstraint?
+    private var keyPreviewDualWidthConstraint: NSLayoutConstraint?
+    private var keyPreviewContentMode: KeyPreviewContentMode?
+    private var keyPreviewAnimationID = 0
 
     /// True when the **host app** is iPad-class. iPhone-only apps running on iPad
     /// in scaled/compatibility mode report `.phone` here even though the device is
@@ -318,6 +332,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Detach window-attached composing popup so it doesn't linger after
         // the keyboard is dismissed.
         hideComposingPopup()
+        teardownKeyPreview()
         // postFinishInput() snapshots scorelist + ldPhraseListArray and dispatches to background
         // internally — no outer async wrapper needed.
         searchServer?.postFinishInput()
@@ -2961,16 +2976,142 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     // MARK: Key preview (iOS callout popup above pressed key)
 
-    func keyboardView(_ view: KeyboardView, showPreviewFor keyDef: KeyDef, keyRect: CGRect) {
-        keyPreviewView?.removeFromSuperview()
+    private func ensureKeyPreviewView() -> UIView {
+        if let keyPreviewView {
+            return keyPreviewView
+        }
 
+        let container = UIView(frame: .zero)
+        container.backgroundColor = .clear
+        container.isUserInteractionEnabled = false
+        container.alpha = 0
+        container.isHidden = true
+
+        let shapeLayer = CAShapeLayer()
+        shapeLayer.shadowColor = LayoutMetrics.Shadow.color
+        shapeLayer.shadowOffset = CGSize(width: 0, height: LayoutMetrics.KeyPreview.shadowOffsetY)
+        shapeLayer.shadowOpacity = LayoutMetrics.KeyPreview.shadowOpacity
+        shapeLayer.shadowRadius = LayoutMetrics.KeyPreview.shadowRadius
+        container.layer.addSublayer(shapeLayer)
+
+        let singleLabel = UILabel()
+        singleLabel.textAlignment = .center
+        singleLabel.translatesAutoresizingMaskIntoConstraints = false
+        singleLabel.isHidden = true
+        container.addSubview(singleLabel)
+
+        let dualStack = UIStackView()
+        dualStack.alignment = .center
+        dualStack.translatesAutoresizingMaskIntoConstraints = false
+        dualStack.isHidden = true
+
+        let primaryLabel = UILabel()
+        primaryLabel.setContentHuggingPriority(.required, for: .horizontal)
+        primaryLabel.setContentHuggingPriority(.required, for: .vertical)
+
+        let subLabel = UILabel()
+        subLabel.setContentHuggingPriority(.required, for: .horizontal)
+        subLabel.setContentHuggingPriority(.required, for: .vertical)
+
+        dualStack.addArrangedSubview(primaryLabel)
+        dualStack.addArrangedSubview(subLabel)
+        container.addSubview(dualStack)
+
+        let singleWidthConstraint = singleLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 0)
+        let dualWidthConstraint = dualStack.widthAnchor.constraint(lessThanOrEqualToConstant: 0)
+        NSLayoutConstraint.activate([
+            singleLabel.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            singleLabel.centerYAnchor.constraint(equalTo: container.centerYAnchor,
+                                                 constant: -LayoutMetrics.KeyPreview.neckHeight / 2),
+            singleWidthConstraint,
+            dualStack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            dualStack.centerYAnchor.constraint(equalTo: container.centerYAnchor,
+                                               constant: -LayoutMetrics.KeyPreview.neckHeight / 2),
+            dualWidthConstraint,
+        ])
+
+        keyPreviewView = container
+        keyPreviewShapeLayer = shapeLayer
+        keyPreviewSingleLabel = singleLabel
+        keyPreviewDualStack = dualStack
+        keyPreviewDualPrimaryLabel = primaryLabel
+        keyPreviewDualSubLabel = subLabel
+        keyPreviewSingleWidthConstraint = singleWidthConstraint
+        keyPreviewDualWidthConstraint = dualWidthConstraint
+        return container
+    }
+
+    private func attachKeyPreview(_ preview: UIView, to window: UIWindow) {
+        guard preview.superview !== window else { return }
+        preview.removeFromSuperview()
+        window.addSubview(preview)
+    }
+
+    private func setKeyPreviewContentMode(_ mode: KeyPreviewContentMode) {
+        guard keyPreviewContentMode != mode else { return }
+        keyPreviewContentMode = mode
+        keyPreviewSingleLabel?.isHidden = mode != .single
+        keyPreviewDualStack?.isHidden = mode != .dual
+    }
+
+    private func hideKeyPreview(animated: Bool) {
+        guard let preview = keyPreviewView else { return }
+        keyPreviewAnimationID += 1
+        let animationID = keyPreviewAnimationID
+        preview.layer.removeAllAnimations()
+        keyPreviewShapeLayer?.removeAllAnimations()
+
+        let finish: () -> Void = { [weak self, weak preview] in
+            guard let self = self,
+                  let preview = preview,
+                  animationID == self.keyPreviewAnimationID else {
+                return
+            }
+            preview.alpha = 0
+            preview.transform = .identity
+            preview.isHidden = true
+        }
+
+        if animated {
+            UIView.animate(withDuration: LayoutMetrics.KeyPreview.disappearDuration,
+                           animations: {
+                preview.alpha = 0
+            }, completion: { _ in finish() })
+        } else {
+            finish()
+        }
+    }
+
+    private func teardownKeyPreview() {
+        keyPreviewAnimationID += 1
+        keyPreviewView?.layer.removeAllAnimations()
+        keyPreviewShapeLayer?.removeAllAnimations()
+        keyPreviewView?.removeFromSuperview()
+        keyPreviewView = nil
+        keyPreviewShapeLayer = nil
+        keyPreviewSingleLabel = nil
+        keyPreviewDualStack = nil
+        keyPreviewDualPrimaryLabel = nil
+        keyPreviewDualSubLabel = nil
+        keyPreviewSingleWidthConstraint = nil
+        keyPreviewDualWidthConstraint = nil
+        keyPreviewContentMode = nil
+    }
+
+    func keyboardView(_ view: KeyboardView, showPreviewFor keyDef: KeyDef, keyRect: CGRect) {
         // At least label or sublabel must be non-empty
-        guard !keyDef.label.isEmpty || !keyDef.sublabel.isEmpty else { return }
+        guard !keyDef.label.isEmpty || !keyDef.sublabel.isEmpty else {
+            hideKeyPreview(animated: false)
+            return
+        }
 
         // Convert key rect from KeyboardView → window coordinates so the preview
         // can float above the keyboard top edge without being clipped by self.view.
         guard let kbView = keyboardView,
-              let window = self.view.window else { return }
+              let window = self.view.window else {
+            hideKeyPreview(animated: false)
+            return
+        }
         let keyInWindow = kbView.convert(keyRect, to: window)
 
         // --- Layout mode: mirror key rendering (same isTall logic as KeyboardView) ---
@@ -2996,10 +3137,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                     window.bounds.width - bubbleW - edge))
         let bubbleY = max(edge, keyInWindow.minY - totalH)
 
-        let container = UIView(frame: CGRect(x: bubbleX, y: bubbleY,
-                                             width: bubbleW, height: totalH))
-        container.backgroundColor = .clear
-        container.isUserInteractionEnabled = false
+        let container = ensureKeyPreviewView()
+        attachKeyPreview(container, to: window)
+        container.layer.removeAllAnimations()
+        keyPreviewShapeLayer?.removeAllAnimations()
+        container.frame = CGRect(x: bubbleX, y: bubbleY, width: bubbleW, height: totalH)
 
         // --- Callout shape ---------------------------------------------------
         // Key edges in container-local coordinates (clamped so a window-edge bubble still draws).
@@ -3037,35 +3179,30 @@ extension KeyboardViewController: KeyboardViewDelegate {
         let keyBg    = keyDef.isModifier ? pal.modifierKey   : pal.normalKey
         let keyLabel = keyDef.isModifier ? pal.modifierLabel : pal.label
 
-        let shapeLayer = CAShapeLayer()
-        shapeLayer.path = path.cgPath
-        shapeLayer.fillColor = keyBg.cgColor
-        shapeLayer.shadowColor = LayoutMetrics.Shadow.color
-        shapeLayer.shadowOffset = CGSize(width: 0, height: LayoutMetrics.KeyPreview.shadowOffsetY)
-        shapeLayer.shadowOpacity = LayoutMetrics.KeyPreview.shadowOpacity
-        shapeLayer.shadowRadius  = LayoutMetrics.KeyPreview.shadowRadius
-        container.layer.addSublayer(shapeLayer)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        keyPreviewShapeLayer?.path = path.cgPath
+        keyPreviewShapeLayer?.fillColor = keyBg.cgColor
+        CATransaction.commit()
 
         // --- Content: same layout as the key itself --------------------------
-        let contentView: UIView
         let hasSublabel = !keyDef.sublabel.isEmpty
 
         if hasSublabel {
             // Dual-label layout — mirrors KeyboardView.makeDualLabelView
-            let stack = UIStackView()
+            setKeyPreviewContentMode(.dual)
+            guard let stack = keyPreviewDualStack,
+                  let primaryLbl = keyPreviewDualPrimaryLabel,
+                  let subLbl = keyPreviewDualSubLabel else {
+                return
+            }
             stack.alignment = .center
 
-            let primaryLbl = UILabel()
             primaryLbl.text = keyDef.label
             primaryLbl.textColor = pal.secondaryLabel
-            primaryLbl.setContentHuggingPriority(.required, for: .horizontal)
-            primaryLbl.setContentHuggingPriority(.required, for: .vertical)
 
-            let subLbl = UILabel()
             subLbl.text = keyDef.sublabel
             subLbl.textColor = keyLabel
-            subLbl.setContentHuggingPriority(.required, for: .horizontal)
-            subLbl.setContentHuggingPriority(.required, for: .vertical)
 
             if isTall {
                 stack.axis    = .vertical
@@ -3086,41 +3223,32 @@ extension KeyboardViewController: KeyboardViewDelegate {
                     ofSize: LayoutMetrics.KeyPreview.sublabelFontSize(isTall: false, isLandscape: isLand),
                     weight: .regular)
             }
-            stack.addArrangedSubview(primaryLbl)
-            stack.addArrangedSubview(subLbl)
-            contentView = stack
+            keyPreviewDualWidthConstraint?.constant = bubbleW + LayoutMetrics.KeyPreview.contentWidthInset
         } else {
             // Single label
-            let lbl = UILabel()
+            setKeyPreviewContentMode(.single)
+            guard let lbl = keyPreviewSingleLabel else { return }
             lbl.text          = keyDef.label
             lbl.font          = UIFont.systemFont(
                 ofSize: LayoutMetrics.KeyPreview.singleFontSize(isLandscape: isLand), weight: .regular)
             lbl.textColor     = keyLabel
             lbl.textAlignment = .center
-            contentView = lbl
+            keyPreviewSingleWidthConstraint?.constant = bubbleW + LayoutMetrics.KeyPreview.contentWidthInset
         }
 
-        contentView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(contentView)
-        NSLayoutConstraint.activate([
-            contentView.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            contentView.centerYAnchor.constraint(equalTo: container.centerYAnchor,
-                                                  constant: -neckH / 2),
-            contentView.widthAnchor.constraint(lessThanOrEqualToConstant: bubbleW + LayoutMetrics.KeyPreview.contentWidthInset),
-        ])
-
         // --- Animate in -------------------------------------------------------
+        keyPreviewAnimationID += 1
+        container.layoutIfNeeded()
+        container.isHidden = false
         container.alpha = 0
         container.transform = CGAffineTransform(scaleX: LayoutMetrics.KeyPreview.initialScale,
                                                 y: LayoutMetrics.KeyPreview.initialScale)
-        window.addSubview(container)   // add to window so preview clears the candidate bar
         UIView.animate(withDuration: LayoutMetrics.KeyPreview.appearDuration, delay: 0,
                        usingSpringWithDamping: LayoutMetrics.KeyPreview.springDamping,
                        initialSpringVelocity: LayoutMetrics.KeyPreview.springInitialVelocity) {
             container.alpha = 1
             container.transform = .identity
         }
-        keyPreviewView = container
     }
 
     func keyboardView(_ view: KeyboardView, didMoveCaretBy steps: Int) {
@@ -3161,11 +3289,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     func keyboardViewDismissPreview(_ view: KeyboardView) {
-        guard let preview = keyPreviewView else { return }
-        keyPreviewView = nil
-        UIView.animate(withDuration: LayoutMetrics.KeyPreview.disappearDuration, animations: {
-            preview.alpha = 0
-        }, completion: { _ in preview.removeFromSuperview() })
+        hideKeyPreview(animated: true)
     }
 
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {
