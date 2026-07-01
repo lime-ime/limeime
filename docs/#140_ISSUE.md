@@ -12,12 +12,15 @@
   implementation commit `1004453b8682`. GitHub Release / APK v6.1.27 is now live as
   `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
   `297a2ffe40e5ab3a6361f9cae8cf301d40bd8292`, size 7410887 bytes, downloaded SHA-256
-  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`) and contains the cj4 semicolon-key / imKeys-unification work.
+  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`) and contains the cj4 semicolon-key / imKeys-unification work for Android/GitHub APK testers.
   `limeimetw` posted the scoped reporter update at
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4846962860, asking GitHub
   APK testers to update to v6.1.27 and Google Play users to wait for the Google Play test
-  update. The issue remains open for reporter confirmation and broader keyboard-
-  customization evaluation.
+  update. The original reporter later clarified in
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4851381332 that they are an
+  iOS tester, so their validation depends on a future TestFlight/App Store build rather than
+  the Android GitHub APK. The issue remains open for iOS reporter confirmation and broader
+  keyboard-customization evaluation.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
