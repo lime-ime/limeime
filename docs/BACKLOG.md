@@ -10,7 +10,7 @@ Last reviewed: 2026-07-01
 
 ## Pending fixes
 
-None currently tracked.
+- fix#142 Android: phone English keyboard (`電話英文鍵盤`) key-face labels can become nearly invisible in the light keyboard theme when used with `行列10` on LIME 6.1.27. Suspected Android path: `phone.xml` / `phone_shift.xml` use static `phone_*` bitmap key faces that do not contrast with the current light key background. Track in `docs/#142_ISSUE.md`. No reporter retest until a newer Android APK or Google Play build contains a targeted visibility fix.
 
 ## New features / product work
 
