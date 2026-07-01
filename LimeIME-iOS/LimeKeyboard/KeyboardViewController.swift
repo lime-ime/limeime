@@ -324,6 +324,20 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         initOnStartInput()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        disableKeyboardWindowTouchDelay()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        disableKeyboardWindowTouchDelay()
+    }
+
+    private func disableKeyboardWindowTouchDelay() {
+        view.window?.gestureRecognizers?.forEach { $0.delaysTouchesBegan = false }
+    }
+
     /// Called every time the keyboard is dismissed — equivalent to Android postFinishInput().
     /// Triggers deferred Tier 2 learning: RP learning + LD phrase learning (spec §9, §13.5).
     override func viewWillDisappear(_ animated: Bool) {

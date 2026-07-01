@@ -1310,6 +1310,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             touchLayerIDs[touchID] = layerID
             appendSwipeSample(touchID: touchID, point: point)
             let key = context.detector.keyAt(point)
+            Prof.event("TouchBegan", "touch=\(touchID) code=\(key?.codes.first ?? 0)")
             touchTrackers[touchID] = TouchTracker(downKey: key)
             guard let key,
                   let target = plainTouchTarget(for: key, in: context) else {
@@ -1416,6 +1417,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                                    with event: UIEvent?) {
         for touch in touches {
             let touchID = ObjectIdentifier(touch)
+            Prof.event("TouchCancel", "touch=\(touchID)")
             touchTrackers.removeValue(forKey: touchID)
             let state = ownerTouchStates.removeValue(forKey: touchID)
             if let target = plainTouchTargets.removeValue(forKey: touchID) {
@@ -1778,6 +1780,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func beginPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
+        Prof.event("PlainPress", "code=\(keyDef.code)")
         button.wasLongPressed = false
         button.backgroundColor = pressedKeyColor
         updateShiftHoldTrackingFromTrackers(for: keyDef)
@@ -1790,6 +1793,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             delegate?.keyboardView(self, showPreviewFor: keyDef, keyRect: keyRect)
         }
         if shouldCommitPlainKeyOnBegan(keyDef) {
+            Prof.event("PlainCommit", "code=\(keyDef.code)")
             delegate?.keyboardView(self, didPress: keyDef)
         }
 
@@ -2103,9 +2107,25 @@ fileprivate final class KeyTouchLayer: UIView {
         super.init(frame: .zero)
         isAccessibilityElement = false
         isMultipleTouchEnabled = true
+        isOpaque = false
+        contentMode = .redraw
     }
 
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func draw(_ rect: CGRect) {}
+
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard !isHidden, alpha > 0.01, isUserInteractionEnabled, bounds.contains(point) else {
+            return nil
+        }
+        // Interactive subviews (system globe / legacy picker key) must handle their own touches.
+        if let hit = super.hitTest(point, with: event), hit !== self, hit.isUserInteractionEnabled {
+            return hit
+        }
+        // Everything else (plain render-only keys + transparent gaps) is owned by the layer.
+        return self
+    }
 
     override func layoutSubviews() {
         super.layoutSubviews()

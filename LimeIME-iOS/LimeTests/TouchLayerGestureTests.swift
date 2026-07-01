@@ -137,6 +137,15 @@ final class TouchLayerGestureTests: XCTestCase {
         XCTAssertLessThan(undoRange.lowerBound, beginRange.lowerBound)
     }
 
+    func testKeyTouchLayerOwnsHitTesting() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView?"))
+        XCTAssertTrue(source.contains("return self"))
+        XCTAssertTrue(source.contains("override func draw(_ rect: CGRect) {}"))
+    }
+
     func testKeyTouchLayerAccessibilityElementsExposeVisibleKeysAndActivateThroughOwner() throws {
         let layout = LimeKeyLayout(id: "accessibility_test", rows: [
             KeyRow(keys: [

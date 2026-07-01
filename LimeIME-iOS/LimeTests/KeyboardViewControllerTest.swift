@@ -507,6 +507,15 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("var enableInputClicksWhenVisible: Bool { true }"))
     }
 
+    func testKeyboardWindowTouchDelayIsDisabled() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("private func disableKeyboardWindowTouchDelay()"))
+        XCTAssertTrue(source.contains("$0.delaysTouchesBegan = false"))
+        XCTAssertTrue(source.contains("disableKeyboardWindowTouchDelay()"))
+    }
+
     func testKeyPreviewIsPersistentAndHiddenInsteadOfRebuiltPerKeypress() throws {
         let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
                                 encoding: .utf8)
