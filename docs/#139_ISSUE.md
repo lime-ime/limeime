@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from a private email/TestFlight report. Do not expose reporter identity or private app details in public comments or docs.
-- Current state: closed by maintainer/project-account on 2026-07-01 after maintainer confirmation that the email-reported issue was fixed in a newer version. Retained closure comments: https://github.com/lime-ime/limeime/issues/139#issuecomment-4849077209 and https://github.com/lime-ime/limeime/issues/139#issuecomment-4849080116. iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below) could not reproduce the reporter's exact numeric-field symptom; LIME's numeric-field routing is not reached from web fields. Source changes kept on `master` split pure number routing for Android parity and make the keyboard extension ASCII-capable. No active public retest/watch remains; if the private reporter still sees the Array10 numeric-keyboard, bottom-coverage, or keyboard-size symptoms in a newer TestFlight build, reopen or create a fresh follow-up with the TestFlight version, iOS version, and non-sensitive field details.
+- Current state: reopened by `limeimetw` on 2026-07-01 after the private reporter said iOS TestFlight 6.1.27 still covers bottom content; retained reopen comment: https://github.com/lime-ime/limeime/issues/139#issuecomment-4857781866. Treat the active follow-up as the iOS bottom-content coverage symptom only. The earlier numeric-field report remains unresolved only as private-reporter context: iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below) could not reproduce the exact numeric-field symptom, and LIME's numeric-field routing is not reached from tested web fields.
 - Public acknowledgement: not needed. This is a maintainer-created tracking issue for private-email evidence.
 
 ## Problem statement
@@ -16,7 +16,7 @@ An iOS TestFlight reporter using the Array10 (`行列10`) input method reported 
 2. Bottom page or content areas in the host app cannot be fully displayed because the keyboard covers them.
 3. The keyboard-size preference appears to enlarge only the English keyboard. The Array10 phone-style numeric keyboard does not appear to change size consistently.
 
-The issue body says the reporter supplied videos in the email thread, but automated GitHub intake did not expose those attachments. Current analysis is therefore based on the public issue summary and source inspection, not on frame-by-frame video review.
+The issue body says the reporter supplied videos in the email thread, but automated GitHub intake did not expose those attachments. Current analysis is therefore based on the public issue summary, the retained project-account comments, and source inspection, not on frame-by-frame video review. On 2026-07-01 the reporter added through the private channel that TestFlight 6.1.27 still covers bottom content, while the native iOS keyboard and other third-party keyboards reportedly do not.
 
 ## Source evidence inspected
 
@@ -24,14 +24,10 @@ The issue body says the reporter supplied videos in the email thread, but automa
 
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
   - `updateInputModeForCurrentField()` sets `mEnglishOnly = true` for `.numberPad`, `.decimalPad`, `.asciiCapableNumberPad`, and `.phonePad`.
-  - `layoutIdForCurrentInputField(...)` then routes:
-    - `.phonePad` to `phone_number`
-    - `.numberPad`, `.decimalPad`, and `.asciiCapableNumberPad` to `symbols1`
-    - English-only non-numeric fields to the configured English layout
-    - Chinese mode with at least one activated IM to `resolvedActiveLayoutId`
-  - `applyLayoutForCurrentInputField()` uses that static routing and therefore cannot currently choose the active IM's Array10 `phone_simple` layout for numeric fields.
+  - Current `layoutIdForCurrentInputField(...)` routes `.phonePad`, `.numberPad`, and `.decimalPad` to `phone_number`, keeps `.asciiCapableNumberPad` on `symbols1`, routes English-only non-numeric fields to the configured English layout, and routes Chinese mode with at least one activated IM to `resolvedActiveLayoutId`.
+  - Comments in the numeric routes explicitly say the pure-number split is kept for Android parity even though iOS system-replaces tested numeric fields before the extension can observe them.
 - `LimeIME-iOS/Shared/Models/KeyboardTypePolicy.swift` mirrors the forced-English category in a separately tested helper. Runtime routing currently uses the inline `KeyboardViewController` switches above rather than calling that helper directly.
-- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift` currently asserts the forced-English categories and the live layout resolver's `.numberPad` -> `symbols1` behavior, so the current test suite protects the behavior the reporter is challenging.
+- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift` includes coverage for the forced-English categories and current numeric-field routing split.
 
 ### Array10 phone-style layout availability
 
@@ -57,40 +53,38 @@ This makes the iOS `.numberPad` -> `symbols1` route different from Android's num
 
 ## Likely root cause / investigation hypothesis
 
-The numeric-keyboard portion is likely caused by iOS treating numeric fields as forced-English and routing `.numberPad` / `.decimalPad` / `.asciiCapableNumberPad` to `symbols1` without considering the active IM. For Array10, the active IM's resolved layout can be `phone_simple`, but that path is bypassed once `mEnglishOnly` is set for numeric fields.
+The original numeric-keyboard hypothesis was narrowed by simulator investigation: tested Safari/WebView numeric field shapes either keep LIME active for bare `type=number` / invalid `type=num` or are taken over by the iOS system numeric keyboard for `inputmode` / `pattern` cases where third-party keyboards are not invoked. Keep the source changes that split pure numeric routing and make the extension ASCII-capable, but do not treat the numeric-field route as the current active defect without newer private details.
 
 The keyboard-size portion is less certain. The inspected size-scaling code appears layout-agnostic and should apply to `phone_simple`, but it depends on `loadSettings()` / `applyFeedbackSettings()` running after the preference changes and on the extension accepting the updated height. The issue needs device/TestFlight reproduction before claiming a specific code defect there.
 
-The bottom-content coverage portion may be an iOS custom-keyboard height/safe-area interaction, a host-app layout issue, or a LIME height problem if LIME reports a larger-than-expected extension height after size/candidate-bar changes. Because the affected app is private, the first implementation pass should focus on reproducible keyboard-extension behavior in local/simulator test fields and ask the private reporter for non-sensitive reproduction details if needed.
+The bottom-content coverage portion is now the active follow-up. The new 6.1.27 report says native and other third-party keyboards do not cover the same bottom content, which makes a LIME custom-keyboard height/safe-area interaction plausible. Still distinguish a LIME extension-height problem from private host-app content-inset behavior until reproduced with a non-sensitive test field or measurable keyboard frame/height evidence.
 
 ## Proposed fix / investigation plan
 
-1. Reproduce on iOS TestFlight or simulator with Array10 active and fields using number, decimal, ASCII-capable number, and phone keyboard types.
-2. Decide whether iOS numeric fields should mirror Android by routing `.numberPad` / `.decimalPad` / `.asciiCapableNumberPad` to an active numeric/phone-style layout when the active IM is Array10, while keeping email/password and other restricted text fields forced English.
-3. Update `layoutIdForCurrentInputField(...)` / `updateInputModeForCurrentField()` and tests so Array10 numeric fields can use `phone_simple` or an equivalent numeric layout when appropriate.
-4. Verify that switching from numeric fields back to normal text fields restores the active IM layout and that forced-English fields such as email/password still behave correctly.
-5. Separately reproduce keyboard-size changes on `phone_simple` and confirm whether `keySizeScale` and `applyHeight()` update the extension height after changing the preference.
-6. For bottom coverage, measure the extension height and confirm whether the private app respects iOS keyboard inset notifications. If only the private app fails to adjust content for the keyboard, treat that as host-app behavior unless LIME is reporting an excessive or stale height.
+1. Reproduce the bottom-coverage symptom on iOS TestFlight or simulator with Array10 active, preferably in a non-sensitive test view that mimics the private app's bottom input/content area.
+2. Measure the extension height path: `KeyboardView.preferredHeight`, `activeCandidateBarHeight`, `emojiSearchHeaderHeight`, and `KeyboardViewController.applyHeight()`'s `view.heightAnchor` constant.
+3. Compare LIME's reported custom-keyboard height/frame against the native keyboard and another third-party keyboard on the same device/orientation when possible.
+4. Check whether candidate bar, emoji/search header state, keyboard-size preference, orientation, safe-area, or iPhone compatibility scaling can leave an excessive or stale height constraint after layout changes.
+5. Keep the numeric-field investigation separate. Ask privately for exact field markup only if the reporter still sees the numeric-keyboard symptom in addition to the confirmed 6.1.27 bottom-coverage follow-up.
 
 ## Verification plan
 
-- Add or update iOS unit tests around `layoutIdForCurrentInputField(...)` for Array10/numeric-field routing instead of only the current generic `.numberPad` -> `symbols1` assertion.
-- Add source-level coverage or a lightweight controller test to ensure keyboard-size preference changes propagate to `KeyboardView.keySizeScale` and `applyHeight()` for `phone_simple`.
+- Add source-level coverage or a lightweight controller test to ensure keyboard-size preference changes propagate to `KeyboardView.keySizeScale` and `applyHeight()` for `phone_simple` without leaving stale height.
+- Add or update focused tests for any discovered height/safe-area calculation change.
 - Manual TestFlight/simulator verification:
-  - Array10 normal text field shows the Array10 phone-style layout.
-  - Array10 number/decimal fields keep an appropriate numeric/phone-style layout and can input digits directly.
-  - Email/password fields remain forced English where appropriate.
+  - Array10 normal text field shows the intended layout without covering the test app's bottom content beyond the expected keyboard frame.
+  - Candidate bar, expanded candidates, emoji/search states, and keyboard-size changes do not leave excessive keyboard height.
   - Keyboard-size settings visibly affect English and Array10 phone-style layouts.
   - Bottom content in a reproducible test app remains visible or scroll-adjustable when the keyboard is shown.
 
 ## Platform impact
 
-- iOS: confirmed report scope. The likely routing issue is in iOS keyboard-extension code and current iOS tests assert the existing numeric-field behavior.
+- iOS: confirmed report scope. The active follow-up is bottom-content coverage on TestFlight 6.1.27. Numeric-field behavior remains documented but is not the currently reproduced defect after simulator investigation.
 - Android: analogous Android input-type routing was inspected and already sends number/phone fields through phone-style keyboard modes. No Android change is implied unless separate Android evidence appears.
 
 ## Follow-up / retest condition
 
-The issue is closed after maintainer/project-account confirmation. Do not post another public acknowledgement or Android APK retest request for this private-email/TestFlight report. If the private reporter later says a newer TestFlight build still has the Array10 numeric-keyboard, bottom-coverage, or keyboard-size problem, reopen or create a fresh follow-up and ask privately for the TestFlight version, iOS version, exact field markup when available, and a non-sensitive screenshot/video frame.
+The issue is open after the private reporter's TestFlight 6.1.27 bottom-coverage follow-up. Do not post another public acknowledgement or Android APK retest request for this private-email/TestFlight report. Next public update should wait for a focused iOS source fix, TestFlight build, or maintainer/private-reporter clarification. If more private details are needed, ask for iOS version, device/orientation, keyboard-size setting, whether the candidate bar/emoji/search panel is visible, and a non-sensitive screen frame showing the covered bottom area.
 
 ## Simulator investigation findings (2026-06-29)
 
@@ -155,10 +149,17 @@ Tooling left in the tree for this investigation (uncommitted):
 
 ## Closure notes (2026-07-01)
 
-- Live issue state: closed at 2026-07-01T00:22:50Z by `limeimetw`; labels remain `bug` and `Usability`, assignee remains `jrywu`.
+- State at closure event, superseded by the reopen below: closed at 2026-07-01T00:22:50Z by `limeimetw`; labels remained `bug` and `Usability`, assignee remained `jrywu`.
 - Retained project-account comments say the issue is closed per maintainer confirmation, and that if a newer TestFlight build still shows the Array10 numeric-keyboard, bottom-coverage, or keyboard-size symptoms, the reporter should provide the test version plus screen/steps and the team can track it again.
 - Source/fix evidence visible on GitHub: commit `0863e6f2233518fb7cd23f406ddae94d867a4f7d` (`#139: iOS numeric-field routing investigation + Android-parity split`) updated the iOS keyboard extension routing, ASCII-capable setting, related tests, and this investigation doc.
 - Backlog state: remove `fix#139 iOS` from active pending fixes; treat any remaining validation as normal TestFlight/App Store release QA or a new follow-up if the private reporter reproduces the problem again.
+
+## Reopen notes (2026-07-01)
+
+- Live issue state: reopened at 2026-07-01T16:38:20Z by `limeimetw` after project-account comment https://github.com/lime-ime/limeime/issues/139#issuecomment-4857781866.
+- New private-reporter fact: iOS TestFlight 6.1.27 still covers bottom content; reporter says the native iOS keyboard and other third-party keyboards do not cover the same bottom content.
+- Current tracking scope: iOS bottom-content coverage / keyboard height or safe-area behavior. Numeric-field routing remains a documented prior investigation, not the active 6.1.27 failure unless the reporter provides new numeric-field evidence.
+- Backlog state: restore `fix#139 iOS` as an active/pending iOS follow-up for bottom-content coverage. No Android APK retest applies.
 
 ## What to communicate to the reporter (private email)
 

@@ -6,10 +6,11 @@ Last reviewed: 2026-07-01
 
 ## Active issue follow-up
 
-- None currently tracked.
+- #139: private iOS TestFlight reporter says 6.1.27 still covers bottom content, while native iOS and other third-party keyboards reportedly do not. Track as iOS bottom-content coverage / keyboard height or safe-area follow-up in `docs/#139_ISSUE.md`. No public duplicate acknowledgement or Android APK retest applies.
 
 ## Pending fixes
 
+- fix#139 iOS: reopened private-email/TestFlight issue for bottom-content coverage on TestFlight 6.1.27. Current focus is LIME custom-keyboard height / safe-area behavior around `KeyboardView.preferredHeight`, `activeCandidateBarHeight`, `emojiSearchHeaderHeight`, and `KeyboardViewController.applyHeight()`. Keep numeric-field routing as prior investigated context, not the active defect unless new private evidence arrives. Track in `docs/#139_ISSUE.md`.
 - fix#142 Android: phone English keyboard (`電話英文鍵盤`) key-face labels can become nearly invisible in the light keyboard theme when used with `行列10` on LIME 6.1.27. Suspected Android path: `phone.xml` / `phone_shift.xml` use static `phone_*` bitmap key faces that do not contrast with the current light key background. Track in `docs/#142_ISSUE.md`. No reporter retest until a newer Android APK or Google Play build contains a targeted visibility fix.
 
 ## New features / product work
