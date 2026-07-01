@@ -112,6 +112,31 @@ final class TouchLayerGestureTests: XCTestCase {
         XCTAssertEqual(tracker.currentKey, space)
     }
 
+    func testPlainKeyPressesCommitOnBeganAndFlintUndoesPreviousCommit() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
+                                encoding: .utf8)
+
+        let commitRange = try XCTUnwrap(source.range(
+            of: #"private func shouldCommitPlainKeyOnBegan\(_ keyDef: KeyDef\) -> Bool \{\s*ownerTouchBehavior\(for: keyDef\) == \.plain\s*\}"#,
+            options: .regularExpression))
+        let commitSource = String(source[commitRange])
+        XCTAssertFalse(commitSource.contains("isRepeatable"))
+        XCTAssertFalse(commitSource.contains("isModifier"))
+
+        let endRange = try XCTUnwrap(source.range(
+            of: #"private func endPlainKeyTouch\(button: KeyButton, keyDef: KeyDef\) \{[\s\S]*?releasePlainKeyTouch\(button: button, keyDef: keyDef\)\s*\}"#,
+            options: .regularExpression))
+        XCTAssertFalse(String(source[endRange]).contains("didPress"))
+
+        let moveRange = try XCTUnwrap(source.range(
+            of: #"plainTouchTargets\[touchID\] = newTarget[\s\S]*?beginPlainKeyTouch\(button: newTarget\.button, keyDef: newTarget\.keyDef\)"#,
+            options: .regularExpression))
+        let moveSource = String(source[moveRange])
+        let undoRange = try XCTUnwrap(moveSource.range(of: "delegate?.keyboardView(self, didPress: flintUndoKeyDef())"))
+        let beginRange = try XCTUnwrap(moveSource.range(of: "beginPlainKeyTouch(button: newTarget.button, keyDef: newTarget.keyDef)"))
+        XCTAssertLessThan(undoRange.lowerBound, beginRange.lowerBound)
+    }
+
     func testKeyTouchLayerAccessibilityElementsExposeVisibleKeysAndActivateThroughOwner() throws {
         let layout = LimeKeyLayout(id: "accessibility_test", rows: [
             KeyRow(keys: [
@@ -149,6 +174,13 @@ final class TouchLayerGestureTests: XCTestCase {
         splitKeyboard.frame = CGRect(x: 0, y: 0, width: 640, height: 64)
         splitKeyboard.layoutIfNeeded()
         XCTAssertEqual(accessibilityLabels(in: splitKeyboard), ["a", "space", "delete", "shift"])
+    }
+
+    private func projectFileURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
     }
 
     private func makeKey(label: String,

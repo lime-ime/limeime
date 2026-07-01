@@ -1370,6 +1370,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                 continue
             }
             plainTouchTargets[touchID] = newTarget
+            if tracker.isSliding {
+                delegate?.keyboardView(self, didPress: flintUndoKeyDef())
+            }
             beginPlainKeyTouch(button: newTarget.button, keyDef: newTarget.keyDef)
             touchTrackers[touchID] = tracker
             cancelRepeatIfNeeded()
@@ -1481,7 +1484,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             if state.longPressFired {
                 cancelPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
             } else {
-                endPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
+                commitKeyTouchOnEnded(button: state.target.button, keyDef: state.target.keyDef)
             }
         case .plain:
             endPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
@@ -1559,7 +1562,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     private func endPopupTouch(state: OwnerTouchState) {
         guard state.popupOpen else {
-            endPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
+            commitKeyTouchOnEnded(button: state.target.button, keyDef: state.target.keyDef)
             return
         }
 
@@ -1612,7 +1615,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         } else if state.longPressFired {
             cancelPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
         } else {
-            endPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
+            commitKeyTouchOnEnded(button: state.target.button, keyDef: state.target.keyDef)
         }
     }
 
@@ -1800,9 +1803,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func endPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
-        if !shouldCommitPlainKeyOnBegan(keyDef) {
-            delegate?.keyboardView(self, didPress: keyDef)
-        }
+        releasePlainKeyTouch(button: button, keyDef: keyDef)
+    }
+
+    private func commitKeyTouchOnEnded(button: KeyButton, keyDef: KeyDef) {
+        delegate?.keyboardView(self, didPress: keyDef)
         releasePlainKeyTouch(button: button, keyDef: keyDef)
     }
 
@@ -1818,7 +1823,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func shouldCommitPlainKeyOnBegan(_ keyDef: KeyDef) -> Bool {
-        (keyDef.isRepeatable || keyDef.isModifier) && ownerTouchBehavior(for: keyDef) == .plain
+        ownerTouchBehavior(for: keyDef) == .plain
+    }
+
+    private func flintUndoKeyDef() -> KeyDef {
+        KeyDef(code: LimeKeyCode.delete.rawValue,
+               codes: [LimeKeyCode.delete.rawValue])
     }
 
     private func cancelPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
