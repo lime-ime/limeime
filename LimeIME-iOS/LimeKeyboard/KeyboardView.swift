@@ -198,6 +198,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private var shiftHoldTrackingActive = false
     private var touchTrackers: [ObjectIdentifier: TouchTracker] = [:]
     private var plainTouchTargets: [ObjectIdentifier: PlainKeyTouchTarget] = [:]
+    private var touchLayerIDs: [ObjectIdentifier: ObjectIdentifier] = [:]
+    // ponytail: key frames are static during a touch; cache per row layer and drop on relayout/no live touches.
+    private var plainTouchContexts: [ObjectIdentifier: PlainKeyTouchContext] = [:]
+    private static let flintHysteresisKeyWidthFraction: CGFloat = 0.25
     private static let styledContentTag = 92731
     /// Set by KeyboardViewController so globe button uses the system keyboard picker.
     weak var inputModeViewController: UIInputViewController? {
@@ -502,6 +506,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
     required init?(coder: NSCoder) { fatalError("not used") }
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        invalidatePlainTouchContexts()
+    }
+
     // MARK: - Layout switch
     func setLayout(_ newLayout: LimeKeyLayout) {
         layout = newLayout
@@ -602,6 +611,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     // MARK: - Build
     private func buildKeys() {
+        invalidatePlainTouchContexts()
         var prevRow: UIView? = nil
 
         // Collect the rows to render, injecting the arrow row at position 0 (above) or at the end (below).
@@ -1308,26 +1318,58 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
                                    touchesBegan touches: Set<UITouch>,
                                    with event: UIEvent?) {
-        let entries = plainKeyEntries(in: layer)
-        let detector = KeyDetector(keys: entries.map(\.model))
+        let layerID = ObjectIdentifier(layer)
+        let context = plainTouchContext(in: layer)
 
         for touch in touches {
             let touchID = ObjectIdentifier(touch)
-            let key = detector.keyAt(touch.location(in: layer))
+            touchLayerIDs[touchID] = layerID
+            let key = context.detector.keyAt(touch.location(in: layer))
             touchTrackers[touchID] = TouchTracker(downKey: key)
             guard let key,
-                  let entry = entries.first(where: { $0.model == key }) else {
+                  let target = plainTouchTarget(for: key, in: context) else {
                 continue
             }
-            plainTouchTargets[touchID] = PlainKeyTouchTarget(button: entry.button, keyDef: entry.keyDef)
-            beginPlainKeyTouch(button: entry.button, keyDef: entry.keyDef)
+            plainTouchTargets[touchID] = target
+            beginPlainKeyTouch(button: target.button, keyDef: target.keyDef)
         }
     }
 
     fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
                                    touchesMoved touches: Set<UITouch>,
                                    with event: UIEvent?) {
-        // P1 keeps touches pinned to their down key. P2 adds live move switching.
+        guard layer.isDescendant(of: self) else { return }
+        let context = plainTouchContext(in: layer)
+
+        for touch in touches {
+            let touchID = ObjectIdentifier(touch)
+            guard var tracker = touchTrackers[touchID] else { continue }
+            let previousKey = tracker.currentKey
+            _ = tracker.move(to: touch.location(in: layer),
+                             detector: context.detector,
+                             hysteresis: context.hysteresis)
+            guard tracker.currentKey != previousKey else {
+                touchTrackers[touchID] = tracker
+                continue
+            }
+
+            if let oldTarget = plainTouchTargets[touchID] {
+                releasePlainKeyTouch(button: oldTarget.button, keyDef: oldTarget.keyDef)
+            } else if let previousKey,
+                      let oldTarget = plainTouchTarget(for: previousKey, in: context) {
+                releasePlainKeyTouch(button: oldTarget.button, keyDef: oldTarget.keyDef)
+            }
+
+            guard let newKey = tracker.currentKey,
+                  let newTarget = plainTouchTarget(for: newKey, in: context) else {
+                touchTrackers[touchID] = tracker
+                plainTouchTargets.removeValue(forKey: touchID)
+                continue
+            }
+            plainTouchTargets[touchID] = newTarget
+            beginPlainKeyTouch(button: newTarget.button, keyDef: newTarget.keyDef)
+            touchTrackers[touchID] = tracker
+        }
     }
 
     fileprivate func keyTouchLayer(_ layer: KeyTouchLayer,
@@ -1335,9 +1377,13 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                                    with event: UIEvent?) {
         for touch in touches {
             let touchID = ObjectIdentifier(touch)
-            touchTrackers.removeValue(forKey: touchID)
-            guard let target = plainTouchTargets.removeValue(forKey: touchID) else { continue }
-            endPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+            let tracker = touchTrackers.removeValue(forKey: touchID)
+            let target = plainTouchTargets.removeValue(forKey: touchID)
+                ?? plainTouchTarget(for: tracker?.currentKey, in: layer)
+            if let target {
+                endPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+            }
+            finishPlainTouch(touchID)
         }
     }
 
@@ -1347,8 +1393,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         for touch in touches {
             let touchID = ObjectIdentifier(touch)
             touchTrackers.removeValue(forKey: touchID)
-            guard let target = plainTouchTargets.removeValue(forKey: touchID) else { continue }
-            cancelPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+            if let target = plainTouchTargets.removeValue(forKey: touchID) {
+                cancelPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+            }
+            finishPlainTouch(touchID)
         }
     }
 
@@ -1364,7 +1412,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let keyRect = button.convert(button.bounds, to: self)
             delegate?.keyboardView(self, showPreviewFor: keyDef, keyRect: keyRect)
         }
-        delegate?.keyboardView(self, didPress: keyDef)
+        if shouldCommitPlainKeyOnBegan(keyDef) {
+            delegate?.keyboardView(self, didPress: keyDef)
+        }
 
         if keyDef.isRepeatable {
             repeatKeyDef = keyDef
@@ -1376,6 +1426,13 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func endPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
+        if !shouldCommitPlainKeyOnBegan(keyDef) {
+            delegate?.keyboardView(self, didPress: keyDef)
+        }
+        releasePlainKeyTouch(button: button, keyDef: keyDef)
+    }
+
+    private func releasePlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
         if keyDef.code == LimeKeyCode.shift.rawValue {
             shiftHoldTrackingActive = false
         }
@@ -1384,6 +1441,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         delegate?.keyboardView(self, didRelease: keyDef)
         stopRepeating()
         button.wasSlideDown = false
+    }
+
+    private func shouldCommitPlainKeyOnBegan(_ keyDef: KeyDef) -> Bool {
+        keyDef.isRepeatable || keyDef.isModifier
     }
 
     private func cancelPlainKeyTouch(button: KeyButton, keyDef: KeyDef) {
@@ -1409,6 +1470,46 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             shiftHoldTrackingActive = false
         }
         delegate?.keyboardView(self, didUpdateShiftHoldActive: active)
+    }
+
+    private func plainTouchContext(in layer: KeyTouchLayer) -> PlainKeyTouchContext {
+        let layerID = ObjectIdentifier(layer)
+        if let cached = plainTouchContexts[layerID] {
+            return cached
+        }
+
+        let entries = plainKeyEntries(in: layer)
+        let detector = KeyDetector(keys: entries.map(\.model))
+        let keyWidth = entries.first(where: { $0.model.frame.width > 0 })?.model.frame.width ?? 44
+        let context = PlainKeyTouchContext(entries: entries,
+                                           detector: detector,
+                                           hysteresis: keyWidth * Self.flintHysteresisKeyWidthFraction)
+        plainTouchContexts[layerID] = context
+        return context
+    }
+
+    private func plainTouchTarget(for key: KeyModel?, in layer: KeyTouchLayer) -> PlainKeyTouchTarget? {
+        guard layer.isDescendant(of: self),
+              let key else {
+            return nil
+        }
+        return plainTouchTarget(for: key, in: plainTouchContext(in: layer))
+    }
+
+    private func plainTouchTarget(for key: KeyModel, in context: PlainKeyTouchContext) -> PlainKeyTouchTarget? {
+        guard let entry = context.entries.first(where: { $0.model == key }) else { return nil }
+        return PlainKeyTouchTarget(button: entry.button, keyDef: entry.keyDef)
+    }
+
+    private func finishPlainTouch(_ touchID: ObjectIdentifier) {
+        guard let layerID = touchLayerIDs.removeValue(forKey: touchID) else { return }
+        if !touchLayerIDs.values.contains(layerID) {
+            plainTouchContexts.removeValue(forKey: layerID)
+        }
+    }
+
+    private func invalidatePlainTouchContexts() {
+        plainTouchContexts.removeAll()
     }
 
     private func plainKeyEntries(in layer: KeyTouchLayer) -> [PlainKeyEntry] {
@@ -1650,6 +1751,12 @@ private struct PlainKeyEntry {
     let model: KeyModel
     let button: KeyButton
     let keyDef: KeyDef
+}
+
+private struct PlainKeyTouchContext {
+    let entries: [PlainKeyEntry]
+    let detector: KeyDetector
+    let hysteresis: CGFloat
 }
 
 private struct PlainKeyTouchTarget {

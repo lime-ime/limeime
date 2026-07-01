@@ -57,6 +57,45 @@ final class TouchTrackerTests: XCTestCase {
         XCTAssertEqual(tracker.currentKey, keys[1])
     }
 
+    func testFlintSlideSequenceEndsOnReleaseKey() {
+        let keys = makeRow(labels: ["q", "w", "e", "r"])
+        let detector = KeyDetector(keys: keys, proximityThreshold: 40)
+        var tracker = TouchTracker(downKey: keys[0])
+
+        for key in keys.dropFirst() {
+            _ = tracker.move(to: key.frame.center, detector: detector, hysteresis: 8)
+        }
+
+        XCTAssertEqual(tracker.currentKey, keys[3])
+        XCTAssertTrue(tracker.isSliding)
+    }
+
+    func testSubKeyWidthBoundaryWobbleKeepsStartKey() {
+        let keys = makeRow(labels: ["q", "w"])
+        let detector = KeyDetector(keys: keys, proximityThreshold: 40)
+        var tracker = TouchTracker(downKey: keys[0])
+        let wobblePoint = CGPoint(x: keys[1].frame.minX + 2, y: keys[1].frame.midY)
+
+        let releasedKey = tracker.move(to: wobblePoint, detector: detector, hysteresis: 12)
+
+        XCTAssertNil(releasedKey)
+        XCTAssertEqual(tracker.currentKey, keys[0])
+        XCTAssertFalse(tracker.isSliding)
+    }
+
+    func testModifierTrackerDoesNotSwitchToNeighbor() {
+        let shift = makeKey(label: "shift", x: 0, code: -1, isModifier: true)
+        let letter = makeKey(label: "a", x: 48)
+        let detector = KeyDetector(keys: [shift, letter], proximityThreshold: 40)
+        var tracker = TouchTracker(downKey: shift)
+
+        let releasedKey = tracker.move(to: letter.frame.center, detector: detector, hysteresis: 8)
+
+        XCTAssertNil(releasedKey)
+        XCTAssertEqual(tracker.currentKey, shift)
+        XCTAssertFalse(tracker.isSliding)
+    }
+
     private func makeKey(label: String,
                          x: CGFloat,
                          code: Int? = nil,
@@ -71,5 +110,17 @@ final class TouchTrackerTests: XCTestCase {
                         hasPopup: false,
                         isDualRow: false,
                         isSpace: false)
+    }
+
+    private func makeRow(labels: [String]) -> [KeyModel] {
+        labels.enumerated().map { index, label in
+            makeKey(label: label, x: CGFloat(index) * 48)
+        }
+    }
+}
+
+private extension CGRect {
+    var center: CGPoint {
+        CGPoint(x: midX, y: midY)
     }
 }
