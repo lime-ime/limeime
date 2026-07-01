@@ -42,6 +42,32 @@ final class TouchLayerGestureTests: XCTestCase {
                        .none)
     }
 
+    func testSwipeEligibilityRejectsRepeatableAndModifierKeys() {
+        let letter = KeyDef(code: 97, label: "a")
+        let delete = KeyDef(code: LimeKeyCode.delete.rawValue,
+                            icon: "delete.left",
+                            isRepeatable: true,
+                            isModifier: true)
+        let shift = KeyDef(code: LimeKeyCode.shift.rawValue,
+                           icon: "shift",
+                           isModifier: true)
+
+        XCTAssertTrue(KeyboardView.canClassifySwipe(behaviorIsPlain: true, keyDef: letter))
+        XCTAssertFalse(KeyboardView.canClassifySwipe(behaviorIsPlain: false, keyDef: letter))
+        XCTAssertFalse(KeyboardView.canClassifySwipe(behaviorIsPlain: true, keyDef: delete))
+        XCTAssertFalse(KeyboardView.canClassifySwipe(behaviorIsPlain: true, keyDef: shift))
+    }
+
+    func testPopupPointConvertsFromLayerSpaceToKeyboardSpace() {
+        let keyboard = KeyboardView(layout: LimeKeyLayout(id: "popup_conversion_test", rows: []))
+        keyboard.frame = CGRect(x: 0, y: 0, width: 320, height: 216)
+        let layer = UIView(frame: CGRect(x: 48, y: 72, width: 160, height: 44))
+        keyboard.addSubview(layer)
+
+        XCTAssertEqual(keyboard.popupKeyboardPoint(fromLayerPoint: CGPoint(x: 12, y: 8), in: layer),
+                       CGPoint(x: 60, y: 80))
+    }
+
     func testRepeatCancelsWhenRepeatableKeyAndLetterAreDown() {
         let delete = makeKey(label: "delete", code: LimeKeyCode.delete.rawValue,
                              isRepeatable: true, isModifier: true)

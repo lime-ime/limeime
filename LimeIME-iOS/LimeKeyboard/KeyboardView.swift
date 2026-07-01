@@ -170,6 +170,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             keyDef: keyDef, legacyGlobeMode: legacyGlobeMode)
     }
 
+    static func canClassifySwipe(behaviorIsPlain: Bool, keyDef: KeyDef) -> Bool {
+        behaviorIsPlain && !keyDef.isRepeatable && !keyDef.isModifier
+    }
+
     /// feat#124: the English "123" key long-presses to phone_simple and shows a "…" hint.
     /// Scoped precisely to the phone_simple code (-106) so it never touches the globe/done key
     /// (longPressCode -100) or iPad dual-row keys (which carry their secondary glyph as
@@ -181,6 +185,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     weak var delegate: KeyboardViewDelegate?
+
+    func popupKeyboardPoint(fromLayerPoint point: CGPoint, in layer: UIView) -> CGPoint {
+        layer.convert(point, to: self)
+    }
 
     private var layout: LimeKeyLayout
     private var isShiftOn: Bool = false
@@ -638,6 +646,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     // MARK: - Build
     private func buildKeys() {
+        cancelAllActiveTouches()
         invalidatePlainTouchContexts()
         var prevRow: UIView? = nil
 
@@ -1160,20 +1169,17 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     fileprivate func accessibilityActivateKey(_ button: KeyButton) -> Bool {
         guard button.isDescendant(of: self),
-              !button.isHidden else {
+              !button.isHidden,
+              let layer = button.superview as? KeyTouchLayer else {
             return false
         }
         let token = NSObject()
         let touchID = ObjectIdentifier(token)
-        let point: CGPoint
-        if let layer = button.superview as? KeyTouchLayer {
-            point = button.convert(CGPoint(x: button.bounds.midX, y: button.bounds.midY), to: layer)
-        } else {
-            point = .zero
-        }
+        let point = button.convert(CGPoint(x: button.bounds.midX, y: button.bounds.midY), to: layer)
         let target = PlainKeyTouchTarget(button: button, keyDef: button.keyDef)
         let state = OwnerTouchState(behavior: ownerTouchBehavior(for: button.keyDef),
                                     target: target,
+                                    layer: layer,
                                     startPoint: point,
                                     lastPoint: point,
                                     startTime: CACurrentMediaTime())
@@ -1313,6 +1319,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let behavior = ownerTouchBehavior(for: target.keyDef)
             let state = OwnerTouchState(behavior: behavior,
                                         target: target,
+                                        layer: layer,
                                         startPoint: point,
                                         lastPoint: point,
                                         startTime: CACurrentMediaTime())
@@ -1407,9 +1414,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         for touch in touches {
             let touchID = ObjectIdentifier(touch)
             touchTrackers.removeValue(forKey: touchID)
-            ownerTouchStates.removeValue(forKey: touchID)
+            let state = ownerTouchStates.removeValue(forKey: touchID)
             if let target = plainTouchTargets.removeValue(forKey: touchID) {
                 cancelPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+            }
+            if state?.popupOpen == true {
+                delegate?.keyboardViewDidCancelPopupSlide(self)
             }
             finishPlainTouch(touchID)
             delegate?.keyboardView(self, highlightPopupKey: nil)
@@ -1558,7 +1568,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             cancelPlainKeyTouch(button: state.target.button, keyDef: state.target.keyDef)
         }
 
-        if let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: state.lastPoint) {
+        let keyboardPoint = popupKeyboardPoint(fromLayerPoint: state.lastPoint, in: state.layer)
+        if let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: keyboardPoint) {
             delegate?.keyboardView(self, didSelectPopupKey: selected)
         } else if state.target.keyDef.popupCharacters.count == 1,
                   squareDistance(state.startPoint, state.lastPoint) <= state.target.button.bounds.height * state.target.button.bounds.height / 4 {
@@ -1569,7 +1580,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func updatePopupSelection(state: inout OwnerTouchState) {
-        let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: state.lastPoint)
+        let keyboardPoint = popupKeyboardPoint(fromLayerPoint: state.lastPoint, in: state.layer)
+        let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: keyboardPoint)
         guard selected != state.popupSelection else { return }
         state.popupSelection = selected
         delegate?.keyboardView(self, highlightPopupKey: selected)
@@ -1673,7 +1685,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     private func swipeCommand(for touchID: ObjectIdentifier, in layer: KeyTouchLayer) -> KeyboardSwipeCommand? {
         guard let state = ownerTouchStates[touchID],
-              state.behavior != .space,
+              Self.canClassifySwipe(behaviorIsPlain: state.behavior == .plain,
+                                    keyDef: state.target.keyDef),
               !state.longPressFired,
               !state.popupOpen,
               let samples = swipeSamples[touchID],
@@ -1710,6 +1723,38 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         if TouchTracker.shouldCancelRepeat(trackers: touchTrackers.values) {
             stopRepeating()
         }
+    }
+
+    private func cancelAllActiveTouches() {
+        ownerLongPressTimers.values.forEach { $0.invalidate() }
+        ownerLongPressTimers.removeAll()
+        stopRepeating()
+
+        let hadOpenPopup = ownerTouchStates.values.contains { $0.popupOpen }
+            || delegate?.keyboardViewHasOpenPopup(self) == true
+
+        var targets: [ObjectIdentifier: PlainKeyTouchTarget] = [:]
+        for target in plainTouchTargets.values {
+            targets[ObjectIdentifier(target.button)] = target
+        }
+        for state in ownerTouchStates.values {
+            targets[ObjectIdentifier(state.target.button)] = state.target
+        }
+        for target in targets.values {
+            cancelPlainKeyTouch(button: target.button, keyDef: target.keyDef)
+        }
+        shiftHoldTrackingActive = false
+
+        if hadOpenPopup {
+            delegate?.keyboardViewDidCancelPopupSlide(self)
+        }
+        delegate?.keyboardView(self, highlightPopupKey: nil)
+
+        touchTrackers.removeAll()
+        plainTouchTargets.removeAll()
+        touchLayerIDs.removeAll()
+        ownerTouchStates.removeAll()
+        swipeSamples.removeAll()
     }
 
     private func invalidateOwnerLongPress(_ touchID: ObjectIdentifier) {
@@ -2019,6 +2064,7 @@ private enum OwnerTouchBehavior {
 private struct OwnerTouchState {
     let behavior: OwnerTouchBehavior
     let target: PlainKeyTouchTarget
+    let layer: KeyTouchLayer
     let startPoint: CGPoint
     var lastPoint: CGPoint
     let startTime: TimeInterval
