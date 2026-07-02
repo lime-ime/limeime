@@ -26,6 +26,7 @@
       }
     },
     {
+      "enabled" : false,
       "target" : {
         "containerPath" : "container:LimeIME.xcodeproj",
         "identifier" : "F96A2D7F2FA5A904004124A7",
