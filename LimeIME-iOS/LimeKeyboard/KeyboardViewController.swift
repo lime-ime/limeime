@@ -3274,6 +3274,10 @@ extension KeyboardViewController: KeyboardViewDelegate {
         currentPopupView != nil
     }
 
+    func keyboardViewCurrentPopupIsSingleKey(_ view: KeyboardView) -> Bool {
+        currentPopupView?.isSingleKey ?? false
+    }
+
     func keyboardView(_ view: KeyboardView, popupKeyAtKeyboardPoint point: CGPoint) -> KeyDef? {
         guard let popup = currentPopupView else { return nil }
         let pointInView = view.convert(point, to: self.view)

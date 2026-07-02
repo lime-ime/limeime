@@ -146,12 +146,23 @@ protocol KeyboardViewDelegate: AnyObject {
     /// `steps` is the signed number of caret positions to move (negative = left).
     func keyboardView(_ view: KeyboardView, didMoveCaretBy steps: Int)
     func keyboardViewHasOpenPopup(_ view: KeyboardView) -> Bool
+    /// True when the open mini-popup has exactly one key (e.g. the "123" symbol-mode switch,
+    /// whose popup is a single-key layout with empty `popupCharacters`). Such popups fire
+    /// directly on release-near-press instead of requiring a slide/flint onto the lone key.
+    func keyboardViewCurrentPopupIsSingleKey(_ view: KeyboardView) -> Bool
     func keyboardView(_ view: KeyboardView, popupKeyAtKeyboardPoint point: CGPoint) -> KeyDef?
     func keyboardView(_ view: KeyboardView, highlightPopupKey keyDef: KeyDef?)
     func keyboardView(_ view: KeyboardView, didSelectPopupKey keyDef: KeyDef)
     func keyboardViewDidCancelPopupSlide(_ view: KeyboardView)
     func keyboardViewDidSwipeLeft(_ view: KeyboardView)
     func keyboardViewDidSwipeRight(_ view: KeyboardView)
+}
+
+extension KeyboardViewDelegate {
+    /// Default: without a host answer, only `popupCharacters`-based single keys are treated as
+    /// single-key. Layout-based single-key popups (e.g. the 123 symbol-mode switch) need the host
+    /// (which owns `currentPopupView`) to return true.
+    func keyboardViewCurrentPopupIsSingleKey(_ view: KeyboardView) -> Bool { false }
 }
 
 final class KeyboardView: UIView, UIInputViewAudioFeedback {
@@ -1614,8 +1625,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         if let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: keyboardPoint) {
             // Usage 1: held + slid onto an alternate → commit it and dismiss.
             delegate?.keyboardView(self, didSelectPopupKey: selected)
-        } else if state.target.keyDef.popupCharacters.count == 1,
+        } else if (state.target.keyDef.popupCharacters.count == 1
+                   || delegate?.keyboardViewCurrentPopupIsSingleKey(self) == true),
                   squareDistance(state.startPoint, state.lastPoint) <= state.target.button.bounds.height * state.target.button.bounds.height / 4 {
+            // Single-key popup (char-based OR a single-key layout like the 123 symbol-mode
+            // switch): release without flinting fires the lone key directly.
             delegate?.keyboardView(self, didReleasePopupKey: state.target.keyDef, commit: true)
         }
         // Usage 2 (else): released without landing on an alternate — leave the
