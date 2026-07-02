@@ -8,13 +8,14 @@
   Cangjie layout is currently fixed (bottom row: comma / space / period / symbol-switch),
   with no `;` key and no layout-customization feature; the need was added to the authors'
   evaluation list.
-- Current state: closed/completed by `limeimetw` on 2026-07-01 after the scoped cj4
-  semicolon-key / imKeys-unification work shipped in v6.1.27. Source merged on `master` in
-  merge commit `be156c4c15fd` after implementation commit `1004453b8682`. GitHub Release /
-  APK v6.1.27 is live as `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
+- Current state: reopened by `limeimetw` on 2026-07-02 after the original reporter asked
+  whether semicolon-key support can also apply to 「自建」 input methods. The scoped cj4
+  semicolon-key / imKeys-unification work already shipped in v6.1.27: source merged on
+  `master` in merge commit `be156c4c15fd` after implementation commit `1004453b8682`, and
+  GitHub Release / APK v6.1.27 is live as `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
   `297a2ffe40e5ab3a6361f9cae8cf301d40bd8292`, size 7410887 bytes, downloaded SHA-256
-  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`) and contains the
-  Android/GitHub APK delivery. `limeimetw` posted the scoped Android/GitHub APK update at
+  `299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`). `limeimetw` posted
+  the scoped Android/GitHub APK update at
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4846962860. The original
   reporter later clarified in https://github.com/lime-ime/limeime/issues/140#issuecomment-4851381332
   that they are an iOS tester, so their validation depends on TestFlight/App Store delivery
@@ -23,7 +24,14 @@
   had been submitted to Apple review, then closed the issue with
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4852416109 after noting the
   scoped semicolon-key support is handled and broader keyboard appearance/layout adjustments
-  will remain lower-priority future evaluation.
+  will remain lower-priority future evaluation. After the reporter's follow-up
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4862288856, `limeimetw` posted
+  https://github.com/lime-ime/limeime/issues/140#issuecomment-4862380175 saying the next
+  direction is to replace the per-IM semicolon preference with explicit selectable Cangjie
+  semicolon layouts (`cj_semi` and `cj_num_semi`) so self-built / custom tables can choose the
+  semicolon-capable layout. That follow-up is tracked as maintainer-created backlog issue #143
+  and `docs/BACKLOG.md` entry `feat#143`; #140 remains open for this follow-up context, but no
+  duplicate public reply or APK/TestFlight retest request is needed yet.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
