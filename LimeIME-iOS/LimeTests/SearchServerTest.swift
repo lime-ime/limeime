@@ -1679,13 +1679,28 @@ final class SearchServerTest: XCTestCase {
 
         let scoreExp = expectation(description: "updateScore called for single-char")
         spy.onUpdateScore = { scoreExp.fulfill() }
+        // The re-warm getMappingByCode("a") fires AFTER updateScore on the same
+        // background dispatch, so waiting only on scoreExp races the count check.
+        // Wait for the re-warm call itself (mirrors test_3_3_4_1).
+        let rewarmExp = expectation(description: "a re-warmed")
+        let rewarmLock = NSLock()
+        var didFulfillRewarm = false
+        spy.onGetMappingByCode = { [weak spy, weak rewarmExp] in
+            rewarmLock.lock()
+            defer { rewarmLock.unlock() }
+            guard let spy, !didFulfillRewarm else { return }
+            if spy.getMappingByCodeCallArgs.contains("a") {
+                didFulfillRewarm = true
+                rewarmExp?.fulfill()
+            }
+        }
 
         let mapping = Mapping(id: 1, code: "a", word: "啊",
                               score: 5, baseScore: 0,
                               recordType: Mapping.RecordType.exactMatchToCode)
         withExtendedLifetime(ss) {
             ss.learnRelatedPhraseAndUpdateScore(mapping)
-            wait(for: [scoreExp], timeout: 10.0)
+            wait(for: [scoreExp, rewarmExp], timeout: 10.0)
         }
 
         XCTAssertTrue(spy.updateScoreCalled, "score must be updated")
