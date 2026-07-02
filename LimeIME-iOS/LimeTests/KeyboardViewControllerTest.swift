@@ -1603,11 +1603,70 @@ final class KeyboardViewControllerTest: XCTestCase {
             56, accuracy: 0.001)
     }
 
+    func testCandidateBarReusesButtonsAndRefreshesTitlesAndHighlight() {
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 390, height: 48))
+        let first = [
+            Mapping(id: 0, code: "ab", word: "ab", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.composingCode),
+            Mapping(id: 1, code: "ab", word: "明", score: 0, baseScore: 0),
+            Mapping(id: 2, code: "li", word: "力", score: 0, baseScore: 0),
+        ]
+        bar.setCandidates(first, selectedIndex: 0)
+        let originalButtons = candidateButtons(in: bar)
+
+        XCTAssertEqual(originalButtons.map { $0.title(for: .normal) }, ["ab", "明", "力"])
+        XCTAssertFalse(originalButtons[0].pillView.backgroundColor?.isEqual(UIColor.clear) ?? true)
+
+        let shorter = [
+            Mapping(id: 3, code: "xy", word: "xy", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.composingCode),
+            Mapping(id: 4, code: "xy", word: "新", score: 0, baseScore: 0),
+        ]
+        bar.setCandidates(shorter, selectedIndex: 1)
+        let shorterButtons = candidateButtons(in: bar)
+
+        XCTAssertEqual(shorterButtons.count, 2)
+        XCTAssertTrue(shorterButtons[0] === originalButtons[0])
+        XCTAssertTrue(shorterButtons[1] === originalButtons[1])
+        XCTAssertNil(originalButtons[2].superview)
+        XCTAssertEqual(shorterButtons.map { $0.title(for: .normal) }, ["xy", "新"])
+        XCTAssertEqual(shorterButtons.map(\.tag), [0, 1])
+        XCTAssertTrue(shorterButtons[0].pillView.backgroundColor?.isEqual(UIColor.clear) ?? false)
+        XCTAssertFalse(shorterButtons[1].pillView.backgroundColor?.isEqual(UIColor.clear) ?? true)
+
+        let longer = shorter + [
+            Mapping(id: 5, code: "za", word: "再", score: 0, baseScore: 0),
+            Mapping(id: 6, code: "jian", word: "見", score: 0, baseScore: 0),
+        ]
+        bar.setCandidates(longer, selectedIndex: 2)
+        let longerButtons = candidateButtons(in: bar)
+
+        XCTAssertEqual(longerButtons.count, 4)
+        XCTAssertTrue(longerButtons[0] === shorterButtons[0])
+        XCTAssertTrue(longerButtons[1] === shorterButtons[1])
+        XCTAssertEqual(longerButtons.map { $0.title(for: .normal) }, ["xy", "新", "再", "見"])
+        XCTAssertEqual(longerButtons.map(\.tag), [0, 1, 2, 3])
+        XCTAssertTrue(longerButtons[1].pillView.backgroundColor?.isEqual(UIColor.clear) ?? false)
+        XCTAssertFalse(longerButtons[2].pillView.backgroundColor?.isEqual(UIColor.clear) ?? true)
+    }
+
     private func projectFileURL(_ relativePath: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent(relativePath)
+    }
+
+    private func candidateButtons(in view: UIView) -> [CandidateButton] {
+        var result: [CandidateButton] = []
+        func walk(_ node: UIView) {
+            if let button = node as? CandidateButton {
+                result.append(button)
+            }
+            node.subviews.forEach(walk)
+        }
+        walk(view)
+        return result
     }
 
     private func loadKeyLayoutFixture(_ layoutID: String) throws -> LimeKeyLayout {

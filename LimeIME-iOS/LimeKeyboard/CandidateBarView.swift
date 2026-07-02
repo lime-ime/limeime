@@ -591,14 +591,11 @@ final class CandidateBarView: UIView {
         self.selectedIndex = (selectedIndex >= 0 && selectedIndex < mappings.count) ? selectedIndex : -1
         updateIdleToolsRevealState(hadCandidates: hadCandidates)
         rebuildButtons()
-        // layoutIfNeeded must come BEFORE setContentOffset(.zero).
-        // During the layout pass UIScrollView internally adjusts contentOffset to
-        // account for contentSize changes; calling setContentOffset after ensures
-        // our zero value always wins and is not overwritten by UIScrollView's
-        // internal adjustment. scrollSelectedIntoView is intentionally omitted
-        // here — a fresh candidate list always starts at offset 0.
-        scrollView.layoutIfNeeded()
-        scrollView.setContentOffset(.zero, animated: false)
+        // A fresh candidate list starts at offset 0. Avoid forcing layout when
+        // the scroll view is already at the left edge.
+        if scrollView.contentOffset.x != 0 {
+            scrollView.setContentOffset(.zero, animated: false)
+        }
     }
 
     /// Append additional candidates to the existing list WITHOUT clearing buttons or
@@ -610,9 +607,8 @@ final class CandidateBarView: UIView {
     /// (e.g. the composing code changed) it falls back to a full `setCandidates`.
     func appendCandidates(_ mappings: [Mapping], selectedIndex: Int = -1) {
         // Preserve scroll position across the stage-2 upgrade.
-        // setCandidates now calls layoutIfNeeded() BEFORE setContentOffset(.zero),
-        // so when it returns layout is fully settled and there are no pending async
-        // scroll adjustments. Overriding the .zero immediately after is safe.
+        // setCandidates may reset a nonzero offset for a fresh list; restore the
+        // clamped prior offset immediately after the candidate list is replaced.
         let preservedX = scrollView.contentOffset.x
         setCandidates(mappings, selectedIndex: selectedIndex)
         guard preservedX > 0 else { return }
@@ -706,24 +702,33 @@ final class CandidateBarView: UIView {
     // MARK: - Private
 
     private func rebuildButtons() {
-        stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        candidateButtons.removeAll(keepingCapacity: true)
-
-        for (index, mapping) in candidates.enumerated() {
-            let btn = makeCandidateButton(mapping: mapping, index: index)
+        while candidateButtons.count < candidates.count {
+            let index = candidateButtons.count
+            let btn = makeCandidateButton(mapping: candidates[index], index: index)
             stackView.addArrangedSubview(btn)
             // Activate AFTER addArrangedSubview so btn and stackView share a
             // common ancestor — activating before would crash with
             // "no common ancestor" AutoLayout assertion.
             btn.heightAnchor.constraint(equalTo: stackView.heightAnchor).isActive = true
             candidateButtons.append(btn)
-            applyHighlightStyle(button: btn, index: index, mapping: mapping)
         }
 
+        while candidateButtons.count > candidates.count {
+            let btn = candidateButtons.removeLast()
+            btn.removeFromSuperview()
+        }
+
+        for (index, mapping) in candidates.enumerated() {
+            configureCandidateButton(candidateButtons[index], mapping: mapping, index: index)
+        }
+
+        updateChromeVisibility(hasCandidates: !candidates.isEmpty)
+    }
+
+    private func updateChromeVisibility(hasCandidates: Bool) {
         // Show/hide the fixed chevron and dismiss button with the candidate list.
         // Left zone: emoji ↔ dismiss swap (per CANDI_LAYOUT.md §9). Right zone:
         // options ↔ chevron swap.
-        let hasCandidates = !candidates.isEmpty
         let showEmptyDismissChrome = emptyDismissChromeEnabled && !hasCandidates
         let allowEmoji    = !isPad
         let allowOptions  = true
@@ -856,29 +861,39 @@ final class CandidateBarView: UIView {
         // so the user can visually distinguish it as "commit the raw English letters".
         // Mirrors Android mColorComposingCode.
         let isComposingCode = mapping.isComposingCodeRecord
-
-        btn.setTitle(mapping.word, for: .normal)
-        let cellFont: UIFont
-        if isComposingCode {
-            cellFont = composingCodeFont
-            btn.titleLabel?.font = cellFont
-            btn.setTitleColor(effectiveCandiText.withAlphaComponent(LayoutMetrics.CandidateBar.composingCodeDimAlpha), for: .normal)
-        } else {
-            cellFont = candidateFont
-            btn.titleLabel?.font = cellFont
-            btn.setTitleColor(effectiveCandiText, for: .normal)
-        }
+        let cellFont = isComposingCode ? composingCodeFont : candidateFont
 
         // Floor the cell width at one em + side pads so a narrow glyph (e.g. the
         // auto-Chinese-punc strip ，。、？!…) keeps a Han-sized tap target rather
         // than collapsing to the punctuation's slim advance. References only
         // `btn`, so it is safe to activate before the view joins the hierarchy.
-        btn.widthAnchor.constraint(
+        let minWidth = btn.widthAnchor.constraint(
             greaterThanOrEqualToConstant:
                 CandidateBarView.minCandidateCellWidth(fontPointSize: cellFont.pointSize,
                                                         hPad: candidateHPad)
-        ).isActive = true
+        )
+        minWidth.isActive = true
+        btn.minWidthConstraint = minWidth
+        configureCandidateButton(btn, mapping: mapping, index: index)
         return btn
+    }
+
+    private func configureCandidateButton(_ btn: CandidateButton, mapping: Mapping, index: Int) {
+        btn.tag = index
+        let isComposingCode = mapping.isComposingCodeRecord
+        let cellFont = isComposingCode ? composingCodeFont : candidateFont
+        btn.titleLabel?.font = cellFont
+        btn.setTitle(mapping.word, for: .normal)
+        btn.setTitleColor(
+            isComposingCode
+                ? effectiveCandiText.withAlphaComponent(LayoutMetrics.CandidateBar.composingCodeDimAlpha)
+                : effectiveCandiText,
+            for: .normal
+        )
+        btn.minWidthConstraint?.constant = CandidateBarView.minCandidateCellWidth(
+            fontPointSize: cellFont.pointSize,
+            hPad: candidateHPad)
+        applyHighlightStyle(button: btn, index: index, mapping: mapping)
     }
 
     /// Paint selection-dependent background and text color on a single candidate button.
@@ -1042,6 +1057,7 @@ final class CandidateBarView: UIView {
 /// to the full bar height while keeping the highlight visually compact.
 final class CandidateButton: UIButton {
     let pillView = UIView()
+    var minWidthConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
