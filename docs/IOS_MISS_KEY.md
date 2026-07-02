@@ -334,3 +334,27 @@ So iOS holds the touch in the thin **screen-edge strip** to disambiguate its own
 - **Log to a file** in the extension's own container: `FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first` → append lines (reset on `viewDidLoad`).
 - **Pull it:** `xcrun devicectl device copy from --device <id> --domain-type appDataContainer --domain-identifier org.limeime.keyboard --source Documents/<file> --destination <local>`. ⚠️ The `appGroupDataContainer` domain is **broken** (bogus `File paths cannot contain '..'` error) — use the extension's own `appDataContainer` instead.
 - **Build + install from CLI** (eliminates Xcode stale-binary doubt): `xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS,id=<dev>' -allowProvisioningUpdates -derivedDataPath <dd> build`, then `xcrun devicectl device install app --device <dev> <…/LimeIME.app>`. `devicectl device uninstall app … org.limeime` first to force a fresh extension binary; a plain reinstall keeps the keyboard enabled but may keep the **cached** running process (a device reboot busts it for sure).
+
+### 2026-07-02 — RESOLVED. Root cause was UIKit touch-delivery delay, NOT `rebuildButtons` starvation
+
+**Fixed and device-confirmed on branch `ios-touch-rewrite`.** After the touch rewrite (docs/IOS_TOUCH_REWRITE.md) gave the single-owner `KeyTouchLayer`, the residual high-speed misses were closed via the plan in **docs/IOS_OPT_TOUCH.md**. The result reframes this doc's central hypothesis.
+
+**Correction to this document's main theory.** The dominant cause was **not** `CandidateBarView.rebuildButtons()` main-thread starvation. Two pieces of evidence:
+
+1. **Misses reproduce on the ENGLISH keyboard with prediction OFF** — a path that never touches the candidate bar (`updateEnglishPrediction()` does `guard englishPredictionOn else { return }` before any candidate work, and `rebuildButtons` isn't reached). So the misses cannot be primarily the candidate rebuild.
+2. **A simulator micro-benchmark measured `KeyDetector` at ~6.4 µs build+resolve / ~5.4 µs resolve per tap** — ~0.04 % of a frame. Detection was never the bottleneck either.
+
+The actual dominant cause was **UIKit delaying/dropping `touchesBegan`** — the same "events never reach the button" family as the 2026-06-30 screen-edge finding, but triggered by the input window's system gesture recognizers rather than the screen edge.
+
+**What actually fixed it (docs/IOS_OPT_TOUCH.md Phase 1, commit `49845bba` — the biggest win):**
+- `delaysTouchesBegan = false` on the input window's gesture recognizers (azooKey pattern), set from `viewDidAppear` + `viewDidLayoutSubviews`.
+- `KeyTouchLayer` hit-surface hardening (Tasty pattern): `isOpaque=false`, empty `draw(_:)`, and a `hitTest` that claims the layer for plain keys + transparent gaps (while still returning interactive globe/legacy-`-3` subview hits).
+
+**Defense-in-depth main-thread reductions (helped, but were not the primary cause):**
+- Reuse the key-preview view instead of rebuilding it per keystroke (`6ed2c884`) — the preview was allocating a `UIView` + `CAShapeLayer` + adding to the window every keystroke.
+- Commit plain keys on `touchesBegan` not release (`d97d52f3`) — a dropped `touchesEnded` can no longer silently swallow a key.
+- **P1 of this doc (diffable `rebuildButtons`) finally landed** (`4daae397`, docs/IOS_OPT_TOUCH.md Task 6): grow/shrink/configure-in-place instead of teardown-all. Still worthwhile for Chinese/candidate-active bursts and battery, just not the root of the misses. **P2 (defer one runloop) was NOT needed** and left unimplemented.
+
+**Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on the single `KeyTouchLayer` (the actual touch owner), and the scattered per-view flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`.
+
+**Device outcome (WJIP17, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
