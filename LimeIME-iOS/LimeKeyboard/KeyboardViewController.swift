@@ -3283,6 +3283,20 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     func keyboardView(_ view: KeyboardView, highlightPopupKey keyDef: KeyDef?) {
         currentPopupView?.setHighlightedKey(keyDef)
+        showPopupKeyPreview(for: keyDef)
+    }
+
+    /// Show the callout key-preview above a popup alternate (slide-over or tap-down); `nil` hides it.
+    /// Suppressed for single-key mini-popups per spec.
+    private func showPopupKeyPreview(for keyDef: KeyDef?) {
+        guard let keyDef,
+              let popup = currentPopupView, !popup.isSingleKey,
+              let kbView = keyboardView,
+              let rect = popup.keyRect(for: keyDef, in: kbView) else {
+            hideKeyPreview(animated: false)
+            return
+        }
+        keyboardView(kbView, showPreviewFor: keyDef, keyRect: rect)
     }
 
     func keyboardView(_ view: KeyboardView, didSelectPopupKey keyDef: KeyDef) {
@@ -3379,6 +3393,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     @objc private func dismissPopupKeyboard() {
+        hideKeyPreview(animated: false)
         currentPopupView?.removeFromSuperview()
         currentPopupView = nil
         view.subviews.filter { $0.tag == 9877 }.forEach { $0.removeFromSuperview() }
@@ -4323,6 +4338,10 @@ extension KeyboardViewController: PopupKeyboardViewDelegate {
     func popupKeyboardView(_ popup: PopupKeyboardView, didSelect keyDef: KeyDef) {
         dismissPopupKeyboard()
         firePopupKey(keyDef)
+    }
+
+    func popupKeyboardView(_ popup: PopupKeyboardView, didHighlight keyDef: KeyDef?) {
+        showPopupKeyPreview(for: keyDef)
     }
 
     /// Fire the action for a popup key (shared by popup selection and single-key direct dispatch).

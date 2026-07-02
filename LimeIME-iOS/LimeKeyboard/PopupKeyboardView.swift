@@ -5,6 +5,8 @@
 
 protocol PopupKeyboardViewDelegate: AnyObject {
     func popupKeyboardView(_ popup: PopupKeyboardView, didSelect keyDef: KeyDef)
+    /// A key became highlighted (slide-over or tap-down) — `nil` clears it. Drives the key preview.
+    func popupKeyboardView(_ popup: PopupKeyboardView, didHighlight keyDef: KeyDef?)
 }
 
 final class PopupKeyboardView: UIView {
@@ -112,14 +114,27 @@ final class PopupKeyboardView: UIView {
 
     @objc private func keyHighlight(_ sender: UIButton) {
         sender.backgroundColor = palette.pressedKey
+        delegate?.popupKeyboardView(self, didHighlight: keyDef(for: sender))
     }
 
     @objc private func keyUnhighlight(_ sender: UIButton) {
         sender.backgroundColor = palette.normalKey
+        delegate?.popupKeyboardView(self, didHighlight: nil)
     }
 
     func key(at point: CGPoint, slideAllowance: CGFloat) -> KeyDef? {
         PopupKeyDetector(targets: keyHitTargets(), slideAllowance: slideAllowance).key(at: point)
+    }
+
+    /// True when the popup has a single alternate — callers suppress the key preview for these.
+    var isSingleKey: Bool { layout.rows.reduce(0) { $0 + $1.keys.count } <= 1 }
+
+    /// Frame of the button matching `keyDef`, in `target`'s coordinate space (for the key preview).
+    func keyRect(for keyDef: KeyDef, in target: UIView) -> CGRect? {
+        for button in popupKeyButtons() where self.keyDef(for: button) == keyDef {
+            return button.convert(button.bounds, to: target)
+        }
+        return nil
     }
 
     func setHighlightedKey(_ highlightedKey: KeyDef?) {

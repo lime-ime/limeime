@@ -357,10 +357,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     @inline(__always)
-    fileprivate func fireHaptic() {
+    fileprivate func fireHaptic(force: Bool = false) {
         guard feedbackVibration else { return }
         let now = CACurrentMediaTime()
-        guard now - lastHapticAt >= minHapticInterval else { return }
+        // `force` bypasses the 40 Hz throttle for distinct one-off events (e.g. a popup
+        // opening mid-flint, whose tick would otherwise be eaten by the just-fired key haptic).
+        if !force, now - lastHapticAt < minHapticInterval { return }
         lastHapticAt = now
         ensureHapticGenerator()
         guard let gen = hapticGenerator else { return }
@@ -1590,7 +1592,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         state.target.button.wasLongPressed = true
         state.target.button.backgroundColor = pressedKeyColor
         state.popupOpen = true
-        fireHaptic()
+        fireHaptic(force: true)   // guaranteed tick even when opened mid-flint
         delegate?.keyboardViewDismissPreview(self)
         let keyRect = state.target.button.convert(state.target.button.bounds, to: self)
         delegate?.keyboardView(self, didLongPressPopupKey: state.target.keyDef, sourceRect: keyRect)
@@ -1610,13 +1612,15 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         let keyboardPoint = popupKeyboardPoint(fromLayerPoint: state.lastPoint, in: state.layer)
         if let selected = delegate?.keyboardView(self, popupKeyAtKeyboardPoint: keyboardPoint) {
+            // Usage 1: held + slid onto an alternate → commit it and dismiss.
             delegate?.keyboardView(self, didSelectPopupKey: selected)
         } else if state.target.keyDef.popupCharacters.count == 1,
                   squareDistance(state.startPoint, state.lastPoint) <= state.target.button.bounds.height * state.target.button.bounds.height / 4 {
             delegate?.keyboardView(self, didReleasePopupKey: state.target.keyDef, commit: true)
-        } else {
-            delegate?.keyboardViewDidCancelPopupSlide(self)
         }
+        // Usage 2 (else): released without landing on an alternate — leave the
+        // mini-keyboard on screen (sticky). Its own buttons handle tap-to-select;
+        // the tap-outside overlay dismisses it. Do NOT dismiss here.
     }
 
     private func updatePopupSelection(state: inout OwnerTouchState) {
@@ -1625,6 +1629,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         guard selected != state.popupSelection else { return }
         state.popupSelection = selected
         delegate?.keyboardView(self, highlightPopupKey: selected)
+        if selected != nil { fireHaptic() }   // per-alternate tick while sliding (matches main-key flint)
     }
 
     private func updateDualRowSlide(touchID: ObjectIdentifier, state: inout OwnerTouchState) {
