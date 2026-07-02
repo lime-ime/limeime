@@ -137,6 +137,24 @@ final class TouchLayerGestureTests: XCTestCase {
         XCTAssertLessThan(undoRange.lowerBound, beginRange.lowerBound)
     }
 
+    func testPlainFlintLandingOnPopupKeyTransitionsToSharedPopupOpenPath() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
+                                encoding: .utf8)
+
+        let preMoveRange = try XCTUnwrap(source.range(
+            of: #"guard var tracker = touchTrackers\[touchID\] else \{ continue \}[\s\S]*?_ = tracker\.move\(to: point,"#,
+            options: .regularExpression))
+        let preMoveSource = String(source[preMoveRange])
+
+        let popupLandingRange = try XCTUnwrap(preMoveSource.range(
+            of: #"if let landing = context\.detector\.keyAt\(point, movingFrom: tracker\.currentKey, hysteresis: context\.hysteresis\),\s*landing\.hasPopup,\s*landing != tracker\.currentKey,\s*let popupTarget = plainTouchTarget\(for: landing, in: context\) \{[\s\S]*?beginFlintPopup\(touchID: touchID, point: point, layer: layer,[\s\S]*?previousTarget: plainTouchTargets\[touchID\], popupTarget: popupTarget\)[\s\S]*?continue\s*\}"#,
+            options: .regularExpression))
+        XCTAssertTrue(String(preMoveSource[popupLandingRange]).contains("landing.hasPopup"))
+
+        XCTAssertTrue(source.contains("private func openPopup(touchID: ObjectIdentifier, state: inout OwnerTouchState)"))
+        XCTAssertEqual(source.components(separatedBy: "openPopup(touchID: touchID, state: &state)").count - 1, 2)
+    }
+
     func testKeyTouchLayerOwnsHitTesting() throws {
         let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardView.swift"),
                                 encoding: .utf8)

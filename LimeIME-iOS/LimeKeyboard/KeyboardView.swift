@@ -1348,6 +1348,14 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             }
 
             guard var tracker = touchTrackers[touchID] else { continue }
+            if let landing = context.detector.keyAt(point, movingFrom: tracker.currentKey, hysteresis: context.hysteresis),
+               landing.hasPopup, landing != tracker.currentKey,
+               let popupTarget = plainTouchTarget(for: landing, in: context) {
+                beginFlintPopup(touchID: touchID, point: point, layer: layer,
+                                previousTarget: plainTouchTargets[touchID], popupTarget: popupTarget)
+                continue
+            }
+
             let previousKey = tracker.currentKey
             _ = tracker.move(to: point,
                              detector: context.detector,
@@ -1450,6 +1458,26 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                                               layoutId: layout.id, legacyGlobeMode: legacyGlobeMode)
     }
 
+    private func beginFlintPopup(touchID: ObjectIdentifier, point: CGPoint, layer: KeyTouchLayer,
+                                 previousTarget: PlainKeyTouchTarget?, popupTarget: PlainKeyTouchTarget) {
+        delegate?.keyboardView(self, didPress: flintUndoKeyDef())
+        if let previousTarget {
+            releasePlainKeyTouch(button: previousTarget.button, keyDef: previousTarget.keyDef)
+        }
+        touchTrackers.removeValue(forKey: touchID)
+        plainTouchTargets.removeValue(forKey: touchID)
+        invalidateOwnerLongPress(touchID)
+
+        var state = OwnerTouchState(behavior: ownerTouchBehavior(for: popupTarget.keyDef),
+                                    target: popupTarget,
+                                    layer: layer,
+                                    startPoint: point,
+                                    lastPoint: point,
+                                    startTime: CACurrentMediaTime())
+        openPopup(touchID: touchID, state: &state)
+        ownerTouchStates[touchID] = state
+    }
+
     private func beginOwnerKeyTouch(touchID: ObjectIdentifier, state: OwnerTouchState) {
         if state.behavior == .space {
             state.target.button.wasLongPressed = false
@@ -1529,12 +1557,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         switch state.behavior {
         case .popup:
-            state.popupOpen = true
-            fireHaptic()
-            delegate?.keyboardViewDismissPreview(self)
-            let keyRect = state.target.button.convert(state.target.button.bounds, to: self)
-            delegate?.keyboardView(self, didLongPressPopupKey: state.target.keyDef, sourceRect: keyRect)
-            updatePopupSelection(state: &state)
+            openPopup(touchID: touchID, state: &state)
         case .dualRow:
             guard state.target.keyDef.longPressCode != 0 else { break }
             state.dualPreviewShown = true
@@ -1560,6 +1583,18 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         ownerTouchStates[touchID] = state
+    }
+
+    private func openPopup(touchID: ObjectIdentifier, state: inout OwnerTouchState) {
+        state.longPressFired = true
+        state.target.button.wasLongPressed = true
+        state.target.button.backgroundColor = pressedKeyColor
+        state.popupOpen = true
+        fireHaptic()
+        delegate?.keyboardViewDismissPreview(self)
+        let keyRect = state.target.button.convert(state.target.button.bounds, to: self)
+        delegate?.keyboardView(self, didLongPressPopupKey: state.target.keyDef, sourceRect: keyRect)
+        updatePopupSelection(state: &state)
     }
 
     private func endPopupTouch(state: OwnerTouchState) {
