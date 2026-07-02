@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from a private email/TestFlight report. Do not expose reporter identity or private app details in public comments or docs.
-- Current state: reopened by `limeimetw` on 2026-07-01 after the private reporter said iOS TestFlight 6.1.27 still covers bottom content; retained reopen comment: https://github.com/lime-ime/limeime/issues/139#issuecomment-4857781866. Treat the active follow-up as the iOS bottom-content coverage symptom only. The earlier numeric-field report remains unresolved only as private-reporter context: iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below) could not reproduce the exact numeric-field symptom, and LIME's numeric-field routing is not reached from tested web fields.
+- Current state: reopened by `limeimetw` on 2026-07-01 after the private reporter said iOS TestFlight 6.1.27 still covers bottom content; retained reopen comment: https://github.com/lime-ime/limeime/issues/139#issuecomment-4857781866. On 2026-07-02 the reporter added that the coverage is not limited to Array10: Dayi also covers bottom content, and the covered range is larger. Treat the active follow-up as an iOS bottom-content coverage symptom affecting at least some table-keyboard layouts. The earlier numeric-field report remains unresolved only as private-reporter context: iOS simulator investigation done 2026-06-29 (see "Simulator investigation findings" below) could not reproduce the exact numeric-field symptom, and LIME's numeric-field routing is not reached from tested web fields.
 - Public acknowledgement: not needed. This is a maintainer-created tracking issue for private-email evidence.
 
 ## Problem statement
@@ -16,7 +16,7 @@ An iOS TestFlight reporter using the Array10 (`行列10`) input method reported 
 2. Bottom page or content areas in the host app cannot be fully displayed because the keyboard covers them.
 3. The keyboard-size preference appears to enlarge only the English keyboard. The Array10 phone-style numeric keyboard does not appear to change size consistently.
 
-The issue body says the reporter supplied videos in the email thread, but automated GitHub intake did not expose those attachments. Current analysis is therefore based on the public issue summary, the retained project-account comments, and source inspection, not on frame-by-frame video review. On 2026-07-01 the reporter added through the private channel that TestFlight 6.1.27 still covers bottom content, while the native iOS keyboard and other third-party keyboards reportedly do not.
+The issue body says the reporter supplied videos in the email thread, but automated GitHub intake did not expose those attachments. Current analysis is therefore based on the public issue summary, the retained project-account comments, private email snippets, and source inspection, not on frame-by-frame video review. On 2026-07-01 the reporter added through the private channel that TestFlight 6.1.27 still covers bottom content, while the native iOS keyboard and other third-party keyboards reportedly do not. On 2026-07-02 the reporter added that Dayi also shows the bottom-coverage symptom and appears to cover a larger range than Array10.
 
 ## Source evidence inspected
 
@@ -57,14 +57,14 @@ The original numeric-keyboard hypothesis was narrowed by simulator investigation
 
 The keyboard-size portion is less certain. The inspected size-scaling code appears layout-agnostic and should apply to `phone_simple`, but it depends on `loadSettings()` / `applyFeedbackSettings()` running after the preference changes and on the extension accepting the updated height. The issue needs device/TestFlight reproduction before claiming a specific code defect there.
 
-The bottom-content coverage portion is now the active follow-up. The new 6.1.27 report says native and other third-party keyboards do not cover the same bottom content, which makes a LIME custom-keyboard height/safe-area interaction plausible. Still distinguish a LIME extension-height problem from private host-app content-inset behavior until reproduced with a non-sensitive test field or measurable keyboard frame/height evidence.
+The bottom-content coverage portion is now the active follow-up. The 6.1.27 reports say native and other third-party keyboards do not cover the same bottom content, and that both Array10 and Dayi can cover bottom content with Dayi covering a larger range. This makes a LIME custom-keyboard height/safe-area interaction plausible and suggests the investigation should compare layout-specific row counts, candidate-bar state, and preferred-height calculations across table keyboards rather than treating the problem as Array10-only. Still distinguish a LIME extension-height problem from private host-app content-inset behavior until reproduced with a non-sensitive test field or measurable keyboard frame/height evidence.
 
 ## Proposed fix / investigation plan
 
-1. Reproduce the bottom-coverage symptom on iOS TestFlight or simulator with Array10 active, preferably in a non-sensitive test view that mimics the private app's bottom input/content area.
-2. Measure the extension height path: `KeyboardView.preferredHeight`, `activeCandidateBarHeight`, `emojiSearchHeaderHeight`, and `KeyboardViewController.applyHeight()`'s `view.heightAnchor` constant.
-3. Compare LIME's reported custom-keyboard height/frame against the native keyboard and another third-party keyboard on the same device/orientation when possible.
-4. Check whether candidate bar, emoji/search header state, keyboard-size preference, orientation, safe-area, or iPhone compatibility scaling can leave an excessive or stale height constraint after layout changes.
+1. Reproduce the bottom-coverage symptom on iOS TestFlight or simulator with Array10 and Dayi active, preferably in a non-sensitive test view that mimics the private app's bottom input/content area.
+2. Measure the extension height path: `KeyboardView.preferredHeight`, `activeCandidateBarHeight`, `emojiSearchHeaderHeight`, layout row counts, per-layout row heights, and `KeyboardViewController.applyHeight()`'s `view.heightAnchor` constant.
+3. Compare LIME's reported custom-keyboard height/frame for Array10, Dayi, native iOS, and another third-party keyboard on the same device/orientation when possible.
+4. Check whether candidate bar, emoji/search header state, keyboard-size preference, orientation, safe-area, layout-specific row count, or iPhone compatibility scaling can leave an excessive or stale height constraint after layout changes.
 5. Keep the numeric-field investigation separate. Ask privately for exact field markup only if the reporter still sees the numeric-keyboard symptom in addition to the confirmed 6.1.27 bottom-coverage follow-up.
 
 ## Verification plan
@@ -72,19 +72,19 @@ The bottom-content coverage portion is now the active follow-up. The new 6.1.27 
 - Add source-level coverage or a lightweight controller test to ensure keyboard-size preference changes propagate to `KeyboardView.keySizeScale` and `applyHeight()` for `phone_simple` without leaving stale height.
 - Add or update focused tests for any discovered height/safe-area calculation change.
 - Manual TestFlight/simulator verification:
-  - Array10 normal text field shows the intended layout without covering the test app's bottom content beyond the expected keyboard frame.
+  - Array10 and Dayi normal text fields show the intended layouts without covering the test app's bottom content beyond the expected keyboard frame.
   - Candidate bar, expanded candidates, emoji/search states, and keyboard-size changes do not leave excessive keyboard height.
   - Keyboard-size settings visibly affect English and Array10 phone-style layouts.
   - Bottom content in a reproducible test app remains visible or scroll-adjustable when the keyboard is shown.
 
 ## Platform impact
 
-- iOS: confirmed report scope. The active follow-up is bottom-content coverage on TestFlight 6.1.27. Numeric-field behavior remains documented but is not the currently reproduced defect after simulator investigation.
+- iOS: confirmed report scope. The active follow-up is bottom-content coverage on TestFlight 6.1.27, now reported for Array10 and Dayi with Dayi covering a larger range. Numeric-field behavior remains documented but is not the currently reproduced defect after simulator investigation.
 - Android: analogous Android input-type routing was inspected and already sends number/phone fields through phone-style keyboard modes. No Android change is implied unless separate Android evidence appears.
 
 ## Follow-up / retest condition
 
-The issue is open after the private reporter's TestFlight 6.1.27 bottom-coverage follow-up. Do not post another public acknowledgement or Android APK retest request for this private-email/TestFlight report. Next public update should wait for a focused iOS source fix, TestFlight build, or maintainer/private-reporter clarification. If more private details are needed, ask for iOS version, device/orientation, keyboard-size setting, whether the candidate bar/emoji/search panel is visible, and a non-sensitive screen frame showing the covered bottom area.
+The issue is open after the private reporter's TestFlight 6.1.27 bottom-coverage follow-up. Do not post another generic public acknowledgement or Android APK retest request for this private-email/TestFlight report. A focused public note is acceptable when new private evidence changes the tracking scope without exposing sender identity or private app details. Next public update after that should wait for a focused iOS source fix, TestFlight build, or maintainer/private-reporter clarification. If more private details are needed, ask for iOS version, device/orientation, keyboard-size setting, whether the candidate bar/emoji/search panel is visible, which input method/layout is active, and a non-sensitive screen frame showing the covered bottom area.
 
 ## Simulator investigation findings (2026-06-29)
 
@@ -160,6 +160,12 @@ Tooling left in the tree for this investigation (uncommitted):
 - New private-reporter fact: iOS TestFlight 6.1.27 still covers bottom content; reporter says the native iOS keyboard and other third-party keyboards do not cover the same bottom content.
 - Current tracking scope: iOS bottom-content coverage / keyboard height or safe-area behavior. Numeric-field routing remains a documented prior investigation, not the active 6.1.27 failure unless the reporter provides new numeric-field evidence.
 - Backlog state: restore `fix#139 iOS` as an active/pending iOS follow-up for bottom-content coverage. No Android APK retest applies.
+
+## Follow-up evidence (2026-07-02)
+
+- New private-reporter fact: iOS 26.6 beta / TestFlight 6.1.27 shows the bottom-content coverage symptom not only with Array10, but also with Dayi, and the Dayi covered range is reportedly larger.
+- Public issue update: post a scoped note that the private reporter expanded the affected layout evidence to Dayi as well, without exposing the reporter's email, private app, or video content.
+- Investigation implication: compare Array10 and Dayi layout heights/row counts/candidate-bar state under the same device, orientation, and keyboard-size setting. Do not keep the active scope Array10-only.
 
 ## What to communicate to the reporter (private email)
 
