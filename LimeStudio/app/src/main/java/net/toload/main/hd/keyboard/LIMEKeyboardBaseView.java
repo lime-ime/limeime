@@ -248,6 +248,10 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
     private int[] mWindowOffset;
     private final float mMiniKeyboardSlideAllowance;
     private int mMiniKeyboardTrackerId;
+    // iOS-parity (Option B): a MULTI-key popup gets NO injected DOWN, so a plain release stays
+    // sticky (tap-to-select). We only begin slide-tracking once the pressing finger enters the
+    // mini-keyboard bounds — mirrors iOS's flint-to-popup transition. Reset on every open/dismiss.
+    private boolean mMiniKeyboardSlideEntered;
 
     //key preview animation
     private Animation mKeyPreviewFadeInAnimator;
@@ -1674,6 +1678,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         // Inject down event on the key to mini keyboard.
         long eventTime = SystemClock.uptimeMillis();
         mMiniKeyboardPopupTime = eventTime;
+        mMiniKeyboardSlideEntered = false;   // fresh popup: multi-key slide-tracking not yet started
         if (!isLargeScreen || miniKeys.size() == 1) {   // disable fling on large screen; //Jeremy enable fling when popup keyboard only has 1 key '12,5,20
             MotionEvent downEvent = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_DOWN, popupKey.x
                     + popupKey.width / 2, popupKey.y + popupKey.height / 2, eventTime);
@@ -1815,18 +1820,53 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         }
 
         // Needs to be called after the gesture detector gets a turn, as it may have
-        // displayed the mini keyboard
-        if (mMiniKeyboard != null && (!isLargeScreen || mMiniKeyboard.getKeyboard().getKeys().size() == 1)) {  //Jeremy enable fling when popup keyboard only has 1 key '12,5,20
+        // displayed the mini keyboard.
+        // Single-key / small-screen popups use classic "fling": a DOWN was injected at open, so we
+        // forward the pressing finger's whole stream and a slide-and-release commits.
+        // Multi-key popups (iOS-parity Option B) get NO injected DOWN, so a plain release stays
+        // sticky (tap-to-select via the popup window). We begin forwarding only once the finger
+        // enters the mini-keyboard bounds — after that a slide-and-release also commits.
+        if (mMiniKeyboard != null) {
+            final boolean flingMode =
+                    !isLargeScreen || mMiniKeyboard.getKeyboard().getKeys().size() == 1;  //Jeremy enable fling when popup keyboard only has 1 key '12,5,20
             final int miniKeyboardPointerIndex = me.findPointerIndex(mMiniKeyboardTrackerId);
-            if (miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount) {
+            final boolean isPopupFinger =
+                    miniKeyboardPointerIndex >= 0 && miniKeyboardPointerIndex < pointerCount;
+            if (isPopupFinger) {
                 final int miniKeyboardX = (int) me.getX(miniKeyboardPointerIndex);
                 final int miniKeyboardY = (int) me.getY(miniKeyboardPointerIndex);
-                MotionEvent translated = generateMiniKeyboardMotionEvent(action,
-                        miniKeyboardX, miniKeyboardY, eventTime);
-                mMiniKeyboard.onTouchEvent(translated);
-                translated.recycle();
+                if (flingMode || mMiniKeyboardSlideEntered) {
+                    // Fling, or a multi-key popup whose finger has already entered → forward so a
+                    // slide-and-release commits the key under the finger.
+                    MotionEvent translated = generateMiniKeyboardMotionEvent(action,
+                            miniKeyboardX, miniKeyboardY, eventTime);
+                    mMiniKeyboard.onTouchEvent(translated);
+                    translated.recycle();
+                } else if (!isTouchOutsideMiniKeyboard(miniKeyboardX, miniKeyboardY)) {
+                    // Multi-key popup: the finger just slid into the mini-keyboard → start tracking.
+                    mMiniKeyboardSlideEntered = true;
+                    MotionEvent down = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_DOWN,
+                            miniKeyboardX, miniKeyboardY, eventTime);
+                    mMiniKeyboard.onTouchEvent(down);
+                    down.recycle();
+                    if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_POINTER_UP) {
+                        // Entered and lifted in the same motion → deliver the UP so it commits.
+                        MotionEvent up = generateMiniKeyboardMotionEvent(MotionEvent.ACTION_UP,
+                                miniKeyboardX, miniKeyboardY, eventTime);
+                        mMiniKeyboard.onTouchEvent(up);
+                        up.recycle();
+                    }
+                }
+                // else: multi-key, not entered, still outside → drop the event; a release here just
+                // leaves the popup on screen (sticky).
+                return true;   // the popup-owning finger is always consumed here
             }
-            return true;
+            if (flingMode) {
+                // Fling consumes the whole stream even if the pointer index is momentarily stale.
+                return true;
+            }
+            // Multi-key sticky: non-owning pointers (a fresh tap on the popup) are handled by the
+            // popup window itself, so let them fall through.
         }
 
         if (mHandler.isInKeyRepeat()) {
@@ -1965,6 +2005,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             mMiniKeyboard = null;
             mMiniKeyboardOriginX = 0;
             mMiniKeyboardOriginY = 0;
+            mMiniKeyboardSlideEntered = false;
             invalidateAllKeys();
         }
     }
