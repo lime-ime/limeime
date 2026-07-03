@@ -60,6 +60,11 @@ struct FileIdentity: Equatable {
     let size: Int64
     let mtime: TimeInterval
 
+    init(size: Int64, mtime: TimeInterval) {
+        self.size = size
+        self.mtime = mtime
+    }
+
     init?(url: URL) {
         let attributes: [FileAttributeKey: Any]
         do {

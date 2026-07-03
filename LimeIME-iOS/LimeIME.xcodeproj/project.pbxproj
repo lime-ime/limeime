@@ -213,6 +213,7 @@
 		EA5199243A781A843C22C763 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */; };
 		EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3A5071216F1AB96116BC3F /* DBServerTest.swift */; };
 		6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */; };
+		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
@@ -1251,6 +1252,7 @@
 				A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */,
 				EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
+				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,
 				8D62ED56761A14A0C42204A9 /* KeyLayout.swift in Sources */,
 				F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */,

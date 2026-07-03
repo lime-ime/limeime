@@ -149,9 +149,9 @@ Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when
 ## Open items
 
 - App-side DB-backed screens (字根資料表 record editor, per-IM counts): the app no longer has a live DB. Decide: move editing into keyboard UI, degrade these screens, or have the app keep a read-model built from the table sources it already holds. If the record editor stays app-side, edits travel as a per-table append-only op-log (`<stem>.ops.json`, ops bound to that table file's identity) — compacted by supersession, not acks: past a size threshold the app rewrites the table limedb with ops folded in and truncates the log (new file identity makes old ops irrelevant by construction). No global transaction file — the epoch UUID already provides stream identity + reset-on-restore, and a global log would reintroduce the unprunable-queue/ack problem.
-- On-device probe (step 0, before any build-out): FA OFF, keyboard reads a file from the App Group and writes into its own container — validates the single load-bearing permission assumption on real hardware.
-- Verify Darwin notifications are deliverable in the keyboard extension on current iOS (expected yes; not FA-gated).
-- Measure import time for the largest table (關聯字庫) on the slowest supported device; tune chunk size for the resume marker.
+- On-device probe: IMPLEMENTED and installed on WJIP17 (I0, 2026-07-04) — the keyboard measures AG-read / own-write / AG-write / Darwin count / attach-import ms and TYPES the report into the app's probe field, which mirrors it to `AppGroup/probe_report.txt`. Harvest whenever the device is unlocked: launch 萊姆輸入法 (probe field auto-focuses in DEBUG), then `xcrun devicectl device copy from --domain-type appGroupDataContainer --domain-identifier group.org.limeime --source probe_report.txt --destination <out>`. RESIDUE: the FA-OFF rows additionally require toggling Full Access off first (device is currently FA ON). Simulator does not enforce the keyboard sandbox, so there is no sim substitute for the permission rows.
+- Darwin delivery + attach-import mechanics (URI/immutable open, bulk copy): covered by in-process unit tests in I3; cross-process delivery on-device remains part of the probe residue above.
+- Import chunk size: provisional 20k rows/chunk pending the probe's measured rows/sec.
 - Add the bundled `lime.db` copy phase to the LimeKeyboard appex target (fresh-install baseline; only the app target has it today).
 
 ## Test matrix

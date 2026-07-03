@@ -26,12 +26,25 @@ struct LimeImConfigRow {
     func getDesc() -> String { desc }
 }
 
+enum LedgerState: String {
+    case pending, inProgress = "in_progress", done, failed
+}
+
+struct LedgerEntry: Equatable {
+    var stem: String
+    var identity: FileIdentity?
+    var state: LedgerState
+    var error: String?
+    var attempts: Int
+    var resumeMarker: Int64?
+}
+
 // MARK: - LimeDB
 
 final class LimeDB {
 
     // MARK: - GRDB connection
-    private let dbQueue: DatabaseQueue
+    let dbQueue: DatabaseQueue
     private let databasePath: String
 
     // MARK: - State (mirroring Android's instance fields)
@@ -153,7 +166,7 @@ final class LimeDB {
     // MARK: - Schema Migration
 
     // Current schema version (mirrors Android DB_VERSION = 104).
-    private static let CURRENT_DB_VERSION = 104
+    static let CURRENT_DB_VERSION = 104
     private static let EMOJI_DATA_VERSION = "17.0"
     private static let EMOJI_TABLE_DATA = "emoji_data"
     private static let EMOJI_TABLE_FTS = "emoji_fts"
@@ -225,6 +238,14 @@ final class LimeDB {
                     score     INTEGER DEFAULT 0,
                     basescore INTEGER DEFAULT 0,
                     code3r    TEXT
+                )
+            """)
+            try db.execute(sql: "CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT)")
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_ledger (
+                    stem TEXT PRIMARY KEY, size INTEGER, mtime REAL,
+                    state TEXT NOT NULL, error TEXT,
+                    attempts INTEGER NOT NULL DEFAULT 0, resume_marker INTEGER
                 )
             """)
             // Versioned upgrade path (mirrors Android onUpgrade — version 102)
@@ -483,6 +504,97 @@ final class LimeDB {
         return (try? dbQueue.read { db in
             try Int.fetchOne(db, sql: "SELECT EXISTS(SELECT 1 FROM \(name) LIMIT 1)") ?? 0
         }) ?? 0 > 0
+    }
+
+    // MARK: - Sync Metadata / Ledger
+
+    func syncMeta(_ key: String) -> String? {
+        try? dbQueue.read { db in
+            try String.fetchOne(db, sql: "SELECT value FROM sync_meta WHERE key = ?", arguments: [key])
+        }
+    }
+
+    func setSyncMeta(_ key: String, _ value: String) throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                           arguments: [key, value])
+        }
+    }
+
+    func ledgerEntry(stem: String) -> LedgerEntry? {
+        try? dbQueue.read { db in
+            guard let row = try Row.fetchOne(db,
+                                             sql: "SELECT * FROM sync_ledger WHERE stem = ?",
+                                             arguments: [stem]) else { return nil }
+            return LimeDB.ledgerEntry(from: row)
+        }
+    }
+
+    func allLedgerEntries() -> [LedgerEntry] {
+        (try? dbQueue.read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM sync_ledger ORDER BY stem").map {
+                LimeDB.ledgerEntry(from: $0)
+            }
+        }) ?? []
+    }
+
+    func upsertLedger(_ e: LedgerEntry, in db: Database) throws {
+        let args: StatementArguments = [
+            e.stem,
+            e.identity?.size,
+            e.identity?.mtime,
+            e.state.rawValue,
+            e.error,
+            e.attempts,
+            e.resumeMarker,
+        ]
+        try db.execute(sql: """
+            INSERT INTO sync_ledger (stem, size, mtime, state, error, attempts, resume_marker)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(stem) DO UPDATE SET
+                size = excluded.size,
+                mtime = excluded.mtime,
+                state = excluded.state,
+                error = excluded.error,
+                attempts = excluded.attempts,
+                resume_marker = excluded.resume_marker
+        """, arguments: args)
+    }
+
+    func deleteLedger(stem: String, in db: Database) throws {
+        try db.execute(sql: "DELETE FROM sync_ledger WHERE stem = ?", arguments: [stem])
+    }
+
+    func wipeLedger(in db: Database) throws {
+        try db.execute(sql: "DELETE FROM sync_ledger")
+    }
+
+    func ensureEpochUUID() throws -> String {
+        try dbQueue.write { db in
+            if let existing = try String.fetchOne(db,
+                                                  sql: "SELECT value FROM sync_meta WHERE key = 'epoch_uuid'") {
+                return existing
+            }
+            let uuid = UUID().uuidString
+            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                           arguments: ["epoch_uuid", uuid])
+            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                           arguments: ["schema_version", "\(LimeDB.CURRENT_DB_VERSION)"])
+            return uuid
+        }
+    }
+
+    private static func ledgerEntry(from row: Row) -> LedgerEntry {
+        let size: Int64? = row["size"]
+        let mtime: Double? = row["mtime"]
+        let identity = size.flatMap { size in mtime.map { FileIdentity(size: size, mtime: $0) } }
+        let stateRaw = row.optString("state") ?? LedgerState.pending.rawValue
+        return LedgerEntry(stem: row.optString("stem") ?? "",
+                           identity: identity,
+                           state: LedgerState(rawValue: stateRaw) ?? .pending,
+                           error: row.optString("error"),
+                           attempts: row.optInt("attempts") ?? 0,
+                           resumeMarker: row.optInt64("resume_marker"))
     }
 
     // MARK: - Core CRUD (mirrors Android's countRecords / addRecord / updateRecord / deleteRecord)

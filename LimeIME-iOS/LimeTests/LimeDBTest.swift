@@ -2922,6 +2922,85 @@ final class LimeDBTest: XCTestCase {
         XCTAssertTrue(keyboards.contains { $0.code == "phonetic" && $0.desc == "注音輸入法鍵盤" })
     }
 
+    func testSyncMetaTablesExistOnFreshDB() throws {
+        let db = try makeLimeDB()
+
+        XCTAssertNil(db.syncMeta("epoch_uuid"))
+        let epoch = try db.ensureEpochUUID()
+        XCTAssertNotNil(UUID(uuidString: epoch))
+        XCTAssertEqual(try db.ensureEpochUUID(), epoch)
+
+        try db.closeForReplacement()
+        let reopened = try makeLimeDB()
+
+        XCTAssertEqual(reopened.syncMeta("epoch_uuid"), epoch)
+        XCTAssertEqual(reopened.syncMeta("schema_version"), "\(LimeDB.CURRENT_DB_VERSION)")
+    }
+
+    func testLedgerRoundTrip() throws {
+        let db = try makeLimeDB()
+        let source = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ledger_source_\(UUID().uuidString).limedb")
+        defer { try? FileManager.default.removeItem(at: source) }
+        try Data("cj".utf8).write(to: source)
+        let identity = try XCTUnwrap(FileIdentity(url: source))
+        let entry = LedgerEntry(stem: "cj", identity: identity, state: .done,
+                                error: nil, attempts: 2, resumeMarker: 41)
+
+        try db.dbQueue.write { sqlDB in
+            try db.upsertLedger(entry, in: sqlDB)
+        }
+
+        XCTAssertEqual(db.ledgerEntry(stem: "cj"), entry)
+
+        let failed = LedgerEntry(stem: "cj", identity: identity, state: .failed,
+                                 error: "boom", attempts: 2, resumeMarker: 41)
+        try db.dbQueue.write { sqlDB in
+            try db.upsertLedger(failed, in: sqlDB)
+        }
+
+        XCTAssertEqual(db.ledgerEntry(stem: "cj"), failed)
+        XCTAssertEqual(db.allLedgerEntries().count, 1)
+
+        try db.dbQueue.write { sqlDB in
+            try db.deleteLedger(stem: "cj", in: sqlDB)
+        }
+
+        XCTAssertNil(db.ledgerEntry(stem: "cj"))
+    }
+
+    func testLedgerTxnAtomicity() throws {
+        enum TestError: Error { case rollback }
+        let db = try makeLimeDB()
+        let entry = LedgerEntry(stem: "x", identity: nil, state: .pending,
+                                error: nil, attempts: 0, resumeMarker: nil)
+
+        XCTAssertThrowsError(try db.dbQueue.write { sqlDB in
+            try db.upsertLedger(entry, in: sqlDB)
+            throw TestError.rollback
+        })
+
+        XCTAssertNil(db.ledgerEntry(stem: "x"))
+    }
+
+    func testWipeLedger() throws {
+        let db = try makeLimeDB()
+        let epoch = try db.ensureEpochUUID()
+        let first = LedgerEntry(stem: "cj", identity: nil, state: .done,
+                                error: nil, attempts: 1, resumeMarker: nil)
+        let second = LedgerEntry(stem: "array", identity: nil, state: .failed,
+                                 error: "boom", attempts: 3, resumeMarker: 9)
+
+        try db.dbQueue.write { sqlDB in
+            try db.upsertLedger(first, in: sqlDB)
+            try db.upsertLedger(second, in: sqlDB)
+            try db.wipeLedger(in: sqlDB)
+        }
+
+        XCTAssertTrue(db.allLedgerEntries().isEmpty)
+        XCTAssertEqual(db.syncMeta("epoch_uuid"), epoch)
+    }
+
     private func assertEmojiSchemaAndDataLoaded(_ db: LimeDB) {
         XCTAssertTrue(db.tableExists("emoji_data"))
         XCTAssertTrue(db.tableExists("emoji_user"))
