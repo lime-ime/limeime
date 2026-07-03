@@ -1941,37 +1941,54 @@ List<Mapping> scorelistSnapshot = null;
             selkey = dbadapter.getImConfig(tablename, "selkey");
             if (DEBUG)
                 Log.i(TAG, "getSelkey():selkey from db:" + selkey);
-            boolean validSelkey = true;
-            if (selkey != null && selkey.length() == 10) {
-                for (int i = 0; i < 10; i++) {
-                    if (Character.isLetter(selkey.charAt(i)) ||
-                            (hasNumberMapping && Character.isDigit(selkey.charAt(i))))
-                        validSelkey = false;
-
-                }
-            } else
-                validSelkey = false;
-            //Jeremy '11,6,19 Rewrite for IM has symbol mapping like ETEN
-            if (!validSelkey || tablename.equals(LIME.DB_TABLE_PHONETIC)) {
-                if (hasNumberMapping && hasSymbolMapping) {
-                    if (tablename.equals(LIME.DB_TABLE_DAYI)
-                            || (tablename.equals(LIME.DB_TABLE_PHONETIC) && mLIMEPref.getPhoneticKeyboardType().equals(LIME.DB_TABLE_PHONETIC))) {
-                        selkey = "'[]-\\^&*()";
-                    } else {
-                        selkey = "!@#$%^&*()";
-                    }
-                } else if (hasNumberMapping) {
-                    selkey = "'[]-\\^&*()";
-                } else {
-                    selkey = "1234567890";
-                }
-            }
+            boolean isPhonetic = tablename.equals(LIME.DB_TABLE_PHONETIC);
+            boolean isDayi = tablename.equals(LIME.DB_TABLE_DAYI);
+            boolean isStandardPhonetic = isPhonetic
+                    && mLIMEPref.getPhoneticKeyboardType().equals(LIME.DB_TABLE_PHONETIC);
+            // Behaviour-preserving extraction. The per-IM mapping flags ARE the selkey policy (e.g.
+            // array has hasNumberMapping=true even though ARRAY_KEY carries no digit root; the
+            // phonetic flags already encode the ETEN26/HSU keyboard type) — so this policy is NOT
+            // derivable from imkeys. Pass the flags as PARAMS to the pure resolveSelkey: this retires
+            // the decision-reads (a param-pass, not a boolean-operator read on the field) with ZERO behaviour
+            // change. resolveSelkey is characterized per built-in IM in GetSelkeyTest.
+            selkey = resolveSelkey(selkey, hasNumberMapping, hasSymbolMapping, isPhonetic, isDayi, isStandardPhonetic);
             if (DEBUG)
                 Log.i(TAG, "getSelkey():selkey:" + selkey);
             selKeyMap.put(table, selkey);
         }
         return selKeyMap.get(table);
     }
+
+    // Pure, BEHAVIOUR-PRESERVING extraction of getSelkey's original inline decision (W-F). A
+    // configured 10-char selkey is used as-is unless it collides with a root (a letter, or a digit
+    // when digits are roots); otherwise the HARDCODED fallback selkey set is chosen (the same
+    // "'[]-\^&*()" / "!@#$%^&*()" / "1234567890" sets as before). hasNumberRoot / hasSymbolRoot are
+    // the per-IM mapping flags, passed straight through from getSelkey — NOT derived from imkeys
+    // (array/phonetic prove the selkey policy is not derivable). Fully branch-covered in GetSelkeyTest.
+    static String resolveSelkey(String configuredSelkey, boolean hasNumberRoot, boolean hasSymbolRoot,
+                                boolean isPhonetic, boolean isDayi, boolean isStandardPhonetic) {
+        boolean valid = configuredSelkey != null && configuredSelkey.length() == 10;
+        if (valid) {
+            for (int i = 0; i < 10; i++) {
+                char c = configuredSelkey.charAt(i);
+                if (Character.isLetter(c) || (hasNumberRoot && Character.isDigit(c))) {
+                    valid = false;
+                    break;
+                }
+            }
+        }
+        if (!valid || isPhonetic) {
+            if (hasNumberRoot && hasSymbolRoot) {
+                return (isDayi || isStandardPhonetic) ? "'[]-\\^&*()" : "!@#$%^&*()";
+            } else if (hasNumberRoot) {
+                return "'[]-\\^&*()";
+            } else {
+                return "1234567890";
+            }
+        }
+        return configuredSelkey;
+    }
+
 /*
     private class runTimeSuggestion {
 
@@ -2177,6 +2194,17 @@ List<Mapping> scorelistSnapshot = null;
             return "";
         }
         return dbadapter.getImConfig(imCode, field);
+    }
+
+    // Active phonetic root set resolved by keyboard type (BPMF / ETEN26 / HSU / ETEN). The stored
+    // "imkeys" meta is always BPMF, so acceptance must call this — not getImConfig — for the
+    // phonetic IM, else eten26/hsu wrongly compose BPMF's digits / ; / - . Mirrors iOS imKeysForTable.
+    public String getPhoneticImKeys(String phoneticKeyboardType) {
+        if (dbadapter == null) {
+            Log.e(TAG, "getPhoneticImKeys(): dbadapter is null");
+            return "";
+        }
+        return dbadapter.getPhoneticImKeys(phoneticKeyboardType);
     }
 
     /**

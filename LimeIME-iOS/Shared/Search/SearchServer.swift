@@ -970,9 +970,15 @@ final class SearchServer {
         prefetchThread?.cancel()
         let snapshotTable = currentTableName
         let t = Thread { [weak self] in
-            var keys = "abcdefghijklmnopqrstuvwxyz"
-            if self?.hasNumberMapping == true { keys += "01234567890" }
-            if self?.hasSymbolMapping == true { keys += ",./;" }
+            // Warm exactly the current IM's roots (imkeys). Falls back to the flag-derived guess
+            // only for a custom IM with no imkeys — where the detail-page toggles are authoritative
+            // (S-i6 / D-4). imKeysForTable prefers stored table meta, hardcoded keymap otherwise.
+            var keys = self?.imKeysForTable(snapshotTable) ?? ""
+            if keys.isEmpty {
+                keys = "abcdefghijklmnopqrstuvwxyz"
+                if self?.hasNumberMapping == true { keys += "0123456789" }
+                if self?.hasSymbolMapping == true { keys += ",./;" }
+            }
             for ch in keys {
                 guard !Thread.current.isCancelled else { return }
                 guard let self = self, self.currentTableName == snapshotTable else { return }
@@ -1296,6 +1302,15 @@ final class SearchServer {
 
     func detectIMCapabilities(tableName: String) -> (hasNumber: Bool, hasSymbol: Bool) {
         let lc = tableName.lowercased()
+        // The user-built custom IM has no fixed keymap; its number/symbol root policy is the
+        // detail-page toggles (accept_number_index / accept_symbol_index) — mirrors Android's
+        // initialIMKeyboard custom branch (W-I / D-1). These feed the composing-acceptance
+        // fallback when the custom IM ships no imkeys; harmless when it does (imkeys-first
+        // acceptance ignores the flags).
+        if lc == "custom" {
+            let p = LIMEPreferenceManager.shared
+            return (hasNumber: p.acceptNumberIndex, hasSymbol: p.acceptSymbolIndex)
+        }
         let phoneticFamily = ["phonetic", "et26", "et_41", "eten", "hsu", "hs", "dayi", "ez"]
         if phoneticFamily.contains(where: { lc.hasPrefix($0) }) {
             return (hasNumber: true, hasSymbol: true)

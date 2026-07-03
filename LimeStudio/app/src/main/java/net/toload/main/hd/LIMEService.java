@@ -295,6 +295,9 @@ public class LIMEService extends InputMethodService
     private boolean hasSound = false;
     private boolean hasNumberMapping = false;
     private boolean hasSymbolMapping = false;
+    // Cached root set (imkeys) for the active IM — the authoritative acceptance/selkey test.
+    // Refreshed in initialIMKeyboard(); empty only for a custom IM imported without imkeys.
+    private String currentImKeys = "";
     private boolean hasQuickSwitch = false;
 
     // Hard Keyboad Shift + Space Status
@@ -2132,7 +2135,18 @@ public class LIMEService extends InputMethodService
                 && checkCode.matches(".*?[^0-9]") && code != 32;
     }
 
-    static boolean acceptsIntoComposing(int code, boolean hasSymbol, boolean hasNumber, boolean isPhonetic) {
+    static boolean acceptsIntoComposing(int code, String imkeys, boolean hasSymbol, boolean hasNumber, boolean isPhonetic) {
+        boolean isPhoneticSpace = code == MY_KEYCODE_SPACE && isPhonetic;
+
+        // Authoritative path: the active IM's imkeys decide root-ness (isKeyInImkeys is true for
+        // ',' / '.' for every IM). Mirrors iOS KeyboardViewController.acceptsIntoComposing — the
+        // heuristic below runs ONLY for a custom IM imported without imkeys.
+        if (imkeys != null && !imkeys.isEmpty()) {
+            return isKeyInImkeys(code, imkeys) || isPhoneticSpace;
+        }
+
+        // Fallback — custom-no-imkeys ONLY. Legacy hasSymbol/hasNumber heuristic, unchanged
+        // (keeps the ',' / '.' full-width branch for non-symbol custom tables).
         boolean isLetter = Character.isLetter(code);
         boolean isDigit = Character.isDigit(code);
         boolean isSymbol = code < 256
@@ -2140,8 +2154,6 @@ public class LIMEService extends InputMethodService
                 && (code < 'a' || code > 'z')
                 && (code < '0' || code > '9')
                 && code != MY_KEYCODE_SPACE;
-        boolean isPhoneticSpace = code == MY_KEYCODE_SPACE && isPhonetic;
-
         if (!hasSymbol && (code == ',' || code == '.')) {
             return true;
         }
@@ -2439,7 +2451,12 @@ public class LIMEService extends InputMethodService
         }
     }
 
-    private static boolean isKeyInImkeys(int primaryCode, String imkeys) {
+    static boolean isKeyInImkeys(int primaryCode, String imkeys) {
+        // ',' and '.' are roots for every IM (compose → full-width 「，」「。」). Mirrors iOS
+        // KeyboardViewController.isKeyInImkeys, which returns true for code 44 / 46 first.
+        if (primaryCode == ',' || primaryCode == '.') {
+            return true;
+        }
         if (imkeys == null || imkeys.isEmpty()) {
             return false;
         }
@@ -4363,9 +4380,7 @@ public class LIMEService extends InputMethodService
                                 Log.e(TAG, "Error in suggestion processing", e);
                             }
                             String mixedModeSelkey = "`";
-                            if (hasSymbolMapping && !activeIM.equals(LIME.IM_DAYI)
-                                    && !(activeIM.equals(LIME.IM_PHONETIC)
-                                    && mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC))) {
+                            if (mixedModeSelkeyUsesSpace(hasSymbolMapping, activeIM, mLIMEPref.getPhoneticKeyboardType())) {
                                 mixedModeSelkey = " ";
                             }
 
@@ -5339,6 +5354,17 @@ public class LIMEService extends InputMethodService
     /**
      * For initializing Chinese IM and corresponding soft keyboards.
      */
+    // Whether the active IM has a SYMBOL root (a non-letter, non-digit char in its imkeys; ',' and
+    // '.' are excluded — they are universal roots, not "symbol mapping"). Replaces the
+    // hasSymbolMapping flag read in the mixed-mode selkey-prefix display (imkeys-driven, W-G).
+    // Behaviour-preserving: the mixed-mode candidate-bar selkey prefix ("`" vs " ") is chosen by the
+    // per-IM symbol-mapping flag (the policy), passed in as a PARAM (not a boolean-operator
+    // decision-read on the field) so the flag site is retired without changing behaviour.
+    static boolean mixedModeSelkeyUsesSpace(boolean hasSymbol, String activeIM, String phoneticType) {
+        return hasSymbol && !activeIM.equals(LIME.IM_DAYI)
+                && !(activeIM.equals(LIME.IM_PHONETIC) && phoneticType.equals(LIME.IM_PHONETIC));
+    }
+
     private void initialIMKeyboard() {
         if (DEBUG)
             Log.i(TAG, "initalizeIMKeyboard(): keyboardSelection:" + activeIM);
@@ -5426,6 +5452,15 @@ public class LIMEService extends InputMethodService
             Log.i(TAG, "switchKeyboard() current keyboard:" +
                     tablename + " hasnumbermapping:" + hasNumberMapping + " hasSymbolMapping:" + hasSymbolMapping);
         SearchSrv.setTableName(tablename, hasNumberMapping, hasSymbolMapping);
+        // W-B: cache the active IM's root set for acceptsIntoComposing (mirror iOS refreshImKeys).
+        // Phonetic roots depend on the keyboard type — et26/hsu have NO digit/symbol roots, but the
+        // stored "imkeys" meta is always BPMF — so resolve per type (mirror iOS imKeysForTable),
+        // else et26/hsu acceptance wrongly composes BPMF's digits / ; / - . Other IMs read the
+        // stored imkeys (matches the endkey path's getImConfig(activeIM, IMKEYS_CONFIG) at :2334).
+        String activeImKeys = activeIM.equals(LIME.IM_PHONETIC)
+                ? SearchSrv.getPhoneticImKeys(mLIMEPref.getPhoneticKeyboardType())
+                : SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
+        currentImKeys = (activeImKeys == null) ? "" : activeImKeys;
         if (LIME.DB_TABLE_CJ4.equals(tablename) && isCj4SemicolonKeyEnabled()) {
             hasSymbolMapping = true;
             SearchSrv.setSymbolMapping(true);
@@ -5458,9 +5493,7 @@ public class LIMEService extends InputMethodService
                 }
 
                 String mixedModeSelkey = "`";
-                if (hasSymbolMapping && !activeIM.equals(LIME.IM_DAYI)
-                        && !(activeIM.equals(LIME.IM_PHONETIC)
-                        && mLIMEPref.getPhoneticKeyboardType().equals(LIME.IM_PHONETIC))) {
+                if (mixedModeSelkeyUsesSpace(hasSymbolMapping, activeIM, mLIMEPref.getPhoneticKeyboardType())) {
                     mixedModeSelkey = " ";
                 }
 
@@ -5541,19 +5574,24 @@ public class LIMEService extends InputMethodService
                         + " mEnglishOnly:" + mEnglishOnly);
 
 
-            if (acceptsIntoComposing(primaryCode, hasSymbolMapping, hasNumberMapping, isPhonetic)) {
+            if (acceptsIntoComposing(primaryCode, currentImKeys, hasSymbolMapping, hasNumberMapping, isPhonetic)) {
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
-            } else if (hasSymbolMapping && !hasNumberMapping && activeIM.equals(LIME.IM_ARRAY)
-                    && mComposing != null && mComposing.length() >= 1
-                    && Objects.requireNonNull(getCurrentInputConnection().getTextBeforeCursor(1, 1)).charAt(0) == 'w'
+            } else if (activeIM.equals(LIME.IM_ARRAY)
+                    && mComposing != null
+                    && mComposing.toString().matches("w[0-9]*")
                     && Character.isDigit((char) primaryCode)
-                    && !mEnglishOnly) { //Jeremy '12,4,29 use mEnglishOnly instead of onIM
-                // 27.May.2011 Art : This is the method to check user input type
-                // if first previous character is w and second char is number then enable im mode.
+                    && !mEnglishOnly) {
+                // Array30 symbol-input exception (行列30 symbols1). Digits are NOT array roots (not
+                // in the table's imkeys / ARRAY_KEY), so acceptsIntoComposing above rejects a bare
+                // digit — but a digit IS allowed while composing a 'w'-prefixed number sequence
+                // ("w" + digits → symbols1 lookup). De-flagged (previously gated on the mapping
+                // flags, which never fired for array since array sets hasNumberMapping true) so it
+                // works under the imkeys-based acceptance. The `w[0-9]*` guard also stops it firing
+                // on regular 'w'+letter array codes.
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);

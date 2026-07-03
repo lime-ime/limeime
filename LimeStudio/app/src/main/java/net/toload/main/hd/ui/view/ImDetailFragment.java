@@ -221,15 +221,24 @@ public class ImDetailFragment extends Fragment {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         if ("custom".equals(tableCode)) {
-            rootView.findViewById(R.id.section_custom_mapping).setVisibility(View.VISIBLE);
-            SwitchMaterial sNum = rootView.findViewById(R.id.switchAcceptNumberIndex);
-            SwitchMaterial sSym = rootView.findViewById(R.id.switchAcceptSymbolIndex);
-            sNum.setChecked(sp.getBoolean("accept_number_index", false));
-            sSym.setChecked(sp.getBoolean("accept_symbol_index", false));
-            sNum.setOnCheckedChangeListener((b, c) ->
-                    sp.edit().putBoolean("accept_number_index", c).apply());
-            sSym.setOnCheckedChangeListener((b, c) ->
-                    sp.edit().putBoolean("accept_symbol_index", c).apply());
+            // W-H / D-1: the number/symbol root toggles only affect a custom IM with NO imkeys
+            // (imkeys-present acceptance is imkeys-driven and ignores the flags). Hide the section
+            // when the custom IM ships imkeys so we don't show controls that do nothing.
+            String customImkeys = (manageImController != null && manageImController.getSearchServer() != null)
+                    ? manageImController.getSearchServer().getImConfig(tableCode, "imkeys") : null;
+            boolean customHasImkeys = customImkeys != null && !customImkeys.isEmpty();
+            rootView.findViewById(R.id.section_custom_mapping)
+                    .setVisibility(customHasImkeys ? View.GONE : View.VISIBLE);
+            if (!customHasImkeys) {
+                SwitchMaterial sNum = rootView.findViewById(R.id.switchAcceptNumberIndex);
+                SwitchMaterial sSym = rootView.findViewById(R.id.switchAcceptSymbolIndex);
+                sNum.setChecked(sp.getBoolean("accept_number_index", false));
+                sSym.setChecked(sp.getBoolean("accept_symbol_index", false));
+                sNum.setOnCheckedChangeListener((b, c) ->
+                        sp.edit().putBoolean("accept_number_index", c).apply());
+                sSym.setOnCheckedChangeListener((b, c) ->
+                        sp.edit().putBoolean("accept_symbol_index", c).apply());
+            }
         }
 
         if ("cj4".equals(tableCode)) {

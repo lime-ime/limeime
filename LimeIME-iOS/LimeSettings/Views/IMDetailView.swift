@@ -81,6 +81,9 @@ struct IMDetailView: View {
     @State private var displayName: String
     @State private var displayVersion: String = "—"
     @State private var displayEndkey: String = "-"
+    // W-H / D-1: hide the number/symbol root toggles when a custom IM ships imkeys (they'd be dead —
+    // imkeys-present acceptance is imkeys-driven). Loaded in refreshMetadataFields (.task).
+    @State private var customHasImkeys: Bool = false
     @State private var editMetadataValue: String = ""
     @State private var editingMetadataField: MetadataField?
     @State private var metadataError: String?
@@ -194,8 +197,8 @@ struct IMDetailView: View {
                 .setupMatchedSectionBlock()
             }
 
-            // §13.3 — shown only for the user-built custom IM
-            if im.tableNick == "custom" {
+            // §13.3 / W-H — shown only for the user-built custom IM that has NO imkeys
+            if im.tableNick == "custom" && !customHasImkeys {
                 Section(header: Text("字根對應設定")) {
                     Toggle(isOn: $acceptNumberIndex) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -405,6 +408,7 @@ struct IMDetailView: View {
         displayVersion = version
         let endkey = DBServer.shared.getImConfig(im.tableNick, "limeendkey")
         displayEndkey = endkey.isEmpty ? "-" : endkey
+        customHasImkeys = !DBServer.shared.getImConfig(im.tableNick, "imkeys").isEmpty
         editMetadataValue = ""
     }
 

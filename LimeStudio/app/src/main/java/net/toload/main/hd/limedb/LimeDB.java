@@ -4756,8 +4756,28 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
+     * Root set (imkeys) for the phonetic IM under the given keyboard type.
+     *
+     * <p>The phonetic table's stored {@code imkeys} meta is always the standard BPMF set (with
+     * digit and symbol roots), but eten26 / hsu have a different, digit-free root set. Callers that
+     * need the ACTIVE root set (e.g. composing-acceptance) must resolve by keyboard type — mirrors
+     * the composing selector at keyToKeyName() and iOS {@code imKeysForTable}. Without this,
+     * eten26/hsu would wrongly accept BPMF's digits / {@code ;} / {@code -} into composing.
+     *
+     * @param phoneticKeyboardType e.g. LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26 / _HSU / _ETEN
+     * @return ETEN26_KEY / HSU_KEY / ETEN_KEY, else BPMF_KEY
+     */
+    public String getPhoneticImKeys(String phoneticKeyboardType) {
+        if (phoneticKeyboardType == null) return BPMF_KEY;
+        if (phoneticKeyboardType.startsWith(LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26)) return ETEN26_KEY;
+        if (phoneticKeyboardType.startsWith(LIME.IM_PHONETIC_KEYBOARD_HSU)) return HSU_KEY;
+        if (phoneticKeyboardType.equals(LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN)) return ETEN_KEY;
+        return BPMF_KEY;
+    }
+
+    /**
      * Gets IM information for a specific field.
-     * 
+     *
      * <p>Retrieves configuration information stored in the imCode table for the
      * specified input method and field. Common fields include:
      * <ul>

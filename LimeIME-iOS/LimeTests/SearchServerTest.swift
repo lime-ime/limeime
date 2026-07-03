@@ -2275,6 +2275,38 @@ final class SearchServerTest: XCTestCase {
         XCTAssertTrue(true)
     }
 
+    // W-I / D-1: the user-built custom IM's number/symbol capabilities come from the detail-page
+    // toggles (accept_number_index / accept_symbol_index), NOT a table scan — mirrors Android's
+    // initialIMKeyboard custom branch. This is what drives the composing-acceptance fallback for a
+    // custom IM that ships no imkeys.
+    func test_3_5_7_1_detectIMCapabilities_custom_readsAcceptToggles() throws {
+        let ss = try makeSearchServer()
+        // detectIMCapabilities("custom") reads LIMEPreferenceManager.shared, bound to the group
+        // suite; drive that same suite and restore whatever was there afterwards.
+        let store = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)!
+        let prevNum = store.object(forKey: "accept_number_index")
+        let prevSym = store.object(forKey: "accept_symbol_index")
+        defer {
+            if let v = prevNum { store.set(v, forKey: "accept_number_index") } else { store.removeObject(forKey: "accept_number_index") }
+            if let v = prevSym { store.set(v, forKey: "accept_symbol_index") } else { store.removeObject(forKey: "accept_symbol_index") }
+        }
+
+        store.set(false, forKey: "accept_number_index")
+        store.set(false, forKey: "accept_symbol_index")
+        var caps = ss.detectIMCapabilities(tableName: "custom")
+        XCTAssertFalse(caps.hasNumber); XCTAssertFalse(caps.hasSymbol)
+
+        store.set(true,  forKey: "accept_number_index")
+        store.set(false, forKey: "accept_symbol_index")
+        caps = ss.detectIMCapabilities(tableName: "custom")
+        XCTAssertTrue(caps.hasNumber);  XCTAssertFalse(caps.hasSymbol)
+
+        store.set(true, forKey: "accept_number_index")
+        store.set(true, forKey: "accept_symbol_index")
+        caps = ss.detectIMCapabilities(tableName: "custom")
+        XCTAssertTrue(caps.hasNumber);  XCTAssertTrue(caps.hasSymbol)
+    }
+
     // SKIPPED: test_3_5_6_1_checkPhoneticKeyboardSetting_pref_db_mismatch_hsu_eten_eten26_standard — requires StubLimeDBRecords + static injection, not portable
     func test_3_5_6_1_checkPhoneticKeyboardSetting_pref_db_mismatch_hsu_eten_eten26_standard() throws {
         // SKIPPED: requires StubLimeDBRecords(Context) + static dbadapter injection — not portable to Swift
