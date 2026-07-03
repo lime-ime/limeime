@@ -914,6 +914,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48AD57F172DCC0C2BD747A7B /* Build configuration list for PBXNativeTarget "LimeKeyboard" */;
 			buildPhases = (
+				8C33CDE3F88441899C2DAA42 /* Copy lime.db to bundle */,
 				7773AA62913279E155050F6F /* Copy emoji.db to bundle */,
 				B1DDA941604063AA655294A3 /* Sources */,
 				F3F12614B80FA93D90347100 /* Resources */,
@@ -1212,6 +1213,25 @@
 			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/hanconvertv2.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/hanconvertv2.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
 		F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy lime.db to bundle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/lime.db",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/lime.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/lime.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+		};
+		8C33CDE3F88441899C2DAA42 /* Copy lime.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (

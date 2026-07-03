@@ -7,6 +7,11 @@
 import SwiftUI
 import UIKit
 import SafariServices
+#if DEBUG
+// FA-PROBE-I0 (temporary): fixture generation for import-timing probe.
+// Selective import — a bare `import GRDB` collides with GroupBoxStyle.Configuration.
+import class GRDB.DatabaseQueue
+#endif
 
 // MARK: - FormSectionGroupBoxStyle
 
@@ -289,6 +294,9 @@ struct SetupTabView: View {
                 // viewWillAppear fires (if LimeIME is the active keyboard)
                 // and writes fresh hasFullAccess to the App Group.
                 triggerProbeIfNeeded()
+                #if DEBUG
+                faProbeSetup()   // FA-PROBE-I0 (temporary)
+                #endif
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
@@ -306,7 +314,19 @@ struct SetupTabView: View {
                 // Once Full Access is confirmed, dismiss the keyboard.
                 if enabled { probeFocused = false }
             }
-            .onChange(of: probeText) { _ in refreshStatus() }
+            .onChange(of: probeText) { _ in
+                refreshStatus()
+                #if DEBUG
+                // FA-PROBE-I0 (temporary): keyboard types its report into the probe
+                // field; mirror it to the App Group so devicectl can read it out.
+                if probeText.contains("[FAPROBE"),
+                   let ag = FileManager.default.containerURL(
+                        forSecurityApplicationGroupIdentifier: groupSuite) {
+                    try? probeText.data(using: .utf8)!
+                        .write(to: ag.appendingPathComponent("probe_report.txt"))
+                }
+                #endif
+            }
             .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
             // scenePhase → .active is unreliable when SwiftUI is hosted in a
             // UIHostingController under a UIKit SceneDelegate, so the §4.3 IM
@@ -573,6 +593,47 @@ struct SetupTabView: View {
             probeFocused = true
         }
     }
+
+    #if DEBUG
+    // FA-PROBE-I0 (temporary, removed at end of I0): writes the AG-read marker,
+    // generates the 100k-row attach-import fixture, and posts a 1 Hz Darwin
+    // doorbell while this tab is up. See docs/IOS_FA_REARCH_TASKS.md Task 0.1–0.3.
+    private static var faProbeDarwinTimer: Timer?
+
+    private func faProbeSetup() {
+        guard let ag = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: groupSuite) else { return }
+        try? "probe \(Date().timeIntervalSince1970)".data(using: .utf8)!
+            .write(to: ag.appendingPathComponent("probe_marker.txt"))
+        let fixture = ag.appendingPathComponent("probe_fixture.limedb")
+        if !FileManager.default.fileExists(atPath: fixture.path) {
+            DispatchQueue.global(qos: .utility).async {
+                try? Self.makeProbeFixture(at: fixture)
+            }
+        }
+        Self.faProbeDarwinTimer?.invalidate()
+        Self.faProbeDarwinTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            let name = CFNotificationName("org.limeime.tables.updated" as CFString)
+            CFNotificationCenterPostNotification(
+                CFNotificationCenterGetDarwinNotifyCenter(), name, nil, nil, true)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { probeFocused = true }
+    }
+
+    private static func makeProbeFixture(at url: URL) throws {
+        let dq = try DatabaseQueue(path: url.path)
+        try dq.write { db in
+            try db.execute(sql: "CREATE TABLE IF NOT EXISTS probe_src(code TEXT, word TEXT, score INTEGER)")
+            let count = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM probe_src") ?? 0
+            guard count < 100_000 else { return }
+            try db.execute(sql: "DELETE FROM probe_src")
+            for i in 0..<100_000 {
+                try db.execute(sql: "INSERT INTO probe_src VALUES (?,?,?)",
+                               arguments: ["c\(i % 9999)", "字\(i)", i % 500])
+            }
+        }
+    }
+    #endif
 
     private func openLimeKeyboardSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }

@@ -7,6 +7,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        DBServer.configureRunMode(.app)
         applyUITestKeyboardPrefsIfNeeded()
         return true
     }

@@ -506,6 +506,12 @@ final class LimeDB {
         }) ?? 0 > 0
     }
 
+    func quickCheckOK() -> Bool {
+        (try? dbQueue.read { db in
+            try String.fetchOne(db, sql: "PRAGMA quick_check") == "ok"
+        }) ?? false
+    }
+
     // MARK: - Sync Metadata / Ledger
 
     func syncMeta(_ key: String) -> String? {

@@ -2,6 +2,8 @@
 import GRDB
 import ZIPFoundation
 
+enum DBRunMode { case app, keyboard }
+
 // MARK: - SharedDatabase
 // Process-local owner for the live LimeDB handle. This mirrors Android's static
 // LimeDB.db shape: DBServer and SearchServer are different facades, but the open
@@ -10,17 +12,34 @@ final class SharedDatabase {
     static let shared = SharedDatabase()
 
     private static let databaseName = "lime.db"
+    private static let databaseFileNames = ["lime.db", "lime.db-wal", "lime.db-shm"]
     private let dataDirOverride: URL?
+    private let appGroupOverride: URL?
+    private var runMode: DBRunMode
     private var cachedDatasource: LimeDB?
     private let lock = NSLock()
 
-    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
+    init(runMode: DBRunMode = .app,
+         dataDirOverride: URL? = nil,
+         appGroupOverride: URL? = nil,
+         datasource: LimeDB? = nil) {
+        self.runMode = runMode
         self.dataDirOverride = dataDirOverride
+        self.appGroupOverride = appGroupOverride
         self.cachedDatasource = datasource
     }
 
     var dataDirURL: URL {
         if let dataDirOverride { return dataDirOverride }
+        if runMode == .keyboard {
+            let url = (FileManager.default.urls(for: .applicationSupportDirectory,
+                                                in: .userDomainMask).first
+                       ?? FileManager.default.temporaryDirectory)
+                .appendingPathComponent("LimeIME", isDirectory: true)
+            try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+            return url
+        }
+        if let appGroupOverride { return appGroupOverride }
         if let url = FileManager.default.containerURL(
                 forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) {
             return url
@@ -33,6 +52,18 @@ final class SharedDatabase {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         print("[DBServer] App Group unavailable; using persistent fallback database directory: \(url.path)")
         return url
+    }
+
+    func configureRunMode(_ runMode: DBRunMode) {
+        var oldDatasource: LimeDB?
+        lock.lock()
+        if self.runMode != runMode {
+            self.runMode = runMode
+            oldDatasource = cachedDatasource
+            cachedDatasource = nil
+        }
+        lock.unlock()
+        try? oldDatasource?.closeForReplacement()
     }
 
     func current() -> LimeDB? {
@@ -80,6 +111,20 @@ final class SharedDatabase {
         let directoryURL = dataDirURL
         try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let dbURL = directoryURL.appendingPathComponent(Self.databaseName)
+        if runMode == .keyboard {
+            if FileManager.default.fileExists(atPath: dbURL.path) {
+                return openKeyboardDatabase(at: dbURL)
+            }
+            if let adopted = adoptLegacyDatabase(to: directoryURL) {
+                return adopted
+            }
+            do {
+                try copyBundledDatabase(to: dbURL)
+            } catch {
+                return nil
+            }
+            return openKeyboardDatabase(at: dbURL)
+        }
         if !FileManager.default.fileExists(atPath: dbURL.path) {
             try? copyBundledDatabase(to: dbURL)
         }
@@ -88,6 +133,49 @@ final class SharedDatabase {
             db.repairKeyboardCatalogIfNeeded(from: bundledURL)
         }
         return db
+    }
+
+    private func openKeyboardDatabase(at dbURL: URL) -> LimeDB? {
+        guard let db = try? LimeDB(path: dbURL.path) else { return nil }
+        try? db.ensureEpochUUID()
+        return db
+    }
+
+    private func adoptLegacyDatabase(to directoryURL: URL) -> LimeDB? {
+        let fileManager = FileManager.default
+        let dbURL = directoryURL.appendingPathComponent(Self.databaseName)
+        let legacyDirectoryURL = appGroupOverride ?? fileManager.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName)
+        guard let legacyDirectoryURL else { return nil }
+        let legacyDBURL = legacyDirectoryURL.appendingPathComponent(Self.databaseName)
+        guard fileManager.fileExists(atPath: legacyDBURL.path) else { return nil }
+
+        do {
+            for name in Self.databaseFileNames {
+                let source = legacyDirectoryURL.appendingPathComponent(name)
+                guard fileManager.fileExists(atPath: source.path) else { continue }
+                let destination = directoryURL.appendingPathComponent(name)
+                try? fileManager.removeItem(at: destination)
+                try fileManager.copyItem(at: source, to: destination)
+            }
+            let db = try LimeDB(path: dbURL.path)
+            guard db.quickCheckOK() else {
+                try? db.closeForReplacement()
+                removeDatabaseFiles(in: directoryURL)
+                return nil
+            }
+            try? db.ensureEpochUUID()
+            return db
+        } catch {
+            removeDatabaseFiles(in: directoryURL)
+            return nil
+        }
+    }
+
+    private func removeDatabaseFiles(in directoryURL: URL) {
+        for name in Self.databaseFileNames {
+            try? FileManager.default.removeItem(at: directoryURL.appendingPathComponent(name))
+        }
     }
 }
 
@@ -107,6 +195,10 @@ final class DBServer {
     // MARK: - Singleton
     static let shared = DBServer(database: .shared)
     private let database: SharedDatabase
+
+    static func configureRunMode(_ runMode: DBRunMode) {
+        SharedDatabase.shared.configureRunMode(runMode)
+    }
 
     // Internal (not private) so @testable import LimeIME tests can construct fresh
     // instances for isolation. Production code should use DBServer.shared.
@@ -1065,11 +1157,6 @@ final class DBServer {
     ///   stale GRDB queue bound to the pre-restore inode is replaced and IM reads
     ///   see the restored data instead of returning zero IMs.
     func prepareKeyboardRuntimeDatabase(forceReopen: Bool = false) throws -> KeyboardRuntimeContext {
-        let dbURL = dataDirURL.appendingPathComponent(DBServer.databaseName)
-        if !FileManager.default.fileExists(atPath: dbURL.path) {
-            try copyBundledDatabase(to: dbURL)
-        }
-
         if forceReopen { reopenDatabaseFromDisk() }
 
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }

@@ -1,4 +1,9 @@
 ﻿import UIKit
+#if DEBUG
+// FA-PROBE-I0 (temporary): attach-import timing probe (selective import to
+// avoid polluting this file's namespace with GRDB's Configuration etc.)
+import class GRDB.DatabaseQueue
+#endif
 
 // Full keyboard extension entry point.
 // Implements IMService behavior per IM_SERVICE.md spec.
@@ -276,6 +281,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        DBServer.configureRunMode(.keyboard)
         // Tell LayoutLoader whether the **host app** is iPad-class BEFORE any
         // load() call. iPhone-only apps running on iPad must use phone layouts.
         _ = syncLayoutEnvironmentFromTraits()
@@ -334,7 +340,74 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         disableKeyboardWindowTouchDelay()
+        #if DEBUG
+        runFAProbe()   // FA-PROBE-I0 (temporary)
+        #endif
     }
+
+    #if DEBUG
+    // FA-PROBE-I0 (temporary, removed at end of I0). Measures, in the real
+    // extension process: App Group file READ, own-container WRITE, App Group
+    // WRITE (= Full Access indicator), Darwin doorbell delivery count, and
+    // ATTACH+bulk-copy import timing. Reports by TYPING into the focused field
+    // (the one channel a keyboard always has); the app mirrors it to the App
+    // Group for devicectl readout. Guarded so unit tests never trigger it.
+    private static var faProbeDarwinCount = 0
+    private var faProbeDidType = false
+
+    private func runFAProbe() {
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
+              !faProbeDidType else { return }
+        let fm = FileManager.default
+        guard let ag = fm.containerURL(forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+              fm.fileExists(atPath: ag.appendingPathComponent("probe_marker.txt").path) else { return }
+        faProbeDidType = true
+        registerFAProbeDarwin()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var agRead = 0, ownWrite = 0, agWrite = 0, impMS = -1, impRows = 0
+            if let d = try? Data(contentsOf: ag.appendingPathComponent("probe_marker.txt")), !d.isEmpty { agRead = 1 }
+            if let sup = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                try? fm.createDirectory(at: sup, withIntermediateDirectories: true)
+                let own = sup.appendingPathComponent("probe_result.txt")
+                if (try? "ok".data(using: .utf8)!.write(to: own)) != nil { ownWrite = 1 }
+                let fixture = ag.appendingPathComponent("probe_fixture.limedb")
+                if fm.fileExists(atPath: fixture.path) {
+                    let t0 = CFAbsoluteTimeGetCurrent()
+                    let scratch = sup.appendingPathComponent("probe_scratch.db")
+                    try? fm.removeItem(at: scratch)
+                    if let dq = try? DatabaseQueue(path: scratch.path) {
+                        try? dq.write { db in
+                            try db.execute(sql: "CREATE TABLE t(code TEXT, word TEXT, score INTEGER)")
+                            try db.execute(sql: "ATTACH DATABASE ? AS src",
+                                           arguments: ["file:\(fixture.path)?immutable=1"])
+                            try db.execute(sql: "INSERT INTO t SELECT * FROM src.probe_src")
+                            try db.execute(sql: "DETACH src")
+                        }
+                        impRows = (try? dq.read { try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM t") ?? 0 }) ?? 0
+                        impMS = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+                    }
+                }
+            }
+            do {
+                try "kb".data(using: .utf8)!.write(to: ag.appendingPathComponent("probe_kb_write.txt"))
+                agWrite = 1
+            } catch { agWrite = 0 }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let report = "[FAPROBE agRead:\(agRead) ownWrite:\(ownWrite) agWrite:\(agWrite) " +
+                             "darwin:\(KeyboardViewController.faProbeDarwinCount) imp:\(impMS)ms/\(impRows)]"
+                self?.textDocumentProxy.insertText(report)
+            }
+        }
+    }
+
+    private func registerFAProbeDarwin() {
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        CFNotificationCenterAddObserver(center, observer, { _, _, _, _, _ in
+            KeyboardViewController.faProbeDarwinCount += 1
+        }, "org.limeime.tables.updated" as CFString, nil, .deliverImmediately)
+    }
+    #endif
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()

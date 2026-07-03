@@ -50,6 +50,26 @@ final class DBServerTest: XCTestCase {
             .appendingPathComponent(UUID().uuidString + ext)
     }
 
+    private func tempDirectory() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    private func copyBundledLimeSeed(to target: URL) throws {
+        let seed = try XCTUnwrap(Bundle.main.url(forResource: "lime", withExtension: "db"))
+        try? FileManager.default.removeItem(at: target)
+        try FileManager.default.copyItem(at: seed, to: target)
+    }
+
+    private func writeLegacyDatabase(at url: URL, code: String, word: String) throws {
+        try copyBundledLimeSeed(to: url)
+        let db = try LimeDB(path: url.path)
+        db.addOrUpdateMappingRecord(LIME.DB_TABLE_CUSTOM, code, word, 42)
+        try db.closeForReplacement()
+    }
+
     // MARK: - Phase 1: Basic Singleton & State
 
     func testDBServerInitialization() {
@@ -1649,6 +1669,111 @@ final class DBServerTest: XCTestCase {
 
         XCTAssertFalse(FileManager.default.fileExists(atPath: zipURL.path),
                        "Zip file should not be created for invalid source")
+    }
+
+    // MARK: - iOS FA Re-Architecture I1.3
+
+    func testKeyboardFreshRunCopiesBundledDefault() throws {
+        let ownDir = try tempDirectory()
+        let appGroupDir = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: ownDir)
+            try? FileManager.default.removeItem(at: appGroupDir)
+        }
+
+        let container = SharedDatabase(runMode: .keyboard,
+                                            dataDirOverride: ownDir,
+                                            appGroupOverride: appGroupDir)
+        defer { container.closeCurrentForReplacement() }
+
+        let db = try XCTUnwrap(container.current())
+        let canonicalURL = ownDir.appendingPathComponent("lime.db")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: canonicalURL.path))
+        XCTAssertNotNil(db.syncMeta("epoch_uuid"))
+    }
+
+    func testKeyboardLegacyAdoptionPreservesRows() throws {
+        let ownDir = try tempDirectory()
+        let appGroupDir = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: ownDir)
+            try? FileManager.default.removeItem(at: appGroupDir)
+        }
+        let legacyURL = appGroupDir.appendingPathComponent("lime.db")
+        try writeLegacyDatabase(at: legacyURL, code: "i13legacy", word: "I13LegacyRow")
+
+        let container = SharedDatabase(runMode: .keyboard,
+                                            dataDirOverride: ownDir,
+                                            appGroupOverride: appGroupDir)
+        defer { container.closeCurrentForReplacement() }
+
+        let db = try XCTUnwrap(container.current())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: ownDir.appendingPathComponent("lime.db").path))
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_CUSTOM, "word = ?", ["I13LegacyRow"]), 1)
+        XCTAssertNotNil(db.syncMeta("epoch_uuid"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: legacyURL.path))
+    }
+
+    func testKeyboardLegacyAdoptionCorruptFallsBack() throws {
+        let ownDir = try tempDirectory()
+        let appGroupDir = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: ownDir)
+            try? FileManager.default.removeItem(at: appGroupDir)
+        }
+        let garbage = Data(repeating: 0x7f, count: 1024)
+        try garbage.write(to: appGroupDir.appendingPathComponent("lime.db"))
+
+        let container = SharedDatabase(runMode: .keyboard,
+                                            dataDirOverride: ownDir,
+                                            appGroupOverride: appGroupDir)
+        defer { container.closeCurrentForReplacement() }
+
+        let db = try XCTUnwrap(container.current())
+        let canonicalURL = ownDir.appendingPathComponent("lime.db")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: canonicalURL.path))
+        XCTAssertTrue(db.quickCheckOK())
+        XCTAssertGreaterThan(canonicalURL.fileSizeBytes, Int64(garbage.count))
+        XCTAssertNotNil(db.syncMeta("epoch_uuid"))
+    }
+
+    func testKeyboardSecondOpenUsesCanonical() throws {
+        let ownDir = try tempDirectory()
+        let appGroupDir = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: ownDir)
+            try? FileManager.default.removeItem(at: appGroupDir)
+        }
+
+        let container = SharedDatabase(runMode: .keyboard,
+                                            dataDirOverride: ownDir,
+                                            appGroupOverride: appGroupDir)
+        defer { container.closeCurrentForReplacement() }
+
+        let firstDB = try XCTUnwrap(container.current())
+        let firstEpoch = try XCTUnwrap(firstDB.syncMeta("epoch_uuid"))
+        try writeLegacyDatabase(at: appGroupDir.appendingPathComponent("lime.db"),
+                                code: "i13later",
+                                word: "I13LaterLegacyRow")
+
+        container.reopenFromDisk()
+        let reopenedDB = try XCTUnwrap(container.current())
+        XCTAssertEqual(reopenedDB.syncMeta("epoch_uuid"), firstEpoch)
+        XCTAssertEqual(reopenedDB.countRecords(LIME.DB_TABLE_CUSTOM, "word = ?", ["I13LaterLegacyRow"]), 0)
+    }
+
+    func testAppModeUnchanged() throws {
+        let ownDir = try tempDirectory()
+        let appGroupDir = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: ownDir)
+            try? FileManager.default.removeItem(at: appGroupDir)
+        }
+
+        let container = SharedDatabase(runMode: .app,
+                                            dataDirOverride: ownDir,
+                                            appGroupOverride: appGroupDir)
+        XCTAssertEqual(container.dataDirURL, ownDir)
     }
 }
 
