@@ -62,6 +62,17 @@ struct RestoreMeta: Codable, Equatable {
     var schemaVersion: Int
 }
 
+struct ExportRequest: Codable, Equatable {
+    var requestUUID: String
+    var expiresAt: TimeInterval
+}
+
+struct ExportReceipt: Codable, Equatable {
+    var requestUUID: String
+    var epochUUID: String
+    var at: TimeInterval
+}
+
 struct FileIdentity: Equatable {
     let size: Int64
     let mtime: TimeInterval

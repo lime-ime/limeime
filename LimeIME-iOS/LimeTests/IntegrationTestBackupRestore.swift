@@ -1,4 +1,6 @@
 ﻿import XCTest
+import GRDB
+import ZIPFoundation
 @testable import LimeIME
 
 /// iOS parity coverage for Android IntegrationTestBackupRestore.
@@ -16,26 +18,30 @@ final class IntegrationTestBackupRestore: XCTestCase {
         CloudIMFixture(table: "dayi", fileName: "dayi.zip")
     ]
 
-    private var tempURL: URL!
+    private var tempRoot: URL!
 
-    override func setUp() {
-        super.setUp()
-        tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        tempRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("IntegrationTestBackupRestore-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempRoot, withIntermediateDirectories: true)
     }
 
-    override func tearDown() {
-        try? FileManager.default.removeItem(at: tempURL)
-        super.tearDown()
+    override func tearDownWithError() throws {
+        try? FileManager.default.removeItem(at: tempRoot)
+        try super.tearDownWithError()
     }
 
     @MainActor
     func testCloudIMInstallBackupAndRestoreLearningThroughSettingsImport() async throws {
-        let (db, controller) = try makeHarness()
-
         for fixture in cloudFixtures {
-            let cloudZip = try cloudFixtureURL(fixture.fileName)
-            try await importCloudIM(cloudZip, table: fixture.table, controller: controller)
+            let h = try makeHarness(label: fixture.table)
+            defer { cleanup(h) }
+            try await importCloudIM(try cloudFixtureURL(fixture.fileName),
+                                    table: fixture.table,
+                                    controller: h.controller)
+            XCTAssertTrue(h.engine.scanAndApply().contains(SyncEvent(kind: .imported, stem: fixture.table)))
+            let db = try XCTUnwrap(h.database.current())
             XCTAssertGreaterThan(db.countRecords(fixture.table, nil, nil),
                                  0,
                                  "\(fixture.table) cloud fixture should install records")
@@ -48,36 +54,49 @@ final class IntegrationTestBackupRestore: XCTestCase {
             XCTAssertEqual(learnedScores(db, table: fixture.table, code: code),
                            [word1: 220, word2: 210])
 
-            db.backupUserRecords(fixture.table)
-            XCTAssertTrue(db.checkBackupTable(fixture.table),
-                          "\(fixture.table) should have a learned-record backup")
+            let backupZip = try backupThroughRelay(h)
+            let restoreResult = await h.controller.restoreDB(from: backupZip)
+            if case .failure(let error) = restoreResult {
+                throw error
+            }
+            h.database.closeCurrentForReplacement()
+            try? FileManager.default.removeItem(at: h.ownDir)
+            try FileManager.default.createDirectory(at: h.ownDir, withIntermediateDirectories: true)
+            let restoredDatabase = SharedDatabase(runMode: .keyboard,
+                                                  dataDirOverride: h.ownDir,
+                                                  appGroupOverride: h.appGroupDir)
+            let restoredEngine = TableSyncEngine(database: restoredDatabase, baseURL: h.appGroupDir)
+            _ = try XCTUnwrap(restoredDatabase.current())
+            XCTAssertEqual(restoredEngine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+            let restoredDB = try XCTUnwrap(restoredDatabase.current())
 
-            try await importCloudIM(cloudZip,
-                                    table: fixture.table,
-                                    controller: controller,
-                                    restoreLearning: true)
-
-            XCTAssertEqual(learnedScores(db, table: fixture.table, code: code),
+            XCTAssertEqual(learnedScores(restoredDB, table: fixture.table, code: code),
                            [word1: 220, word2: 210],
-                           "\(fixture.table) learned scores should survive cloud re-import")
+                           "\(fixture.table) learned scores should survive backup restore")
+            restoredDatabase.closeCurrentForReplacement()
         }
     }
 
     @MainActor
     func testCloudIMLimedbBackupClearAndRestoreWorkflow() async throws {
-        let (db, controller) = try makeHarness()
+        let h = try makeHarness(label: "limedb")
+        defer { cleanup(h) }
 
         for fixture in cloudFixtures {
             try await importCloudIM(try cloudFixtureURL(fixture.fileName),
                                     table: fixture.table,
-                                    controller: controller)
+                                    controller: h.controller)
         }
+        _ = h.engine.scanAndApply()
+        let db = try XCTUnwrap(h.database.current())
 
         let table = "phonetic"
-        let originalCount = db.countRecords(table, nil, nil)
+        let originalCount = try exportableRecordCount(db, table: table)
         XCTAssertGreaterThan(originalCount, 0)
+        let exportServer = DBServer(_testDatasource: db)
+        let targetBackupURL = tempRoot.appendingPathComponent("phonetic-\(UUID().uuidString).limedb")
 
-        guard let backupURL = await controller.exportIMAsLimedb(tableNick: table) else {
+        guard let backupURL = exportServer.exportZippedDb(tableName: table, targetDbFile: targetBackupURL) else {
             XCTFail("Expected .limedb export for \(table)")
             return
         }
@@ -87,7 +106,8 @@ final class IntegrationTestBackupRestore: XCTestCase {
         db.clearTable(table)
         XCTAssertEqual(db.countRecords(table, nil, nil), 0)
 
-        try await importCloudIM(backupURL, table: table, controller: controller)
+        try await importCloudIM(backupURL, table: table, controller: h.controller)
+        XCTAssertTrue(h.engine.scanAndApply().contains(SyncEvent(kind: .imported, stem: table)))
 
         XCTAssertEqual(db.countRecords(table, nil, nil),
                        originalCount,
@@ -95,16 +115,41 @@ final class IntegrationTestBackupRestore: XCTestCase {
     }
 
     @MainActor
-    private func makeHarness() throws -> (LimeIME.LimeDB, LimeIME.SetupImController) {
-        let db = try LimeIME.LimeDB(path: tempURL.path)
-        _ = db.openDBConnection(false)
-        let server = LimeIME.DBServer(_testDatasource: db)
+    private struct Harness {
+        let ownDir: URL
+        let appGroupDir: URL
+        let database: SharedDatabase
+        let engine: TableSyncEngine
+        let controller: LimeIME.SetupImController
+    }
+
+    @MainActor
+    private func makeHarness(label: String = UUID().uuidString) throws -> Harness {
+        let ownDir = tempRoot.appendingPathComponent("own-\(label)", isDirectory: true)
+        let appGroupDir = tempRoot.appendingPathComponent("ag-\(label)", isDirectory: true)
+        try FileManager.default.createDirectory(at: ownDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: appGroupDir, withIntermediateDirectories: true)
+        let database = SharedDatabase(runMode: .keyboard,
+                                      dataDirOverride: ownDir,
+                                      appGroupOverride: appGroupDir)
+        let engine = TableSyncEngine(database: database, baseURL: appGroupDir)
+        _ = try XCTUnwrap(database.current())
+        let server = LimeIME.DBServer(_testDatabaseDirectory: appGroupDir)
         let suiteName = "test.integration.backup.restore.\(UUID().uuidString)"
         let prefs = LimeIME.LIMEPreferenceManager(defaults: UserDefaults(suiteName: suiteName)!)
         let controller = LimeIME.SetupImController(dbServer: server,
                                                    prefs: prefs,
                                                    progress: LimeIME.ProgressManager())
-        return (db, controller)
+        return Harness(ownDir: ownDir,
+                       appGroupDir: appGroupDir,
+                       database: database,
+                       engine: engine,
+                       controller: controller)
+    }
+
+    @MainActor
+    private func cleanup(_ h: Harness) {
+        h.database.closeCurrentForReplacement()
     }
 
     @MainActor
@@ -120,12 +165,46 @@ final class IntegrationTestBackupRestore: XCTestCase {
         }
     }
 
-    private func learnedScores(_ db: LimeIME.LimeDB, table: String, code: String) -> [String: Int] {
+    private func learnedScores(_ db: LimeDB, table: String, code: String) -> [String: Int] {
         var scores: [String: Int] = [:]
         for record in db.getRecordList(table, code, searchByCode: true, 0, 0) where record.code == code {
             scores[record.word] = record.score
         }
         return scores
+    }
+
+    @MainActor
+    private func backupThroughRelay(_ h: Harness) throws -> URL {
+        let requestUUID = UUID().uuidString
+        let request = ExportRequest(requestUUID: requestUUID,
+                                    expiresAt: Date().timeIntervalSince1970 + 120)
+        try atomicWrite(try JSONEncoder().encode(request), to: SyncPaths.exportRequest(h.appGroupDir))
+        let events = h.engine.scanAndApply()
+        XCTAssertTrue(events.contains(SyncEvent(kind: .exported, stem: nil)))
+        let receipt = try JSONDecoder().decode(ExportReceipt.self,
+                                               from: Data(contentsOf: SyncPaths.receipt(h.appGroupDir)))
+        XCTAssertEqual(receipt.requestUUID, requestUUID)
+
+        let zip = tempRoot.appendingPathComponent("backup-\(requestUUID).zip")
+        let archive = try Archive(url: zip, accessMode: .create)
+        try archive.addEntry(with: DBServer.databaseName, fileURL: SyncPaths.backupSnapshot(h.appGroupDir))
+        try? FileManager.default.removeItem(at: SyncPaths.backupSnapshot(h.appGroupDir))
+        try? FileManager.default.removeItem(at: SyncPaths.receipt(h.appGroupDir))
+        return zip
+    }
+
+    private func exportableRecordCount(_ db: LimeDB, table: String) throws -> Int {
+        try db.dbQueue.read { sqlDB in
+            try Int.fetchOne(sqlDB,
+                             sql: """
+                             SELECT COUNT(*) FROM \(quote(table))
+                             WHERE code IS NOT NULL AND word IS NOT NULL
+                             """) ?? 0
+        }
+    }
+
+    private func quote(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     private func cloudFixtureURL(_ fileName: String) throws -> URL {

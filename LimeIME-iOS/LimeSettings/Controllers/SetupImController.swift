@@ -124,7 +124,7 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try server.restoreBundledDatabase()
+                try prepareBundledRestore(server: server)
                 return .success("已還原預設資料庫")
             } catch {
                 return .failure(error)
@@ -157,10 +157,7 @@ final class SetupImController: BaseController {
     /// Backup the database to a temp .zip file and return its URL for sharing.
     /// Caller is responsible for deleting the temp file after sharing.
     func backupDB() throws -> URL {
-        let dest = FileManager.default.temporaryDirectory
-            .appendingPathComponent("lime_backup_\(Int(Date().timeIntervalSince1970)).zip")
-        try dbServer.backupDatabase(uri: dest)
-        return dest
+        try requestKeyboardBackup(server: dbServer)
     }
 
     // MARK: - Restore
@@ -170,14 +167,14 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             do {
-                try server.restoreDatabase(uri: url)
+                try prepareBackupRestore(server: server, from: url)
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onProgress(100, status: "資料庫還原完成")
                     view?.refreshImList()
                 }
             } catch {
-                let msg = error.localizedDescription
+                let msg = mapSetupImError(error).localizedDescription
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onError("還原失敗：\(msg)")
@@ -193,22 +190,12 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try server.restoreDatabase(uri: url)
+                try prepareBackupRestore(server: server, from: url)
                 return .success(())
             } catch {
-                return .failure(error)
+                return .failure(mapSetupImError(error))
             }
         }.value
-        if case .success = result {
-            // Re-register all known IMs in iOS structured format.
-            // Android backups store im configs as key-value rows; registerIM replaces
-            // them with single iOS-format rows that getAllImConfigs() can read correctly.
-            await reregisterKnownIMs()
-            // Signal the keyboard extension to reload its database connection.
-            // The keyboard holds a stale DatabaseQueue to the old file after restore.
-            UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?
-                .set(Date().timeIntervalSince1970, forKey: "lime_db_restored_at")
-        }
         await MainActor.run { progress.dismiss() }
         return result
     }
@@ -280,6 +267,267 @@ final class SetupImController: BaseController {
     }
 }
 
+enum SetupImControllerError: Error {
+    case backupTimedOut
+    case restoreSchemaTooNew(Int)
+}
+
+extension SetupImControllerError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .backupTimedOut:
+            return "備份逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
+        case .restoreSchemaTooNew:
+            return "請先更新 LIME"
+        }
+    }
+}
+
+private struct RestorePayload {
+    let databaseURL: URL
+    let sharedPrefsURL: URL
+    let preferenceManifestURL: URL
+}
+
+// ponytail: fixed backup request TTL; make configurable only if product copy gains multiple retry modes.
+private let backupRequestTTL: TimeInterval = 120
+// ponytail: fixed poll window; replace with receipt notification only if Darwin/file polling proves flaky.
+private let backupReceiptPollTimeout: TimeInterval = 15
+private let backupReceiptPollInterval: TimeInterval = 0.25
+private let maxRestoreExtractTotalBytes: UInt64 = 500 * 1024 * 1024
+private let maxRestoreExtractEntries = 10_000
+private let maxRestoreCompressionRatio = 100.0
+
+private func prepareBundledRestore(server: DBServer) throws {
+    guard let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
+        throw DBServerError.fileNotFound("lime.db (bundled)")
+    }
+    try prepareRestore(server: server, databaseURL: bundledURL)
+}
+
+private func prepareBackupRestore(server: DBServer, from url: URL) throws {
+    let startedScopedAccess = url.startAccessingSecurityScopedResource()
+    defer { if startedScopedAccess { url.stopAccessingSecurityScopedResource() } }
+
+    let dir = FileManager.default.temporaryDirectory
+        .appendingPathComponent("lime_restore_\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+
+    let localURL = try coordinatedCopy(url, into: dir)
+    let payload = try restorePayload(from: localURL, in: dir)
+    try prepareRestore(server: server, databaseURL: payload.databaseURL)
+    restorePreferences(server: server,
+                       sharedPrefsURL: payload.sharedPrefsURL,
+                       preferenceManifestURL: payload.preferenceManifestURL)
+}
+
+private func prepareRestore(server: DBServer, databaseURL: URL) throws {
+    do {
+        _ = try server.makeTableStore().prepareRestore(from: databaseURL)
+        postSyncSignal(.tablesUpdated)
+    } catch {
+        throw mapSetupImError(error)
+    }
+}
+
+private func requestKeyboardBackup(server: DBServer) throws -> URL {
+    let baseURL = server.makeTableStore().baseURL
+    let requestURL = SyncPaths.exportRequest(baseURL)
+    let snapshotURL = SyncPaths.backupSnapshot(baseURL)
+    let receiptURL = SyncPaths.receipt(baseURL)
+    let requestUUID = UUID().uuidString
+    let requestedAt = Date().timeIntervalSince1970
+
+    try? FileManager.default.removeItem(at: snapshotURL)
+    try? FileManager.default.removeItem(at: receiptURL)
+
+    let request = ExportRequest(requestUUID: requestUUID,
+                                expiresAt: requestedAt + backupRequestTTL)
+    try atomicWrite(try JSONEncoder().encode(request), to: requestURL)
+    postSyncSignal(.tablesUpdated)
+
+    do {
+        let deadline = Date().addingTimeInterval(backupReceiptPollTimeout)
+        while Date() <= deadline {
+            if let receipt = matchingReceipt(at: receiptURL, requestUUID: requestUUID),
+               snapshotIsFresh(at: snapshotURL, since: requestedAt) {
+                let zip = try buildBackupArchive(server: server, snapshotURL: snapshotURL)
+                try? FileManager.default.removeItem(at: snapshotURL)
+                try? FileManager.default.removeItem(at: requestURL)
+                try? FileManager.default.removeItem(at: receiptURL)
+                _ = receipt
+                return zip
+            }
+            Thread.sleep(forTimeInterval: backupReceiptPollInterval)
+        }
+        throw SetupImControllerError.backupTimedOut
+    } catch {
+        try? FileManager.default.removeItem(at: requestURL)
+        throw error
+    }
+}
+
+private func matchingReceipt(at url: URL, requestUUID: String) -> ExportReceipt? {
+    guard let data = try? Data(contentsOf: url),
+          let receipt = try? JSONDecoder().decode(ExportReceipt.self, from: data),
+          receipt.requestUUID == requestUUID
+    else {
+        return nil
+    }
+    return receipt
+}
+
+private func snapshotIsFresh(at url: URL, since requestedAt: TimeInterval) -> Bool {
+    guard let identity = FileIdentity(url: url) else { return false }
+    return identity.mtime >= requestedAt - 1
+}
+
+private func buildBackupArchive(server: DBServer, snapshotURL: URL) throws -> URL {
+    guard FileManager.default.fileExists(atPath: snapshotURL.path) else {
+        throw DBServerError.fileNotFound(DBServer.databaseName)
+    }
+
+    let baseURL = server.makeTableStore().baseURL
+    let sharedPrefsURL = baseURL.appendingPathComponent(DBServer.sharedPrefsBackupName)
+    let preferenceManifestURL = baseURL.appendingPathComponent(DBServer.preferenceManifestPath)
+    try? FileManager.default.removeItem(at: sharedPrefsURL)
+    try? FileManager.default.removeItem(at: preferenceManifestURL)
+    server.backupDefaultSharedPreference(file: sharedPrefsURL)
+    server.backupPreferenceCompatibilityManifest(file: preferenceManifestURL)
+    defer {
+        try? FileManager.default.removeItem(at: sharedPrefsURL)
+        try? FileManager.default.removeItem(at: preferenceManifestURL)
+    }
+
+    let zipURL = FileManager.default.temporaryDirectory
+        .appendingPathComponent("lime_backup_\(Int(Date().timeIntervalSince1970)).zip")
+    try? FileManager.default.removeItem(at: zipURL)
+
+    let archive = try Archive(url: zipURL, accessMode: .create)
+    try archive.addEntry(with: DBServer.databaseName, fileURL: snapshotURL)
+    if FileManager.default.fileExists(atPath: sharedPrefsURL.path) {
+        try archive.addEntry(with: DBServer.sharedPrefsBackupName, fileURL: sharedPrefsURL)
+    }
+    if FileManager.default.fileExists(atPath: preferenceManifestURL.path) {
+        try archive.addEntry(with: DBServer.preferenceManifestPath, fileURL: preferenceManifestURL)
+    }
+    guard fileSizeBytes(at: zipURL) > 0 else {
+        throw DBServerError.archiveCreationFailed
+    }
+    try? FileManager.default.setAttributes(
+        [.protectionKey: FileProtectionType.complete], ofItemAtPath: zipURL.path)
+    return zipURL
+}
+
+private func coordinatedCopy(_ url: URL, into dir: URL) throws -> URL {
+    let destination = dir.appendingPathComponent("restore-input-\(UUID().uuidString)")
+    var coordinatorError: NSError?
+    var copyError: Error?
+    NSFileCoordinator().coordinate(readingItemAt: url, options: .withoutChanges, error: &coordinatorError) { coordinatedURL in
+        do {
+            try FileManager.default.copyItem(at: coordinatedURL, to: destination)
+        } catch {
+            copyError = error
+        }
+    }
+    if let error = coordinatorError ?? copyError {
+        throw error
+    }
+    return destination
+}
+
+private func restorePayload(from url: URL, in dir: URL) throws -> RestorePayload {
+    let databaseURL = dir.appendingPathComponent(DBServer.databaseName)
+    let sharedPrefsURL = dir.appendingPathComponent(DBServer.sharedPrefsBackupName)
+    let preferenceManifestURL = dir.appendingPathComponent(DBServer.preferenceManifestPath)
+
+    guard isZipArchive(at: url) else {
+        return RestorePayload(databaseURL: url,
+                              sharedPrefsURL: sharedPrefsURL,
+                              preferenceManifestURL: preferenceManifestURL)
+    }
+
+    let archive: Archive
+    do {
+        archive = try Archive(url: url, accessMode: .read)
+    } catch {
+        throw DBServerError.invalidRestoreArchive(url.path)
+    }
+    try validateRestoreArchive(archive)
+
+    var dbExtracted = false
+    for entry in archive where entry.type == .file {
+        if entry.path == DBServer.preferenceManifestPath {
+            try FileManager.default.createDirectory(at: preferenceManifestURL.deletingLastPathComponent(),
+                                                    withIntermediateDirectories: true)
+            try? FileManager.default.removeItem(at: preferenceManifestURL)
+            _ = try archive.extract(entry, to: preferenceManifestURL, skipCRC32: false)
+            continue
+        }
+        if URL(fileURLWithPath: entry.path).lastPathComponent == DBServer.sharedPrefsBackupName {
+            try? FileManager.default.removeItem(at: sharedPrefsURL)
+            _ = try archive.extract(entry, to: sharedPrefsURL, skipCRC32: false)
+            continue
+        }
+        guard !dbExtracted,
+              URL(fileURLWithPath: entry.path).lastPathComponent == DBServer.databaseName else {
+            continue
+        }
+        try? FileManager.default.removeItem(at: databaseURL)
+        _ = try archive.extract(entry, to: databaseURL, skipCRC32: false)
+        dbExtracted = true
+    }
+
+    guard dbExtracted else { throw DBServerError.missingDatabaseInRestoreArchive }
+    return RestorePayload(databaseURL: databaseURL,
+                          sharedPrefsURL: sharedPrefsURL,
+                          preferenceManifestURL: preferenceManifestURL)
+}
+
+private func validateRestoreArchive(_ archive: Archive) throws {
+    var totalBytes: UInt64 = 0
+    var count = 0
+    for entry in archive where entry.type != .directory {
+        count += 1
+        if count > maxRestoreExtractEntries { throw DBServerError.zipBombDetected }
+        totalBytes = totalBytes &+ UInt64(entry.uncompressedSize)
+        if totalBytes > maxRestoreExtractTotalBytes { throw DBServerError.zipBombDetected }
+        if entry.compressedSize > 0 {
+            let ratio = Double(entry.uncompressedSize) / Double(entry.compressedSize)
+            if ratio > maxRestoreCompressionRatio { throw DBServerError.zipBombDetected }
+        }
+        let components = entry.path.split(separator: "/", omittingEmptySubsequences: true)
+        if entry.path.isEmpty || entry.path.hasPrefix("/") || components.contains(where: { $0 == ".." }) {
+            throw DBServerError.unsafeZipEntry(entry.path)
+        }
+    }
+}
+
+private func restorePreferences(server: DBServer, sharedPrefsURL: URL, preferenceManifestURL: URL) {
+    if FileManager.default.fileExists(atPath: preferenceManifestURL.path),
+       server.restorePreferenceCompatibilityManifest(file: preferenceManifestURL) {
+        return
+    }
+    if FileManager.default.fileExists(atPath: sharedPrefsURL.path) {
+        server.restoreDefaultSharedPreference(file: sharedPrefsURL)
+    }
+}
+
+private func mapSetupImError(_ error: Error) -> Error {
+    if let tableStoreError = error as? TableStoreError,
+       case .schemaTooNew(let version) = tableStoreError {
+        return SetupImControllerError.restoreSchemaTooNew(version)
+    }
+    return error
+}
+
+private func fileSizeBytes(at url: URL) -> Int64 {
+    let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)
+    let size = attrs?[.size] as? NSNumber
+    return size?.int64Value ?? 0
+}
+
 func importDatabaseFile(server: DBServer, url: URL, tableName: String, meta: TableMeta? = nil) throws {
     let store = server.makeTableStore()
     if isZipArchive(at: url) {
@@ -332,11 +580,30 @@ private func installLegacyZippedDB(store: TableStore, zipURL: URL,
 
     let extracted = dir.appendingPathComponent(URL(fileURLWithPath: entry.path).lastPathComponent)
     _ = try archive.extract(entry, to: extracted, skipCRC32: false)
-    try store.installLimedb(from: extracted, stem: tableName, meta: meta)
+    do {
+        try store.installLimedb(from: extracted, stem: tableName, meta: meta)
+    } catch {
+        guard tableName != "custom" else { throw error }
+        try store.installLimedb(from: mapLegacyCustomBackup(extracted, tableName: tableName, in: dir),
+                                stem: tableName,
+                                meta: meta)
+    }
 }
 
 private func isZipArchive(at url: URL) -> Bool {
     guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
     defer { try? handle.close() }
     return (try? handle.read(upToCount: 4))?.starts(with: [0x50, 0x4B]) == true
+}
+
+private func mapLegacyCustomBackup(_ sourceURL: URL, tableName: String, in dir: URL) throws -> URL {
+    let mapped = dir.appendingPathComponent("\(tableName)-mapped.limedb")
+    let db = try LimeDB(path: mapped.path)
+    defer { try? db.closeForReplacement() }
+    db.importDb(sourceFile: sourceURL,
+                tableNames: ["custom"],
+                overwriteExisting: true,
+                includeRelated: false)
+    db.renameTableName("custom", tableName)
+    return mapped
 }

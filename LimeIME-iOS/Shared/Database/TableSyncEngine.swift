@@ -2,7 +2,7 @@
 import GRDB
 
 struct SyncEvent: Equatable {
-    enum Kind: Equatable { case epochApplied, imported, dropped, failed, noop }
+    enum Kind: Equatable { case epochApplied, imported, dropped, failed, noop, exported }
     let kind: Kind
     let stem: String?
 }
@@ -77,6 +77,10 @@ final class TableSyncEngine {
             if dropStem(entry.stem, in: db) {
                 events.append(SyncEvent(kind: .dropped, stem: entry.stem))
             }
+        }
+
+        if let exportEvent = exportSnapshotIfRequested() {
+            events.append(exportEvent)
         }
 
         if events.isEmpty && !silentSkip {
@@ -384,6 +388,42 @@ final class TableSyncEngine {
             return true
         } catch {
             return false
+        }
+    }
+
+    private func exportSnapshotIfRequested() -> SyncEvent? {
+        let requestURL = SyncPaths.exportRequest(baseURL)
+        guard let data = try? Data(contentsOf: requestURL),
+              let request = try? JSONDecoder().decode(ExportRequest.self, from: data),
+              request.expiresAt >= Date().timeIntervalSince1970,
+              let db = database.current()
+        else {
+            return nil
+        }
+
+        let outbox = SyncPaths.outboxDir(baseURL)
+        let snapshot = SyncPaths.backupSnapshot(baseURL)
+        let temp = outbox.appendingPathComponent("backup.limedb.tmp-\(UUID().uuidString)")
+        defer { try? fileManager.removeItem(at: temp) }
+
+        do {
+            try fileManager.createDirectory(at: outbox, withIntermediateDirectories: true)
+            try? fileManager.removeItem(at: temp)
+            try db.vacuumInto(temp.path)
+            if fileManager.fileExists(atPath: snapshot.path) {
+                _ = try fileManager.replaceItemAt(snapshot, withItemAt: temp)
+            } else {
+                try fileManager.moveItem(at: temp, to: snapshot)
+            }
+            let epoch = db.syncMeta("epoch_uuid") ?? (try? db.ensureEpochUUID()) ?? ""
+            let receipt = ExportReceipt(requestUUID: request.requestUUID,
+                                        epochUUID: epoch,
+                                        at: Date().timeIntervalSince1970)
+            try atomicWrite(JSONEncoder().encode(receipt), to: SyncPaths.receipt(baseURL))
+            try? fileManager.removeItem(at: requestURL)
+            return SyncEvent(kind: .exported, stem: nil)
+        } catch {
+            return nil
         }
     }
 

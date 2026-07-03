@@ -925,7 +925,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             case .failed:
                 showLimeToast("匯入失敗")
                 showedTerminalEvent = true
-            case .epochApplied, .dropped, .noop:
+            case .epochApplied, .dropped, .noop, .exported:
                 break
             }
         }

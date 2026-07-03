@@ -13,6 +13,7 @@
 		05CE854A1417A2D45839D8D2 /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
 		0638AFC436CE8D769E24B98D /* SetupImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9627C2D44209CBC7935864D /* SetupImControllerTest.swift */; };
 		06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */; };
+		E4A901B7C3D24F6089ABCDF1 /* EpochRestoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
 		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
@@ -309,6 +310,7 @@
 		0595186AC824BB0CCF9D15EF /* ManageRelatedControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageRelatedControllerTest.swift; sourceTree = "<group>"; };
 		05956B91D60A7720342125CA /* DBManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBManagerView.swift; sourceTree = "<group>"; };
 		06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntegrationTestBackupRestore.swift; sourceTree = "<group>"; };
+		E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpochRestoreTest.swift; sourceTree = "<group>"; };
 		086EF4DE9DDC4C8FAB4060D9 /* lime_phonetic_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_ipad.json; sourceTree = "<group>"; };
 		0A1B5D154B1A949CA010C9CE /* lime_english.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_english.json; sourceTree = "<group>"; };
 		0CE58AA4A8D7C8C7CAB2DD1B /* BaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseController.swift; sourceTree = "<group>"; };
@@ -590,6 +592,7 @@
 				6E1A5C0D9B234F0187A6D442 /* TableStoreTest.swift */,
 				6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
+				E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
 				F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */,
@@ -1309,6 +1312,7 @@
 				F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */,
 				8C4D2C17B8A1495297103E44 /* LimeToastState.swift in Sources */,
 				06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */,
+				E4A901B7C3D24F6089ABCDF1 /* EpochRestoreTest.swift in Sources */,
 				E02BE727FF878D591A3D34B5 /* LimeDB.swift in Sources */,
 				BD134223224AF768213904BA /* LimeDBProtocol.swift in Sources */,
 				9B1ECA9BBCEE603587497032 /* LimeDBTest.swift in Sources */,

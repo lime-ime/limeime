@@ -3088,8 +3088,12 @@ final class LimeDB {
         if FileManager.default.fileExists(atPath: destPath) {
             try FileManager.default.removeItem(at: destURL)
         }
+        try vacuumInto(destPath)
+    }
+
+    func vacuumInto(_ destinationPath: String) throws {
         try dbQueue.writeWithoutTransaction { db in
-            try db.execute(sql: "VACUUM INTO ?", arguments: [destPath])
+            try db.execute(sql: "VACUUM INTO ?", arguments: [destinationPath])
         }
     }
 
