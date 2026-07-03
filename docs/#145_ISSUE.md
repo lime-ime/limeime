@@ -5,7 +5,8 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/145
 - Classification: `bug` + `Usability`
 - Reporter: `james631025`
-- Live state at triage: open, no labels, no assignee, no comments before Hermes triage.
+- Live state after the 2026-07-03 labeled/assigned webhook: open, labeled `bug` + `Usability`, assigned to `jrywu`.
+- Public acknowledgement / clarification request: https://github.com/lime-ime/limeime/issues/145#issuecomment-4874848760 asks for platform, version/device details, active layout, app scope, whether other actions besides switching IMEs restore the row, and screenshot evidence.
 - Reporter scope: while using LIME on a tablet, the bottom keyboard row, described as the row containing the Space key, is often covered. Switching to another input method and then switching back to LIME makes the row appear again.
 - Current state: plausible UI/layout bug, but the report does not yet identify Android vs iPadOS, LIME version, tablet model, orientation, split-keyboard setting, keyboard-size setting, navigation mode, or screenshots/video.
 
@@ -51,7 +52,9 @@ If the reporter is on iPadOS instead, investigate it separately through the iOS 
 2. On Android, reproduce on a tablet or emulator with gesture navigation and 3-button navigation, in both portrait and landscape, with normal and split-keyboard settings.
 3. Instrument the Android IME view path around `onCreateInputView()`, `setOnApplyWindowInsetsListener(...)`, `mCandidateInInputView` measured height/padding, and `LIMEKeyboardBaseView.onMeasure()` to compare the broken state against the restored state after switching IMEs.
 4. Verify whether API level, system navigation bar height, `fitsSystemWindows`, host app `adjustResize` behavior, or tablet resource key heights are causing the bottom row to be clipped.
-5. If the reporter confirms iPadOS, compare with #139's iOS height/safe-area investigation but keep the public issue scopes separate unless the same source defect is proven.
+5. Ask whether closing/reopening the keyboard, rotating the tablet, changing keyboard size, or expanding/collapsing candidates also restores the row, because this distinguishes a full input-view recreation problem from a lighter remeasure/inset problem.
+6. Ask whether the symptom happens every time, first open only, or intermittently, because that separates stale initial measurement from ongoing resize/inset behavior.
+7. If the reporter confirms iPadOS, compare with #139's iOS height/safe-area investigation but keep the public issue scopes separate unless the same source defect is proven.
 
 ## Verification plan
 
