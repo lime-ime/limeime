@@ -122,3 +122,44 @@ All of the following, each verified with fresh output (superpowers:verification-
 7. superpowers:finishing-a-development-branch executed — branch merge-ready, no co-author trailers, per-iteration commits intact.
 
 Failure at any Final Gate item → identify the owning iteration, re-enter it through the same subagent workflow, re-run its gate, then re-run the Final Gate. Loop until green. Do not stop for anything else.
+
+---
+
+## Flight log — plan write-backs (2026-07-04, in-flight)
+
+Amendments discovered during execution; the sections above stay as written, this log records what actually changed.
+
+### Execution-state summary
+
+| Iteration | Status | Commits (branch `ios-fa-rearch`) |
+|---|---|---|
+| I0 probes | Installed on WJIP17; results = DEVICE RESIDUE (device locked; FA currently ON — FA-OFF rows need a manual toggle). Probe code kept `#if DEBUG` until Final Gate. | rides I1.3 commit |
+| I1 foundation | COMPLETE — full LimeTests suite + build green in one process | `d1451708`, `8678fae5`, `df0a8cdb` |
+| I2.1 assets | COMPLETE — emoji.db + FTS5 prebuild; seed lime.db stripped; Android-safety verified (Android seeds emoji at runtime) | `7cbc32ba` |
+| I2.2 emoji attach | IN FLIGHT (Codex) | — |
+| Docs addenda | Implementation-phase addenda folded into tasks 4.2 / 5.1 | `d49e6faf` |
+
+### I0 — how the probe actually works (differs from T1–T3 as written)
+
+One combined deploy, fully headless: the keyboard measures AG-read / own-write / AG-write / Darwin count / attach-import ms and **types** the report into the app's probe field (`[FAPROBE …]`); the app mirrors it to `AppGroup/probe_report.txt`; readout via `devicectl device copy from --domain-type appGroupDataContainer`. No banner-reading, no UITest. Per user direction: never wait/poll on device lock state — probes are opportunistic residue, harvested whenever the device happens to be unlocked.
+
+### Corrected facts the plan sections assumed wrong
+
+- **No hanconvert DB on iOS** (`hanConvert` = CFStringTransform) — I2 is emoji-only. `hanconvertv2.db` is bundled by the app target but has zero Swift references → I6 deletion candidate.
+- **emoji.db was already a bundled resource in BOTH app and appex** with copy phases; iOS seeded lime.db from it at runtime (same as Android still does). I2.1 therefore only prebuilt FTS5 into it and stripped the (empty) emoji tables from the seed lime.db — the "extraction" task as written was unnecessary.
+- **Seed `lime.db` emoji tables were empty** — the size-shrink rationale was wrong; the real I2 payoff is deleting the seed/refresh machinery and staleness-free upgrades.
+- `Shared/Database/lime.db` is NOT the default DB (it is a `related`-only test fixture bundled into LimeTests); the default DB is `LimeStudio/app/src/main/res/raw/lime.db`.
+
+### Workflow corrections
+
+- Codex dispatch flags actually used: `codex exec -C <worktree> -s workspace-write -o <report> "<brief>"` (no `--full-auto` on exec in codex-cli 0.140).
+- Session cwd resets between turns → EVERY git command uses `git -C <abs worktree path>`; one accidental commit landed on master and was undone content-safely (`git reset` mixed, no file contents touched).
+- Subagent deviations rejected during review (precedent): `#if canImport(XCTest) @testable import LimeIME` inside shared code (replaced by adding SyncContract.swift to the LimeTests target); `typealias datasourceContainer = SharedDatabase` shim (deleted, tests use the real name).
+- Gate addition: the I1 gate ran the ENTIRE LimeTests suite in one `xcodebuild test` process (not per-class) — this also smoke-tests run-mode cross-contamination between test classes; keep for every remaining iteration gate.
+
+### Task amendments folded into IOS_FA_REARCH_TASKS.md (from the design-doc addenda)
+
+- **Task 4.2**: `export.request.json` carries `{requestUUID, expiresAt}` (TTL ~2 min); keyboard ignores expired requests; app accepts only matching-UUID receipts; timeout UX disambiguates via Darwin liveness (`org.limeime.fa.*` ping seen but no receipt → FA guidance; no ping → "請將鍵盤切換至萊姆輸入法後再試").
+- **Task 5.1**: `FAState {confirmedOn, confirmedOff, unknown}` — confirmedOff only from a live `org.limeime.fa.off` ping (silence never proves off); keyboard posts `fa.on`/`fa.off` on appear; probe trigger rewritten to `keyboardEnabled && !hasFreshEvidence` (old `!fullAccessEnabled` guard was circular — never fires on device).
+- **I3 T-kb note**: the import status banner rides the existing LimeToast surface — no new opaque chrome over the UIInputView blur, per IOS_LIGHT_DARK.md §5/§7; text-only progress; calm failure styling.
+- Parked options (addenda, deliberately not tasked): insertText probe relay (needs hardware spike), keyboard-side pref-edit durability FA OFF (accepted: hamburger edits are FA-ON-durable only; app-side edits always work).
