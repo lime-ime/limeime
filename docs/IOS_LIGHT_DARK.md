@@ -145,3 +145,14 @@ The composing popup, expanded collapse chevron, and expanded separator used to h
 4. Force palette[0] while OS is Dark → keyboard stays Light; force palette[1] while OS is Light → keyboard stays Dark (proves `iosLight` / `iosDark` freeze).
 5. Switch to palettes 2–5 → Android-ported colours unchanged.
 6. `LimeTests` scheme passes.
+
+---
+
+## 11. FA re-arch addendum (2026-07-04) — import status banner theming
+
+The FA re-architecture ([IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md) §Keyboard import executor) adds keyboard-surface status chrome: the import banner (匯入中… / 已安裝 / 匯入失敗) shown while `TableSyncEngine` applies desired-state changes. Rules for that chrome, so it doesn't regress this doc's work:
+
+- **Ride the existing LimeToast surface** (`showLimeToast`, `KeyboardViewController.swift` §LIME Toast) rather than introducing a new flat-filled view — LimeToast already follows the §7 chrome rules (`resolvedKeyboardTheme` clamped to `{0,1}` for palettes 2–5). A long-running 匯入中 state may pin the toast (no 1.5 s auto-hide) but must not add a new opaque strip over the `UIInputView` blur (§1/§5: no flat fills over the blur).
+- Progress text only — no progress-bar chrome; percent rides the toast string (e.g. 匯入中… 45%). Keeps the surface count unchanged in both palettes.
+- Failure state (匯入失敗) uses the same toast surface with `secondaryLabel` color, not a red fill — error semantics live in the Settings app UI, the keyboard stays visually calm.
+- Verification additions to §10: trigger an import in Light palette[0] and Dark palette[1] → banner text readable on both, no flat strip appears behind it; palettes 2–5 → banner chrome stays Light/Dark-clamped per §7.
