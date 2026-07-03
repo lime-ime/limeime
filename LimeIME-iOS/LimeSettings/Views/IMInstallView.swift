@@ -370,7 +370,7 @@ struct IMInstallView: View {
                 switch r {
                 case .success(let table):
                     if seedCustomAfter { try? DBServer.shared.seedCustomIM() }
-                    statusMessage = "已成功匯入 \(table)"
+                    statusMessage = "已交付鍵盤 \(table)"
                     downloadManager.refreshInstalledTables()
                     onRefresh?()
                 case .failure(let error):
@@ -384,7 +384,7 @@ struct IMInstallView: View {
                 switch r {
                 case .success(let count):
                     if seedCustomAfter { try? DBServer.shared.seedCustomIM() }
-                    statusMessage = "文字檔匯入完成，共 \(count) 筆"
+                    statusMessage = "已交付鍵盤，共 \(count) 筆"
                     downloadManager.refreshInstalledTables()
                     onRefresh?()
                 case .failure(let error):

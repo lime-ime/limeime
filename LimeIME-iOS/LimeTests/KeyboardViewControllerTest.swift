@@ -1498,6 +1498,17 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(codes.contains(LimeKeyCode.switchToSymbol.rawValue), "phone_simple needs 123 (-2)")
     }
 
+    @MainActor
+    func testViewWillAppearTriggersTableSyncRunnerWhenReady() async {
+        let controller = KeyboardViewController()
+        let ran = expectation(description: "table sync runner")
+        controller.tableSyncRunner = { ran.fulfill() }
+
+        controller.viewWillAppear(false)
+
+        await fulfillment(of: [ran], timeout: 1.0)
+    }
+
     // MARK: - isKeyInImkeys unification characterization
 
     @MainActor

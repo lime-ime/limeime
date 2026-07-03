@@ -45,6 +45,12 @@ enum SyncSignal: String {
     case importFailed = "org.limeime.import.failed"
 }
 
+func postSyncSignal(_ signal: SyncSignal) {
+    let name = CFNotificationName(signal.rawValue as CFString)
+    CFNotificationCenterPostNotification(
+        CFNotificationCenterGetDarwinNotifyCenter(), name, nil, nil, true)
+}
+
 struct TableMeta: Codable, Equatable {
     var restoreLearning: Bool?
     var displayName: String?

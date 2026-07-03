@@ -149,6 +149,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var expandedComposingLabel: UILabel?
     private var limeToastState = LimeToastState()
     private var limeToastTimer: Timer?
+    private var limeToastPinned = false
+    private let databaseQueue = DispatchQueue(label: "org.limeime.keyboard.database", qos: .userInitiated)
+    private let tableScanLock = NSLock()
+    private var tableScanRunning = false
+    private var tableScanRequested = false
+    private var isKeyboardVisible = false
+    var tableSyncRunner: (() -> Void)?
 
     // MARK: - Chinese Punctuation (spec §11)
     private var hasChineseSymbolCandidatesShown: Bool = false
@@ -279,6 +286,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - Lifecycle
 
+    deinit {
+        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                           observer,
+                                           CFNotificationName(SyncSignal.tablesUpdated.rawValue as CFString),
+                                           nil)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         DBServer.configureRunMode(.keyboard)
@@ -303,13 +318,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
         sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
         sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        registerTableUpdateObserver()
         lastKnownDatabaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
         lastKnownKeyboardRuntimeGeneration = sharedDefaults?.integer(
             forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
         // app (0x8BADF00D) when it presents the keyboard extension for the first time.
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        databaseQueue.async { [weak self] in
             self?.setupDatabase()
         }
     }
@@ -317,6 +333,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Called every time the keyboard becomes visible (spec §2 initOnStartInput).
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        isKeyboardVisible = true
         // Refresh if Settings replaced lime.db or changed the active IM set while this extension was alive.
         let databaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
         let keyboardRuntimeGeneration = sharedDefaults?.integer(
@@ -327,13 +344,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             lastKnownDatabaseGeneration = databaseGeneration
             lastKnownKeyboardRuntimeGeneration = keyboardRuntimeGeneration
             // DB replacement needs a reopen; IM install/enable changes only need a runtime refresh.
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            databaseQueue.async { [weak self] in
                 self?.setupDatabase(forceReopen: databaseWasReplaced)
             }
         }
         sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
         sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
         sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        requestTableSyncScanIfReady()
         initOnStartInput()
     }
 
@@ -422,6 +440,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Triggers deferred Tier 2 learning: RP learning + LD phrase learning (spec §9, §13.5).
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        isKeyboardVisible = false
         dismissPopupKeyboard()
         // Detach window-attached composing popup so it doesn't linger after
         // the keyboard is dismissed.
@@ -763,7 +782,171 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             self.updateInputModeForCurrentField()
             self.applyLayoutForCurrentInputField()
             self.updateGlobeAndDismissBindings()
+            self.requestTableSyncScanIfReady()
         }
+    }
+
+    private func registerTableUpdateObserver() {
+        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observer,
+            { _, observer, _, _, _ in
+                guard let observer else { return }
+                let controller = Unmanaged<KeyboardViewController>
+                    .fromOpaque(observer)
+                    .takeUnretainedValue()
+                DispatchQueue.main.async { [weak controller] in
+                    controller?.requestTableSyncScanIfReady()
+                }
+            },
+            SyncSignal.tablesUpdated.rawValue as CFString,
+            nil,
+            .deliverImmediately)
+    }
+
+    private var tableSyncDatasourceReady: Bool {
+        searchServer != nil || tableSyncRunner != nil
+    }
+
+    private func requestTableSyncScanIfReady() {
+        guard isKeyboardVisible, tableSyncDatasourceReady else { return }
+        tableScanLock.lock()
+        if tableScanRunning {
+            tableScanRequested = true
+            tableScanLock.unlock()
+            return
+        }
+        tableScanRunning = true
+        tableScanLock.unlock()
+
+        databaseQueue.async { [weak self] in
+            self?.runTableSyncScanLoop()
+        }
+    }
+
+    private func runTableSyncScanLoop() {
+        while true {
+            autoreleasepool {
+                performTableSyncScan()
+            }
+            tableScanLock.lock()
+            if tableScanRequested {
+                tableScanRequested = false
+                tableScanLock.unlock()
+                continue
+            }
+            tableScanRunning = false
+            tableScanLock.unlock()
+            break
+        }
+    }
+
+    private func performTableSyncScan() {
+        if let tableSyncRunner {
+            tableSyncRunner()
+            return
+        }
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) else { return }
+
+        let hadPendingWork = hasPendingTableSyncWork(baseURL: baseURL)
+        if hadPendingWork {
+            DispatchQueue.main.async { [weak self] in
+                self?.beginTableSyncToast()
+            }
+        }
+
+        let events = TableSyncEngine(database: .shared, baseURL: baseURL).scanAndApply()
+        if events.contains(where: { $0.kind == .imported }) {
+            postSyncSignal(.importDone)
+        }
+        if events.contains(where: { $0.kind == .failed }) {
+            postSyncSignal(.importFailed)
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.finishTableSyncToast(events, hadPendingWork: hadPendingWork)
+        }
+    }
+
+    private func hasPendingTableSyncWork(baseURL: URL) -> Bool {
+        let fm = FileManager.default
+        guard let db = SharedDatabase.shared.current() else { return false }
+        if restoreNeedsApply(baseURL: baseURL, db: db) { return true }
+        let tablesDir = SyncPaths.tablesDir(baseURL)
+        let sources = (try? fm.contentsOfDirectory(at: tablesDir, includingPropertiesForKeys: nil)) ?? []
+        var sourceStems = Set<String>()
+
+        for url in sources where url.pathExtension.lowercased() == "limedb" {
+            let stem = url.deletingPathExtension().lastPathComponent
+            sourceStems.insert(stem)
+            guard let identity = FileIdentity(url: url) else { return true }
+            guard let ledger = db.ledgerEntry(stem: stem) else { return true }
+            if ledger.identity != identity { return true }
+            if ledger.state == .inProgress { return true }
+            // ponytail: mirrors TableSyncEngine's private retry cap; extract only if a second caller needs it.
+            if ledger.state == .failed && ledger.attempts >= 3 { continue }
+            if ledger.state != .done { return true }
+        }
+
+        return db.allLedgerEntries().contains { !sourceStems.contains($0.stem) }
+    }
+
+    private func restoreNeedsApply(baseURL: URL, db: LimeDB) -> Bool {
+        let restoreURL = SyncPaths.restoreDB(baseURL)
+        guard FileManager.default.fileExists(atPath: restoreURL.path) else { return false }
+        guard let data = try? Data(contentsOf: SyncPaths.restoreMeta(baseURL)),
+              let meta = try? JSONDecoder().decode(RestoreMeta.self, from: data),
+              let currentEpoch = db.syncMeta("epoch_uuid") else { return true }
+        return meta.epochUUID != currentEpoch
+    }
+
+    private func beginTableSyncToast() {
+        guard isKeyboardVisible else { return }
+        limeToastPinned = true
+        showLimeToast("匯入中…")
+    }
+
+    private func finishTableSyncToast(_ events: [SyncEvent], hadPendingWork: Bool) {
+        limeToastPinned = false
+        guard isKeyboardVisible else {
+            hideLimeToast()
+            return
+        }
+        var showedTerminalEvent = false
+        for event in events {
+            switch event.kind {
+            case .imported:
+                if let stem = event.stem {
+                    showLimeToast("已安裝〈\(tableSyncDisplayName(for: stem))〉")
+                    showedTerminalEvent = true
+                }
+            case .failed:
+                showLimeToast("匯入失敗")
+                showedTerminalEvent = true
+            case .epochApplied, .dropped, .noop:
+                break
+            }
+        }
+        if hadPendingWork && !showedTerminalEvent {
+            hideLimeToast()
+        }
+    }
+
+    private func tableSyncDisplayName(for stem: String) -> String {
+        if let baseURL = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+           let data = try? Data(contentsOf: SyncPaths.tableMeta(baseURL, stem: stem)),
+           let meta = try? JSONDecoder().decode(TableMeta.self, from: data),
+           let displayName = meta.displayName,
+           !displayName.isEmpty {
+            return displayName
+        }
+        if let im = activatedIMs.first(where: { $0.tableNick == stem || $0.imName == stem }) {
+            return displayName(for: im)
+        }
+        return stem
     }
 
     private func prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: Bool) throws -> DBServer.KeyboardRuntimeContext {
@@ -2975,6 +3158,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 text, baseFont: candidateBar.composingStripFont,
                 color: lbl.textColor ?? .label)
         }
+        guard !limeToastPinned else { return }
         limeToastTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
             self?.hideLimeToast()
         }

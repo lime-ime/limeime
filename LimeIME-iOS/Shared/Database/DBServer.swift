@@ -273,6 +273,10 @@ final class DBServer {
         database.dataDirURL
     }
 
+    func makeTableStore() -> TableStore {
+        TableStore(baseURL: dataDirURL)
+    }
+
     // MARK: - LimeDB accessor
     // DBServer uses the process-local SharedDatabase owner instead of owning LimeDB directly.
     private var datasource: LimeDB? {

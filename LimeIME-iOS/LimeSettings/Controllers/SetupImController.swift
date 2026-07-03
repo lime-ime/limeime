@@ -5,6 +5,7 @@
 // Mirrors Android SetupImController.
 
 import Foundation
+import ZIPFoundation
 
 // MARK: - SetupImController
 
@@ -29,20 +30,14 @@ final class SetupImController: BaseController {
         progress.show(status: "匯入中…")
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            // Use a reference holder so the @Sendable progress callback can
-            // mutate the running count without capturing a `var` (Swift 6).
-            final class CountBox: @unchecked Sendable { var value: Int = 0 }
-            let counter = CountBox()
             do {
-                try server.importTxtFile(at: url.path, tableName: tableName) { count in
-                    counter.value = count
-                    Task { @MainActor in
-                        view?.onProgress(50, status: "已匯入 \(count) 筆…")
-                    }
-                }
+                let count = try installTextFile(server: server, url: url, tableName: tableName,
+                                                meta: TableMeta(restoreLearning: false,
+                                                                displayName: nil,
+                                                                provenance: "local-text"))
                 await MainActor.run {
                     self.progress.dismiss()
-                    view?.onProgress(100, status: "文字檔匯入完成，共 \(counter.value) 筆")
+                    view?.onProgress(100, status: "已交付鍵盤，共 \(count) 筆")
                     view?.refreshImList()
                 }
             } catch {
@@ -62,17 +57,10 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                var lastCount = 0
-                try server.importTxtFile(at: url.path, tableName: tableName) { count in
-                    lastCount = count
-                }
-                if restoreLearning {
-                    if let ss = server.makeSearchServer() {
-                        let restored = ss.restoreUserRecords(tableName)
-                        if restored > 0 { ss.dropBackupTable(tableName) }
-                    }
-                }
-                return .success(lastCount)
+                let meta = TableMeta(restoreLearning: restoreLearning,
+                                     displayName: nil,
+                                     provenance: "local-text")
+                return .success(try installTextFile(server: server, url: url, tableName: tableName, meta: meta))
             } catch {
                 return .failure(error)
             }
@@ -89,10 +77,13 @@ final class SetupImController: BaseController {
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
         Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable)
+                try importDatabaseFile(server: server, url: url, tableName: safeTable,
+                                       meta: TableMeta(restoreLearning: false,
+                                                       displayName: nil,
+                                                       provenance: "local-db"))
                 await MainActor.run {
                     self.progress.dismiss()
-                    view?.onProgress(100, status: "已成功匯入 \(safeTable)")
+                    view?.onProgress(100, status: "已交付鍵盤 \(safeTable)")
                     view?.refreshImList()
                 }
             } catch {
@@ -113,13 +104,10 @@ final class SetupImController: BaseController {
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable)
-                if restoreLearning {
-                    if let ss = server.makeSearchServer() {
-                        let restored = ss.restoreUserRecords(safeTable)
-                        if restored > 0 { ss.dropBackupTable(safeTable) }
-                    }
-                }
+                try importDatabaseFile(server: server, url: url, tableName: safeTable,
+                                       meta: TableMeta(restoreLearning: restoreLearning,
+                                                       displayName: nil,
+                                                       provenance: "local-db"))
                 return .success(safeTable)
             } catch {
                 return .failure(error)
@@ -292,12 +280,59 @@ final class SetupImController: BaseController {
     }
 }
 
-func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
+func importDatabaseFile(server: DBServer, url: URL, tableName: String, meta: TableMeta? = nil) throws {
+    let store = server.makeTableStore()
     if isZipArchive(at: url) {
-        try server.importFromZip(at: url, tableName: tableName)
+        do {
+            try store.installFromZip(from: url, stem: tableName, meta: meta)
+        } catch {
+            try installLegacyZippedDB(store: store, zipURL: url,
+                                      tableName: tableName, meta: meta,
+                                      originalError: error)
+        }
     } else {
-        try server.importFromAttachedDB(sourcePath: url.path, tableName: tableName)
+        try store.installLimedb(from: url, stem: tableName, meta: meta)
     }
+    postSyncSignal(.tablesUpdated)
+}
+
+private func installTextFile(server: DBServer, url: URL, tableName: String, meta: TableMeta?) throws -> Int {
+    let store = server.makeTableStore()
+    try store.installText(from: url, stem: tableName, meta: meta)
+    let count = installedRowCount(baseURL: store.baseURL, tableName: tableName)
+    postSyncSignal(.tablesUpdated)
+    return count
+}
+
+private func installedRowCount(baseURL: URL, tableName: String) -> Int {
+    guard let db = try? LimeDB(path: SyncPaths.tableFile(baseURL, stem: tableName).path) else { return 0 }
+    defer { try? db.closeForReplacement() }
+    return db.countRecords(tableName, nil, nil)
+}
+
+private func installLegacyZippedDB(store: TableStore, zipURL: URL,
+                                   tableName: String, meta: TableMeta?,
+                                   originalError: Error) throws {
+    let archive: Archive
+    do {
+        archive = try Archive(url: zipURL, accessMode: .read)
+    } catch {
+        throw originalError
+    }
+    guard let entry = archive.first(where: { entry in
+        entry.type != .directory && entry.path.lowercased().hasSuffix(".db")
+    }) else {
+        throw originalError
+    }
+
+    let dir = FileManager.default.temporaryDirectory
+        .appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: dir) }
+
+    let extracted = dir.appendingPathComponent(URL(fileURLWithPath: entry.path).lastPathComponent)
+    _ = try archive.extract(entry, to: extracted, skipCRC32: false)
+    try store.installLimedb(from: extracted, stem: tableName, meta: meta)
 }
 
 private func isZipArchive(at url: URL) -> Bool {

@@ -56,10 +56,10 @@ final class IMDownloadManager: ObservableObject {
     func refreshInstalledTables() {
         Task.detached(priority: .background) { [weak self] in
             let server = DBServer.shared
-            // Use tableHasData() — all tables exist in bundled lime.db, only populated ones are installed
+            let delivered = Set(server.makeTableStore().installedStems())
             let tables = IMCatalog.allVariants
                 .map { $0.tableName }
-                .filter { server.tableHasData($0) }
+                .filter { delivered.contains($0) }
             let result = Set(tables)
             await MainActor.run { [weak self] in
                 self?.installedTables = result
@@ -122,14 +122,10 @@ final class IMDownloadManager: ObservableObject {
             let server = DBServer.shared
 
             do {
-                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName)
-
-                if restoreLearning {
-                    if let ss = server.makeSearchServer() {
-                        let restored = ss.restoreUserRecords(variant.tableName)
-                        if restored > 0 { ss.dropBackupTable(variant.tableName) }
-                    }
-                }
+                let meta = TableMeta(restoreLearning: restoreLearning,
+                                     displayName: variant.label,
+                                     provenance: "download")
+                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName, meta: meta)
 
                 // Register in im table so the keyboard can see it
                 try server.registerIM(imName: variant.imName, tableName: variant.tableName,

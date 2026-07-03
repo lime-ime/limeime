@@ -31,8 +31,11 @@ final class SetupImControllerTest: XCTestCase {
     // MARK: - Helpers
 
     private func makeDB() throws -> (url: URL, db: LimeIME.LimeDB) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SetupImControllerTest-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("lime.db")
         let db = try LimeIME.LimeDB(path: url.path)
         _ = db.openDBConnection(false)
         return (url, db)
@@ -57,7 +60,7 @@ final class SetupImControllerTest: XCTestCase {
         try sourceDB.exportDB(to: snapshotURL.path)
 
         let archive = try Archive(url: zipURL, accessMode: .create)
-        try archive.addEntry(with: "custom.db", fileURL: snapshotURL)
+        try archive.addEntry(with: "custom.limedb", fileURL: snapshotURL)
         try? FileManager.default.removeItem(at: snapshotURL)
         return (dbURL, zipURL)
     }
@@ -88,8 +91,44 @@ final class SetupImControllerTest: XCTestCase {
         try queue.close()
 
         let archive = try Archive(url: zipURL, accessMode: .create)
-        try archive.addEntry(with: "cj4.db", fileURL: dbURL)
+        try archive.addEntry(with: "custom.limedb", fileURL: dbURL)
         return (dbURL, zipURL)
+    }
+
+    private func makeSingleTableLimedb(tableName: String = "custom") throws -> URL {
+        let dbURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".limedb")
+        let queue = try DatabaseQueue(path: dbURL.path)
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE \(quote(tableName)) (
+                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code      TEXT,
+                    word      TEXT,
+                    score     INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0,
+                    code3r    TEXT
+                )
+            """)
+            try db.execute(sql: """
+                INSERT INTO \(quote(tableName)) (code, word, score, basescore, code3r)
+                VALUES ('proxy_db', '交付', 5, 1, 'bd')
+            """)
+        }
+        try queue.close()
+        return dbURL
+    }
+
+    private func makeCinFixture() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        try """
+        %cname Proxy CIN
+        %chardef begin
+        proxy_txt\t文字交付
+        %chardef end
+        """.write(to: url, atomically: true, encoding: .utf8)
+        return url
     }
 
     private func seedCustomRoundTripRecords(_ db: LimeIME.LimeDB, prefix: String,
@@ -145,6 +184,41 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    private func installedTableURL(for liveDBURL: URL, tableName: String) -> URL {
+        SyncPaths.tableFile(liveDBURL.deletingLastPathComponent(), stem: tableName)
+    }
+
+    private func installedRowCount(liveDBURL: URL, tableName: String) throws -> Int {
+        let queue = try DatabaseQueue(path: installedTableURL(for: liveDBURL, tableName: tableName).path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(quote(tableName))") ?? 0
+        }
+    }
+
+    private func installedRecordSnapshot(liveDBURL: URL, tableName: String,
+                                         prefix: String) throws -> [String] {
+        let queue = try DatabaseQueue(path: installedTableURL(for: liveDBURL, tableName: tableName).path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db,
+                             sql: """
+                             SELECT code, word, score, basescore, code3r
+                             FROM \(quote(tableName))
+                             WHERE code LIKE ?
+                             """,
+                             arguments: ["\(prefix)_%"]).map {
+                "\($0["code"] as String? ?? "")|\($0["word"] as String? ?? "")|" +
+                "\($0["score"] as Int? ?? 0)|\($0["basescore"] as Int? ?? 0)|" +
+                "\($0["code3r"] as String? ?? "")"
+            }.sorted()
+        }
+    }
+
+    private func quote(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
     // MARK: - importDBFile
 
     func testImportDBFileInvalidPathReportsError() async throws {
@@ -185,6 +259,30 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    func testAsyncImportDBFileDeliversSingleTableLimedbToTableStoreOnly() async throws {
+        let (url, db) = try makeDB()
+        let fixture = try makeSingleTableLimedb(tableName: "custom")
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: fixture)
+        }
+        let progress = await LimeIME.ProgressManager()
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: progress
+        )
+
+        let result = await controller.importDBFile(url: fixture, tableName: "custom")
+
+        if case .failure(let error) = result {
+            XCTFail("Expected raw .limedb import to succeed, got \(error)")
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: installedTableURL(for: url, tableName: "custom").path))
+        XCTAssertEqual(try installedRowCount(liveDBURL: url, tableName: "custom"), 1)
+        XCTAssertEqual(db.countRecords("custom", "code = ?", ["proxy_db"]), 0,
+                       "Live app DB must not receive rows before keyboard scan")
+    }
+
     func testAsyncImportDBFileImportsZippedLimedb() async throws {
         let (url, db) = try makeDB()
         let zipped = try makeZippedCustomLimedb()
@@ -204,7 +302,9 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected zipped .limedb import to succeed, got \(error)")
         }
-        XCTAssertGreaterThan(db.countRecords("custom", nil, nil), 0)
+        XCTAssertEqual(try installedRowCount(liveDBURL: url, tableName: "custom"), 1)
+        XCTAssertEqual(db.countRecords("custom", nil, nil), 0,
+                       "Import should deliver a TableStore source, not write live DB rows")
         await MainActor.run {
             XCTAssertFalse(progress.isVisible, "Async DB import must dismiss progress after success")
         }
@@ -229,8 +329,9 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected Android-shaped .limedb import to succeed, got \(error)")
         }
-        XCTAssertEqual(db.getRecordList("custom", "android_cj4", searchByCode: true, 0, 0).first?.word,
-                       "安卓")
+        XCTAssertEqual(try installedRowCount(liveDBURL: url, tableName: "custom"), 1)
+        XCTAssertNil(db.getRecordList("custom", "android_cj4", searchByCode: true, 0, 0).first,
+                     "Import should deliver a TableStore source, not write live DB rows")
         await MainActor.run {
             XCTAssertFalse(progress.isVisible, "Async DB import must dismiss progress after success")
         }
@@ -248,7 +349,9 @@ final class SetupImControllerTest: XCTestCase {
 
         try importDatabaseFile(server: server, url: zipped.zipURL, tableName: "custom")
 
-        XCTAssertGreaterThan(db.countRecords("custom", nil, nil), 0)
+        XCTAssertEqual(try installedRowCount(liveDBURL: url, tableName: "custom"), 1)
+        XCTAssertEqual(db.countRecords("custom", nil, nil), 0,
+                       "Import should deliver a TableStore source, not write live DB rows")
     }
 
     func testExportLimedbRemoveAndReimportRestoresSameCustomEntries() async throws {
@@ -280,7 +383,9 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected .limedb re-import to succeed, got \(error)")
         }
-        XCTAssertEqual(customRecordSnapshot(db, prefix: prefix), before)
+        XCTAssertTrue(customRecordSnapshot(db, prefix: prefix).isEmpty,
+                      "Re-import should not write live DB rows")
+        XCTAssertEqual(try installedRecordSnapshot(liveDBURL: url, tableName: "custom", prefix: prefix), before)
     }
 
     func testExportLimedbCopiesNonCustomTableRowsIntoArchiveCustomTable() async throws {
@@ -386,7 +491,9 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected .lime re-import to succeed, got \(error)")
         }
-        XCTAssertEqual(customRecordSnapshot(db, prefix: prefix), before)
+        XCTAssertTrue(customRecordSnapshot(db, prefix: prefix).isEmpty,
+                      "Re-import should not write live DB rows")
+        XCTAssertEqual(try installedRecordSnapshot(liveDBURL: url, tableName: "custom", prefix: prefix), before)
     }
 
     func testExportIMAsTextIncludesImMetadataFromDatabase() async throws {
@@ -423,6 +530,29 @@ final class SetupImControllerTest: XCTestCase {
     }
 
     // MARK: - importTxtFile
+
+    func testAsyncImportTxtFileDeliversCinToTableStoreOnly() async throws {
+        let (url, db) = try makeDB()
+        let fixture = try makeCinFixture()
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: fixture)
+        }
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: fixture, tableName: "custom")
+
+        if case .failure(let error) = result {
+            XCTFail("Expected .cin import to succeed, got \(error)")
+        }
+        XCTAssertTrue(FileManager.default.fileExists(atPath: installedTableURL(for: url, tableName: "custom").path))
+        XCTAssertEqual(try installedRowCount(liveDBURL: url, tableName: "custom"), 1)
+        XCTAssertEqual(db.countRecords("custom", "code = ?", ["proxy_txt"]), 0,
+                       "Live app DB must not receive rows before keyboard scan")
+    }
 
     func testImportTxtFileNonExistentPathReportsError() async throws {
         let (url, db) = try makeDB()
