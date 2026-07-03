@@ -2,6 +2,95 @@
 import GRDB
 import ZIPFoundation
 
+// MARK: - SharedDatabase
+// Process-local owner for the live LimeDB handle. This mirrors Android's static
+// LimeDB.db shape: DBServer and SearchServer are different facades, but the open
+// SQLite connection belongs to one neutral owner per process.
+final class SharedDatabase {
+    static let shared = SharedDatabase()
+
+    private static let databaseName = "lime.db"
+    private let dataDirOverride: URL?
+    private var cachedDatasource: LimeDB?
+    private let lock = NSLock()
+
+    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
+        self.dataDirOverride = dataDirOverride
+        self.cachedDatasource = datasource
+    }
+
+    var dataDirURL: URL {
+        if let dataDirOverride { return dataDirOverride }
+        if let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) {
+            return url
+        }
+        let fallback = FileManager.default.urls(for: .applicationSupportDirectory,
+                                                in: .userDomainMask).first?
+            .appendingPathComponent("LimeIME", isDirectory: true)
+        let url = fallback ?? FileManager.default.temporaryDirectory
+            .appendingPathComponent("LimeIME", isDirectory: true)
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        print("[DBServer] App Group unavailable; using persistent fallback database directory: \(url.path)")
+        return url
+    }
+
+    func current() -> LimeDB? {
+        lock.lock()
+        defer { lock.unlock() }
+        if cachedDatasource == nil {
+            cachedDatasource = openDatasource()
+        }
+        return cachedDatasource
+    }
+
+    func setCurrent(_ datasource: LimeDB?) {
+        lock.lock()
+        cachedDatasource = datasource
+        lock.unlock()
+    }
+
+    func closeCurrentForReplacement() {
+        lock.lock()
+        let datasource = cachedDatasource
+        lock.unlock()
+        do {
+            try datasource?.closeForReplacement()
+        } catch {
+            print("[DBServer] closeDatabase() failed: \(error)")
+        }
+    }
+
+    func reopenFromDisk() {
+        closeCurrentForReplacement()
+        setCurrent(nil)
+        setCurrent(openDatasource())
+    }
+
+    func copyBundledDatabase(to destinationURL: URL) throws {
+        guard let sourceURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
+            throw DBServerError.bundledDatabaseMissing
+        }
+        try FileManager.default.createDirectory(at: destinationURL.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+    }
+
+    private func openDatasource() -> LimeDB? {
+        let directoryURL = dataDirURL
+        try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        let dbURL = directoryURL.appendingPathComponent(Self.databaseName)
+        if !FileManager.default.fileExists(atPath: dbURL.path) {
+            try? copyBundledDatabase(to: dbURL)
+        }
+        guard let db = try? LimeDB(path: dbURL.path) else { return nil }
+        if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
+            db.repairKeyboardCatalogIfNeeded(from: bundledURL)
+        }
+        return db
+    }
+}
+
 // MARK: - DBServer
 // Port of DBServer.java — thin orchestration layer between callers and LimeDB.
 // Singleton. No Android Context, Uri, or SharedPreferences.
@@ -16,15 +105,30 @@ final class DBServer {
     }
 
     // MARK: - Singleton
-    static let shared = DBServer()
+    static let shared = DBServer(database: .shared)
+    private let database: SharedDatabase
+
     // Internal (not private) so @testable import LimeIME tests can construct fresh
     // instances for isolation. Production code should use DBServer.shared.
-    internal init() {}
+    internal init() {
+        self.database = SharedDatabase()
+    }
+
+    private init(database: SharedDatabase) {
+        self.database = database
+    }
 
     /// Test hook: inject a pre-opened LimeDB so tests can use isolated temp databases
     /// without touching the shared App Group container. Do not use in production code.
     init(_testDatasource: LimeDB) {
-        self.datasource = _testDatasource
+        let dataDirURL = URL(fileURLWithPath: _testDatasource.dbPath()).deletingLastPathComponent()
+        self.database = SharedDatabase(dataDirOverride: dataDirURL, datasource: _testDatasource)
+    }
+
+    /// Test hook: use an isolated database directory while exercising DBServer's
+    /// own open/reopen path.
+    init(_testDatabaseDirectory dataDirURL: URL) {
+        self.database = SharedDatabase(dataDirOverride: dataDirURL)
     }
 
     // MARK: - Constants
@@ -37,6 +141,7 @@ final class DBServer {
     static let databaseExt             = ".db"
     static let dbTableRelated          = "related"
     static let bufferSize4KB: Int      = 4096
+    static let databaseGenerationKey   = "lime_db_generation"
 
     // MARK: - Security limits (zip bomb guard)
     /// Maximum cumulative uncompressed size of any archive we extract (500 MB).
@@ -73,41 +178,23 @@ final class DBServer {
     // MARK: - Data Directory
     /// App Group container URL (mirrors Android's ContextCompat.getDataDir()).
     private var dataDirURL: URL {
-        if let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: DBServer.appGroupID) {
-            return url
-        }
-        let fallback = FileManager.default.urls(for: .applicationSupportDirectory,
-                                                in: .userDomainMask).first?
-            .appendingPathComponent("LimeIME", isDirectory: true)
-        let url = fallback ?? FileManager.default.temporaryDirectory
-            .appendingPathComponent("LimeIME", isDirectory: true)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        print("[DBServer] App Group unavailable; using persistent fallback database directory: \(url.path)")
-        return url
+        database.dataDirURL
     }
 
     // MARK: - LimeDB accessor
-    // DBServer creates its own LimeDB backed by the shared lime.db in the App Group container.
-    private lazy var datasource: LimeDB? = {
-        let dbURL = dataDirURL.appendingPathComponent(DBServer.databaseName)
-        if !FileManager.default.fileExists(atPath: dbURL.path) {
-            try? copyBundledDatabase(to: dbURL)
+    // DBServer uses the process-local SharedDatabase owner instead of owning LimeDB directly.
+    private var datasource: LimeDB? {
+        get {
+            database.current()
         }
-        guard let db = try? LimeDB(path: dbURL.path) else { return nil }
-        if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
-            db.repairKeyboardCatalogIfNeeded(from: bundledURL)
+        set {
+            database.setCurrent(newValue)
         }
-        return db
-    }()
+    }
 
     // MARK: - Private helper: close / reopen database around backup-restore critical sections.
     private func closeDatabase() {
-        do {
-            try datasource?.closeForReplacement()
-        } catch {
-            print("[DBServer] closeDatabase() failed: \(error)")
-        }
+        database.closeCurrentForReplacement()
     }
 
     /// Discards the current `datasource` and rebuilds a fresh `LimeDB` against the
@@ -119,13 +206,7 @@ final class DBServer {
     /// Closing + reopening rebinds the queue to the restored file. Mirrors the
     /// inline rebuild already used inside `backupDatabase` / `restoreDatabase`.
     func reopenDatabaseFromDisk() {
-        closeDatabase()
-        let dbURL = dataDirURL.appendingPathComponent(DBServer.databaseName)
-        datasource = nil
-        datasource = try? LimeDB(path: dbURL.path)
-        if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
-            datasource?.repairKeyboardCatalogIfNeeded(from: bundledURL)
-        }
+        database.reopenFromDisk()
     }
 
     // MARK: - 1. isDatabaseOnHold
@@ -388,13 +469,13 @@ final class DBServer {
             throw DBServerError.invalidRestoreSource("備份檔路徑是空的")
         }
         try validateRestoreFile(at: srcFilePath)
-        guard datasource != nil else { throw DBServerError.datasourceUnavailable }
+        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
 
         let dataDir = dataDirURL
         let sharedPrefBackup = dataDir.appendingPathComponent(DBServer.sharedPrefsBackupName)
         let preferenceManifest = dataDir.appendingPathComponent(DBServer.preferenceManifestPath)
 
-        datasource?.holdDBConnection()
+        ds.holdDBConnection()
         closeDatabase()
 
         // Temp path: Android backup lands here during extraction, then swapped in after
@@ -404,7 +485,6 @@ final class DBServer {
 
         var restoreSucceeded = false
         defer {
-            datasource?.unHoldDBConnection()
             // Step 1: release old datasource — GRDB checkpoints its WAL into the OLD lime.db.
             // lime.db is still the pre-restore file at this point, so the checkpoint is safe.
             datasource = nil
@@ -421,6 +501,7 @@ final class DBServer {
             // Step 4: open a fresh datasource on the restored (or original) file.
             print("[DBServer] restore defer: reopening at \(dbURL.path), exists=\(FileManager.default.fileExists(atPath: dbURL.path)), restoreSucceeded=\(restoreSucceeded)")
             datasource = try? LimeDB(path: dbURL.path)
+            ds.unHoldDBConnection()
             if restoreSucceeded {
                 if FileManager.default.fileExists(atPath: preferenceManifest.path),
                    restorePreferenceCompatibilityManifest(file: preferenceManifest) {
@@ -432,6 +513,7 @@ final class DBServer {
                 }
                 datasource?.checkAndUpdateRelatedTable()
                 datasource?.ensureCurrentDatabase()
+                markDatabaseReplaced()
             }
         }
 
@@ -507,18 +589,17 @@ final class DBServer {
         guard let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
             throw DBServerError.fileNotFound("lime.db (bundled)")
         }
-        guard datasource != nil else { throw DBServerError.datasourceUnavailable }
+        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
 
         let dataDir = dataDirURL
         let dbURL = dataDir.appendingPathComponent(DBServer.databaseName)
         let tempDBPath = dataDir.appendingPathComponent(DBServer.databaseName + ".restore_tmp")
 
-        datasource?.holdDBConnection()
+        ds.holdDBConnection()
         closeDatabase()
 
         var restoreSucceeded = false
         defer {
-            datasource?.unHoldDBConnection()
             // Release old datasource — GRDB checkpoints its WAL into the OLD lime.db.
             datasource = nil
             if restoreSucceeded {
@@ -531,9 +612,11 @@ final class DBServer {
             }
             print("[DBServer] restoreBundledDatabase defer: reopening at \(dbURL.path), restoreSucceeded=\(restoreSucceeded)")
             datasource = try? LimeDB(path: dbURL.path)
+            ds.unHoldDBConnection()
             if restoreSucceeded {
                 datasource?.checkAndUpdateRelatedTable()
                 datasource?.ensureCurrentDatabase()
+                markDatabaseReplaced()
             }
         }
 
@@ -584,6 +667,13 @@ final class DBServer {
         } catch {
             print("[DBServer] backupPreferenceCompatibilityManifest: error — \(error)")
         }
+    }
+
+    private func markDatabaseReplaced() {
+        guard let defaults = UserDefaults(suiteName: DBServer.appGroupID) else { return }
+        defaults.set(defaults.integer(forKey: DBServer.databaseGenerationKey) + 1,
+                     forKey: DBServer.databaseGenerationKey)
+        defaults.synchronize()
     }
 
     @discardableResult
@@ -958,12 +1048,13 @@ final class DBServer {
 
     // MARK: - SearchServer factory
 
-    /// Returns a SearchServer backed by the same LimeDB connection as this DBServer.
-    /// Multiple SearchServer instances sharing one LimeDB are safe — GRDB's DatabaseQueue
-    /// serialises all writes internally.
+    /// Returns a SearchServer backed by the process-local SharedDatabase owner.
+    /// The provider re-reads the current LimeDB on every query, so a Settings-side
+    /// close/reopen can replace the queue without rebuilding SearchServer.
     func makeSearchServer() -> SearchServer? {
-        guard let ds = datasource else { return nil }
-        return SearchServer(db: ds)
+        guard let initialDatasource = datasource else { return nil }
+        let database = self.database
+        return SearchServer(dbProvider: { database.current() ?? initialDatasource })
     }
 
     // MARK: - Keyboard Runtime Bootstrap
@@ -1016,7 +1107,8 @@ final class DBServer {
             ?? allIMs.first(where: { $0.enabled })?.tableNick
             ?? "phonetic"
         let initialIM = firstNick.isEmpty ? "phonetic" : firstNick
-        let searchServer = SearchServer(db: ds)
+        let database = self.database
+        let searchServer = SearchServer(dbProvider: { database.current() ?? ds })
         let capabilities = searchServer.detectIMCapabilities(tableName: initialIM)
         searchServer.setTableName(initialIM,
                                   hasNumberMapping: capabilities.hasNumber,
@@ -1028,12 +1120,7 @@ final class DBServer {
     }
 
     private func copyBundledDatabase(to destinationURL: URL) throws {
-        guard let sourceURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
-            throw DBServerError.bundledDatabaseMissing
-        }
-        try FileManager.default.createDirectory(at: destinationURL.deletingLastPathComponent(),
-                                                withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+        try database.copyBundledDatabase(to: destinationURL)
     }
 
     private func importRelatedIfNeeded() {

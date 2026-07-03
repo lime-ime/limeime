@@ -83,6 +83,24 @@ final class DBServerTest: XCTestCase {
         XCTAssertNotNil(url, "Data directory should be accessible")
     }
 
+    func testDBServerRetriesOpenAfterInitialDatasourceFailure() throws {
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        XCTAssertTrue(FileManager.default.createFile(atPath: databaseDir.path, contents: Data()),
+                      "Blocked database directory should be created as a file")
+        let server = DBServer(_testDatabaseDirectory: databaseDir)
+
+        XCTAssertNil(server.makeSearchServer(), "Blocked database directory should make first open fail")
+
+        try FileManager.default.removeItem(at: databaseDir)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+
+        XCTAssertNotNil(server.makeSearchServer(),
+                        "DBServer should retry opening after the directory becomes available")
+    }
+
     func testDBServerGetInstanceWithoutContext() {
         // On iOS there is only one access path: DBServer.shared.
         let s1 = DBServer.shared
@@ -1030,6 +1048,37 @@ final class DBServerTest: XCTestCase {
         restoreDefaults(originalStandard, defaults: standardDefaults)
         sharedDefaults.synchronize()
         standardDefaults.synchronize()
+    }
+
+    func testDBServerRestoreDatabaseBumpsDatabaseGeneration() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let fixtureURL = tempFile(".zip")
+        defer { try? FileManager.default.removeItem(at: fixtureURL) }
+
+        let defaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) ?? UserDefaults.standard
+        let key = DBServer.databaseGenerationKey
+        let original = defaults.object(forKey: key)
+        defer {
+            if let original {
+                defaults.set(original, forKey: key)
+            } else {
+                defaults.removeObject(forKey: key)
+            }
+            defaults.synchronize()
+        }
+
+        defaults.set(7, forKey: key)
+        defaults.synchronize()
+        try writeCrossPlatformFixtureZip(
+            to: fixtureURL,
+            databaseURL: URL(fileURLWithPath: db.dbPath()),
+            sourcePlatform: "ios",
+            preferences: [:])
+
+        try server.restoreDatabase(srcFilePath: fixtureURL.path)
+
+        XCTAssertEqual(defaults.integer(forKey: key), 8)
     }
 
     func testBackupSharePresentationReleasesBlockingOverlayBeforeSheetDismissal() {

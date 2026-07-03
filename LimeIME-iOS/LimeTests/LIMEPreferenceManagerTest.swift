@@ -315,6 +315,18 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         XCTAssertNotNil(state)
     }
 
+    func testSyncIMActivatedStateBumpsKeyboardRuntimeGeneration() throws {
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".db")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+        let db = try LimeDB(path: tempURL.path)
+        testDefaults.set(11, forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey)
+
+        prefs.syncIMActivatedState(dbServer: DBServer(_testDatasource: db))
+
+        XCTAssertEqual(testDefaults.integer(forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey), 12)
+    }
+
     func testSyncIMActivatedStateWithIMs() throws {
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".db")

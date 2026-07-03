@@ -65,6 +65,27 @@ final class SearchServerTest: XCTestCase {
         return ss
     }
 
+    func testProviderBackedSearchServerUsesCurrentDatabase() {
+        let first = SpyLimeDB()
+        let second = SpyLimeDB()
+        first.getMappingByCodeResponses["aa"] = [
+            Mapping(id: 1, code: "aa", word: "first", score: 1, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode)
+        ]
+        second.getMappingByCodeResponses["bb"] = [
+            Mapping(id: 2, code: "bb", word: "second", score: 1, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode)
+        ]
+        var current: any LimeDBProtocol = first
+        let ss = SearchServer(dbProvider: { current })
+
+        _ = ss.getMappingByCode("aa")
+        current = second
+        _ = ss.getMappingByCode("bb")
+        XCTAssertEqual(first.getMappingByCodeCallArgs, ["aa"])
+        XCTAssertEqual(second.getMappingByCodeCallArgs, ["bb"])
+    }
+
     // MARK: - 3.1 getMappingByCode
 
     // SKIPPED: test_3_1_1_2_getMappingByCode_null_dbadapter_returns_empty — static field injection, not portable

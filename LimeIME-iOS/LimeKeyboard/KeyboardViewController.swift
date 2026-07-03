@@ -6,6 +6,8 @@
 final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedback {
 
     var enableInputClicksWhenVisible: Bool { true }
+    private static let databaseSetupAttempts = 3
+    private static let databaseSetupRetryDelay: TimeInterval = 0.15
 
     static func isForcedEnglishKeyboardType(_ keyboardType: UIKeyboardType) -> Bool {
         KeyboardTypePolicy.isForcedEnglishKeyboardType(keyboardType)
@@ -19,7 +21,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - SearchServer
     private var searchServer: SearchServer?
-    private var lastKnownRestoreTimestamp: Double = 0
+    private var lastKnownDatabaseGeneration: Int = 0
+    private var lastKnownKeyboardRuntimeGeneration: Int = 0
 
     // MARK: - Composing State (spec §3)
     private var mComposing:      String = ""  // current composing code buffer
@@ -294,6 +297,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
         sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
         sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        lastKnownDatabaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
+        lastKnownKeyboardRuntimeGeneration = sharedDefaults?.integer(
+            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
         // app (0x8BADF00D) when it presents the keyboard extension for the first time.
@@ -305,17 +311,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Called every time the keyboard becomes visible (spec §2 initOnStartInput).
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Reload database if Settings app performed a restore while the keyboard was inactive.
-        // After restore, the keyboard's DatabaseQueue points to the old (replaced) file.
-        let restoredAt = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?
-            .double(forKey: "lime_db_restored_at") ?? 0
-        if restoredAt > lastKnownRestoreTimestamp {
-            lastKnownRestoreTimestamp = restoredAt
-            // Settings restored the shared lime.db in its own process; our
-            // DBServer.shared still holds a GRDB queue bound to the old inode.
-            // Force a reopen so the keyboard sees the restored IMs (#86).
+        // Refresh if Settings replaced lime.db or changed the active IM set while this extension was alive.
+        let databaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
+        let keyboardRuntimeGeneration = sharedDefaults?.integer(
+            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
+        let databaseWasReplaced = databaseGeneration != lastKnownDatabaseGeneration
+        let keyboardRuntimeChanged = keyboardRuntimeGeneration != lastKnownKeyboardRuntimeGeneration
+        if databaseWasReplaced || keyboardRuntimeChanged {
+            lastKnownDatabaseGeneration = databaseGeneration
+            lastKnownKeyboardRuntimeGeneration = keyboardRuntimeGeneration
+            // DB replacement needs a reopen; IM install/enable changes only need a runtime refresh.
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                self?.setupDatabase(forceReopen: true)
+                self?.setupDatabase(forceReopen: databaseWasReplaced)
             }
         }
         sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
@@ -613,7 +620,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     ///   so a Settings-app restore (#86) rebuilds the stale DB connection before
     ///   resolving the activated IM list. First load (viewDidLoad) passes false.
     private func setupDatabase(forceReopen: Bool = false) {
-        guard let context = try? DBServer.shared.prepareKeyboardRuntimeDatabase(forceReopen: forceReopen) else { return }
+        let context: DBServer.KeyboardRuntimeContext
+        do {
+            context = try prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: forceReopen)
+        } catch {
+            recordDatabaseSetupFailure(error)
+            return
+        }
+        clearDatabaseSetupFailure()
         let ss = context.searchServer
         let resolved = context.activatedIMs
         let resolvedIM = context.initialIM
@@ -677,6 +691,36 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             self.applyLayoutForCurrentInputField()
             self.updateGlobeAndDismissBindings()
         }
+    }
+
+    private func prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: Bool) throws -> DBServer.KeyboardRuntimeContext {
+        var lastError: Error?
+        for attempt in 1...Self.databaseSetupAttempts {
+            do {
+                return try DBServer.shared.prepareKeyboardRuntimeDatabase(forceReopen: forceReopen)
+            } catch {
+                lastError = error
+                NSLog("[Keyboard] DB setup attempt \(attempt) failed: \(error)")
+                if attempt < Self.databaseSetupAttempts {
+                    Thread.sleep(forTimeInterval: Self.databaseSetupRetryDelay * Double(attempt))
+                }
+            }
+        }
+        throw lastError ?? DBServerError.datasourceUnavailable
+    }
+
+    private func recordDatabaseSetupFailure(_ error: Error) {
+        let message = String(describing: error)
+        NSLog("[Keyboard] DB setup failed after \(Self.databaseSetupAttempts) attempts: \(message)")
+        sharedDefaults?.set(message, forKey: "keyboard_db_last_error")
+        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
+        sharedDefaults?.synchronize()
+    }
+
+    private func clearDatabaseSetupFailure() {
+        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error")
+        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error_at")
+        sharedDefaults?.synchronize()
     }
 
     private func applyResolvedActiveIMLayout() {

@@ -1,70 +1,97 @@
-# iOS Full Access — Impact on LimeIME
+# iOS Full Access Permission
 
-Scope: LimeKeyboard extension (`LimeIME-iOS/LimeKeyboard/`).
+Scope: LimeKeyboard extension and LimeSettings DB/import flow.
 
-The user-facing **Settings → General → Keyboard → LimeIME → Allow Full Access** switch gates a specific set of hardware and system capabilities inside keyboard extensions. For LimeIME, only two features depend on it.
+## Bottom line
 
----
+LimeIME cannot require Full Access for the keyboard to function. Apple App Review Guideline 4.4.1 says keyboard extensions must provide input, provide a next-keyboard method, and remain functional without requiring Full Access.
 
-## Features that require Full Access
+But Apple also documents that a keyboard without open access has no shared container with its containing app. Therefore Settings-installed IM tables in the App Group `lime.db` are a Full Access feature, not the no-permission baseline.
 
-### 1. Haptic feedback (current, silently broken without FA)
+Sources:
 
-Code: [`KeyboardView.swift:875`](../LimeIME-iOS/LimeKeyboard/KeyboardView.swift), [`KeyboardViewController.swift:1727`](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift)
+- Apple App Review Guidelines 4.4.1: https://developer.apple.com/app-store/review/guidelines/
+- Apple Custom Keyboard guide: https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/CustomKeyboard.html
 
-`UIImpactFeedbackGenerator.impactOccurred()` is called on every key press and candidate-bar interaction. Apple's documentation states:
+## Correct model
 
-> *"If the user doesn't grant open access to your keyboard, calls to the feedback generators are silently ignored."*
+Full Access OFF:
 
-**Effect without Full Access:** haptic feedback silently stops. No crash, no error — the Taptic Engine is simply never engaged. There is currently no `hasFullAccess` guard before these calls.
+- Keyboard must not be blank.
+- Keyboard must type.
+- Keyboard must provide the globe / next-keyboard path.
+- Keyboard can read bundled resources.
+- Keyboard can read its own extension container.
+- Keyboard can use `UILexicon`.
+- Keyboard must not depend on App Group `lime.db`.
 
-Sound feedback (`AudioServicesPlaySystemSound` for system default, or `AVAudioPlayer` for custom volume) is **not** gated by Full Access and works correctly either way.
+Full Access ON:
 
-### 2. Voice input — mic key (planned, not yet shipped)
+- Keyboard can use the App Group shared container.
+- Keyboard can read Settings-managed `lime.db`.
+- Settings install/import/restore can affect the keyboard.
+- Keyboard can copy App Group DB into its own private snapshot.
+- Features such as shared learning, shared preferences, cloud/import sync, and DB restore can work.
 
-All four sub-capabilities needed for the mic key require Full Access:
+## Why the old assumption was wrong
 
-| Sub-capability | Gated? |
-| --- | --- |
-| Microphone hardware access from an extension | ✅ |
-| `NSMicrophoneUsageDescription` prompt in an extension | ✅ |
-| `SFSpeechRecognizer` instantiation in an extension | ✅ |
-| `NSSpeechRecognitionUsageDescription` prompt | ✅ |
+The old doc said App Group access works without Full Access. That is not a safe product contract.
 
-Implementation must use **on-device recognition only** (`requiresOnDeviceRecognition = true`). Requires A12 Bionic or newer. Pre-A12 devices show the mic key as disabled. See roll-out notes in [IPAD_KEYBOARD.md](IPAD_KEYBOARD.md) for placement.
+It may appear true in Simulator or in a warm keyboard process because:
 
-**Note — system mic bar:** All Face ID iPhones (iPhone X and later, iOS 11+) show a system action bar below the keyboard with a microphone on the right and globe on the left. This predates Dynamic Island and iOS 16 — the trigger is simply the absence of a physical home button. iPhone SE (all generations, home button) does not have this bar; its globe and mic appear inline in the keyboard bottom row. Tapping the system mic invokes Apple's own dictation in a separate OS process — LimeIME is not involved and its Full Access state is irrelevant. LimeIME's own mic key (this section) exists because Apple's system dictation disappears when a 3rd-party keyboard is active on devices without Dynamic Island's dedicated mic hardware path.
+- the extension already opened the DB before permission changed,
+- the process kept a live SQLite handle,
+- Simulator behavior is looser or stale,
+- App Group prefs may still appear writable in a specific run.
 
-Required `Info.plist` additions when shipping (extension target):
+Do not design around that. Cold start, reboot, extension kill, reinstall, or App Review can behave differently.
 
-```xml
-<key>NSMicrophoneUsageDescription</key>
-<string>萊姆輸入法需要麥克風以提供離線語音輸入；錄音不會離開您的裝置。</string>
-<key>NSSpeechRecognitionUsageDescription</key>
-<string>萊姆輸入法以裝置上的語音辨識將語音轉為文字；不會傳送音訊或文字至雲端。</string>
-```
+## Way out
 
----
+Use a fallback DB source order:
 
-## Everything else works without Full Access
+1. App Group `lime.db`, when Full Access / App Group access works.
+2. Keyboard-private snapshot `lime.db`, if previously copied.
+3. Bundled default `lime.db` inside `LimeKeyboard.appex`.
+4. English-only keyboard as the final fallback.
 
-The common misconception is that the App Group requires Full Access — it does not. App Group access (`FileManager.containerURL(forSecurityApplicationGroupIdentifier:)`) and shared `UserDefaults(suiteName:)` are gated only by the App Group entitlement (`group.org.limeime`), which both LimeKeyboard and LimeSettings already declare.
+This keeps the keyboard functional without Full Access and still lets Full Access unlock install/import/restore.
 
-Empirically verified with Full Access **off**:
+## Product behavior
 
-- Chinese IM input (all IMs: phonetic, array, CJ, dayi, ET, Hsu, EZ, WB) — works
-- `lime.db` opens, candidates produced normally
-- IM selection, theme, key/font size, number row pref — all read from shared `UserDefaults`
-- Phrase learning and score writebacks to `lime.db` — work
-- Heartbeat to LimeSettings (`keyboard_has_full_access`, `keyboard_last_seen_at`) — works
+Never granted Full Access:
 
----
+- Keyboard uses bundled/private default DB.
+- Settings-installed IMs are unavailable to the keyboard.
+- Import/download UI must explain that applying new IMs to the keyboard requires Full Access.
 
-## LimeSettings orange banner
+Full Access granted:
 
-The Setup tab shows an orange ⚠ banner when `keyboard_has_full_access == false`. This is now justified by two reasons:
+- Settings installs/imports/restores into App Group `lime.db`.
+- Keyboard reads App Group DB.
+- Keyboard updates its private snapshot after a successful DB open.
 
-1. **Today:** haptic feedback silently stops without Full Access.
-2. **When mic key ships:** voice input requires Full Access.
+Full Access later turned off:
 
-Banner copy should reflect the haptic + voice dependency, not imply the keyboard is broken for IM input.
+- Keyboard falls back to its private snapshot.
+- Last synced IMs continue to work.
+- New Settings changes are not visible until Full Access is granted again.
+
+## Required implementation
+
+- Bundle a default `lime.db` with the keyboard extension.
+- Add a keyboard-private DB path under the extension container.
+- Change keyboard DB open to use the fallback order above.
+- When App Group DB opens successfully, copy it to the keyboard-private snapshot.
+- Keep the existing DB-open retry and `keyboard_db_last_error` breadcrumb.
+- Settings UI must not claim the keyboard is broken without Full Access; it should say install/import/sync needs Full Access.
+
+## Test matrix
+
+- Fresh install, Full Access OFF: keyboard types and can switch keyboards.
+- Fresh install, Full Access OFF: default bundled IM works or English fallback works.
+- Full Access ON, install IM: keyboard sees installed IM.
+- Full Access ON, restore default DB: keyboard reopens App Group DB.
+- Full Access ON, install IM, then Full Access OFF, kill extension: keyboard uses private snapshot.
+- Full Access OFF, install IM in Settings: Settings warns that keyboard sync requires Full Access.
+

@@ -1336,6 +1336,20 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("first activation after Settings/cloud install"))
     }
 
+    func testKeyboardReloadsForDatabaseAndIMRuntimeGenerations() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("DBServer.databaseGenerationKey"))
+        XCTAssertTrue(source.contains("LIMEPreferenceManager.keyboardRuntimeGenerationKey"))
+        XCTAssertTrue(source.contains("let databaseWasReplaced = databaseGeneration != lastKnownDatabaseGeneration"))
+        XCTAssertTrue(source.contains("let keyboardRuntimeChanged = keyboardRuntimeGeneration != lastKnownKeyboardRuntimeGeneration"))
+        XCTAssertTrue(source.contains("self?.setupDatabase(forceReopen: databaseWasReplaced)"))
+        XCTAssertTrue(source.contains("databaseSetupAttempts = 3"))
+        XCTAssertTrue(source.contains("prepareKeyboardRuntimeDatabaseWithRetry"))
+        XCTAssertTrue(source.contains("keyboard_db_last_error"))
+    }
+
     func testLimeToastStateShowsTrimmedNonEmptyMessage() {
         var state = LimeToastState()
 

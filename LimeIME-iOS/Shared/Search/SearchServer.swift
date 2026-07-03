@@ -6,7 +6,8 @@
 
 final class SearchServer {
 
-    private let db: any LimeDBProtocol
+    private let dbProvider: () -> any LimeDBProtocol
+    private var db: any LimeDBProtocol { dbProvider() }
     private var currentTableName: String = ""
 
     // MARK: - IM Capability Flags (spec §13 setTableName)
@@ -61,7 +62,11 @@ final class SearchServer {
     private var prefetchThread: Thread?
 
     init(db: any LimeDBProtocol) {
-        self.db = db
+        self.dbProvider = { db }
+    }
+
+    init(dbProvider: @escaping () -> any LimeDBProtocol) {
+        self.dbProvider = dbProvider
     }
 
     // MARK: - IM Selection (spec §13 setTableName)
