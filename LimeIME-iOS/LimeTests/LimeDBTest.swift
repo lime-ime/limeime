@@ -2480,7 +2480,7 @@ final class LimeDBTest: XCTestCase {
 
     func testLimeDBGetBaseScoreAlwaysZero() throws {
         let db = try makeLimeDB()
-        // iOS decision: basescore always 0 (no hanconvertv2.db bundled; scores accumulate via learning)
+        // iOS decision: basescore always 0; scores accumulate via learning.
         XCTAssertEqual(db.getBaseScore("愛"), 0)
         XCTAssertEqual(db.getBaseScore(""), 0)
         XCTAssertEqual(db.getBaseScore(String(repeating: "測", count: 1000)), 0)

@@ -92,12 +92,6 @@ final class SharedDatabase {
         }
     }
 
-    func reopenFromDisk() {
-        closeCurrentForReplacement()
-        setCurrent(nil)
-        setCurrent(openDatasource())
-    }
-
     func copyBundledDatabase(to destinationURL: URL) throws {
         guard let sourceURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
             throw DBServerError.bundledDatabaseMissing
@@ -233,7 +227,6 @@ final class DBServer {
     static let databaseExt             = ".db"
     static let dbTableRelated          = "related"
     static let bufferSize4KB: Int      = 4096
-    static let databaseGenerationKey   = "lime_db_generation"
 
     // MARK: - Security limits (zip bomb guard)
     /// Maximum cumulative uncompressed size of any archive we extract (500 MB).
@@ -291,18 +284,6 @@ final class DBServer {
     // MARK: - Private helper: close / reopen database around backup-restore critical sections.
     private func closeDatabase() {
         database.closeCurrentForReplacement()
-    }
-
-    /// Discards the current `datasource` and rebuilds a fresh `LimeDB` against the
-    /// on-disk `lime.db`. Required in the keyboard extension after a Settings-app
-    /// restore (#86): the restore happens in the Settings process, replacing the
-    /// shared `lime.db` file on disk, but the keyboard extension's own
-    /// `DBServer.shared.datasource` still holds a GRDB `DatabaseQueue` bound to the
-    /// old (now-swapped/deleted) inode, so every read returns zero rows → zero IMs.
-    /// Closing + reopening rebinds the queue to the restored file. Mirrors the
-    /// inline rebuild already used inside `backupDatabase` / `restoreDatabase`.
-    func reopenDatabaseFromDisk() {
-        database.reopenFromDisk()
     }
 
     // MARK: - 1. isDatabaseOnHold
@@ -609,7 +590,6 @@ final class DBServer {
                 }
                 datasource?.checkAndUpdateRelatedTable()
                 datasource?.ensureCurrentDatabase()
-                markDatabaseReplaced()
             }
         }
 
@@ -712,7 +692,6 @@ final class DBServer {
             if restoreSucceeded {
                 datasource?.checkAndUpdateRelatedTable()
                 datasource?.ensureCurrentDatabase()
-                markDatabaseReplaced()
             }
         }
 
@@ -763,13 +742,6 @@ final class DBServer {
         } catch {
             print("[DBServer] backupPreferenceCompatibilityManifest: error — \(error)")
         }
-    }
-
-    private func markDatabaseReplaced() {
-        guard let defaults = UserDefaults(suiteName: DBServer.appGroupID) else { return }
-        defaults.set(defaults.integer(forKey: DBServer.databaseGenerationKey) + 1,
-                     forKey: DBServer.databaseGenerationKey)
-        defaults.synchronize()
     }
 
     @discardableResult
@@ -1155,27 +1127,14 @@ final class DBServer {
 
     // MARK: - Keyboard Runtime Bootstrap
 
-    /// - Parameter forceReopen: When true, discards the cached `datasource` and
-    ///   rebuilds it against the on-disk `lime.db` before reading IM configs. The
-    ///   keyboard extension passes `true` after a Settings-app restore (#86) so the
-    ///   stale GRDB queue bound to the pre-restore inode is replaced and IM reads
-    ///   see the restored data instead of returning zero IMs.
-    func prepareKeyboardRuntimeDatabase(forceReopen: Bool = false) throws -> KeyboardRuntimeContext {
-        if forceReopen { reopenDatabaseFromDisk() }
-
+    func prepareKeyboardRuntimeDatabase() throws -> KeyboardRuntimeContext {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         // No phonetic auto-seed: aligning with Android, the bundled default DB ships
         // empty IM tables and no phonetic side-file. Restore-to-default => empty IM list.
         importRelatedIfNeeded()
 
         let allIMs = (try? ds.getAllImConfigs()) ?? []
-        // After a restore (#86), `keyboard_state` holds row offsets captured against
-        // the PRE-restore im-table ordering; applying them to the restored table can
-        // resolve the wrong (or zero) IMs. Ignore the saved index map on forceReopen
-        // and rebuild the activated list from the restored `enabled` flags instead.
-        let keyboardState = forceReopen
-            ? ""
-            : (UserDefaults(suiteName: DBServer.appGroupID)?.string(forKey: "keyboard_state") ?? "")
+        let keyboardState = UserDefaults(suiteName: DBServer.appGroupID)?.string(forKey: "keyboard_state") ?? ""
         var activated: [ImConfig]
         if keyboardState.isEmpty {
             activated = allIMs.filter { $0.enabled }

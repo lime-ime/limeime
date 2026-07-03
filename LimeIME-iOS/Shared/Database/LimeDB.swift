@@ -2717,7 +2717,7 @@ final class LimeDB {
         return (65...90).contains(Int(scalar.value)) || (97...122).contains(Int(scalar.value))
     }
 
-    /// TC↔SC conversion using iOS CFStringTransform (replaces Android hanconvertv2.db).
+    /// TC↔SC conversion using iOS CFStringTransform (replaces the Android converter DB).
     /// hanOption: 0 = no conversion, 1 = Traditional→Simplified, 2 = Simplified→Traditional.
     func hanConvert(_ input: String, _ hanOption: Int) -> String {
         guard !input.isEmpty, hanOption != 0 else { return input }
@@ -2731,7 +2731,7 @@ final class LimeDB {
     }
 
     /// Base score for a character — always returns 0 on iOS.
-    /// Android seeds basescore from hanconvertv2.db during import; that DB is not bundled on iOS.
+    /// Android seeds basescore from its converter DB during import; iOS does not bundle it.
     /// Scores accumulate through user learning instead.
     func getBaseScore(_ input: String) -> Int {
         return 0

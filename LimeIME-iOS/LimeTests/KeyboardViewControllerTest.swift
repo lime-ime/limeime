@@ -1336,18 +1336,53 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("first activation after Settings/cloud install"))
     }
 
-    func testKeyboardReloadsForDatabaseAndIMRuntimeGenerations() throws {
+    func testKeyboardHeartbeatUsesOutboxAndLocalMirrorOnly() throws {
         let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
                                 encoding: .utf8)
 
-        XCTAssertTrue(source.contains("DBServer.databaseGenerationKey"))
-        XCTAssertTrue(source.contains("LIMEPreferenceManager.keyboardRuntimeGenerationKey"))
-        XCTAssertTrue(source.contains("let databaseWasReplaced = databaseGeneration != lastKnownDatabaseGeneration"))
-        XCTAssertTrue(source.contains("let keyboardRuntimeChanged = keyboardRuntimeGeneration != lastKnownKeyboardRuntimeGeneration"))
-        XCTAssertTrue(source.contains("self?.setupDatabase(forceReopen: databaseWasReplaced)"))
+        XCTAssertFalse(source.contains("sharedDefaults?.set(true, forKey: \"keyboard_extension_loaded\")"))
+        XCTAssertFalse(source.contains("sharedDefaults?.set(currentHasFullAccess, forKey: \"keyboard_has_full_access\")"))
+        XCTAssertFalse(source.contains("sharedDefaults?.set(now, forKey: \"keyboard_last_seen_at\")"))
+        XCTAssertFalse(source.contains("sharedDefaults?.set(message, forKey: \"keyboard_db_last_error\")"))
+        XCTAssertFalse(source.contains("sharedDefaults?.removeObject(forKey: \"keyboard_db_last_error\")"))
+        XCTAssertTrue(source.contains("localDefaults.set(true, forKey: \"keyboard_extension_loaded\")"))
+        XCTAssertTrue(source.contains("localDefaults.set(currentHasFullAccess, forKey: \"keyboard_has_full_access\")"))
+        XCTAssertTrue(source.contains("localDefaults.set(now, forKey: \"keyboard_last_seen_at\")"))
+        XCTAssertTrue(source.contains("UserDefaults.standard.set(message, forKey: \"keyboard_db_last_error\")"))
+        XCTAssertTrue(source.contains("KeyboardHeartbeat("))
+        XCTAssertTrue(source.contains("atomicWrite(data, to: SyncPaths.heartbeat(baseURL))"))
+        XCTAssertTrue(source.contains("postSyncSignal(currentHasFullAccess ? .faOn : .faOff)"))
         XCTAssertTrue(source.contains("databaseSetupAttempts = 3"))
         XCTAssertTrue(source.contains("prepareKeyboardRuntimeDatabaseWithRetry"))
-        XCTAssertTrue(source.contains("keyboard_db_last_error"))
+    }
+
+    func testKeyboardLegacyGenerationSignalsAreRemoved() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertFalse(source.contains("DBServer.databaseGenerationKey"))
+        XCTAssertFalse(source.contains("LIMEPreferenceManager.keyboardRuntimeGenerationKey"))
+        XCTAssertFalse(source.contains("lastKnownDatabaseGeneration"))
+        XCTAssertFalse(source.contains("lastKnownKeyboardRuntimeGeneration"))
+        XCTAssertFalse(source.contains("databaseWasReplaced"))
+        XCTAssertFalse(source.contains("keyboardRuntimeChanged"))
+        XCTAssertFalse(source.contains("setupDatabase(forceReopen:"))
+        XCTAssertFalse(source.contains("prepareKeyboardRuntimeDatabase(forceReopen:"))
+    }
+
+    func testFAProbeI0BlocksAreRemoved() throws {
+        let removedProbeMarker = "FA-PROBE" + "-I0"
+        for relativePath in [
+            "LimeKeyboard/KeyboardViewController.swift",
+            "LimeSettings/Views/SetupTabView.swift"
+        ] {
+            let source = try String(contentsOf: projectFileURL(relativePath),
+                                    encoding: .utf8)
+            XCTAssertFalse(source.contains(removedProbeMarker), relativePath)
+            XCTAssertFalse(source.contains("runFAProbe"), relativePath)
+            XCTAssertFalse(source.contains("faProbeSetup"), relativePath)
+            XCTAssertFalse(source.contains("probe_fixture.limedb"), relativePath)
+        }
     }
 
     func testLimeToastStateShowsTrimmedNonEmptyMessage() {

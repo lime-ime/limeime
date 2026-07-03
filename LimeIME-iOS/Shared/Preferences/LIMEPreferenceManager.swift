@@ -24,7 +24,6 @@ final class LIMEPreferenceManager {
     // MARK: - Constants
 
     static let suiteName = "group.org.limeime"
-    static let keyboardRuntimeGenerationKey = "lime_keyboard_runtime_generation"
 
     // MARK: - Storage
 
@@ -396,8 +395,6 @@ final class LIMEPreferenceManager {
         keyboardState = enabledConfigs
             .map { "\($0.offset)" }
             .joined(separator: ";")
-        defaults.set(defaults.integer(forKey: Self.keyboardRuntimeGenerationKey) + 1,
-                     forKey: Self.keyboardRuntimeGenerationKey)
 
         // Keep the current IM preference coherent with the newly synced enabled list.
         // Cloud/download installs run from the Settings process; without this, the

@@ -1070,14 +1070,14 @@ final class DBServerTest: XCTestCase {
         standardDefaults.synchronize()
     }
 
-    func testDBServerRestoreDatabaseBumpsDatabaseGeneration() throws {
+    func testDBServerRestoreDatabaseDoesNotWriteLegacyDatabaseGeneration() throws {
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
         let fixtureURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: fixtureURL) }
 
         let defaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) ?? UserDefaults.standard
-        let key = DBServer.databaseGenerationKey
+        let key = "lime_db_generation"
         let original = defaults.object(forKey: key)
         defer {
             if let original {
@@ -1098,7 +1098,7 @@ final class DBServerTest: XCTestCase {
 
         try server.restoreDatabase(srcFilePath: fixtureURL.path)
 
-        XCTAssertEqual(defaults.integer(forKey: key), 8)
+        XCTAssertEqual(defaults.integer(forKey: key), 7)
     }
 
     func testBackupSharePresentationReleasesBlockingOverlayBeforeSheetDismissal() {
@@ -1756,8 +1756,12 @@ final class DBServerTest: XCTestCase {
                                 code: "i13later",
                                 word: "I13LaterLegacyRow")
 
-        container.reopenFromDisk()
-        let reopenedDB = try XCTUnwrap(container.current())
+        container.closeCurrentForReplacement()
+        let reopenedContainer = SharedDatabase(runMode: .keyboard,
+                                               dataDirOverride: ownDir,
+                                               appGroupOverride: appGroupDir)
+        defer { reopenedContainer.closeCurrentForReplacement() }
+        let reopenedDB = try XCTUnwrap(reopenedContainer.current())
         XCTAssertEqual(reopenedDB.syncMeta("epoch_uuid"), firstEpoch)
         XCTAssertEqual(reopenedDB.countRecords(LIME.DB_TABLE_CUSTOM, "word = ?", ["I13LaterLegacyRow"]), 0)
     }

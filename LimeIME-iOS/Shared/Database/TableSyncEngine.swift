@@ -30,7 +30,9 @@ final class TableSyncEngine {
     private let database: SharedDatabase
     private let baseURL: URL
     private let fileManager = FileManager.default
+    // ponytail: fixed import chunk from I0 timing; tune only if device memory/time profiles change.
     private let chunkSize = 20_000
+    // ponytail: same-identity environmental retries stop after three appears.
     private let maxAttempts = 3
     private let validStems: Set<String> = [
         "custom", "cj", "scj", "cj5", "ecj", "dayi", "phonetic", "ez",
@@ -263,7 +265,6 @@ final class TableSyncEngine {
                 }
             }
             try db.execute(sql: "DELETE FROM \(quoted(stem))")
-            // ponytail: same-identity environmental retries stop after three appears.
             let attempts = min((ledger?.attempts ?? 0) + 1, maxAttempts)
             try limeDB.upsertLedger(LedgerEntry(stem: stem,
                                                 identity: identity,

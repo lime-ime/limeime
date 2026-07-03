@@ -1,16 +1,11 @@
 ﻿import UIKit
-#if DEBUG
-// FA-PROBE-I0 (temporary): attach-import timing probe (selective import to
-// avoid polluting this file's namespace with GRDB's Configuration etc.)
-import class GRDB.DatabaseQueue
-#endif
-
 // Full keyboard extension entry point.
 // Implements IMService behavior per IM_SERVICE.md spec.
 
 final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedback {
 
     var enableInputClicksWhenVisible: Bool { true }
+    // ponytail: fixed DB setup retries; make configurable only if device logs show startup flakiness.
     private static let databaseSetupAttempts = 3
     private static let databaseSetupRetryDelay: TimeInterval = 0.15
 
@@ -26,8 +21,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - SearchServer
     private var searchServer: SearchServer?
-    private var lastKnownDatabaseGeneration: Int = 0
-    private var lastKnownKeyboardRuntimeGeneration: Int = 0
 
     // MARK: - Composing State (spec §3)
     private var mComposing:      String = ""  // current composing code buffer
@@ -313,9 +306,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         applyHeight()
         reportFullAccessStatus()
         registerTableUpdateObserver()
-        lastKnownDatabaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
-        lastKnownKeyboardRuntimeGeneration = sharedDefaults?.integer(
-            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
         // app (0x8BADF00D) when it presents the keyboard extension for the first time.
@@ -328,20 +318,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         isKeyboardVisible = true
-        // Refresh if Settings replaced lime.db or changed the active IM set while this extension was alive.
-        let databaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
-        let keyboardRuntimeGeneration = sharedDefaults?.integer(
-            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
-        let databaseWasReplaced = databaseGeneration != lastKnownDatabaseGeneration
-        let keyboardRuntimeChanged = keyboardRuntimeGeneration != lastKnownKeyboardRuntimeGeneration
-        if databaseWasReplaced || keyboardRuntimeChanged {
-            lastKnownDatabaseGeneration = databaseGeneration
-            lastKnownKeyboardRuntimeGeneration = keyboardRuntimeGeneration
-            // DB replacement needs a reopen; IM install/enable changes only need a runtime refresh.
-            databaseQueue.async { [weak self] in
-                self?.setupDatabase(forceReopen: databaseWasReplaced)
-            }
-        }
         reportFullAccessStatus()
         requestTableSyncScanIfReady()
         initOnStartInput()
@@ -351,12 +327,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let currentHasFullAccess = hasFullAccess
         let now = Date().timeIntervalSince1970
         let lastDBError = UserDefaults.standard.string(forKey: "keyboard_db_last_error")
-
-        // Legacy App-Group heartbeat stays until I6 removes shared-defaults status writes.
-        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
-        sharedDefaults?.set(currentHasFullAccess, forKey: "keyboard_has_full_access")
-        sharedDefaults?.set(now, forKey: "keyboard_last_seen_at")
-        sharedDefaults?.synchronize()
 
         let localDefaults = UserDefaults.standard
         localDefaults.set(true, forKey: "keyboard_extension_loaded")
@@ -383,74 +353,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         disableKeyboardWindowTouchDelay()
-        #if DEBUG
-        runFAProbe()   // FA-PROBE-I0 (temporary)
-        #endif
     }
-
-    #if DEBUG
-    // FA-PROBE-I0 (temporary, removed at end of I0). Measures, in the real
-    // extension process: App Group file READ, own-container WRITE, App Group
-    // WRITE (= Full Access indicator), Darwin doorbell delivery count, and
-    // ATTACH+bulk-copy import timing. Reports by TYPING into the focused field
-    // (the one channel a keyboard always has); the app mirrors it to the App
-    // Group for devicectl readout. Guarded so unit tests never trigger it.
-    private static var faProbeDarwinCount = 0
-    private var faProbeDidType = false
-
-    private func runFAProbe() {
-        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
-              !faProbeDidType else { return }
-        let fm = FileManager.default
-        guard let ag = fm.containerURL(forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
-              fm.fileExists(atPath: ag.appendingPathComponent("probe_marker.txt").path) else { return }
-        faProbeDidType = true
-        registerFAProbeDarwin()
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var agRead = 0, ownWrite = 0, agWrite = 0, impMS = -1, impRows = 0
-            if let d = try? Data(contentsOf: ag.appendingPathComponent("probe_marker.txt")), !d.isEmpty { agRead = 1 }
-            if let sup = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-                try? fm.createDirectory(at: sup, withIntermediateDirectories: true)
-                let own = sup.appendingPathComponent("probe_result.txt")
-                if (try? "ok".data(using: .utf8)!.write(to: own)) != nil { ownWrite = 1 }
-                let fixture = ag.appendingPathComponent("probe_fixture.limedb")
-                if fm.fileExists(atPath: fixture.path) {
-                    let t0 = CFAbsoluteTimeGetCurrent()
-                    let scratch = sup.appendingPathComponent("probe_scratch.db")
-                    try? fm.removeItem(at: scratch)
-                    if let dq = try? DatabaseQueue(path: scratch.path) {
-                        try? dq.write { db in
-                            try db.execute(sql: "CREATE TABLE t(code TEXT, word TEXT, score INTEGER)")
-                            try db.execute(sql: "ATTACH DATABASE ? AS src",
-                                           arguments: ["file:\(fixture.path)?immutable=1"])
-                            try db.execute(sql: "INSERT INTO t SELECT * FROM src.probe_src")
-                            try db.execute(sql: "DETACH src")
-                        }
-                        impRows = (try? dq.read { try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM t") ?? 0 }) ?? 0
-                        impMS = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
-                    }
-                }
-            }
-            do {
-                try "kb".data(using: .utf8)!.write(to: ag.appendingPathComponent("probe_kb_write.txt"))
-                agWrite = 1
-            } catch { agWrite = 0 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                let report = "[FAPROBE agRead:\(agRead) ownWrite:\(ownWrite) agWrite:\(agWrite) " +
-                             "darwin:\(KeyboardViewController.faProbeDarwinCount) imp:\(impMS)ms/\(impRows)]"
-                self?.textDocumentProxy.insertText(report)
-            }
-        }
-    }
-
-    private func registerFAProbeDarwin() {
-        let center = CFNotificationCenterGetDarwinNotifyCenter()
-        let observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
-        CFNotificationCenterAddObserver(center, observer, { _, _, _, _, _ in
-            KeyboardViewController.faProbeDarwinCount += 1
-        }, "org.limeime.tables.updated" as CFString, nil, .deliverImmediately)
-    }
-    #endif
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -733,13 +636,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - Database Setup
 
-    /// - Parameter forceReopen: passed through to `prepareKeyboardRuntimeDatabase`
-    ///   so a Settings-app restore (#86) rebuilds the stale DB connection before
-    ///   resolving the activated IM list. First load (viewDidLoad) passes false.
-    private func setupDatabase(forceReopen: Bool = false) {
+    private func setupDatabase() {
         let context: DBServer.KeyboardRuntimeContext
         do {
-            context = try prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: forceReopen)
+            context = try prepareKeyboardRuntimeDatabaseWithRetry()
         } catch {
             recordDatabaseSetupFailure(error)
             return
@@ -974,11 +874,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         return stem
     }
 
-    private func prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: Bool) throws -> DBServer.KeyboardRuntimeContext {
+    private func prepareKeyboardRuntimeDatabaseWithRetry() throws -> DBServer.KeyboardRuntimeContext {
         var lastError: Error?
         for attempt in 1...Self.databaseSetupAttempts {
             do {
-                return try DBServer.shared.prepareKeyboardRuntimeDatabase(forceReopen: forceReopen)
+                return try DBServer.shared.prepareKeyboardRuntimeDatabase()
             } catch {
                 lastError = error
                 NSLog("[Keyboard] DB setup attempt \(attempt) failed: \(error)")
@@ -993,18 +893,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func recordDatabaseSetupFailure(_ error: Error) {
         let message = String(describing: error)
         NSLog("[Keyboard] DB setup failed after \(Self.databaseSetupAttempts) attempts: \(message)")
-        sharedDefaults?.set(message, forKey: "keyboard_db_last_error")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
-        sharedDefaults?.synchronize()
         UserDefaults.standard.set(message, forKey: "keyboard_db_last_error")
         UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
         UserDefaults.standard.synchronize()
     }
 
     private func clearDatabaseSetupFailure() {
-        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error")
-        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error_at")
-        sharedDefaults?.synchronize()
         UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error")
         UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error_at")
         UserDefaults.standard.synchronize()
