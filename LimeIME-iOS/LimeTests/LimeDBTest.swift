@@ -2431,58 +2431,31 @@ final class LimeDBTest: XCTestCase {
 
     func testEmojiPanelSearchAllowsSingleAsciiButCandidateSearchDoesNot() throws {
         let db = try makeLimeDB()
-        try db.replaceEmojiDataForTest([
-            .init(value: "😢", cp: "1F622", groupName: "Smileys & Emotion", subgroup: "face-concerned",
-                  sortOrder: 1, nameEn: "crying face", nameTw: "哭臉",
-                  tagsEn: "cry|crying|face", tagsTw: "哭臉|哭|臉", version: 1.0)
-        ], emojiVersion: "17.0")
 
         XCTAssertTrue(db.findEmojiForCandidate("c", locale: .en, limit: 8).isEmpty)
-        XCTAssertEqual(db.searchEmoji("c", locale: .en, limit: 8).map(\.word), ["😢"])
-        XCTAssertEqual(db.searchEmoji("cr", locale: .en, limit: 8).map(\.word), ["😢"])
-        XCTAssertEqual(db.searchEmoji("cry", locale: .en, limit: 8).map(\.word), ["😢"])
+        let singleLetterResults = db.searchEmoji("c", locale: .en, limit: 8)
+        XCTAssertFalse(singleLetterResults.isEmpty)
+        XCTAssertTrue(singleLetterResults.allSatisfy { $0.isEmojiRecord })
+        XCTAssertTrue(db.searchEmoji("cry", locale: .en, limit: 8).map(\.word).contains("😢"))
     }
 
     func testEmojiCandidateSearchBroadensMultiCharacterChineseToFirstCharacter() throws {
         let db = try makeLimeDB()
-        try db.replaceEmojiDataForTest([
-            .init(value: "🇯🇵", cp: "1F1EF,1F1F5", groupName: "Flags", subgroup: "country-flag",
-                  sortOrder: 1, nameEn: "flag: Japan", nameTw: "東洋旗",
-                  tagsEn: "flag|Japan", tagsTw: "日|本", version: 0.6)
-        ], emojiVersion: "17.0")
 
-        XCTAssertEqual(db.findEmojiForCandidate("日本", locale: .tw, limit: 8).map(\.word), ["🇯🇵"])
+        XCTAssertTrue(db.findEmojiForCandidate("日本", locale: .tw, limit: 40).map(\.word).contains("🇯🇵"))
     }
 
     func testEmojiUsageWritebackChangesPanelRecentsOrder() throws {
         let db = try makeLimeDB()
-        try db.replaceEmojiDataForTest([
-            .init(value: "😢", cp: "1F622", groupName: "Smileys & Emotion", subgroup: "face-concerned",
-                  sortOrder: 1, nameEn: "crying face", nameTw: "哭臉",
-                  tagsEn: "cry|crying|face", tagsTw: "哭臉|哭|臉", version: 1.0),
-            .init(value: "🇯🇵", cp: "1F1EF,1F1F5", groupName: "Flags", subgroup: "country-flag",
-                  sortOrder: 2, nameEn: "flag: Japan", nameTw: "日本國旗",
-                  tagsEn: "flag|Japan", tagsTw: "國旗|日本|國|旗|日|本", version: 0.6)
-        ], emojiVersion: "17.0")
 
-        XCTAssertEqual(db.loadEmojiPanelItems(limit: 2).map(\.word), ["😢", "🇯🇵"])
+        let initial = db.loadEmojiPanelItems(limit: 2).map(\.word)
+        XCTAssertEqual(initial.first, "😀")
         db.recordEmojiUsage("🇯🇵", timestampSeconds: 1000)
-        XCTAssertEqual(db.loadEmojiPanelItems(limit: 2).map(\.word), ["🇯🇵", "😢"])
+        XCTAssertEqual(db.loadEmojiPanelItems(limit: 2).map(\.word), ["🇯🇵", "😀"])
     }
 
     func testEmojiRecentCategoryLoadsOnlyUsedEmojiNewestFirst() throws {
         let db = try makeLimeDB()
-        try db.replaceEmojiDataForTest([
-            .init(value: "😢", cp: "1F622", groupName: "Smileys & Emotion", subgroup: "face-concerned",
-                  sortOrder: 1, nameEn: "crying face", nameTw: "哭臉",
-                  tagsEn: "cry|crying|face", tagsTw: "哭臉|哭|臉", version: 1.0),
-            .init(value: "🇯🇵", cp: "1F1EF,1F1F5", groupName: "Flags", subgroup: "country-flag",
-                  sortOrder: 2, nameEn: "flag: Japan", nameTw: "日本國旗",
-                  tagsEn: "flag|Japan", tagsTw: "國旗|日本|國|旗|日|本", version: 0.6),
-            .init(value: "😀", cp: "1F600", groupName: "Smileys & Emotion", subgroup: "face-smiling",
-                  sortOrder: 3, nameEn: "grinning face", nameTw: "笑臉",
-                  tagsEn: "grin|smile|face", tagsTw: "笑臉|笑|臉", version: 1.0),
-        ], emojiVersion: "17.0")
 
         XCTAssertTrue(db.loadRecentEmoji(limit: 8).isEmpty)
         db.recordEmojiUsage("😢", timestampSeconds: 1000)
@@ -2493,53 +2466,14 @@ final class LimeDBTest: XCTestCase {
 
     func testEmojiCategoryPagesLoadFromDatabaseGroupsInCatalogOrder() throws {
         let db = try makeLimeDB()
-        try db.replaceEmojiDataForTest([
-            .init(value: "🐶", cp: "1F436", groupName: "Animals & Nature", subgroup: "animal-mammal",
-                  sortOrder: 30, nameEn: "dog face", nameTw: "狗臉",
-                  tagsEn: "dog|face", tagsTw: "狗|臉", version: 1.0),
-            .init(value: "😀", cp: "1F600", groupName: "Smileys & Emotion", subgroup: "face-smiling",
-                  sortOrder: 20, nameEn: "grinning face", nameTw: "笑臉",
-                  tagsEn: "grin|smile|face", tagsTw: "笑臉|笑|臉", version: 1.0),
-            .init(value: "😢", cp: "1F622", groupName: "Smileys & Emotion", subgroup: "face-concerned",
-                  sortOrder: 10, nameEn: "crying face", nameTw: "哭臉",
-                  tagsEn: "cry|crying|face", tagsTw: "哭臉|哭|臉", version: 1.0),
-            .init(value: "👋", cp: "1F44B", groupName: "People & Body", subgroup: "hand-fingers-open",
-                  sortOrder: 25, nameEn: "waving hand", nameTw: "揮手",
-                  tagsEn: "wave|hand", tagsTw: "揮手|手", version: 1.0),
-            .init(value: "🍎", cp: "1F34E", groupName: "Food & Drink", subgroup: "food-fruit",
-                  sortOrder: 40, nameEn: "red apple", nameTw: "蘋果",
-                  tagsEn: "apple|fruit", tagsTw: "蘋果|水果", version: 1.0),
-            .init(value: "🚗", cp: "1F697", groupName: "Travel & Places", subgroup: "transport-ground",
-                  sortOrder: 50, nameEn: "automobile", nameTw: "汽車",
-                  tagsEn: "car|auto", tagsTw: "車|汽車", version: 1.0),
-            .init(value: "⚽", cp: "26BD", groupName: "Activities", subgroup: "sport",
-                  sortOrder: 60, nameEn: "soccer ball", nameTw: "足球",
-                  tagsEn: "soccer|ball", tagsTw: "足球|球", version: 1.0),
-            .init(value: "💡", cp: "1F4A1", groupName: "Objects", subgroup: "light-video",
-                  sortOrder: 70, nameEn: "light bulb", nameTw: "燈泡",
-                  tagsEn: "light|bulb", tagsTw: "燈泡|燈", version: 1.0),
-            .init(value: "❤️", cp: "2764 FE0F", groupName: "Symbols", subgroup: "heart",
-                  sortOrder: 80, nameEn: "red heart", nameTw: "紅心",
-                  tagsEn: "heart|love", tagsTw: "愛心|心", version: 1.0),
-            .init(value: "🇯🇵", cp: "1F1EF,1F1F5", groupName: "Flags", subgroup: "country-flag",
-                  sortOrder: 90, nameEn: "flag: Japan", nameTw: "日本國旗",
-                  tagsEn: "flag|Japan", tagsTw: "國旗|日本", version: 0.6),
-        ], emojiVersion: "17.0")
 
-        db.recordEmojiUsage("😀", timestampSeconds: 3000)
+        db.recordEmojiUsage("😢", timestampSeconds: 3000)
         let pages = db.loadEmojiCategoryPages()
 
-        XCTAssertEqual(pages.map { $0.map(\.word) }, [
-            ["😢", "😀"],
-            ["👋"],
-            ["🐶"],
-            ["🍎"],
-            ["🚗"],
-            ["⚽"],
-            ["💡"],
-            ["❤️"],
-            ["🇯🇵"],
-        ])
+        XCTAssertEqual(pages.count, 9)
+        XCTAssertEqual(pages.map { $0.first?.word },
+                       ["😀", "👋", "🐵", "🍇", "🌍", "🎃", "👓", "🏧", "🏁"])
+        XCTAssertTrue(pages[0].map(\.word).contains("😢"))
     }
 
     // MARK: - 36. getBaseScore — documents always-0 decision
@@ -2747,47 +2681,44 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
-    // MARK: - 36. DB 104 integrated seed / upgrade / restore paths
+    // MARK: - 36. DB 104 attached emoji / upgrade / restore paths
 
-    func testDB103FreshBundledSeedRefreshesEmojiData() throws {
+    func testDB103FreshBundledSeedDropsMainEmojiDataAndUsesAttachment() throws {
         try copyBundledLimeSeed(to: tempURL)
         let db = try makeLimeDB()
 
         XCTAssertEqual(try db.databaseVersionForTest(), 104)
-        XCTAssertGreaterThan(db.countRecords("im", "title = ?", ["name"]), 0)
+        XCTAssertEqual(db.countRecords("im", "code = ?", ["emoji"]), 0)
         assertCj4SchemaAndKeyboardLoaded(db)
-        assertEmojiSchemaAndDataLoaded(db)
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
-    func testDB103OpeningVersion102DatabaseAddsEmojiSchemaAndData() throws {
+    func testDB103OpeningVersion102DatabaseAddsEmojiUserAndUsesAttachment() throws {
         tempURL = try makeDB103SeedVariant(name: "lime_ios_102_no_emoji.db",
                                            userVersion: 102,
-                                           dropEmojiSchema: true,
-                                           insertCurrentEmojiVersion: false)
+                                           dropEmojiSchema: true)
         let db = try makeLimeDB()
 
         XCTAssertEqual(try db.databaseVersionForTest(), 104)
         assertCj4SchemaAndKeyboardLoaded(db)
-        assertEmojiSchemaAndDataLoaded(db)
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
-    func testDB103OpeningVersion103DatabaseRepairsMissingEmojiSchemaAndData() throws {
+    func testDB103OpeningVersion103DatabaseRepairsMissingEmojiUserAndUsesAttachment() throws {
         tempURL = try makeDB103SeedVariant(name: "lime_ios_103_no_emoji.db",
                                            userVersion: 103,
-                                           dropEmojiSchema: true,
-                                           insertCurrentEmojiVersion: true)
+                                           dropEmojiSchema: true)
         let db = try makeLimeDB()
 
         XCTAssertEqual(try db.databaseVersionForTest(), 104)
         assertCj4SchemaAndKeyboardLoaded(db)
-        assertEmojiSchemaAndDataLoaded(db)
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
-    func testDB103OpeningOldDatabaseRepairsStaleEmojiFTSSchema() throws {
+    func testDB103OpeningOldDatabaseDropsStaleEmojiFTSSchema() throws {
         tempURL = try makeDB103SeedVariant(name: "lime_ios_102_stale_emoji_fts.db",
                                            userVersion: 102,
-                                           dropEmojiSchema: true,
-                                           insertCurrentEmojiVersion: false)
+                                           dropEmojiSchema: true)
         let queue = try DatabaseQueue(path: tempURL.path)
         try queue.write { db in
             try db.execute(sql: """
@@ -2810,14 +2741,13 @@ final class LimeDBTest: XCTestCase {
         let db = try makeLimeDB()
 
         XCTAssertEqual(try db.databaseVersionForTest(), 104)
-        assertEmojiSchemaAndDataLoaded(db)
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
     func testDB103OpeningDatabaseRemovesStaleCj4KeyboardRow() throws {
         tempURL = try makeDB103SeedVariant(name: "lime_ios_104_stale_cj4_keyboard.db",
                                            userVersion: 104,
-                                           dropEmojiSchema: false,
-                                           insertCurrentEmojiVersion: false)
+                                           dropEmojiSchema: false)
         let queue = try DatabaseQueue(path: tempURL.path)
         try queue.write { db in
             try db.execute(sql: """
@@ -2845,38 +2775,39 @@ final class LimeDBTest: XCTestCase {
         assertCj4SchemaAndKeyboardLoaded(db)
     }
 
-    func testDB103EmojiRefreshPreservesValidUserUsageAndPrunesInvalidUsage() throws {
+    func testDB103EmojiUserUsageSurvivesOpenAndDanglingIsFilteredFromRecents() throws {
         try copyBundledLimeSeed(to: tempURL)
         var db = try makeLimeDB()
-        let emoji = try XCTUnwrap(db.firstEmojiValueForTest())
-        try db.setEmojiUserForTest(value: emoji, useCount: 7, lastUsed: 1000)
-        try db.setEmojiUserForTest(value: "not-an-emoji", useCount: 3, lastUsed: 1000)
-        try db.setEmojiVersionForTest("0.0")
+        db.recordEmojiUsage("😀", timestampSeconds: 1000)
+        db.recordEmojiUsage("not-an-emoji", timestampSeconds: 1000)
+        try db.closeForReplacement()
 
         db = try makeLimeDB()
 
-        XCTAssertEqual(try db.emojiUserCountForTest(value: emoji), 7)
-        XCTAssertEqual(try db.emojiUserCountForTest(value: "not-an-emoji"), 0)
-        assertEmojiSchemaAndDataLoaded(db)
+        XCTAssertEqual(try db.emojiUserCountForTest(value: "😀"), 1)
+        XCTAssertEqual(try db.emojiUserCountForTest(value: "not-an-emoji"), 1)
+        XCTAssertTrue(db.loadRecentEmoji(limit: 8).map(\.word).contains("😀"))
+        XCTAssertFalse(db.loadRecentEmoji(limit: 8).map(\.word).contains("not-an-emoji"))
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
-    func testDB103SecondOpenDoesNotDuplicateEmojiRows() throws {
+    func testDB103SecondOpenDoesNotMaterializeEmojiRows() throws {
         try copyBundledLimeSeed(to: tempURL)
         var db = try makeLimeDB()
-        let firstEmojiRows = try db.emojiDataCountForTest()
-        let firstEmojiImRows = try db.emojiImRowCountForTest()
+        XCTAssertFalse(db.tableExists("emoji_data"))
+        XCTAssertFalse(db.tableExists("emoji_fts"))
+        XCTAssertFalse(db.searchEmoji("grinning", locale: .en).isEmpty)
+        try db.closeForReplacement()
 
         db = try makeLimeDB()
 
-        XCTAssertEqual(try db.emojiDataCountForTest(), firstEmojiRows)
-        XCTAssertEqual(try db.emojiImRowCountForTest(), firstEmojiImRows)
+        assertEmojiAttachmentLoadedAndMainStaticTablesDropped(db)
     }
 
-    func testDB103DBServerRestoreOldBackupRunsUpgradeRepairAndEmojiRefresh() throws {
+    func testDB103DBServerRestoreOldBackupRunsUpgradeRepairAndEmojiHygiene() throws {
         let oldDb = try makeDB103SeedVariant(name: "lime_ios_restore_102_no_emoji.db",
                                              userVersion: 102,
-                                             dropEmojiSchema: true,
-                                             insertCurrentEmojiVersion: false)
+                                             dropEmojiSchema: true)
         let restoreZip = FileManager.default.temporaryDirectory
             .appendingPathComponent("lime_ios_restore_102_no_emoji_\(UUID().uuidString).zip")
         try createRestoreZip(databaseURL: oldDb, zipURL: restoreZip)
@@ -2890,11 +2821,14 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(stats.version, 104)
         XCTAssertEqual(stats.cj4KeyboardRows, 0)
         XCTAssertEqual(stats.cjKeyboardRows, 1)
-        XCTAssertGreaterThan(stats.emojiDataRows, 0)
-        XCTAssertGreaterThan(stats.emojiImRows, 0)
+        XCTAssertFalse(stats.emojiDataTableExists)
+        XCTAssertFalse(stats.emojiFTSTableExists)
+        XCTAssertTrue(stats.emojiUserTableExists)
+        XCTAssertEqual(stats.emojiImRows, 0)
+        XCTAssertFalse(try LimeDB(path: liveDB.path).searchEmoji("grinning", locale: .en).isEmpty)
     }
 
-    func testDB103DBServerFactoryResetCopiesBundled103SeedAndEmojiData() throws {
+    func testDB103DBServerFactoryResetCopiesBundled103SeedAndUsesAttachedEmojiData() throws {
         let liveDB = dbServerLiveDatabaseURLForTest()
         let backup = try backupLiveDBForTest(liveDB)
         defer { restoreLiveDBForTest(liveDB, backup: backup) }
@@ -2903,11 +2837,13 @@ final class LimeDBTest: XCTestCase {
 
         let stats = try rawDB103Stats(liveDB)
         XCTAssertEqual(stats.version, 104)
-        XCTAssertGreaterThan(stats.coreNameRows, 0)
         XCTAssertEqual(stats.cj4KeyboardRows, 0)
         XCTAssertEqual(stats.cjKeyboardRows, 1)
-        XCTAssertGreaterThan(stats.emojiDataRows, 0)
-        XCTAssertGreaterThan(stats.emojiImRows, 0)
+        XCTAssertFalse(stats.emojiDataTableExists)
+        XCTAssertFalse(stats.emojiFTSTableExists)
+        XCTAssertTrue(stats.emojiUserTableExists)
+        XCTAssertEqual(stats.emojiImRows, 0)
+        XCTAssertFalse(try LimeDB(path: liveDB.path).searchEmoji("grinning", locale: .en).isEmpty)
     }
 
     func testDBServerMissingLiveDatabaseOpensBundledKeyboardCatalog() throws {
@@ -3001,12 +2937,11 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.syncMeta("epoch_uuid"), epoch)
     }
 
-    private func assertEmojiSchemaAndDataLoaded(_ db: LimeDB) {
-        XCTAssertTrue(db.tableExists("emoji_data"))
+    private func assertEmojiAttachmentLoadedAndMainStaticTablesDropped(_ db: LimeDB) {
+        XCTAssertFalse(db.tableExists("emoji_data"))
+        XCTAssertFalse(db.tableExists("emoji_fts"))
         XCTAssertTrue(db.tableExists("emoji_user"))
-        XCTAssertTrue(db.tableExists("emoji_fts"))
-        XCTAssertGreaterThan((try? db.emojiDataCountForTest()) ?? 0, 0)
-        XCTAssertGreaterThan((try? db.emojiImRowCountForTest()) ?? 0, 0)
+        XCTAssertFalse(db.searchEmoji("grinning", locale: .en).isEmpty)
     }
 
     private func assertCj4SchemaAndKeyboardLoaded(_ db: LimeDB) {
@@ -3023,8 +2958,7 @@ final class LimeDBTest: XCTestCase {
 
     private func makeDB103SeedVariant(name: String,
                                       userVersion: Int,
-                                      dropEmojiSchema: Bool,
-                                      insertCurrentEmojiVersion: Bool) throws -> URL {
+                                      dropEmojiSchema: Bool) throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(name)_\(UUID().uuidString)")
         try copyBundledLimeSeed(to: url)
@@ -3035,12 +2969,6 @@ final class LimeDBTest: XCTestCase {
                 try db.execute(sql: "DROP TABLE IF EXISTS emoji_user")
                 try db.execute(sql: "DROP TABLE IF EXISTS emoji_data")
                 try db.execute(sql: "DELETE FROM im WHERE code = 'emoji'")
-            }
-            if insertCurrentEmojiVersion {
-                try db.execute(sql: """
-                    INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                    VALUES ('emoji', 'version', '17.0', '', 0, '', '', '')
-                """)
             }
             try db.execute(sql: "PRAGMA user_version = \(userVersion)")
         }
@@ -3079,16 +3007,17 @@ final class LimeDBTest: XCTestCase {
         try? FileManager.default.removeItem(at: backup)
     }
 
-    private func rawDB103Stats(_ dbURL: URL) throws -> (version: Int, coreNameRows: Int, emojiDataRows: Int, emojiImRows: Int, cj4KeyboardRows: Int, cjKeyboardRows: Int) {
+    private func rawDB103Stats(_ dbURL: URL) throws -> (version: Int, emojiDataTableExists: Bool, emojiFTSTableExists: Bool, emojiUserTableExists: Bool, emojiImRows: Int, cj4KeyboardRows: Int, cjKeyboardRows: Int) {
         let queue = try DatabaseQueue(path: dbURL.path)
         return try queue.read { db in
             let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
-            let core = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM im WHERE title = 'name'") ?? 0
-            let emojiData = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM emoji_data") ?? 0
+            let emojiData = (try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='emoji_data'") ?? 0) > 0
+            let emojiFTS = (try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='emoji_fts'") ?? 0) > 0
+            let emojiUser = (try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='emoji_user'") ?? 0) > 0
             let emojiIm = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM im WHERE code = 'emoji'") ?? 0
             let cj4KeyboardRows = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'cj4'") ?? 0
             let cjKeyboardRows = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'cj' AND imkb = 'lime_cj'") ?? 0
-            return (version, core, emojiData, emojiIm, cj4KeyboardRows, cjKeyboardRows)
+            return (version, emojiData, emojiFTS, emojiUser, emojiIm, cj4KeyboardRows, cjKeyboardRows)
         }
     }
 }

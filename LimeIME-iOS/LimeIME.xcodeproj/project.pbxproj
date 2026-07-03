@@ -212,6 +212,7 @@
 		E8E5B5DA570FE25A0B191DB8 /* EditRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D003E6B950F019B0269750C6 /* EditRecordView.swift */; };
 		EA5199243A781A843C22C763 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */; };
 		EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3A5071216F1AB96116BC3F /* DBServerTest.swift */; };
+		E22A220E220E220E220E2202 /* EmojiAttachTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E22A220E220E220E220E2201 /* EmojiAttachTest.swift */; };
 		6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */; };
 		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
@@ -455,6 +456,7 @@
 		CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_smileys.json; sourceTree = "<group>"; };
 		CC11223344556677889900DD /* phone_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_shift.json; sourceTree = "<group>"; };
 		CC3A5071216F1AB96116BC3F /* DBServerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBServerTest.swift; sourceTree = "<group>"; };
+		E22A220E220E220E220E2201 /* EmojiAttachTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiAttachTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
 		D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad.json; sourceTree = "<group>"; };
@@ -571,6 +573,7 @@
 			children = (
 				B4F8A3C2D6E95F0A3B2C7D8E /* EngineLatencyBenchmark.swift */,
 				CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
+				E22A220E220E220E220E2201 /* EmojiAttachTest.swift */,
 				6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
@@ -1271,6 +1274,7 @@
 				EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */,
 				A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */,
 				EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */,
+				E22A220E220E220E220E2202 /* EmojiAttachTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,

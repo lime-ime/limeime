@@ -46,6 +46,7 @@ final class LimeDB {
     // MARK: - GRDB connection
     let dbQueue: DatabaseQueue
     private let databasePath: String
+    private let emojiAttached: Bool
 
     // MARK: - State (mirroring Android's instance fields)
     private var currentTableName: String = "custom"
@@ -152,11 +153,17 @@ final class LimeDB {
     /// Opens (or creates) lime.db at the given path.
     init(path: String) throws {
         databasePath = path
+        let emojiDBURL = Bundle.main.url(forResource: "emoji", withExtension: "db")
+        emojiAttached = emojiDBURL != nil
         var config = Configuration()
         config.prepareDatabase { db in
             try db.execute(sql: "PRAGMA journal_mode = WAL")
             try db.execute(sql: "PRAGMA cache_size = -4096")   // 4 MB page cache
             try db.execute(sql: "PRAGMA mmap_size = 8388608")  // 8 MB mmap — skips pread() for cold page reads
+            if let emojiDBURL {
+                try db.execute(sql: "ATTACH DATABASE ? AS emoji",
+                               arguments: ["\(emojiDBURL.absoluteString)?immutable=1"])
+            }
         }
         dbQueue = try DatabaseQueue(path: path, configuration: config)
         try migrate()
@@ -167,9 +174,10 @@ final class LimeDB {
 
     // Current schema version (mirrors Android DB_VERSION = 104).
     static let CURRENT_DB_VERSION = 104
-    private static let EMOJI_DATA_VERSION = "17.0"
     private static let EMOJI_TABLE_DATA = "emoji_data"
     private static let EMOJI_TABLE_FTS = "emoji_fts"
+    private static let EMOJI_DATA_Q = "emoji.emoji_data"
+    private static let EMOJI_FTS_Q = "emoji.emoji_fts"
     private static let EMOJI_TABLE_USER = "emoji_user"
     private static let EMOJI_CATEGORY_GROUPS = [
         "Smileys & Emotion",
@@ -241,6 +249,8 @@ final class LimeDB {
                 )
             """)
             try db.execute(sql: "CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT)")
+            try LimeDB.ensureEmojiUserTable(db)
+            try LimeDB.dropLegacyEmojiStaticTables(db)
             try db.execute(sql: """
                 CREATE TABLE IF NOT EXISTS sync_ledger (
                     stem TEXT PRIMARY KEY, size INTEGER, mtime REAL,
@@ -308,9 +318,6 @@ final class LimeDB {
                 }
             }
         }
-        if version < 103 {
-            try LimeDB.createEmojiTables(db, forceRecreate: false)
-        }
         if version < 104 {
             try LimeDB.ensureCj4Schema(db)
         }
@@ -329,7 +336,6 @@ final class LimeDB {
     func ensureCurrentDatabase() {
         do {
             try dbQueue.write { db in
-                try LimeDB.createEmojiTables(db, forceRecreate: false)
                 try LimeDB.ensureCj4Schema(db)
                 try LimeDB.ensureComputerNumKeyboard(db)
                 let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
@@ -337,7 +343,6 @@ final class LimeDB {
                     try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
                 }
             }
-            refreshEmojiDataIfNeeded()
         } catch {
             NSLog("LimeDB current database check failed: \(error)")
         }
@@ -2415,7 +2420,7 @@ final class LimeDB {
         }
     }
 
-    // MARK: - Emoji (integrated main-db tables)
+    // MARK: - Emoji (attached bundle DB + main-db usage)
 
     // Emoji type constants (mirrors Android LIME.EMOJI_EN / EMOJI_TW / EMOJI_CN)
     static let EMOJI_EN = 1
@@ -2427,21 +2432,9 @@ final class LimeDB {
         case tw
     }
 
-    struct EmojiDataRow {
-        let value: String
-        let cp: String
-        let groupName: String
-        let subgroup: String
-        let sortOrder: Int
-        let nameEn: String
-        let nameTw: String
-        let tagsEn: String
-        let tagsTw: String
-        let version: Double
-    }
-
-    /// Legacy-compatible emoji lookup routed through the integrated emoji tables.
+    /// Legacy-compatible emoji lookup routed through the attached emoji bundle DB.
     func emojiConvert(_ source: String, _ emoji: Int) -> [Mapping] {
+        guard emojiAttached else { return [] }
         switch emoji {
         case LimeDB.EMOJI_EN:
             return findEmojiForCandidate(source, locale: .en, limit: 8)
@@ -2453,25 +2446,27 @@ final class LimeDB {
     }
 
     func findEmojiForCandidate(_ candidate: String, locale: EmojiLocale, limit: Int = 8) -> [Mapping] {
+        guard emojiAttached else { return [] }
         let query = LimeDB.buildEmojiCandidateQuery(candidate)
         guard !query.isEmpty else { return [] }
         return queryEmojiFTS(query: query, code: candidate, limit: limit)
     }
 
     func searchEmoji(_ queryText: String, locale: EmojiLocale, limit: Int = 200) -> [Mapping] {
+        guard emojiAttached else { return [] }
         let query = LimeDB.buildEmojiPanelSearchQuery(queryText)
         guard !query.isEmpty else { return [] }
         return queryEmojiFTS(query: query, code: queryText, limit: limit)
     }
 
     private func queryEmojiFTS(query: String, code: String, limit: Int) -> [Mapping] {
-        refreshEmojiDataIfNeeded()
+        guard emojiAttached else { return [] }
         let safeLimit = max(limit, 1)
         let words: [String] = (try? dbQueue.read { db in
             try String.fetchAll(db, sql: """
                 SELECT d.value
-                FROM \(LimeDB.EMOJI_TABLE_FTS) f
-                JOIN \(LimeDB.EMOJI_TABLE_DATA) d ON d.rowid = f.rowid
+                FROM \(LimeDB.EMOJI_FTS_Q) f
+                JOIN \(LimeDB.EMOJI_DATA_Q) d ON d.rowid = f.rowid
                 LEFT JOIN \(LimeDB.EMOJI_TABLE_USER) u ON u.value = d.value
                 WHERE \(LimeDB.EMOJI_TABLE_FTS) MATCH ?
                 ORDER BY (u.last_used IS NULL), u.last_used DESC, d.sort_order ASC
@@ -2488,12 +2483,12 @@ final class LimeDB {
     }
 
     func loadEmojiPanelItems(limit: Int = 360) -> [Mapping] {
-        refreshEmojiDataIfNeeded()
+        guard emojiAttached else { return [] }
         let safeLimit = max(limit, 1)
         let words: [String] = (try? dbQueue.read { db in
             try String.fetchAll(db, sql: """
                 SELECT d.value
-                FROM \(LimeDB.EMOJI_TABLE_DATA) d
+                FROM \(LimeDB.EMOJI_DATA_Q) d
                 LEFT JOIN \(LimeDB.EMOJI_TABLE_USER) u ON u.value = d.value
                 ORDER BY (u.last_used IS NULL), u.last_used DESC, d.sort_order ASC
                 LIMIT ?
@@ -2507,12 +2502,12 @@ final class LimeDB {
     }
 
     func loadEmojiCategoryPages() -> [[Mapping]] {
-        refreshEmojiDataIfNeeded()
+        guard emojiAttached else { return [] }
         let pages: [[String]] = (try? dbQueue.read { db in
             try LimeDB.EMOJI_CATEGORY_GROUPS.map { groupName in
                 try String.fetchAll(db, sql: """
                     SELECT value
-                    FROM \(LimeDB.EMOJI_TABLE_DATA)
+                    FROM \(LimeDB.EMOJI_DATA_Q)
                     WHERE group_name = ?
                     ORDER BY sort_order ASC
                 """, arguments: [groupName])
@@ -2528,13 +2523,13 @@ final class LimeDB {
     }
 
     func loadRecentEmoji(limit: Int = 32) -> [Mapping] {
-        refreshEmojiDataIfNeeded()
+        guard emojiAttached else { return [] }
         let safeLimit = max(limit, 1)
         let words: [String] = (try? dbQueue.read { db in
             try String.fetchAll(db, sql: """
                 SELECT d.value
                 FROM \(LimeDB.EMOJI_TABLE_USER) u
-                JOIN \(LimeDB.EMOJI_TABLE_DATA) d ON d.value = u.value
+                JOIN \(LimeDB.EMOJI_DATA_Q) d ON d.value = u.value
                 WHERE u.last_used IS NOT NULL
                 ORDER BY u.last_used DESC, u.use_count DESC, d.sort_order ASC
                 LIMIT ?
@@ -2550,7 +2545,7 @@ final class LimeDB {
     func recordEmojiUsage(_ value: String, timestampSeconds: Int64 = Int64(Date().timeIntervalSince1970)) {
         guard !value.isEmpty else { return }
         try? dbQueue.write { db in
-            try LimeDB.createEmojiTables(db, forceRecreate: false)
+            try LimeDB.ensureEmojiUserTable(db)
             try db.execute(sql: """
                 UPDATE \(LimeDB.EMOJI_TABLE_USER)
                 SET last_used = ?, use_count = use_count + 1
@@ -2566,200 +2561,51 @@ final class LimeDB {
         }
     }
 
-    private func refreshEmojiDataIfNeeded() {
-        do {
-            try dbQueue.write { db in
-                try LimeDB.createEmojiTables(db, forceRecreate: false)
-            }
-            let current = try dbQueue.read { db in
-                try String.fetchOne(db,
-                    sql: "SELECT desc FROM im WHERE code = ? AND title = ?",
-                    arguments: ["emoji", "version"])
-            }
-            let hasIntegratedEmojiData = try dbQueue.read { db in
-                try (Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(LimeDB.EMOJI_TABLE_DATA)") ?? 0) > 0
-            }
-            guard current != LimeDB.EMOJI_DATA_VERSION || !hasIntegratedEmojiData else { return }
-            guard let url = Bundle.main.url(forResource: "emoji", withExtension: "db") else { return }
-            var sourceConfig = Configuration()
-            sourceConfig.readonly = true
-            let sourceQueue = try DatabaseQueue(path: url.path, configuration: sourceConfig)
-            let hasSourceEmojiData = try sourceQueue.read { db in try db.tableExists(LimeDB.EMOJI_TABLE_DATA) }
-            guard hasSourceEmojiData else { return }
-            let sourceRows = try sourceQueue.read { db in
-                try Row.fetchAll(db, sql: """
-                    SELECT value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version
-                    FROM \(LimeDB.EMOJI_TABLE_DATA)
-                """)
-            }
-            let imRows = try sourceQueue.read { db in
-                try Row.fetchAll(db, sql: """
-                    SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle
-                    FROM im
-                    WHERE code = 'emoji'
-                """)
-            }
-            try dbQueue.write { db in
-                try LimeDB.createEmojiTables(db, forceRecreate: false)
-                let usageRows = try Row.fetchAll(db, sql: """
-                    SELECT value, last_used, use_count
-                    FROM \(LimeDB.EMOJI_TABLE_USER)
-                """)
-                try db.execute(sql: "DELETE FROM \(LimeDB.EMOJI_TABLE_USER)")
-                try db.execute(sql: "DELETE FROM \(LimeDB.EMOJI_TABLE_DATA)")
-                for row in sourceRows {
-                    try db.execute(sql: """
-                        INSERT INTO \(LimeDB.EMOJI_TABLE_DATA)
-                        (value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, arguments: [
-                        row["value"] as String?,
-                        row["cp"] as String?,
-                        row["group_name"] as String?,
-                        row["subgroup"] as String?,
-                        row["sort_order"] as Int? ?? 0,
-                        row["name_en"] as String?,
-                        row["name_tw"] as String?,
-                        row["tags_en"] as String?,
-                        row["tags_tw"] as String?,
-                        row["version"] as Double? ?? 0.0,
-                    ])
-                }
-                try LimeDB.rebuildEmojiFTS(db)
-                try db.execute(sql: "DELETE FROM im WHERE code = 'emoji'")
-                for row in imRows {
-                    try db.execute(sql: """
-                        INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """, arguments: [
-                        row["code"] as String?,
-                        row["title"] as String?,
-                        row["desc"] as String?,
-                        row["keyboard"] as String?,
-                        LimeDB.parseBoolFlag(row["disable"]) ? 1 : 0,
-                        row["selkey"] as String? ?? "",
-                        row["endkey"] as String? ?? "",
-                        row["spacestyle"] as String? ?? "",
-                    ])
-                }
-                for row in usageRows {
-                    let value = row["value"] as String? ?? ""
-                    try db.execute(sql: """
-                        INSERT OR IGNORE INTO \(LimeDB.EMOJI_TABLE_USER) (value, last_used, use_count)
-                        SELECT ?, ?, ?
-                        WHERE EXISTS (
-                            SELECT 1 FROM \(LimeDB.EMOJI_TABLE_DATA) WHERE value = ?
-                        )
-                    """, arguments: [
-                        value,
-                        row["last_used"] as Int64? ?? 0,
-                        row["use_count"] as Int? ?? 0,
-                        value,
-                    ])
-                }
-            }
-        } catch {
-            NSLog("LimeDB emoji refresh failed: \(error)")
-        }
-    }
-
-    private static func createEmojiTables(_ db: Database, forceRecreate: Bool) throws {
-        if forceRecreate {
-            try LimeDB.dropEmojiFTSIfPresent(db)
-            try db.execute(sql: "DROP TABLE IF EXISTS \(EMOJI_TABLE_USER)")
-            try db.execute(sql: "DROP TABLE IF EXISTS \(EMOJI_TABLE_DATA)")
-        }
-        try db.execute(sql: """
-            CREATE TABLE IF NOT EXISTS \(EMOJI_TABLE_DATA) (
-                value TEXT PRIMARY KEY,
-                cp TEXT NOT NULL,
-                group_name TEXT NOT NULL,
-                subgroup TEXT NOT NULL,
-                sort_order INTEGER NOT NULL,
-                name_en TEXT,
-                name_tw TEXT,
-                tags_en TEXT,
-                tags_tw TEXT,
-                version REAL NOT NULL
-            )
-        """)
-        try db.execute(sql: "CREATE INDEX IF NOT EXISTS idx_emoji_group ON \(EMOJI_TABLE_DATA)(group_name, sort_order)")
-        try LimeDB.dropEmojiFTSIfUnusable(db)
-        if try !db.tableExists(EMOJI_TABLE_FTS) {
-            do {
-                try db.execute(sql: """
-                    CREATE VIRTUAL TABLE \(EMOJI_TABLE_FTS) USING fts5(
-                        name_en, name_tw, tags_en, tags_tw,
-                        content='\(EMOJI_TABLE_DATA)', content_rowid='rowid',
-                        tokenize='unicode61 remove_diacritics 1'
-                    )
-                """)
-            } catch {
-                try LimeDB.dropEmojiFTSIfPresent(db)
-                try db.execute(sql: """
-                    CREATE VIRTUAL TABLE \(EMOJI_TABLE_FTS) USING fts4(
-                        name_en, name_tw, tags_en, tags_tw,
-                        tokenize=unicode61 "remove_diacritics=1",
-                        content=\(EMOJI_TABLE_DATA)
-                    )
-                """)
-            }
-        }
+    private static func ensureEmojiUserTable(_ db: Database) throws {
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS \(EMOJI_TABLE_USER) (
-                value TEXT PRIMARY KEY REFERENCES \(EMOJI_TABLE_DATA)(value),
+                value TEXT PRIMARY KEY,
                 last_used INTEGER,
                 use_count INTEGER NOT NULL DEFAULT 0
             )
         """)
-    }
-
-    private static func dropEmojiFTSIfUnusable(_ db: Database) throws {
-        guard try db.tableExists(EMOJI_TABLE_FTS) else { return }
         let createSQL = try String.fetchOne(db, sql: """
-            SELECT sql FROM sqlite_schema
+            SELECT sql FROM main.sqlite_master
             WHERE type = 'table' AND name = ?
-        """, arguments: [EMOJI_TABLE_FTS]) ?? ""
-        let normalizedSQL = createSQL.lowercased()
-        guard normalizedSQL.contains("virtual table") &&
-              (normalizedSQL.contains("using fts4") || normalizedSQL.contains("using fts5")) else {
-            try LimeDB.dropEmojiFTSIfPresent(db)
-            return
-        }
-        do {
-            _ = try Int.fetchOne(db, sql: "SELECT 1 FROM \(EMOJI_TABLE_FTS) LIMIT 1")
-        } catch {
-            try LimeDB.dropEmojiFTSIfPresent(db)
-        }
+        """, arguments: [EMOJI_TABLE_USER]) ?? ""
+        guard createSQL.range(of: "REFERENCES", options: .caseInsensitive) != nil else { return }
+
+        try db.execute(sql: "DROP TABLE IF EXISTS main.emoji_user_new")
+        try db.execute(sql: """
+            CREATE TABLE main.emoji_user_new (
+                value TEXT PRIMARY KEY,
+                last_used INTEGER,
+                use_count INTEGER NOT NULL DEFAULT 0
+            )
+        """)
+        try db.execute(sql: """
+            INSERT OR REPLACE INTO main.emoji_user_new (value, last_used, use_count)
+            SELECT value, last_used, COALESCE(use_count, 0)
+            FROM main.\(EMOJI_TABLE_USER)
+        """)
+        try db.execute(sql: "DROP TABLE main.\(EMOJI_TABLE_USER)")
+        try db.execute(sql: "ALTER TABLE main.emoji_user_new RENAME TO \(EMOJI_TABLE_USER)")
     }
 
-    private static func dropEmojiFTSIfPresent(_ db: Database) throws {
-        do {
-            try db.execute(sql: "DROP TABLE IF EXISTS \(EMOJI_TABLE_FTS)")
-        } catch {
-            try LimeDB.removeEmojiFTSSchemaEntries(db)
-        }
-    }
-
-    private static func removeEmojiFTSSchemaEntries(_ db: Database) throws {
-        let schemaVersion = try Int.fetchOne(db, sql: "PRAGMA schema_version") ?? 0
-        try db.execute(sql: "PRAGMA writable_schema = ON")
-        do {
-            try db.execute(sql: """
-                DELETE FROM sqlite_schema
-                WHERE tbl_name = ?
-                   OR name = ?
-                   OR name LIKE ?
-            """, arguments: [
-                EMOJI_TABLE_FTS,
-                EMOJI_TABLE_FTS,
-                "\(EMOJI_TABLE_FTS)_%"
-            ])
-            try db.execute(sql: "PRAGMA schema_version = \(schemaVersion + 1)")
-            try db.execute(sql: "PRAGMA writable_schema = OFF")
-        } catch {
-            try? db.execute(sql: "PRAGMA writable_schema = OFF")
-            throw error
+    private static func dropLegacyEmojiStaticTables(_ db: Database) throws {
+        let tables = [
+            EMOJI_TABLE_FTS,
+            "\(EMOJI_TABLE_FTS)_docsize",
+            "\(EMOJI_TABLE_FTS)_segdir",
+            "\(EMOJI_TABLE_FTS)_segments",
+            "\(EMOJI_TABLE_FTS)_stat",
+            "\(EMOJI_TABLE_FTS)_data",
+            "\(EMOJI_TABLE_FTS)_idx",
+            "\(EMOJI_TABLE_FTS)_config",
+            EMOJI_TABLE_DATA,
+        ]
+        for table in tables {
+            try db.execute(sql: "DROP TABLE IF EXISTS main.\(table)")
         }
     }
 
@@ -2798,10 +2644,6 @@ final class LimeDB {
                 'computer_simple', 'computer_simple', 'lime', 'lime_shift',
                 'symbols', 'symbols_shift', '', '', '', '', 0)
         """)
-    }
-
-    private static func rebuildEmojiFTS(_ db: Database) throws {
-        try db.execute(sql: "INSERT INTO \(EMOJI_TABLE_FTS)(\(EMOJI_TABLE_FTS)) VALUES ('rebuild')")
     }
 
     private static func buildEmojiPanelSearchQuery(_ input: String) -> String {
@@ -2845,68 +2687,9 @@ final class LimeDB {
         }
     }
 
-    func replaceEmojiDataForTest(_ rows: [EmojiDataRow], emojiVersion: String) throws {
-        try dbQueue.write { db in
-            try LimeDB.createEmojiTables(db, forceRecreate: true)
-            for row in rows {
-                try db.execute(sql: """
-                    INSERT INTO \(LimeDB.EMOJI_TABLE_DATA)
-                    (value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, arguments: [
-                    row.value, row.cp, row.groupName, row.subgroup, row.sortOrder,
-                    row.nameEn, row.nameTw, row.tagsEn, row.tagsTw, row.version,
-                ])
-            }
-            try LimeDB.rebuildEmojiFTS(db)
-            try db.execute(sql: "DELETE FROM im WHERE code = 'emoji'")
-            try db.execute(sql: """
-                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                VALUES ('emoji', 'version', ?, '', 0, '', '', '')
-            """, arguments: [emojiVersion])
-        }
-    }
-
     func databaseVersionForTest() throws -> Int {
         try dbQueue.read { db in
             try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
-        }
-    }
-
-    func emojiDataCountForTest() throws -> Int {
-        try dbQueue.read { db in
-            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(LimeDB.EMOJI_TABLE_DATA)") ?? 0
-        }
-    }
-
-    func emojiImRowCountForTest() throws -> Int {
-        try dbQueue.read { db in
-            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM im WHERE code = 'emoji'") ?? 0
-        }
-    }
-
-    func firstEmojiValueForTest() throws -> String? {
-        try dbQueue.read { db in
-            try String.fetchOne(db, sql: "SELECT value FROM \(LimeDB.EMOJI_TABLE_DATA) LIMIT 1")
-        }
-    }
-
-    func setEmojiVersionForTest(_ version: String) throws {
-        try dbQueue.write { db in
-            try db.execute(sql: "UPDATE im SET desc = ? WHERE code = 'emoji' AND title = 'version'", arguments: [version])
-        }
-    }
-
-    func setEmojiUserForTest(value: String, useCount: Int, lastUsed: Int64) throws {
-        var config = Configuration()
-        config.foreignKeysEnabled = false
-        let rawQueue = try DatabaseQueue(path: databasePath, configuration: config)
-        try rawQueue.write { db in
-            try LimeDB.createEmojiTables(db, forceRecreate: false)
-            try db.execute(sql: """
-                INSERT OR REPLACE INTO \(LimeDB.EMOJI_TABLE_USER) (value, last_used, use_count)
-                VALUES (?, ?, ?)
-            """, arguments: [value, lastUsed, useCount])
         }
     }
 
