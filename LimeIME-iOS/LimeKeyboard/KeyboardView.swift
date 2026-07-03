@@ -1049,7 +1049,17 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         } else if !keyDef.sublabel.isEmpty {
             let displayLabel = keyDef.label
             let container: UIView
-            if keyDef.longPressCode != 0 {
+            let sepT = "\\" + "t"
+            if displayLabel.contains(sepT) {
+                // et26 / hsu two-part hint ("letter\tinitial"): draw the letter (secondary colour)
+                // and the initial bopomofo (primary colour) side-by-side on top, final bopomofo
+                // (sublabel) below — mirrors Android's hasSecondSubLabel vertical draw. Always
+                // vertical, like Android's portrait branch.
+                let parts = displayLabel.components(separatedBy: sepT)
+                container = makeSecondSubLabelView(letter: parts.first ?? "",
+                                                   initial: parts.count > 1 ? parts[1] : "",
+                                                   finalLabel: keyDef.sublabel, labelColor: keyLabel)
+            } else if keyDef.longPressCode != 0 {
                 // Sliding key: label=hint (top), sublabel=tap-primary (bottom) — equal size+color.
                 container = makeDualSlidingLabelView(top: displayLabel, bottom: keyDef.sublabel,
                                                      labelColor: keyLabel)
@@ -1068,7 +1078,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                     let estimatedWidth = UIScreen.main.bounds.width
                         * (keyDef.widthPercent / totalPercent) - keyHGap
                     let usableHeight = rowHeight - 2 * keyVGap
-                    isTall = usableHeight >= estimatedWidth
+                    // Mirror Android (LIMEKeyboardBaseView: key.height>key.width || subLabel.length()>2):
+                    // also stack vertically when the letter hint is >2 chars, so the wide phone-pad
+                    // keys (abc / pqrs / ()'" / +-*/ …) render up/down instead of the side-by-side split.
+                    isTall = usableHeight > estimatedWidth || displayLabel.count > 2
                 }
                 container = makeDualLabelView(primary: displayLabel, sub: keyDef.sublabel,
                                               isTall: isTall, labelColor: keyLabel)
@@ -1280,6 +1293,57 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             ])
             return container
         }
+    }
+
+    /// Two-part-hint key (et26 / hsu). Primary label is "letter\tinitial": the letter renders in
+    /// secondary colour (left) and the initial bopomofo in primary colour (right), side-by-side on
+    /// top; the final bopomofo (sublabel) renders large below. Mirrors Android's hasSecondSubLabel
+    /// vertical draw (letter=subKeyColor, initial=keyColor, final=keyColor). Uses the existing
+    /// keyLabelFont (hint) / keySublabelFont (final) — no font changes.
+    private func makeSecondSubLabelView(letter: String, initial: String,
+                                        finalLabel: String, labelColor: UIColor) -> UIView {
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .fill
+        stack.spacing = 0
+
+        let top = UIStackView()
+        top.axis = .horizontal
+        top.alignment = .center
+        top.distribution = .fillEqually
+        top.spacing = 0
+
+        let letterLbl = UILabel()
+        letterLbl.text = letter
+        letterLbl.font = keyLabelFont
+        letterLbl.textColor = palette.secondaryLabel
+        letterLbl.textAlignment = .center
+        letterLbl.adjustsFontSizeToFitWidth = true
+        letterLbl.minimumScaleFactor = 0.6
+
+        let initialLbl = UILabel()
+        initialLbl.text = initial
+        initialLbl.font = keyLabelFont
+        initialLbl.textColor = labelColor
+        initialLbl.textAlignment = .center
+        initialLbl.adjustsFontSizeToFitWidth = true
+        initialLbl.minimumScaleFactor = 0.6
+
+        top.addArrangedSubview(letterLbl)
+        top.addArrangedSubview(initialLbl)
+
+        let finalLbl = UILabel()
+        finalLbl.text = finalLabel
+        finalLbl.font = keySublabelFont
+        finalLbl.textColor = labelColor
+        finalLbl.textAlignment = .center
+        finalLbl.adjustsFontSizeToFitWidth = true
+        finalLbl.minimumScaleFactor = 0.6
+        finalLbl.setContentHuggingPriority(.required, for: .vertical)
+
+        stack.addArrangedSubview(top)
+        stack.addArrangedSubview(finalLbl)
+        return stack
     }
 
     /// Builds a two-part label view for dual-sliding keys (hint\nprimary).
@@ -1976,7 +2040,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func keyModel(for keyDef: KeyDef, frame: CGRect) -> KeyModel {
         KeyModel(frame: frame,
                  codes: keyDef.codes,
-                 primaryLabel: keyDef.label,
+                 // Collapse the et26/hsu "letter\tinitial" separator for the preview (display-only);
+                 // the main key render keeps the \t to draw the two parts side-by-side.
+                 primaryLabel: keyDef.label.replacingOccurrences(of: "\\" + "t", with: " "),
                  secondaryLabel: keyDef.sublabel,
                  isRepeatable: keyDef.isRepeatable,
                  isModifier: keyDef.isModifier,

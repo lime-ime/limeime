@@ -2001,6 +2001,11 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
 
     private void dismissPopupKeyboard() {
         if (mMiniKeyboardPopup.isShowing()) {
+            // The mini keyboard owns its own key-preview popup (a separate window). It is normally
+            // hidden by the mini keyboard's own onUpEvent, but a flint/slide can commit via one event
+            // stream while the container is torn down by another, orphaning the preview bubble on
+            // screen. Dismiss it here so no teardown path can leave it stuck.
+            if (mMiniKeyboard != null) mMiniKeyboard.dismissKeyPreview();
             mMiniKeyboardPopup.dismiss();
             mMiniKeyboard = null;
             mMiniKeyboardOriginX = 0;

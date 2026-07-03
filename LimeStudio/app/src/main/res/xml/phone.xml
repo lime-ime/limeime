@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <!--
   ~ /*
@@ -33,34 +33,34 @@
 
     <Row>
         <Key limehd:codes="-2" limehd:isModifier="true" limehd:keyLabel="123" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="49" limehd:iconPreview="@drawable/phone_1_l" limehd:keyIcon="@drawable/phone_1"/>
-        <Key limehd:codes="50,97,98,99" limehd:iconPreview="@drawable/phone_2_l" limehd:keyIcon="@drawable/phone_2"/>
-        <Key limehd:codes="51,100,101,102" limehd:iconPreview="@drawable/phone_3_l" limehd:keyIcon="@drawable/phone_3"/>
+        <Key limehd:codes="49" limehd:keyLabel="()'&quot;\n1" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="()'&quot;"/>
+        <Key limehd:codes="50" limehd:keyLabel="abc\n2" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="abc"/>
+        <Key limehd:codes="51" limehd:keyLabel="def\n3" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="def"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete_light" limehd:isModifier="true"  limehd:keyEdgeFlags="right" limehd:isRepeatable="true"/>
     </Row>
     
     <Row>
         <Key limehd:codes="-9" limehd:keyLabel="ABC" limehd:isModifier="true" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="52,103,104,105" limehd:iconPreview="@drawable/phone_4_l" limehd:keyIcon="@drawable/phone_4"/>
-        <Key limehd:codes="53,106,107,108" limehd:iconPreview="@drawable/phone_5_l" limehd:keyIcon="@drawable/phone_5"/>
-        <Key limehd:codes="54,109,110,111" limehd:iconPreview="@drawable/phone_6_l" limehd:keyIcon="@drawable/phone_6"/>
-        <Key limehd:codes="61,43,45,42,47" limehd:iconPreview="@drawable/phone_cal_l" limehd:keyIcon="@drawable/phone_cal" limehd:keyEdgeFlags="right"/>
+        <Key limehd:codes="52" limehd:keyLabel="ghi\n4" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="ghi"/>
+        <Key limehd:codes="53" limehd:keyLabel="jkl\n5" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="jkl"/>
+        <Key limehd:codes="54" limehd:keyLabel="mno\n6" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="mno"/>
+        <Key limehd:codes="61" limehd:keyLabel="+-*/\n=" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="+-*/" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row>
         <Key limehd:codes="-1" limehd:keyIcon="@drawable/sym_keyboard_shift"
                 limehd:isSticky="true" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="55,112,113,114,115" limehd:iconPreview="@drawable/phone_7_l" limehd:keyIcon="@drawable/phone_7"/>
-        <Key limehd:codes="56,116,117,118" limehd:iconPreview="@drawable/phone_8_l" limehd:keyIcon="@drawable/phone_8"/>
-        <Key limehd:codes="57,119,120,121,122" limehd:iconPreview="@drawable/phone_9_l" limehd:keyIcon="@drawable/phone_9"/>
+        <Key limehd:codes="55" limehd:keyLabel="pqrs\n7" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="pqrs"/>
+        <Key limehd:codes="56" limehd:keyLabel="tuv\n8" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="tuv"/>
+        <Key limehd:codes="57" limehd:keyLabel="wxyz\n9" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="wxyz"/>
         <Key limehd:codes="32" limehd:keyIcon="@drawable/sym_flat_keyboard_space" limehd:isRepeatable="true" limehd:keyEdgeFlags="right"/>
     </Row>
     
     <Row limehd:rowEdgeFlags="bottom">
         <Key limehd:codes="-3"  limehd:keyIcon="@drawable/sym_keyboard_done_light" limehd:isModifier="true" limehd:keyEdgeFlags="left"/>
-        <Key limehd:codes="40,41,91,93" limehd:iconPreview="@drawable/phone_left_l" limehd:keyIcon="@drawable/phone_left"/>
-        <Key limehd:codes="48,126,94,123,125" limehd:iconPreview="@drawable/phone_0_l" limehd:keyIcon="@drawable/phone_0"/>
-        <Key limehd:codes="44,59,63,92,46" limehd:iconPreview="@drawable/phone_right_l" limehd:keyIcon="@drawable/phone_right"/>
+        <Key limehd:codes="42" limehd:keyLabel="&lt;&gt;^~\n*" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="&lt;&gt;^~"/>
+        <Key limehd:codes="48" limehd:keyLabel=".,?!\n0" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters=".,?!"/>
+        <Key limehd:codes="35" limehd:keyLabel="@$%&amp;\n#" limehd:popupKeyboard="@xml/popup_template" limehd:popupCharacters="@$%&amp;"/>
         <Key limehd:codes="10" limehd:keyIcon="@drawable/sym_keyboard_return_light" limehd:isModifier="true"  limehd:keyEdgeFlags="right"/>
     </Row>
     

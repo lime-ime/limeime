@@ -48,11 +48,9 @@ public class PointerTracker {
     // Timing constants
     private final int mDelayBeforeKeyRepeatStart;
     private final int mLongPressKeyTimeout;
-    private final int mMultiTapKeyTimeout;
 
     // Miscellaneous constants
     private static final int NOT_A_KEY = LIMEKeyboardBaseView.NOT_A_KEY;
-    private static final int[] KEY_DELETE = { LIMEBaseKeyboard.KEYCODE_DELETE };
 
     private final UIProxy mProxy;
     private final LIMEKeyboardBaseView.UIHandler mHandler;
@@ -77,13 +75,6 @@ public class PointerTracker {
 
     // true if this pointer is in sliding key input
     private boolean mIsInSlidingKeyInput;
-
-    // For multi-tap
-    private int mLastSentIndex;
-    private int mTapCount;
-    private long mLastTapTime;
-    private boolean mInMultiTap;
-    private final StringBuilder mPreviewLabel = new StringBuilder(1);
 
     // pressed key
     private int mPreviousKey = NOT_A_KEY;
@@ -186,8 +177,6 @@ public class PointerTracker {
         mHasDistinctMultitouch = proxy.hasDistinctMultitouch();
         mDelayBeforeKeyRepeatStart = res.getInteger(R.integer.config_delay_before_key_repeat_start);
         mLongPressKeyTimeout = res.getInteger(R.integer.config_long_press_key_timeout);
-        mMultiTapKeyTimeout = res.getInteger(R.integer.config_multi_tap_key_timeout);
-        resetMultiTap();
     }
 
     public void setOnKeyboardActionListener(OnKeyboardActionListener listener) {
@@ -297,7 +286,6 @@ public class PointerTracker {
         mKeyAlreadyProcessed = false;
         mIsRepeatableKey = false;
         mIsInSlidingKeyInput = false;
-        checkMultiTap(eventTime, keyIndex);
         if (mListener != null) {
             if (isValidKeyIndex(keyIndex)) {
                 mListener.onPress(mKeys[keyIndex].codes[0]);
@@ -354,7 +342,6 @@ public class PointerTracker {
                 mIsInSlidingKeyInput = true;
                 if (mListener != null)
                     mListener.onRelease(oldKey.codes[0]);
-                resetMultiTap();
                 if (mListener != null) {
                     mListener.onPress(getKey(keyIndex).codes[0]);
                     // This onPress call may have changed keyboard layout. Those cases are detected
@@ -375,7 +362,6 @@ public class PointerTracker {
                 mIsInSlidingKeyInput = true;
                 if (mListener != null)
                     mListener.onRelease(oldKey.codes[0]);
-                resetMultiTap();
                 keyState.onMoveToNewKey(keyIndex, x ,y);
                 mHandler.cancelLongPressTimer();
             }
@@ -520,15 +506,6 @@ public class PointerTracker {
                 int code = key.codes[0];
                 int[] codes = mKeyDetector.newCodeArray();
                 mKeyDetector.getKeyIndexAndNearbyCodes(x, y, codes);
-                // Multi-tap
-                if (mInMultiTap) {
-                    if (mTapCount != -1) {
-                        mListener.onKey(LIMEBaseKeyboard.KEYCODE_DELETE, KEY_DELETE, x, y);
-                    } else {
-                        mTapCount = 0;
-                    }
-                    code = key.codes[mTapCount];
-                }
                 /*
                  * Swap the first and second values in the codes array if the primary code is not
                  * the first value but the second value in the array. This happens when key
@@ -543,51 +520,11 @@ public class PointerTracker {
                     listener.onRelease(code);
                 }
             }
-            mLastSentIndex = index;
-            mLastTapTime = eventTime;
         }
     }
 
-    /**
-     * Handle multi-tap keys by producing the key label for the current multi-tap state.
-     */
     public CharSequence getPreviewText(Key key) {
-        if (mInMultiTap) {
-            // Multi-tap
-            mPreviewLabel.setLength(0);
-            mPreviewLabel.append((char) key.codes[Math.max(mTapCount, 0)]);
-            return mPreviewLabel;
-        } else {
-            return key.label;
-        }
-    }
-
-    private void resetMultiTap() {
-        mLastSentIndex = NOT_A_KEY;
-        mTapCount = 0;
-        mLastTapTime = -1;
-        mInMultiTap = false;
-    }
-
-    private void checkMultiTap(long eventTime, int keyIndex) {
-        Key key = getKey(keyIndex);
-        if (key == null)
-            return;
-
-        final boolean isMultiTap =
-                (eventTime < mLastTapTime + mMultiTapKeyTimeout && keyIndex == mLastSentIndex);
-        if (key.codes.length > 1) {
-            mInMultiTap = true;
-            if (isMultiTap) {
-                mTapCount = (mTapCount + 1) % key.codes.length;
-            } else {
-                mTapCount = -1;
-            }
-            return;
-        }
-        if (!isMultiTap) {
-            resetMultiTap();
-        }
+        return key.label;
     }
 
     private void debugLog(String title, int x, int y) {

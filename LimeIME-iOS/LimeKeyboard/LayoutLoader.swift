@@ -196,7 +196,6 @@ final class LayoutLoader {
     private static func splitLabel(_ label: String, fallbackSublabel: String) -> (String, String) {
         // JSON "1\\nㄅ" → Swift string where index 1 is '\' and index 2 is 'n'
         let sepN = "\\" + "n"
-        let sepT = "\\" + "t"
         let primary: String
         let sub: String
         if let range = label.range(of: sepN) {
@@ -206,12 +205,10 @@ final class LayoutLoader {
             primary = label
             sub = fallbackSublabel
         }
-        // Collapse any `\t` separators inside the primary portion to a single space
-        // so the letter + initial-remap render together in the primary label.
-        let collapsed = primary.replacingOccurrences(of: sepT, with: " ")
-                               .replacingOccurrences(of: "  ", with: " ")
-                               .trimmingCharacters(in: .whitespaces)
-        return (collapsed, sub)
+        // Keep any `\t` separator (letter\tinitial) in the primary so the renderer can draw the two
+        // parts side-by-side, mirroring Android's hasSecondSubLabel (et26 / hsu). Consumers that
+        // only *display* the label (the key preview) collapse it to a space — see keyModel().
+        return (primary.trimmingCharacters(in: .whitespaces), sub)
     }
 
     /// Resolve Android @string/ resource references to their iOS display strings.

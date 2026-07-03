@@ -1,4 +1,4 @@
-# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
+﻿# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
 
 ## Problem statement
 
@@ -54,13 +54,120 @@ Likely Android-only visual regression or legacy-asset issue: `phone.xml` / `phon
 
 This is consistent with the reporter's note that typing and composing still work.
 
-## Proposed solution / investigation plan
+## Decided approach
 
-1. Reproduce or visually inspect Android `phone` and `phone_shift` layouts under the current 6.1.27 light keyboard theme.
-2. Prefer replacing central phone-key bitmap faces with text-based `keyLabel`/secondary-label rendering if supported by the Android keyboard view, so label colors follow the active theme.
-3. If text-based phone labels are not feasible, add theme-appropriate drawable variants or tinting for `phone_*` assets.
-4. Verify that key codes remain unchanged for both lowercase and shifted phone layouts.
-5. Add a lightweight guard where practical so `phone` / `phone_shift` resource mapping stays covered, but do not rely on non-visual compile checks as the only verification.
+**Abandon the `phone_*` bitmap key faces entirely.** Redraw the phone pad with
+**standard two-line text keys** and expose the alphabet/symbol alternates through
+the **mini popup keyboard** instead of the current multi-tap cycle on `codes`.
+
+- **Labels:** `keyLabel="main\nsub"`. `LIMEKeyboardBaseView` already splits a
+  `keyLabel` on `\n` into a main label + sub-label ([LIMEKeyboardBaseView.java:1109](../LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java#L1109)),
+  both drawn as theme text colors (`keySubLabelTextColorNormal`). No bitmap glyph
+  is left to be invisible, so #142 disappears by construction.
+- **Alternates:** `popupKeyboard="@xml/popup_template"` + `popupCharacters="…"`
+  instead of the multi-code cycle. Selection uses the sticky-tap / hold-slide
+  mini popup already shipped on Android — see [MINI_POPUP_KB.md](MINI_POPUP_KB.md) §8.
+
+This is the exact pattern already live in [phone_simple.xml](../LimeStudio/app/src/main/res/xml/phone_simple.xml)
+(cal key `keyLabel="+-*/\n="` + `popupKeyboard="@xml/popup_template"`
+`popupCharacters="+-*/"`).
+
+Files to change: `phone.xml`, `phone_shift.xml`.
+
+**Dead code removed (post-conversion cleanup).** With the popup conversion, the
+phone layouts were the last users of multi-tap `codes` cycling, so:
+- The multi-tap cycling logic in `PointerTracker.java` (`checkMultiTap`,
+  `resetMultiTap`, `mInMultiTap`/`mTapCount`/`mLastTapTime`/`mLastSentIndex`/
+  `mPreviewLabel`, the `mInMultiTap` branches in `detectAndSendKey` /
+  `getPreviewText`) was deleted, along with the now-unused
+  `config_multi_tap_key_timeout` integer.
+- All 104 `phone_*` / `phone_*_l` bitmap drawables (`phone_0`…`phone_9`,
+  `phone_cal`, `phone_left`, `phone_right` × 4 densities) were deleted — nothing
+  references them anymore.
+
+**Status: implemented (Android + iOS/iPad).** Android `phone.xml` /
+`phone_shift.xml` rewritten to `keyLabel="<hint>\n<digit>"` +
+`popup_template`/`popupCharacters`; every `phone_*` bitmap face removed.
+`./gradlew :app:processDebugResources` (with `--rerun-tasks`) passes, so AAPT
+accepts the `\n` sub-labels and `&quot;`/`&amp;` entities. iOS/iPad
+`phone.json` / `phone_shift.json` rewritten to match (see the iOS + iPad section
+below). Both still need on-device visual/behaviour QA per the plan below.
+
+**Follow-up fix (flint preview stuck).** Because the letter/symbol keys now open
+popups, the mini keyboard's own key-preview bubble (e.g. "Y") could be left
+orphaned on screen after a flint/slide commit: it is normally hidden by the mini
+keyboard's `onUpEvent`, but a flint commits via one touch stream while the
+container is torn down by another. Fixed at the single teardown chokepoint —
+`dismissPopupKeyboard()` now calls `mMiniKeyboard.dismissKeyPreview()` before
+dismissing the container. Compiles; needs on-device confirmation.
+
+## Target layout
+
+Columns 2–4 are the phone pad; each letter/symbol key shows a text label and
+opens a mini popup for its alternates (no more multi-tap cycling). Column 1
+(`123` / `ABC`·`中` / Shift / done) and column 5 (delete / `=` cal / space /
+return) keep their existing function keys.
+
+| Row·Col | Primary (code) | Popup alternates | Replaces (old codes) |
+|---------|----------------|------------------|----------------------|
+| R1 C2 | `1` (49) | `( ) ' "` | digit-only |
+| R1 C3 | `2` (50) | `a b c` | multi-tap `2abc` |
+| R1 C4 | `3` (51) | `d e f` | multi-tap `3def` |
+| R2 C2 | `4` (52) | `g h i` | multi-tap `4ghi` |
+| R2 C3 | `5` (53) | `j k l` | multi-tap `5jkl` |
+| R2 C4 | `6` (54) | `m n o` | multi-tap `6mno` |
+| R3 C2 | `7` (55) | `p q r s` | multi-tap `7pqrs` |
+| R3 C3 | `8` (56) | `t u v` | multi-tap `8tuv` |
+| R3 C4 | `9` (57) | `w x y z` | multi-tap `9wxyz` |
+| R4 C2 (left of 0) | `*` (42) | `< > ^ ~` | `( ) [ ]` |
+| R4 C3 (0) | `0` (48) | `. , ? !` | `0 ~ ^ { }` |
+| R4 C4 (right of 0) | `#` (35) | `@ $ % &` | `, ; ? \ .` |
+
+The bottom row is `*` `0` `#` — a real phone keypad. The face shows the
+phone-pad char; the extra symbols live in each key's popup.
+
+**Symbol distribution — one category per key** (so a symbol's location is
+guessable, and no symbol is reachable from two keys). Each popup is capped at
+**4 alternates**, matching the 4-letter keys (`PQRS`, `WXYZ`) so the sub-label
+fits the key face:
+
+Shift is a **second symbol layer** — the face char (`1 * 0 #` / `=`) is unchanged
+but the popup set differs, so the pad reaches two categories per key. Math lives
+solely on the `=` (cal) key, so **no symbol is reachable from two keys**:
+
+| Key | Unshifted | Shift |
+|-----|-----------|-------|
+| `1` | `( ) ' "` — round brackets & quotes | `[ ] { }` — square & curly brackets |
+| `*` | `< > ^ ~` — compare / logic | `: ; _ \|` — marks & separators |
+| `0` | `. , ? !` — sentence punctuation | `. , ? !` — (same; no 2nd set) |
+| `#` | `@ $ % &` — web & currency | `£ € ¥ ¢` — foreign currency |
+| `=` (cal) | `+ - * /` — math | `+ - * /` — (same; math) |
+
+`0` and `=` repeat across layers because there is no second punctuation / math
+group; the only symbols left unplaced are `\` and `` ` ``, which stay on the
+`123` layer.
+
+- **Function keys are unchanged.** Column 1 (`123` / `ABC`·`中` / **Shift** /
+  done) and column 5 (delete / `=` cal / **space** / return) keep their current
+  keys and icons. Shift and space stay exactly as they are today.
+- Letter faces show the uppercase hint (`ABC`) as the sub-label; the popup emits
+  lowercase in `phone.xml` and uppercase in `phone_shift.xml`, following Shift.
+- **`phone_shift.xml` = capital letters + second symbol layer.** Versus
+  `phone.xml`: every alphabet popup emits **uppercase** (`ABC`…`WXYZ`), column 1
+  row 2 is the `中` mode key (code `-9`) in place of `ABC`, and the symbol popups
+  carry their **shift** set — `1`(`[]{}`), `*`(`:;_|`), `#`(`£€¥¢`). The `0`
+  (`.,?!`) and `=` cal (`+-*/`) keys and the face chars (`1 * 0 #`) are the same
+  on both layers.
+
+### Open items (decide before implementing)
+
+- **Cal `=` key = the math key.** The column-5 cal key (face `=`, popup `+ - * /`,
+  text label `+-*/\n=`) now owns arithmetic exclusively — the `*` pad key was
+  moved off math to `< > ^ ~`, so nothing is reachable from two keys. Its old
+  `phone_cal` bitmap is gone. No longer redundant; keep it.
+- **Off the pad.** With both layers, only `\` and `` ` `` are not reachable from
+  the pad; they stay on the `123` symbol layer. Flagging only to confirm that is
+  acceptable.
 
 ## Follow-up questions
 
@@ -74,17 +181,34 @@ If reproduction differs by theme, ask later for the exact LIME keyboard theme an
 
 Confirmed reported platform. The suspected path is Android-specific XML layout and bitmap drawable rendering in `phone.xml` / `phone_shift.xml`.
 
-### iOS
+### iOS + iPad
 
-Possible parity check only. The iOS phone layouts (`LimeIME-iOS/LimeKeyboard/Layouts/phone.json` and `phone_shift.json`) use text `label` / `sublabel` fields rather than Android `phone_*` bitmap drawables, so the same bitmap-contrast root cause does not directly apply. iOS should still be visually checked if the Android fix changes shared layout expectations or if a matching iOS report appears.
+**Parity implemented.** `LimeIME-iOS/LimeKeyboard/Layouts/phone.json` and
+`phone_shift.json` were rewritten to match the Android design:
+
+- Letter keys converted from multi-tap `codes` cycling to `popupKeyboard`
+  (`@xml/popup_template` + `popupCharacters`); a plain tap types the digit, the
+  popup gives the letters.
+- The same base/shift symbol distribution as Android (`1`,`*`,`0`,`#`,`=`).
+- **`label`/`sublabel` un-reverted.** iOS draws a tall key as *label small (top) /
+  sublabel large (bottom)* ([KeyboardView.swift:1057](../LimeIME-iOS/LimeKeyboard/KeyboardView.swift#L1057)),
+  so to show the digit/face big like Android, `label` now holds the **hint**
+  (letters / popup chars) and `sublabel` holds the **face** char. (Previously
+  swapped — letters rendered large, digit small.)
+
+**iPad shares these files.** There is no `phone_ipad.json`; `LayoutLoader`
+resolves `phone_ipad`→`phone`, so iPad loads the same `phone.json` /
+`phone_shift.json`. No separate iPad phone layout exists or is needed.
 
 ## Verification plan
 
-- Android: open `行列10` with `電話英文鍵盤` in the light keyboard theme and verify all phone-key digit/letter labels are readable.
-- Android: repeat with Shift enabled to verify uppercase phone labels remain readable.
-- Android: verify input behavior is unchanged for keys `1` through `9`, `0`, punctuation, Shift, Space, Delete, Return, `123`, and `ABC` / `中` mode switching.
-- Android: run the usual Gradle compile check from `LimeStudio/` after any source/XML changes.
-- iOS: no immediate fix is indicated, but visually compare iOS phone layout during release QA if phone layout parity is touched.
+- Android: open `行列10` with `電話英文鍵盤` in the light keyboard theme and verify every pad key now shows a readable text label + sub-label (no blank keys). Repeat in the dark and any accent theme.
+- Android: long-press each letter key (`2`–`9`) and confirm the mini popup shows and commits the correct letters (`abc`…`wxyz`), via both sticky-tap and hold-slide.
+- Android: confirm the bottom row reads `*` `0` `#` (real phone pad) and the base symbol popups: `1`→`( ) ' "`, `*`(left of 0)→`< > ^ ~`, `0`→`. , ? !`, `#`(right of 0)→`@ $ % &`, and the `=` cal key→`+ - * /`.
+- Android: with Shift on (`phone_shift`), confirm letters commit **uppercase**, the `中` mode key replaces `ABC`, and the symbol popups switch to the shift set: `1`→`[ ] { }`, `*`→`: ; _ |`, `#`→`£ € ¥ ¢` (`0`→`. , ? !` and the `=` cal key→`+ - * /` stay the same as base).
+- Android: confirm Shift, Space, Delete, Return, `123`, and `ABC` / `中` keys are visually and functionally unchanged.
+- Android: run the usual Gradle compile check from `LimeStudio/` after the XML changes.
+- iOS/iPad: open the `電話英文鍵盤` (phone) keyboard and verify the pad shows digit big / letters small, long-press opens the letter/symbol popups, and Shift switches to uppercase letters + the shift symbol set. Same layout renders on iPad (shared `phone.json`).
 
 ## Retest condition
 
