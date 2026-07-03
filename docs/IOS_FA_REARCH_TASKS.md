@@ -212,7 +212,7 @@ final class TableSyncEngine {
 
 ### Task 4.2: Backup relay
 
-**Files:** Modify `Shared/Database/DBServer.swift` (`func exportSnapshot(to url: URL) throws` — completes/rolls back pending imports, then `VACUUM INTO` temp + rename + write `receipt.json {epochUUID, at}`); KeyboardViewController: honor `export.request.json` during scan (FA-write attempt; silent failure ok); SetupImController `backupDB()` → write request, focus probe, poll receipt ≤ 15 s → zip snapshot + prefs (existing backup zip layout) → cleanup; timeout → typed error surfaced as FA guidance.
+**Files:** Modify `Shared/Database/DBServer.swift` (`func exportSnapshot(to url: URL) throws` — completes/rolls back pending imports, then `VACUUM INTO` temp + rename + write `receipt.json {requestUUID, epochUUID, at}`); KeyboardViewController: honor `export.request.json` during scan (FA-write attempt; silent failure ok); SetupImController `backupDB()` → write request `{requestUUID, expiresAt}` (TTL ~2 min; keyboard ignores expired requests; app accepts only a receipt matching its current requestUUID — IOS_FULL_ACCESS.md addendum "request hygiene"), focus probe, poll receipt ≤ 15 s → zip snapshot + prefs (existing backup zip layout) → cleanup. Timeout UX disambiguates via Darwin liveness (addendum): no `org.limeime.fa.*` ping in the window → "請將鍵盤切換至萊姆輸入法後再試"; ping but no receipt → FA unlock guidance.
 **Tests:** request → engine/scan produces snapshot + receipt in temp App Group; snapshot opens + quick_check passes + contains learned rows; pending in-progress import defers snapshot until completed; `IntegrationTestBackupRestore` updated end-to-end: backup zip → prepareRestore → engine apply → learned data round-trips.
 
 ---
@@ -221,8 +221,8 @@ final class TableSyncEngine {
 
 ### Task 5.1: Tri-state FA detection + heartbeat files
 
-**Files:** Modify `SetupTabView.swift` (`refreshStatus`): `enum FAState { confirmedOn, unknown }` from outbox `receipt/heartbeat.json` freshness (`keyboard_last_seen_at` ≤ 120 s → confirmed; else unknown; legacy shared-defaults keys ignored); KeyboardViewController: heartbeat → outbox file write on appear (FA-on only lands) + mirror all heartbeat/db-error keys to `UserDefaults.standard` (self-diagnosis); banner copy per IOS_FULL_ACCESS_DETECT.md §Corrected model (never error for unknown).
-**Tests:** unit-level state derivation (fixture outbox dirs: fresh/stale/missing → confirmedOn/unknown/unknown).
+**Files:** Modify `SetupTabView.swift` (`refreshStatus`): `enum FAState { confirmedOn, confirmedOff, unknown }` — confirmedOn from outbox `heartbeat.json` freshness (≤ 120 s); confirmedOff ONLY from a live Darwin `org.limeime.fa.off` ping this session (silence never proves off — detection-doc addendum); else unknown; legacy shared-defaults keys ignored. Probe trigger rewritten to `keyboardEnabled && !hasFreshEvidence` (the current `!fullAccessEnabled` guard is circular and never fires on device — detection-doc addendum). KeyboardViewController: on appear post `org.limeime.fa.on` / `.fa.off` (reads `hasFullAccess` directly) + heartbeat → outbox file (FA-on only lands) + mirror heartbeat/db-error keys to `UserDefaults.standard` (self-diagnosis). Banner: confirmedOff renders the same feature-unlock copy as unknown, never an error.
+**Tests:** unit-level state derivation (fixture outbox dirs + simulated fa-ping flags: fresh/stale/missing/off-ping → confirmedOn/unknown/unknown/confirmedOff).
 
 ### Task 5.2: Setup/DB-manager copy + gating + goto-settings
 

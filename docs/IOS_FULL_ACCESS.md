@@ -149,9 +149,9 @@ Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when
 ## Open items
 
 - App-side DB-backed screens (字根資料表 record editor, per-IM counts): the app no longer has a live DB. Decide: move editing into keyboard UI, degrade these screens, or have the app keep a read-model built from the table sources it already holds. If the record editor stays app-side, edits travel as a per-table append-only op-log (`<stem>.ops.json`, ops bound to that table file's identity) — compacted by supersession, not acks: past a size threshold the app rewrites the table limedb with ops folded in and truncates the log (new file identity makes old ops irrelevant by construction). No global transaction file — the epoch UUID already provides stream identity + reset-on-restore, and a global log would reintroduce the unprunable-queue/ack problem.
-- On-device probe: IMPLEMENTED and installed on WJIP17 (I0, 2026-07-04) — the keyboard measures AG-read / own-write / AG-write / Darwin count / attach-import ms and TYPES the report into the app's probe field, which mirrors it to `AppGroup/probe_report.txt`. Harvest whenever the device is unlocked: launch 萊姆輸入法 (probe field auto-focuses in DEBUG), then `xcrun devicectl device copy from --domain-type appGroupDataContainer --domain-identifier group.org.limeime --source probe_report.txt --destination <out>`. RESIDUE: the FA-OFF rows additionally require toggling Full Access off first (device is currently FA ON). Simulator does not enforce the keyboard sandbox, so there is no sim substitute for the permission rows.
-- Darwin delivery + attach-import mechanics (URI/immutable open, bulk copy): covered by in-process unit tests in I3; cross-process delivery on-device remains part of the probe residue above.
-- Import chunk size: provisional 20k rows/chunk pending the probe's measured rows/sec.
+- On-device probe (step 0, before any build-out): FA OFF, keyboard reads a file from the App Group and writes into its own container — validates the single load-bearing permission assumption on real hardware.
+- Verify Darwin notifications are deliverable in the keyboard extension on current iOS (expected yes; not FA-gated).
+- Measure import time for the largest table (關聯字庫) on the slowest supported device; tune chunk size for the resume marker.
 - Add the bundled `lime.db` copy phase to the LimeKeyboard appex target (fresh-install baseline; only the app target has it today).
 
 ## Test matrix
@@ -166,3 +166,37 @@ Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when
 - FA ON, backup: probe → snapshot → receipt → zip within seconds; learned data included.
 - FA ON, haptics enabled in preferences: key press vibrates; turn FA OFF → haptics silently stop, no error.
 - FA ON → later OFF: keyboard keeps working on its canonical DB; only backup, haptics, and durable status stop; UI degrades to neutral copy.
+
+## Implementation-phase addendum (2026-07-04)
+
+The plan above is unchanged. These notes record clarifications and optional extensions from implementation-phase review; none is a prerequisite for the current IOS_FA_REARCH_TASKS.md tasks unless marked.
+
+### Keyboard-side preference edits (hamburger menu) — the FA asymmetry
+
+- The keyboard's long-press options menu writes 簡繁轉換 / 分離鍵盤 / 字根反查 straight to shared UserDefaults (`KeyboardViewController.swift:3903`, `:3907`, `:3937`; `LIMEPreferenceManager.setReverseLookup`). **FA ON: these land durably and the app sees them on its next read — no code change needed.** FA OFF: silently dropped; the change may appear applied inside the live keyboard process (cfprefsd in-process cache) and then evaporates when the extension is killed. Nothing in the current code gates these writes on `hasFullAccess`.
+- The opposite direction is always safe: app-side edits of the same keys reach the keyboard in every FA state (re-read on appear). So every pref remains fully usable FA OFF via the Settings app; the in-keyboard edit path is the only broken leg.
+- **Optional fix (deliberately NOT in the current tasks):** persist hamburger-editable prefs in the keyboard's own container (always writable) as the authoritative copy, and reconcile back to the app via the probe relay below with last-writer-wins timestamps. Adopt only if FA-OFF durability of three prefs justifies the protocol; the accepted lazy alternative is "hamburger edits are FA-ON-only, app-side edits always work".
+
+### Probe relay (insertText) — a keyboard→app channel FA cannot block
+
+Typing is the keyboard's core function; `documentContextBeforeInput` + `insertText` work in every FA state, on device. That makes the existing probe field a two-way channel:
+
+1. App prefills the probe field with a short magic token and focuses it (existing probe moments: Setup tab, DB tab).
+2. Keyboard on appear sees the token in `documentContextBeforeInput` → recognizes its own containing app's sync field → types one compact payload: protocol version, FA bit, timestamp, pending pref deltas.
+3. App observes its own field binding (instant, no poll), parses, applies, clears the field, resigns focus.
+
+Constraints: LIME must be the summoned (currently active) keyboard; the keyboard visibly pops up (unavoidable — ride the existing probe moments, or gate on a Darwin "pending edits" ping so it only fires when there is something to sync); keep the token short (`documentContextBeforeInput` truncates around the cursor) and read it at `viewDidAppear`/`textDidChange`, not `viewWillAppear` (context can be nil early); debounce once per appear. The token handshake guarantees the payload is never typed into a real text field.
+
+Status: **design option, not yet validated on hardware.** Needs a step-0 spike (WJIP17: token field → keyboard branch → one `insertText`) before anything is built on it. If adopted, FA detection, heartbeat freshness, and pref write-back merge into one round-trip on the existing probe.
+
+### Darwin name-encoded FA report (cheap, recommended alongside Task 5.1)
+
+Darwin notifications carry no payload, but the *name* is free: the keyboard posts `org.limeime.fa.on` or `org.limeime.fa.off` on appear (it reads `hasFullAccess` directly — no write-attempt inference needed). Live-only, but during a probe the app is foreground and listening by construction. This gives:
+
+- **Confirmed OFF** becomes representable (see detection doc addendum) — a state the heartbeat file can never produce.
+- Disambiguation for the backup flow: no Darwin ping during the receipt window → LIME never ran → show "請將鍵盤切換至萊姆輸入法後再試"; ping received but no receipt/heartbeat file → LIME ran and FA is off → show FA unlock guidance. Without liveness these two failures are indistinguishable and the timeout message has to hedge.
+
+### Backup: permission ≠ execution, and request hygiene
+
+- Even FA ON, backup requires a **running LIME instance** — only the keyboard process can read its own container and execute `VACUUM INTO`. The probe summons whatever keyboard is active; if that is Apple's, the request sits until LIME next appears. The user is the fallback switch (globe key), so timeout UX should surface the probe field and the switch instruction rather than only FA guidance.
+- `export.request.json` persists in the App Group, so a timed-out request could be honored hours later, producing a snapshot nobody consumes. Stamp each request with a UUID + TTL: the keyboard ignores expired requests; the app accepts only a receipt matching its current request UUID. (Refines Task 4.2; same files.)
