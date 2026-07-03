@@ -36,6 +36,10 @@ enum SyncPaths {
     static func receipt(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("receipt.json")
     }
+
+    static func heartbeat(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("heartbeat.json")
+    }
 }
 
 enum SyncSignal: String {
@@ -43,6 +47,8 @@ enum SyncSignal: String {
     case outboxUpdated = "org.limeime.outbox.updated"
     case importDone = "org.limeime.import.done"
     case importFailed = "org.limeime.import.failed"
+    case faOn = "org.limeime.fa.on"
+    case faOff = "org.limeime.fa.off"
 }
 
 func postSyncSignal(_ signal: SyncSignal) {
@@ -71,6 +77,99 @@ struct ExportReceipt: Codable, Equatable {
     var requestUUID: String
     var epochUUID: String
     var at: TimeInterval
+}
+
+struct KeyboardHeartbeat: Codable, Equatable {
+    var hasFullAccess: Bool
+    var lastSeenAt: TimeInterval
+    var lastDBError: String?
+}
+
+enum FAState: Equatable {
+    case confirmedOn
+    case confirmedOff
+    case unknown
+}
+
+enum FAStateResolver {
+    // ponytail: fixed freshness window from the FA detection spec; make configurable only if device polling changes.
+    static let heartbeatFreshness: TimeInterval = 120
+
+    static func resolve(heartbeat: KeyboardHeartbeat?,
+                        now: Date = Date(),
+                        faPingThisSession: Bool?) -> FAState {
+        if isFreshOnHeartbeat(heartbeat, now: now) {
+            return .confirmedOn
+        }
+        if faPingThisSession == false {
+            return .confirmedOff
+        }
+        return .unknown
+    }
+
+    static func hasFreshEvidence(heartbeat: KeyboardHeartbeat?,
+                                 now: Date = Date(),
+                                 faPingThisSession: Bool?) -> Bool {
+        isFreshOnHeartbeat(heartbeat, now: now) || faPingThisSession != nil
+    }
+
+    static func isFreshOnHeartbeat(_ heartbeat: KeyboardHeartbeat?,
+                                   now: Date = Date()) -> Bool {
+        guard let heartbeat, heartbeat.hasFullAccess else { return false }
+        return now.timeIntervalSince1970 - heartbeat.lastSeenAt <= heartbeatFreshness
+    }
+}
+
+final class FAPingObserver {
+    private let onPing: (Bool) -> Void
+    private var observer: UnsafeRawPointer?
+
+    init(onPing: @escaping (Bool) -> Void) {
+        self.onPing = onPing
+        self.observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        addObserver(for: .faOn)
+        addObserver(for: .faOff)
+    }
+
+    deinit {
+        guard let observer else { return }
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        CFNotificationCenterRemoveObserver(center, observer,
+                                           CFNotificationName(SyncSignal.faOn.rawValue as CFString),
+                                           nil)
+        CFNotificationCenterRemoveObserver(center, observer,
+                                           CFNotificationName(SyncSignal.faOff.rawValue as CFString),
+                                           nil)
+    }
+
+    private func addObserver(for signal: SyncSignal) {
+        guard let observer else { return }
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observer,
+            { _, observer, name, _, _ in
+                guard let observer,
+                      let rawName = name?.rawValue as String?
+                else { return }
+                let monitor = Unmanaged<FAPingObserver>
+                    .fromOpaque(observer)
+                    .takeUnretainedValue()
+                let hasFullAccess: Bool
+                if rawName == SyncSignal.faOn.rawValue {
+                    hasFullAccess = true
+                } else if rawName == SyncSignal.faOff.rawValue {
+                    hasFullAccess = false
+                } else {
+                    return
+                }
+                DispatchQueue.main.async {
+                    monitor.onPing(hasFullAccess)
+                }
+            },
+            signal.rawValue as CFString,
+            nil,
+            .deliverImmediately)
+    }
 }
 
 struct FileIdentity: Equatable {

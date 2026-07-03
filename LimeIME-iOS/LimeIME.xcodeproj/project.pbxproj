@@ -14,6 +14,7 @@
 		0638AFC436CE8D769E24B98D /* SetupImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9627C2D44209CBC7935864D /* SetupImControllerTest.swift */; };
 		06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */; };
 		E4A901B7C3D24F6089ABCDF1 /* EpochRestoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */; };
+		FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
 		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
@@ -467,6 +468,7 @@
 		CC11223344556677889900DD /* phone_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_shift.json; sourceTree = "<group>"; };
 		CC3A5071216F1AB96116BC3F /* DBServerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBServerTest.swift; sourceTree = "<group>"; };
 		E22A220E220E220E220E2201 /* EmojiAttachTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmojiAttachTest.swift; sourceTree = "<group>"; };
+		FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAStateTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
 		D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad.json; sourceTree = "<group>"; };
@@ -586,9 +588,10 @@
 			isa = PBXGroup;
 			children = (
 				B4F8A3C2D6E95F0A3B2C7D8E /* EngineLatencyBenchmark.swift */,
-				CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
-				E22A220E220E220E220E2201 /* EmojiAttachTest.swift */,
-				6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
+					CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
+					E22A220E220E220E220E2201 /* EmojiAttachTest.swift */,
+					FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */,
+					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 				6E1A5C0D9B234F0187A6D442 /* TableStoreTest.swift */,
 				6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
@@ -1293,8 +1296,9 @@
 				EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */,
 				A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */,
 				EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */,
-				E22A220E220E220E220E2202 /* EmojiAttachTest.swift in Sources */,
-				6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
+					E22A220E220E220E220E2202 /* EmojiAttachTest.swift in Sources */,
+					FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */,
+					6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				6E1A5C0D9B234F0187A6D452 /* TableStore.swift in Sources */,
 				6E1A5C0D9B234F0187A6D455 /* TableSyncEngine.swift in Sources */,

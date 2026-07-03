@@ -1,4 +1,4 @@
-// SetupTabView.swift
+﻿// SetupTabView.swift
 // LimeIME-iOS
 //
 // App Setup tab — keyboard activation guide, status detection, about.
@@ -154,15 +154,17 @@ struct SetupTabView: View {
     // same system API iOS uses to build the keyboard switcher.  It updates the
     // moment the user adds or removes a keyboard in Settings, no heartbeat needed.
     @State private var keyboardEnabled   = false
-    // fullAccessEnabled: can only be known once the keyboard extension has run at
-    // least once and written the value to the shared App Group.
-    @State private var fullAccessEnabled = false
+    @State private var faState: FAState = .unknown
+    @State private var faPingThisSession: Bool?
+    @State private var hasFreshFAEvidence = false
+    @State private var faPingObserver: FAPingObserver?
+    @State private var showSettingsGuidance = false
 
     @State private var pollTimer: Timer?
 
     // Invisible probe field: when the user taps it and types with the keyboard,
-    // the extension writes keyboard_has_full_access to the App Group so the Full
-    // Access state becomes accurate without leaving this screen.
+    // the extension reports FA state through Darwin and a fresh outbox heartbeat
+    // when Full Access allows the write.
     @State private var probeText: String = ""
     @FocusState private var probeFocused: Bool
 
@@ -205,15 +207,15 @@ struct SetupTabView: View {
                         SetupStepRow(text: "開啟萊姆輸入法") {
                             ToggleSwitchIcon()
                         }
-                        SetupStepRow(text: "開啟「允許完整取用」") {
+                        SetupStepRow(text: "開啟「允許完整取用」（建議）") {
                             ToggleSwitchIcon()
                         }
                     }
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
                     // ── Explanatory note (hidden once Full Access is on) ──
-                    if !fullAccessEnabled {
-                        Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
+                    if faState != .confirmedOn {
+                        Text("完整取用用於：備份已學習字詞、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -230,15 +232,7 @@ struct SetupTabView: View {
                     .buttonStyle(LimeTonalButtonStyle())
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
-                    // Hidden once fully enabled (green banner) — the hint only
-                    // helps while the user is still hunting for the keyboard.
-                    if detectionState != .fullyEnabled {
-                        Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-                    }
+                    settingsGuidance
 
                     // Invisible 1 × 1 probe — preserves heartbeat polling
                     // without showing a text field in the new layout.
@@ -287,12 +281,13 @@ struct SetupTabView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
+                ensureFAPingObserver()
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
                 // Auto-focus the invisible probe so the LimeIME extension's
                 // viewWillAppear fires (if LimeIME is the active keyboard)
-                // and writes fresh hasFullAccess to the App Group.
+                // and sends fresh FA evidence.
                 triggerProbeIfNeeded()
                 #if DEBUG
                 faProbeSetup()   // FA-PROBE-I0 (temporary)
@@ -310,9 +305,9 @@ struct SetupTabView: View {
                     stopPolling()
                 }
             }
-            .onChange(of: fullAccessEnabled) { enabled in
-                // Once Full Access is confirmed, dismiss the keyboard.
-                if enabled { probeFocused = false }
+            .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
+                // Once live evidence arrives, stop probing.
+                if hasFreshEvidence { probeFocused = false }
             }
             .onChange(of: probeText) { _ in
                 refreshStatus()
@@ -336,6 +331,7 @@ struct SetupTabView: View {
             // view context, where the @EnvironmentObject and @State are valid.
             .onReceive(NotificationCenter.default.publisher(
                 for: UIApplication.didBecomeActiveNotification)) { _ in
+                ensureFAPingObserver()
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
@@ -472,8 +468,8 @@ struct SetupTabView: View {
 
     private var statusText: String {
         switch detectionState {
-        case .fullyEnabled:        return "萊姆輸入法已啟用"
-        case .enabledNoFullAccess: return "鍵盤已啟用，但尚未允許完整取用"
+        case .fullyEnabled:        return "完整取用權限：已開啟（已學習字詞會納入備份）"
+        case .enabledNoFullAccess: return "開啟完整取用權限可備份已學習字詞並啟用按鍵震動回饋"
         case .notEnabled:          return "尚未啟用萊姆輸入法鍵盤"
         }
     }
@@ -481,7 +477,7 @@ struct SetupTabView: View {
     private var statusSymbol: String {
         switch detectionState {
         case .fullyEnabled:        return "checkmark.circle.fill"
-        case .enabledNoFullAccess: return "exclamationmark.triangle.fill"
+        case .enabledNoFullAccess: return "info.circle.fill"
         case .notEnabled:          return "xmark.circle.fill"
         }
     }
@@ -502,6 +498,30 @@ struct SetupTabView: View {
         }
     }
 
+    @ViewBuilder
+    private var settingsGuidance: some View {
+        if detectionState != .fullyEnabled {
+            let text = "看到「萊姆輸入法」頁 → 點「Keyboards」；停在設定主頁 → Apps > 萊姆輸入法 > Keyboards。"
+            if showSettingsGuidance {
+                Label(text, systemImage: "arrow.turn.down.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(SettingsTheme.warningInk)
+                    .padding(.vertical, SettingsMetrics.statusVerticalPadding)
+                    .padding(.horizontal, SettingsMetrics.statusHorizontalPadding)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(SettingsTheme.statusTintYellow)
+                    .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
+                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+            } else {
+                Text(text)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+            }
+        }
+    }
+
     // MARK: - Detection
 
     private enum DetectionState {
@@ -510,7 +530,7 @@ struct SetupTabView: View {
 
     private var detectionState: DetectionState {
         guard keyboardEnabled else { return .notEnabled }
-        return fullAccessEnabled ? .fullyEnabled : .enabledNoFullAccess
+        return faState == .confirmedOn ? .fullyEnabled : .enabledNoFullAccess
     }
 
     private func refreshStatus() {
@@ -546,21 +566,33 @@ struct SetupTabView: View {
         keyboardEnabled = viaInputModes || viaAppleKeyboards
 
         if keyboardEnabled {
-            let suite = UserDefaults(suiteName: groupSuite)
-            suite?.synchronize()  // force cross-process refresh
-            // `bool(forKey:)` returns false for missing keys, which creates a
-            // false-positive orange banner when the extension has never run yet
-            // (e.g. keyboard just enabled + Full Access just granted).
-            // Instead: treat MISSING key as "unknown → assume enabled".
-            // The extension explicitly writes `false` when it finds Full Access
-            // denied, so orange only appears when we KNOW it is actually denied.
-            if let storedValue = suite?.object(forKey: "keyboard_has_full_access") as? Bool {
-                fullAccessEnabled = storedValue   // definitive value from extension
-            } else {
-                fullAccessEnabled = true          // never ran yet — assume granted
-            }
+            let heartbeat = readKeyboardHeartbeat()
+            faState = FAStateResolver.resolve(heartbeat: heartbeat,
+                                              faPingThisSession: faPingThisSession)
+            hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
+                                                                  faPingThisSession: faPingThisSession)
         } else {
-            fullAccessEnabled = false
+            faState = .unknown
+            hasFreshFAEvidence = false
+        }
+    }
+
+    private func readKeyboardHeartbeat() -> KeyboardHeartbeat? {
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupSuite),
+              let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL))
+        else { return nil }
+        return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+    }
+
+    private func ensureFAPingObserver() {
+        guard faPingObserver == nil else { return }
+        faPingObserver = FAPingObserver { hasFullAccess in
+            faPingThisSession = hasFullAccess
+            refreshStatus()
+            if hasFreshFAEvidence {
+                probeFocused = false
+            }
         }
     }
 
@@ -582,15 +614,16 @@ struct SetupTabView: View {
     }
 
     /// Focuses the invisible probe field (with a short delay) when the keyboard
-    /// is enabled but Full Access hasn't been confirmed yet.  Focusing any text
-    /// field causes iOS to load whichever keyboard is currently active; if that
-    /// is LimeIME, its UIInputViewController.viewWillAppear fires and writes a
-    /// fresh `keyboard_has_full_access` value to the App Group — which the
-    /// 1-second poll then picks up automatically.
+    /// is enabled but this app session has no fresh FA evidence yet. Focusing any
+    /// text field causes iOS to load whichever keyboard is currently active; if
+    /// that is LimeIME, its UIInputViewController.viewWillAppear fires and sends
+    /// a Darwin ping plus, when FA is on, a fresh heartbeat file.
     private func triggerProbeIfNeeded() {
-        guard keyboardEnabled && !fullAccessEnabled else { return }
+        guard keyboardEnabled && !hasFreshFAEvidence else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            probeFocused = true
+            if keyboardEnabled && !hasFreshFAEvidence {
+                probeFocused = true
+            }
         }
     }
 
@@ -636,8 +669,22 @@ struct SetupTabView: View {
     #endif
 
     private func openLimeKeyboardSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
+        showSettingsGuidance = true
+        // ponytail: fixed 20 s guidance window; make stateful only if Settings deep-link telemetry needs it.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            showSettingsGuidance = false
+        }
+
+        let plainURL = URL(string: UIApplication.openSettingsURLString)
+        let firstURL = Bundle.main.bundleIdentifier
+            .flatMap { URL(string: "\(UIApplication.openSettingsURLString)/\($0)") }
+            ?? plainURL
+        guard let firstURL else { return }
+        UIApplication.shared.open(firstURL) { opened in
+            if !opened, let plainURL {
+                UIApplication.shared.open(plainURL)
+            }
+        }
     }
 
     // MARK: - Version

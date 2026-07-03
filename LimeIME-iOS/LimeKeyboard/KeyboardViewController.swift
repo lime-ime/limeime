@@ -311,13 +311,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         LayoutLoader.prefetchCommonLayouts()
         setupKeyboardUI()
         applyHeight()
-        // Heartbeat for the Settings app's Setup tab. Writes current state, not a
-        // one-way latch — the host app clears these on foreground and we re-assert
-        // them here (and again in viewWillAppear) so the banner can reflect reality
-        // across enable/disable/Full-Access toggles.
-        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
-        sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        reportFullAccessStatus()
         registerTableUpdateObserver()
         lastKnownDatabaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
         lastKnownKeyboardRuntimeGeneration = sharedDefaults?.integer(
@@ -348,11 +342,42 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 self?.setupDatabase(forceReopen: databaseWasReplaced)
             }
         }
-        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
-        sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        reportFullAccessStatus()
         requestTableSyncScanIfReady()
         initOnStartInput()
+    }
+
+    private func reportFullAccessStatus() {
+        let currentHasFullAccess = hasFullAccess
+        let now = Date().timeIntervalSince1970
+        let lastDBError = UserDefaults.standard.string(forKey: "keyboard_db_last_error")
+
+        // Legacy App-Group heartbeat stays until I6 removes shared-defaults status writes.
+        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
+        sharedDefaults?.set(currentHasFullAccess, forKey: "keyboard_has_full_access")
+        sharedDefaults?.set(now, forKey: "keyboard_last_seen_at")
+        sharedDefaults?.synchronize()
+
+        let localDefaults = UserDefaults.standard
+        localDefaults.set(true, forKey: "keyboard_extension_loaded")
+        localDefaults.set(currentHasFullAccess, forKey: "keyboard_has_full_access")
+        localDefaults.set(now, forKey: "keyboard_last_seen_at")
+        if let lastDBError, !lastDBError.isEmpty {
+            localDefaults.set(lastDBError, forKey: "keyboard_db_last_error")
+        } else {
+            localDefaults.removeObject(forKey: "keyboard_db_last_error")
+        }
+        localDefaults.synchronize()
+
+        postSyncSignal(currentHasFullAccess ? .faOn : .faOff)
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+              let data = try? JSONEncoder().encode(KeyboardHeartbeat(
+                hasFullAccess: currentHasFullAccess,
+                lastSeenAt: now,
+                lastDBError: lastDBError))
+        else { return }
+        try? atomicWrite(data, to: SyncPaths.heartbeat(baseURL))
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -971,12 +996,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         sharedDefaults?.set(message, forKey: "keyboard_db_last_error")
         sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
         sharedDefaults?.synchronize()
+        UserDefaults.standard.set(message, forKey: "keyboard_db_last_error")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
+        UserDefaults.standard.synchronize()
     }
 
     private func clearDatabaseSetupFailure() {
         sharedDefaults?.removeObject(forKey: "keyboard_db_last_error")
         sharedDefaults?.removeObject(forKey: "keyboard_db_last_error_at")
         sharedDefaults?.synchronize()
+        UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error")
+        UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error_at")
+        UserDefaults.standard.synchronize()
     }
 
     private func applyResolvedActiveIMLayout() {

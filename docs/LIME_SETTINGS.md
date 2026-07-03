@@ -212,13 +212,13 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 | --- | --- | --- |
 | 1 | `Image(systemName: "keyboard")` `.title3` `.accentColor` | `"輕觸「鍵盤」"` |
 | 2 | `ToggleSwitchIcon()` (green capsule + white thumb) | `"開啟萊姆輸入法"` |
-| 3 | `ToggleSwitchIcon()` | `"開啟「允許完整取用」"` |
+| 3 | `ToggleSwitchIcon()` | `"開啟「允許完整取用」（建議）"` |
 
-**Explanatory note** (`.subheadline`, `.secondary`, centered): `"萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"` — **hidden once Full Access is granted** (`fullAccessEnabled`), since the note only explains why to turn it on.
+**Explanatory note** (`.subheadline`, `.secondary`, centered): `"完整取用用於：備份已學習字詞、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。"` — **hidden once Full Access is confirmed on** (`FAState.confirmedOn`), since the note only explains the optional unlock.
 
-**CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). A `.footnote`/`.secondary` hint follows it: `"若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。"` — **hidden once the banner is green** (`detectionState == .fullyEnabled`), since the hint only helps while the keyboard isn't fully enabled yet.
+**CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). A `.footnote`/`.secondary` hint follows it: `"看到「萊姆輸入法」頁 → 點「Keyboards」；停在設定主頁 → Apps > 萊姆輸入法 > Keyboards。"` After the tap, the same two-landing guidance is elevated in a prominent status-tint block for about 20 seconds.
 
-**Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !fullAccessEnabled`; causes the keyboard extension's `viewWillAppear` to write a fresh `keyboard_has_full_access` to the App Group.
+**Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !hasFreshEvidence`, where fresh evidence is a fresh heartbeat file or any `org.limeime.fa.*` ping this app session. This avoids gating the probe on the answer it is trying to fetch.
 
 **Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders just above the About footer.
 
@@ -260,13 +260,13 @@ NavigationStack (.navigationBarHidden(true))
         │               .font(.title3).foregroundColor(.accentColor)
         │       }
         │       SetupStepRow(text: "開啟萊姆輸入法")         { ToggleSwitchIcon() }
-        │       SetupStepRow(text: "開啟「允許完整取用」")   { ToggleSwitchIcon() }
+        │       SetupStepRow(text: "開啟「允許完整取用」（建議）")   { ToggleSwitchIcon() }
         │   }
         │   .padding(.horizontal, 24)
         │
         ├── // ── Explanatory note (hidden once Full Access is on) ──────
-        │   if !fullAccessEnabled {
-        │       Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
+        │   if faState != .confirmedOn {
+        │       Text("完整取用用於：備份已學習字詞、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。")
         │           .font(.subheadline).foregroundColor(.secondary)
         │           .multilineTextAlignment(.center)
         │           .padding(.horizontal, 24)
@@ -288,7 +288,7 @@ NavigationStack (.navigationBarHidden(true))
         │   TextField("", text: $probeText)   // 1×1 pt, opacity 0.01, accessibilityHidden
         │       .focused($probeFocused)       // auto-focused when keyboard enabled but Full
         │       .frame(width: 1, height: 1)   // Access not confirmed; causes LimeKeyboard's
-        │       .opacity(0.01)               // viewWillAppear to write keyboard_has_full_access
+        │       .opacity(0.01)               // viewWillAppear to send FA ping/heartbeat
         │
         ├── // ── Installed-IM status (§4.3) ───────────────────────────
         │   imStatusSection          // none/disabled/ok banner + optional CTA → 輸入法 tab
@@ -343,12 +343,19 @@ private struct SetupStepRow<Icon: View>: View {
 
 #### 4.1.2 openLimeKeyboardSettings()
 
-Opens the app's own Settings page via `openSettingsURLString`. `App-Prefs:` deep links are intentionally not used — `canOpenURL` returns `true` for whitelisted schemes regardless of path, causing silent navigation to the wrong page.
+Opens the app's own Settings page via the bundle-ID-suffixed `openSettingsURLString` first, falling back to plain `openSettingsURLString` if `open` reports failure. `App-Prefs:` deep links are intentionally not used — `canOpenURL` returns `true` for whitelisted schemes regardless of path, causing silent navigation to the wrong page.
 
 ```swift
 private func openLimeKeyboardSettings() {
-    if let url = URL(string: UIApplication.openSettingsURLString) {
-        UIApplication.shared.open(url)
+    let plainURL = URL(string: UIApplication.openSettingsURLString)
+    let firstURL = Bundle.main.bundleIdentifier
+        .flatMap { URL(string: "\(UIApplication.openSettingsURLString)/\($0)") }
+        ?? plainURL
+    guard let firstURL else { return }
+    UIApplication.shared.open(firstURL) { opened in
+        if !opened, let plainURL {
+            UIApplication.shared.open(plainURL)
+        }
     }
 }
 ```
@@ -383,17 +390,17 @@ to `RecognizerIntent`. This is **not** part of the iOS setup tab.
 
 ### 4.2 Status Banner
 
-Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The invisible probe field (§4.1) is auto-focused when `keyboardEnabled && !fullAccessEnabled` to trigger the keyboard extension's `viewWillAppear`, which writes a fresh `keyboard_has_full_access` to the App Group.
+Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The invisible probe field (§4.1) is auto-focused when `keyboardEnabled && !hasFreshEvidence` to trigger the keyboard extension's `viewWillAppear`, which sends a live Darwin FA ping and, with Full Access on, writes a fresh `outbox/heartbeat.json`.
 
 **Detection logic** (`refreshStatus()`):
 
 - `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"org.limeime"`. Does not use `keyboard_extension_loaded`.
-- `fullAccessEnabled`: reads `keyboard_has_full_access` from `UserDefaults(suiteName: "group.org.limeime")`. If the key is absent (extension has never run), assumes `true` to avoid a false-positive orange banner right after first enable.
+- `faState`: ignores legacy shared-default heartbeat keys. `confirmedOn` requires `outbox/heartbeat.json` to decode, be fresh (≤120 seconds), and report `hasFullAccess == true`. `confirmedOff` requires a live `org.limeime.fa.off` ping this app session. Everything else is `unknown`.
 
 | State | Color | SF Symbol | Banner text |
 | --- | --- | --- | --- |
-| `fullyEnabled` | `.green` | `checkmark.circle.fill` | `"萊姆輸入法已啟用"` |
-| `enabledNoFullAccess` | `.orange` | `exclamationmark.triangle.fill` | `"鍵盤已啟用，但尚未允許完整取用"` |
+| `fullyEnabled` | `.green` | `checkmark.circle.fill` | `"完整取用權限：已開啟（已學習字詞會納入備份）"` |
+| `enabledNoFullAccess` | `.orange` | `info.circle.fill` | `"開啟完整取用權限可備份已學習字詞並啟用按鍵震動回饋"` |
 | `notEnabled` | `.red` | `xmark.circle.fill` | `"尚未啟用萊姆輸入法鍵盤"` |
 
 Banner renders as `Label(text, systemImage:)` in `.subheadline` font, inside a `secondarySystemBackground` rounded-rect card (`.cornerRadius(10)`).
@@ -984,9 +991,10 @@ NavigationStack
         │
         ├── Text("資料庫管理").font(.largeTitle).bold()   // rendered in-content on ALL devices
         │
-        ├── dbAction(footer: "備份包含所有字根、關聯字及喜好設定。")     // no section header
+        ├── dbAction(footer: backupFooter)     // confirmed ON: backup note; otherwise FA unlock note
         │   └── Button "備份資料庫"  systemImage: "square.and.arrow.up"
         │       .buttonStyle(.borderedProminent).controlSize(.large)   // filled primary action
+        │       .disabled(isWorking || faState != .confirmedOn)
         │       → performBackup() → UIActivityViewController (Files, AirDrop, Mail…)
         │
         ├── dbAction(footer: "還原後鍵盤將重新載入資料庫。")
@@ -1019,15 +1027,17 @@ layout is identical on iPhone and iPad.
 
 ### 7.2 Backup Behaviour
 
-1. Call `DBServer.shared.backupDatabase(uri: tempZip, progress:)` from a `Task.detached(priority: .userInitiated)`. The call is dispatched off the main actor — calling it via `MainActor.run` would block SwiftUI from rendering the progress overlay until the work finished. `DBServer` is a plain class (not `@MainActor`-isolated) and GRDB serializes the queue internally, so background dispatch is safe.
-2. `backupDatabase` zips `lime.db` (+ journal + filtered shared-prefs plist) into a temp `.zip` and accepts an optional `Progress` for ZIPFoundation to update during `addEntry`. The view observes `progress.fractionCompleted` via KVO and republishes to a `@State backupProgress: Double`.
+Backup is disabled unless `FAState == .confirmedOn` (fresh heartbeat). When disabled, the footer is exactly `"開啟完整取用權限以備份已學習字詞"`. The tab starts the same invisible probe-field freshness check on appear, so a user who has already enabled Full Access sees the button enable after the heartbeat lands. Restore buttons stay enabled regardless of FA state.
+
+1. Call `SetupImController.backupDBAsync()` from a SwiftUI `Task`; the controller writes the keyboard export request, waits for a matching receipt, and builds the shareable zip off the main actor.
+2. Timeout copy is split by live FA pings during the backup window: ping seen but no receipt → Full Access guidance; no ping → `"請將鍵盤切換至萊姆輸入法後再試"`.
 3. After `closeDatabase()` (required to checkpoint GRDB's WAL into the main file), the `defer` block **must** rebuild the datasource: `datasource = try? LimeDB(path: livePath)`. `LimeDB.openDBConnection()` is a no-op stub on iOS, so without the explicit rebuild every later `dbQueue.write` throws SQLITE_MISUSE 21 ("out of memory" in `sqlite3_errmsg`), the IM list silently empties (`tableHasData` swallows the error via `try?`), and reinstall fails with the same error. Mirror the pattern used by `restoreDatabase()`.
 4. Present via a `UIActivityViewController` bridge (`ShareSheet`) so the user can save to Files, send via AirDrop, etc.
 5. Clean up temp file after the share sheet is dismissed.
 
 ### 7.3 Restore Behaviour
 
-1. Show a **confirmation alert** (title `確認還原`, buttons `還原` destructive / `取消`) before proceeding: "還原後目前所有資料將被取代，確定繼續？". Both restore actions share this alert.
+1. Show a **confirmation alert** (title `確認還原`, buttons `還原` destructive / `取消`) before proceeding: "還原後目前所有資料將被取代，確定繼續？". Both restore actions share this alert and remain enabled regardless of Full Access state.
 2. On confirm, open a `.fileImporter` restricted to `.item` (to pick `.db` / `.limedb` files).
 3. On file selection:
    a. Stop any in-flight DB access (notify keyboard extension via App Group flag if needed).
@@ -1054,7 +1064,7 @@ State transitions:
 
 Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupProgress = 0`, and writes the error to `statusMessage`.
 
-**Why the preparing-share phase exists.** Verified on WJIP17 (iPhone 17 Pro): with a real-sized `lime.db` (post-learning, multi-MB), the dominant cost is *not* the zip — it is the `UIActivityViewController` initialization that runs synchronously on the main thread when SwiftUI presents `.sheet(isPresented: $showShareSheet)`. Tapping `備份資料庫` previously flashed the determinate bar for a fraction of a second and then locked the DB Manager view for ~20 seconds with no spinner until the share sheet eventually drew. Keeping `isWorking = true` and pivoting the overlay text to `準備備份中…` covers the whole window so the user always sees feedback. Do not move the `isWorking = false` / `preparingShare = false` resets back into the `MainActor.run` block that follows `try server.backupDatabase(...)` — that re-introduces the freeze.
+**Why the preparing-share phase exists.** Verified on WJIP17 (iPhone 17 Pro): with a real-sized backup, the dominant visible cost can be request/receipt wait plus `UIActivityViewController` initialization. The DB Manager keeps `isWorking = true` and pivots the overlay text to `準備備份中…` so the user always sees feedback before the share sheet appears.
 
 ---
 

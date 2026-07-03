@@ -160,6 +160,17 @@ final class SetupImController: BaseController {
         try requestKeyboardBackup(server: dbServer)
     }
 
+    func backupDBAsync() async -> Result<URL, Error> {
+        let server = dbServer
+        return await Task.detached(priority: .userInitiated) {
+            do {
+                return .success(try requestKeyboardBackup(server: server))
+            } catch {
+                return .failure(error)
+            }
+        }.value
+    }
+
     // MARK: - Restore
 
     func restoreDB(from url: URL, view: (any SetupImView)?) {
