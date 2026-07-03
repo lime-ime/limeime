@@ -156,6 +156,7 @@ final class LimeDB {
         let emojiDBURL = Bundle.main.url(forResource: "emoji", withExtension: "db")
         emojiAttached = emojiDBURL != nil
         var config = Configuration()
+        config.busyMode = .timeout(5)
         config.prepareDatabase { db in
             try db.execute(sql: "PRAGMA journal_mode = WAL")
             try db.execute(sql: "PRAGMA cache_size = -4096")   // 4 MB page cache
