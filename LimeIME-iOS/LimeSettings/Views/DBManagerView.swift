@@ -276,6 +276,13 @@ struct DBManagerView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             if !hasFreshFAEvidence {
                 probeFocused = true
+                // Auto-dismiss the FA-detection probe keyboard (see SetupTabView). The
+                // BACKUP probe (triggerBackupProbe) is intentionally NOT auto-dismissed —
+                // backup needs the keyboard running long enough to write its snapshot.
+                // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    if !backupAwaitingReceipt { probeFocused = false }
+                }
             }
         }
     }

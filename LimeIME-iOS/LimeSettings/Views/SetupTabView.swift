@@ -594,6 +594,12 @@ struct SetupTabView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             if keyboardEnabled && !hasFreshFAEvidence {
                 probeFocused = true
+                // Auto-dismiss so the popup keyboard doesn't linger — even when the active
+                // keyboard isn't LIME and no FA ping arrives to hide it sooner.
+                // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    probeFocused = false
+                }
             }
         }
     }
