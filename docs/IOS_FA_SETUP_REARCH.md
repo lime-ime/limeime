@@ -133,11 +133,15 @@ Amendments discovered during execution; the sections above stay as written, this
 
 | Iteration | Status | Commits (branch `ios-fa-rearch`) |
 |---|---|---|
-| I0 probes | Installed on WJIP17; results = DEVICE RESIDUE (device locked; FA currently ON — FA-OFF rows need a manual toggle). Probe code kept `#if DEBUG` until Final Gate. | rides I1.3 commit |
+| I0 probes | Probe SUPERSEDED before device readout: I5's fa.on/fa.off + heartbeat channel replaces FA detection, and on an FA-OFF device the product itself proves the AG-read premise (install a table → keyboard imports it). Probe code deleted in I6. Device rows remain Final-Gate residue. | rides I1.3 commit; deleted `48dc63df` |
 | I1 foundation | COMPLETE — full LimeTests suite + build green in one process | `d1451708`, `8678fae5`, `df0a8cdb` |
 | I2.1 assets | COMPLETE — emoji.db + FTS5 prebuild; seed lime.db stripped; Android-safety verified (Android seeds emoji at runtime) | `7cbc32ba` |
-| I2.2 emoji attach | IN FLIGHT (Codex) | — |
-| Docs addenda | Implementation-phase addenda folded into tasks 4.2 / 5.1 | `d49e6faf` |
+| I2.2 emoji attach | COMPLETE — ATTACH immutable, qualified queries, FK-free emoji_user rebuild, seed machinery deleted (net −284) | `459e71ff` |
+| I3 desired-state sync | COMPLETE — stubs pre-wired for parallel dispatch; TableStore + TableSyncEngine built concurrently; wiring rerouted installs (已交付鍵盤). Known-red seam to I4 documented in `8faf3146`. | `531328b8`, `4310e9b9`, `8fc5fd5c`, `8faf3146` |
+| I4 restore/backup | COMPLETE — epoch restore (zip/factory/skew), VACUUM INTO relay with requestUUID+TTL, IntegrationTestBackupRestore ported; full suite green again | `ca733832` |
+| I5 detection/UI/spec | COMPLETE — FAState tri-state + evidence-based probe trigger, DB-manager gating, goto-settings variant, LIME_SETTINGS.md §4/§7 | `99bdbbf2` |
+| I6 legacy removal | COMPLETE — shared-defaults signals deleted, probe deleted, hanconvertv2 iOS phase removed, grep gates clean (net −197) | `48dc63df` |
+| Docs addenda | Implementation-phase addenda folded into tasks 4.2 / 5.1; flight log maintained in-flight | `d49e6faf`, `c8fbdb76` |
 
 ### I0 — how the probe actually works (differs from T1–T3 as written)
 

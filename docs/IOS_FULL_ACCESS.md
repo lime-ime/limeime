@@ -149,10 +149,8 @@ Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when
 ## Open items
 
 - App-side DB-backed screens (字根資料表 record editor, per-IM counts): the app no longer has a live DB. Decide: move editing into keyboard UI, degrade these screens, or have the app keep a read-model built from the table sources it already holds. If the record editor stays app-side, edits travel as a per-table append-only op-log (`<stem>.ops.json`, ops bound to that table file's identity) — compacted by supersession, not acks: past a size threshold the app rewrites the table limedb with ops folded in and truncates the log (new file identity makes old ops irrelevant by construction). No global transaction file — the epoch UUID already provides stream identity + reset-on-restore, and a global log would reintroduce the unprunable-queue/ack problem.
-- On-device probe (step 0, before any build-out): FA OFF, keyboard reads a file from the App Group and writes into its own container — validates the single load-bearing permission assumption on real hardware.
-- Verify Darwin notifications are deliverable in the keyboard extension on current iOS (expected yes; not FA-gated).
-- Measure import time for the largest table (關聯字庫) on the slowest supported device; tune chunk size for the resume marker.
-- Add the bundled `lime.db` copy phase to the LimeKeyboard appex target (fresh-install baseline; only the app target has it today).
+- DEVICE RESIDUE (the only remaining hardware validation, needs a human to toggle Full Access on WJIP17): run the FA-OFF rows of the test matrix below on device. The old step-0 probe is superseded — with the shipped architecture, installing a table FA-OFF and typing with it IS the App-Group-read proof; the fa.on/fa.off Darwin pings + heartbeat file cover cross-process signal delivery. Import chunk size shipped at 20k rows (`// ponytail:` in TableSyncEngine) — revisit only if device timing shows multi-second chunks.
+- DONE in I1/I6 (kept here for history): appex `lime.db` copy phase added; legacy shared-defaults signals removed; hanconvertv2 iOS copy phase removed (asset was unreferenced in Swift).
 
 ## Test matrix
 
