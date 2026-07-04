@@ -167,3 +167,37 @@ One combined deploy, fully headless: the keyboard measures AG-read / own-write /
 - **Task 5.1**: `FAState {confirmedOn, confirmedOff, unknown}` — confirmedOff only from a live `org.limeime.fa.off` ping (silence never proves off); keyboard posts `fa.on`/`fa.off` on appear; probe trigger rewritten to `keyboardEnabled && !hasFreshEvidence` (old `!fullAccessEnabled` guard was circular — never fires on device).
 - **I3 T-kb note**: the import status banner rides the existing LimeToast surface — no new opaque chrome over the UIInputView blur, per IOS_LIGHT_DARK.md §5/§7; text-only progress; calm failure styling.
 - Parked options (addenda, deliberately not tasked): insertText probe relay (needs hardware spike), keyboard-side pref-edit durability FA OFF (accepted: hamburger edits are FA-ON-durable only; app-side edits always work).
+
+---
+
+# Campaign 2 — v2 cold/hot transport (2026-07-04, autonomous goal mode)
+
+Triggered by device testing: v1's app-side desired-state sources left app screens (IM list, editors) on a divergent DB. IOS_FULL_ACCESS.md is rewritten to v2 (cold/hot model) and is the sole design source for this campaign. Same goal-mode contract and ground rules as Campaign 1, with ONE change:
+
+**NO device gates anywhere.** All verification is simulator-autonomous: unit suite + build + ios-visual-verify-methodology end-to-end (XCUITest-driven + simctl orchestration + screenshot reads — no Computer Use dependency). Device testing is the user's own manual acceptance afterward, not a gate.
+
+## Iterations
+
+### J1 — Cold plumbing (app side)
+`sync_rev(stem, rev, mode)` maintenance inside LimeDB mutating paths (imports, record add/update/delete, clearTable — same-transaction bumps; installs/downloads → `merge`); epoch bump helpers (restore/factory only); `ColdPublisher`: `VACUUM INTO` temp → rename `AppGroup/cold.limedb` → `cold.meta.json {generation, epochUUID, schemaVersion}` after → doorbell; debounce (flow completion + app background). Unit tests: rev bumps per mutation class, publish atomicity (sidecar-after), generation monotonicity, epoch only on restore.
+
+### J2 — Engine retarget (keyboard side)
+`TableSyncEngine.scanAndApply` v2: sidecar-generation fast path (JSON read only when unchanged); attach snapshot immutable + in-DB generation cross-check (mid-publish → skip); epoch → hot rebuild (fresh snapshot copy; 還原已學習記錄 pref via prefs, keyboard-local stash/merge; post-swap hygiene + `migrate()` as today); im mirror wholesale + runtime-rebuild event; per-stem rev diff with `merge|replace` modes (replace = cold wins, no stash); drops for stems gone from cold; ledger rev-keyed (in hot DB, same-transaction); chunked copy + resume (rev-keyed) retained; export-request handling unchanged. Rewrite TableSyncEngineTest for v2 fixtures (cold snapshot builder helper). Delete v1 source-folder scanning.
+
+### J3 — Controller/UI reverts (app side)
+SetupImController import/download paths back to cold-DB imports (pre-I3.3 shape) + publish hooks; IMStoreView installed-set from cold DB (`tableHasData`) again; restore = legacy restore INTO cold + schema gate + epoch bump + publish; 還原預設資料庫 same; TableStore + TableStoreTest deleted (validation/conversion live in the app import paths as before); SetupImControllerTest/IntegrationTestBackupRestore reworked to v2 flows (round-trip: install → learn(hot) → backup → restore cold → epoch rebuild → learned back).
+
+### J4 — Editor policy
+Record/related editors: read-only unless `FAState == confirmedOn` (freshness label on cold data; existing bypass seam only for sim tests); FA-ON edit entry → snapshot request (backup relay, on-demand) → refresh that table in cold from snapshot (rows + real scores) → edits → save bumps rev `mode=replace` + publish. IM-meta editing (title/endkey/selkey/keyboard id/disable) stays FA-free via im mirror. Documented race accepted (typing same table during edit session).
+
+### J5 — v1 artifact cleanup
+Delete `tables/` + `restore.limedb` handling, `SyncPaths` folder entries, rebuildSources/prepareRestore v1 paths; on first v2 run the app removes leftover v1 artifacts from the App Group (v1 never shipped beyond dev devices — unconditional cleanup). Grep gates: no `tables/` references outside history docs.
+
+### J6 — Final gate (SIM-ONLY, the only successful stop)
+1. Full LimeTests suite + build green (one process).
+2. uiall parity: same pass/fail set as the recorded master baseline (12 pre-existing environment reds documented; zero NEW failures).
+3. **User-acceptance e2e on simulator (ios-visual-verify methodology, autonomous)**: install 大易+注音 via real IMInstallView cloud UI (XCUITest) → verify IM list → backup (Documents-mirror seam) → orchestrator pulls zip → `simctl uninstall` (full wipe) → reinstall → push zip → restore seam → **assert both IMs back in the IM list** → type with one via the keyboard → candidate appears. Plus: meta-only edit (rename IM) propagates via im mirror without table re-import (assert via timing/log or ledger revs); Setup/DB-tab screenshots read against the spec.
+4. Review stack over the campaign diff (self line-by-line + codex second reader, my verification of every candidate) — zero unresolved CONFIRMED; ponytail sweep; debt ledger updated.
+5. Docs in sync (this file's flight log + IOS_FULL_ACCESS.md as-built + IOS_FA_REARCH_TASKS.md campaign-2 addendum).
+6. finishing-a-development-branch → merge decision handed to user.
+Failure at any item → re-enter the owning iteration, loop until green. No other stop conditions.
