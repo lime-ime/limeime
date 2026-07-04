@@ -304,6 +304,7 @@ struct VariantRow: View {
                     manager.install(variant)
                 }
             }
+            .accessibilityIdentifier("install_variant_\(variant.id)")
         }
         .padding(.vertical, 4)
         // Error banner

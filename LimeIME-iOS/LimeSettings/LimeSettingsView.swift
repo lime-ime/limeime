@@ -19,6 +19,11 @@ struct LimeSettingsView: View {
     @StateObject private var setupController: SetupImController
     @StateObject private var manageImController: ManageImController
     @StateObject private var manageRelatedController: ManageRelatedController
+#if DEBUG
+    @State private var didRunUITestRestore = false
+    @State private var uiTestRestoreStatus: String?
+    @State private var uiTestRestoreCounts: String?
+#endif
 
     init() {
         let pm = ProgressManager()
@@ -69,6 +74,9 @@ struct LimeSettingsView: View {
             Task {
                 await setupController.seedRelatedIfNeeded()
                 manageRelatedController.invalidate()
+#if DEBUG
+                await runUITestRestoreIfNeeded()
+#endif
             }
             // Cold-launch deep link (URL arrived before view appeared).
             if let url = pendingLimeDeepLinkURL {
@@ -108,6 +116,9 @@ struct LimeSettingsView: View {
                             .shadow(radius: SettingsMetrics.modalShadowRadius))
                 }
             }
+#if DEBUG
+            uiTestRestoreStatusViews
+#endif
         }
     }
 
@@ -122,6 +133,52 @@ struct LimeSettingsView: View {
             break
         }
     }
+
+#if DEBUG
+    // ponytail: launch-arg restore seam exercises the normal cold restore path after SwiftUI is ready.
+    private func runUITestRestoreIfNeeded() async {
+        guard !didRunUITestRestore,
+              let fileName = UserDefaults.standard.string(forKey: "limeUITestRestoreFromDocuments"),
+              !fileName.isEmpty
+        else { return }
+        didRunUITestRestore = true
+        let url = FileManager.default.urls(for: .documentDirectory,
+                                           in: .userDomainMask)[0]
+            .appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            uiTestRestoreStatus = "restore_failed missing \(url.path)"
+            return
+        }
+        let result = await setupController.restoreDB(from: url)
+        switch result {
+        case .success:
+            manageImController.invalidate()
+            manageRelatedController.invalidate()
+            uiTestRestoreCounts = await setupController.restoredTableCountsForUITest()
+            uiTestRestoreStatus = "restore_done \(url.path)"
+        case .failure(let error):
+            uiTestRestoreStatus = "restore_failed \(error.localizedDescription)"
+        }
+    }
+
+    @ViewBuilder
+    private var uiTestRestoreStatusViews: some View {
+        if let status = uiTestRestoreStatus {
+            Text(status)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier(status.hasPrefix("restore_done") ? "restore_done" : "restore_failed")
+                .accessibilityLabel(status)
+        }
+        if let counts = uiTestRestoreCounts {
+            Text(counts)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier("restore_table_counts")
+                .accessibilityLabel(counts)
+        }
+    }
+#endif
 
 }
 
@@ -165,6 +222,7 @@ struct ConstrainedDetailLayout<Trailing: View>: ViewModifier {
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.tint)
                 }
+                .accessibilityIdentifier("detail_back_button")
                 Spacer()
             }
             .padding(.horizontal, 20)

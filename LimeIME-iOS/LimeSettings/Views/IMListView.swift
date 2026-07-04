@@ -378,6 +378,7 @@ private struct InstallFAB: View {
                         y: SettingsMetrics.floatingActionShadowY)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("im_install_fab")
         .scaleEffect(motion && animate ? 1.08 : 1.0)
         .animation(motion
             ? .easeInOut(duration: 1.2).repeatForever(autoreverses: true)

@@ -35,6 +35,9 @@ struct DBManagerView: View {
     @State private var faPingSeenDuringBackup = false
     @State private var probeText = ""
     @FocusState private var probeFocused: Bool
+#if DEBUG
+    @State private var uiTestBackupStatus: String?
+#endif
 
     private let groupSuite = LIMEPreferenceManager.suiteName
 
@@ -93,6 +96,9 @@ struct DBManagerView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .accessibilityHidden(true)
+#if DEBUG
+                    uiTestBackupStatusView
+#endif
                 }
                 .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
                 .padding(.bottom, SettingsMetrics.setupBottomPadding)
@@ -209,7 +215,10 @@ struct DBManagerView: View {
     }
 
     private var backupEnabled: Bool {
-        faState == .confirmedOn
+#if DEBUG
+        if isUITestColdBackupEnabled { return true }
+#endif
+        return faState == .confirmedOn
     }
 
     private var backupFooter: String {
@@ -280,6 +289,12 @@ struct DBManagerView: View {
     // MARK: - Backup
 
     private func performBackup() {
+#if DEBUG
+        if isUITestColdBackupEnabled {
+            performUITestColdBackup()
+            return
+        }
+#endif
         guard backupEnabled else { return }
         var presentationState = BackupSharePresentationState(
             isWorking: isWorking,
@@ -342,6 +357,43 @@ struct DBManagerView: View {
     private var shouldShowLocalWorkingOverlay: Bool {
         isWorking && (preparingShare || backupProgress > 0)
     }
+
+#if DEBUG
+    // ponytail: debug launch arg bypasses FA/keyboard relay for the cold-restore e2e only.
+    private var isUITestColdBackupEnabled: Bool {
+        let arg = UserDefaults.standard.object(forKey: "limeUITestBackupColdToDocuments")
+        return (arg as? String) == "1" || (arg as? Bool) == true
+    }
+
+    private func performUITestColdBackup() {
+        isWorking = true
+        statusMessage = "備份中…"
+        uiTestBackupStatus = nil
+        Task {
+            let result = await setupController.backupColdDBToDocumentsForUITest()
+            switch result {
+            case .success(let url):
+                statusMessage = "資料庫備份完成"
+                uiTestBackupStatus = "backup_done \(url.path)"
+            case .failure(let error):
+                statusMessage = "備份失敗：\(error.localizedDescription)"
+                uiTestBackupStatus = "backup_failed \(error.localizedDescription)"
+            }
+            isWorking = false
+        }
+    }
+
+    @ViewBuilder
+    private var uiTestBackupStatusView: some View {
+        if let status = uiTestBackupStatus {
+            Text(status)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier(status.hasPrefix("backup_done") ? "backup_done" : "backup_failed")
+                .accessibilityLabel(status)
+        }
+    }
+#endif
 
     // MARK: - Init DB
 

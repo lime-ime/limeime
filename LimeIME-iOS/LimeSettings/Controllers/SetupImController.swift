@@ -177,6 +177,46 @@ final class SetupImController: BaseController {
         }.value
     }
 
+#if DEBUG
+    // ponytail: UI-test backup snapshots cold DB directly; hot relay is already covered by EpochRestoreTest.testBackupRelayRoundTrip.
+    func backupColdDBToDocumentsForUITest(fileName: String = "lime_backup.zip") async -> Result<URL, Error> {
+        let server = dbServer
+        return await Task.detached(priority: .userInitiated) {
+            let snapshotURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("lime_cold_backup_\(UUID().uuidString).db")
+            defer { try? FileManager.default.removeItem(at: snapshotURL) }
+            do {
+                try server.exportDB(to: snapshotURL.path)
+                let zipURL = try buildBackupArchive(server: server, snapshotURL: snapshotURL)
+                defer { try? FileManager.default.removeItem(at: zipURL) }
+                let documentsURL = FileManager.default.urls(for: .documentDirectory,
+                                                            in: .userDomainMask)[0]
+                let destination = documentsURL.appendingPathComponent(fileName)
+                try? FileManager.default.removeItem(at: destination)
+                try FileManager.default.copyItem(at: zipURL, to: destination)
+                guard fileSizeBytes(at: destination) > 0 else {
+                    throw DBServerError.archiveCreationFailed
+                }
+                return .success(destination)
+            } catch {
+                return .failure(error)
+            }
+        }.value
+    }
+
+    // ponytail: row-count fallback is a UI-test proof that restored cold tables are real when keyboard driving is flaky.
+    func restoredTableCountsForUITest() async -> String {
+        let server = dbServer
+        let counts = await Task.detached(priority: .userInitiated) {
+            [
+                "dayi": server.countRecords("dayi", nil, nil),
+                "phonetic": server.countRecords("phonetic", nil, nil),
+            ]
+        }.value
+        return "restore_table_counts dayi=\(counts["dayi"] ?? 0) phonetic=\(counts["phonetic"] ?? 0)"
+    }
+#endif
+
     func refreshTableFromKeyboard(stem: String) async -> Result<Void, Error> {
         let server = dbServer
         return await Task.detached(priority: .userInitiated) {
