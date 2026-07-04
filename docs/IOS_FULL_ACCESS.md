@@ -8,10 +8,13 @@ Companion docs: [IOS_FULL_ACCESS_DETECT.md](IOS_FULL_ACCESS_DETECT.md) (enabled 
 
 LimeIME cannot require Full Access for the keyboard to function (App Review Guideline 4.4.1: a keyboard must type, provide the globe/next-keyboard path, and remain functional without Full Access).
 
-Design: the keyboard's own container holds the one canonical `lime.db`. The app never shares a live database with the keyboard; it acts as a proxy that downloads/receives table files into an App Group "desired-state" folder, and the keyboard imports them itself. With Full Access OFF, everything works — typing, install, import, uninstall, restore, learning, learned-record preservation on re-install. Full Access ON unlocks exactly two features:
+Design (v2 — cold/hot model, supersedes the v1 "desired-state folder of per-table files"): the app owns a full **cold DB** (a complete `lime.db` run by the app's own LimeDB/DBServer — all imports, IM-meta changes, and table edits happen there, so every app screen works natively). The keyboard owns its **hot DB** (canonical for typing; the ONLY home of learned scores). The app publishes an atomic snapshot of the cold DB into the App Group; the keyboard tracks it by generation/epoch/per-table revision and updates the hot DB incrementally. With Full Access OFF, everything works — typing, install, import, uninstall, restore, learning, learned-record preservation. Full Access ON unlocks:
 
-1. In-app backup (keyboard exports learned data to the App Group). The sole purpose of backup is the user's learned data — fixed tables are re-downloadable.
+1. In-app backup (keyboard exports the hot DB — the sole purpose of backup is the user's learned data; fixed tables are re-downloadable).
 2. Key haptic feedback (按鍵震動回饋) — a system restriction: keyboard extensions cannot play haptics without Full Access. Key-click *sound* (`UIDevice.playInputClick()`) works without it.
+3. Table-record editing with real data (the editor's hot-snapshot refresh needs the same keyboard→App-Group write as backup). FA OFF the record screens are read-only; see §Editor policy.
+
+Ownership principle that drives the whole design: **`code`/`word`/structure/IM-meta are cold-owned (app is the truth); `score` is hot-owned (keyboard is the truth).** The app never displays or accepts a score value it cannot know to be real.
 
 Sources:
 
@@ -46,28 +49,35 @@ Apple's open-access documentation, verbatim: without open access a keyboard has 
 - **Upgrade rule: static attached DBs upgrade by replacement, the canonical DB upgrades by migration.** An app update shipping a newer emoji/hanconvert DB applies automatically at next attach — no materialized copy exists to go stale, and code + data travel in the same signed bundle so schema changes are atomically paired with the code reading them (`immutable=1` stays safe: iOS kills the extension during updates, no live handle survives a bundle swap). `emoji_user` rows referencing entries removed by a newer emoji DB dangle harmlessly (join semantics — they just stop displaying). The bundled default `lime.db` does NOT auto-apply on update: it is the fresh-install / factory-reset baseline only; existing canonical DBs upgrade via `migrate()`.
 - First run: the keyboard copies its bundled default `lime.db` into the canonical path, then opens it normally (`migrate()` runs only in its usual schema-upgrade role, not as bootstrap). The default DB is "epoch zero" — the identical file the app uses for 還原預設資料庫 — and already carries emoji data and IM metadata (LIME ships with empty IM tables by design). Build requirement: bundle `lime.db` in the LimeKeyboard appex (currently only the app target has the copy phase); ~4 MB appex growth, required for 4.4.1 anyway since the keyboard must work standalone before the app ever runs.
 
-### Desired-state table folder (app → keyboard, works FA OFF)
+### Cold DB — app-owned (v2)
 
-Not a message queue — a declarative folder that always reflects what should be installed. No acks are needed for correctness, so the one-way FA-OFF channel is sufficient.
+- The app runs a full `LimeDB`/`DBServer` against its own **cold DB** (the App-Group `lime.db` location it always used). ALL structural mutations happen here exactly as pre-re-arch: downloads, `.cin`/`.lime`/`.limedb`/zip imports (conversion IS validation — parse errors surface in the app UI), IM registration, IM-meta edits, record edits, clears, restores. Every app screen (IM list, detail, counts, editors) reads this DB natively — no replicas, no read-models.
+- The cold DB carries **no meaningful learned data**: `score` values in it are base/seed values except immediately after a restore or an FA-ON editing session (see below). The app never displays scores from the cold DB as if they were real.
+- Sync bookkeeping inside the cold DB, maintained by the app in the same transactions as the mutations they describe:
+  - `sync_rev(stem TEXT PRIMARY KEY, rev INTEGER, mode TEXT)` — bumped when that table's DATA changes. `mode`: `merge` (installs/downloads — keyboard preserves learned scores on re-import) or `replace` (FA-ON editing sessions — cold wins wholesale, because cold was just seeded from hot).
+  - `sync_meta`: `epoch_uuid` (bumped ONLY by restore-from-backup / 還原預設資料庫 — the destructive events) + `schema_version`.
+  - The `im` table needs no revision — it is mirrored wholesale (≈15 rows).
 
-- Path: `AppGroup/tables/<tableNick>.limedb` — stem is the table identity (closed enum: `IM_CODES` + related). Single format: everything the keyboard receives is a limedb (matching the downloadable `.limedb` reference schema). Fixed names; no mapping/manifest file (a registry can drift from the directory; the path is the identity).
-- App is the sole writer. Replace = write temp → atomic rename. At most one source file per table, by construction.
-- Optional per-table sidecar `<tableNick>.meta.json` written after the data file, only if an import needs options a filename cannot carry (e.g. the 還原已學習記錄 choice, display name, source provenance such as "從 xxx.cin 匯入"). No global manifest.
-- Install/update: app downloads (app always has network) or receives files, then normalizes to limedb app-side: `.zip` → unzip; `.cin`/`.lime` → app runs the existing text-table import code targeting a standalone single-table limedb (conversion IS validation — parse errors surface immediately in the app UI, and the keyboard can never receive an unparseable text table). The original `.cin` is not kept; the converted limedb doubles as the repair source.
-- Uninstall: app deletes the stem's files → keyboard's next scan sees ledger entry without backing file → drops the table.
-- Cleanup: none needed. Source files remain while the IM is installed; they double as the app's own record of installed IMs and enable free "repair / re-import" (wipe the keyboard ledger → everything reimports).
+### Published snapshot — the transport (app → keyboard, works FA OFF)
 
-### Keyboard import executor
+- After each mutation burst (debounced: flow completion / app background), the app **publishes**: `VACUUM INTO` a temp file → atomic rename to `AppGroup/cold.limedb` → write sidecar `cold.meta.json {generation, epochUUID, schemaVersion}` (generation bumps on every publish). Atomic, self-contained (no WAL sidecars), safe for the keyboard to ATTACH `immutable=1` — the rename means an attached inode never changes.
+- One artifact replaces the whole v1 `tables/` folder and `restore.limedb`. Not a queue — the snapshot always states the complete intended cold state; no acks needed for correctness. Publish cost: one whole-DB vacuum per burst (~4–40 MB IO), accepted ceiling.
+- Doorbell: Darwin `org.limeime.tables.updated` after publish (name kept from v1 wiring); scan-on-appear remains the guaranteed path.
 
-- On every `viewWillAppear`: list `AppGroup/tables/`, diff `(stem, size, mtime)` against a processed-ledger stored in the keyboard's own container. Import whatever differs; drop whatever lost its file. Idempotent — re-delivery or missed signals are harmless.
-- Single-format importer: every delivery is a limedb, so the keyboard's only import path is attach-source + bulk row copy (fast — no text parsing in the extension; working set of a few MB, safe under the memory limit). Transactional per chunk with a resume marker for very large tables (e.g. 關聯字庫); the process can be killed at any keyboard dismissal, so the largest imports may complete across sessions.
-- Progress/status display lives in the keyboard UI (toolbar/candidate-bar banner: 匯入中… / 已安裝) because the app cannot durably observe progress FA OFF.
-- Import success/failure state (FA OFF the app cannot durably know it):
-  - **Normalize-and-validate at the proxy**: text tables are converted app-side (see desired-state section) — the conversion is the validation, so an unparseable table can never reach the keyboard. Received/downloaded `.limedb` files are checked app-side before delivery: open read-only (`config.readonly` source pattern already in the import code), `PRAGMA quick_check`, verify expected tables/columns. Invalid files never enter desired state, so keyboard-side failures are only environmental (interruption, disk) — the kind that resolve by resume/retry.
-  - Ledger records per-table state: `pending / in-progress / done / failed(error, attempts)`. Deterministic failures do NOT retry the same file identity on every appear; a replaced file (new identity) resets the state. Environmental failures resume with a small attempt cap.
-  - Status surfaces: Darwin pings for both outcomes (`org.limeime.import.done` / `.failed`) give the app a live toast when foreground; the keyboard UI is the authoritative surface (匯入中… / 已安裝 / 匯入失敗 banner, failed table absent from the IM switcher); FA ON receipts carry per-table status so the app can show real badges.
-  - FA OFF app copy stays honest: sources show as "已交付鍵盤", not installed-and-verified.
-- 還原已學習記錄 / 刪除時備份已學習記錄: keyboard-local, FA-free. The keyboard owns both the learned data and the import, so preservation is a local merge in one transaction (import new rows, carry over score/userword values for matching entries; stash lives in its own container/DB). Only the user's *choice* travels via sidecar.
+### Keyboard sync engine (hot ← cold)
+
+Scan on every `viewWillAppear` (+ doorbell), against the hot DB's ledger:
+
+1. Read `cold.meta.json` — one tiny JSON read. `generation == applied` → done (the common case costs nothing else).
+2. Generation differs → ATTACH `cold.limedb` (`immutable=1`); verify in-DB generation matches the sidecar (mismatch = app mid-publish → skip, retry next scan).
+3. **Epoch differs** → destructive rebuild: hot := fresh copy of the snapshot, learned data handled per the 還原已學習記錄 pref (keyboard-local stash/merge; only the user's *choice* travels — as prefs, readable FA OFF). Ledger reset, epoch recorded.
+4. Same epoch → incremental:
+   - **im mirror, always**: `DELETE FROM im; INSERT … SELECT FROM cold.im` in one transaction — meta-only changes (titles/versions, endkey, selkey, spacestyle, keyboard id, disable) cost milliseconds and never touch table data. Runtime rebuild fires after the mirror so new meta applies immediately.
+   - **Per-stem `sync_rev` diff**: only stems whose rev moved get the clear + chunked attach-copy (20k rows/chunk, resume marker, kill-safe) — in `merge` mode learned scores carry over; in `replace` mode cold wins wholesale. A record-edit session re-imports that one table; nothing else moves.
+   - Stems registered in the hot ledger but absent/unregistered in cold → dropped (table cleared + im row removed).
+5. Ledger (`applied generation/epoch/revs`) lives INSIDE the hot DB, updated in the same transactions — ledger and data cannot desync.
+
+Status surfaces (unchanged from v1): keyboard banner rides LimeToast (匯入中… / 已安裝 / 匯入失敗, no new chrome over the UIInputView blur); Darwin `org.limeime.import.done/.failed` live pings; FA-ON receipts/heartbeat as durable status; FA-OFF app copy stays honest ("已交付鍵盤").
 
 ### Signal channels
 
@@ -84,53 +94,54 @@ Not a message queue — a declarative folder that always reflects what should be
 - FA ON status uses outbox *files* (receipts, heartbeat), not shared UserDefaults. App keeps its existing 1-second poll.
 - Install-flow UX: app writes the table file → posts doorbell → focuses probe field → keyboard loads, scans, imports while the user watches; live done-ping gives the toast. If the app misses everything: "已交付鍵盤，將於下次使用鍵盤時完成" — honest, and correct.
 
-### Conflict resolution — imports vs. restore
+### Conflict resolution & versioning (v2)
 
-No conflicts by construction, via three properties:
+1. **Single writer, serialized.** The app is the cold DB's only writer and publishes atomically (temp+rename + sidecar-after). The snapshot at rest is always one coherent statement of the complete cold state — there is nothing else to conflict with.
+2. **Deterministic apply order** in the scan: epoch check → im mirror → rev diffs → drops. A snapshot published mid-scan is picked up next scan (attached inode never changes under the engine).
+3. **Destructive-idempotent applies.** Epoch rebuild replaces hot wholesale; a rev import starts by clearing that table. Resume markers are keyed to `(stem, rev)` — a newer rev or epoch abandons partial work. Replays are always safe.
+4. **Version identity rule: destructive applies key on content, incremental applies key on monotonic revs.** Epoch = UUID in `sync_meta` (+ sidecar mirror; sidecar suspect → read the in-DB stamp) — mtime churn (iCloud device restore, filesystem copies) can never trigger a rebuild. Revs are app-maintained integers, consistent with data by same-transaction construction.
+5. Snapshot staleness is self-healing: generation mismatch between sidecar and in-DB value (app mid-publish) → skip and retry; the sidecar is written after the DB file.
 
-1. **Single writer, serialized.** The app is the App Group's sole writer and runs one operation at a time. A restore rewrites the whole desired state atomically from the user's view: `restore.limedb` + reconciled `tables/` in the same operation. Later installs/uninstalls mutate `tables/` on top. The folder at rest is always one coherent snapshot of intent.
-2. **Deterministic apply order.** Keyboard scan: (a) if `restore.limedb` identity (size+mtime) differs from the ledger's last-applied restore epoch → swap DB, wipe table ledger, record epoch; (b) then per-table diff on the new baseline. A table file newer than the restore re-imports on top (newer intent); one reconciled by the restore diffs as a no-op.
-3. **Destructive-idempotent applies.** Table import starts by clearing that table; restore starts by swapping the whole DB. A superseded half-finished import is obliterated by the successor's first step. Resume markers are keyed to file identity `(stem, size, mtime)` — identity changed or newer restore epoch present → abandon partial work, don't resume it.
+### Backup / restore / factory reset
 
-Temp+rename writes mean the keyboard never sees a torn file; a file replaced mid-import is redone at next scan, and idempotence makes the redo harmless.
+- **Backup — FA ON (unchanged from v1).** 備份 → `ExportRequest {requestUUID, expiresAt}` → probe summons keyboard → hot `VACUUM INTO` App Group + receipt(requestUUID) → app zips (existing layout) → cleanup. Timeout UX disambiguates via Darwin liveness (fa ping but no receipt → FA guidance; no ping → 請切換至萊姆輸入法).
+- **Restore from backup — works FA OFF.** App-side: legacy restore into the COLD DB (existing code path — zips contain the whole DB including learned scores, which seed the restored baseline) → validate schema (`請先更新 LIME` gate) → bump `epoch_uuid` → publish. Keyboard: epoch rebuild → hot := snapshot copy. Learned data returns because the backup carried it; from then on learning accrues hot-only again. All app screens show the restored content immediately (they read the cold DB — the v1 "empty IM list after restore" defect is structurally impossible).
+- **還原預設資料庫 / factory reset — works FA OFF.** Cold := bundled default, epoch bump, publish; keyboard rebuilds. Learned data wiped by definition of the operation (or preserved per 還原已學習記錄 pref where applicable).
+- FA OFF backup button: honest unlock copy ("開啟完整取用權限以備份已學習字詞"), never an error state.
 
-- `restore.limedb` is a persistent epoch baseline, NOT a consumable command. It is never deleted when later installs happen — the app cannot know (FA OFF, no ack) whether the keyboard has applied it yet, so deleting it would race with an un-applied restore and land new imports on the un-restored DB. It is only ever replaced by the next restore (atomic rename = new epoch identity). Cost: one stale file in the App Group — same order as the table sources, the accepted price of ackless correctness.
-- The processed-ledger and applied-epoch marker live INSIDE the canonical DB (meta table, updated in the same transaction as each import chunk / swap), not as a separate file. Ledger and DB therefore cannot desync — a lost side-file can never cause an old epoch to be re-applied over learned data, and chunk-commit + ledger-update are atomic for free.
-- **Version identity rule: destructive applies key on content, non-destructive applies key on file metadata.** The base DB epoch is a UUID; same UUID as the applied epoch in the canonical DB → no-op, even if mtimes churned (iCloud device restore, filesystem copy) — a whole-DB swap must never trigger on metadata noise. Table stems stay on `(size, mtime)`: a spurious table re-import is non-destructive (clear + reload with learned-score merge), so churn costs CPU, not data.
-- **Where the UUID lives:** (1) authoritative — `sync_meta` table inside `restore.limedb`, stamped by the app when PREPARING the file (backup snapshots carry an old `sync_meta` + ledger, so preparation rewrites: fresh `epoch_uuid`, cleared ledger rows); (2) mirror — `restore.meta.json` sidecar written after the DB file, so the scan compares with one tiny JSON read (sidecar missing/suspect → read the in-DB stamp via a safe read-only open; app-written temp+rename, no WAL sidecars); (3) canonical DB — no separate applied-marker write needed: the swap installs the new `sync_meta` (new UUID, empty ledger) as part of the file itself, so "applied epoch" and "current DB" are atomically the same fact. Scan check: sidecar UUID == canonical `epoch_uuid` row. Fresh install: the canonical DB is a copy of the bundled default, whose shipped `sync_meta` UUID serves as the initial epoch; no `restore.limedb` present → no epoch to apply, and no collision is possible because the app always stamps a fresh UUID when preparing a restore file.
+### Editor policy (v2 — column ownership)
 
-### Backup / restore
-
-- **Backup — FA ON.** User taps 備份 → app writes an export-request marker → probe field loads the keyboard → keyboard snapshots its canonical DB into the App Group via `VACUUM INTO` (consistent single-file snapshot while the DB stays open; no WAL sidecar; SQLite ≥3.27 / iOS 13+; issue through GRDB), renames, writes a receipt → app's poll sees the receipt → zips (ZIPFoundation) → share sheet → app deletes the temp snapshot. Whole-DB export: at tens of MB it is a sub-second write, and backup semantics stay identical to Android (backup contains everything, including learned data).
-- **Restore — works FA OFF.** App unzips the backup and feeds it through the desired-state folder (whole-DB `restore.limedb`); the keyboard swaps/imports into its own container. Learned data returns because it was inside the whole-DB backup.
-- **Restore default DB (還原預設資料庫 / factory reset) — works FA OFF.** Same mechanism: the app delivers the bundled default `lime.db` as the restore file; the swap wipes tables and learned data.
-- Consistency on any restore: the app-held table sources ARE the app's installed-set, and every restore begins by deleting all of them (`tables/` stems + sidecars). `restore.limedb` becomes the sole desired state; the keyboard resets its processed-ledger after the swap. After restore the app holds no sources — its installed list is empty and repopulates only through future installs; table files written later import on top of the restored baseline.
-- FA OFF backup button: show honest copy ("開啟完整取用權限以備份已學習字詞"), never an error state.
+- **IM meta (titles/version names, endkey, selkey, spacestyle, keyboard id, enable/disable): cold-owned, editable in EVERY FA state.** Changes ride the im mirror; effective at next keyboard appearance (doorbell makes it immediate when live). No snapshot round-trip needed — there is no hot truth for meta.
+- **Table records (字根資料表 / 關聯字庫): read-only FA OFF.** The score column is hot-owned; FA OFF the app cannot know real scores (mostly-0 base values would be lies), and blind edits could silently fight learned state. Read-only browse shows cold data, labeled with last-sync freshness.
+- **FA ON: full live editing via snapshot refresh.** Entering an edit screen → app requests a hot snapshot (same relay as backup, on-demand) → refreshes that table in the cold DB from it (real rows, REAL scores) → user edits → save bumps `sync_rev` with `mode=replace` → publish → keyboard re-imports that table with cold winning wholesale (a merge here would clobber the user's score edits with pre-edit learned values). Accepted, documented race: typing on that same table between snapshot and save loses those minutes of its learning.
+- Full Access's honest sales pitch is therefore: 備份已學習字詞、按鍵震動回饋、編輯字根資料表（含實際分數）.
 
 ## Product behavior
 
 Never granted Full Access:
 
 - Keyboard types, switches keyboards, uses every installed IM, learns — all normal. Key-click sound available; key haptics unavailable (system restriction).
-- Installs/imports/uninstalls/restores made in Settings reach the keyboard through the desired-state folder; applied at next keyboard appearance (or instantly via the probe field during the install flow).
+- Installs/imports/uninstalls/restores/IM-meta edits made in Settings reach the keyboard through the published snapshot; applied at next keyboard appearance (or instantly via the doorbell + probe during a flow). All app screens are correct at all times (they read the cold DB).
+- Table-record editors are read-only (score is hot-owned); IM-meta editing fully works.
 - In-app backup is unavailable; button shows the honest unlock copy.
 - Settings sees no durable keyboard status — UI uses the tri-state model (see IOS_FULL_ACCESS_DETECT.md), never claims the keyboard is broken.
 
 Full Access granted:
 
-- Everything above, plus: backup export works, key haptic feedback works, keyboard writes durable receipts/status/heartbeat files, Settings shows confirmed states and instant install feedback.
+- Everything above, plus: backup export works, key haptic feedback works, table-record editing goes live (snapshot-refresh flow, real scores), keyboard writes durable receipts/status/heartbeat, Settings shows confirmed states and instant feedback.
 
 Full Access later turned off:
 
-- Nothing changes for typing, IMs, or learning — the canonical DB is keyboard-owned and unaffected.
-- Backup export, haptics, and durable status stop; Settings UI degrades to neutral copy.
+- Nothing changes for typing, IMs, or learning — the hot DB is keyboard-owned and unaffected.
+- Backup export, haptics, live record editing, and durable status stop; Settings UI degrades to neutral copy; editors fall back to read-only.
 
 ## What Full Access actually gates (final list)
 
-1. Keyboard→App Group writes: backup snapshot export, durable receipts/status/heartbeat.
+1. Keyboard→App Group writes: backup snapshot export, editor snapshot refresh, durable receipts/status/heartbeat.
 2. Key haptic feedback (system restriction on keyboard extensions).
+3. Consequences of 1: real-score visibility and therefore table-record editing.
 
-That's all. Settings UI copy must present Full Access as a feature unlock ("備份已學習字詞、按鍵震動回饋、即時安裝回報"), never a requirement.
+That's all. Settings UI copy must present Full Access as a feature unlock ("備份已學習字詞、按鍵震動回饋、編輯字根資料表"), never a requirement.
 
 ## Planned LIME_SETTINGS.md updates (spec changes — NOT yet applied to that file)
 
@@ -148,22 +159,25 @@ Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when
 
 ## Open items
 
-- App-side DB-backed screens (字根資料表 record editor, per-IM counts): the app no longer has a live DB. Decide: move editing into keyboard UI, degrade these screens, or have the app keep a read-model built from the table sources it already holds. If the record editor stays app-side, edits travel as a per-table append-only op-log (`<stem>.ops.json`, ops bound to that table file's identity) — compacted by supersession, not acks: past a size threshold the app rewrites the table limedb with ops folded in and truncates the log (new file identity makes old ops irrelevant by construction). No global transaction file — the epoch UUID already provides stream identity + reset-on-restore, and a global log would reintroduce the unprunable-queue/ack problem.
-- DEVICE RESIDUE (the only remaining hardware validation, needs a human to toggle Full Access on WJIP17): run the FA-OFF rows of the test matrix below on device. The old step-0 probe is superseded — with the shipped architecture, installing a table FA-OFF and typing with it IS the App-Group-read proof; the fa.on/fa.off Darwin pings + heartbeat file cover cross-process signal delivery. Import chunk size shipped at 20k rows (`// ponytail:` in TableSyncEngine) — revisit only if device timing shows multi-second chunks.
-- DONE in I1/I6 (kept here for history): appex `lime.db` copy phase added; legacy shared-defaults signals removed; hanconvertv2 iOS copy phase removed (asset was unreferenced in Swift).
+- **v1→v2 code migration** (the branch currently implements the v1 desired-state-folder transport, all green): retarget TableSyncEngine to the snapshot (generation/epoch/rev/im-mirror, merge|replace), add cold-DB rev/publish plumbing, revert SetupImController/IMStoreView to app-DB imports + publish hook, dissolve TableStore (validation/conversion folds back into app import paths), implement editor policy, delete v1 artifacts handling (`tables/`, `restore.limedb`; v1 never shipped — cleanup is unconditional). Plan: IOS_FA_SETUP_REARCH.md campaign 2.
+- Import chunk size 20k rows (`// ponytail:` in TableSyncEngine) — revisit only if device timing shows multi-second chunks.
+- DONE in v1 campaign (kept for history): appex `lime.db` copy phase; legacy shared-defaults signals removed; hanconvertv2 iOS phase removed; keyboard-side IM registration; FA tri-state detection; goto-settings variant.
 
-## Test matrix
+## Test matrix (v2)
 
-- Fresh install, FA never granted, app never opened: keyboard copies bundled default DB and types (empty IM tables, emoji present, English fallback), globe works; key-click sound plays, no haptics.
-- FA OFF, app downloads 倉頡: table file lands in App Group; keyboard imports on next appear (or instantly via probe); IM usable; app shows "交付" state, live toast if foreground.
-- FA OFF, kill keyboard mid-import of 關聯字庫: import resumes next session; no corruption (chunk transactions).
-- FA OFF, uninstall IM in app: keyboard drops table on next scan.
-- FA OFF, re-install IM with 還原已學習記錄: learned scores survive the re-import.
-- FA OFF, restore backup zip: tables and learned data return via desired-state swap.
-- FA OFF, 還原預設資料庫: keyboard swaps to bundled default DB; tables and learned data wiped; `tables/` folder and ledger reconciled (no stale re-import on next scan).
-- FA ON, backup: probe → snapshot → receipt → zip within seconds; learned data included.
-- FA ON, haptics enabled in preferences: key press vibrates; turn FA OFF → haptics silently stop, no error.
-- FA ON → later OFF: keyboard keeps working on its canonical DB; only backup, haptics, and durable status stop; UI degrades to neutral copy.
+- Fresh install, FA never granted, app never opened: keyboard copies bundled default DB and types (empty IM tables, emoji present, English fallback); key-click sound, no haptics.
+- FA OFF, app downloads 倉頡: cold import → publish → keyboard rev-imports on next appear (or instantly via doorbell+probe); IM usable; IM list correct immediately.
+- FA OFF, rename an IM / change endkey (meta only): publish → keyboard im-mirror only — no table data copied; new meta live at next appear.
+- FA OFF, kill keyboard mid-import of 關聯字庫: resumes next session; no corruption (chunk transactions, rev-keyed resume).
+- FA OFF, uninstall IM in app: cold drop → publish → keyboard drops table + im row on next scan.
+- FA OFF, re-install IM (merge mode) with 還原已學習記錄: learned scores survive the re-import.
+- FA OFF, restore backup zip: cold restored (screens correct immediately), epoch bump → keyboard rebuilds hot; tables AND learned data back; typing works.
+- FA OFF, 還原預設資料庫: cold := default, epoch bump → hot rebuilt; learned wiped.
+- FA OFF, record editor: read-only, freshness label, no score lies.
+- FA ON, backup: request → probe → hot VACUUM INTO → receipt → zip; learned data included.
+- FA ON, edit a record: snapshot refresh shows real scores → edit → replace-mode rev → keyboard re-imports that table only; edited score effective when typing; other tables untouched.
+- FA ON, haptics: vibrate; FA OFF → silently stop.
+- FA ON → later OFF: typing/learning unaffected; backup, live editing, durable status stop; UI degrades to neutral copy.
 
 ## Implementation-phase addendum (2026-07-04)
 
