@@ -75,4 +75,31 @@ final class FAStateTest: XCTestCase {
                                                faPingAt: 940),
                        .confirmedOn)
     }
+
+    func testActiveThisSessionRequiresPingAtOrAfterProbe() {
+        XCTAssertTrue(FAStateResolver.isActiveThisSession(faPingAt: 103,
+                                                          probeFiredAt: 100))
+        XCTAssertTrue(FAStateResolver.isActiveThisSession(faPingAt: 100,
+                                                          probeFiredAt: 100))
+        XCTAssertFalse(FAStateResolver.isActiveThisSession(faPingAt: 99.99,
+                                                           probeFiredAt: 100))
+    }
+
+    func testActiveThisSessionRejectsNilEvidence() {
+        XCTAssertFalse(FAStateResolver.isActiveThisSession(faPingAt: nil,
+                                                           probeFiredAt: 100))
+        XCTAssertFalse(FAStateResolver.isActiveThisSession(faPingAt: 103,
+                                                           probeFiredAt: nil))
+        XCTAssertFalse(FAStateResolver.isActiveThisSession(faPingAt: nil,
+                                                           probeFiredAt: nil))
+    }
+
+    func testActiveThisSessionUsesWindowBoundary() {
+        XCTAssertTrue(FAStateResolver.isActiveThisSession(faPingAt: 103,
+                                                          probeFiredAt: 100,
+                                                          window: 3))
+        XCTAssertFalse(FAStateResolver.isActiveThisSession(faPingAt: 103.01,
+                                                           probeFiredAt: 100,
+                                                           window: 3))
+    }
 }

@@ -23,6 +23,7 @@ struct RelatedListView: View {
     @State private var editingCapability: RecordEditingCapability = .readOnly
     @State private var faPingThisSession: Bool?
     @State private var faPingAt: TimeInterval?
+    @State private var activeProbeFiredAt: TimeInterval?
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
     @State private var faPollTimer: Timer?
@@ -49,7 +50,7 @@ struct RelatedListView: View {
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
     private var canEdit: Bool { editingCapability == .live }
-    private var unlockHint: String { "開啟完整取用以編輯關聯字庫（顯示實際分數）" }
+    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯關聯字庫（顯示實際分數）" }
     private var forceLiveEditing: Bool { RecordEditingCapability.forceLiveEditingEnabled() }
 
     var body: some View {
@@ -238,11 +239,15 @@ struct RelatedListView: View {
         let faState = FAStateResolver.resolve(heartbeat: heartbeat,
                                               faPingThisSession: faPingThisSession,
                                               faPingAt: faPingAt)
-        let next = RecordEditingCapability.resolve(faState: faState)
+        let activeThisSession = FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                                    probeFiredAt: activeProbeFiredAt)
+        let next = RecordEditingCapability.resolve(faState: faState,
+                                                   activeThisSession: activeThisSession,
+                                                   forceLive: forceLiveEditing)
         editingCapability = next
         hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
                                                               faPingThisSession: faPingThisSession)
-        if next == .live {
+        if faState == .confirmedOn || forceLiveEditing {
             refreshHotSnapshotIfNeeded()
         }
     }
@@ -261,7 +266,7 @@ struct RelatedListView: View {
             faPingThisSession = hasFullAccess
             faPingAt = Date().timeIntervalSince1970
             refreshCapability()
-            if hasFreshFAEvidence {
+            if hasFreshFAEvidence && !isRefreshingHotSnapshot {
                 probeFocused = false
             }
         }
@@ -293,9 +298,22 @@ struct RelatedListView: View {
         didAttemptHotRefresh = true
         isRefreshingHotSnapshot = true
         statusMessage = ""
+        let probeFiredAt = Date().timeIntervalSince1970
+        activeProbeFiredAt = probeFiredAt
+        probeFocused = true
         Task {
+            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
+            guard FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                      probeFiredAt: probeFiredAt) else {
+                isRefreshingHotSnapshot = false
+                editingCapability = .readOnly
+                statusMessage = "請將鍵盤切換至萊姆輸入法後再試"
+                probeFocused = false
+                return
+            }
             let result = await setupController.refreshTableFromKeyboard(stem: "related")
             isRefreshingHotSnapshot = false
+            probeFocused = false
             switch result {
             case .success:
                 statusMessage = ""

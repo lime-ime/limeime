@@ -33,6 +33,7 @@ struct DBManagerView: View {
     @State private var faPollTimer: Timer?
     @State private var backupAwaitingReceipt = false
     @State private var faPingSeenDuringBackup = false
+    @State private var backupProbeFiredAt: TimeInterval?
     @State private var probeText = ""
     @FocusState private var probeFocused: Bool
 #if DEBUG
@@ -253,7 +254,7 @@ struct DBManagerView: View {
                 faPingSeenDuringBackup = true
             }
             refreshFAState()
-            if hasFreshFAEvidence {
+            if hasFreshFAEvidence && !backupAwaitingReceipt {
                 probeFocused = false
             }
         }
@@ -288,6 +289,8 @@ struct DBManagerView: View {
     }
 
     private func triggerBackupProbe() {
+        let probeFiredAt = Date().timeIntervalSince1970
+        backupProbeFiredAt = probeFiredAt
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             probeFocused = true
         }
@@ -314,8 +317,22 @@ struct DBManagerView: View {
         faPingSeenDuringBackup = false
         triggerBackupProbe()
         Task {
+            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
+            guard FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                      probeFiredAt: backupProbeFiredAt) else {
+                backupAwaitingReceipt = false
+                isWorking = false
+                backupProgress = 0
+                preparingShare = false
+                backupProbeFiredAt = nil
+                probeFocused = false
+                statusMessage = "備份失敗：請將鍵盤切換至萊姆輸入法後再試"
+                return
+            }
             let result = await setupController.backupDBAsync()
             backupAwaitingReceipt = false
+            backupProbeFiredAt = nil
+            probeFocused = false
             switch result {
             case .success(let dest):
                 refreshFAState()

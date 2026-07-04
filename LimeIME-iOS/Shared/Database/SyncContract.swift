@@ -73,8 +73,9 @@ enum RecordEditingCapability: Equatable {
     case live
 
     static func resolve(faState: FAState,
+                        activeThisSession: Bool = true,
                         forceLive: Bool = forceLiveEditingEnabled()) -> RecordEditingCapability {
-        forceLive || faState == .confirmedOn ? .live : .readOnly
+        forceLive || (faState == .confirmedOn && activeThisSession) ? .live : .readOnly
     }
 
     static func forceLiveEditingEnabled(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
@@ -93,6 +94,8 @@ enum RecordEditingCapability: Equatable {
 enum FAStateResolver {
     // ponytail: fixed freshness window from the FA detection spec; make configurable only if device polling changes.
     static let heartbeatFreshness: TimeInterval = 120
+    // ponytail: short active-keyboard proof window; widen only if device probes prove slower.
+    static let activeProbeWaitNanoseconds: UInt64 = 2_500_000_000
 
     static func resolve(heartbeat: KeyboardHeartbeat?,
                         now: Date = Date(),
@@ -121,6 +124,14 @@ enum FAStateResolver {
                                    now: Date = Date()) -> Bool {
         guard let heartbeat, heartbeat.hasFullAccess else { return false }
         return now.timeIntervalSince1970 - heartbeat.lastSeenAt <= heartbeatFreshness
+    }
+
+    static func isActiveThisSession(faPingAt: TimeInterval?,
+                                    probeFiredAt: TimeInterval?,
+                                    window: TimeInterval = 3) -> Bool {
+        guard let faPingAt, let probeFiredAt else { return false }
+        let elapsed = faPingAt - probeFiredAt
+        return elapsed >= 0 && elapsed <= window
     }
 }
 

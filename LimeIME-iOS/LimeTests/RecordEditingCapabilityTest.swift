@@ -9,11 +9,27 @@ final class RecordEditingCapabilityTest: XCTestCase {
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOn), .live)
     }
 
+    func testLiveEditingRequiresActiveConfirmedOnGate() {
+        XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOn,
+                                                       activeThisSession: true),
+                       .live)
+        XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOn,
+                                                       activeThisSession: false),
+                       .readOnly)
+        XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOff,
+                                                       activeThisSession: true),
+                       .readOnly)
+    }
+
     func testForcedLiveEditingLaunchArgument() {
         let args = ["LimeIME", "-limeUITestForceLiveEditing", "1"]
 
         XCTAssertTrue(RecordEditingCapability.forceLiveEditingEnabled(arguments: args))
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .unknown, forceLive: true), .live)
+        XCTAssertEqual(RecordEditingCapability.resolve(faState: .unknown,
+                                                       activeThisSession: false,
+                                                       forceLive: true),
+                       .live)
     }
 
     func testRefreshTableFromSnapshotCopiesScoresWithoutRevBump() throws {
