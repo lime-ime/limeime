@@ -723,6 +723,11 @@ final class LimeDB {
     /// INSERT a row using a [String: Any] values dict. Returns rowid or -1 on error.
     @discardableResult
     func addRecord(_ table: String, _ values: [String: Any?]) -> Int64 {
+        addRecord(table, values, syncMode: .merge)
+    }
+
+    @discardableResult
+    func addRecord(_ table: String, _ values: [String: Any?], syncMode: SyncRevMode) -> Int64 {
         guard !checkDBConnection() else { return -1 }
         guard isValidTableName(table) else { return -1 }
         let cols = values.keys.joined(separator: ", ")
@@ -733,7 +738,7 @@ final class LimeDB {
             try db.execute(sql: sql, arguments: args)
             let rowID = db.lastInsertedRowID
             if let stem = syncRevStem(for: table) {
-                try bumpSyncRev(stem, mode: .merge, in: db)
+                try bumpSyncRev(stem, mode: syncMode, in: db)
             }
             return rowID
         }) ?? -1
@@ -743,6 +748,13 @@ final class LimeDB {
     @discardableResult
     func updateRecord(_ table: String, _ values: [String: Any?],
                       _ whereClause: String?, _ whereArgs: [String]?) -> Int {
+        updateRecord(table, values, whereClause, whereArgs, syncMode: .merge)
+    }
+
+    @discardableResult
+    func updateRecord(_ table: String, _ values: [String: Any?],
+                      _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int {
         guard !checkDBConnection() else { return -1 }
         guard isValidTableName(table) else { return -1 }
         let setClauses = values.keys.map { "\($0) = ?" }.joined(separator: ", ")
@@ -756,7 +768,7 @@ final class LimeDB {
             try db.execute(sql: sql, arguments: StatementArguments(allArgs))
             let changes = db.changesCount
             if changes > 0, let stem = syncRevStem(for: table) {
-                try bumpSyncRev(stem, mode: .merge, in: db)
+                try bumpSyncRev(stem, mode: syncMode, in: db)
             }
             return changes
         }) ?? -1
@@ -765,6 +777,12 @@ final class LimeDB {
     /// DELETE rows. Returns affected count or -1 on error.
     @discardableResult
     func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int {
+        deleteRecord(table, whereClause, whereArgs, syncMode: .merge)
+    }
+
+    @discardableResult
+    func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int {
         guard !checkDBConnection() else { return -1 }
         guard isValidTableName(table) else { return -1 }
         var sql = "DELETE FROM \(table)"
@@ -777,7 +795,7 @@ final class LimeDB {
             try db.execute(sql: sql, arguments: args)
             let changes = db.changesCount
             if changes > 0, let stem = syncRevStem(for: table) {
-                try bumpSyncRev(stem, mode: .merge, in: db)
+                try bumpSyncRev(stem, mode: syncMode, in: db)
             }
             return changes
         }) ?? -1
@@ -2956,15 +2974,82 @@ final class LimeDB {
                       tableNames: [], includeRelated: true)
     }
 
+    func refreshTableFromSnapshot(_ stem: String, snapshotURL: URL) throws {
+        guard !checkDBConnection() else { throw DBServerError.datasourceUnavailable }
+        guard isValidTableName(stem) else { throw LimeDBError.invalidTableName(stem) }
+        let alias = "snapshot_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
+
+        try dbQueue.writeWithoutTransaction { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS \(quotedIdentifier(alias))",
+                           arguments: ["\(snapshotURL.absoluteString)?immutable=1"])
+        }
+        defer {
+            try? dbQueue.writeWithoutTransaction { db in
+                try db.execute(sql: "DETACH DATABASE \(quotedIdentifier(alias))")
+            }
+        }
+
+        try dbQueue.write { db in
+            let sourceExists = try Int.fetchOne(db, sql: """
+                SELECT COUNT(*) FROM \(quotedIdentifier(alias)).sqlite_master
+                WHERE type = 'table' AND name = ?
+            """, arguments: [stem]) ?? 0
+            guard sourceExists > 0 else { throw LimeDBError.missingSourceTable(stem) }
+
+            if stem == "related" {
+                try db.execute(sql: """
+                    CREATE TABLE IF NOT EXISTS related (
+                        _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                        pword     TEXT,
+                        cword     TEXT,
+                        basescore INTEGER DEFAULT 0,
+                        score     INTEGER DEFAULT 0
+                    )
+                """)
+            } else {
+                try db.execute(sql: """
+                    CREATE TABLE IF NOT EXISTS \(quotedIdentifier(stem)) (
+                        _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                        code      TEXT,
+                        word      TEXT,
+                        score     INTEGER DEFAULT 0,
+                        basescore INTEGER DEFAULT 0,
+                        code3r    TEXT
+                    )
+                """)
+            }
+
+            let source = try tableColumns(db, schemaName: alias, tableName: stem)
+            let destination = try tableColumns(db, tableName: stem)
+            let preferred = stem == "related"
+                ? ["pword", "cword", "basescore", "score"]
+                : ["code", "word", "score", "basescore", "code3r"]
+            let columns = preferred.filter { source.contains($0) && destination.contains($0) }
+            guard !columns.isEmpty else { throw LimeDBError.noSharedColumns(stem) }
+
+            let columnList = columns.map(quotedIdentifier).joined(separator: ", ")
+            try db.execute(sql: "DELETE FROM \(quotedIdentifier(stem))")
+            try db.execute(sql: """
+                INSERT INTO \(quotedIdentifier(stem)) (\(columnList))
+                SELECT \(columnList)
+                FROM \(quotedIdentifier(alias)).\(quotedIdentifier(stem))
+            """)
+        }
+    }
+
     private func tableColumns(_ db: Database, schemaName: String? = nil, tableName: String) throws -> Set<String> {
         let sql: String
         if let schemaName {
-            sql = "PRAGMA \(schemaName).table_info(\(tableName))"
+            sql = "PRAGMA \(quotedIdentifier(schemaName)).table_info(\(quotedIdentifier(tableName)))"
         } else {
-            sql = "PRAGMA table_info(\(tableName))"
+            sql = "PRAGMA table_info(\(quotedIdentifier(tableName)))"
         }
         let rows = try Row.fetchAll(db, sql: sql)
         return Set(rows.map { $0["name"] as String? ?? "" })
+    }
+
+    private func quotedIdentifier(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     private func importMappingRowsFromAttachedSource(_ db: Database,
@@ -3914,6 +3999,8 @@ final class LimeDB {
 enum LimeDBError: Error {
     case invalidTableName(String)
     case fileNotFound(String)
+    case missingSourceTable(String)
+    case noSharedColumns(String)
 }
 
 // MARK: - DatabaseValue helper

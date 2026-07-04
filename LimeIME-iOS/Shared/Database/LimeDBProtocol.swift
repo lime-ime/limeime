@@ -71,8 +71,11 @@ protocol LimeDBProtocol: AnyObject {
     func getRecordList(_ table: String, _ query: String?, searchByCode: Bool, _ maximum: Int, _ offset: Int) -> [LimeRecord]
     func getRecord(_ table: String, _ id: Int64) -> LimeRecord?
     func addRecord(_ table: String, _ values: [String: Any?]) -> Int64
+    func addRecord(_ table: String, _ values: [String: Any?], syncMode: SyncRevMode) -> Int64
     @discardableResult func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int
+    @discardableResult func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?, syncMode: SyncRevMode) -> Int
     @discardableResult func updateRecord(_ table: String, _ values: [String: Any?], _ whereClause: String?, _ whereArgs: [String]?) -> Int
+    @discardableResult func updateRecord(_ table: String, _ values: [String: Any?], _ whereClause: String?, _ whereArgs: [String]?, syncMode: SyncRevMode) -> Int
     func countRecords(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int
 
     // MARK: Related table

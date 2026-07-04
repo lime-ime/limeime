@@ -1341,14 +1341,32 @@ final class SearchServer {
     }
 
     @discardableResult
+    func addRecord(_ table: String, _ values: [String: Any?], syncMode: SyncRevMode) -> Int64 {
+        return db.addRecord(table, values, syncMode: syncMode)
+    }
+
+    @discardableResult
     func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int {
         return db.deleteRecord(table, whereClause, whereArgs)
+    }
+
+    @discardableResult
+    func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int {
+        return db.deleteRecord(table, whereClause, whereArgs, syncMode: syncMode)
     }
 
     @discardableResult
     func updateRecord(_ table: String, _ values: [String: Any?],
                       _ whereClause: String?, _ whereArgs: [String]?) -> Int {
         return db.updateRecord(table, values, whereClause, whereArgs)
+    }
+
+    @discardableResult
+    func updateRecord(_ table: String, _ values: [String: Any?],
+                      _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int {
+        return db.updateRecord(table, values, whereClause, whereArgs, syncMode: syncMode)
     }
 
     func clearTable(_ table: String) {

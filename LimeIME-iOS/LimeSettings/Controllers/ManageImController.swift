@@ -82,14 +82,22 @@ final class ManageImController: BaseController {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
         let ss = searchServer
-        let rowID = await Task.detached(priority: .userInitiated) {
-            ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score],
+                                      syncMode: .replace) ?? -1
+            guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if rowID > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("新增失敗"))
+        return result
     }
 
     // MARK: - Update record
@@ -100,29 +108,43 @@ final class ManageImController: BaseController {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
         let ss = searchServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            ss?.updateRecord(table, ["code": code, "word": word, "score": score],
-                             "_id = ?", [id]) ?? 0
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
+                                            "_id = ?", [id], syncMode: .replace) ?? 0
+            guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if affected > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("更新失敗"))
+        return result
     }
 
     // MARK: - Delete record
 
     func deleteRecord(table: String, id: String) async -> Result<Void, Error> {
         let ss = searchServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = ss?.deleteRecord(table, "_id = ?", [id], syncMode: .replace) ?? 0
+            guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if affected > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("刪除失敗"))
+        return result
     }
 
     // MARK: - IM list
@@ -141,6 +163,7 @@ final class ManageImController: BaseController {
         let localPrefs = self.prefs
         await Task.detached(priority: .userInitiated) {
             server.updateIMEnabled(imName: imName, enabled: enabled)
+            try? server.publishColdSnapshot()
             await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
         }.value
     }
@@ -150,7 +173,12 @@ final class ManageImController: BaseController {
     func setIMSortOrder(id: Int64, sortOrder: Int) async {
         let server = self.dbServer
         await Task.detached(priority: .background) {
-            try? server.updateIMSortOrder(id: id, sortOrder: sortOrder)
+            do {
+                try server.updateIMSortOrder(id: id, sortOrder: sortOrder)
+                try? server.publishColdSnapshot()
+            } catch {
+                return
+            }
         }.value
     }
 
@@ -195,6 +223,7 @@ final class ManageImController: BaseController {
         let server = self.dbServer
         await Task.detached(priority: .background) {
             server.setImConfigKeyboard(tableNick, keyboard)
+            try? server.publishColdSnapshot()
         }.value
         ManageImController.markKeyboardCacheDirty()
     }
@@ -210,11 +239,18 @@ final class ManageImController: BaseController {
         }
 
         let server = self.dbServer
-        await Task.detached(priority: .userInitiated) {
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             server.setImConfig(tableNick, "name", trimmedName)
             server.setImConfig(tableNick, "version", trimmedVersion)
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
 
+        guard case .success = result else { return result }
         ManageImController.markKeyboardCacheDirty()
         invalidate()
         return .success(())
@@ -233,10 +269,17 @@ final class ManageImController: BaseController {
         }
 
         let server = self.dbServer
-        await Task.detached(priority: .userInitiated) {
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             server.setImConfig(tableNick, field, trimmedValue)
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
 
+        guard case .success = result else { return result }
         ManageImController.markKeyboardCacheDirty()
         invalidate()
         return .success(())
@@ -250,8 +293,11 @@ final class ManageImController: BaseController {
             view?.onError("字根和文字不能為空"); return
         }
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
+            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score],
+                                      syncMode: .replace) ?? -1
+            if rowID > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 rowID > 0 ? view?.refreshRecordList() : view?.onError("新增失敗")
             }
@@ -264,9 +310,11 @@ final class ManageImController: BaseController {
             view?.onError("字根和文字不能為空"); return
         }
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
-                                            "_id = ?", [id]) ?? 0
+                                            "_id = ?", [id], syncMode: .replace) ?? 0
+            if affected > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 affected > 0 ? view?.refreshRecordList() : view?.onError("更新失敗")
             }
@@ -275,8 +323,10 @@ final class ManageImController: BaseController {
 
     func deleteRecord(table: String, id: String, view: (any ManageImView)?) {
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
+            let affected = ss?.deleteRecord(table, "_id = ?", [id], syncMode: .replace) ?? 0
+            if affected > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 affected > 0 ? view?.refreshRecordList() : view?.onError("刪除失敗")
             }
@@ -306,6 +356,7 @@ final class ManageImController: BaseController {
         let localPrefs = self.prefs
         Task.detached(priority: .userInitiated) {
             server.updateIMEnabled(imName: imName, enabled: enabled)
+            try? server.publishColdSnapshot()
             await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
             await MainActor.run { view?.refreshRecordList() }
         }
@@ -314,7 +365,12 @@ final class ManageImController: BaseController {
     func updateIMSortOrder(id: Int64, sortOrder: Int) {
         let server = self.dbServer
         Task.detached(priority: .background) {
-            try? server.updateIMSortOrder(id: id, sortOrder: sortOrder)
+            do {
+                try server.updateIMSortOrder(id: id, sortOrder: sortOrder)
+                try? server.publishColdSnapshot()
+            } catch {
+                return
+            }
         }
     }
 

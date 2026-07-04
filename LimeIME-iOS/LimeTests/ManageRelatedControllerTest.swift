@@ -36,6 +36,20 @@ final class ManageRelatedControllerTest: XCTestCase {
         return (url, db)
     }
 
+    private func makeDBDirectory() throws -> (dir: URL, db: LimeIME.LimeDB) {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("manage-related-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let db = try LimeIME.LimeDB(path: dir.appendingPathComponent("lime.db").path)
+        _ = db.openDBConnection(false)
+        return (dir, db)
+    }
+
+    private func readColdMeta(in dir: URL) throws -> LimeIME.ColdSnapshotMeta {
+        try JSONDecoder().decode(LimeIME.ColdSnapshotMeta.self,
+                                 from: Data(contentsOf: LimeIME.SyncPaths.coldMeta(dir)))
+    }
+
     // MARK: - loadRelated
 
     func testLoadRelatedEmptyTable() async throws {
@@ -170,6 +184,35 @@ final class ManageRelatedControllerTest: XCTestCase {
         XCTAssertTrue(updated.contains {
             $0.parentWord == "分數" && $0.childWord == "更新" && $0.score == 88
         })
+    }
+
+    func testUpdateRelatedPublishesReplaceModeSnapshot() async throws {
+        let (dir, db) = try makeDBDirectory()
+        defer {
+            try? db.closeForReplacement()
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageRelatedController(dbServer: server)
+        let rowID = db.addRecord("related",
+                                 ["pword": "分數", "cword": "編輯",
+                                  "basescore": 0, "score": 7])
+        XCTAssertGreaterThan(rowID, 0)
+        let firstMeta = try server.publishColdSnapshot()
+
+        let result = await controller.updateRelated(id: rowID,
+                                                    parentWord: "分數",
+                                                    childWord: "更新",
+                                                    score: 88)
+
+        guard case .success = result else {
+            XCTFail("Expected updateRelated to succeed, got \(result)")
+            return
+        }
+        let rev = try XCTUnwrap(db.syncRevs()["related"])
+        XCTAssertEqual(rev.mode, .replace)
+        XCTAssertEqual(try readColdMeta(in: dir).generation, firstMeta.generation + 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: LimeIME.SyncPaths.coldDB(dir).path))
     }
 
     func testUpdateRelatedEmptyWordReportsError() async throws {

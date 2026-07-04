@@ -44,12 +44,20 @@ final class ManageRelatedController: BaseController {
             return .failure(ControllerError.validation("詞彙和關聯字不能為空"))
         }
         let server = self.dbServer
-        let rowID = await Task.detached(priority: .userInitiated) {
-            server.addRecord("related",
-                             ["pword": parentWord, "cword": childWord,
-                              "basescore": 0, "score": score])
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let rowID = server.addRecord("related",
+                                         ["pword": parentWord, "cword": childWord,
+                                          "basescore": 0, "score": score],
+                                         syncMode: .replace)
+            guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        return rowID > 0 ? .success(()) : .failure(ControllerError.operation("新增失敗"))
+        return result
     }
 
     func updateRelated(id: Int64, parentWord: String,
@@ -58,29 +66,52 @@ final class ManageRelatedController: BaseController {
             return .failure(ControllerError.validation("詞彙和關聯字不能為空"))
         }
         let server = self.dbServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            server.updateRecord("related",
-                                ["pword": parentWord, "cword": childWord, "score": score],
-                                "_id = ?", ["\(id)"])
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = server.updateRecord("related",
+                                               ["pword": parentWord, "cword": childWord, "score": score],
+                                               "_id = ?", ["\(id)"], syncMode: .replace)
+            guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        return affected > 0 ? .success(()) : .failure(ControllerError.operation("更新失敗"))
+        return result
     }
 
     func clearRelated() async -> Result<Void, Error> {
-        let ss = dbServer.makeSearchServer()
-        await Task.detached(priority: .userInitiated) {
-            ss?.clearTable("related")
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = server.deleteRecord("related", nil, nil, syncMode: .replace)
+            guard affected >= 0 else { return .failure(ControllerError.operation("清除失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        invalidate()
-        return .success(())
+        if case .success = result {
+            invalidate()
+        }
+        return result
     }
 
     func deleteRelated(id: Int64) async -> Result<Void, Error> {
         let server = self.dbServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            server.deleteRecord("related", "_id = ?", ["\(id)"])
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = server.deleteRecord("related", "_id = ?", ["\(id)"], syncMode: .replace)
+            guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
+            do {
+                try server.publishColdSnapshot()
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        return affected > 0 ? .success(()) : .failure(ControllerError.operation("刪除失敗"))
+        return result
     }
 
     // MARK: - Protocol-based methods (kept for unit tests with mock views)
@@ -104,7 +135,9 @@ final class ManageRelatedController: BaseController {
         Task.detached(priority: .userInitiated) {
             let rowID = server.addRecord("related",
                                         ["pword": parentWord, "cword": childWord,
-                                         "basescore": 0, "score": score])
+                                         "basescore": 0, "score": score],
+                                        syncMode: .replace)
+            if rowID > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 rowID > 0 ? view?.refreshPhraseList() : view?.onError("新增失敗")
             }
@@ -120,7 +153,8 @@ final class ManageRelatedController: BaseController {
         Task.detached(priority: .userInitiated) {
             let affected = server.updateRecord("related",
                                                ["pword": parentWord, "cword": childWord, "score": score],
-                                               "_id = ?", ["\(id)"])
+                                               "_id = ?", ["\(id)"], syncMode: .replace)
+            if affected > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 affected > 0 ? view?.refreshPhraseList() : view?.onError("更新失敗")
             }
@@ -130,7 +164,8 @@ final class ManageRelatedController: BaseController {
     func deleteRelated(id: Int64, view: (any ManageRelatedView)?) {
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = server.deleteRecord("related", "_id = ?", ["\(id)"])
+            let affected = server.deleteRecord("related", "_id = ?", ["\(id)"], syncMode: .replace)
+            if affected > 0 { try? server.publishColdSnapshot() }
             await MainActor.run {
                 affected > 0 ? view?.refreshPhraseList() : view?.onError("刪除失敗")
             }

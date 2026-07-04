@@ -1117,15 +1117,38 @@ final class DBServer {
     }
 
     @discardableResult
+    func addRecord(_ table: String, _ values: [String: Any?], syncMode: SyncRevMode) -> Int64 {
+        datasource?.addRecord(table, values, syncMode: syncMode) ?? -1
+    }
+
+    @discardableResult
     func updateRecord(_ table: String, _ values: [String: Any?],
                       _ whereClause: String?, _ whereArgs: [String]?) -> Int {
         datasource?.updateRecord(table, values, whereClause, whereArgs) ?? 0
     }
 
     @discardableResult
+    func updateRecord(_ table: String, _ values: [String: Any?],
+                      _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int {
+        datasource?.updateRecord(table, values, whereClause, whereArgs, syncMode: syncMode) ?? 0
+    }
+
+    @discardableResult
     func deleteRecord(_ table: String, _ whereClause: String?,
                       _ whereArgs: [String]?) -> Int {
         datasource?.deleteRecord(table, whereClause, whereArgs) ?? 0
+    }
+
+    @discardableResult
+    func deleteRecord(_ table: String, _ whereClause: String?,
+                      _ whereArgs: [String]?, syncMode: SyncRevMode) -> Int {
+        datasource?.deleteRecord(table, whereClause, whereArgs, syncMode: syncMode) ?? 0
+    }
+
+    func refreshColdTableFromSnapshot(stem: String, snapshotURL: URL) throws {
+        guard let datasource else { throw DBServerError.datasourceUnavailable }
+        try datasource.refreshTableFromSnapshot(stem, snapshotURL: snapshotURL)
     }
 
     // MARK: - SearchServer factory

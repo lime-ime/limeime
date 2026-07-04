@@ -15,6 +15,7 @@
 		06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */; };
 		E4A901B7C3D24F6089ABCDF1 /* EpochRestoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */; };
 		FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */; };
+		A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
 		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
@@ -363,6 +364,7 @@
 		55ACA3BC6FDCE9C013025EB0 /* KeyboardPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardPickerView.swift; sourceTree = "<group>"; };
 		55C6C7CF0775CFE705BB3B43 /* lime_abc.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_abc.json; sourceTree = "<group>"; };
 		5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManageImControllerTest.swift; sourceTree = "<group>"; };
+		A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordEditingCapabilityTest.swift; sourceTree = "<group>"; };
 		577CC268BA6F7CF6C121BA1F /* ReverseLookupSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReverseLookupSettingsView.swift; sourceTree = "<group>"; };
 		5802DBDEBC645B7A9362C580 /* lime_array_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_ipad_narrow.json; sourceTree = "<group>"; };
 		5881111DCA9ED12EFE8C4039 /* lime_cj_number.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_cj_number.json; sourceTree = "<group>"; };
@@ -604,6 +606,7 @@
 				A616F712F666B45F6A993A5C /* LIMEPreferenceManagerTest.swift */,
 				5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */,
 				0595186AC824BB0CCF9D15EF /* ManageRelatedControllerTest.swift */,
+				A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */,
 				A0B1C2D3E4F5061728394A60 /* PreferenceBackupAdapterTest.swift */,
 				70669219C0D562C4F98D828D /* SearchServerTest.swift */,
 				A9627C2D44209CBC7935864D /* SetupImControllerTest.swift */,
@@ -1302,6 +1305,7 @@
 				9B1ECA9BBCEE603587497032 /* LimeDBTest.swift in Sources */,
 				EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */,
 				41CFFB478874C876C611CC47 /* ManageRelatedControllerTest.swift in Sources */,
+				A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */,
 				41F0C74C36F32BE94395EF6C /* Mapping.swift in Sources */,
 				A0B1C2D3E4F5061728394A51 /* PreferenceBackupAdapter.swift in Sources */,
 				A0B1C2D3E4F5061728394A61 /* PreferenceBackupAdapterTest.swift in Sources */,

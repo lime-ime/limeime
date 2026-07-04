@@ -5,6 +5,7 @@
 // Spec §5.2.
 
 import SwiftUI
+import UIKit
 
 // MARK: - IMDetailView
 
@@ -88,6 +89,14 @@ struct IMDetailView: View {
     @State private var editingMetadataField: MetadataField?
     @State private var metadataError: String?
     @State private var isSavingMetadata = false
+    @State private var relatedEditingCapability: RecordEditingCapability = .readOnly
+    @State private var relatedFAPingThisSession: Bool?
+    @State private var relatedFAPingAt: TimeInterval?
+    @State private var hasFreshRelatedFAEvidence = false
+    @State private var relatedFAPingObserver: FAPingObserver?
+    @State private var relatedFAPollTimer: Timer?
+    @State private var relatedProbeText = ""
+    @FocusState private var relatedProbeFocused: Bool
 
     init(im: IMRow, onRefresh: (() -> Void)? = nil, onDeleted: (() -> Void)? = nil) {
         self.im = im
@@ -122,6 +131,9 @@ struct IMDetailView: View {
     private var backupOnDeleteBinding: Binding<Bool> {
         Binding(get: { backupOnDelete }, set: { backupOnDelete = $0 })
     }
+    private let groupSuite = LIMEPreferenceManager.suiteName
+    private var canClearRelated: Bool { relatedEditingCapability == .live }
+    private var relatedUnlockHint: String { "開啟完整取用以編輯關聯字庫（顯示實際分數）" }
 
     var body: some View {
         List {
@@ -256,6 +268,12 @@ struct IMDetailView: View {
                             Spacer()
                         }
                     }
+                    .disabled(!canClearRelated)
+                    if !canClearRelated {
+                        Text(relatedUnlockHint)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .setupMatchedSectionBlock()
             }
@@ -295,6 +313,18 @@ struct IMDetailView: View {
             }
         }
         .setupMatchedGroupedSurface()
+        .background {
+            if im.tableNick == "related" {
+                TextField("", text: $relatedProbeText)
+                    .focused($relatedProbeFocused)
+                    .frame(width: SettingsMetrics.invisibleProbeSize,
+                           height: SettingsMetrics.invisibleProbeSize)
+                    .opacity(SettingsMetrics.invisibleProbeOpacity)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .accessibilityHidden(true)
+            }
+        }
         .constrainedDetailLayout(displayName) {
             Button {
                 showSharePicker = true
@@ -367,6 +397,7 @@ struct IMDetailView: View {
         .task {
             refreshMetadataFields()
             if im.tableNick == "related" {
+                startRelatedCapabilityMonitoring()
                 let n = await manageImController.countRelated()
                 totalRecord = "\(n)"
             } else {
@@ -376,6 +407,16 @@ struct IMDetailView: View {
                 keyboardName = kb.keyboards.first(where: { $0.code == kb.selected })?.desc ?? kb.selected
                 totalRecord = "\(n)"
             }
+        }
+        .onDisappear {
+            stopRelatedFAPolling()
+        }
+        .onChange(of: relatedProbeText) { _ in
+            refreshRelatedEditingCapability()
+        }
+        .onReceive(NotificationCenter.default.publisher(
+            for: UIApplication.didBecomeActiveNotification)) { _ in
+            startRelatedCapabilityMonitoring()
         }
         .alert("移除輸入法", isPresented: $showRemoveAlert) {
             Button("移除", role: .destructive) {
@@ -389,6 +430,7 @@ struct IMDetailView: View {
         }
         .alert("清除關聯字庫", isPresented: $showClearRelatedAlert) {
             Button("清除", role: .destructive) {
+                guard canClearRelated else { return }
                 Task {
                     _ = await manageRelatedController.clearRelated()
                     totalRecord = "0"
@@ -397,6 +439,67 @@ struct IMDetailView: View {
             Button("取消", role: .cancel) {}
         } message: {
             Text("此操作將清除所有關聯字資料，無法還原。確定繼續？")
+        }
+    }
+
+    private func startRelatedCapabilityMonitoring() {
+        guard im.tableNick == "related" else { return }
+        ensureRelatedFAPingObserver()
+        refreshRelatedEditingCapability()
+        startRelatedFAPolling()
+        triggerRelatedProbeIfNeeded()
+    }
+
+    private func refreshRelatedEditingCapability() {
+        guard im.tableNick == "related" else { return }
+        let heartbeat = readKeyboardHeartbeat()
+        let faState = FAStateResolver.resolve(heartbeat: heartbeat,
+                                              faPingThisSession: relatedFAPingThisSession,
+                                              faPingAt: relatedFAPingAt)
+        relatedEditingCapability = RecordEditingCapability.resolve(faState: faState)
+        hasFreshRelatedFAEvidence = FAStateResolver.hasFreshEvidence(
+            heartbeat: heartbeat,
+            faPingThisSession: relatedFAPingThisSession)
+    }
+
+    private func readKeyboardHeartbeat() -> KeyboardHeartbeat? {
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupSuite),
+              let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL))
+        else { return nil }
+        return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+    }
+
+    private func ensureRelatedFAPingObserver() {
+        guard relatedFAPingObserver == nil else { return }
+        relatedFAPingObserver = FAPingObserver { hasFullAccess in
+            relatedFAPingThisSession = hasFullAccess
+            relatedFAPingAt = Date().timeIntervalSince1970
+            refreshRelatedEditingCapability()
+            if hasFreshRelatedFAEvidence {
+                relatedProbeFocused = false
+            }
+        }
+    }
+
+    private func startRelatedFAPolling() {
+        guard relatedFAPollTimer == nil else { return }
+        relatedFAPollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            refreshRelatedEditingCapability()
+        }
+    }
+
+    private func stopRelatedFAPolling() {
+        relatedFAPollTimer?.invalidate()
+        relatedFAPollTimer = nil
+    }
+
+    private func triggerRelatedProbeIfNeeded() {
+        guard !hasFreshRelatedFAEvidence else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            if !hasFreshRelatedFAEvidence {
+                relatedProbeFocused = true
+            }
         }
     }
 
@@ -501,6 +604,7 @@ struct IMDetailView: View {
                 guard let kbList = server.getKeyboardConfigList(),
                       let kb = kbList.first(where: { $0.code == targetCode }) else { return }
                 server.setImConfigKeyboard("phonetic", kb)
+                try? server.publishColdSnapshot()
             }.value
             // Refresh the 鍵盤佈局 label after the DB write so the detail page
             // reflects the new layout immediately.

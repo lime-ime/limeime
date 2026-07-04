@@ -68,6 +68,28 @@ enum FAState: Equatable {
     case unknown
 }
 
+enum RecordEditingCapability: Equatable {
+    case readOnly
+    case live
+
+    static func resolve(faState: FAState,
+                        forceLive: Bool = forceLiveEditingEnabled()) -> RecordEditingCapability {
+        forceLive || faState == .confirmedOn ? .live : .readOnly
+    }
+
+    static func forceLiveEditingEnabled(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
+        #if DEBUG
+        // ponytail: simulator UI tests need the live editor without device-only Full Access writes.
+        guard let index = arguments.firstIndex(of: "-limeUITestForceLiveEditing"),
+              arguments.indices.contains(index + 1)
+        else { return false }
+        return arguments[index + 1] == "1"
+        #else
+        return false
+        #endif
+    }
+}
+
 enum FAStateResolver {
     // ponytail: fixed freshness window from the FA detection spec; make configurable only if device polling changes.
     static let heartbeatFreshness: TimeInterval = 120

@@ -2908,9 +2908,15 @@ final class SpyLimeDB: LimeDBProtocol {
                        _ maximum: Int, _ offset: Int) -> [LimeRecord] { [] }
     func getRecord(_ table: String, _ id: Int64) -> LimeRecord? { nil }
     func addRecord(_ table: String, _ values: [String: Any?]) -> Int64 { 0 }
+    func addRecord(_ table: String, _ values: [String: Any?], syncMode: SyncRevMode) -> Int64 { 0 }
     func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int { 0 }
+    func deleteRecord(_ table: String, _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int { 0 }
     func updateRecord(_ table: String, _ values: [String: Any?],
                       _ whereClause: String?, _ whereArgs: [String]?) -> Int { 0 }
+    func updateRecord(_ table: String, _ values: [String: Any?],
+                      _ whereClause: String?, _ whereArgs: [String]?,
+                      syncMode: SyncRevMode) -> Int { 0 }
     func countRecords(_ table: String, _ whereClause: String?, _ whereArgs: [String]?) -> Int { 0 }
 
     // MARK: LimeDBProtocol — related table

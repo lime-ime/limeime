@@ -1,4 +1,4 @@
-// ManageImControllerTest.swift
+﻿// ManageImControllerTest.swift
 // LimeIMETests
 //
 // CRUD + pagination tests for ManageImController.
@@ -38,6 +38,20 @@ final class ManageImControllerTest: XCTestCase {
         let db = try LimeIME.LimeDB(path: url.path)
         _ = db.openDBConnection(false)
         return (url, db)
+    }
+
+    private func makeDBDirectory() throws -> (dir: URL, db: LimeIME.LimeDB) {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("manage-im-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let db = try LimeIME.LimeDB(path: dir.appendingPathComponent("lime.db").path)
+        _ = db.openDBConnection(false)
+        return (dir, db)
+    }
+
+    private func readColdMeta(in dir: URL) throws -> LimeIME.ColdSnapshotMeta {
+        try JSONDecoder().decode(LimeIME.ColdSnapshotMeta.self,
+                                 from: Data(contentsOf: LimeIME.SyncPaths.coldMeta(dir)))
     }
 
     // MARK: - loadRecords
@@ -182,6 +196,29 @@ final class ManageImControllerTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(testTable, "limeendkey"), "")
     }
 
+    func testUpdateIMMetadataFieldPublishesColdSnapshot() async throws {
+        let (dir, db) = try makeDBDirectory()
+        defer {
+            try? db.closeForReplacement()
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageImController(dbServer: server)
+        let firstMeta = try server.publishColdSnapshot()
+
+        let result = await controller.updateIMMetadataField(tableNick: testTable,
+                                                            field: "limeendkey",
+                                                            value: " ,.; ")
+
+        guard case .success = result else {
+            XCTFail("Expected metadata field update to succeed, got \(result)")
+            return
+        }
+        XCTAssertEqual(db.getImConfig(testTable, "limeendkey"), ",.;")
+        XCTAssertEqual(try readColdMeta(in: dir).generation, firstMeta.generation + 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: LimeIME.SyncPaths.coldDB(dir).path))
+    }
+
     // MARK: - updateRecord
 
     func testUpdateRecordAfterAdd() async throws {
@@ -215,6 +252,34 @@ final class ManageImControllerTest: XCTestCase {
 
         let updated = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
         XCTAssertTrue(updated.contains { $0.word == "新文" })
+    }
+
+    func testUpdateRecordPublishesReplaceModeSnapshot() async throws {
+        let (dir, db) = try makeDBDirectory()
+        defer {
+            try? db.closeForReplacement()
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageImController(dbServer: server)
+        let rowID = db.addRecord(testTable, ["code": "live", "word": "原文", "score": 1])
+        XCTAssertGreaterThan(rowID, 0)
+        let firstMeta = try server.publishColdSnapshot()
+
+        let result = await controller.updateRecord(table: testTable,
+                                                   id: "\(rowID)",
+                                                   code: "live",
+                                                   word: "新文",
+                                                   score: 9)
+
+        guard case .success = result else {
+            XCTFail("Expected updateRecord to succeed, got \(result)")
+            return
+        }
+        let rev = try XCTUnwrap(db.syncRevs()[testTable])
+        XCTAssertEqual(rev.mode, .replace)
+        XCTAssertEqual(try readColdMeta(in: dir).generation, firstMeta.generation + 1)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: LimeIME.SyncPaths.coldDB(dir).path))
     }
 
     func testUpdateRecordEmptyCodeReportsError() async throws {

@@ -177,6 +177,20 @@ final class SetupImController: BaseController {
         }.value
     }
 
+    func refreshTableFromKeyboard(stem: String) async -> Result<Void, Error> {
+        let server = dbServer
+        return await Task.detached(priority: .userInitiated) {
+            do {
+                let snapshot = try requestKeyboardSnapshot(server: server)
+                defer { try? FileManager.default.removeItem(at: snapshot) }
+                try server.refreshColdTableFromSnapshot(stem: stem, snapshotURL: snapshot)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
+        }.value
+    }
+
     // MARK: - Restore
 
     func restoreDB(from url: URL, view: (any SetupImView)?) {
@@ -312,6 +326,12 @@ private func restoreBackupIntoCold(server: DBServer, from url: URL) throws {
 }
 
 private func requestKeyboardBackup(server: DBServer) throws -> URL {
+    let snapshotURL = try requestKeyboardSnapshot(server: server)
+    defer { try? FileManager.default.removeItem(at: snapshotURL) }
+    return try buildBackupArchive(server: server, snapshotURL: snapshotURL)
+}
+
+private func requestKeyboardSnapshot(server: DBServer) throws -> URL {
     let baseURL = server.syncBaseURL
     let requestURL = SyncPaths.exportRequest(baseURL)
     let snapshotURL = SyncPaths.backupSnapshot(baseURL)
@@ -332,12 +352,10 @@ private func requestKeyboardBackup(server: DBServer) throws -> URL {
         while Date() <= deadline {
             if let receipt = matchingReceipt(at: receiptURL, requestUUID: requestUUID),
                snapshotIsFresh(at: snapshotURL, since: requestedAt) {
-                let zip = try buildBackupArchive(server: server, snapshotURL: snapshotURL)
-                try? FileManager.default.removeItem(at: snapshotURL)
                 try? FileManager.default.removeItem(at: requestURL)
                 try? FileManager.default.removeItem(at: receiptURL)
                 _ = receipt
-                return zip
+                return snapshotURL
             }
             Thread.sleep(forTimeInterval: backupReceiptPollInterval)
         }
