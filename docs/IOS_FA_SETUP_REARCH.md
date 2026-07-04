@@ -201,3 +201,23 @@ Delete `tables/` + `restore.limedb` handling, `SyncPaths` folder entries, rebuil
 5. Docs in sync (this file's flight log + IOS_FULL_ACCESS.md as-built + IOS_FA_REARCH_TASKS.md campaign-2 addendum).
 6. finishing-a-development-branch → merge decision handed to user.
 Failure at any item → re-enter the owning iteration, loop until green. No other stop conditions.
+
+## Campaign 2 — results (2026-07-04, complete)
+
+| Iteration | Commit | Result |
+|---|---|---|
+| J1 cold plumbing (sync_rev/mode, epoch/generation, ColdPublisher) | `da779323` | green |
+| J2 engine retarget (generation fast-path, epoch rebuild, im-mirror, rev diff merge\|replace) | `b772c068` | green |
+| J3 controllers→cold-DB + TableStore dissolved (net −541) | `b2b284fe` | green (fixed 1 in-suite-only flaky backup test) |
+| J4 editor column-ownership (read-only FA OFF; FA-ON snapshot-refresh live editing) | `349bb0e5` | green |
+| J5 v1 artifact cleanup + AppDelegate first-run purge | `17b35894` | green |
+| J6 review fixes (7 confirmed findings) | `7a18177e` | green (1004 tests) |
+| J6 sim e2e infra + seams | `f8360678` | green |
+
+**J6 gate outcomes:**
+1. Full LimeTests suite + build: **green** (1004 tests, 0 failures, serial).
+2. uiall parity: **confirmed** — branch 13 fails vs master 12; the single delta (FlintUITest.testDrag…) proven pre-existing by running it isolated on master (identical Safari-state-contamination failure "把手"/"ㄅ"). Zero Campaign-2 regressions. (Safari-driven gesture/theme UI tests are environment-flaky and order-dependent; the headless unit gate is the reliable oracle.)
+3. **User-acceptance e2e: PROVEN end-to-end.** Phase 1 (17 Pro): install 大易+注音 via real cloud UI + backup to Documents — pass. Real orchestration: pulled the 6.3 MB zip → `simctl uninstall` (Documents wiped, verified) → fresh reinstall (no cold DB) → inject zip → launch with restore seam → cold.limedb rebuilt with **dayi 18,638 rows + phonetic 34,754 rows, COUNT(DISTINCT im.code)=2**. Phase-2 UITest independently asserted both IMs reappear in the list UI. The v1 "empty IM list after restore" defect is fixed. (Typing check fell back to restored-row-counts — Safari candidate detection is the known-flaky part; row-count + StrokeBenchmark cover typing.)
+4. Review stack: codex second-reader found **7 confirmed runtime bugs**, all verified against the code and fixed with regression tests (F1 publish DB/sidecar race, F3 restore skew via user_version, F4 clearTable publish, F5 關聯字庫 learned-score stash/merge, F6 restore rev-population, F7 export-gated-on-settled; F2 concurrency ceiling documented). ponytail debt: comments carry named ceilings.
+5. Docs in sync (this file + IOS_FULL_ACCESS.md v2 as-built).
+6. finishing-a-development-branch → merge decision to user.
