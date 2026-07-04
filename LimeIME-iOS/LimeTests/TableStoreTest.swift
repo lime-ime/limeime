@@ -206,6 +206,41 @@ final class TableStoreTest: XCTestCase {
         return zipURL
     }
 
+    // AMENDED restore semantics (user acceptance): the backup's im table is the
+    // authority for the installed-set — restore rebuilds tables/ sources from it,
+    // so the app's IM list repopulates after a restore.
+    func testPrepareRestoreRebuildsSourcesFromIMTable() throws {
+        let store = TableStore(baseURL: baseURL)
+        let source = tempURL("restore-full-\(UUID().uuidString).limedb")
+        let queue = try DatabaseQueue(path: source.path)
+        try queue.write { db in
+            try db.execute(sql: "CREATE TABLE cj (code TEXT, word TEXT, score INTEGER DEFAULT 0)")
+            try db.execute(sql: "INSERT INTO cj VALUES ('a', '一', 5)")
+            try db.execute(sql: "CREATE TABLE dayi (code TEXT, word TEXT, score INTEGER DEFAULT 0)")
+            // dayi has a table but is NOT registered in im → must NOT be rebuilt
+            try db.execute(sql: """
+                CREATE TABLE im (code TEXT, title TEXT, desc TEXT, keyboard TEXT,
+                                 disable INTEGER, selkey TEXT, endkey TEXT, spacestyle TEXT)
+            """)
+            try db.execute(sql: "INSERT INTO im VALUES ('cj', '倉頡輸入法', '', 'lime', 0, '', '', '')")
+        }
+        try queue.close()
+
+        _ = try store.prepareRestore(from: source)
+
+        XCTAssertEqual(store.installedStems(), ["cj"])
+        let rebuilt = SyncPaths.tableFile(baseURL, stem: "cj")
+        let rebuiltQueue = try DatabaseQueue(path: rebuilt.path)
+        let (rows, imTitle) = try rebuiltQueue.read { db -> (Int, String?) in
+            (try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM cj") ?? 0,
+             try String.fetchOne(db, sql: "SELECT title FROM im WHERE code = 'cj'"))
+        }
+        XCTAssertEqual(rows, 1)
+        XCTAssertEqual(imTitle, "倉頡輸入法")
+        let metaData = try Data(contentsOf: SyncPaths.tableMeta(baseURL, stem: "cj"))
+        XCTAssertEqual(try JSONDecoder().decode(TableMeta.self, from: metaData).provenance, "restore")
+    }
+
     private func makeRestoreSource(epoch: String, schemaVersion: Int) throws -> URL {
         let url = tempURL("restore-source-\(UUID().uuidString).limedb")
         let queue = try DatabaseQueue(path: url.path)

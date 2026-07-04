@@ -12,6 +12,8 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(SyncPaths.tableMeta(base, stem: "cj").path, "/tmp/x/tables/cj.meta.json")
         XCTAssertEqual(SyncPaths.restoreDB(base).path, "/tmp/x/restore.limedb")
         XCTAssertEqual(SyncPaths.restoreMeta(base).path, "/tmp/x/restore.meta.json")
+        XCTAssertEqual(SyncPaths.coldDB(base).path, "/tmp/x/cold.limedb")
+        XCTAssertEqual(SyncPaths.coldMeta(base).path, "/tmp/x/cold.meta.json")
         XCTAssertEqual(SyncPaths.outboxDir(base).path, "/tmp/x/outbox")
         XCTAssertEqual(SyncPaths.exportRequest(base).path, "/tmp/x/outbox/export.request.json")
         XCTAssertEqual(SyncPaths.backupSnapshot(base).path, "/tmp/x/outbox/backup.limedb")

@@ -69,7 +69,12 @@ final class EpochRestoreTest: XCTestCase {
             XCTFail("Expected bundled restore delivery to succeed, got \(error)")
         }
         XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.restoreDB(appGroup).path))
-        XCTAssertTrue(try desiredTableSources(in: appGroup).isEmpty)
+        // AMENDED restore semantics: sources are rebuilt from the restored DB. The
+        // factory seed registers no IMs (empty im table) but ships 關聯字庫 content,
+        // so exactly the related source is rebuilt — the old cj source must be gone.
+        let rebuiltNames = try desiredTableSources(in: appGroup).map { $0.lastPathComponent }.sorted()
+        XCTAssertEqual(rebuiltNames.filter { $0.hasSuffix(".limedb") }, ["related.limedb"])
+        XCTAssertFalse(rebuiltNames.contains("cj.limedb"))
         XCTAssertEqual(try rawCount("keyboard", in: SyncPaths.restoreDB(appGroup)), expectedKeyboardRows)
         XCTAssertGreaterThan(expectedKeyboardRows, 0)
     }

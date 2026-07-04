@@ -21,6 +21,14 @@ enum SyncPaths {
         base.appendingPathComponent("restore.meta.json")
     }
 
+    static func coldDB(_ base: URL) -> URL {
+        base.appendingPathComponent("cold.limedb")
+    }
+
+    static func coldMeta(_ base: URL) -> URL {
+        base.appendingPathComponent("cold.meta.json")
+    }
+
     static func outboxDir(_ base: URL) -> URL {
         base.appendingPathComponent("outbox", isDirectory: true)
     }

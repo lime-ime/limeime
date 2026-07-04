@@ -77,6 +77,102 @@ final class LimeDBTest: XCTestCase {
         XCTAssertFalse(db.isDatabaseOnHold(), "should not be on hold after unhold")
     }
 
+    // MARK: - Cold Sync Rev / Epoch
+
+    func testSyncRevManualBumpsIncrementAndOverwriteMode() throws {
+        let db = try makeLimeDB()
+        XCTAssertTrue(db.syncRevs().isEmpty)
+
+        try db.dbQueue.write { sqlDB in
+            try db.bumpSyncRev("cj", mode: .merge, in: sqlDB)
+            try db.bumpSyncRev("cj", mode: .replace, in: sqlDB)
+        }
+
+        let rev = try XCTUnwrap(db.syncRevs()["cj"])
+        XCTAssertEqual(rev.rev, 2)
+        XCTAssertEqual(rev.mode, .replace)
+    }
+
+    func testImportTxtFileBumpsSyncRevForStemWithMergeMode() throws {
+        let db = try makeLimeDB()
+        let source = FileManager.default.temporaryDirectory
+            .appendingPathComponent("cold-import-\(UUID().uuidString).lime")
+        defer { try? FileManager.default.removeItem(at: source) }
+        try """
+        %chardef begin
+        a\t測\t0\t0
+        %chardef end
+        """.write(to: source, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: source.path, tableName: "custom")
+
+        let rev = try XCTUnwrap(db.syncRevs()["custom"])
+        XCTAssertEqual(rev.rev, 1)
+        XCTAssertEqual(rev.mode, .merge)
+    }
+
+    func testRecordAddUpdateDeleteBumpSyncRev() throws {
+        let db = try makeLimeDB()
+
+        let rowID = db.addRecord("custom", ["code": "a", "word": "一", "score": 0])
+        XCTAssertGreaterThan(rowID, 0)
+        XCTAssertEqual(db.syncRevs()["custom"]?.rev, 1)
+
+        XCTAssertEqual(db.updateRecord("custom", ["word": "乙"], "_id = ?", ["\(rowID)"]), 1)
+        XCTAssertEqual(db.syncRevs()["custom"]?.rev, 2)
+
+        XCTAssertEqual(db.deleteRecord("custom", "_id = ?", ["\(rowID)"]), 1)
+        XCTAssertEqual(db.syncRevs()["custom"]?.rev, 3)
+        XCTAssertEqual(db.syncRevs()["custom"]?.mode, .merge)
+    }
+
+    func testClearTableBumpsSyncRev() throws {
+        let db = try makeLimeDB()
+        XCTAssertGreaterThan(db.addRecord("custom", ["code": "a", "word": "一"]), 0)
+
+        db.clearTable("custom")
+
+        XCTAssertEqual(db.syncRevs()["custom"]?.rev, 2)
+        XCTAssertEqual(db.syncRevs()["custom"]?.mode, .merge)
+    }
+
+    func testImportDbAndImportFromAttachedDBBumpSyncRevs() throws {
+        let db = try makeLimeDB()
+        let source = try makeSourceDB(customRows: [("a", "甲")],
+                                      relatedRows: [("甲", "乙")])
+        defer { try? FileManager.default.removeItem(at: source) }
+
+        db.importDb(sourceFile: source, tableNames: ["custom"], overwriteExisting: true, includeRelated: true)
+        XCTAssertEqual(db.syncRevs()["custom"]?.rev, 1)
+        XCTAssertEqual(db.syncRevs()["related"]?.rev, 1)
+        XCTAssertEqual(db.syncRevs()["custom"]?.mode, .merge)
+
+        try db.importFromAttachedDB(sourcePath: source.path, tableName: "cj")
+        XCTAssertEqual(db.syncRevs()["cj"]?.rev, 1)
+        XCTAssertEqual(db.syncRevs()["cj"]?.mode, .merge)
+    }
+
+    func testRegisterIMDoesNotBumpSyncRev() throws {
+        let db = try makeLimeDB()
+
+        try db.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "cj")
+
+        XCTAssertNil(db.syncRevs()["cj"])
+        XCTAssertTrue(db.syncRevs().isEmpty)
+    }
+
+    func testBumpEpochChangesEpochAndColdGenerationStartsZero() throws {
+        let db = try makeLimeDB()
+        let first = try db.ensureEpochUUID()
+
+        let second = try db.bumpEpoch()
+
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(db.syncMeta("epoch_uuid"), second)
+        XCTAssertEqual(db.syncMeta("schema_version"), "\(LimeDB.CURRENT_DB_VERSION)")
+        XCTAssertEqual(db.coldGeneration(), 0)
+    }
+
     // MARK: - 2. countRecords
 
     func testLimeDBCountMapping() throws {
@@ -2954,6 +3050,44 @@ final class LimeDBTest: XCTestCase {
         let seed = try XCTUnwrap(Bundle.main.url(forResource: "lime", withExtension: "db"))
         try? FileManager.default.removeItem(at: target)
         try FileManager.default.copyItem(at: seed, to: target)
+    }
+
+    private func makeSourceDB(customRows: [(String, String)] = [],
+                              relatedRows: [(String, String)] = []) throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lime-source-\(UUID().uuidString).db")
+        let queue = try DatabaseQueue(path: url.path)
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE custom (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT,
+                    word TEXT,
+                    score INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0,
+                    code3r TEXT
+                )
+            """)
+            for (code, word) in customRows {
+                try db.execute(sql: "INSERT INTO custom (code, word, score, basescore) VALUES (?, ?, 0, 0)",
+                               arguments: [code, word])
+            }
+            try db.execute(sql: """
+                CREATE TABLE related (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pword TEXT,
+                    cword TEXT,
+                    basescore INTEGER DEFAULT 0,
+                    score INTEGER DEFAULT 0
+                )
+            """)
+            for (pword, cword) in relatedRows {
+                try db.execute(sql: "INSERT INTO related (pword, cword, basescore, score) VALUES (?, ?, 0, 0)",
+                               arguments: [pword, cword])
+            }
+        }
+        try queue.close()
+        return url
     }
 
     private func makeDB103SeedVariant(name: String,

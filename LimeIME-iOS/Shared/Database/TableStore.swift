@@ -158,7 +158,66 @@ final class TableStore {
         let meta = RestoreMeta(epochUUID: epoch, schemaVersion: LimeDB.CURRENT_DB_VERSION)
         try atomicWrite(JSONEncoder().encode(meta), to: SyncPaths.restoreMeta(baseURL))
         try clearAllSources()
+        // Rebuild the installed-set from the backup: the backup's `im` table is the
+        // authority for what was installed. Each registered, non-empty IM table (plus
+        // related) becomes a fresh source file, so the app's IM list repopulates and
+        // repair/uninstall keep working per stem. The keyboard re-imports these on
+        // top of the epoch — same rows, convergent.
+        try rebuildSources(fromRestoreCopy: temp)
         return epoch
+    }
+
+    private func rebuildSources(fromRestoreCopy restoreCopy: URL) throws {
+        let sourceQueue = try DatabaseQueue(path: restoreCopy.path)
+        defer { try? sourceQueue.close() }
+        let stems: [String] = try sourceQueue.read { db in
+            var found: [String] = []
+            let registered: Set<String>
+            if try tableExists("im", in: db) {
+                registered = Set(try String.fetchAll(db, sql: "SELECT code FROM im"))
+            } else {
+                registered = []
+            }
+            for stem in LimeDB.syncableStems {
+                guard stem == "related" || registered.contains(stem) else { continue }
+                guard try tableExists(stem, in: db) else { continue }
+                guard try rowCount(in: db, table: stem) > 0 else { continue }
+                found.append(stem)
+            }
+            return found
+        }
+        for stem in stems {
+            let out = try scratchFile(extension: "limedb")
+            defer { removeSQLiteFiles(at: out) }
+            let outQueue = try DatabaseQueue(path: out.path)
+            try outQueue.writeWithoutTransaction { db in
+                try db.execute(sql: "ATTACH DATABASE ? AS src", arguments: [restoreCopy.path])
+                if let createSQL = try String.fetchOne(db, sql: """
+                    SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = ?
+                """, arguments: [stem]) {
+                    try db.execute(sql: createSQL)
+                    try db.execute(sql: "INSERT INTO \(quote(stem)) SELECT * FROM src.\(quote(stem))")
+                }
+                let srcHasIM = try Int.fetchOne(db, sql: """
+                    SELECT COUNT(*) FROM src.sqlite_master WHERE type = 'table' AND name = 'im'
+                """) ?? 0 > 0
+                if stem != "related", srcHasIM {
+                    try db.execute(sql: """
+                        CREATE TABLE IF NOT EXISTS im (code TEXT, title TEXT, desc TEXT, keyboard TEXT,
+                                         disable INTEGER, selkey TEXT, endkey TEXT, spacestyle TEXT)
+                    """)
+                    try db.execute(sql: """
+                        INSERT INTO im SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle
+                        FROM src.im WHERE code = ?
+                    """, arguments: [stem])
+                }
+                try db.execute(sql: "DETACH src")
+                try db.execute(sql: "PRAGMA wal_checkpoint(TRUNCATE)")
+            }
+            try outQueue.close()
+            try deliverLimedb(from: out, stem: stem,
+                              meta: TableMeta(restoreLearning: true, displayName: nil, provenance: "restore"))
+        }
     }
 
     func clearAllSources() throws {

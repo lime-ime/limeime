@@ -67,7 +67,9 @@ final class IntegrationTestBackupRestore: XCTestCase {
                                                   appGroupOverride: h.appGroupDir)
             let restoredEngine = TableSyncEngine(database: restoredDatabase, baseURL: h.appGroupDir)
             _ = try XCTUnwrap(restoredDatabase.current())
-            XCTAssertEqual(restoredEngine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+            let restoreEvents = restoredEngine.scanAndApply()
+            XCTAssertTrue(restoreEvents.contains(SyncEvent(kind: .epochApplied, stem: nil)))
+            XCTAssertTrue(restoreEvents.contains(SyncEvent(kind: .imported, stem: fixture.table)))
             let restoredDB = try XCTUnwrap(restoredDatabase.current())
 
             XCTAssertEqual(learnedScores(restoredDB, table: fixture.table, code: code),

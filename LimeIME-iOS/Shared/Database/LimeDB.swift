@@ -30,6 +30,10 @@ enum LedgerState: String {
     case pending, inProgress = "in_progress", done, failed
 }
 
+enum SyncRevMode: String {
+    case merge, replace
+}
+
 struct LedgerEntry: Equatable {
     var stem: String
     var identity: FileIdentity?
@@ -155,6 +159,10 @@ final class LimeDB {
         guard let index = IM_CODES.firstIndex(of: code) else { return nil }
         return IM_FULL_NAMES[index]
     }
+
+    /// The closed set of table stems the desired-state sync moves between app and
+    /// keyboard: every known IM table plus the related-phrase table.
+    static var syncableStems: [String] { IM_CODES + ["related"] }
     // MARK: - Initializer
 
     /// Opens (or creates) lime.db at the given path.
@@ -257,6 +265,13 @@ final class LimeDB {
                 )
             """)
             try db.execute(sql: "CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT)")
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_rev (
+                    stem TEXT PRIMARY KEY,
+                    rev INTEGER NOT NULL,
+                    mode TEXT NOT NULL
+                )
+            """)
             try LimeDB.ensureEmojiUserTable(db)
             try LimeDB.dropLegacyEmojiStaticTables(db)
             try db.execute(sql: """
@@ -502,6 +517,15 @@ final class LimeDB {
         return false
     }
 
+    private func syncRevStem(for table: String) -> String? {
+        guard isValidTableName(table),
+              table != "im",
+              table != "keyboard",
+              !table.hasSuffix("_user")
+        else { return nil }
+        return table
+    }
+
     // MARK: - Table Utilities
 
     func tableExists(_ name: String) -> Bool {
@@ -535,9 +559,39 @@ final class LimeDB {
 
     func setSyncMeta(_ key: String, _ value: String) throws {
         try dbQueue.write { db in
-            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                           arguments: [key, value])
+            try setSyncMeta(key, value, in: db)
         }
+    }
+
+    private func setSyncMeta(_ key: String, _ value: String, in db: Database) throws {
+        try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
+                       arguments: [key, value])
+    }
+
+    func bumpSyncRev(_ stem: String, mode: SyncRevMode, in db: Database) throws {
+        let next = (try Int64.fetchOne(db, sql: """
+            SELECT COALESCE(MAX(rev), 0) + 1 FROM sync_rev WHERE stem = ?
+        """, arguments: [stem]) ?? 1)
+        try db.execute(sql: """
+            INSERT INTO sync_rev (stem, rev, mode) VALUES (?, ?, ?)
+            ON CONFLICT(stem) DO UPDATE SET
+                rev = excluded.rev,
+                mode = excluded.mode
+        """, arguments: [stem, next, mode.rawValue])
+    }
+
+    func syncRevs() -> [String: (rev: Int64, mode: SyncRevMode)] {
+        (try? dbQueue.read { db in
+            var result: [String: (rev: Int64, mode: SyncRevMode)] = [:]
+            let rows = try Row.fetchAll(db, sql: "SELECT stem, rev, mode FROM sync_rev")
+            for row in rows {
+                let stem: String = row["stem"]
+                let rev: Int64 = row["rev"]
+                let rawMode: String = row["mode"]
+                result[stem] = (rev, SyncRevMode(rawValue: rawMode) ?? .merge)
+            }
+            return result
+        }) ?? [:]
     }
 
     func ledgerEntry(stem: String) -> LedgerEntry? {
@@ -590,17 +644,41 @@ final class LimeDB {
 
     func ensureEpochUUID() throws -> String {
         try dbQueue.write { db in
-            if let existing = try String.fetchOne(db,
-                                                  sql: "SELECT value FROM sync_meta WHERE key = 'epoch_uuid'") {
-                return existing
-            }
+            try ensureEpochUUID(in: db)
+        }
+    }
+
+    func ensureEpochUUID(in db: Database) throws -> String {
+        if let existing = try String.fetchOne(db,
+                                              sql: "SELECT value FROM sync_meta WHERE key = 'epoch_uuid'") {
+            try setSyncMeta("schema_version", "\(LimeDB.CURRENT_DB_VERSION)", in: db)
+            return existing
+        }
+        let uuid = UUID().uuidString
+        try setSyncMeta("epoch_uuid", uuid, in: db)
+        try setSyncMeta("schema_version", "\(LimeDB.CURRENT_DB_VERSION)", in: db)
+        return uuid
+    }
+
+    func bumpEpoch() throws -> String {
+        try dbQueue.write { db in
             let uuid = UUID().uuidString
-            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                           arguments: ["epoch_uuid", uuid])
-            try db.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES (?, ?)",
-                           arguments: ["schema_version", "\(LimeDB.CURRENT_DB_VERSION)"])
+            try setSyncMeta("epoch_uuid", uuid, in: db)
+            try setSyncMeta("schema_version", "\(LimeDB.CURRENT_DB_VERSION)", in: db)
             return uuid
         }
+    }
+
+    func coldGeneration() -> Int64 {
+        guard let raw = syncMeta("generation") else { return 0 }
+        return Int64(raw) ?? 0
+    }
+
+    func bumpColdGeneration(in db: Database) throws {
+        let raw = try String.fetchOne(db,
+                                      sql: "SELECT value FROM sync_meta WHERE key = 'generation'")
+        let next = (Int64(raw ?? "") ?? 0) + 1
+        try setSyncMeta("generation", "\(next)", in: db)
     }
 
     private static func ledgerEntry(from row: Row) -> LedgerEntry {
@@ -644,7 +722,11 @@ final class LimeDB {
         let args = StatementArguments(values.values.map { DatabaseValue(value: $0) })
         return (try? dbQueue.write { db in
             try db.execute(sql: sql, arguments: args)
-            return db.lastInsertedRowID
+            let rowID = db.lastInsertedRowID
+            if let stem = syncRevStem(for: table) {
+                try bumpSyncRev(stem, mode: .merge, in: db)
+            }
+            return rowID
         }) ?? -1
     }
 
@@ -663,7 +745,11 @@ final class LimeDB {
         }
         return (try? dbQueue.write { db in
             try db.execute(sql: sql, arguments: StatementArguments(allArgs))
-            return db.changesCount
+            let changes = db.changesCount
+            if changes > 0, let stem = syncRevStem(for: table) {
+                try bumpSyncRev(stem, mode: .merge, in: db)
+            }
+            return changes
         }) ?? -1
     }
 
@@ -680,7 +766,11 @@ final class LimeDB {
         }
         return (try? dbQueue.write { db in
             try db.execute(sql: sql, arguments: args)
-            return db.changesCount
+            let changes = db.changesCount
+            if changes > 0, let stem = syncRevStem(for: table) {
+                try bumpSyncRev(stem, mode: .merge, in: db)
+            }
+            return changes
         }) ?? -1
     }
 
@@ -1206,13 +1296,17 @@ final class LimeDB {
         guard let imCode = imCode, !imCode.isEmpty,
               let field = field, !field.isEmpty else { return }
         try? dbQueue.write { db in
-            try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
-                           arguments: [imCode, field])
-            if let v = value {
-                try db.execute(
-                    sql: "INSERT INTO im (code, title, desc) VALUES (?, ?, ?)",
-                    arguments: [imCode, field, v])
-            }
+            try setImConfig(imCode, field, value, in: db)
+        }
+    }
+
+    private func setImConfig(_ imCode: String, _ field: String, _ value: String?, in db: Database) throws {
+        try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
+                       arguments: [imCode, field])
+        if let value {
+            try db.execute(
+                sql: "INSERT INTO im (code, title, desc) VALUES (?, ?, ?)",
+                arguments: [imCode, field, value])
         }
     }
 
@@ -1222,9 +1316,13 @@ final class LimeDB {
         guard let imCode = imCode, !imCode.isEmpty,
               let field = field, !field.isEmpty else { return }
         try? dbQueue.write { db in
-            try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
-                           arguments: [imCode, field])
+            try removeImConfig(imCode, field, in: db)
         }
+    }
+
+    private func removeImConfig(_ imCode: String, _ field: String, in db: Database) throws {
+        try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
+                       arguments: [imCode, field])
     }
 
     /// Delete all im rows for an IM code. Mirrors Java resetImConfig(im).
@@ -1529,12 +1627,17 @@ final class LimeDB {
     /// Mirrors Android setIMConfigKeyboard: remove existing key-value row then insert new one.
     func setIMConfigKeyboard(_ imCode: String, _ desc: String, _ keyboardCode: String) {
         guard !checkDBConnection() else { return }
-        removeImConfig(imCode, "keyboard")
         try? dbQueue.write { db in
-            try db.execute(
-                sql: "INSERT INTO im (code, title, desc, keyboard) VALUES (?, ?, ?, ?)",
-                arguments: [imCode, "keyboard", desc, keyboardCode])
+            try setIMConfigKeyboard(imCode, desc, keyboardCode, in: db)
         }
+    }
+
+    private func setIMConfigKeyboard(_ imCode: String, _ desc: String, _ keyboardCode: String,
+                                     in db: Database) throws {
+        try removeImConfig(imCode, "keyboard", in: db)
+        try db.execute(
+            sql: "INSERT INTO im (code, title, desc, keyboard) VALUES (?, ?, ?, ?)",
+            arguments: [imCode, "keyboard", desc, keyboardCode])
     }
 
     func setImConfigKeyboard(_ imCode: String, _ keyboard: KeyboardConfig) {
@@ -1704,6 +1807,9 @@ final class LimeDB {
         guard isValidTableName(table) else { return }
         try? dbQueue.write { db in
             try db.execute(sql: "DELETE FROM \(table)")
+            if let stem = syncRevStem(for: table) {
+                try bumpSyncRev(stem, mode: .merge, in: db)
+            }
         }
         resetImConfig(table)
     }
@@ -2894,24 +3000,34 @@ final class LimeDB {
         guard FileManager.default.fileExists(atPath: sourceFile.path) else { return }
         let valid = tableNames.filter { isValidTableName($0) }
         if valid.isEmpty && !includeRelated { return }
-        if overwriteExisting {
-            for t in valid { clearTable(t) }
-            if includeRelated { clearTable("related") }
-        }
         holdDBConnection()
         defer { unHoldDBConnection() }
         let path = sourceFile.path.replacingOccurrences(of: "'", with: "''")
         try? dbQueue.write { db in
+            var touched = Set<String>()
             try db.execute(sql: "ATTACH DATABASE '\(path)' AS sourceDB")
             defer { try? db.execute(sql: "DETACH DATABASE sourceDB") }
             for t in valid {
+                guard (try? db.tableExists(t)) == true else { continue }
+                if overwriteExisting {
+                    try db.execute(sql: "DELETE FROM \(t)")
+                    try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [t])
+                    if let stem = syncRevStem(for: t) { touched.insert(stem) }
+                }
                 // Try backup format (custom table) first, fall back to direct
                 let hasCustom = (try? Row.fetchOne(db,
                     sql: "SELECT name FROM sourceDB.sqlite_master WHERE type='table' AND name='custom'")) != nil
-                if hasCustom {
-                    try? importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: "custom")
-                } else {
-                    try? importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: t)
+                do {
+                    if hasCustom {
+                        try importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: "custom")
+                    } else {
+                        try importMappingRowsFromAttachedSource(db, targetTable: t, sourceTable: t)
+                    }
+                    if let stem = syncRevStem(for: t) { touched.insert(stem) }
+                } catch {
+                    if !overwriteExisting, let stem = syncRevStem(for: t) {
+                        touched.remove(stem)
+                    }
                 }
             }
             let hasImTable = ((try? Int.fetchOne(db,
@@ -2937,6 +3053,10 @@ final class LimeDB {
                 }
             }
             if includeRelated {
+                if overwriteExisting {
+                    try db.execute(sql: "DELETE FROM related")
+                    touched.insert("related")
+                }
                 let hasRelatedTable = ((try? Int.fetchOne(db,
                     sql: "SELECT COUNT(*) FROM sourceDB.sqlite_master WHERE type='table' AND name='related'")) ?? 0) > 0
                 if hasRelatedTable {
@@ -2945,7 +3065,11 @@ final class LimeDB {
                         SELECT pword, cword, COALESCE(basescore, 0), COALESCE(score, 0)
                         FROM sourceDB.related
                     """)
+                    touched.insert("related")
                 }
+            }
+            for stem in touched.sorted() {
+                try bumpSyncRev(stem, mode: .merge, in: db)
             }
         }
     }
@@ -3085,6 +3209,7 @@ final class LimeDB {
                 defaultImFullName(tableName, fallback: tableName),
                 tableName,
             ])
+            try bumpSyncRev(tableName, mode: .merge, in: db)
         }
     }
 
@@ -3227,6 +3352,10 @@ final class LimeDB {
         var relatedBatch: [(pword: String, cword: String, baseScore: Int, userScore: Int)] = []
         let batchSize = 500
         var totalInserted = 0
+        let defaultKeyboardCode = defaultKeyboardCodeForImportedIM(tableName)
+        let defaultKeyboardDesc = getKeyboardConfig(defaultKeyboardCode)?.desc ?? defaultKeyboardCode
+
+        try dbQueue.write { db in
         for line in reader {
             guard !importCancelled else { break }
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3325,7 +3454,7 @@ final class LimeDB {
                     }
                 }
                 if relatedBatch.count >= batchSize {
-                    totalInserted += try flushRelatedBatch(&relatedBatch)
+                    totalInserted += try flushRelatedBatch(&relatedBatch, in: db)
                     progress?(totalInserted)
                 }
                 continue
@@ -3345,41 +3474,46 @@ final class LimeDB {
                 }
             }
             if batch.count >= batchSize {
-                totalInserted += try flushBatch(&batch, tableName: tableName)
+                totalInserted += try flushBatch(&batch, tableName: tableName, in: db)
                 progress?(totalInserted)
             }
         }
         if !relatedBatch.isEmpty && !importCancelled {
-            totalInserted += try flushRelatedBatch(&relatedBatch)
+            totalInserted += try flushRelatedBatch(&relatedBatch, in: db)
             progress?(totalInserted)
         }
         if !batch.isEmpty && !importCancelled {
-            totalInserted += try flushBatch(&batch, tableName: tableName)
+            totalInserted += try flushBatch(&batch, tableName: tableName, in: db)
             progress?(totalInserted)
         }
         if !importCancelled {
-            setImConfig(tableName, "source", sourceName)
-            setImConfig(tableName, "version", version.isEmpty ? sourceName : version)
-            setImConfig(tableName, "name", name.isEmpty ? defaultImFullName(tableName, fallback: sourceName) : name)
-            setImConfig(tableName, "amount", String(totalInserted))
-            setImConfig(tableName, "import", Date().description)
-            if !selkey.isEmpty { setImConfig(tableName, "selkey", selkey) }
-            if !endkey.isEmpty { setImConfig(tableName, "endkey", endkey) }
-            if !limeendkey.isEmpty { setImConfig(tableName, "limeendkey", limeendkey) }
-            if !spacestyle.isEmpty { setImConfig(tableName, "spacestyle", spacestyle) }
+            try setImConfig(tableName, "source", sourceName, in: db)
+            try setImConfig(tableName, "version", version.isEmpty ? sourceName : version, in: db)
+            try setImConfig(tableName, "name", name.isEmpty ? defaultImFullName(tableName, fallback: sourceName) : name, in: db)
+            try setImConfig(tableName, "amount", String(totalInserted), in: db)
+            try setImConfig(tableName, "import", Date().description, in: db)
+            if !selkey.isEmpty { try setImConfig(tableName, "selkey", selkey, in: db) }
+            if !endkey.isEmpty { try setImConfig(tableName, "endkey", endkey, in: db) }
+            if !limeendkey.isEmpty { try setImConfig(tableName, "limeendkey", limeendkey, in: db) }
+            if !spacestyle.isEmpty { try setImConfig(tableName, "spacestyle", spacestyle, in: db) }
 
             let hasImportedImkeys = !imkeys.isEmpty
             let hasImportedImkeynames = !imkeynamesHeader.isEmpty || !imkeynames.isEmpty
 
-            if !imkeys.isEmpty { setImConfig(tableName, "imkeys", imkeys) }
-            if !imkeynamesHeader.isEmpty { setImConfig(tableName, "imkeynames", imkeynamesHeader) }
-            else if !imkeynames.isEmpty { setImConfig(tableName, "imkeynames", imkeynames.joined(separator: "|")) }
-            applyDefaultMetadataForStandardIM(tableName,
-                                              hasSelkey: !selkey.isEmpty,
-                                              hasEndkey: !endkey.isEmpty,
-                                              hasImportedImkeys: hasImportedImkeys,
-                                              hasImportedImkeynames: hasImportedImkeynames)
-            applyDefaultKeyboardForImportedIM(tableName)
+            if !imkeys.isEmpty { try setImConfig(tableName, "imkeys", imkeys, in: db) }
+            if !imkeynamesHeader.isEmpty { try setImConfig(tableName, "imkeynames", imkeynamesHeader, in: db) }
+            else if !imkeynames.isEmpty { try setImConfig(tableName, "imkeynames", imkeynames.joined(separator: "|"), in: db) }
+            try applyDefaultMetadataForStandardIM(tableName,
+                                                  hasSelkey: !selkey.isEmpty,
+                                                  hasEndkey: !endkey.isEmpty,
+                                                  hasImportedImkeys: hasImportedImkeys,
+                                                  hasImportedImkeynames: hasImportedImkeynames,
+                                                  in: db)
+            try setIMConfigKeyboard(tableName, defaultKeyboardDesc, defaultKeyboardCode, in: db)
+            if let stem = syncRevStem(for: tableName) {
+                try bumpSyncRev(stem, mode: .merge, in: db)
+            }
+        }
         }
     }
 
@@ -3396,53 +3530,54 @@ final class LimeDB {
                                                     hasSelkey: Bool,
                                                     hasEndkey: Bool,
                                                     hasImportedImkeys: Bool,
-                                                    hasImportedImkeynames: Bool) {
+                                                    hasImportedImkeynames: Bool,
+                                                    in db: Database) throws {
         switch tableName {
         case "array":
-            if !hasSelkey { setImConfig(tableName, "selkey", "1234567890") }
+            if !hasSelkey { try setImConfig(tableName, "selkey", "1234567890", in: db) }
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0")
+                try setImConfig(tableName, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0", in: db)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0")
+                try setImConfig(tableName, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0", in: db)
             }
         case "phonetic":
-            if !hasSelkey { setImConfig(tableName, "selkey", "123456789") }
-            if !hasEndkey { setImConfig(tableName, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+") }
+            if !hasSelkey { try setImConfig(tableName, "selkey", "123456789", in: db) }
+            if !hasEndkey { try setImConfig(tableName, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+", in: db) }
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+")
+                try setImConfig(tableName, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+", in: db)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋")
+                try setImConfig(tableName, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋", in: db)
             }
         case "cj", "cj4", "cj5", "ecj", "scj":
             // Cangjie family (倉頡) shares one canonical key layout (matches lime_cj.xml).
             // Reuse CJ_KEY/CJ_CHAR so the labels stay in one place. Selkey is left to the
             // imported file / existing config.
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", LimeDB.CJ_KEY)
+                try setImConfig(tableName, "imkeys", LimeDB.CJ_KEY, in: db)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", LimeDB.CJ_CHAR)
+                try setImConfig(tableName, "imkeynames", LimeDB.CJ_CHAR, in: db)
             }
         case "dayi":
             // Dayi (大易). Reuse DAYI_KEY/DAYI_CHAR (the same key→radical map the app
             // already uses to render dayi keynames). Selkey is left to the imported
             // file / existing config.
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", LimeDB.DAYI_KEY)
+                try setImConfig(tableName, "imkeys", LimeDB.DAYI_KEY, in: db)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", LimeDB.DAYI_CHAR)
+                try setImConfig(tableName, "imkeynames", LimeDB.DAYI_CHAR, in: db)
             }
         case "ez":
             // EZ (輕鬆輸入法). Reuse EZ_KEY/EZ_CHAR (extracted from ez.limedb).
             // Selkey is left to the imported file / existing config.
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", LimeDB.EZ_KEY)
+                try setImConfig(tableName, "imkeys", LimeDB.EZ_KEY, in: db)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", LimeDB.EZ_CHAR)
+                try setImConfig(tableName, "imkeynames", LimeDB.EZ_CHAR, in: db)
             }
         default:
             break
@@ -3474,12 +3609,6 @@ final class LimeDB {
         default:
             return "lime"
         }
-    }
-
-    private func applyDefaultKeyboardForImportedIM(_ tableName: String) {
-        let keyboardCode = defaultKeyboardCodeForImportedIM(tableName)
-        let desc = getKeyboardConfig(keyboardCode)?.desc ?? keyboardCode
-        setIMConfigKeyboard(tableName, desc, keyboardCode)
     }
 
     /// Auto-detect field delimiter from a data line (mirrors Java identifyDelimiter()).
@@ -3602,34 +3731,33 @@ final class LimeDB {
         }
     }
 
-    private func flushBatch(_ batch: inout [(code: String, word: String, score: Int, baseScore: Int)], tableName: String) throws -> Int {
+    private func flushBatch(_ batch: inout [(code: String, word: String, score: Int, baseScore: Int)],
+                            tableName: String,
+                            in db: Database) throws -> Int {
         let count = batch.count
-        try dbQueue.write { db in
-            for pair in batch {
-                if tableName == "phonetic" {
-                    let noTone = pair.code.replacingOccurrences(of: "[3467 ]", with: "", options: .regularExpression)
-                    try db.execute(
-                        sql: "INSERT OR IGNORE INTO \(tableName) (code, word, score, basescore, code3r) VALUES (?, ?, ?, ?, ?)",
-                        arguments: [pair.code, pair.word, pair.score, pair.baseScore, noTone])
-                } else {
-                    try db.execute(
-                        sql: "INSERT OR IGNORE INTO \(tableName) (code, word, score, basescore) VALUES (?, ?, ?, ?)",
-                        arguments: [pair.code, pair.word, pair.score, pair.baseScore])
-                }
+        for pair in batch {
+            if tableName == "phonetic" {
+                let noTone = pair.code.replacingOccurrences(of: "[3467 ]", with: "", options: .regularExpression)
+                try db.execute(
+                    sql: "INSERT OR IGNORE INTO \(tableName) (code, word, score, basescore, code3r) VALUES (?, ?, ?, ?, ?)",
+                    arguments: [pair.code, pair.word, pair.score, pair.baseScore, noTone])
+            } else {
+                try db.execute(
+                    sql: "INSERT OR IGNORE INTO \(tableName) (code, word, score, basescore) VALUES (?, ?, ?, ?)",
+                    arguments: [pair.code, pair.word, pair.score, pair.baseScore])
             }
         }
         batch.removeAll()
         return count
     }
 
-    private func flushRelatedBatch(_ batch: inout [(pword: String, cword: String, baseScore: Int, userScore: Int)]) throws -> Int {
+    private func flushRelatedBatch(_ batch: inout [(pword: String, cword: String, baseScore: Int, userScore: Int)],
+                                   in db: Database) throws -> Int {
         let count = batch.count
-        try dbQueue.write { db in
-            for row in batch {
-                try db.execute(
-                    sql: "INSERT OR IGNORE INTO related (pword, cword, basescore, score) VALUES (?, ?, ?, ?)",
-                    arguments: [row.pword, row.cword, row.baseScore, row.userScore])
-            }
+        for row in batch {
+            try db.execute(
+                sql: "INSERT OR IGNORE INTO related (pword, cword, basescore, score) VALUES (?, ?, ?, ?)",
+                arguments: [row.pword, row.cword, row.baseScore, row.userScore])
         }
         batch.removeAll()
         return count
