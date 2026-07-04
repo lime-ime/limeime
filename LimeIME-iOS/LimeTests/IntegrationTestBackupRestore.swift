@@ -60,16 +60,14 @@ final class IntegrationTestBackupRestore: XCTestCase {
                 throw error
             }
             h.database.closeCurrentForReplacement()
-            try? FileManager.default.removeItem(at: h.ownDir)
-            try FileManager.default.createDirectory(at: h.ownDir, withIntermediateDirectories: true)
             let restoredDatabase = SharedDatabase(runMode: .keyboard,
                                                   dataDirOverride: h.ownDir,
                                                   appGroupOverride: h.appGroupDir)
             let restoredEngine = TableSyncEngine(database: restoredDatabase, baseURL: h.appGroupDir)
             _ = try XCTUnwrap(restoredDatabase.current())
             let restoreEvents = restoredEngine.scanAndApply()
-            XCTAssertTrue(restoreEvents.contains(SyncEvent(kind: .epochApplied, stem: nil)))
-            XCTAssertTrue(restoreEvents.contains(SyncEvent(kind: .imported, stem: fixture.table)))
+            XCTAssertTrue(restoreEvents.contains(SyncEvent(kind: .epochApplied, stem: nil)),
+                          "restore events: \(restoreEvents)")
             let restoredDB = try XCTUnwrap(restoredDatabase.current())
 
             XCTAssertEqual(learnedScores(restoredDB, table: fixture.table, code: code),
@@ -135,7 +133,11 @@ final class IntegrationTestBackupRestore: XCTestCase {
                                       dataDirOverride: ownDir,
                                       appGroupOverride: appGroupDir)
         let engine = TableSyncEngine(database: database, baseURL: appGroupDir)
-        _ = try XCTUnwrap(database.current())
+        let hot = try XCTUnwrap(database.current())
+        let coldDatabase = SharedDatabase(runMode: .app, dataDirOverride: appGroupDir)
+        let cold = try XCTUnwrap(coldDatabase.current())
+        try cold.setSyncMeta("epoch_uuid", try hot.ensureEpochUUID())
+        coldDatabase.closeCurrentForReplacement()
         let server = LimeIME.DBServer(_testDatabaseDirectory: appGroupDir)
         let suiteName = "test.integration.backup.restore.\(UUID().uuidString)"
         let prefs = LimeIME.LIMEPreferenceManager(defaults: UserDefaults(suiteName: suiteName)!)

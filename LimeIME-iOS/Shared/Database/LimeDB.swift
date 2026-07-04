@@ -3775,7 +3775,10 @@ final class LimeDB {
     func importFromZip(at zipURL: URL, tableName: String) throws {
         guard isValidTableName(tableName) else { throw LimeDBError.invalidTableName(tableName) }
         let archive = try Archive(url: zipURL, accessMode: .read)
-        guard let entry = archive.first(where: { $0.path.hasSuffix(".db") }) else { throw LimeDBError.fileNotFound("*.db inside zip") }
+        guard let entry = archive.first(where: {
+            let lower = $0.path.lowercased()
+            return lower.hasSuffix(".db") || lower.hasSuffix(".limedb")
+        }) else { throw LimeDBError.fileNotFound("*.db inside zip") }
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".db")
         _ = try archive.extract(entry, to: tempURL)
         defer { try? FileManager.default.removeItem(at: tempURL) }

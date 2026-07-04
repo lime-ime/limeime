@@ -49,13 +49,21 @@ final class TableSyncEngine {
 
     @discardableResult
     func scanAndApply(deadline: Date? = nil) -> [SyncEvent] {
-        guard let sidecar = readColdMeta() else {
-            return [SyncEvent(kind: .noop, stem: nil)]
-        }
         guard let db = database.current() else {
             return [SyncEvent(kind: .failed, stem: "hot")]
         }
-        if appliedGeneration(in: db) == sidecar.generation {
+        guard let sidecar = readColdMeta() else {
+            if let exportEvent = exportSnapshotIfRequested() {
+                return [exportEvent]
+            }
+            return [SyncEvent(kind: .noop, stem: nil)]
+        }
+        let currentEpoch = db.syncMeta("epoch_uuid") ?? (try? db.ensureEpochUUID()) ?? ""
+        if appliedGeneration(in: db) == sidecar.generation,
+           sidecar.epochUUID == currentEpoch {
+            if let exportEvent = exportSnapshotIfRequested() {
+                return [exportEvent]
+            }
             return [SyncEvent(kind: .noop, stem: nil)]
         }
 
@@ -78,7 +86,6 @@ final class TableSyncEngine {
             }
 
             let coldRevs = try coldSyncRevs(alias: alias, in: db)
-            let currentEpoch = db.syncMeta("epoch_uuid") ?? (try? db.ensureEpochUUID()) ?? ""
             if sidecar.epochUUID != currentEpoch {
                 detach(alias, in: db)
                 attached = false

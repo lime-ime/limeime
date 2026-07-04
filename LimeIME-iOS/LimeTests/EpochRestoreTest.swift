@@ -25,76 +25,76 @@ final class EpochRestoreTest: XCTestCase {
             dbServer: LimeIME.DBServer(_testDatabaseDirectory: appGroup),
             prefs: makePrefs(),
             progress: LimeIME.ProgressManager())
+        let database = SharedDatabase(runMode: .keyboard,
+                                      dataDirOverride: own,
+                                      appGroupOverride: appGroup)
+        let engine = TableSyncEngine(database: database, baseURL: appGroup)
+        _ = try XCTUnwrap(database.current())
+        defer { database.closeCurrentForReplacement() }
 
         let result = await controller.restoreDB(from: backupZip)
 
         if case .failure(let error) = result {
             XCTFail("Expected restore delivery to succeed, got \(error)")
         }
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.restoreDB(appGroup).path))
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.restoreMeta(appGroup).path))
-        XCTAssertTrue(try desiredTableSources(in: appGroup).isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.coldDB(appGroup).path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.coldMeta(appGroup).path))
+        XCTAssertEqual(try rawCount("cj", whereCode: "zip_marker", in: appGroup.appendingPathComponent("lime.db")), 1)
 
-        let meta = try restoreMeta(in: appGroup)
-        let database = SharedDatabase(runMode: .keyboard,
-                                      dataDirOverride: own,
-                                      appGroupOverride: appGroup)
-        let engine = TableSyncEngine(database: database, baseURL: appGroup)
-        _ = try XCTUnwrap(database.current())
-
+        let meta = try coldMeta(in: appGroup)
         let events = engine.scanAndApply()
 
         let canonical = try XCTUnwrap(database.current())
         XCTAssertEqual(events, [SyncEvent(kind: .epochApplied, stem: nil)])
         XCTAssertEqual(canonical.syncMeta("epoch_uuid"), meta.epochUUID)
         XCTAssertEqual(try countRows("cj", whereCode: "zip_marker", in: canonical), 1)
-        database.closeCurrentForReplacement()
     }
 
     @MainActor
     func testFactoryReset() async throws {
         let appGroup = try tempDirectory()
         defer { try? FileManager.default.removeItem(at: appGroup) }
-        try writeSource(stem: "cj", rows: 1, in: appGroup)
         let controller = LimeIME.SetupImController(
             dbServer: LimeIME.DBServer(_testDatabaseDirectory: appGroup),
             prefs: makePrefs(),
             progress: LimeIME.ProgressManager())
-        let bundled = try XCTUnwrap(Bundle.main.url(forResource: "lime", withExtension: "db"))
-        let expectedKeyboardRows = try rawCount("keyboard", in: bundled)
 
         let result = await controller.restoreBundledDatabase()
 
         if case .failure(let error) = result {
             XCTFail("Expected bundled restore delivery to succeed, got \(error)")
         }
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.restoreDB(appGroup).path))
-        // AMENDED restore semantics: sources are rebuilt from the restored DB. The
-        // factory seed registers no IMs (empty im table) but ships 關聯字庫 content,
-        // so exactly the related source is rebuilt — the old cj source must be gone.
-        let rebuiltNames = try desiredTableSources(in: appGroup).map { $0.lastPathComponent }.sorted()
-        XCTAssertEqual(rebuiltNames.filter { $0.hasSuffix(".limedb") }, ["related.limedb"])
-        XCTAssertFalse(rebuiltNames.contains("cj.limedb"))
-        XCTAssertEqual(try rawCount("keyboard", in: SyncPaths.restoreDB(appGroup)), expectedKeyboardRows)
-        XCTAssertGreaterThan(expectedKeyboardRows, 0)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.coldDB(appGroup).path))
+        let liveKeyboardRows = try rawCount("keyboard", in: appGroup.appendingPathComponent("lime.db"))
+        let publishedKeyboardRows = try rawCount("keyboard", in: SyncPaths.coldDB(appGroup))
+        XCTAssertEqual(publishedKeyboardRows, liveKeyboardRows)
+        XCTAssertGreaterThan(publishedKeyboardRows, 0)
     }
 
-    func testRestoreThenInstallLayering() throws {
+    @MainActor
+    func testRestoreThenInstallLayering() async throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        let store = TableStore(baseURL: h.appGroupDir)
-        try store.prepareRestore(from: makeRestoreSource(rows: [("base", "底", 0)]))
-        try store.installLimedb(from: makeTableDB(stem: "cj", rows: [("layer", "層", 0)]),
-                                stem: "cj",
-                                meta: nil)
+        let server = LimeIME.DBServer(_testDatabaseDirectory: h.appGroupDir)
+        let controller = LimeIME.SetupImController(dbServer: server,
+                                                   prefs: makePrefs(),
+                                                   progress: LimeIME.ProgressManager())
+        let backupZip = try makeBackupZip(databaseURL: makeRestoreSource(rows: [("base", "底", 0)]))
+        let restoreResult = await controller.restoreDB(from: backupZip)
+        if case .failure(let error) = restoreResult {
+            XCTFail("Expected restore delivery to succeed, got \(error)")
+        }
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+
+        try importDatabaseFile(server: server,
+                               url: makeTableDB(stem: "cj", rows: [("layer", "層", 0)]),
+                               tableName: "cj")
+        try server.publishColdSnapshot()
 
         let events = h.engine.scanAndApply()
 
         let db = try XCTUnwrap(h.database.current())
-        XCTAssertEqual(events, [
-            SyncEvent(kind: .epochApplied, stem: nil),
-            SyncEvent(kind: .imported, stem: "cj"),
-        ])
+        XCTAssertEqual(events, [SyncEvent(kind: .imported, stem: "cj")])
         XCTAssertEqual(try countRows("cj", whereCode: "base", in: db), 0)
         XCTAssertEqual(try countRows("cj", whereCode: "layer", in: db), 1)
     }
@@ -103,8 +103,6 @@ final class EpochRestoreTest: XCTestCase {
     func testSkewRejected() async throws {
         let appGroup = try tempDirectory()
         defer { try? FileManager.default.removeItem(at: appGroup) }
-        let before = try writeSource(stem: "cj", rows: 1, in: appGroup)
-        let beforeIdentity = try XCTUnwrap(FileIdentity(url: before))
         let sourceDB = try makeRestoreSource(schemaVersion: LimeDB.CURRENT_DB_VERSION + 1,
                                              rows: [("future", "未來", 0)])
         let backupZip = try makeBackupZip(databaseURL: sourceDB)
@@ -119,9 +117,8 @@ final class EpochRestoreTest: XCTestCase {
             return XCTFail("Expected future schema restore to fail")
         }
         XCTAssertTrue(error.localizedDescription.contains("請先更新"))
-        XCTAssertEqual(FileIdentity(url: before), beforeIdentity)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.restoreDB(appGroup).path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.restoreMeta(appGroup).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.coldDB(appGroup).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.coldMeta(appGroup).path))
     }
 
     func testBackupRelayRoundTrip() throws {
@@ -159,8 +156,16 @@ final class EpochRestoreTest: XCTestCase {
     func testBackupDefersDuringImport() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        let source = try writeSource(stem: "cj", rows: 7, in: h.appGroupDir)
         let db = try XCTUnwrap(h.database.current())
+        let coldDir = try tempDirectory()
+        defer { try? FileManager.default.removeItem(at: coldDir) }
+        let coldDatabase = SharedDatabase(runMode: .app, dataDirOverride: coldDir)
+        let cold = try XCTUnwrap(coldDatabase.current())
+        let publisher = ColdPublisher(database: coldDatabase, baseURL: h.appGroupDir)
+        try cold.setSyncMeta("epoch_uuid", try db.ensureEpochUUID())
+        try replaceRows(in: cold, stem: "cj", rows: 7)
+        try publisher.publish()
+        let sidecar = try coldMeta(in: h.appGroupDir)
         try db.dbQueue.write { sqlDB in
             try sqlDB.execute(sql: """
                 CREATE TABLE IF NOT EXISTS cj (
@@ -175,7 +180,8 @@ final class EpochRestoreTest: XCTestCase {
                 )
             """)
             try db.upsertLedger(LedgerEntry(stem: "cj",
-                                            identity: FileIdentity(url: source),
+                                            identity: nil,
+                                            rev: cold.syncRevs()["cj"]?.rev,
                                             state: .inProgress,
                                             error: nil,
                                             attempts: 1,
@@ -193,6 +199,8 @@ final class EpochRestoreTest: XCTestCase {
             SyncEvent(kind: .exported, stem: nil),
         ])
         XCTAssertEqual(try rawCount("cj", in: SyncPaths.backupSnapshot(h.appGroupDir)), 7)
+        XCTAssertEqual(db.syncMeta("applied_generation"), "\(sidecar.generation)")
+        coldDatabase.closeCurrentForReplacement()
     }
 
     private func makeHarness() throws -> Harness {
@@ -280,17 +288,6 @@ final class EpochRestoreTest: XCTestCase {
         return url
     }
 
-    @discardableResult
-    private func writeSource(stem: String, rows: Int, in baseURL: URL) throws -> URL {
-        let sourceRows = (0..<rows).map { ("c\($0)", "w\($0)", 0) }
-        let source = try makeTableDB(stem: stem, rows: sourceRows)
-        let destination = SyncPaths.tableFile(baseURL, stem: stem)
-        try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(),
-                                                withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: source, to: destination)
-        return destination
-    }
-
     private func insertRows(into stem: String, rows: [(String, String, Int)], in db: LimeDB) throws {
         try db.dbQueue.write { sqlDB in
             try sqlDB.execute(sql: """
@@ -314,14 +311,28 @@ final class EpochRestoreTest: XCTestCase {
         try atomicWrite(try JSONEncoder().encode(request), to: SyncPaths.exportRequest(baseURL))
     }
 
-    private func restoreMeta(in baseURL: URL) throws -> RestoreMeta {
-        try JSONDecoder().decode(RestoreMeta.self, from: Data(contentsOf: SyncPaths.restoreMeta(baseURL)))
+    private func coldMeta(in baseURL: URL) throws -> ColdSnapshotMeta {
+        try JSONDecoder().decode(ColdSnapshotMeta.self, from: Data(contentsOf: SyncPaths.coldMeta(baseURL)))
     }
 
-    private func desiredTableSources(in baseURL: URL) throws -> [URL] {
-        let dir = SyncPaths.tablesDir(baseURL)
-        guard FileManager.default.fileExists(atPath: dir.path) else { return [] }
-        return try FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
+    private func replaceRows(in db: LimeDB, stem: String, rows: Int) throws {
+        try db.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: """
+                CREATE TABLE IF NOT EXISTS \(quote(stem)) (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT, word TEXT, score INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0, code3r TEXT
+                )
+            """)
+            try sqlDB.execute(sql: "DELETE FROM \(quote(stem))")
+            for i in 0..<rows {
+                try sqlDB.execute(sql: """
+                    INSERT INTO \(quote(stem)) (code, word, score)
+                    VALUES (?, ?, 0)
+                """, arguments: ["c\(i)", "w\(i)"])
+            }
+            try db.bumpSyncRev(stem, mode: .merge, in: sqlDB)
+        }
     }
 
     private func rawCount(_ table: String, whereCode code: String? = nil, in url: URL) throws -> Int {

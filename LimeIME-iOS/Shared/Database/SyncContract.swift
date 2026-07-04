@@ -1,26 +1,6 @@
 ﻿import Foundation
 
 enum SyncPaths {
-    static func tablesDir(_ base: URL) -> URL {
-        base.appendingPathComponent("tables", isDirectory: true)
-    }
-
-    static func tableFile(_ base: URL, stem: String) -> URL {
-        tablesDir(base).appendingPathComponent("\(stem).limedb")
-    }
-
-    static func tableMeta(_ base: URL, stem: String) -> URL {
-        tablesDir(base).appendingPathComponent("\(stem).meta.json")
-    }
-
-    static func restoreDB(_ base: URL) -> URL {
-        base.appendingPathComponent("restore.limedb")
-    }
-
-    static func restoreMeta(_ base: URL) -> URL {
-        base.appendingPathComponent("restore.meta.json")
-    }
-
     static func coldDB(_ base: URL) -> URL {
         base.appendingPathComponent("cold.limedb")
     }
@@ -63,17 +43,6 @@ func postSyncSignal(_ signal: SyncSignal) {
     let name = CFNotificationName(signal.rawValue as CFString)
     CFNotificationCenterPostNotification(
         CFNotificationCenterGetDarwinNotifyCenter(), name, nil, nil, true)
-}
-
-struct TableMeta: Codable, Equatable {
-    var restoreLearning: Bool?
-    var displayName: String?
-    var provenance: String?
-}
-
-struct RestoreMeta: Codable, Equatable {
-    var epochUUID: String
-    var schemaVersion: Int
 }
 
 struct ExportRequest: Codable, Equatable {

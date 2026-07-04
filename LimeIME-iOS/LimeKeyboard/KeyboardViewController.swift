@@ -845,14 +845,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     private func tableSyncDisplayName(for stem: String) -> String {
-        if let baseURL = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
-           let data = try? Data(contentsOf: SyncPaths.tableMeta(baseURL, stem: stem)),
-           let meta = try? JSONDecoder().decode(TableMeta.self, from: data),
-           let displayName = meta.displayName,
-           !displayName.isEmpty {
-            return displayName
-        }
         if let im = activatedIMs.first(where: { $0.tableNick == stem || $0.imName == stem }) {
             return displayName(for: im)
         }

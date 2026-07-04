@@ -134,7 +134,7 @@ final class SharedDatabase {
 
     private func openKeyboardDatabase(at dbURL: URL) -> LimeDB? {
         guard let db = try? LimeDB(path: dbURL.path) else { return nil }
-        try? db.ensureEpochUUID()
+        _ = try? db.ensureEpochUUID()
         return db
     }
 
@@ -161,7 +161,7 @@ final class SharedDatabase {
                 removeDatabaseFiles(in: directoryURL)
                 return nil
             }
-            try? db.ensureEpochUUID()
+            _ = try? db.ensureEpochUUID()
             return db
         } catch {
             removeDatabaseFiles(in: directoryURL)
@@ -269,8 +269,19 @@ final class DBServer {
         database.dataDirURL
     }
 
-    func makeTableStore() -> TableStore {
-        TableStore(baseURL: dataDirURL)
+    var syncBaseURL: URL {
+        dataDirURL
+    }
+
+    @discardableResult
+    func publishColdSnapshot() throws -> ColdSnapshotMeta {
+        try ColdPublisher(database: database, baseURL: dataDirURL).publish()
+    }
+
+    @discardableResult
+    func bumpEpoch() throws -> String {
+        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
+        return try ds.bumpEpoch()
     }
 
     // MARK: - LimeDB accessor

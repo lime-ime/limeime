@@ -221,13 +221,9 @@
 		C01D10000000000000000002 /* ColdPublisherTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D10000000000000000001 /* ColdPublisherTest.swift */; };
 		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		C01D20000000000000000004 /* ColdPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D20000000000000000001 /* ColdPublisher.swift */; };
-		6E1A5C0D9B234F0187A6D450 /* TableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D440 /* TableStore.swift */; };
-		6E1A5C0D9B234F0187A6D451 /* TableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D440 /* TableStore.swift */; };
-		6E1A5C0D9B234F0187A6D452 /* TableStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D440 /* TableStore.swift */; };
 		6E1A5C0D9B234F0187A6D453 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D441 /* TableSyncEngine.swift */; };
 		6E1A5C0D9B234F0187A6D454 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D441 /* TableSyncEngine.swift */; };
 		6E1A5C0D9B234F0187A6D455 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D441 /* TableSyncEngine.swift */; };
-		6E1A5C0D9B234F0187A6D456 /* TableStoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D442 /* TableStoreTest.swift */; };
 		6E1A5C0D9B234F0187A6D457 /* TableSyncEngineTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
@@ -520,9 +516,7 @@
 		FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBProtocol.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContract.swift; sourceTree = "<group>"; };
 		C01D20000000000000000001 /* ColdPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColdPublisher.swift; sourceTree = "<group>"; };
-		6E1A5C0D9B234F0187A6D440 /* TableStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableStore.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D441 /* TableSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSyncEngine.swift; sourceTree = "<group>"; };
-		6E1A5C0D9B234F0187A6D442 /* TableStoreTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableStoreTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSyncEngineTest.swift; sourceTree = "<group>"; };
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -599,7 +593,6 @@
 					FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */,
 					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 					C01D10000000000000000001 /* ColdPublisherTest.swift */,
-				6E1A5C0D9B234F0187A6D442 /* TableStoreTest.swift */,
 				6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				E4A901B7C3D24F6089ABCDF0 /* EpochRestoreTest.swift */,
@@ -705,7 +698,6 @@
 				FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */,
 				6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */,
 				C01D20000000000000000001 /* ColdPublisher.swift */,
-				6E1A5C0D9B234F0187A6D440 /* TableStore.swift */,
 				6E1A5C0D9B234F0187A6D441 /* TableSyncEngine.swift */,
 			);
 			path = Database;
@@ -1290,9 +1282,7 @@
 					C01D10000000000000000002 /* ColdPublisherTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				C01D20000000000000000004 /* ColdPublisher.swift in Sources */,
-				6E1A5C0D9B234F0187A6D452 /* TableStore.swift in Sources */,
 				6E1A5C0D9B234F0187A6D455 /* TableSyncEngine.swift in Sources */,
-				6E1A5C0D9B234F0187A6D456 /* TableStoreTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D457 /* TableSyncEngineTest.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,
 				8D62ED56761A14A0C42204A9 /* KeyLayout.swift in Sources */,
@@ -1353,7 +1343,6 @@
 				60877D3DCDD874F7F0FE15A6 /* LimeDBProtocol.swift in Sources */,
 				6E1A5C0D9B234F0187A6D424 /* SyncContract.swift in Sources */,
 				C01D20000000000000000002 /* ColdPublisher.swift in Sources */,
-				6E1A5C0D9B234F0187A6D450 /* TableStore.swift in Sources */,
 				6E1A5C0D9B234F0187A6D453 /* TableSyncEngine.swift in Sources */,
 				D82AE1FA73F859BBABBF644C /* LimeSettingsView.swift in Sources */,
 				C9C4D445F9D778B1F3CB5102 /* MainViewController.swift in Sources */,
@@ -1405,7 +1394,6 @@
 				19DCADEDF3021C74C1F1DF4B /* LimeDBProtocol.swift in Sources */,
 				6E1A5C0D9B234F0187A6D425 /* SyncContract.swift in Sources */,
 				C01D20000000000000000003 /* ColdPublisher.swift in Sources */,
-				6E1A5C0D9B234F0187A6D451 /* TableStore.swift in Sources */,
 				6E1A5C0D9B234F0187A6D454 /* TableSyncEngine.swift in Sources */,
 				17766B10C8DE7763C32633C1 /* Mapping.swift in Sources */,
 				77F10738CE2887D86C549599 /* PopupKeyboardView.swift in Sources */,

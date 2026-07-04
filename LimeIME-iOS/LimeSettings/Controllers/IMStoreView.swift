@@ -56,10 +56,9 @@ final class IMDownloadManager: ObservableObject {
     func refreshInstalledTables() {
         Task.detached(priority: .background) { [weak self] in
             let server = DBServer.shared
-            let delivered = Set(server.makeTableStore().installedStems())
             let tables = IMCatalog.allVariants
                 .map { $0.tableName }
-                .filter { delivered.contains($0) }
+                .filter { server.tableHasData($0) }
             let result = Set(tables)
             await MainActor.run { [weak self] in
                 self?.installedTables = result
@@ -122,10 +121,8 @@ final class IMDownloadManager: ObservableObject {
             let server = DBServer.shared
 
             do {
-                let meta = TableMeta(restoreLearning: restoreLearning,
-                                     displayName: variant.label,
-                                     provenance: "download")
-                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName, meta: meta)
+                LIMEPreferenceManager.shared.setRestoreOnImport(restoreLearning, for: variant.tableName)
+                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName)
 
                 // Register in im table so the keyboard can see it
                 try server.registerIM(imName: variant.imName, tableName: variant.tableName,
@@ -133,6 +130,7 @@ final class IMDownloadManager: ObservableObject {
 
                 // Rebuild keyboard_state so the keyboard extension picks up the new IM
                 LIMEPreferenceManager.shared.syncIMActivatedState(dbServer: server)
+                try server.publishColdSnapshot()
 
                 await MainActor.run {
                     self.states[variant.id] = .installed

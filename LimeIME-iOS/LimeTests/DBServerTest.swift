@@ -938,20 +938,27 @@ final class DBServerTest: XCTestCase {
 
     // MARK: - Phase 2.4: Backup+Restore database (URI-based)
 
-    func testDBServerBackupDatabaseAndRestoreWithDataConsistency() {
-        // In test sandbox the App Group container is not available;
-        // verify that backupDatabase+restoreDatabase don't crash.
+    func testDBServerBackupDatabaseAndRestoreWithDataConsistency() throws {
         let backupURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: backupURL) }
 
-        let server = DBServer()
-        do {
-            try server.backupDatabase(uri: backupURL)
-            try server.restoreDatabase(uri: backupURL)
-        } catch {
-            // Errors acceptable in test sandbox
-        }
-        XCTAssertTrue(true, "Backup/Restore should complete without crashing")
+        let db = try makeLimeDB()
+        let tableName = LIME.DB_TABLE_CUSTOM
+        db.addOrUpdateMappingRecord(tableName, "backup_restore", "備份還原", 42)
+        let originalCount = db.countRecords(tableName, nil, nil)
+        XCTAssertGreaterThan(originalCount, 0)
+
+        let server = DBServer(_testDatasource: db)
+        try server.backupDatabase(uri: backupURL)
+
+        let reopened = try XCTUnwrap(server._datasourceForTesting)
+        reopened.clearTable(tableName)
+        XCTAssertEqual(reopened.countRecords(tableName, nil, nil), 0)
+
+        try server.restoreDatabase(uri: backupURL)
+
+        let restored = try XCTUnwrap(server._datasourceForTesting)
+        XCTAssertEqual(restored.countRecords(tableName, nil, nil), originalCount)
     }
 
     func testDBServerBackupDatabaseWithDataIntegrity() {

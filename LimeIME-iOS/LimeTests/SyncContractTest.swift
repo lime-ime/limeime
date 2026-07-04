@@ -7,11 +7,6 @@ final class SyncContractTest: XCTestCase {
     func testPathDerivations() {
         let base = URL(fileURLWithPath: "/tmp/x")
 
-        XCTAssertEqual(SyncPaths.tablesDir(base).path, "/tmp/x/tables")
-        XCTAssertEqual(SyncPaths.tableFile(base, stem: "cj").path, "/tmp/x/tables/cj.limedb")
-        XCTAssertEqual(SyncPaths.tableMeta(base, stem: "cj").path, "/tmp/x/tables/cj.meta.json")
-        XCTAssertEqual(SyncPaths.restoreDB(base).path, "/tmp/x/restore.limedb")
-        XCTAssertEqual(SyncPaths.restoreMeta(base).path, "/tmp/x/restore.meta.json")
         XCTAssertEqual(SyncPaths.coldDB(base).path, "/tmp/x/cold.limedb")
         XCTAssertEqual(SyncPaths.coldMeta(base).path, "/tmp/x/cold.meta.json")
         XCTAssertEqual(SyncPaths.outboxDir(base).path, "/tmp/x/outbox")
@@ -49,19 +44,11 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(files, ["payload.limedb"])
     }
 
-    func testRestoreMetaRoundTrip() throws {
-        let meta = RestoreMeta(epochUUID: "E", schemaVersion: 104)
+    func testColdSnapshotMetaRoundTrip() throws {
+        let meta = ColdSnapshotMeta(generation: 1, epochUUID: "E", schemaVersion: 104)
         let data = try JSONEncoder().encode(meta)
 
         XCTAssertNotEqual(Array(data.prefix(3)), [0xEF, 0xBB, 0xBF])
-        XCTAssertEqual(try JSONDecoder().decode(RestoreMeta.self, from: data), meta)
-    }
-
-    func testTableMetaRoundTrip() throws {
-        let empty = TableMeta()
-        let full = TableMeta(restoreLearning: true, displayName: "CJ", provenance: "import")
-
-        XCTAssertEqual(try JSONDecoder().decode(TableMeta.self, from: JSONEncoder().encode(empty)), empty)
-        XCTAssertEqual(try JSONDecoder().decode(TableMeta.self, from: JSONEncoder().encode(full)), full)
+        XCTAssertEqual(try JSONDecoder().decode(ColdSnapshotMeta.self, from: data), meta)
     }
 }

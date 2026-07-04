@@ -5,6 +5,7 @@
 // Mirrors Android SetupImController.
 
 import Foundation
+import GRDB
 import ZIPFoundation
 
 // MARK: - SetupImController
@@ -30,14 +31,19 @@ final class SetupImController: BaseController {
         progress.show(status: "匯入中…")
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
+            final class CountBox: @unchecked Sendable { var value: Int = 0 }
+            let counter = CountBox()
             do {
-                let count = try installTextFile(server: server, url: url, tableName: tableName,
-                                                meta: TableMeta(restoreLearning: false,
-                                                                displayName: nil,
-                                                                provenance: "local-text"))
+                try server.importTxtFile(at: url.path, tableName: tableName) { count in
+                    counter.value = count
+                    Task { @MainActor in
+                        view?.onProgress(50, status: "已匯入 \(count) 筆…")
+                    }
+                }
+                try server.publishColdSnapshot()
                 await MainActor.run {
                     self.progress.dismiss()
-                    view?.onProgress(100, status: "已交付鍵盤，共 \(count) 筆")
+                    view?.onProgress(100, status: "文字檔匯入完成，共 \(counter.value) 筆")
                     view?.refreshImList()
                 }
             } catch {
@@ -57,10 +63,12 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                let meta = TableMeta(restoreLearning: restoreLearning,
-                                     displayName: nil,
-                                     provenance: "local-text")
-                return .success(try installTextFile(server: server, url: url, tableName: tableName, meta: meta))
+                var lastCount = 0
+                try server.importTxtFile(at: url.path, tableName: tableName) { count in
+                    lastCount = count
+                }
+                try server.publishColdSnapshot()
+                return .success(lastCount)
             } catch {
                 return .failure(error)
             }
@@ -77,13 +85,11 @@ final class SetupImController: BaseController {
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
         Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable,
-                                       meta: TableMeta(restoreLearning: false,
-                                                       displayName: nil,
-                                                       provenance: "local-db"))
+                try importDatabaseFile(server: server, url: url, tableName: safeTable)
+                try server.publishColdSnapshot()
                 await MainActor.run {
                     self.progress.dismiss()
-                    view?.onProgress(100, status: "已交付鍵盤 \(safeTable)")
+                    view?.onProgress(100, status: "已成功匯入 \(safeTable)")
                     view?.refreshImList()
                 }
             } catch {
@@ -104,10 +110,8 @@ final class SetupImController: BaseController {
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable,
-                                       meta: TableMeta(restoreLearning: restoreLearning,
-                                                       displayName: nil,
-                                                       provenance: "local-db"))
+                try importDatabaseFile(server: server, url: url, tableName: safeTable)
+                try server.publishColdSnapshot()
                 return .success(safeTable)
             } catch {
                 return .failure(error)
@@ -124,7 +128,9 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try prepareBundledRestore(server: server)
+                try server.restoreBundledDatabase()
+                try server.bumpEpoch()
+                try server.publishColdSnapshot()
                 return .success("已還原預設資料庫")
             } catch {
                 return .failure(error)
@@ -178,8 +184,9 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             do {
-                try prepareBackupRestore(server: server, from: url)
+                try restoreBackupIntoCold(server: server, from: url)
                 await MainActor.run {
+                    self.syncIMActivatedState()
                     self.progress.dismiss()
                     view?.onProgress(100, status: "資料庫還原完成")
                     view?.refreshImList()
@@ -201,40 +208,17 @@ final class SetupImController: BaseController {
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try prepareBackupRestore(server: server, from: url)
+                try restoreBackupIntoCold(server: server, from: url)
                 return .success(())
             } catch {
                 return .failure(mapSetupImError(error))
             }
         }.value
+        if case .success = result {
+            syncIMActivatedState()
+        }
         await MainActor.run { progress.dismiss() }
         return result
-    }
-
-    // MARK: - Re-register IMs after Android backup restore
-
-    private func reregisterKnownIMs() async {
-        let knownIMs: [(name: String, title: String, keyboard: String)] = [
-            ("phonetic", "注音",     "lime_phonetic"),
-            ("dayi",     "大易",     "lime_dayi"),
-            ("cj",       "倉頡",     "lime_cj_number"),
-            ("cj5",      "倉頡五代", "lime_cj_number"),
-            ("array",    "行列",     "lime_array"),
-            ("array10",  "行列十",   "phone_simple"),
-            ("wb",       "筆順五碼", "lime_wb"),
-            ("hs",       "許氏",     "lime_hs"),
-            ("ez",       "輕鬆",     "lime_ez"),
-            ("scj",      "速成",     "lime_cj_number"),
-            ("ecj",      "易倉頡",   "lime_cj_number"),
-        ]
-        let server = self.dbServer
-        await Task.detached(priority: .userInitiated) {
-            for im in knownIMs {
-                guard server.tableHasData(im.name) else { continue }
-                try? server.registerIM(imName: im.name, tableName: im.name,
-                                       label: im.title, keyboardId: im.keyboard)
-            }
-        }.value
     }
 
     // MARK: - Export (share)
@@ -309,14 +293,7 @@ private let maxRestoreExtractTotalBytes: UInt64 = 500 * 1024 * 1024
 private let maxRestoreExtractEntries = 10_000
 private let maxRestoreCompressionRatio = 100.0
 
-private func prepareBundledRestore(server: DBServer) throws {
-    guard let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") else {
-        throw DBServerError.fileNotFound("lime.db (bundled)")
-    }
-    try prepareRestore(server: server, databaseURL: bundledURL)
-}
-
-private func prepareBackupRestore(server: DBServer, from url: URL) throws {
+private func restoreBackupIntoCold(server: DBServer, from url: URL) throws {
     let startedScopedAccess = url.startAccessingSecurityScopedResource()
     defer { if startedScopedAccess { url.stopAccessingSecurityScopedResource() } }
 
@@ -327,23 +304,15 @@ private func prepareBackupRestore(server: DBServer, from url: URL) throws {
 
     let localURL = try coordinatedCopy(url, into: dir)
     let payload = try restorePayload(from: localURL, in: dir)
-    try prepareRestore(server: server, databaseURL: payload.databaseURL)
-    restorePreferences(server: server,
-                       sharedPrefsURL: payload.sharedPrefsURL,
-                       preferenceManifestURL: payload.preferenceManifestURL)
-}
-
-private func prepareRestore(server: DBServer, databaseURL: URL) throws {
-    do {
-        _ = try server.makeTableStore().prepareRestore(from: databaseURL)
-        postSyncSignal(.tablesUpdated)
-    } catch {
-        throw mapSetupImError(error)
-    }
+    try validateRestoreDatabase(payload.databaseURL)
+    try server.restoreDatabase(srcFilePath: localURL.path)
+    reregisterKnownIMs(server: server)
+    try server.bumpEpoch()
+    try server.publishColdSnapshot()
 }
 
 private func requestKeyboardBackup(server: DBServer) throws -> URL {
-    let baseURL = server.makeTableStore().baseURL
+    let baseURL = server.syncBaseURL
     let requestURL = SyncPaths.exportRequest(baseURL)
     let snapshotURL = SyncPaths.backupSnapshot(baseURL)
     let receiptURL = SyncPaths.receipt(baseURL)
@@ -399,7 +368,7 @@ private func buildBackupArchive(server: DBServer, snapshotURL: URL) throws -> UR
         throw DBServerError.fileNotFound(DBServer.databaseName)
     }
 
-    let baseURL = server.makeTableStore().baseURL
+    let baseURL = server.syncBaseURL
     let sharedPrefsURL = baseURL.appendingPathComponent(DBServer.sharedPrefsBackupName)
     let preferenceManifestURL = baseURL.appendingPathComponent(DBServer.preferenceManifestPath)
     try? FileManager.default.removeItem(at: sharedPrefsURL)
@@ -515,21 +484,55 @@ private func validateRestoreArchive(_ archive: Archive) throws {
     }
 }
 
-private func restorePreferences(server: DBServer, sharedPrefsURL: URL, preferenceManifestURL: URL) {
-    if FileManager.default.fileExists(atPath: preferenceManifestURL.path),
-       server.restorePreferenceCompatibilityManifest(file: preferenceManifestURL) {
-        return
+private func validateRestoreDatabase(_ databaseURL: URL) throws {
+    var config = Configuration()
+    config.readonly = true
+    let queue = try DatabaseQueue(path: databaseURL.path, configuration: config)
+    defer { try? queue.close() }
+    try queue.read { db in
+        let quickCheck = try String.fetchOne(db, sql: "PRAGMA quick_check")
+        guard quickCheck == "ok" else {
+            throw DBServerError.invalidRestoreSource(quickCheck ?? "quick_check failed")
+        }
+        guard try tableExists("sync_meta", in: db),
+              let raw = try String.fetchOne(db,
+                                            sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'"),
+              let version = Int(raw)
+        else { return }
+        if version > LimeDB.CURRENT_DB_VERSION {
+            throw SetupImControllerError.restoreSchemaTooNew(version)
+        }
     }
-    if FileManager.default.fileExists(atPath: sharedPrefsURL.path) {
-        server.restoreDefaultSharedPreference(file: sharedPrefsURL)
+}
+
+private func tableExists(_ table: String, in db: Database) throws -> Bool {
+    try (Int.fetchOne(db,
+                      sql: "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?",
+                      arguments: [table]) ?? 0) > 0
+}
+
+private func reregisterKnownIMs(server: DBServer) {
+    let knownIMs: [(name: String, title: String, keyboard: String)] = [
+        ("phonetic", "注音",     "lime_phonetic"),
+        ("dayi",     "大易",     "lime_dayi"),
+        ("cj",       "倉頡",     "lime_cj_number"),
+        ("cj5",      "倉頡五代", "lime_cj_number"),
+        ("array",    "行列",     "lime_array"),
+        ("array10",  "行列十",   "phone_simple"),
+        ("wb",       "筆順五碼", "lime_wb"),
+        ("hs",       "許氏",     "lime_hs"),
+        ("ez",       "輕鬆",     "lime_ez"),
+        ("scj",      "速成",     "lime_cj_number"),
+        ("ecj",      "易倉頡",   "lime_cj_number"),
+    ]
+    for im in knownIMs {
+        guard server.tableHasData(im.name) else { continue }
+        try? server.registerIM(imName: im.name, tableName: im.name,
+                               label: im.title, keyboardId: im.keyboard)
     }
 }
 
 private func mapSetupImError(_ error: Error) -> Error {
-    if let tableStoreError = error as? TableStoreError,
-       case .schemaTooNew(let version) = tableStoreError {
-        return SetupImControllerError.restoreSchemaTooNew(version)
-    }
     return error
 }
 
@@ -539,66 +542,24 @@ private func fileSizeBytes(at url: URL) -> Int64 {
     return size?.int64Value ?? 0
 }
 
-func importDatabaseFile(server: DBServer, url: URL, tableName: String, meta: TableMeta? = nil) throws {
-    let store = server.makeTableStore()
+func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
+    let sourceURL: URL
+    let cleanupURL: URL?
     if isZipArchive(at: url) {
-        do {
-            try store.installFromZip(from: url, stem: tableName, meta: meta)
-        } catch {
-            try installLegacyZippedDB(store: store, zipURL: url,
-                                      tableName: tableName, meta: meta,
-                                      originalError: error)
-        }
+        let extracted = try extractImportDatabase(from: url)
+        sourceURL = extracted.databaseURL
+        cleanupURL = extracted.tempDir
     } else {
-        try store.installLimedb(from: url, stem: tableName, meta: meta)
+        sourceURL = url
+        cleanupURL = nil
     }
-    postSyncSignal(.tablesUpdated)
-}
-
-private func installTextFile(server: DBServer, url: URL, tableName: String, meta: TableMeta?) throws -> Int {
-    let store = server.makeTableStore()
-    try store.installText(from: url, stem: tableName, meta: meta)
-    let count = installedRowCount(baseURL: store.baseURL, tableName: tableName)
-    postSyncSignal(.tablesUpdated)
-    return count
-}
-
-private func installedRowCount(baseURL: URL, tableName: String) -> Int {
-    guard let db = try? LimeDB(path: SyncPaths.tableFile(baseURL, stem: tableName).path) else { return 0 }
-    defer { try? db.closeForReplacement() }
-    return db.countRecords(tableName, nil, nil)
-}
-
-private func installLegacyZippedDB(store: TableStore, zipURL: URL,
-                                   tableName: String, meta: TableMeta?,
-                                   originalError: Error) throws {
-    let archive: Archive
-    do {
-        archive = try Archive(url: zipURL, accessMode: .read)
-    } catch {
-        throw originalError
+    defer {
+        if let cleanupURL {
+            try? FileManager.default.removeItem(at: cleanupURL)
+        }
     }
-    guard let entry = archive.first(where: { entry in
-        entry.type != .directory && entry.path.lowercased().hasSuffix(".db")
-    }) else {
-        throw originalError
-    }
-
-    let dir = FileManager.default.temporaryDirectory
-        .appendingPathComponent(UUID().uuidString, isDirectory: true)
-    try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    defer { try? FileManager.default.removeItem(at: dir) }
-
-    let extracted = dir.appendingPathComponent(URL(fileURLWithPath: entry.path).lastPathComponent)
-    _ = try archive.extract(entry, to: extracted, skipCRC32: false)
-    do {
-        try store.installLimedb(from: extracted, stem: tableName, meta: meta)
-    } catch {
-        guard tableName != "custom" else { throw error }
-        try store.installLimedb(from: mapLegacyCustomBackup(extracted, tableName: tableName, in: dir),
-                                stem: tableName,
-                                meta: meta)
-    }
+    try validateImportDatabaseSource(sourceURL, tableName: tableName)
+    try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName)
 }
 
 private func isZipArchive(at url: URL) -> Bool {
@@ -607,14 +568,45 @@ private func isZipArchive(at url: URL) -> Bool {
     return (try? handle.read(upToCount: 4))?.starts(with: [0x50, 0x4B]) == true
 }
 
-private func mapLegacyCustomBackup(_ sourceURL: URL, tableName: String, in dir: URL) throws -> URL {
-    let mapped = dir.appendingPathComponent("\(tableName)-mapped.limedb")
-    let db = try LimeDB(path: mapped.path)
-    defer { try? db.closeForReplacement() }
-    db.importDb(sourceFile: sourceURL,
-                tableNames: ["custom"],
-                overwriteExisting: true,
-                includeRelated: false)
-    db.renameTableName("custom", tableName)
-    return mapped
+private func extractImportDatabase(from zipURL: URL) throws -> (databaseURL: URL, tempDir: URL) {
+    let archive = try Archive(url: zipURL, accessMode: .read)
+    guard let entry = archive.first(where: {
+        let lower = $0.path.lowercased()
+        return lower.hasSuffix(".db") || lower.hasSuffix(".limedb")
+    }) else {
+        throw DBServerError.invalidRestoreSource("匯入檔格式不正確")
+    }
+    let tempDir = FileManager.default.temporaryDirectory
+        .appendingPathComponent("lime-import-\(UUID().uuidString)", isDirectory: true)
+    try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    let databaseURL = tempDir.appendingPathComponent("import.db")
+    _ = try archive.extract(entry, to: databaseURL)
+    return (databaseURL, tempDir)
+}
+
+private func validateImportDatabaseSource(_ url: URL, tableName: String) throws {
+    guard FileManager.default.fileExists(atPath: url.path) else {
+        throw DBServerError.fileNotFound(url.path)
+    }
+    var config = Configuration()
+    config.readonly = true
+    let queue = try DatabaseQueue(path: url.path, configuration: config)
+    defer { try? queue.close() }
+
+    let sourceTable = try queue.read { db -> String in
+        if try db.tableExists("custom") { return "custom" }
+        if try db.tableExists(tableName) { return tableName }
+        throw DBServerError.invalidRestoreSource("匯入檔格式不正確")
+    }
+    let count = try queue.read { db in
+        try Int.fetchOne(db,
+                         sql: """
+                         SELECT COUNT(*)
+                         FROM \(sourceTable)
+                         WHERE code IS NOT NULL AND word IS NOT NULL
+                         """) ?? 0
+    }
+    guard count > 0 else {
+        throw DBServerError.invalidRestoreSource("匯入檔沒有可匯入資料")
+    }
 }

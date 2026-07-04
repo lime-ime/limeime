@@ -1536,6 +1536,7 @@ final class KeyboardViewControllerTest: XCTestCase {
     @MainActor
     func testViewWillAppearTriggersTableSyncRunnerWhenReady() async {
         let controller = KeyboardViewController()
+        controller.loadViewIfNeeded()
         let ran = expectation(description: "table sync runner")
         controller.tableSyncRunner = { ran.fulfill() }
 
