@@ -68,6 +68,38 @@ enum FAState: Equatable {
     case unknown
 }
 
+enum SetupDetectionState: Equatable {
+    case notEnabled
+    case checkingActive
+    case enabledNotActive
+    case activeNoFullAccess
+    case fullyEnabled
+}
+
+enum SetupDetection {
+    static func state(keyboardEnabled: Bool,
+                      activeThisSession: Bool,
+                      probePending: Bool,
+                      faConfirmedOn: Bool) -> SetupDetectionState {
+        guard keyboardEnabled else { return .notEnabled }
+        guard activeThisSession else {
+            return probePending ? .checkingActive : .enabledNotActive
+        }
+        return faConfirmedOn ? .fullyEnabled : .activeNoFullAccess
+    }
+
+    static func forceKeyboardEnabled(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
+        #if DEBUG
+        guard let index = arguments.firstIndex(of: "-limeUITestForceKeyboardEnabled"),
+              arguments.indices.contains(index + 1)
+        else { return false }
+        return arguments[index + 1] == "1"
+        #else
+        return false
+        #endif
+    }
+}
+
 enum RecordEditingCapability: Equatable {
     case readOnly
     case live
@@ -94,6 +126,7 @@ enum RecordEditingCapability: Equatable {
 enum FAStateResolver {
     // ponytail: fixed freshness window from the FA detection spec; make configurable only if device polling changes.
     static let heartbeatFreshness: TimeInterval = 120
+    static let activeSessionWindow: TimeInterval = 3
     // ponytail: short active-keyboard proof window; widen only if device probes prove slower.
     static let activeProbeWaitNanoseconds: UInt64 = 2_500_000_000
 
@@ -128,7 +161,7 @@ enum FAStateResolver {
 
     static func isActiveThisSession(faPingAt: TimeInterval?,
                                     probeFiredAt: TimeInterval?,
-                                    window: TimeInterval = 3) -> Bool {
+                                    window: TimeInterval = activeSessionWindow) -> Bool {
         guard let faPingAt, let probeFiredAt else { return false }
         let elapsed = faPingAt - probeFiredAt
         return elapsed >= 0 && elapsed <= window

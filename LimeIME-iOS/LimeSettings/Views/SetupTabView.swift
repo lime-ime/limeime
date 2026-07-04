@@ -154,6 +154,9 @@ struct SetupTabView: View {
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
     @State private var faPingAt: TimeInterval?
+    @State private var activeProbeFiredAt: TimeInterval?
+    @State private var activeProbePending = false
+    @State private var activating = false
 
     @State private var pollTimer: Timer?
 
@@ -228,6 +231,7 @@ struct SetupTabView: View {
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
                     settingsGuidance
+                    activationAffordance
 
                     // Invisible 1 × 1 probe — preserves heartbeat polling
                     // without showing a text field in the new layout.
@@ -298,8 +302,7 @@ struct SetupTabView: View {
                 }
             }
             .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
-                // Once live evidence arrives, stop probing.
-                if hasFreshEvidence { probeFocused = false }
+                if hasFreshEvidence && activeThisSession { finishActiveProbe() }
             }
             .onChange(of: probeText) { _ in
                 refreshStatus()
@@ -451,7 +454,9 @@ struct SetupTabView: View {
     private var statusText: String {
         switch detectionState {
         case .fullyEnabled:        return "萊姆輸入法已啟用"
-        case .enabledNoFullAccess: return "鍵盤已啟用，但尚未允許完整取用"
+        case .activeNoFullAccess:  return "萊姆輸入法已使用中（尚未允許完整取用）"
+        case .enabledNotActive:    return "已啟用，但尚未切換為萊姆輸入法 — 請在鍵盤上長按 🌐 切換"
+        case .checkingActive:      return "萊姆輸入法檢查中…"
         case .notEnabled:          return "尚未啟用萊姆輸入法鍵盤"
         }
     }
@@ -459,7 +464,9 @@ struct SetupTabView: View {
     private var statusSymbol: String {
         switch detectionState {
         case .fullyEnabled:        return "checkmark.circle.fill"
-        case .enabledNoFullAccess: return "info.circle.fill"
+        case .activeNoFullAccess,
+             .enabledNotActive:    return "info.circle.fill"
+        case .checkingActive:      return "hourglass"
         case .notEnabled:          return "xmark.circle.fill"
         }
     }
@@ -467,7 +474,9 @@ struct SetupTabView: View {
     private var statusInk: Color {
         switch detectionState {
         case .fullyEnabled:        return SettingsTheme.successInk
-        case .enabledNoFullAccess: return SettingsTheme.warningInk
+        case .activeNoFullAccess,
+             .enabledNotActive:    return SettingsTheme.warningInk
+        case .checkingActive:      return .secondary
         case .notEnabled:          return SettingsTheme.dangerInk
         }
     }
@@ -475,7 +484,9 @@ struct SetupTabView: View {
     private var statusTint: Color {
         switch detectionState {
         case .fullyEnabled:        return SettingsTheme.statusTintGreen
-        case .enabledNoFullAccess: return SettingsTheme.statusTintYellow
+        case .activeNoFullAccess,
+             .enabledNotActive:    return SettingsTheme.statusTintYellow
+        case .checkingActive:      return Color(UIColor.secondarySystemBackground)
         case .notEnabled:          return SettingsTheme.statusTintRed
         }
     }
@@ -491,15 +502,33 @@ struct SetupTabView: View {
         }
     }
 
-    // MARK: - Detection
+    @ViewBuilder
+    private var activationAffordance: some View {
+        if detectionState == .enabledNotActive {
+            VStack(spacing: 8) {
+                Button { activateKeyboard() } label: { Text("切換為萊姆輸入法") }
+                    .buttonStyle(LimeTonalButtonStyle())
 
-    private enum DetectionState {
-        case fullyEnabled, enabledNoFullAccess, notEnabled
+                Text("長按 🌐 選擇萊姆輸入法")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+        }
     }
 
-    private var detectionState: DetectionState {
-        guard keyboardEnabled else { return .notEnabled }
-        return faState == .confirmedOn ? .fullyEnabled : .enabledNoFullAccess
+    // MARK: - Detection
+
+    private var detectionState: SetupDetectionState {
+        SetupDetection.state(keyboardEnabled: keyboardEnabled,
+                             activeThisSession: activeThisSession,
+                             probePending: activeProbePending,
+                             faConfirmedOn: faState == .confirmedOn)
+    }
+
+    private var activeThisSession: Bool {
+        FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                            probeFiredAt: activeProbeFiredAt)
     }
 
     private func refreshStatus() {
@@ -532,7 +561,7 @@ struct SetupTabView: View {
             + (UserDefaults(suiteName: ".GlobalPreferences")?.array(forKey: "AppleKeyboards") as? [String] ?? [])
         let viaAppleKeyboards = appleKeyboards.contains { $0.hasPrefix("org.limeime") }
 
-        keyboardEnabled = viaInputModes || viaAppleKeyboards
+        keyboardEnabled = viaInputModes || viaAppleKeyboards || SetupDetection.forceKeyboardEnabled()
 
         if keyboardEnabled {
             let heartbeat = readKeyboardHeartbeat()
@@ -541,9 +570,18 @@ struct SetupTabView: View {
                                               faPingAt: faPingAt)
             hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
                                                                   faPingThisSession: faPingThisSession)
+            if activeThisSession {
+                activeProbePending = false
+            } else if let firedAt = activeProbeFiredAt,
+                      Date().timeIntervalSince1970 - firedAt >= FAStateResolver.activeSessionWindow {
+                activeProbePending = false
+            }
         } else {
             faState = .unknown
             hasFreshFAEvidence = false
+            activeProbeFiredAt = nil
+            activeProbePending = false
+            activating = false
         }
     }
 
@@ -558,11 +596,15 @@ struct SetupTabView: View {
     private func ensureFAPingObserver() {
         guard faPingObserver == nil else { return }
         faPingObserver = FAPingObserver { hasFullAccess in
+            let pingAt = Date().timeIntervalSince1970
             faPingThisSession = hasFullAccess
-            faPingAt = Date().timeIntervalSince1970
+            faPingAt = pingAt
+            if activating {
+                activeProbeFiredAt = pingAt
+            }
             refreshStatus()
-            if hasFreshFAEvidence {
-                probeFocused = false
+            if activeThisSession {
+                finishActiveProbe()
             }
         }
     }
@@ -585,23 +627,52 @@ struct SetupTabView: View {
     }
 
     /// Focuses the invisible probe field (with a short delay) when the keyboard
-    /// is enabled but this app session has no fresh FA evidence yet. Focusing any
+    /// is enabled but this app session has no active-keyboard proof yet. Focusing any
     /// text field causes iOS to load whichever keyboard is currently active; if
     /// that is LimeIME, its UIInputViewController.viewWillAppear fires and sends
     /// a Darwin ping plus, when FA is on, a fresh heartbeat file.
     private func triggerProbeIfNeeded() {
-        guard keyboardEnabled && !hasFreshFAEvidence else { return }
+        guard keyboardEnabled && !activeThisSession && !activeProbePending && !activating else { return }
+        activeProbePending = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            if keyboardEnabled && !hasFreshFAEvidence {
+            if keyboardEnabled && !activeThisSession && activeProbePending && !activating {
+                let firedAt = Date().timeIntervalSince1970
+                activeProbeFiredAt = firedAt
                 probeFocused = true
+                finishActiveProbeWindow(startedAt: firedAt)
                 // Auto-dismiss so the popup keyboard doesn't linger — even when the active
                 // keyboard isn't LIME and no FA ping arrives to hide it sooner.
                 // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    probeFocused = false
+                    if !activating { probeFocused = false }
                 }
+            } else if !activeThisSession {
+                activeProbePending = false
             }
         }
+    }
+
+    private func activateKeyboard() {
+        activating = true
+        activeProbePending = true
+        let firedAt = Date().timeIntervalSince1970
+        activeProbeFiredAt = firedAt
+        probeFocused = true
+        finishActiveProbeWindow(startedAt: firedAt)
+    }
+
+    private func finishActiveProbeWindow(startedAt: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + FAStateResolver.activeSessionWindow) {
+            if activeProbeFiredAt == startedAt && !activeThisSession {
+                activeProbePending = false
+            }
+        }
+    }
+
+    private func finishActiveProbe() {
+        activeProbePending = false
+        activating = false
+        probeFocused = false
     }
 
     private func openLimeKeyboardSettings() {

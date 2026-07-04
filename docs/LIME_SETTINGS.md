@@ -218,7 +218,7 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 **CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). A `.footnote`/`.secondary` hint follows it: `"看到「萊姆輸入法」頁 → 點「Keyboards」；停在設定主頁 → Apps > 萊姆輸入法 > Keyboards。"` After the tap, the same two-landing guidance is elevated in a prominent status-tint block for about 20 seconds.
 
-**Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !hasFreshEvidence`, where fresh evidence is a fresh heartbeat file or any `org.limeime.fa.*` ping this app session. This avoids gating the probe on the answer it is trying to fetch.
+**Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !activeThisSession`; a fresh `org.limeime.fa.*` ping after the probe proves LIME is the active keyboard for this app session. This avoids gating the active-keyboard probe on Full Access evidence.
 
 **Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders just above the About footer.
 
@@ -284,11 +284,17 @@ NavigationStack (.navigationBarHidden(true))
         │           .multilineTextAlignment(.center).padding(.horizontal, 24)
         │   }
         │
+        ├── // ── Activate affordance (enabled but not active only) ────
+        │   if detectionState == .enabledNotActive {
+        │       Button("切換為萊姆輸入法") { activateKeyboard() }
+        │       Text("長按 🌐 選擇萊姆輸入法")
+        │   }
+        │
         ├── // ── Invisible probe field ────────────────────────────────
         │   TextField("", text: $probeText)   // 1×1 pt, opacity 0.01, accessibilityHidden
-        │       .focused($probeFocused)       // auto-focused when keyboard enabled but Full
-        │       .frame(width: 1, height: 1)   // Access not confirmed; causes LimeKeyboard's
-        │       .opacity(0.01)               // viewWillAppear to send FA ping/heartbeat
+        │       .focused($probeFocused)       // auto-focused when keyboard enabled but no
+        │       .frame(width: 1, height: 1)   // active-keyboard proof; causes LimeKeyboard's
+        │       .opacity(0.01)                // viewWillAppear to send FA ping/heartbeat
         │
         ├── // ── Installed-IM status (§4.3) ───────────────────────────
         │   imStatusSection          // none/disabled/ok banner + optional CTA → 輸入法 tab
@@ -390,18 +396,23 @@ to `RecognizerIntent`. This is **not** part of the iOS setup tab.
 
 ### 4.2 Status Banner
 
-Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The invisible probe field (§4.1) is auto-focused when `keyboardEnabled && !hasFreshEvidence` to trigger the keyboard extension's `viewWillAppear`, which sends a live Darwin FA ping and, with Full Access on, writes a fresh `outbox/heartbeat.json`.
+Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The invisible probe field (§4.1) is auto-focused when `keyboardEnabled && !activeThisSession` to trigger the keyboard extension's `viewWillAppear`, which sends a live Darwin FA ping and, with Full Access on, writes a fresh `outbox/heartbeat.json`. During the probe window the banner stays neutral `checkingActive` so it does not flash "not active" before the ping can arrive.
 
 **Detection logic** (`refreshStatus()`):
 
-- `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"org.limeime"`. Does not use `keyboard_extension_loaded`.
+- `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"org.limeime"`, plus the system `AppleKeyboards` list. Does not use `keyboard_extension_loaded`. DEBUG UI tests may force only this axis with `-limeUITestForceKeyboardEnabled 1`; active/full-access still require the real Darwin ping/heartbeat.
+- `activeThisSession`: `FAStateResolver.isActiveThisSession(faPingAt:probeFiredAt:)`, where the probe timestamp is captured when the setup probe focuses. No ping after the active window resolves to enabled-but-not-active.
 - `faState`: ignores legacy shared-default heartbeat keys. `confirmedOn` requires `outbox/heartbeat.json` to decode, be fresh (≤120 seconds), and report `hasFullAccess == true`. `confirmedOff` requires a live `org.limeime.fa.off` ping this app session. Everything else is `unknown`.
 
 | State | Color | SF Symbol | Banner text |
 | --- | --- | --- | --- |
-| `fullyEnabled` | `.green` | `checkmark.circle.fill` | `"完整取用權限：已開啟（已學習字詞會納入備份）"` |
-| `enabledNoFullAccess` | `.orange` | `info.circle.fill` | `"開啟完整取用權限可備份已學習字詞並啟用按鍵震動回饋"` |
+| `fullyEnabled` | `.green` | `checkmark.circle.fill` | `"萊姆輸入法已啟用"` |
+| `activeNoFullAccess` | `.orange` | `info.circle.fill` | `"萊姆輸入法已使用中（尚未允許完整取用）"` |
+| `enabledNotActive` | `.orange` | `info.circle.fill` | `"已啟用，但尚未切換為萊姆輸入法 — 請在鍵盤上長按 🌐 切換"` |
+| `checkingActive` | neutral | `hourglass` | `"萊姆輸入法檢查中…"` |
 | `notEnabled` | `.red` | `xmark.circle.fill` | `"尚未啟用萊姆輸入法鍵盤"` |
+
+`enabledNotActive` also shows a full-width tonal `"切換為萊姆輸入法"` button plus inline `"長按 🌐 選擇萊姆輸入法"` instruction. The button focuses the probe field and suppresses the short auto-dismiss so the keyboard stays up while the user opens the globe menu; a Darwin ping flips the banner to `activeNoFullAccess` or `fullyEnabled` and dismisses the keyboard.
 
 Banner renders as `Label(text, systemImage:)` in `.subheadline` font, inside a `secondarySystemBackground` rounded-rect card (`.cornerRadius(10)`).
 
