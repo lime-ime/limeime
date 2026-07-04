@@ -44,6 +44,29 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(files, ["payload.limedb"])
     }
 
+    func testAppLaunchCleanupRemovesLegacyV1ArtifactsOnly() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+
+        let tables = dir.appendingPathComponent("tables", isDirectory: true)
+        let restoreDB = dir.appendingPathComponent(["restore", "limedb"].joined(separator: "."))
+        let restoreSidecar = dir.appendingPathComponent(["restore", "meta", "json"].joined(separator: "."))
+        let keep = dir.appendingPathComponent("cold.limedb")
+        try FileManager.default.createDirectory(at: tables, withIntermediateDirectories: true)
+        try Data().write(to: tables.appendingPathComponent("cj.limedb"))
+        try Data().write(to: restoreDB)
+        try Data().write(to: restoreSidecar)
+        try Data().write(to: keep)
+
+        AppDelegate.removeLegacyV1Artifacts(in: dir)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: tables.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: restoreDB.path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: restoreSidecar.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: keep.path))
+    }
+
     func testColdSnapshotMetaRoundTrip() throws {
         let meta = ColdSnapshotMeta(generation: 1, epochUUID: "E", schemaVersion: 104)
         let data = try JSONEncoder().encode(meta)
