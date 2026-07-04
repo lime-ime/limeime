@@ -91,6 +91,7 @@ struct LimeSettingsView: View {
     @State private var rootRelayFocused = false
 #if DEBUG
     @State private var didRunUITestRestore = false
+    @State private var didPrepareRelayOnlyPrefs = false
     @State private var uiTestRestoreStatus: String?
     @State private var uiTestRestoreCounts: String?
     @State private var relayPayloadReceived = false
@@ -228,6 +229,12 @@ struct LimeSettingsView: View {
     }
 
     private func triggerRootRelay() {
+#if DEBUG
+        if !didPrepareRelayOnlyPrefs {
+            RelayPrefSync.prepareRelayOnlyIfNeeded(in: sharedDefaults)
+            didPrepareRelayOnlyPrefs = true
+        }
+#endif
         guard !rootRelayPending else { return }
         let firedAt = Date().timeIntervalSince1970
         rootRelayPending = true
@@ -248,6 +255,10 @@ struct LimeSettingsView: View {
 
     private func handleRootRelayTextChange() {
         guard let payload = decodeRelayPayload(rootRelayText) else { return }
+        RelayPrefSync.apply(han: payload.han,
+                            split: payload.split,
+                            pts: payload.pts,
+                            to: sharedDefaults)
         rootRelayDidReceivePayload = true
         let relayFiredAt = rootRelayFiredAt ?? payload.ts
         rootRelayFiredAt = FAStateResolver.isActiveThisSession(faPingAt: payload.ts,

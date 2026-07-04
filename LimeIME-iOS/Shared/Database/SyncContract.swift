@@ -53,15 +53,102 @@ enum RelayToken {
     static let request = "LIMERELAYREQ?"
 }
 
-func encodeRelayPayload(faOn: Bool, ts: TimeInterval) -> String {
-    "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+struct RelayPrefState: Codable, Equatable {
+    var hanConvert: Int
+    var splitKeyboard: Int
+    var updatedAt: TimeInterval
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval)? {
+final class KeyboardRelayPrefStore {
+    private let url: URL
+
+    init(baseDirectory: URL? = nil) {
+        let directory = baseDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory,
+                                                                  in: .userDomainMask)[0]
+        self.url = directory.appendingPathComponent("relay-prefs.json")
+    }
+
+    func read() throws -> RelayPrefState? {
+        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder().decode(RelayPrefState.self, from: data)
+    }
+
+    func write(_ state: RelayPrefState) throws {
+        let data = try JSONEncoder().encode(state)
+        try atomicWrite(data, to: url)
+    }
+
+    @discardableResult
+    func update(hanConvert: Int? = nil,
+                splitKeyboard: Int? = nil,
+                updatedAt: TimeInterval = Date().timeIntervalSince1970) throws -> RelayPrefState {
+        let current = try read()
+        let state = RelayPrefState(hanConvert: hanConvert ?? current?.hanConvert ?? 0,
+                                   splitKeyboard: splitKeyboard ?? current?.splitKeyboard ?? 0,
+                                   updatedAt: updatedAt)
+        try write(state)
+        return state
+    }
+}
+
+enum RelayPrefSync {
+    static let hanConvertKey = "han_convert_option"
+    static let splitKeyboardKey = "split_keyboard_mode"
+    static let appliedAtKey = "relay_pref_applied_at"
+
+    static func apply(han: Int?,
+                      split: Int?,
+                      pts: TimeInterval?,
+                      to defaults: UserDefaults) -> Bool {
+        guard let pts, pts > defaults.double(forKey: appliedAtKey) else { return false }
+        let validHan = han.flatMap { (0...2).contains($0) ? $0 : nil }
+        let validSplit = split.flatMap { (0...2).contains($0) ? $0 : nil }
+        guard validHan != nil || validSplit != nil else { return false }
+
+        if let validHan {
+            defaults.set(validHan, forKey: hanConvertKey)
+        }
+        if let validSplit {
+            defaults.set(validSplit, forKey: splitKeyboardKey)
+        }
+        defaults.set(pts, forKey: appliedAtKey)
+        return true
+    }
+
+    static func prepareRelayOnlyIfNeeded(in defaults: UserDefaults,
+                                         arguments: [String] = ProcessInfo.processInfo.arguments) {
+        guard forceRelayOnly(arguments: arguments) else { return }
+        defaults.removeObject(forKey: hanConvertKey)
+        defaults.removeObject(forKey: splitKeyboardKey)
+        defaults.removeObject(forKey: appliedAtKey)
+    }
+
+    static func forceRelayOnly(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
+        #if DEBUG
+        guard let index = arguments.firstIndex(of: "-limeUITestForceRelayOnly"),
+              arguments.indices.contains(index + 1)
+        else { return false }
+        return arguments[index + 1] == "1"
+        #else
+        return false
+        #endif
+    }
+}
+
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
+    var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+    if let prefs {
+        payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);pts=\(prefs.updatedAt)"
+    }
+    return payload
+}
+
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
-    // Lenient: only the first 3 fields matter; anything after (e.g. a duplicate payload
-    // typed on a re-appearance) is ignored, and ts is read up to its trailing junk.
+    // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
+    // read when present, and numeric values tolerate trailing duplicate-payload junk.
     let fields = text[start...].split(separator: ";", omittingEmptySubsequences: false)
     guard fields.count >= 3,
           fields[0].hasPrefix(marker),
@@ -74,7 +161,31 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     let tsBody = fields[2].dropFirst(3)
     let tsDigits = tsBody.prefix { $0.isNumber || $0 == "." || $0 == "-" }
     guard let ts = Double(tsDigits), ts.isFinite else { return nil }
-    return (proto: proto, faOn: fa == 1, ts: ts)
+
+    var han: Int?
+    var split: Int?
+    var pts: TimeInterval?
+    for field in fields.dropFirst(3) {
+        let pair = field.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+        guard pair.count == 2 else { continue }
+        let value = pair[1]
+        switch pair[0] {
+        case "han":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            han = Int(digits)
+        case "split":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            split = Int(digits)
+        case "pts":
+            let digits = value.prefix { $0.isNumber || $0 == "." || $0 == "-" }
+            if let parsed = Double(digits), parsed.isFinite {
+                pts = parsed
+            }
+        default:
+            continue
+        }
+    }
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {

@@ -172,6 +172,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // Set true around our own insertText/deleteBackward calls to suppress textDidChange checks
     private var isSelfUpdate = false
     private var didAnswerRelayThisAppearance = false
+    private let relayPrefStore = KeyboardRelayPrefStore()
 
     // MARK: - English Pick-Space Punctuation Swap (ENGLISH_KB.md #0 / §2a)
     // After an English suggestion pick auto-appends a space (word ), typing punctuation
@@ -520,8 +521,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         didAnswerRelayThisAppearance = true
         isSelfUpdate = true
         defer { isSelfUpdate = false }
+        let prefs = (try? relayPrefStore.read())
+            ?? RelayPrefState(hanConvert: hanConvertOption,
+                              splitKeyboard: splitKeyboardMode,
+                              updatedAt: 0)
         textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
-                                                        ts: Date().timeIntervalSince1970))
+                                                        ts: Date().timeIntervalSince1970,
+                                                        prefs: prefs))
         return true
     }
 
@@ -4092,14 +4098,22 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
         showInlineMenu(entries: entries, onDismiss: { [weak self] in
             guard let self else { return }
+            var changed = false
             if pendingHan != hanStart {
                 self.hanConvertOption = pendingHan
                 self.sharedDefaults?.set(pendingHan, forKey: "han_convert_option")
+                changed = true
             }
             if pendingSplit != splitStart {
                 self.splitKeyboardMode = pendingSplit
                 self.sharedDefaults?.set(pendingSplit, forKey: "split_keyboard_mode")
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
+                changed = true
+            }
+            if changed {
+                try? self.relayPrefStore.write(RelayPrefState(hanConvert: self.hanConvertOption,
+                                                              splitKeyboard: self.splitKeyboardMode,
+                                                              updatedAt: Date().timeIntervalSince1970))
             }
         })
     }
@@ -4127,8 +4141,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
         for (opt, title) in options.enumerated() {
             let display = (hanConvertOption == opt) ? "✓ \(title)" : title
             items.append((display, { [weak self] in
-                self?.hanConvertOption = opt
-                self?.sharedDefaults?.set(opt, forKey: "han_convert_option")
+                guard let self else { return }
+                self.hanConvertOption = opt
+                self.sharedDefaults?.set(opt, forKey: "han_convert_option")
+                try? self.relayPrefStore.update(hanConvert: opt,
+                                                splitKeyboard: self.splitKeyboardMode)
             }))
         }
         items.append(("取消", {}))

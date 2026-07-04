@@ -17,6 +17,7 @@
 		FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */; };
 		3A5E7D0C0000000000000002 /* SetupDetectionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */; };
 		A1B2C3D4E5F6071828394B71 /* RelayPayloadTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */; };
+		F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00D14A00000000000000001 /* RelayPrefSyncTest.swift */; };
 		A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
@@ -475,6 +476,7 @@
 		FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAStateTest.swift; sourceTree = "<group>"; };
 		3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupDetectionTest.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPayloadTest.swift; sourceTree = "<group>"; };
+		F00D14A00000000000000001 /* RelayPrefSyncTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPrefSyncTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
 		C01D10000000000000000001 /* ColdPublisherTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColdPublisherTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
@@ -599,6 +601,7 @@
 					FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */,
 					3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */,
 					A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */,
+					F00D14A00000000000000001 /* RelayPrefSyncTest.swift */,
 					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 					C01D10000000000000000001 /* ColdPublisherTest.swift */,
 				6E1A5C0D9B234F0187A6D443 /* TableSyncEngineTest.swift */,
@@ -1289,6 +1292,7 @@
 					FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */,
 					3A5E7D0C0000000000000002 /* SetupDetectionTest.swift in Sources */,
 					A1B2C3D4E5F6071828394B71 /* RelayPayloadTest.swift in Sources */,
+					F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */,
 					6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
 					C01D10000000000000000002 /* ColdPublisherTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
