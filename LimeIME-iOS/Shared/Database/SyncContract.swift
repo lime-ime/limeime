@@ -45,6 +45,52 @@ func postSyncSignal(_ signal: SyncSignal) {
         CFNotificationCenterGetDarwinNotifyCenter(), name, nil, nil, true)
 }
 
+enum RelayToken {
+    // Plain ASCII, no BOM: iOS strips/normalizes a leading U+FEFF out of
+    // documentContextBeforeInput, so a BOM-prefixed token never matches hasSuffix
+    // on the keyboard side. The field is a 1×1 invisible probe, so visibility of the
+    // token doesn't matter; distinctiveness (a real field never ends with this) does.
+    static let request = "LIMERELAYREQ?"
+}
+
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval) -> String {
+    "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+}
+
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval)? {
+    let marker = "LIMERLY!v"
+    guard let start = text.range(of: marker)?.lowerBound else { return nil }
+    // Lenient: only the first 3 fields matter; anything after (e.g. a duplicate payload
+    // typed on a re-appearance) is ignored, and ts is read up to its trailing junk.
+    let fields = text[start...].split(separator: ";", omittingEmptySubsequences: false)
+    guard fields.count >= 3,
+          fields[0].hasPrefix(marker),
+          let proto = Int(fields[0].dropFirst(marker.count)),
+          fields[1].hasPrefix("fa="),
+          let fa = Int(fields[1].dropFirst(3)),
+          (fa == 0 || fa == 1),
+          fields[2].hasPrefix("ts=")
+    else { return nil }
+    let tsBody = fields[2].dropFirst(3)
+    let tsDigits = tsBody.prefix { $0.isNumber || $0 == "." || $0 == "-" }
+    guard let ts = Double(tsDigits), ts.isFinite else { return nil }
+    return (proto: proto, faOn: fa == 1, ts: ts)
+}
+
+func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
+    // Check the full field content (before + after the cursor). SwiftUI sets the probe
+    // token programmatically and can leave the cursor at position 0, so the token lands
+    // entirely in the after-context. hasSuffix on the full content keeps the handshake
+    // safe: a real field where a user typed the token then more text will not match.
+    ((before ?? "") + (after ?? "")).hasSuffix(RelayToken.request)
+}
+
+extension Notification.Name {
+    static let limeTriggerRelay = Notification.Name("org.limeime.triggerRelay")
+    static let limeRelayPayloadReceived = Notification.Name("org.limeime.relayPayloadReceived")
+    static let limeRelayResolvedNotActive = Notification.Name("org.limeime.relayResolvedNotActive")
+}
+
 struct ExportRequest: Codable, Equatable {
     var requestUUID: String
     var expiresAt: TimeInterval
@@ -89,8 +135,19 @@ enum SetupDetection {
     }
 
     static func forceKeyboardEnabled(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
+        flagEnabled("-limeUITestForceKeyboardEnabled", arguments)
+    }
+
+    /// Forces the enabled-but-not-active rung on the sim (which otherwise can't sit
+    /// there because its LIME keyboard keeps loading and pinging) so the activate guide
+    /// is visually verifiable.
+    static func forceNotActive(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
+        flagEnabled("-limeUITestForceNotActive", arguments)
+    }
+
+    private static func flagEnabled(_ flag: String, _ arguments: [String]) -> Bool {
         #if DEBUG
-        guard let index = arguments.firstIndex(of: "-limeUITestForceKeyboardEnabled"),
+        guard let index = arguments.firstIndex(of: flag),
               arguments.indices.contains(index + 1)
         else { return false }
         return arguments[index + 1] == "1"

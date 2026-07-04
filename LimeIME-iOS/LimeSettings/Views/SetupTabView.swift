@@ -160,12 +160,6 @@ struct SetupTabView: View {
 
     @State private var pollTimer: Timer?
 
-    // Invisible probe field: when the user taps it and types with the keyboard,
-    // the extension reports FA state through Darwin and a fresh outbox heartbeat
-    // when Full Access allows the write.
-    @State private var probeText: String = ""
-    @FocusState private var probeFocused: Bool
-
     // PrimaryLanguage from LimeKeyboard/Info.plist
     private let groupSuite   = LIMEPreferenceManager.suiteName
     private let githubURL        = URL(string: "https://github.com/lime-ime/limeime")!
@@ -233,17 +227,6 @@ struct SetupTabView: View {
                     settingsGuidance
                     activationAffordance
 
-                    // Invisible 1 × 1 probe — preserves heartbeat polling
-                    // without showing a text field in the new layout.
-                    TextField("", text: $probeText)
-                        .focused($probeFocused)
-                        .frame(width: SettingsMetrics.invisibleProbeSize,
-                               height: SettingsMetrics.invisibleProbeSize)
-                        .opacity(SettingsMetrics.invisibleProbeOpacity)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .accessibilityHidden(true)
-
                     // ── Installed-IM status (§4.3) ────────────────────────
                     imStatusSection
                         .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
@@ -284,19 +267,14 @@ struct SetupTabView: View {
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
-                // Auto-focus the invisible probe so the LimeIME extension's
-                // viewWillAppear fires (if LimeIME is the active keyboard)
-                // and sends fresh FA evidence.
-                triggerProbeIfNeeded()
+                triggerRootRelayIfNeeded()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
                     refreshStatus()
                     refreshIMStatus()
                     startPolling()
-                    // Re-trigger each time app comes to foreground — covers the
-                    // common case: user grants Full Access in Settings, returns.
-                    triggerProbeIfNeeded()
+                    triggerRootRelayIfNeeded()
                 } else if phase == .background {
                     stopPolling()
                 }
@@ -304,10 +282,14 @@ struct SetupTabView: View {
             .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
                 if hasFreshEvidence && activeThisSession { finishActiveProbe() }
             }
-            .onChange(of: probeText) { _ in
-                refreshStatus()
-            }
             .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
+            .onReceive(NotificationCenter.default.publisher(for: .limeRelayPayloadReceived)) { note in
+                handleRelayPayloadNotification(note)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .limeRelayResolvedNotActive)) { _ in
+                activeProbePending = false
+                activating = false
+            }
             // scenePhase → .active is unreliable when SwiftUI is hosted in a
             // UIHostingController under a UIKit SceneDelegate, so the §4.3 IM
             // count could stay stale (showing 0) after returning from system
@@ -320,7 +302,7 @@ struct SetupTabView: View {
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
-                triggerProbeIfNeeded()
+                triggerRootRelayIfNeeded()
             }
         }
     }
@@ -527,8 +509,11 @@ struct SetupTabView: View {
     }
 
     private var activeThisSession: Bool {
-        FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
-                                            probeFiredAt: activeProbeFiredAt)
+        #if DEBUG
+        if SetupDetection.forceNotActive() { return false }
+        #endif
+        return FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                   probeFiredAt: activeProbeFiredAt)
     }
 
     private func refreshStatus() {
@@ -593,6 +578,32 @@ struct SetupTabView: View {
         return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
     }
 
+    private func handleRelayPayloadNotification(_ note: Notification) {
+        guard note.userInfo?["source"] as? String == "root",
+              let faOn = note.userInfo?["faOn"] as? Bool,
+              let ts = note.userInfo?["ts"] as? TimeInterval
+        else { return }
+        let firedAt = note.userInfo?["firedAt"] as? TimeInterval
+        applyRelayPayload((proto: 1, faOn: faOn, ts: ts), firedAt: firedAt)
+    }
+
+    private func applyRelayPayload(_ payload: (proto: Int, faOn: Bool, ts: TimeInterval),
+                                   firedAt: TimeInterval?) {
+        let relayFiredAt = firedAt ?? payload.ts
+        activeProbeFiredAt = FAStateResolver.isActiveThisSession(faPingAt: payload.ts,
+                                                                 probeFiredAt: relayFiredAt)
+            ? relayFiredAt
+            : payload.ts
+        faPingThisSession = payload.faOn
+        faPingAt = payload.ts
+        activeProbePending = false
+        activating = false
+        refreshStatus()
+        if activeThisSession {
+            finishActiveProbe()
+        }
+    }
+
     private func ensureFAPingObserver() {
         guard faPingObserver == nil else { return }
         faPingObserver = FAPingObserver { hasFullAccess in
@@ -626,53 +637,26 @@ struct SetupTabView: View {
         pollTimer = nil
     }
 
-    /// Focuses the invisible probe field (with a short delay) when the keyboard
-    /// is enabled but this app session has no active-keyboard proof yet. Focusing any
-    /// text field causes iOS to load whichever keyboard is currently active; if
-    /// that is LimeIME, its UIInputViewController.viewWillAppear fires and sends
-    /// a Darwin ping plus, when FA is on, a fresh heartbeat file.
-    private func triggerProbeIfNeeded() {
+    private func triggerRootRelayIfNeeded() {
         guard keyboardEnabled && !activeThisSession && !activeProbePending && !activating else { return }
+        requestRootRelay()
+    }
+
+    private func requestRootRelay() {
+        let firedAt = Date().timeIntervalSince1970
         activeProbePending = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            if keyboardEnabled && !activeThisSession && activeProbePending && !activating {
-                let firedAt = Date().timeIntervalSince1970
-                activeProbeFiredAt = firedAt
-                probeFocused = true
-                finishActiveProbeWindow(startedAt: firedAt)
-                // Auto-dismiss so the popup keyboard doesn't linger — even when the active
-                // keyboard isn't LIME and no FA ping arrives to hide it sooner.
-                // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    if !activating { probeFocused = false }
-                }
-            } else if !activeThisSession {
-                activeProbePending = false
-            }
-        }
+        activeProbeFiredAt = firedAt
+        NotificationCenter.default.post(name: .limeTriggerRelay, object: nil)
     }
 
     private func activateKeyboard() {
         activating = true
-        activeProbePending = true
-        let firedAt = Date().timeIntervalSince1970
-        activeProbeFiredAt = firedAt
-        probeFocused = true
-        finishActiveProbeWindow(startedAt: firedAt)
-    }
-
-    private func finishActiveProbeWindow(startedAt: TimeInterval) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + FAStateResolver.activeSessionWindow) {
-            if activeProbeFiredAt == startedAt && !activeThisSession {
-                activeProbePending = false
-            }
-        }
+        requestRootRelay()
     }
 
     private func finishActiveProbe() {
         activeProbePending = false
         activating = false
-        probeFocused = false
     }
 
     private func openLimeKeyboardSettings() {

@@ -1385,6 +1385,23 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    func testSetupRelayUsesOnlyRootProbeField() throws {
+        let setupSource = try String(contentsOf: projectFileURL("LimeSettings/Views/SetupTabView.swift"),
+                                     encoding: .utf8)
+        let rootSource = try String(contentsOf: projectFileURL("LimeSettings/LimeSettingsView.swift"),
+                                    encoding: .utf8)
+        let syncSource = try String(contentsOf: projectFileURL("Shared/Database/SyncContract.swift"),
+                                    encoding: .utf8)
+
+        XCTAssertFalse(setupSource.contains("@FocusState private var probeFocused"))
+        XCTAssertFalse(setupSource.contains("TextField(\"\", text: $probeText)"))
+        XCTAssertFalse(setupSource.contains("probeFocused = true"))
+        XCTAssertTrue(setupSource.contains("NotificationCenter.default.post(name: .limeTriggerRelay"))
+        XCTAssertTrue(rootSource.contains("RelayProbeField(text: $rootRelayText, isFocused: $rootRelayFocused)"))
+        XCTAssertTrue(rootSource.contains("NotificationCenter.default.publisher(for: .limeTriggerRelay)"))
+        XCTAssertTrue(syncSource.contains("static let limeRelayResolvedNotActive"))
+    }
+
     func testLimeToastStateShowsTrimmedNonEmptyMessage() {
         var state = LimeToastState()
 

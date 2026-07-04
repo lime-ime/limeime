@@ -171,6 +171,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - Self-Update Guard (spec §12)
     // Set true around our own insertText/deleteBackward calls to suppress textDidChange checks
     private var isSelfUpdate = false
+    private var didAnswerRelayThisAppearance = false
 
     // MARK: - English Pick-Space Punctuation Swap (ENGLISH_KB.md #0 / §2a)
     // After an English suggestion pick auto-appends a space (word ), typing punctuation
@@ -318,7 +319,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         isKeyboardVisible = true
+        didAnswerRelayThisAppearance = false
         reportFullAccessStatus()
+        scheduleRelayResponse()
         requestTableSyncScanIfReady()
         initOnStartInput()
     }
@@ -353,6 +356,22 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         disableKeyboardWindowTouchDelay()
+        scheduleRelayResponse()
+    }
+
+    /// The app's invisible probe *loads* the keyboard (viewWillAppear fires — that's the
+    /// FA ping) but may never *present* it, so viewDidAppear can be skipped entirely.
+    /// textDocumentProxy is already connected at viewWillAppear, so answer from there too.
+    /// Poll because iOS populates documentContextBeforeInput asynchronously and a token set
+    /// programmatically by the app fires no textDidChange; the once-per-appearance guard
+    /// makes repeats no-ops.
+    private func scheduleRelayResponse() {
+        answerRelayRequestIfNeeded()
+        for delay in [0.05, 0.15, 0.3, 0.6, 1.0, 1.5] as [Double] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.answerRelayRequestIfNeeded()
+            }
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -458,6 +477,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func textDidChange(_ textInput: UITextInput?) {
         // Guard: skip checks triggered by our own insertText/deleteBackward (spec §12)
         guard !isSelfUpdate else { return }
+        if answerRelayRequestIfNeeded() { return }
 
         // Field-change detection. When the user taps a new input while the
         // keyboard is still on screen, `viewWillAppear` does NOT re-fire, so
@@ -488,6 +508,21 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // would stick until the next layout pass (spec: docs/IPHONE_LEGACY_KB.md
         // § Risks/pitfalls — first-tap latency).
         updateGlobeAndDismissBindings()
+    }
+
+    @discardableResult
+    private func answerRelayRequestIfNeeded() -> Bool {
+        guard !didAnswerRelayThisAppearance,
+              isRelayRequestContext(before: textDocumentProxy.documentContextBeforeInput,
+                                    after: textDocumentProxy.documentContextAfterInput)
+        else { return false }
+
+        didAnswerRelayThisAppearance = true
+        isSelfUpdate = true
+        defer { isSelfUpdate = false }
+        textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
+                                                        ts: Date().timeIntervalSince1970))
+        return true
     }
 
     // MARK: - Initialization (spec §2 initOnStartInput)
