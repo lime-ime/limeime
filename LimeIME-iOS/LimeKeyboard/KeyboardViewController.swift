@@ -4127,6 +4127,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
             items.append((display, { [weak self] in
                 guard let self else { return }
                 LIMEPreferenceManager.shared.setReverseLookup(option.value, for: self.activeIM)
+                // FA-off durable copy + relay delivery back to the app's Preferences tab.
+                try? self.relayPrefStore.update(reverseLookupIM: self.activeIM,
+                                                reverseLookupValue: option.value)
                 self.showLimeToast("字根反查：\(option.label)")
             }))
         }

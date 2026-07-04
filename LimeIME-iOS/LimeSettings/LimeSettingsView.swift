@@ -257,6 +257,8 @@ struct LimeSettingsView: View {
         guard let payload = decodeRelayPayload(rootRelayText) else { return }
         RelayPrefSync.apply(han: payload.han,
                             split: payload.split,
+                            reverseLookupIM: payload.rlim,
+                            reverseLookupValue: payload.rlval,
                             pts: payload.pts,
                             to: sharedDefaults)
         rootRelayDidReceivePayload = true

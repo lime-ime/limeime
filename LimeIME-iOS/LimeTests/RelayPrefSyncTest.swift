@@ -62,6 +62,37 @@ final class RelayPrefSyncTest: XCTestCase {
         XCTAssertEqual(defaults.double(forKey: LimeIME.RelayPrefSync.appliedAtKey), 101)
     }
 
+    func testReverseLookupRoundTripsAndApplies() throws {
+        let prefs = LimeIME.RelayPrefState(hanConvert: 0, splitKeyboard: 0, updatedAt: 50,
+                                           reverseLookupIM: "dayi", reverseLookupValue: "cj")
+        let payload = LimeIME.encodeRelayPayload(faOn: false, ts: 1, prefs: prefs)
+        let decoded = try XCTUnwrap(LimeIME.decodeRelayPayload(LimeIME.RelayToken.request + payload))
+        XCTAssertEqual(decoded.rlim, "dayi")
+        XCTAssertEqual(decoded.rlval, "cj")
+
+        // A concatenated duplicate payload still yields the clean value.
+        let dup = try XCTUnwrap(LimeIME.decodeRelayPayload(payload + payload))
+        XCTAssertEqual(dup.rlval, "cj")
+
+        // Old payload without reverse-lookup fields → nil.
+        let plain = try XCTUnwrap(LimeIME.decodeRelayPayload("LIMERLY!v1;fa=1;ts=3"))
+        XCTAssertNil(plain.rlim)
+        XCTAssertNil(plain.rlval)
+
+        let (defaults, suite) = try makeDefaults()
+        defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
+        XCTAssertTrue(LimeIME.RelayPrefSync.apply(han: nil, split: nil,
+                                                  reverseLookupIM: "dayi", reverseLookupValue: "cj",
+                                                  pts: 50, to: defaults))
+        XCTAssertEqual(defaults.string(forKey: LimeIME.RelayPrefSync.reverseLookupKey(for: "dayi")), "cj")
+        XCTAssertEqual(defaults.string(forKey: "dayi_im_reverselookup"), "cj")
+        // Older pts must not overwrite.
+        XCTAssertFalse(LimeIME.RelayPrefSync.apply(han: nil, split: nil,
+                                                   reverseLookupIM: "dayi", reverseLookupValue: "none",
+                                                   pts: 49, to: defaults))
+        XCTAssertEqual(defaults.string(forKey: "dayi_im_reverselookup"), "cj")
+    }
+
     func testRelayOnlyFlagClearsPlainSharedValues() throws {
         let (defaults, suite) = try makeDefaults()
         defer { UserDefaults.standard.removePersistentDomain(forName: suite) }

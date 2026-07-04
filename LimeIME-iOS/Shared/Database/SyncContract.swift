@@ -57,6 +57,9 @@ struct RelayPrefState: Codable, Equatable {
     var hanConvert: Int
     var splitKeyboard: Int
     var updatedAt: TimeInterval
+    // Last reverse-lookup change (per-IM). Optional so older stored JSON still decodes.
+    var reverseLookupIM: String? = nil
+    var reverseLookupValue: String? = nil
 }
 
 final class KeyboardRelayPrefStore {
@@ -82,11 +85,15 @@ final class KeyboardRelayPrefStore {
     @discardableResult
     func update(hanConvert: Int? = nil,
                 splitKeyboard: Int? = nil,
+                reverseLookupIM: String? = nil,
+                reverseLookupValue: String? = nil,
                 updatedAt: TimeInterval = Date().timeIntervalSince1970) throws -> RelayPrefState {
         let current = try read()
         let state = RelayPrefState(hanConvert: hanConvert ?? current?.hanConvert ?? 0,
                                    splitKeyboard: splitKeyboard ?? current?.splitKeyboard ?? 0,
-                                   updatedAt: updatedAt)
+                                   updatedAt: updatedAt,
+                                   reverseLookupIM: reverseLookupIM ?? current?.reverseLookupIM,
+                                   reverseLookupValue: reverseLookupValue ?? current?.reverseLookupValue)
         try write(state)
         return state
     }
@@ -97,20 +104,32 @@ enum RelayPrefSync {
     static let splitKeyboardKey = "split_keyboard_mode"
     static let appliedAtKey = "relay_pref_applied_at"
 
+    /// Reverse-lookup is stored per-IM under `<IM>_im_reverselookup` (see
+    /// LIMEPreferenceManager.reverseLookupKey). Keep this in sync with that format.
+    static func reverseLookupKey(for im: String) -> String { "\(im)_im_reverselookup" }
+
     static func apply(han: Int?,
                       split: Int?,
+                      reverseLookupIM: String? = nil,
+                      reverseLookupValue: String? = nil,
                       pts: TimeInterval?,
                       to defaults: UserDefaults) -> Bool {
         guard let pts, pts > defaults.double(forKey: appliedAtKey) else { return false }
         let validHan = han.flatMap { (0...2).contains($0) ? $0 : nil }
         let validSplit = split.flatMap { (0...2).contains($0) ? $0 : nil }
-        guard validHan != nil || validSplit != nil else { return false }
+        let rlIM = reverseLookupIM.flatMap { $0.isEmpty ? nil : $0 }
+        let rlVal = reverseLookupValue.flatMap { $0.isEmpty ? nil : $0 }
+        let hasReverseLookup = rlIM != nil && rlVal != nil
+        guard validHan != nil || validSplit != nil || hasReverseLookup else { return false }
 
         if let validHan {
             defaults.set(validHan, forKey: hanConvertKey)
         }
         if let validSplit {
             defaults.set(validSplit, forKey: splitKeyboardKey)
+        }
+        if let rlIM, let rlVal {
+            defaults.set(rlVal, forKey: reverseLookupKey(for: rlIM))
         }
         defaults.set(pts, forKey: appliedAtKey)
         return true
@@ -140,11 +159,15 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
     if let prefs {
         payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);pts=\(prefs.updatedAt)"
+        if let im = prefs.reverseLookupIM, let val = prefs.reverseLookupValue,
+           !im.isEmpty, !val.isEmpty {
+            payload += ";rlim=\(im);rlval=\(val)"
+        }
     }
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -165,6 +188,15 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var han: Int?
     var split: Int?
     var pts: TimeInterval?
+    var rlim: String?
+    var rlval: String?
+    // Reverse-lookup IM/value are alphanumeric strings; truncate any concatenated
+    // duplicate payload (defensive — the single-probe capture prevents duplicates).
+    func stripJunk(_ s: Substring) -> String {
+        var out = String(s)
+        if let r = out.range(of: "LIMERLY!") { out = String(out[..<r.lowerBound]) }
+        return out
+    }
     for field in fields.dropFirst(3) {
         let pair = field.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
         guard pair.count == 2 else { continue }
@@ -181,11 +213,15 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             if let parsed = Double(digits), parsed.isFinite {
                 pts = parsed
             }
+        case "rlim":
+            let v = stripJunk(value); if !v.isEmpty { rlim = v }
+        case "rlval":
+            let v = stripJunk(value); if !v.isEmpty { rlval = v }
         default:
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
