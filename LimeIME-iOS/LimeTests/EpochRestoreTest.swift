@@ -100,6 +100,53 @@ final class EpochRestoreTest: XCTestCase {
     }
 
     @MainActor
+    func testRestoreWithoutSyncRevSeedsLedgerSoLaterClearDropsHotRows() async throws {
+        let appGroup = try tempDirectory()
+        let own = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: appGroup)
+            try? FileManager.default.removeItem(at: own)
+        }
+        let server = LimeIME.DBServer(_testDatabaseDirectory: appGroup)
+        let controller = LimeIME.SetupImController(dbServer: server,
+                                                   prefs: makePrefs(),
+                                                   progress: LimeIME.ProgressManager())
+        let database = SharedDatabase(runMode: .keyboard,
+                                      dataDirOverride: own,
+                                      appGroupOverride: appGroup)
+        let engine = TableSyncEngine(database: database, baseURL: appGroup)
+        _ = try XCTUnwrap(database.current())
+        defer { database.closeCurrentForReplacement() }
+        let backupZip = try makeBackupZip(databaseURL: makeRestoreSource(
+            rows: [("legacy_cj", "舊", 0)],
+            includeIM: true
+        ))
+
+        let restoreResult = await controller.restoreDB(from: backupZip)
+
+        if case .failure(let error) = restoreResult {
+            XCTFail("Expected legacy restore to succeed, got \(error)")
+        }
+        XCTAssertNotNil(try syncRev(stem: "cj", in: appGroup.appendingPathComponent("lime.db")))
+        XCTAssertEqual(engine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+        let hot = try XCTUnwrap(database.current())
+        XCTAssertEqual(try countRows("cj", whereCode: "legacy_cj", in: hot), 1)
+        XCTAssertNotNil(hot.ledgerEntry(stem: "cj"))
+
+        let clearController = LimeIME.ManageImController(dbServer: server, prefs: makePrefs())
+        let beforeClear = try coldMeta(in: appGroup)
+        let clearResult = await clearController.clearTable(tableNick: "cj")
+
+        guard case .success = clearResult else {
+            return XCTFail("Expected clearTable to succeed, got \(clearResult)")
+        }
+        XCTAssertEqual(try coldMeta(in: appGroup).generation, beforeClear.generation + 1)
+        XCTAssertEqual(engine.scanAndApply(), [SyncEvent(kind: .dropped, stem: "cj")])
+        XCTAssertEqual(try countRows("cj", whereCode: "legacy_cj", in: try XCTUnwrap(database.current())), 0)
+        XCTAssertNil(try XCTUnwrap(database.current()).ledgerEntry(stem: "cj"))
+    }
+
+    @MainActor
     func testSkewRejected() async throws {
         let appGroup = try tempDirectory()
         defer { try? FileManager.default.removeItem(at: appGroup) }
@@ -250,7 +297,8 @@ final class EpochRestoreTest: XCTestCase {
     }
 
     private func makeRestoreSource(schemaVersion: Int = LimeDB.CURRENT_DB_VERSION,
-                                   rows: [(String, String, Int)]) throws -> URL {
+                                   rows: [(String, String, Int)],
+                                   includeIM: Bool = false) throws -> URL {
         let url = try tempDirectory().appendingPathComponent("lime.db")
         let queue = try DatabaseQueue(path: url.path)
         try queue.write { db in
@@ -265,6 +313,19 @@ final class EpochRestoreTest: XCTestCase {
             try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('epoch_uuid', 'old')")
             try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('schema_version', ?)",
                            arguments: ["\(schemaVersion)"])
+            if includeIM {
+                try db.execute(sql: """
+                    CREATE TABLE im (
+                        _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        code TEXT, title TEXT, desc TEXT, keyboard TEXT, disable INTEGER,
+                        selkey TEXT, endkey TEXT, spacestyle TEXT
+                    )
+                """)
+                try db.execute(sql: """
+                    INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                    VALUES ('cj', '倉頡', '', 'lime_cj_number', 0, '123456789', '', '')
+                """)
+            }
             for row in rows {
                 try db.execute(sql: "INSERT INTO cj (code, word, score) VALUES (?, ?, ?)",
                                arguments: [row.0, row.1, row.2])
@@ -361,6 +422,16 @@ final class EpochRestoreTest: XCTestCase {
             try Int.fetchOne(sqlDB,
                              sql: "SELECT COUNT(*) FROM \(quote(stem)) WHERE code = ?",
                              arguments: [code]) ?? 0
+        }
+    }
+
+    private func syncRev(stem: String, in url: URL) throws -> Int64? {
+        let queue = try DatabaseQueue(path: url.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Int64.fetchOne(db,
+                               sql: "SELECT rev FROM sync_rev WHERE stem = ?",
+                               arguments: [stem])
         }
     }
 

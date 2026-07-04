@@ -390,6 +390,7 @@ final class ManageImController: BaseController {
             }
             ss?.clearTable(tableNick)
             await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
+            try? server.publishColdSnapshot()
         }.value
         ManageImController.markKeyboardCacheDirty()
         invalidate()

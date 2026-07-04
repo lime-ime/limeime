@@ -422,6 +422,28 @@ final class ManageImControllerTest: XCTestCase {
         // No crash is sufficient; error for missing row is acceptable
     }
 
+    func testClearTablePublishesSnapshotAndBumpsSyncRev() async throws {
+        let (dir, db) = try makeDBDirectory()
+        defer {
+            try? db.closeForReplacement()
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageImController(dbServer: server)
+        XCTAssertGreaterThan(db.addRecord(testTable, ["code": "clear_me", "word": "清除"]), 0)
+        let beforeRev = try XCTUnwrap(db.syncRevs()[testTable]?.rev)
+        let beforeMeta = try server.publishColdSnapshot()
+
+        let result = await controller.clearTable(tableNick: testTable)
+
+        guard case .success = result else {
+            return XCTFail("Expected clearTable to succeed, got \(result)")
+        }
+        let afterRev = try XCTUnwrap(db.syncRevs()[testTable]?.rev)
+        XCTAssertGreaterThan(afterRev, beforeRev)
+        XCTAssertEqual(try readColdMeta(in: dir).generation, beforeMeta.generation + 1)
+    }
+
     // MARK: - Callbacks on main thread
 
     func testRefreshCallbackOnMainThread() async throws {

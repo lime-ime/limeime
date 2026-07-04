@@ -146,7 +146,7 @@ final class TableSyncEngine {
             if !unsettled {
                 try db.setSyncMeta("applied_generation", "\(sidecar.generation)")
             }
-            if let exportEvent = exportSnapshotIfRequested() {
+            if !unsettled, let exportEvent = exportSnapshotIfRequested() {
                 events.append(exportEvent)
             }
             if events.isEmpty {
@@ -302,17 +302,19 @@ final class TableSyncEngine {
             defer { try? db.execute(sql: "DETACH DATABASE stash") }
             try db.execute(sql: """
                 CREATE TABLE stash.sync_stash (
-                    stem TEXT, code TEXT, word TEXT, score INTEGER
+                    stem TEXT, keya TEXT, keyb TEXT, score INTEGER
                 )
             """)
             for stem in validStems where prefs.restoreOnImport(for: stem) {
+                let keys = learnKeys(for: stem)
                 let columns = try tableColumns(stem, schema: nil, in: db)
-                guard columns.contains("code"), columns.contains("word"), columns.contains("score") else {
+                guard columns.contains(keys.a), columns.contains(keys.b), columns.contains("score") else {
                     continue
                 }
                 try db.execute(sql: """
-                    INSERT INTO stash.sync_stash (stem, code, word, score)
-                    SELECT ?, code, word, score FROM \(quoted(stem)) WHERE score <> 0
+                    INSERT INTO stash.sync_stash (stem, keya, keyb, score)
+                    SELECT ?, \(quoted(keys.a)), \(quoted(keys.b)), score
+                    FROM \(quoted(stem)) WHERE score <> 0
                 """, arguments: [stem])
             }
         }
@@ -326,20 +328,27 @@ final class TableSyncEngine {
             let stems = try String.fetchAll(db, sql: "SELECT DISTINCT stem FROM stash.sync_stash")
             for stem in stems where validStems.contains(stem) {
                 try ensureDestinationTable(stem, in: db)
+                let keys = learnKeys(for: stem)
                 let columns = try tableColumns(stem, schema: nil, in: db)
-                guard columns.contains("code"), columns.contains("word"), columns.contains("score") else {
+                guard columns.contains(keys.a), columns.contains(keys.b), columns.contains("score") else {
                     continue
                 }
+                let keyA = quoted(keys.a)
+                let keyB = quoted(keys.b)
                 try db.execute(sql: """
                     UPDATE \(quoted(stem))
                     SET score = (
                         SELECT s.score FROM stash.sync_stash s
-                        WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                        WHERE s.stem = ?
+                          AND s.keya IS \(quoted(stem)).\(keyA)
+                          AND s.keyb IS \(quoted(stem)).\(keyB)
                         LIMIT 1
                     )
                     WHERE EXISTS (
                         SELECT 1 FROM stash.sync_stash s
-                        WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                        WHERE s.stem = ?
+                          AND s.keya IS \(quoted(stem)).\(keyA)
+                          AND s.keyb IS \(quoted(stem)).\(keyB)
                     )
                 """, arguments: [stem, stem])
             }
@@ -425,6 +434,8 @@ final class TableSyncEngine {
                 if ledger.state == .done { return .skip }
                 if ledger.state == .failed && ledger.attempts >= maxAttempts { return .silentSkip }
                 if ledger.state == .inProgress {
+                    // ponytail: two live keyboard processes can resume the same marker; add per-process claim tokens with staleness if duplicate imports show up in device traces.
+                    try ensureStashTable(in: db)
                     return .start(marker: ledger.resumeMarker ?? 0)
                 }
             }
@@ -433,11 +444,13 @@ final class TableSyncEngine {
             try ensureStashTable(in: db)
             try db.execute(sql: "DELETE FROM sync_stash WHERE stem = ?", arguments: [stem])
             if mode == .merge {
+                let keys = learnKeys(for: stem)
                 let columns = try tableColumns(stem, schema: nil, in: db)
-                if columns.contains("code"), columns.contains("word"), columns.contains("score") {
+                if columns.contains(keys.a), columns.contains(keys.b), columns.contains("score") {
                     try db.execute(sql: """
-                        INSERT INTO sync_stash (stem, code, word, score)
-                        SELECT ?, code, word, score FROM \(quoted(stem)) WHERE score <> 0
+                        INSERT INTO sync_stash (stem, keya, keyb, score)
+                        SELECT ?, \(quoted(keys.a)), \(quoted(keys.b)), score
+                        FROM \(quoted(stem)) WHERE score <> 0
                     """, arguments: [stem])
                 }
             }
@@ -531,18 +544,26 @@ final class TableSyncEngine {
                               in limeDB: LimeDB) throws {
         try limeDB.dbQueue.write { db in
             if restoreLearning {
+                try ensureStashTable(in: db)
+                let keys = learnKeys(for: stem)
                 let columns = try tableColumns(stem, schema: nil, in: db)
-                if columns.contains("code"), columns.contains("word"), columns.contains("score") {
+                if columns.contains(keys.a), columns.contains(keys.b), columns.contains("score") {
+                    let keyA = quoted(keys.a)
+                    let keyB = quoted(keys.b)
                     try db.execute(sql: """
                         UPDATE \(quoted(stem))
                         SET score = (
                             SELECT s.score FROM sync_stash s
-                            WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                            WHERE s.stem = ?
+                              AND s.keya IS \(quoted(stem)).\(keyA)
+                              AND s.keyb IS \(quoted(stem)).\(keyB)
                             LIMIT 1
                         )
                         WHERE EXISTS (
                             SELECT 1 FROM sync_stash s
-                            WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                            WHERE s.stem = ?
+                              AND s.keya IS \(quoted(stem)).\(keyA)
+                              AND s.keyb IS \(quoted(stem)).\(keyB)
                         )
                     """, arguments: [stem, stem])
                 }
@@ -653,14 +674,24 @@ final class TableSyncEngine {
     }
 
     private func ensureStashTable(in db: Database) throws {
+        let columns = try tableColumns("sync_stash", schema: nil, in: db)
+        if !columns.isEmpty,
+           !(columns.contains("stem") && columns.contains("keya") &&
+             columns.contains("keyb") && columns.contains("score")) {
+            try db.execute(sql: "DROP TABLE sync_stash")
+        }
         try db.execute(sql: """
             CREATE TABLE IF NOT EXISTS sync_stash (
                 stem  TEXT,
-                code  TEXT,
-                word  TEXT,
+                keya  TEXT,
+                keyb  TEXT,
                 score INTEGER
             )
         """)
+    }
+
+    private func learnKeys(for stem: String) -> (a: String, b: String) {
+        stem == "related" ? ("pword", "cword") : ("code", "word")
     }
 
     private func tableColumns(_ table: String, schema: String?, in db: Database) throws -> [String] {

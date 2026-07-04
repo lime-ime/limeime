@@ -321,6 +321,7 @@ private func restoreBackupIntoCold(server: DBServer, from url: URL) throws {
     try validateRestoreDatabase(payload.databaseURL)
     try server.restoreDatabase(srcFilePath: localURL.path)
     reregisterKnownIMs(server: server)
+    try server.ensureMergeSyncRevForNonEmptySyncableTables()
     try server.bumpEpoch()
     try server.publishColdSnapshot()
 }
@@ -512,13 +513,18 @@ private func validateRestoreDatabase(_ databaseURL: URL) throws {
         guard quickCheck == "ok" else {
             throw DBServerError.invalidRestoreSource(quickCheck ?? "quick_check failed")
         }
-        guard try tableExists("sync_meta", in: db),
-              let raw = try String.fetchOne(db,
-                                            sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'"),
-              let version = Int(raw)
-        else { return }
-        if version > LimeDB.CURRENT_DB_VERSION {
-            throw SetupImControllerError.restoreSchemaTooNew(version)
+        if try tableExists("sync_meta", in: db),
+           let raw = try String.fetchOne(db,
+                                         sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'"),
+           let version = Int(raw) {
+            if version > LimeDB.CURRENT_DB_VERSION {
+                throw SetupImControllerError.restoreSchemaTooNew(version)
+            }
+            return
+        }
+        let userVersion = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
+        if userVersion > 0 && userVersion > LimeDB.CURRENT_DB_VERSION {
+            throw SetupImControllerError.restoreSchemaTooNew(userVersion)
         }
     }
 }

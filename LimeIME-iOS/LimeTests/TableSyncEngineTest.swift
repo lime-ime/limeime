@@ -74,6 +74,24 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try score(for: "c1", stem: "cj", in: db), 5)
     }
 
+    func testRelatedMergePreservesLearnedScore() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try replaceRelatedRows(in: cold, rows: [("上文", "下文", 5)])
+        try h.publisher.publish()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "related")])
+        let hot = try XCTUnwrap(h.database.current())
+        XCTAssertEqual(try relatedScore(pword: "上文", cword: "下文", in: hot), 5)
+        try setRelatedScore(88, pword: "上文", cword: "下文", in: hot)
+
+        try replaceRelatedRows(in: cold, rows: [("上文", "下文", 1)])
+        try h.publisher.publish()
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "related")])
+        XCTAssertEqual(try relatedScore(pword: "上文", cword: "下文", in: hot), 88)
+    }
+
     func testDeadlineResumeUsesRevAndNewRevRestartsPartialImport() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
@@ -149,6 +167,24 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(reopened.ledgerEntry(stem: "cj")?.rev, cold.syncRevs()["cj"]?.rev)
     }
 
+    func testEpochRebuildPreservesRelatedLearnedRowsWhenPrefIsOn() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        h.prefs.setRestoreOnImport(true, for: "related")
+        let hot = try XCTUnwrap(h.database.current())
+        try replaceRelatedRows(in: hot, rows: [("父", "子", 88)], bumpRev: false)
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try replaceRelatedRows(in: cold, rows: [("父", "子", 1)])
+        _ = try cold.bumpEpoch()
+        try h.publisher.publish()
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+
+        let reopened = try XCTUnwrap(h.database.current())
+        XCTAssertEqual(try relatedScore(pword: "父", cword: "子", in: reopened), 88)
+        XCTAssertEqual(reopened.ledgerEntry(stem: "related")?.rev, cold.syncRevs()["related"]?.rev)
+    }
+
     func testEpochRebuildWipesLearnedRowsWhenPrefIsOff() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
@@ -212,6 +248,41 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(h.appGroupDir).path))
         XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.backupSnapshot(h.appGroupDir).path))
         XCTAssertEqual(try quickCheck(SyncPaths.backupSnapshot(h.appGroupDir)), "ok")
+    }
+
+    func testExportRequestWaitsWhenIncrementalImportFailsThenExportsAfterCleanScan() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try cold.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: "DROP TABLE IF EXISTS cj")
+            try sqlDB.execute(sql: "CREATE TABLE cj (bad TEXT)")
+            try sqlDB.execute(sql: "INSERT INTO cj (bad) VALUES ('broken')")
+            try cold.bumpSyncRev("cj", mode: .merge, in: sqlDB)
+        }
+        try setIMRow(in: cold, stem: "cj", title: "Broken CJ")
+        try h.publisher.publish()
+        let request = ExportRequest(requestUUID: UUID().uuidString,
+                                    expiresAt: Date().timeIntervalSince1970 + 60)
+        try atomicWrite(try JSONEncoder().encode(request), to: SyncPaths.exportRequest(h.appGroupDir))
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .failed, stem: "cj")])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(h.appGroupDir).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.backupSnapshot(h.appGroupDir).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.receipt(h.appGroupDir).path))
+
+        try cold.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: "DROP TABLE IF EXISTS cj")
+        }
+        try replaceRows(in: cold, stem: "cj", rows: 2, mode: .merge)
+        try h.publisher.publish()
+
+        XCTAssertEqual(h.engine.scanAndApply(), [
+            SyncEvent(kind: .imported, stem: "cj"),
+            SyncEvent(kind: .exported, stem: nil),
+        ])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(h.appGroupDir).path))
+        XCTAssertEqual(try rawCount("cj", in: SyncPaths.backupSnapshot(h.appGroupDir)), 2)
     }
 
     private func makeHarness() throws -> Harness {
@@ -348,6 +419,60 @@ final class TableSyncEngineTest: XCTestCase {
         try db.dbQueue.write { sqlDB in
             try sqlDB.execute(sql: "UPDATE \(quoted(stem)) SET score = ? WHERE code = ?",
                               arguments: [score, code])
+        }
+    }
+
+    @discardableResult
+    private func replaceRelatedRows(in db: LimeDB,
+                                    rows: [(pword: String, cword: String, score: Int)],
+                                    mode: SyncRevMode = .merge,
+                                    bumpRev: Bool = true) throws -> Int64? {
+        try db.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: """
+                CREATE TABLE IF NOT EXISTS related (
+                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pword     TEXT,
+                    cword     TEXT,
+                    basescore INTEGER DEFAULT 0,
+                    score     INTEGER DEFAULT 0
+                )
+            """)
+            try sqlDB.execute(sql: "DELETE FROM related")
+            let insert = try sqlDB.makeStatement(sql: """
+                INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)
+            """)
+            for row in rows {
+                try insert.execute(arguments: [row.pword, row.cword, row.score])
+            }
+            if bumpRev {
+                try db.bumpSyncRev("related", mode: mode, in: sqlDB)
+            }
+        }
+        return db.syncRevs()["related"]?.rev
+    }
+
+    private func relatedScore(pword: String, cword: String, in db: LimeDB) throws -> Int {
+        try db.dbQueue.read { sqlDB in
+            try Int.fetchOne(sqlDB,
+                             sql: "SELECT score FROM related WHERE pword = ? AND cword = ? LIMIT 1",
+                             arguments: [pword, cword]) ?? -1
+        }
+    }
+
+    private func setRelatedScore(_ score: Int, pword: String, cword: String, in db: LimeDB) throws {
+        try db.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: "UPDATE related SET score = ? WHERE pword = ? AND cword = ?",
+                              arguments: [score, pword, cword])
+        }
+    }
+
+    private func rawCount(_ table: String, in url: URL) throws -> Int {
+        var config = Configuration()
+        config.readonly = true
+        let queue = try DatabaseQueue(path: url.path, configuration: config)
+        defer { try? queue.close() }
+        return try queue.read { sqlDB in
+            try Int.fetchOne(sqlDB, sql: "SELECT COUNT(*) FROM \(quoted(table))") ?? 0
         }
     }
 

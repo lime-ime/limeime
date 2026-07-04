@@ -232,7 +232,8 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
-    private func makeRestoreZip(schemaVersion: Int = LimeDB.CURRENT_DB_VERSION,
+    private func makeRestoreZip(schemaVersion: Int? = LimeDB.CURRENT_DB_VERSION,
+                                userVersion: Int = 0,
                                 code: String = "restore_marker") throws -> URL {
         let dir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -240,6 +241,7 @@ final class SetupImControllerTest: XCTestCase {
         let dbURL = dir.appendingPathComponent(DBServer.databaseName)
         let queue = try DatabaseQueue(path: dbURL.path)
         try queue.write { db in
+            try db.execute(sql: "PRAGMA user_version = \(userVersion)")
             try db.execute(sql: """
                 CREATE TABLE custom (
                     _id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -247,10 +249,12 @@ final class SetupImControllerTest: XCTestCase {
                     basescore INTEGER DEFAULT 0, code3r TEXT
                 )
             """)
-            try db.execute(sql: "CREATE TABLE sync_meta (key TEXT PRIMARY KEY, value TEXT)")
-            try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('epoch_uuid', 'old-epoch')")
-            try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('schema_version', ?)",
-                           arguments: ["\(schemaVersion)"])
+            if let schemaVersion {
+                try db.execute(sql: "CREATE TABLE sync_meta (key TEXT PRIMARY KEY, value TEXT)")
+                try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('epoch_uuid', 'old-epoch')")
+                try db.execute(sql: "INSERT INTO sync_meta (key, value) VALUES ('schema_version', ?)",
+                               arguments: ["\(schemaVersion)"])
+            }
             try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, '還原', 9)",
                            arguments: [code])
         }
@@ -751,6 +755,52 @@ final class SetupImControllerTest: XCTestCase {
         XCTAssertEqual(db.countRecords("custom", "code = ?", ["future_skew"]), 0)
         XCTAssertEqual(db.syncMeta("epoch_uuid"), beforeEpoch)
         XCTAssertFalse(FileManager.default.fileExists(atPath: coldSnapshotURL(for: url).path))
+    }
+
+    func testRestoreDBFallsBackToUserVersionWhenSyncMetaMissing() async throws {
+        let (futureURL, futureDB) = try makeDB()
+        defer {
+            try? futureDB.closeForReplacement()
+            try? FileManager.default.removeItem(at: futureURL.deletingLastPathComponent())
+        }
+        let futureController = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: futureDB), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+        let futureZip = try makeRestoreZip(schemaVersion: nil,
+                                           userVersion: LimeDB.CURRENT_DB_VERSION + 1,
+                                           code: "future_user_version")
+
+        let futureResult = await futureController.restoreDB(from: futureZip)
+
+        guard case .failure(let futureError) = futureResult else {
+            return XCTFail("Expected future user_version restore to fail")
+        }
+        XCTAssertTrue(futureError.localizedDescription.contains("請先更新"))
+        XCTAssertEqual(futureDB.countRecords("custom", "code = ?", ["future_user_version"]), 0)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: coldSnapshotURL(for: futureURL).path))
+
+        let (okURL, okDB) = try makeDB()
+        defer {
+            try? okDB.closeForReplacement()
+            try? FileManager.default.removeItem(at: okURL.deletingLastPathComponent())
+        }
+        let okController = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: okDB), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+        let okZip = try makeRestoreZip(schemaVersion: nil,
+                                       userVersion: LimeDB.CURRENT_DB_VERSION,
+                                       code: "legacy_user_version_ok")
+
+        let okResult = await okController.restoreDB(from: okZip)
+
+        if case .failure(let error) = okResult {
+            XCTFail("Expected legacy user_version restore to succeed, got \(error)")
+        }
+        XCTAssertEqual(try rawCount("custom", whereCode: "legacy_user_version_ok", in: okURL), 1)
+        XCTAssertEqual(try rawCount("custom", whereCode: "legacy_user_version_ok",
+                                    in: coldSnapshotURL(for: okURL)), 1)
     }
 
     // MARK: - syncIMActivatedState

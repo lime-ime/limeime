@@ -30,6 +30,7 @@ final class ColdPublisherTest: XCTestCase {
         XCTAssertEqual(try quickCheck(SyncPaths.coldDB(baseURL)), "ok")
         XCTAssertNoColdSidecars()
         XCTAssertEqual(try readSidecar(), first)
+        XCTAssertEqual(try readSnapshotMeta(), first)
         XCTAssertEqual(try readSyncMetaInt64("generation", in: SyncPaths.coldDB(baseURL)), first.generation)
         XCTAssertEqual(liveDB.coldGeneration(), first.generation)
         XCTAssertEqual(first.epochUUID, liveDB.syncMeta("epoch_uuid"))
@@ -40,6 +41,7 @@ final class ColdPublisherTest: XCTestCase {
 
         XCTAssertEqual(second.generation, first.generation + 1)
         XCTAssertEqual(try readSidecar(), second)
+        XCTAssertEqual(try readSnapshotMeta(), second)
         XCTAssertEqual(try readSyncMetaInt64("generation", in: SyncPaths.coldDB(baseURL)), second.generation)
         XCTAssertEqual(try readInt("SELECT COUNT(*) FROM custom", in: SyncPaths.coldDB(baseURL)), 1)
         XCTAssertEqual(liveDB.coldGeneration(), second.generation)
@@ -70,6 +72,21 @@ final class ColdPublisherTest: XCTestCase {
     private func readSidecar() throws -> ColdSnapshotMeta {
         try JSONDecoder().decode(ColdSnapshotMeta.self,
                                  from: Data(contentsOf: SyncPaths.coldMeta(baseURL)))
+    }
+
+    private func readSnapshotMeta() throws -> ColdSnapshotMeta {
+        let url = SyncPaths.coldDB(baseURL)
+        return try readOnlyQueue(url).read { db in
+            let generation = try String.fetchOne(db,
+                sql: "SELECT value FROM sync_meta WHERE key = 'generation'") ?? ""
+            let epoch = try String.fetchOne(db,
+                sql: "SELECT value FROM sync_meta WHERE key = 'epoch_uuid'") ?? ""
+            let schema = try String.fetchOne(db,
+                sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'") ?? ""
+            return ColdSnapshotMeta(generation: Int64(generation) ?? -1,
+                                    epochUUID: epoch,
+                                    schemaVersion: Int(schema) ?? -1)
+        }
     }
 
     private func quickCheck(_ url: URL) throws -> String {

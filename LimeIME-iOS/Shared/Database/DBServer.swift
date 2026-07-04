@@ -1254,6 +1254,34 @@ final class DBServer {
         datasource?.tableHasData(name) ?? false
     }
 
+    func ensureMergeSyncRevForNonEmptySyncableTables() throws {
+        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
+        try ds.dbQueue.write { db in
+            for stem in LimeDB.syncableStems {
+                guard ds.isValidTableName(stem),
+                      try tableExists(stem, in: db),
+                      try tableHasData(stem, in: db)
+                else { continue }
+                try ds.bumpSyncRev(stem, mode: .merge, in: db)
+            }
+        }
+    }
+
+    private func tableExists(_ table: String, in db: Database) throws -> Bool {
+        try (Int.fetchOne(db,
+                          sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                          arguments: [table]) ?? 0) > 0
+    }
+
+    private func tableHasData(_ table: String, in db: Database) throws -> Bool {
+        try (Int.fetchOne(db,
+                          sql: "SELECT EXISTS(SELECT 1 FROM \(quotedIdentifier(table)) LIMIT 1)") ?? 0) > 0
+    }
+
+    private func quotedIdentifier(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
     func importFromZip(at zipURL: URL, tableName: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importFromZip(at: zipURL, tableName: tableName)
