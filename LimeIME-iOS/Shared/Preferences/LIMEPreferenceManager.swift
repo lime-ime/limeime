@@ -392,8 +392,12 @@ final class LIMEPreferenceManager {
         guard let configs = try? dbServer.getAllImConfigs() else { return }
         let enabledConfigs = configs.enumerated()
             .filter { $0.element.enabled }
+        // Codes, not list indices: the app's im list and the keyboard's canonical-DB
+        // im list are DIFFERENT databases since the FA re-arch, so positional indices
+        // no longer identify the same IM on both sides. The keyboard-side reader
+        // still accepts legacy numeric tokens from pre-re-arch prefs.
         keyboardState = enabledConfigs
-            .map { "\($0.offset)" }
+            .map { $0.element.tableNick }
             .joined(separator: ";")
 
         // Keep the current IM preference coherent with the newly synced enabled list.

@@ -88,6 +88,57 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertNil(db.ledgerEntry(stem: "cj"))
     }
 
+    // The seed lime.db ships an EMPTY im table, so the keyboard must register
+    // imported IMs itself — otherwise getAllImConfigs() stays empty and the
+    // keyboard remains English-only forever (final-review finding #1).
+    func testImportRegistersIMRowAndDropRemovesIt() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let source = try writeSource(stem: "cj", rows: 10, in: h.appGroupDir)
+        _ = h.engine.scanAndApply()
+
+        let db = try XCTUnwrap(h.database.current())
+        let title = try db.dbQueue.read { sqlDB in
+            try String.fetchOne(sqlDB, sql: "SELECT title FROM im WHERE code = 'cj'")
+        }
+        XCTAssertEqual(title, "倉頡輸入法")
+
+        try FileManager.default.removeItem(at: source)
+        _ = h.engine.scanAndApply()
+        let remaining = try db.dbQueue.read { sqlDB in
+            try Int.fetchOne(sqlDB, sql: "SELECT COUNT(*) FROM im WHERE code = 'cj'") ?? 0
+        }
+        XCTAssertEqual(remaining, 0)
+    }
+
+    func testImportCopiesIMMetadataFromSource() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let source = try writeSource(stem: "cj", rows: 10, in: h.appGroupDir)
+        // Give the source its own im row — its metadata is authoritative.
+        let queue = try DatabaseQueue(path: source.path)
+        try queue.write { sqlDB in
+            try sqlDB.execute(sql: """
+                CREATE TABLE IF NOT EXISTS im (code TEXT, title TEXT, desc TEXT,
+                    keyboard TEXT, disable INTEGER, selkey TEXT, endkey TEXT, spacestyle TEXT)
+            """)
+            try sqlDB.execute(sql: """
+                INSERT INTO im VALUES ('cj', '客製倉頡', '', 'lime_cj', 0, '123456789', '', '')
+            """)
+        }
+        try queue.close()
+
+        _ = h.engine.scanAndApply()
+
+        let db = try XCTUnwrap(h.database.current())
+        let row = try db.dbQueue.read { sqlDB in
+            try Row.fetchOne(sqlDB, sql: "SELECT title, keyboard, selkey FROM im WHERE code = 'cj'")
+        }
+        XCTAssertEqual(row?["title"] as String?, "客製倉頡")
+        XCTAssertEqual(row?["keyboard"] as String?, "lime_cj")
+        XCTAssertEqual(row?["selkey"] as String?, "123456789")
+    }
+
     func testDeadlineResume() throws {
         let h = try makeHarness()
         defer { cleanup(h) }

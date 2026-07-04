@@ -148,6 +148,13 @@ final class LimeDB {
         "大易輸入法", "注音輸入法", "輕鬆輸入法", "行列輸入法", "行列10輸入法",
         "筆順五碼輸入法", "華象直覺輸入法", "拼音輸入法", "四碼倉頡輸入法"
     ]
+
+    /// Fallback display title for TableSyncEngine's keyboard-side IM registration
+    /// (used only when a table source carries no `im` row of its own).
+    static func defaultIMTitle(for code: String) -> String? {
+        guard let index = IM_CODES.firstIndex(of: code) else { return nil }
+        return IM_FULL_NAMES[index]
+    }
     // MARK: - Initializer
 
     /// Opens (or creates) lime.db at the given path.

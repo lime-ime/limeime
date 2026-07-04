@@ -50,7 +50,8 @@ final class TableSyncEngine {
 
         if let epochEvent = applyRestoreEpochIfNeeded() {
             events.append(epochEvent)
-            if epochEvent.kind == .failed { return events }
+            // A bad/unreadable/future-schema restore file must not wedge the rest of
+            // the sync (imports, drops, backup export) — record the failure and move on.
         }
 
         let snapshot = tableSourceSnapshot()
@@ -226,6 +227,7 @@ final class TableSyncEngine {
                         return .paused
                     }
                 }
+                try syncIMRegistration(stem: stem, alias: alias, in: db)
                 try finishImport(stem: stem,
                                  identity: identity,
                                  restoreLearning: restoreLearning,
@@ -384,11 +386,51 @@ final class TableSyncEngine {
             try limeDB.dbQueue.write { db in
                 try ensureDestinationTable(stem, in: db)
                 try db.execute(sql: "DELETE FROM \(quoted(stem))")
+                if stem != "related" {
+                    try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [stem])
+                }
                 try limeDB.deleteLedger(stem: stem, in: db)
             }
             return true
         } catch {
             return false
+        }
+    }
+
+    /// The seed lime.db ships an EMPTY `im` table and the app registers IMs only in
+    /// its own DB, so the keyboard must register imported IMs itself or it stays
+    /// English-only. Source limedbs (cloud downloads, text conversions) carry their
+    /// own `im` row — copy its metadata; synthesize a fallback row otherwise.
+    /// An existing row keeps its `disable` state across re-imports.
+    private func syncIMRegistration(stem: String, alias: String, in limeDB: LimeDB) throws {
+        guard stem != "related" else { return }
+        try limeDB.dbQueue.write { db in
+            let sourceHasIMTable = try Int.fetchOne(db, sql: """
+                SELECT COUNT(*) FROM \(quoted(alias)).sqlite_master
+                WHERE type = 'table' AND name = 'im'
+            """, arguments: []) ?? 0 > 0
+            let existingDisable = try Int.fetchOne(db,
+                sql: "SELECT disable FROM im WHERE code = ?", arguments: [stem])
+            var registered = false
+            if sourceHasIMTable {
+                let copied = try Int.fetchOne(db, sql: """
+                    SELECT COUNT(*) FROM \(quoted(alias)).im WHERE code = ?
+                """, arguments: [stem]) ?? 0 > 0
+                if copied {
+                    try db.execute(sql: """
+                        INSERT OR REPLACE INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                        SELECT code, title, desc, keyboard, ?, selkey, endkey, spacestyle
+                        FROM \(quoted(alias)).im WHERE code = ?
+                    """, arguments: [existingDisable ?? 0, stem])
+                    registered = true
+                }
+            }
+            if !registered && existingDisable == nil {
+                try db.execute(sql: """
+                    INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                    VALUES (?, ?, '', 'lime', 0, '', '', '')
+                """, arguments: [stem, LimeDB.defaultIMTitle(for: stem) ?? stem])
+            }
         }
     }
 

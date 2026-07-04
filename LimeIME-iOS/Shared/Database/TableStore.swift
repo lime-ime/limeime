@@ -149,10 +149,15 @@ final class TableStore {
         }
         queue = nil
 
-        try clearAllSources()
+        // Deliver the restore file BEFORE clearing sources: if this ordering were
+        // reversed and the copy failed, the folder would be left empty with the old
+        // epoch and the next keyboard scan would drop every table. With restore-first,
+        // a partial clearAllSources merely re-imports stale sources on top of the new
+        // baseline — convergent, no data loss.
         try replaceFile(from: temp, to: SyncPaths.restoreDB(baseURL))
         let meta = RestoreMeta(epochUUID: epoch, schemaVersion: LimeDB.CURRENT_DB_VERSION)
         try atomicWrite(JSONEncoder().encode(meta), to: SyncPaths.restoreMeta(baseURL))
+        try clearAllSources()
         return epoch
     }
 

@@ -82,8 +82,11 @@ final class SharedDatabase {
     }
 
     func closeCurrentForReplacement() {
+        // Detach the handle from the cache in the same locked step so no concurrent
+        // current() caller can receive an already-closed LimeDB during a swap window.
         lock.lock()
         let datasource = cachedDatasource
+        cachedDatasource = nil
         lock.unlock()
         do {
             try datasource?.closeForReplacement()
@@ -1139,9 +1142,12 @@ final class DBServer {
         if keyboardState.isEmpty {
             activated = allIMs.filter { $0.enabled }
         } else {
-            let enabledIndices = Set(keyboardState.components(separatedBy: ";"))
+            // keyboard_state carries tableNick codes since the FA re-arch; numeric
+            // tokens are legacy positional indices from pre-re-arch prefs (kept so an
+            // un-migrated pref string still activates something sensible).
+            let tokens = Set(keyboardState.components(separatedBy: ";"))
             activated = allIMs.enumerated()
-                .filter { enabledIndices.contains(String($0.offset)) }
+                .filter { tokens.contains($0.element.tableNick) || tokens.contains(String($0.offset)) }
                 .map { $0.element }
         }
         // Align with Android buildActivatedIMList(): the activated IM list is built

@@ -790,6 +790,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             postSyncSignal(.importFailed)
         }
 
+        // The scan mutated the canonical DB (new/changed/dropped IM tables or a whole
+        // epoch swap) — rebuild the live runtime (searchServer, activatedIMs, layout)
+        // or the running session keeps serving the pre-scan state until the extension
+        // process restarts. setupDatabase() marshals its state updates to main itself.
+        if events.contains(where: { [.imported, .dropped, .epochApplied].contains($0.kind) }) {
+            setupDatabase()
+        }
+
         DispatchQueue.main.async { [weak self] in
             self?.finishTableSyncToast(events, hadPendingWork: hadPendingWork)
         }

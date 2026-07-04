@@ -153,6 +153,7 @@ struct SetupTabView: View {
     @State private var faPingThisSession: Bool?
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
+    @State private var faPingAt: TimeInterval?
     @State private var showSettingsGuidance = false
 
     @State private var pollTimer: Timer?
@@ -550,7 +551,8 @@ struct SetupTabView: View {
         if keyboardEnabled {
             let heartbeat = readKeyboardHeartbeat()
             faState = FAStateResolver.resolve(heartbeat: heartbeat,
-                                              faPingThisSession: faPingThisSession)
+                                              faPingThisSession: faPingThisSession,
+                                              faPingAt: faPingAt)
             hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
                                                                   faPingThisSession: faPingThisSession)
         } else {
@@ -571,6 +573,7 @@ struct SetupTabView: View {
         guard faPingObserver == nil else { return }
         faPingObserver = FAPingObserver { hasFullAccess in
             faPingThisSession = hasFullAccess
+            faPingAt = Date().timeIntervalSince1970
             refreshStatus()
             if hasFreshFAEvidence {
                 probeFocused = false

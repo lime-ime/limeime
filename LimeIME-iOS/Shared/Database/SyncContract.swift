@@ -97,13 +97,18 @@ enum FAStateResolver {
 
     static func resolve(heartbeat: KeyboardHeartbeat?,
                         now: Date = Date(),
-                        faPingThisSession: Bool?) -> FAState {
-        if isFreshOnHeartbeat(heartbeat, now: now) {
-            return .confirmedOn
-        }
+                        faPingThisSession: Bool?,
+                        faPingAt: TimeInterval? = nil) -> FAState {
+        let hbFresh = isFreshOnHeartbeat(heartbeat, now: now)
+        // Recency rule: the heartbeat file cannot be rewritten once FA is revoked,
+        // so an ON heartbeat can stay "fresh" for up to the window after a revoke.
+        // An OFF ping NEWER than the heartbeat therefore overrides it. A ping with
+        // no timestamp is treated as oldest (a fresh heartbeat wins).
         if faPingThisSession == false {
-            return .confirmedOff
+            let pingNewer = (faPingAt ?? 0) > (heartbeat?.lastSeenAt ?? -1)
+            if !hbFresh || pingNewer { return .confirmedOff }
         }
+        if hbFresh { return .confirmedOn }
         return .unknown
     }
 

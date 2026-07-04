@@ -27,6 +27,7 @@ struct DBManagerView: View {
     @State private var preparingShare = false
     @State private var faState: FAState = .unknown
     @State private var faPingThisSession: Bool?
+    @State private var faPingAt: TimeInterval?
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
     @State private var faPollTimer: Timer?
@@ -220,7 +221,8 @@ struct DBManagerView: View {
     private func refreshFAState() {
         let heartbeat = readKeyboardHeartbeat()
         faState = FAStateResolver.resolve(heartbeat: heartbeat,
-                                          faPingThisSession: faPingThisSession)
+                                          faPingThisSession: faPingThisSession,
+                                          faPingAt: faPingAt)
         hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
                                                               faPingThisSession: faPingThisSession)
     }
@@ -237,6 +239,7 @@ struct DBManagerView: View {
         guard faPingObserver == nil else { return }
         faPingObserver = FAPingObserver { hasFullAccess in
             faPingThisSession = hasFullAccess
+            faPingAt = Date().timeIntervalSince1970
             if backupAwaitingReceipt {
                 faPingSeenDuringBackup = true
             }
