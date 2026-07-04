@@ -11,6 +11,41 @@ final class EpochRestoreTest: XCTestCase {
         let engine: TableSyncEngine
     }
 
+    // Regression: a WAL-mode backup DB (the real backup/export path leaves the DB in
+    // WAL) cannot be opened read-only without its -wal/-shm sidecars (not in the zip),
+    // so validateRestoreDatabase used to throw SQLITE_CANTOPEN (error 14) and break
+    // restore of every WAL backup. The cold-backup test seam produced a non-WAL VACUUM
+    // INTO snapshot, which is why this was missed. validate now opens read-write.
+    @MainActor
+    func testRestoreWALModeBackupSucceeds() async throws {
+        let appGroup = try tempDirectory()
+        let own = try tempDirectory()
+        defer {
+            try? FileManager.default.removeItem(at: appGroup)
+            try? FileManager.default.removeItem(at: own)
+        }
+        let sourceDB = try makeRestoreSource(rows: [("wal_marker", "還原", 7)])
+        try Self.forceWALHeader(at: sourceDB)
+        let backupZip = try makeBackupZip(databaseURL: sourceDB)
+        let controller = LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatabaseDirectory: appGroup),
+            prefs: makePrefs(),
+            progress: LimeIME.ProgressManager())
+        let database = SharedDatabase(runMode: .keyboard,
+                                      dataDirOverride: own,
+                                      appGroupOverride: appGroup)
+        _ = try XCTUnwrap(database.current())
+        defer { database.closeCurrentForReplacement() }
+
+        let result = await controller.restoreDB(from: backupZip)
+
+        if case .failure(let error) = result {
+            XCTFail("WAL-mode backup restore should succeed, got \(error)")
+        }
+        XCTAssertEqual(try rawCount("cj", whereCode: "wal_marker",
+                                    in: appGroup.appendingPathComponent("lime.db")), 1)
+    }
+
     @MainActor
     func testRestoreZipEndToEnd() async throws {
         let appGroup = try tempDirectory()
@@ -294,6 +329,20 @@ final class EpochRestoreTest: XCTestCase {
         try archive.addEntry(with: DBServer.sharedPrefsBackupName, fileURL: sharedPrefs)
         try archive.addEntry(with: DBServer.preferenceManifestPath, fileURL: manifest)
         return zip
+    }
+
+    // Leaves journal_mode=wal in the DB header with no -wal/-shm sidecars — the shape
+    // that makes a read-only open throw SQLITE_CANTOPEN. Synchronous (nonisolated) so
+    // GRDB uses its sync API, not the async overload.
+    private nonisolated static func forceWALHeader(at url: URL) throws {
+        let q = try DatabaseQueue(path: url.path)
+        try q.writeWithoutTransaction { db in
+            _ = try String.fetchOne(db, sql: "PRAGMA journal_mode = WAL")
+            try db.execute(sql: "PRAGMA wal_checkpoint(TRUNCATE)")
+        }
+        try q.close()
+        try? FileManager.default.removeItem(at: URL(fileURLWithPath: url.path + "-wal"))
+        try? FileManager.default.removeItem(at: URL(fileURLWithPath: url.path + "-shm"))
     }
 
     private func makeRestoreSource(schemaVersion: Int = LimeDB.CURRENT_DB_VERSION,

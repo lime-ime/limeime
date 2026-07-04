@@ -319,7 +319,6 @@ final class SetupImController: BaseController {
 enum SetupImControllerError: Error {
     case backupTimedOut
     case restoreSchemaTooNew(Int)
-    case restoreFileUnreadable
 }
 
 extension SetupImControllerError: LocalizedError {
@@ -329,8 +328,6 @@ extension SetupImControllerError: LocalizedError {
             return "備份逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
         case .restoreSchemaTooNew:
             return "請先更新 LIME"
-        case .restoreFileUnreadable:
-            return "無法讀取備份檔。若檔案存放於 iCloud，請先在「檔案」App 中下載後再試；並確認選擇的是有效的萊姆備份（.zip）。"
         }
     }
 }
@@ -464,17 +461,6 @@ private func buildBackupArchive(server: DBServer, snapshotURL: URL) throws -> UR
 
 private func coordinatedCopy(_ url: URL, into dir: URL) throws -> URL {
     let destination = dir.appendingPathComponent("restore-input-\(UUID().uuidString)")
-    // iCloud/Files picks can be non-materialized placeholders — request download and
-    // wait briefly so the coordinated read sees real bytes instead of failing to open.
-    if (try? url.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true {
-        try? FileManager.default.startDownloadingUbiquitousItem(at: url)
-        for _ in 0..<40 {  // up to ~4 s
-            let status = (try? url.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]))?
-                .ubiquitousItemDownloadingStatus
-            if status == .current || status == .downloaded { break }
-            Thread.sleep(forTimeInterval: 0.1)
-        }
-    }
     var coordinatorError: NSError?
     var copyError: Error?
     NSFileCoordinator().coordinate(readingItemAt: url, options: .withoutChanges, error: &coordinatorError) { coordinatedURL in
@@ -484,9 +470,8 @@ private func coordinatedCopy(_ url: URL, into dir: URL) throws -> URL {
             copyError = error
         }
     }
-    if coordinatorError ?? copyError != nil {
-        // Unreadable pick (undownloaded iCloud, revoked scope, corrupt) → actionable message.
-        throw SetupImControllerError.restoreFileUnreadable
+    if let error = coordinatorError ?? copyError {
+        throw error
     }
     return destination
 }
@@ -559,9 +544,11 @@ private func validateRestoreArchive(_ archive: Archive) throws {
 }
 
 private func validateRestoreDatabase(_ databaseURL: URL) throws {
-    var config = Configuration()
-    config.readonly = true
-    let queue = try DatabaseQueue(path: databaseURL.path, configuration: config)
+    // Open READ-WRITE (on the throwaway extracted copy): a WAL-mode backup DB cannot
+    // be opened read-only without its -wal/-shm sidecars, which are not carried in the
+    // backup zip — a read-only open throws SQLITE_CANTOPEN (error 14) and breaks
+    // restore for every WAL backup. Read-write lets SQLite recreate the sidecars.
+    let queue = try DatabaseQueue(path: databaseURL.path)
     defer { try? queue.close() }
     try queue.read { db in
         let quickCheck = try String.fetchOne(db, sql: "PRAGMA quick_check")
@@ -612,16 +599,6 @@ private func reregisterKnownIMs(server: DBServer) {
 }
 
 private func mapSetupImError(_ error: Error) -> Error {
-    // Our own typed messages pass through unchanged.
-    if error is SetupImControllerError { return error }
-    // A picked file that can't be opened / isn't a valid SQLite backup surfaces as a
-    // raw SQLite/Cocoa error; show actionable guidance instead of "SQLite error 14 …".
-    let text = (error as NSError).localizedDescription.lowercased()
-    if text.contains("unable to open") || text.contains("not a database")
-        || text.contains("file is not a database") || text.contains("malformed")
-        || text.contains("no such file") || (error as NSError).domain == NSCocoaErrorDomain {
-        return SetupImControllerError.restoreFileUnreadable
-    }
     return error
 }
 
