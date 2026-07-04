@@ -6,14 +6,20 @@ final class TableSyncEngineTest: XCTestCase {
     private struct Harness {
         let ownDir: URL
         let appGroupDir: URL
+        let coldDir: URL
         let database: SharedDatabase
+        let coldDatabase: SharedDatabase
         let engine: TableSyncEngine
+        let publisher: ColdPublisher
+        let prefs: LIMEPreferenceManager
+        let defaults: UserDefaults
+        let defaultsSuite: String
     }
 
-    func testImportFromFolder() throws {
+    func testImportFromSnapshotRecordsRevAndSecondScanUsesFastPath() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        let source = try writeSource(stem: "cj", rows: 100, in: h.appGroupDir)
+        let coldRev = try publishColdStem(h, stem: "cj", rows: 100)
 
         let events = h.engine.scanAndApply()
 
@@ -22,221 +28,226 @@ final class TableSyncEngineTest: XCTestCase {
                        db.ledgerEntry(stem: "cj")?.error ?? "")
         XCTAssertEqual(try count("cj", in: db), 100)
         XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .done)
-        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.identity, FileIdentity(url: source))
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.rev, coldRev)
+        let sidecar = try readColdMeta(in: h.appGroupDir)
+        XCTAssertEqual(db.syncMeta("applied_generation"), "\(sidecar.generation)")
+
+        try FileManager.default.removeItem(at: SyncPaths.coldDB(h.appGroupDir))
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .noop, stem: nil)])
     }
 
-    func testNoopOnSecondScan() throws {
+    func testMetaOnlyChangeMirrorsIMWithoutReimportingRows() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        try writeSource(stem: "cj", rows: 100, in: h.appGroupDir)
+        let rev = try publishColdStem(h, stem: "cj", rows: 3, title: "Before")
         _ = h.engine.scanAndApply()
-
-        let events = h.engine.scanAndApply()
-
-        XCTAssertEqual(events, [SyncEvent(kind: .noop, stem: nil)])
         let db = try XCTUnwrap(h.database.current())
-        XCTAssertEqual(try count("cj", in: db), 100)
+        let beforeCount = try count("cj", in: db)
+
+        try setIMRow(in: try XCTUnwrap(h.coldDatabase.current()), stem: "cj", title: "After")
+        try h.publisher.publish()
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .metaSynced, stem: nil)])
+        XCTAssertEqual(try count("cj", in: db), beforeCount)
+        XCTAssertEqual(try imTitle("cj", in: db), "After")
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.rev, rev)
     }
 
-    func testReimportPreservesLearnedScores() throws {
+    func testMergePreservesLearnedScoreAndReplaceLetsColdWin() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        try writeSource(stem: "cj", rows: 100, in: h.appGroupDir)
+        try publishColdStem(h, stem: "cj", rows: 3)
         _ = h.engine.scanAndApply()
         let db = try XCTUnwrap(h.database.current())
-        try db.dbQueue.write { sqlDB in
-            try sqlDB.execute(sql: "UPDATE cj SET score = 77 WHERE code = 'c1'")
+        try setScore(77, code: "c1", stem: "cj", in: db)
+
+        try replaceRows(in: try XCTUnwrap(h.coldDatabase.current()),
+                        stem: "cj", rows: 3, scoreForC1: 5, mode: .merge)
+        try h.publisher.publish()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "cj")])
+        XCTAssertEqual(try score(for: "c1", stem: "cj", in: db), 77)
+
+        try replaceRows(in: try XCTUnwrap(h.coldDatabase.current()),
+                        stem: "cj", rows: 3, scoreForC1: 5, mode: .replace)
+        try h.publisher.publish()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "cj")])
+        XCTAssertEqual(try score(for: "c1", stem: "cj", in: db), 5)
+    }
+
+    func testDeadlineResumeUsesRevAndNewRevRestartsPartialImport() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let firstRev = try publishColdStem(h, stem: "cj", rows: 50_000)
+
+        XCTAssertTrue(h.engine.scanAndApply(deadline: Date()).isEmpty)
+
+        let db = try XCTUnwrap(h.database.current())
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .inProgress)
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.rev, firstRev)
+        XCTAssertLessThan(try count("cj", in: db), 50_000)
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "cj")])
+        XCTAssertEqual(try count("cj", in: db), 50_000)
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .done)
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.rev, firstRev)
+
+        try replaceRows(in: try XCTUnwrap(h.coldDatabase.current()),
+                        stem: "cj", rows: 50_000, mode: .merge)
+        try h.publisher.publish()
+        XCTAssertTrue(h.engine.scanAndApply(deadline: Date()).isEmpty)
+        XCTAssertLessThan(try count("cj", in: db), 50_000)
+
+        let newRev = try replaceRows(in: try XCTUnwrap(h.coldDatabase.current()),
+                                     stem: "cj", rows: 12, mode: .merge)
+        try h.publisher.publish()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "cj")])
+        XCTAssertEqual(try count("cj", in: db), 12)
+        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.rev, newRev)
+    }
+
+    func testDropClearsHotRowsIMAndLedgerWhenColdTableIsEmptyAndUnregistered() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        try publishColdStem(h, stem: "cj", rows: 10)
+        _ = h.engine.scanAndApply()
+
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try cold.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: "DELETE FROM cj")
+            try sqlDB.execute(sql: "DELETE FROM im WHERE code = 'cj'")
+            try cold.bumpSyncRev("cj", mode: .merge, in: sqlDB)
         }
-        try writeSource(stem: "cj", rows: 100, in: h.appGroupDir, mtimeOffset: 10)
-
-        let events = h.engine.scanAndApply()
-
-        XCTAssertEqual(events, [SyncEvent(kind: .imported, stem: "cj")])
-        XCTAssertEqual(try score(for: "c1", in: db), 77)
-    }
-
-    func testReimportCleanWhenRestoreLearningFalse() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        try writeSource(stem: "cj", rows: 100, in: h.appGroupDir)
-        _ = h.engine.scanAndApply()
-        let db = try XCTUnwrap(h.database.current())
-        try db.dbQueue.write { sqlDB in
-            try sqlDB.execute(sql: "UPDATE cj SET score = 77 WHERE code = 'c1'")
-        }
-        try writeTableMeta(stem: "cj", restoreLearning: false, in: h.appGroupDir)
-        try writeSource(stem: "cj", rows: 100, in: h.appGroupDir, mtimeOffset: 10)
-
-        let events = h.engine.scanAndApply()
-
-        XCTAssertEqual(events, [SyncEvent(kind: .imported, stem: "cj")])
-        XCTAssertEqual(try score(for: "c1", in: db), 0)
-    }
-
-    func testUninstallDrops() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        let source = try writeSource(stem: "cj", rows: 100, in: h.appGroupDir)
-        _ = h.engine.scanAndApply()
-        try FileManager.default.removeItem(at: source)
+        try h.publisher.publish()
 
         let events = h.engine.scanAndApply()
 
         let db = try XCTUnwrap(h.database.current())
         XCTAssertEqual(events, [SyncEvent(kind: .dropped, stem: "cj")])
         XCTAssertEqual(try count("cj", in: db), 0)
+        XCTAssertNil(try imTitle("cj", in: db))
         XCTAssertNil(db.ledgerEntry(stem: "cj"))
     }
 
-    // The seed lime.db ships an EMPTY im table, so the keyboard must register
-    // imported IMs itself — otherwise getAllImConfigs() stays empty and the
-    // keyboard remains English-only forever (final-review finding #1).
-    func testImportRegistersIMRowAndDropRemovesIt() throws {
+    func testEpochRebuildPreservesLearnedRowsWhenPrefIsOn() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        let source = try writeSource(stem: "cj", rows: 10, in: h.appGroupDir)
-        _ = h.engine.scanAndApply()
+        h.prefs.setRestoreOnImport(true, for: "cj")
+        let hot = try XCTUnwrap(h.database.current())
+        try replaceRows(in: hot, stem: "cj", rows: 3, scoreForC1: 77, bumpRev: false)
 
-        let db = try XCTUnwrap(h.database.current())
-        let title = try db.dbQueue.read { sqlDB in
-            try String.fetchOne(sqlDB, sql: "SELECT title FROM im WHERE code = 'cj'")
-        }
-        XCTAssertEqual(title, "倉頡輸入法")
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try replaceRows(in: cold, stem: "cj", rows: 3, scoreForC1: 5, mode: .merge)
+        try setIMRow(in: cold, stem: "cj", title: "Epoch CJ")
+        _ = try cold.bumpEpoch()
+        let sidecar = try h.publisher.publish()
 
-        try FileManager.default.removeItem(at: source)
-        _ = h.engine.scanAndApply()
-        let remaining = try db.dbQueue.read { sqlDB in
-            try Int.fetchOne(sqlDB, sql: "SELECT COUNT(*) FROM im WHERE code = 'cj'") ?? 0
-        }
-        XCTAssertEqual(remaining, 0)
-    }
-
-    func testImportCopiesIMMetadataFromSource() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        let source = try writeSource(stem: "cj", rows: 10, in: h.appGroupDir)
-        // Give the source its own im row — its metadata is authoritative.
-        let queue = try DatabaseQueue(path: source.path)
-        try queue.write { sqlDB in
-            try sqlDB.execute(sql: """
-                CREATE TABLE IF NOT EXISTS im (code TEXT, title TEXT, desc TEXT,
-                    keyboard TEXT, disable INTEGER, selkey TEXT, endkey TEXT, spacestyle TEXT)
-            """)
-            try sqlDB.execute(sql: """
-                INSERT INTO im VALUES ('cj', '客製倉頡', '', 'lime_cj', 0, '123456789', '', '')
-            """)
-        }
-        try queue.close()
-
-        _ = h.engine.scanAndApply()
-
-        let db = try XCTUnwrap(h.database.current())
-        let row = try db.dbQueue.read { sqlDB in
-            try Row.fetchOne(sqlDB, sql: "SELECT title, keyboard, selkey FROM im WHERE code = 'cj'")
-        }
-        XCTAssertEqual(row?["title"] as String?, "客製倉頡")
-        XCTAssertEqual(row?["keyboard"] as String?, "lime_cj")
-        XCTAssertEqual(row?["selkey"] as String?, "123456789")
-    }
-
-    func testDeadlineResume() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        try writeSource(stem: "cj", rows: 100_000, in: h.appGroupDir)
-
-        _ = h.engine.scanAndApply(deadline: Date())
-
-        let db = try XCTUnwrap(h.database.current())
-        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .inProgress)
-        XCTAssertLessThan(try count("cj", in: db), 100_000)
-
-        let events = h.engine.scanAndApply()
-
-        XCTAssertEqual(try count("cj", in: db), 100_000)
-        XCTAssertEqual(events, [SyncEvent(kind: .imported, stem: "cj")],
-                       db.ledgerEntry(stem: "cj")?.error ?? "")
-        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .done)
-    }
-
-    func testIdentityChangeAbandonsResume() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        try writeSource(stem: "cj", rows: 100_000, in: h.appGroupDir)
-        _ = h.engine.scanAndApply(deadline: Date())
-        try writeSource(stem: "cj", rows: 50, in: h.appGroupDir, mtimeOffset: 10)
-
-        let events = h.engine.scanAndApply()
-
-        let db = try XCTUnwrap(h.database.current())
-        XCTAssertEqual(events, [SyncEvent(kind: .imported, stem: "cj")])
-        XCTAssertEqual(try count("cj", in: db), 50)
-        XCTAssertEqual(db.ledgerEntry(stem: "cj")?.state, .done)
-    }
-
-    func testEpochApplied() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        try writeSource(stem: "array", rows: 10, in: h.appGroupDir)
-        let db = try XCTUnwrap(h.database.current())
-        let epoch = "E2E2E2E2-E2E2-4E2E-A2E2-E2E2E2E2E2E2"
-        try writeRestore(from: db, in: h.appGroupDir, epochUUID: epoch, marker: true)
-
-        let events = h.engine.scanAndApply()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
 
         let reopened = try XCTUnwrap(h.database.current())
-        XCTAssertEqual(events.first, SyncEvent(kind: .epochApplied, stem: nil))
-        XCTAssertTrue(events.contains(SyncEvent(kind: .imported, stem: "array")))
-        XCTAssertEqual(reopened.syncMeta("epoch_uuid"), epoch)
-        XCTAssertEqual(try count("cj", whereCode: "epoch_marker", in: reopened), 1)
-        XCTAssertEqual(try count("array", in: reopened), 10)
+        XCTAssertEqual(try score(for: "c1", stem: "cj", in: reopened), 77)
+        XCTAssertEqual(reopened.syncMeta("applied_generation"), "\(sidecar.generation)")
+        XCTAssertEqual(reopened.ledgerEntry(stem: "cj")?.rev, cold.syncRevs()["cj"]?.rev)
     }
 
-    func testEpochSameUUIDNoop() throws {
+    func testEpochRebuildWipesLearnedRowsWhenPrefIsOff() throws {
         let h = try makeHarness()
         defer { cleanup(h) }
-        let db = try XCTUnwrap(h.database.current())
-        let epoch = try XCTUnwrap(db.syncMeta("epoch_uuid"))
-        let restore = try writeRestore(from: db, in: h.appGroupDir, epochUUID: epoch)
-        try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: 30)],
-                                              ofItemAtPath: restore.path)
+        h.prefs.setRestoreOnImport(false, for: "cj")
+        let hot = try XCTUnwrap(h.database.current())
+        try replaceRows(in: hot, stem: "cj", rows: 3, scoreForC1: 77, bumpRev: false)
+
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        try replaceRows(in: cold, stem: "cj", rows: 3, scoreForC1: 5, mode: .merge)
+        try setIMRow(in: cold, stem: "cj", title: "Epoch CJ")
+        _ = try cold.bumpEpoch()
+        try h.publisher.publish()
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .epochApplied, stem: nil)])
+        XCTAssertEqual(try score(for: "c1", stem: "cj", in: try XCTUnwrap(h.database.current())), 5)
+    }
+
+    func testFutureSchemaSidecarFailsWithoutTouchingHot() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        let hot = try XCTUnwrap(h.database.current())
+        try replaceRows(in: hot, stem: "cj", rows: 3, scoreForC1: 77, bumpRev: false)
+        var sidecar = try publishColdStemAndReadMeta(h, stem: "cj", rows: 3)
+        sidecar.schemaVersion = LimeDB.CURRENT_DB_VERSION + 1
+        try atomicWrite(try JSONEncoder().encode(sidecar), to: SyncPaths.coldMeta(h.appGroupDir))
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .failed, stem: "cold")])
+        XCTAssertEqual(try score(for: "c1", stem: "cj", in: hot), 77)
+        XCTAssertNil(hot.syncMeta("applied_generation"))
+    }
+
+    func testMidPublishGenerationMismatchNoopsAndRetryAppliesRepublishedSnapshot() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        var sidecar = try publishColdStemAndReadMeta(h, stem: "cj", rows: 2)
+        sidecar.generation += 1
+        try atomicWrite(try JSONEncoder().encode(sidecar), to: SyncPaths.coldMeta(h.appGroupDir))
+
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .noop, stem: nil)])
+        XCTAssertNil(try XCTUnwrap(h.database.current()).syncMeta("applied_generation"))
+
+        try h.publisher.publish()
+        XCTAssertEqual(h.engine.scanAndApply(), [SyncEvent(kind: .imported, stem: "cj")])
+        XCTAssertEqual(try count("cj", in: try XCTUnwrap(h.database.current())), 2)
+    }
+
+    func testExportRequestStillHonoredAfterTableWork() throws {
+        let h = try makeHarness()
+        defer { cleanup(h) }
+        try publishColdStem(h, stem: "cj", rows: 3)
+        let request = ExportRequest(requestUUID: UUID().uuidString,
+                                    expiresAt: Date().timeIntervalSince1970 + 60)
+        try atomicWrite(try JSONEncoder().encode(request), to: SyncPaths.exportRequest(h.appGroupDir))
 
         let events = h.engine.scanAndApply()
 
-        XCTAssertEqual(events, [SyncEvent(kind: .noop, stem: nil)])
-        XCTAssertEqual(db.syncMeta("epoch_uuid"), epoch)
-    }
-
-    func testEpochFutureSchemaRefused() throws {
-        let h = try makeHarness()
-        defer { cleanup(h) }
-        let db = try XCTUnwrap(h.database.current())
-        let originalEpoch = try XCTUnwrap(db.syncMeta("epoch_uuid"))
-        try writeRestore(from: db,
-                         in: h.appGroupDir,
-                         epochUUID: "F2F2F2F2-F2F2-4F2F-A2F2-F2F2F2F2F2F2",
-                         schemaVersion: LimeDB.CURRENT_DB_VERSION + 1)
-
-        let events = h.engine.scanAndApply()
-
-        XCTAssertEqual(events, [SyncEvent(kind: .failed, stem: "restore")])
-        XCTAssertEqual(db.syncMeta("epoch_uuid"), originalEpoch)
+        XCTAssertEqual(events, [
+            SyncEvent(kind: .imported, stem: "cj"),
+            SyncEvent(kind: .exported, stem: nil),
+        ])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(h.appGroupDir).path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.backupSnapshot(h.appGroupDir).path))
+        XCTAssertEqual(try quickCheck(SyncPaths.backupSnapshot(h.appGroupDir)), "ok")
     }
 
     private func makeHarness() throws -> Harness {
         let own = try tempDirectory()
         let ag = try tempDirectory()
+        let coldDir = try tempDirectory()
         let database = SharedDatabase(runMode: .keyboard,
                                       dataDirOverride: own,
                                       appGroupOverride: ag)
-        let engine = TableSyncEngine(database: database, baseURL: ag)
-        _ = try XCTUnwrap(database.current())
-        return Harness(ownDir: own, appGroupDir: ag, database: database, engine: engine)
+        let coldDatabase = SharedDatabase(runMode: .app,
+                                          dataDirOverride: coldDir)
+        let hot = try XCTUnwrap(database.current())
+        let cold = try XCTUnwrap(coldDatabase.current())
+        let hotEpoch = try hot.ensureEpochUUID()
+        try cold.setSyncMeta("epoch_uuid", hotEpoch)
+        try cold.setSyncMeta("schema_version", "\(LimeDB.CURRENT_DB_VERSION)")
+
+        let defaultsSuite = "TableSyncEngineTest.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: defaultsSuite))
+        defaults.removePersistentDomain(forName: defaultsSuite)
+        let prefs = LIMEPreferenceManager(defaults: defaults)
+        let engine = TableSyncEngine(database: database, baseURL: ag, prefs: prefs)
+        let publisher = ColdPublisher(database: coldDatabase, baseURL: ag)
+        return Harness(ownDir: own, appGroupDir: ag, coldDir: coldDir,
+                       database: database, coldDatabase: coldDatabase,
+                       engine: engine, publisher: publisher,
+                       prefs: prefs, defaults: defaults, defaultsSuite: defaultsSuite)
     }
 
     private func cleanup(_ h: Harness) {
         h.database.closeCurrentForReplacement()
+        h.coldDatabase.closeCurrentForReplacement()
+        h.defaults.removePersistentDomain(forName: h.defaultsSuite)
         try? FileManager.default.removeItem(at: h.ownDir)
         try? FileManager.default.removeItem(at: h.appGroupDir)
+        try? FileManager.default.removeItem(at: h.coldDir)
     }
 
     private func tempDirectory() throws -> URL {
@@ -247,97 +258,118 @@ final class TableSyncEngineTest: XCTestCase {
     }
 
     @discardableResult
-    private func writeSource(stem: String,
-                             rows: Int,
-                             in baseURL: URL,
-                             mtimeOffset: TimeInterval = 0) throws -> URL {
-        let url = SyncPaths.tableFile(baseURL, stem: stem)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
-                                                withIntermediateDirectories: true)
-        try? FileManager.default.removeItem(at: url)
-
-        let queue = try DatabaseQueue(path: url.path)
-        try queue.write { db in
-            try db.execute(sql: "CREATE TABLE \(stem) (code TEXT, word TEXT, score INTEGER)")
-            let insert = try db.makeStatement(sql: "INSERT INTO \(stem) (code, word, score) VALUES (?, ?, ?)")
-            for i in 0..<rows {
-                try insert.execute(arguments: ["c\(i)", "w\(i)", 0])
-            }
-        }
-        try queue.close()
-        try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: mtimeOffset)],
-                                              ofItemAtPath: url.path)
-        return url
+    private func publishColdStem(_ h: Harness,
+                                 stem: String,
+                                 rows: Int,
+                                 title: String = "倉頡輸入法") throws -> Int64 {
+        let cold = try XCTUnwrap(h.coldDatabase.current())
+        let hot = try XCTUnwrap(h.database.current())
+        let rev = try XCTUnwrap(replaceRows(in: cold, stem: stem, rows: rows, mode: .merge))
+        try setIMRow(in: cold, stem: stem, title: title)
+        try setIMRow(in: hot, stem: stem, title: title)
+        try h.publisher.publish()
+        return rev
     }
 
-    private func writeTableMeta(stem: String, restoreLearning: Bool, in baseURL: URL) throws {
-        let meta = TableMeta(restoreLearning: restoreLearning,
-                             displayName: nil,
-                             provenance: nil)
-        try atomicWrite(try JSONEncoder().encode(meta),
-                        to: SyncPaths.tableMeta(baseURL, stem: stem))
+    private func publishColdStemAndReadMeta(_ h: Harness, stem: String, rows: Int) throws -> ColdSnapshotMeta {
+        try publishColdStem(h, stem: stem, rows: rows)
+        return try readColdMeta(in: h.appGroupDir)
+    }
+
+    private func readColdMeta(in baseURL: URL) throws -> ColdSnapshotMeta {
+        try JSONDecoder().decode(ColdSnapshotMeta.self,
+                                 from: Data(contentsOf: SyncPaths.coldMeta(baseURL)))
     }
 
     @discardableResult
-    private func writeRestore(from db: LimeDB,
-                              in baseURL: URL,
-                              epochUUID: String,
-                              schemaVersion: Int = LimeDB.CURRENT_DB_VERSION,
-                              marker: Bool = false) throws -> URL {
-        let restore = SyncPaths.restoreDB(baseURL)
-        try? FileManager.default.removeItem(at: restore)
-        try db.dbQueue.writeWithoutTransaction { sqlDB in
-            try sqlDB.execute(sql: "VACUUM INTO ?", arguments: [restore.path])
-        }
-
-        let restoreQueue = try DatabaseQueue(path: restore.path)
-        try restoreQueue.write { sqlDB in
-            try sqlDB.execute(sql: "CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT)")
-            try sqlDB.execute(sql: """
-                CREATE TABLE IF NOT EXISTS sync_ledger (
-                    stem TEXT PRIMARY KEY, size INTEGER, mtime REAL,
-                    state TEXT NOT NULL, error TEXT,
-                    attempts INTEGER NOT NULL DEFAULT 0, resume_marker INTEGER
-                )
+    private func replaceRows(in db: LimeDB,
+                             stem: String,
+                             rows: Int,
+                             scoreForC1: Int = 0,
+                             mode: SyncRevMode = .merge,
+                             bumpRev: Bool = true) throws -> Int64? {
+        try db.dbQueue.write { sqlDB in
+            try createMappingTable(stem, in: sqlDB)
+            try sqlDB.execute(sql: "DELETE FROM \(quoted(stem))")
+            let insert = try sqlDB.makeStatement(sql: """
+                INSERT INTO \(quoted(stem)) (code, word, score)
+                VALUES (?, ?, ?)
             """)
-            try sqlDB.execute(sql: "DELETE FROM sync_ledger")
-            try sqlDB.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('epoch_uuid', ?)",
-                              arguments: [epochUUID])
-            try sqlDB.execute(sql: "INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('schema_version', ?)",
-                              arguments: ["\(schemaVersion)"])
-            if marker {
-                try sqlDB.execute(sql: """
-                    INSERT INTO cj (code, word, score)
-                    VALUES ('epoch_marker', 'marker', 0)
-                """)
+            for i in 0..<rows {
+                try insert.execute(arguments: ["c\(i)", "w\(i)", i == 1 ? scoreForC1 : 0])
+            }
+            if bumpRev {
+                try db.bumpSyncRev(stem, mode: mode, in: sqlDB)
             }
         }
-        try restoreQueue.close()
+        return db.syncRevs()[stem]?.rev
+    }
 
-        let meta = RestoreMeta(epochUUID: epochUUID, schemaVersion: schemaVersion)
-        try atomicWrite(try JSONEncoder().encode(meta), to: SyncPaths.restoreMeta(baseURL))
-        return restore
+    private func createMappingTable(_ stem: String, in db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS \(quoted(stem)) (
+                _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                code      TEXT,
+                word      TEXT,
+                score     INTEGER DEFAULT 0,
+                basescore INTEGER DEFAULT 0,
+                code3r    TEXT
+            )
+        """)
+    }
+
+    private func setIMRow(in db: LimeDB, stem: String, title: String) throws {
+        try db.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: """
+                DELETE FROM im WHERE code = ?
+            """, arguments: [stem])
+            try sqlDB.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES (?, ?, '', 'lime_cj', 0, '123456789', '', '')
+            """, arguments: [stem, title])
+        }
     }
 
     private func count(_ stem: String, in db: LimeDB) throws -> Int {
         try db.dbQueue.read { sqlDB in
-            try Int.fetchOne(sqlDB, sql: "SELECT COUNT(*) FROM \(stem)") ?? 0
+            try Int.fetchOne(sqlDB, sql: "SELECT COUNT(*) FROM \(quoted(stem))") ?? 0
         }
     }
 
-    private func count(_ stem: String, whereCode code: String, in db: LimeDB) throws -> Int {
+    private func score(for code: String, stem: String, in db: LimeDB) throws -> Int {
         try db.dbQueue.read { sqlDB in
             try Int.fetchOne(sqlDB,
-                             sql: "SELECT COUNT(*) FROM \(stem) WHERE code = ?",
-                             arguments: [code]) ?? 0
-        }
-    }
-
-    private func score(for code: String, in db: LimeDB) throws -> Int {
-        try db.dbQueue.read { sqlDB in
-            try Int.fetchOne(sqlDB,
-                             sql: "SELECT score FROM cj WHERE code = ? LIMIT 1",
+                             sql: "SELECT score FROM \(quoted(stem)) WHERE code = ? LIMIT 1",
                              arguments: [code]) ?? -1
         }
+    }
+
+    private func setScore(_ score: Int, code: String, stem: String, in db: LimeDB) throws {
+        try db.dbQueue.write { sqlDB in
+            try sqlDB.execute(sql: "UPDATE \(quoted(stem)) SET score = ? WHERE code = ?",
+                              arguments: [score, code])
+        }
+    }
+
+    private func imTitle(_ stem: String, in db: LimeDB) throws -> String? {
+        try db.dbQueue.read { sqlDB in
+            try String.fetchOne(sqlDB,
+                                sql: "SELECT title FROM im WHERE code = ? LIMIT 1",
+                                arguments: [stem])
+        }
+    }
+
+    private func quickCheck(_ url: URL) throws -> String {
+        var config = Configuration()
+        config.readonly = true
+        let queue = try DatabaseQueue(path: url.path, configuration: config)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try String.fetchOne(db, sql: "PRAGMA quick_check") ?? ""
+        }
+    }
+
+    private func quoted(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 }

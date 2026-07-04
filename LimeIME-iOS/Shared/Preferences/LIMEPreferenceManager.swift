@@ -191,6 +191,14 @@ final class LIMEPreferenceManager {
         set { defaults.set(newValue, forKey: "accept_symbol_index") }
     }
 
+    func restoreOnImport(for tableNick: String) -> Bool {
+        boolValue("restore_on_import_\(tableNick)", default: true)
+    }
+
+    func setRestoreOnImport(_ enabled: Bool, for tableNick: String) {
+        defaults.set(enabled, forKey: "restore_on_import_\(tableNick)")
+    }
+
     // MARK: - §8.5 Han Conversion
 
     var hanConvertOption: Int {

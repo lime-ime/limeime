@@ -794,7 +794,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // epoch swap) — rebuild the live runtime (searchServer, activatedIMs, layout)
         // or the running session keeps serving the pre-scan state until the extension
         // process restarts. setupDatabase() marshals its state updates to main itself.
-        if events.contains(where: { [.imported, .dropped, .epochApplied].contains($0.kind) }) {
+        if events.contains(where: { [.imported, .dropped, .epochApplied, .metaSynced].contains($0.kind) }) {
             setupDatabase()
         }
 
@@ -804,35 +804,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     private func hasPendingTableSyncWork(baseURL: URL) -> Bool {
-        let fm = FileManager.default
         guard let db = SharedDatabase.shared.current() else { return false }
-        if restoreNeedsApply(baseURL: baseURL, db: db) { return true }
-        let tablesDir = SyncPaths.tablesDir(baseURL)
-        let sources = (try? fm.contentsOfDirectory(at: tablesDir, includingPropertiesForKeys: nil)) ?? []
-        var sourceStems = Set<String>()
-
-        for url in sources where url.pathExtension.lowercased() == "limedb" {
-            let stem = url.deletingPathExtension().lastPathComponent
-            sourceStems.insert(stem)
-            guard let identity = FileIdentity(url: url) else { return true }
-            guard let ledger = db.ledgerEntry(stem: stem) else { return true }
-            if ledger.identity != identity { return true }
-            if ledger.state == .inProgress { return true }
-            // ponytail: mirrors TableSyncEngine's private retry cap; extract only if a second caller needs it.
-            if ledger.state == .failed && ledger.attempts >= 3 { continue }
-            if ledger.state != .done { return true }
-        }
-
-        return db.allLedgerEntries().contains { !sourceStems.contains($0.stem) }
-    }
-
-    private func restoreNeedsApply(baseURL: URL, db: LimeDB) -> Bool {
-        let restoreURL = SyncPaths.restoreDB(baseURL)
-        guard FileManager.default.fileExists(atPath: restoreURL.path) else { return false }
-        guard let data = try? Data(contentsOf: SyncPaths.restoreMeta(baseURL)),
-              let meta = try? JSONDecoder().decode(RestoreMeta.self, from: data),
-              let currentEpoch = db.syncMeta("epoch_uuid") else { return true }
-        return meta.epochUUID != currentEpoch
+        guard let data = try? Data(contentsOf: SyncPaths.coldMeta(baseURL)),
+              let meta = try? JSONDecoder().decode(ColdSnapshotMeta.self, from: data)
+        else { return false }
+        let applied = Int64(db.syncMeta("applied_generation") ?? "") ?? 0
+        return meta.generation != applied
     }
 
     private func beginTableSyncToast() {
@@ -858,7 +835,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             case .failed:
                 showLimeToast("匯入失敗")
                 showedTerminalEvent = true
-            case .epochApplied, .dropped, .noop, .exported:
+            case .epochApplied, .dropped, .noop, .exported, .metaSynced:
                 break
             }
         }

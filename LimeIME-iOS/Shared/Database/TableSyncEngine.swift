@@ -2,12 +2,18 @@
 import GRDB
 
 struct SyncEvent: Equatable {
-    enum Kind: Equatable { case epochApplied, imported, dropped, failed, noop, exported }
+    enum Kind: Equatable { case epochApplied, imported, dropped, failed, noop, exported, metaSynced }
     let kind: Kind
     let stem: String?
 }
 
 final class TableSyncEngine {
+    private struct ColdRev {
+        let stem: String
+        let rev: Int64
+        let mode: SyncRevMode
+    }
+
     private enum ImportOutcome {
         case imported
         case skipped
@@ -22,13 +28,9 @@ final class TableSyncEngine {
         case silentSkip
     }
 
-    private struct RestoreInfo {
-        let epochUUID: String
-        let schemaVersion: Int
-    }
-
     private let database: SharedDatabase
     private let baseURL: URL
+    private let prefs: LIMEPreferenceManager
     private let fileManager = FileManager.default
     // ponytail: fixed import chunk from I0 timing; tune only if device memory/time profiles change.
     private let chunkSize = 20_000
@@ -39,113 +41,301 @@ final class TableSyncEngine {
         "array", "array10", "wb", "hs", "pinyin", "cj4", "related"
     ]
 
-    init(database: SharedDatabase, baseURL: URL) {
+    init(database: SharedDatabase, baseURL: URL, prefs: LIMEPreferenceManager = .shared) {
         self.database = database
         self.baseURL = baseURL
+        self.prefs = prefs
     }
 
     @discardableResult
     func scanAndApply(deadline: Date? = nil) -> [SyncEvent] {
-        var events: [SyncEvent] = []
-
-        if let epochEvent = applyRestoreEpochIfNeeded() {
-            events.append(epochEvent)
-            // A bad/unreadable/future-schema restore file must not wedge the rest of
-            // the sync (imports, drops, backup export) — record the failure and move on.
+        guard let sidecar = readColdMeta() else {
+            return [SyncEvent(kind: .noop, stem: nil)]
+        }
+        guard let db = database.current() else {
+            return [SyncEvent(kind: .failed, stem: "hot")]
+        }
+        if appliedGeneration(in: db) == sidecar.generation {
+            return [SyncEvent(kind: .noop, stem: nil)]
         }
 
-        let snapshot = tableSourceSnapshot()
-        let sources = snapshot.sources
-        let sourceStems = snapshot.stems
-        var silentSkip = false
+        let coldURL = SyncPaths.coldDB(baseURL)
+        let alias = "cold_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
+        var attached = false
 
-        for source in sources {
-            switch importStem(source.stem, from: source.url, identity: source.identity, deadline: deadline) {
-            case .imported:
-                events.append(SyncEvent(kind: .imported, stem: source.stem))
-            case .failed:
-                events.append(SyncEvent(kind: .failed, stem: source.stem))
-            case .paused:
-                return events
-            case .silentSkip:
-                silentSkip = true
-            case .skipped:
-                break
+        do {
+            try attach(coldURL, as: alias, in: db)
+            attached = true
+            defer {
+                if attached { detach(alias, in: db) }
             }
-        }
 
-        guard let db = database.current() else { return events }
-        for entry in db.allLedgerEntries() where !sourceStems.contains(entry.stem) {
-            guard validStems.contains(entry.stem) else { continue }
-            if dropStem(entry.stem, in: db) {
-                events.append(SyncEvent(kind: .dropped, stem: entry.stem))
+            guard try coldGeneration(alias: alias, in: db) == sidecar.generation else {
+                return [SyncEvent(kind: .noop, stem: nil)]
             }
-        }
+            guard sidecar.schemaVersion <= LimeDB.CURRENT_DB_VERSION else {
+                return [SyncEvent(kind: .failed, stem: "cold")]
+            }
 
-        if let exportEvent = exportSnapshotIfRequested() {
-            events.append(exportEvent)
-        }
+            let coldRevs = try coldSyncRevs(alias: alias, in: db)
+            let currentEpoch = db.syncMeta("epoch_uuid") ?? (try? db.ensureEpochUUID()) ?? ""
+            if sidecar.epochUUID != currentEpoch {
+                detach(alias, in: db)
+                attached = false
+                var events = applyEpochSnapshot(sidecar: sidecar, coldURL: coldURL, coldRevs: coldRevs)
+                if let exportEvent = exportSnapshotIfRequested() {
+                    events.append(exportEvent)
+                }
+                return events.isEmpty ? [SyncEvent(kind: .noop, stem: nil)] : events
+            }
 
-        if events.isEmpty && !silentSkip {
-            events.append(SyncEvent(kind: .noop, stem: nil))
+            let coldIMCodes = try coldIMCodes(alias: alias, in: db)
+            let dropStems = try coldRevs.values.reduce(into: Set<String>()) { result, rev in
+                guard validStems.contains(rev.stem),
+                      !coldIMCodes.contains(rev.stem),
+                      try coldTableIsEmpty(stem: rev.stem, alias: alias, in: db)
+                else { return }
+                result.insert(rev.stem)
+            }
+
+            var events: [SyncEvent] = []
+            var unsettled = false
+            let imChanged = try mirrorIM(alias: alias, in: db)
+
+            for rev in coldRevs.values.sorted(by: { $0.stem < $1.stem }) {
+                guard validStems.contains(rev.stem), !dropStems.contains(rev.stem) else { continue }
+                let ledger = db.ledgerEntry(stem: rev.stem)
+                guard ledger?.rev != rev.rev || ledger?.state != .done else { continue }
+                switch importStem(rev.stem, rev: rev.rev, mode: rev.mode,
+                                  alias: alias, deadline: deadline) {
+                case .imported:
+                    events.append(SyncEvent(kind: .imported, stem: rev.stem))
+                case .failed:
+                    unsettled = true
+                    events.append(SyncEvent(kind: .failed, stem: rev.stem))
+                case .paused:
+                    return events
+                case .silentSkip:
+                    unsettled = true
+                case .skipped:
+                    break
+                }
+            }
+
+            for entry in db.allLedgerEntries() where validStems.contains(entry.stem) {
+                if coldRevs[entry.stem] == nil || dropStems.contains(entry.stem) {
+                    if dropStem(entry.stem, in: db) {
+                        events.append(SyncEvent(kind: .dropped, stem: entry.stem))
+                    } else {
+                        unsettled = true
+                        events.append(SyncEvent(kind: .failed, stem: entry.stem))
+                    }
+                }
+            }
+
+            if imChanged && events.isEmpty {
+                events.append(SyncEvent(kind: .metaSynced, stem: nil))
+            }
+            if !unsettled {
+                try db.setSyncMeta("applied_generation", "\(sidecar.generation)")
+            }
+            if let exportEvent = exportSnapshotIfRequested() {
+                events.append(exportEvent)
+            }
+            if events.isEmpty {
+                events.append(SyncEvent(kind: .noop, stem: nil))
+            }
+            return events
+        } catch {
+            return [SyncEvent(kind: .failed, stem: "cold")]
         }
-        return events
     }
 
-    private func applyRestoreEpochIfNeeded() -> SyncEvent? {
-        let restoreURL = SyncPaths.restoreDB(baseURL)
-        guard fileManager.fileExists(atPath: restoreURL.path) else { return nil }
-        guard let restoreInfo = readRestoreInfo(from: restoreURL) else {
-            return SyncEvent(kind: .failed, stem: "restore")
+    private func readColdMeta() -> ColdSnapshotMeta? {
+        guard let data = try? Data(contentsOf: SyncPaths.coldMeta(baseURL)) else { return nil }
+        return try? JSONDecoder().decode(ColdSnapshotMeta.self, from: data)
+    }
+
+    private func appliedGeneration(in db: LimeDB) -> Int64 {
+        Int64(db.syncMeta("applied_generation") ?? "") ?? 0
+    }
+
+    private func coldGeneration(alias: String, in limeDB: LimeDB) throws -> Int64 {
+        try limeDB.dbQueue.read { db in
+            let raw = try String.fetchOne(db,
+                sql: "SELECT value FROM \(quoted(alias)).sync_meta WHERE key = 'generation'")
+            return Int64(raw ?? "") ?? -1
         }
-        guard let currentDB = database.current() else {
-            return SyncEvent(kind: .failed, stem: "restore")
+    }
+
+    private func coldSyncRevs(alias: String, in limeDB: LimeDB) throws -> [String: ColdRev] {
+        try limeDB.dbQueue.read { db in
+            let rows = try Row.fetchAll(db,
+                sql: "SELECT stem, rev, mode FROM \(quoted(alias)).sync_rev ORDER BY stem")
+            var result: [String: ColdRev] = [:]
+            for row in rows {
+                let stem: String = row["stem"]
+                let rev: Int64 = row["rev"]
+                let rawMode: String = row["mode"]
+                result[stem] = ColdRev(stem: stem,
+                                       rev: rev,
+                                       mode: SyncRevMode(rawValue: rawMode) ?? .merge)
+            }
+            return result
         }
-        let currentEpoch = currentDB.syncMeta("epoch_uuid") ?? (try? currentDB.ensureEpochUUID())
-        guard restoreInfo.epochUUID != currentEpoch else { return nil }
-        guard restoreInfo.schemaVersion <= LimeDB.CURRENT_DB_VERSION else {
-            return SyncEvent(kind: .failed, stem: "restore")
+    }
+
+    private func coldIMCodes(alias: String, in limeDB: LimeDB) throws -> Set<String> {
+        try limeDB.dbQueue.read { db in
+            let hasIM = try tableExists("im", schema: alias, in: db)
+            guard hasIM else { return [] }
+            return Set(try String.fetchAll(db, sql: "SELECT code FROM \(quoted(alias)).im"))
+        }
+    }
+
+    private func coldTableIsEmpty(stem: String, alias: String, in limeDB: LimeDB) throws -> Bool {
+        try limeDB.dbQueue.read { db in
+            guard try tableExists(stem, schema: alias, in: db) else { return true }
+            let count = try Int.fetchOne(db,
+                sql: "SELECT COUNT(*) FROM \(quoted(alias)).\(quoted(stem))") ?? 0
+            return count == 0
+        }
+    }
+
+    private func mirrorIM(alias: String, in limeDB: LimeDB) throws -> Bool {
+        try limeDB.dbQueue.write { db in
+            let hot = try imSnapshot(schema: nil, in: db)
+            let cold = try imSnapshot(schema: alias, in: db)
+            guard hot != cold else { return false }
+            try db.execute(sql: "DELETE FROM im")
+            try db.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle
+                FROM \(quoted(alias)).im
+            """)
+            return true
+        }
+    }
+
+    private func imSnapshot(schema: String?, in db: Database) throws -> [String] {
+        let prefix = schema.map { "\(quoted($0))." } ?? ""
+        guard try tableExists("im", schema: schema, in: db) else { return [] }
+        return try String.fetchAll(db, sql: """
+            SELECT quote(code) || char(31) || quote(title) || char(31) ||
+                   quote(desc) || char(31) || quote(keyboard) || char(31) ||
+                   quote(disable) || char(31) || quote(selkey) || char(31) ||
+                   quote(endkey) || char(31) || quote(spacestyle)
+            FROM \(prefix)im
+            ORDER BY 1
+        """)
+    }
+
+    private func tableExists(_ table: String, schema: String?, in db: Database) throws -> Bool {
+        let prefix = schema.map { "\(quoted($0))." } ?? ""
+        let count = try Int.fetchOne(db, sql: """
+            SELECT COUNT(*) FROM \(prefix)sqlite_master
+            WHERE type = 'table' AND name = ?
+        """, arguments: [table]) ?? 0
+        return count > 0
+    }
+
+    private func applyEpochSnapshot(sidecar: ColdSnapshotMeta,
+                                    coldURL: URL,
+                                    coldRevs: [String: ColdRev]) -> [SyncEvent] {
+        let stashURL = database.dataDirURL
+            .appendingPathComponent("sync-stash-\(UUID().uuidString).limedb")
+        defer {
+            try? fileManager.removeItem(at: stashURL)
+            removeSidecars(for: stashURL)
         }
 
         do {
+            if let oldHot = database.current() {
+                try stashLearnedRows(from: oldHot, to: stashURL)
+            }
             database.closeCurrentForReplacement()
-            try replaceCanonicalDatabase(with: restoreURL)
+            removeSidecars(for: coldURL)
+            try replaceCanonicalDatabase(with: coldURL)
             database.setCurrent(nil)
-            _ = database.current()
-            return SyncEvent(kind: .epochApplied, stem: nil)
+            guard let reopened = database.current() else {
+                return [SyncEvent(kind: .failed, stem: "hot")]
+            }
+            try mergeLearnedRows(from: stashURL, into: reopened)
+            try reopened.dbQueue.write { db in
+                try reopened.wipeLedger(in: db)
+                for rev in coldRevs.values where validStems.contains(rev.stem) {
+                    try reopened.upsertLedger(LedgerEntry(stem: rev.stem,
+                                                          identity: nil,
+                                                          rev: rev.rev,
+                                                          state: .done,
+                                                          error: nil,
+                                                          attempts: 0,
+                                                          resumeMarker: nil),
+                                              in: db)
+                }
+                try db.execute(sql: """
+                    INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('applied_generation', ?)
+                """, arguments: ["\(sidecar.generation)"])
+            }
+            return [SyncEvent(kind: .epochApplied, stem: nil)]
         } catch {
             database.setCurrent(nil)
             _ = database.current()
-            return SyncEvent(kind: .failed, stem: "restore")
+            return [SyncEvent(kind: .failed, stem: "cold")]
         }
     }
 
-    private func readRestoreInfo(from restoreURL: URL) -> RestoreInfo? {
-        let metaURL = SyncPaths.restoreMeta(baseURL)
-        if let data = try? Data(contentsOf: metaURL),
-           let meta = try? JSONDecoder().decode(RestoreMeta.self, from: data) {
-            return RestoreInfo(epochUUID: meta.epochUUID, schemaVersion: meta.schemaVersion)
-        }
-
-        var config = Configuration()
-        config.readonly = true
-        guard let queue = try? DatabaseQueue(path: restoreURL.path, configuration: config) else { return nil }
-        defer { try? queue.close() }
-        return try? queue.read { db in
-            let hasMeta = try Int.fetchOne(db, sql: """
-                SELECT COUNT(*) FROM sqlite_master
-                WHERE type = 'table' AND name = 'sync_meta'
-            """) ?? 0
-            guard hasMeta > 0,
-                  let epoch = try String.fetchOne(db,
-                                                  sql: "SELECT value FROM sync_meta WHERE key = 'epoch_uuid'") else {
-                return nil
+    private func stashLearnedRows(from limeDB: LimeDB, to stashURL: URL) throws {
+        try? fileManager.removeItem(at: stashURL)
+        removeSidecars(for: stashURL)
+        try fileManager.createDirectory(at: stashURL.deletingLastPathComponent(),
+                                        withIntermediateDirectories: true)
+        try limeDB.dbQueue.writeWithoutTransaction { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS stash", arguments: [stashURL.path])
+            defer { try? db.execute(sql: "DETACH DATABASE stash") }
+            try db.execute(sql: """
+                CREATE TABLE stash.sync_stash (
+                    stem TEXT, code TEXT, word TEXT, score INTEGER
+                )
+            """)
+            for stem in validStems where prefs.restoreOnImport(for: stem) {
+                let columns = try tableColumns(stem, schema: nil, in: db)
+                guard columns.contains("code"), columns.contains("word"), columns.contains("score") else {
+                    continue
+                }
+                try db.execute(sql: """
+                    INSERT INTO stash.sync_stash (stem, code, word, score)
+                    SELECT ?, code, word, score FROM \(quoted(stem)) WHERE score <> 0
+                """, arguments: [stem])
             }
-            let versionText = try String.fetchOne(db,
-                                                  sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'")
-            let userVersion = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? LimeDB.CURRENT_DB_VERSION
-            return RestoreInfo(epochUUID: epoch,
-                               schemaVersion: versionText.flatMap(Int.init) ?? userVersion)
+        }
+    }
+
+    private func mergeLearnedRows(from stashURL: URL, into limeDB: LimeDB) throws {
+        guard fileManager.fileExists(atPath: stashURL.path) else { return }
+        try limeDB.dbQueue.writeWithoutTransaction { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS stash", arguments: [stashURL.path])
+            defer { try? db.execute(sql: "DETACH DATABASE stash") }
+            let stems = try String.fetchAll(db, sql: "SELECT DISTINCT stem FROM stash.sync_stash")
+            for stem in stems where validStems.contains(stem) {
+                try ensureDestinationTable(stem, in: db)
+                let columns = try tableColumns(stem, schema: nil, in: db)
+                guard columns.contains("code"), columns.contains("word"), columns.contains("score") else {
+                    continue
+                }
+                try db.execute(sql: """
+                    UPDATE \(quoted(stem))
+                    SET score = (
+                        SELECT s.score FROM stash.sync_stash s
+                        WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                        LIMIT 1
+                    )
+                    WHERE EXISTS (
+                        SELECT 1 FROM stash.sync_stash s
+                        WHERE s.stem = ? AND s.code = \(quoted(stem)).code AND s.word = \(quoted(stem)).word
+                    )
+                """, arguments: [stem, stem])
+            }
         }
     }
 
@@ -154,6 +344,7 @@ final class TableSyncEngine {
         let parent = canonicalURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: parent, withIntermediateDirectories: true)
 
+        removeSidecars(for: restoreURL)
         removeSidecars(for: canonicalURL)
         let tmp = parent.appendingPathComponent("lime.db.restore-\(UUID().uuidString)")
         defer { try? fileManager.removeItem(at: tmp) }
@@ -172,35 +363,16 @@ final class TableSyncEngine {
         }
     }
 
-    private func tableSourceSnapshot() -> (sources: [(stem: String, url: URL, identity: FileIdentity)],
-                                           stems: Set<String>) {
-        let tablesDir = SyncPaths.tablesDir(baseURL)
-        guard let urls = try? fileManager.contentsOfDirectory(at: tablesDir,
-                                                              includingPropertiesForKeys: nil) else {
-            return ([], [])
-        }
-        var stems = Set<String>()
-        let sources = urls.compactMap { url -> (stem: String, url: URL, identity: FileIdentity)? in
-            guard url.pathExtension == "limedb" else { return nil }
-            let stem = url.deletingPathExtension().lastPathComponent
-            guard validStems.contains(stem) else { return nil }
-            stems.insert(stem)
-            guard let identity = FileIdentity(url: url) else { return nil }
-            return (stem, url, identity)
-        }.sorted { $0.stem < $1.stem }
-        return (sources, stems)
-    }
-
     private func importStem(_ stem: String,
-                            from sourceURL: URL,
-                            identity: FileIdentity,
+                            rev: Int64,
+                            mode: SyncRevMode,
+                            alias: String,
                             deadline: Date?) -> ImportOutcome {
         guard let db = database.current() else { return .failed }
         do {
-            let restoreLearning = readTableMeta(stem)?.restoreLearning ?? true
             let start = try beginImport(stem: stem,
-                                        identity: identity,
-                                        restoreLearning: restoreLearning,
+                                        rev: rev,
+                                        mode: mode,
                                         in: db)
             switch start {
             case .skip:
@@ -208,9 +380,6 @@ final class TableSyncEngine {
             case .silentSkip:
                 return .silentSkip
             case .start(let startMarker):
-                let alias = "src_\(UUID().uuidString.replacingOccurrences(of: "-", with: "_"))"
-                try attach(sourceURL, as: alias, in: db)
-                defer { detach(alias, in: db) }
                 let columns = try importColumns(stem: stem, alias: alias, in: db)
                 var marker = startMarker
                 while true {
@@ -218,7 +387,7 @@ final class TableSyncEngine {
                                                          alias: alias,
                                                          columns: columns,
                                                          marker: marker,
-                                                         identity: identity,
+                                                         rev: rev,
                                                          in: db) else {
                         break
                     }
@@ -227,26 +396,25 @@ final class TableSyncEngine {
                         return .paused
                     }
                 }
-                try syncIMRegistration(stem: stem, alias: alias, in: db)
                 try finishImport(stem: stem,
-                                 identity: identity,
-                                 restoreLearning: restoreLearning,
+                                 rev: rev,
+                                 restoreLearning: mode == .merge,
                                  in: db)
                 return .imported
             }
         } catch {
-            markFailed(stem: stem, identity: identity, error: error, in: db)
+            markFailed(stem: stem, rev: rev, error: error, in: db)
             return .failed
         }
     }
 
     private func beginImport(stem: String,
-                             identity: FileIdentity,
-                             restoreLearning: Bool,
+                             rev: Int64,
+                             mode: SyncRevMode,
                              in limeDB: LimeDB) throws -> StartImport {
         try limeDB.dbQueue.write { db in
             let ledger = try ledgerEntry(stem: stem, in: db)
-            if let ledger, ledger.identity == identity {
+            if let ledger, ledger.rev == rev {
                 if ledger.state == .done { return .skip }
                 if ledger.state == .failed && ledger.attempts >= maxAttempts { return .silentSkip }
                 if ledger.state == .inProgress {
@@ -257,7 +425,7 @@ final class TableSyncEngine {
             try ensureDestinationTable(stem, in: db)
             try ensureStashTable(in: db)
             try db.execute(sql: "DELETE FROM sync_stash WHERE stem = ?", arguments: [stem])
-            if restoreLearning {
+            if mode == .merge {
                 let columns = try tableColumns(stem, schema: nil, in: db)
                 if columns.contains("code"), columns.contains("word"), columns.contains("score") {
                     try db.execute(sql: """
@@ -269,7 +437,8 @@ final class TableSyncEngine {
             try db.execute(sql: "DELETE FROM \(quoted(stem))")
             let attempts = min((ledger?.attempts ?? 0) + 1, maxAttempts)
             try limeDB.upsertLedger(LedgerEntry(stem: stem,
-                                                identity: identity,
+                                                identity: nil,
+                                                rev: rev,
                                                 state: .inProgress,
                                                 error: nil,
                                                 attempts: attempts,
@@ -313,7 +482,7 @@ final class TableSyncEngine {
                            alias: String,
                            columns: [String],
                            marker: Int64,
-                           identity: FileIdentity,
+                           rev: Int64,
                            in limeDB: LimeDB) throws -> Int64? {
         try limeDB.dbQueue.write { db in
             guard let lastRowID = try Int64.fetchOne(db, sql: """
@@ -338,7 +507,8 @@ final class TableSyncEngine {
 
             let current = try ledgerEntry(stem: stem, in: db)
             try limeDB.upsertLedger(LedgerEntry(stem: stem,
-                                                identity: identity,
+                                                identity: nil,
+                                                rev: rev,
                                                 state: .inProgress,
                                                 error: nil,
                                                 attempts: current?.attempts ?? 1,
@@ -349,7 +519,7 @@ final class TableSyncEngine {
     }
 
     private func finishImport(stem: String,
-                              identity: FileIdentity,
+                              rev: Int64,
                               restoreLearning: Bool,
                               in limeDB: LimeDB) throws {
         try limeDB.dbQueue.write { db in
@@ -372,7 +542,8 @@ final class TableSyncEngine {
             }
             try db.execute(sql: "DELETE FROM sync_stash WHERE stem = ?", arguments: [stem])
             try limeDB.upsertLedger(LedgerEntry(stem: stem,
-                                                identity: identity,
+                                                identity: nil,
+                                                rev: rev,
                                                 state: .done,
                                                 error: nil,
                                                 attempts: 0,
@@ -394,43 +565,6 @@ final class TableSyncEngine {
             return true
         } catch {
             return false
-        }
-    }
-
-    /// The seed lime.db ships an EMPTY `im` table and the app registers IMs only in
-    /// its own DB, so the keyboard must register imported IMs itself or it stays
-    /// English-only. Source limedbs (cloud downloads, text conversions) carry their
-    /// own `im` row — copy its metadata; synthesize a fallback row otherwise.
-    /// An existing row keeps its `disable` state across re-imports.
-    private func syncIMRegistration(stem: String, alias: String, in limeDB: LimeDB) throws {
-        guard stem != "related" else { return }
-        try limeDB.dbQueue.write { db in
-            let sourceHasIMTable = try Int.fetchOne(db, sql: """
-                SELECT COUNT(*) FROM \(quoted(alias)).sqlite_master
-                WHERE type = 'table' AND name = 'im'
-            """, arguments: []) ?? 0 > 0
-            let existingDisable = try Int.fetchOne(db,
-                sql: "SELECT disable FROM im WHERE code = ?", arguments: [stem])
-            var registered = false
-            if sourceHasIMTable {
-                let copied = try Int.fetchOne(db, sql: """
-                    SELECT COUNT(*) FROM \(quoted(alias)).im WHERE code = ?
-                """, arguments: [stem]) ?? 0 > 0
-                if copied {
-                    try db.execute(sql: """
-                        INSERT OR REPLACE INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                        SELECT code, title, desc, keyboard, ?, selkey, endkey, spacestyle
-                        FROM \(quoted(alias)).im WHERE code = ?
-                    """, arguments: [existingDisable ?? 0, stem])
-                    registered = true
-                }
-            }
-            if !registered && existingDisable == nil {
-                try db.execute(sql: """
-                    INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                    VALUES (?, ?, '', 'lime', 0, '', '', '')
-                """, arguments: [stem, LimeDB.defaultIMTitle(for: stem) ?? stem])
-            }
         }
     }
 
@@ -470,24 +604,19 @@ final class TableSyncEngine {
         }
     }
 
-    private func markFailed(stem: String, identity: FileIdentity, error: Error, in limeDB: LimeDB) {
+    private func markFailed(stem: String, rev: Int64, error: Error, in limeDB: LimeDB) {
         try? limeDB.dbQueue.write { db in
             let current = try ledgerEntry(stem: stem, in: db)
             let attempts = min(max(current?.attempts ?? 1, 1), maxAttempts)
             try limeDB.upsertLedger(LedgerEntry(stem: stem,
-                                                identity: identity,
+                                                identity: nil,
+                                                rev: rev,
                                                 state: .failed,
                                                 error: String(describing: error),
                                                 attempts: attempts,
                                                 resumeMarker: current?.resumeMarker),
                                     in: db)
         }
-    }
-
-    private func readTableMeta(_ stem: String) -> TableMeta? {
-        let url = SyncPaths.tableMeta(baseURL, stem: stem)
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(TableMeta.self, from: data)
     }
 
     private func ensureDestinationTable(_ stem: String, in db: Database) throws {
@@ -543,6 +672,7 @@ final class TableSyncEngine {
         let identity = size.flatMap { size in mtime.map { FileIdentity(size: size, mtime: $0) } }
         return LedgerEntry(stem: row["stem"] ?? stem,
                            identity: identity,
+                           rev: row["rev"],
                            state: LedgerState(rawValue: stateRaw ?? "") ?? .pending,
                            error: row["error"],
                            attempts: row["attempts"] ?? 0,

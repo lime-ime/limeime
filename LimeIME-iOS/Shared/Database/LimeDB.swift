@@ -37,6 +37,7 @@ enum SyncRevMode: String {
 struct LedgerEntry: Equatable {
     var stem: String
     var identity: FileIdentity?
+    var rev: Int64? = nil
     var state: LedgerState
     var error: String?
     var attempts: Int
@@ -276,11 +277,16 @@ final class LimeDB {
             try LimeDB.dropLegacyEmojiStaticTables(db)
             try db.execute(sql: """
                 CREATE TABLE IF NOT EXISTS sync_ledger (
-                    stem TEXT PRIMARY KEY, size INTEGER, mtime REAL,
+                    stem TEXT PRIMARY KEY, size INTEGER, mtime REAL, rev INTEGER,
                     state TEXT NOT NULL, error TEXT,
                     attempts INTEGER NOT NULL DEFAULT 0, resume_marker INTEGER
                 )
             """)
+            let ledgerColumns = try Set(String.fetchAll(db,
+                sql: "SELECT name FROM pragma_table_info('sync_ledger')"))
+            if !ledgerColumns.contains("rev") {
+                try db.execute(sql: "ALTER TABLE sync_ledger ADD COLUMN rev INTEGER")
+            }
             // Versioned upgrade path (mirrors Android onUpgrade — version 102)
             try upgradeIfNeeded(db)
         }
@@ -616,17 +622,19 @@ final class LimeDB {
             e.stem,
             e.identity?.size,
             e.identity?.mtime,
+            e.rev,
             e.state.rawValue,
             e.error,
             e.attempts,
             e.resumeMarker,
         ]
         try db.execute(sql: """
-            INSERT INTO sync_ledger (stem, size, mtime, state, error, attempts, resume_marker)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO sync_ledger (stem, size, mtime, rev, state, error, attempts, resume_marker)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(stem) DO UPDATE SET
                 size = excluded.size,
                 mtime = excluded.mtime,
+                rev = excluded.rev,
                 state = excluded.state,
                 error = excluded.error,
                 attempts = excluded.attempts,
@@ -688,6 +696,7 @@ final class LimeDB {
         let stateRaw = row.optString("state") ?? LedgerState.pending.rawValue
         return LedgerEntry(stem: row.optString("stem") ?? "",
                            identity: identity,
+                           rev: row.optInt64("rev"),
                            state: LedgerState(rawValue: stateRaw) ?? .pending,
                            error: row.optString("error"),
                            attempts: row.optInt("attempts") ?? 0,
