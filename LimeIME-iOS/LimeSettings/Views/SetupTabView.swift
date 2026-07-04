@@ -154,7 +154,6 @@ struct SetupTabView: View {
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
     @State private var faPingAt: TimeInterval?
-    @State private var showSettingsGuidance = false
 
     @State private var pollTimer: Timer?
 
@@ -203,7 +202,7 @@ struct SetupTabView: View {
                         SetupStepRow(text: "開啟萊姆輸入法") {
                             ToggleSwitchIcon()
                         }
-                        SetupStepRow(text: "開啟「允許完整取用」（建議）") {
+                        SetupStepRow(text: "開啟「允許完整取用」") {
                             ToggleSwitchIcon()
                         }
                     }
@@ -451,8 +450,8 @@ struct SetupTabView: View {
 
     private var statusText: String {
         switch detectionState {
-        case .fullyEnabled:        return "完整取用權限：已開啟（已學習字詞會納入備份）"
-        case .enabledNoFullAccess: return "開啟完整取用權限可備份已學習字詞並啟用按鍵震動回饋"
+        case .fullyEnabled:        return "萊姆輸入法已啟用"
+        case .enabledNoFullAccess: return "鍵盤已啟用，但尚未允許完整取用"
         case .notEnabled:          return "尚未啟用萊姆輸入法鍵盤"
         }
     }
@@ -484,24 +483,11 @@ struct SetupTabView: View {
     @ViewBuilder
     private var settingsGuidance: some View {
         if detectionState != .fullyEnabled {
-            let text = "看到「萊姆輸入法」頁 → 點「Keyboards」；停在設定主頁 → Apps > 萊姆輸入法 > Keyboards。"
-            if showSettingsGuidance {
-                Label(text, systemImage: "arrow.turn.down.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(SettingsTheme.warningInk)
-                    .padding(.vertical, SettingsMetrics.statusVerticalPadding)
-                    .padding(.horizontal, SettingsMetrics.statusHorizontalPadding)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(SettingsTheme.statusTintYellow)
-                    .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
-                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-            } else {
-                Text(text)
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-            }
+            Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
         }
     }
 
@@ -613,12 +599,6 @@ struct SetupTabView: View {
     }
 
     private func openLimeKeyboardSettings() {
-        showSettingsGuidance = true
-        // ponytail: fixed 20 s guidance window; make stateful only if Settings deep-link telemetry needs it.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
-            showSettingsGuidance = false
-        }
-
         let plainURL = URL(string: UIApplication.openSettingsURLString)
         let firstURL = Bundle.main.bundleIdentifier
             .flatMap { URL(string: "\(UIApplication.openSettingsURLString)/\($0)") }

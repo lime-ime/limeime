@@ -10,7 +10,7 @@
 			<key>Title</key>
 			<string>萊姆輸入法鍵盤</string>
 			<key>FooterText</key>
-			<string>鍵盤啟用由 iOS 管理。完整取用為選用功能（備份已學習字詞、按鍵震動回饋）。請進入 Keyboards 開啟萊姆輸入法。</string>
+			<string>鍵盤啟用與完整取用由 iOS 管理。請進入 Keyboards 開啟萊姆輸入法與允許完整取用。</string>
 		</dict>
 		<dict>
 			<key>Type</key>
