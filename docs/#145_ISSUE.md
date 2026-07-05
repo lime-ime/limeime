@@ -5,16 +5,24 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/145
 - Classification: `bug` + `Usability`
 - Reporter: `james631025`
-- Live state after the 2026-07-03 labeled/assigned webhook: open, labeled `bug` + `Usability`, assigned to `jrywu`.
-- Public acknowledgement / clarification request: https://github.com/lime-ime/limeime/issues/145#issuecomment-4874848760 asks for platform, version/device details, active layout, app scope, whether other actions besides switching IMEs restore the row, and screenshot evidence.
-- Reporter scope: while using LIME on a tablet, the bottom keyboard row, described as the row containing the Space key, is often covered. Switching to another input method and then switching back to LIME makes the row appear again.
-- Current state: plausible UI/layout bug, but the report does not yet identify Android vs iPadOS, LIME version, tablet model, orientation, split-keyboard setting, keyboard-size setting, navigation mode, or screenshots/video.
+- Live state after the 2026-07-05 follow-up comment: open, labeled `bug` + `Usability`, assigned to `jrywu`.
+- Public acknowledgement / clarification request: https://github.com/lime-ime/limeime/issues/145#issuecomment-4874848760 asked for platform, version/device details, active layout, app scope, whether other actions besides switching IMEs restore the row, and screenshot evidence.
+- Reporter follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4880870984 confirms Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation also restores the row, and includes a screenshot.
+- Latest maintainer/project-account follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884643621 asks which Boshiamy keyboard layout is active, such as standard keyboard, phone keyboard, or another custom/special layout.
+- Current state: Android tablet UI/layout bug with screenshot evidence. The exact Boshiamy keyboard layout, orientation/navigation mode, split-keyboard setting, keyboard-size setting, and reproduction timing still need confirmation before choosing a fix path.
 
 ## Problem statement
 
-The reporter says that on a tablet, the bottom row of the keyboard is often hidden or covered, and the workaround is to switch away to another input method and then switch back to LIME. The visible symptom suggests the IME view can enter a stale or incorrectly inset layout state where the keyboard container does not reserve enough visible space for the bottom row.
+The reporter says that on an Android tablet, the bottom row of the keyboard is often hidden or covered, and the workaround is to switch away to another input method and then switch back to LIME. A later comment confirms that rotating the tablet also restores the row. The visible symptom suggests the IME view can enter a stale or incorrectly inset layout state where the keyboard container does not reserve enough visible space for the bottom row.
 
-Because the report says only `平板` and does not name the platform, treat Android tablet as the first investigation target for the public GitHub APK line, while keeping iOS/iPadOS bottom-content coverage as an analogous but separate path until the reporter confirms the platform.
+The reporter has now identified the platform as Android tablet, specifically iPlay 30 / Android 10 / LIME 6.1.27 while using 嘸蝦米. Keep iOS/iPadOS bottom-content coverage as related context only, not the active #145 platform path, unless a separate iPad report appears.
+
+## Reporter evidence
+
+- Initial report: the lowest keyboard row containing Space is often covered on a tablet, and switching to another input method and back makes the row appear again.
+- Follow-up details: Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation restores the row.
+- Screenshot evidence: the attached image shows the LIME keyboard with the bottom functional row visibly at the lower screen edge and partially cut off/covered. Do not infer the exact Boshiamy layout from the screenshot alone.
+- Remaining missing detail after the latest project-account comment: which Boshiamy keyboard layout is selected, for example standard keyboard, phone keyboard, or another custom/special layout.
 
 ## Source evidence inspected
 
@@ -36,7 +44,7 @@ Because the report says only `平板` and does not name the platform, treat Andr
 ### iOS/iPadOS comparison
 
 - Existing issue #139 tracks an iOS TestFlight bottom-content coverage issue from a private reporter. Its active scope is host-app bottom content being covered by LIME's custom keyboard height/safe-area behavior.
-- #145 is not yet proven to be the same issue because the reporter has not said whether the tablet is Android or iPadOS, and the described workaround is about the LIME keyboard row itself reappearing after IME switching.
+- #145 is not the same active platform path as #139: the reporter confirmed Android tablet, and the described workaround is about the LIME keyboard row itself reappearing after IME switching or rotation.
 
 ## Likely root cause / investigation hypothesis
 
@@ -44,17 +52,16 @@ The most plausible Android hypothesis is a stale IME window/insets or measuremen
 
 The current source has a suspicious Android clue: `onCreateInputView()` applies API 35+ bottom system-bar padding directly to the full input container, while the `mLastKnownBottomPadding` recovery variable referenced in the debug log is not functional. This does not prove the reported tablet path yet, but it is a concrete area to inspect with device logs and layout measurements.
 
-If the reporter is on iPadOS instead, investigate it separately through the iOS custom-keyboard height/safe-area path already documented for #139, rather than assuming the Android inset path applies.
+The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path is not the active #145 investigation path.
 
 ## Proposed investigation plan
 
-1. Ask the reporter for platform, LIME version, tablet model, OS version, orientation, navigation mode, active input method/table, keyboard size setting, split-keyboard setting, and a screenshot or short screen recording showing the hidden bottom row.
+1. Confirm the active Boshiamy keyboard layout, orientation, navigation mode, keyboard size setting, split-keyboard setting, and whether the symptom happens on first open, every open, or intermittently.
 2. On Android, reproduce on a tablet or emulator with gesture navigation and 3-button navigation, in both portrait and landscape, with normal and split-keyboard settings.
 3. Instrument the Android IME view path around `onCreateInputView()`, `setOnApplyWindowInsetsListener(...)`, `mCandidateInInputView` measured height/padding, and `LIMEKeyboardBaseView.onMeasure()` to compare the broken state against the restored state after switching IMEs.
 4. Verify whether API level, system navigation bar height, `fitsSystemWindows`, host app `adjustResize` behavior, or tablet resource key heights are causing the bottom row to be clipped.
-5. Ask whether closing/reopening the keyboard, rotating the tablet, changing keyboard size, or expanding/collapsing candidates also restores the row, because this distinguishes a full input-view recreation problem from a lighter remeasure/inset problem.
+5. Rotation is now confirmed to restore the row. Still ask whether closing/reopening the keyboard, changing keyboard size, or expanding/collapsing candidates also restores it, because this distinguishes a full input-view recreation problem from a lighter remeasure/inset problem.
 6. Ask whether the symptom happens every time, first open only, or intermittently, because that separates stale initial measurement from ongoing resize/inset behavior.
-7. If the reporter confirms iPadOS, compare with #139's iOS height/safe-area investigation but keep the public issue scopes separate unless the same source defect is proven.
 
 ## Verification plan
 
@@ -64,15 +71,15 @@ If the reporter is on iPadOS instead, investigate it separately through the iOS 
   - Portrait/landscape, gesture navigation, and 3-button navigation do not cover the Space row.
   - Split keyboard and keyboard-size settings do not leave stale bottom padding or excessive height.
 - Add focused regression coverage or logging-backed assertions for any Android inset/measurement helper introduced during the fix.
-- If iPadOS is confirmed, verify through a TestFlight/simulator scenario matching the reporter's tablet and orientation.
+- iOS/iPadOS: no #145 retest path unless separate matching iPad evidence appears.
 
 ## Platform impact
 
-- Android: likely first investigation target because the public GitHub APK line and current code show an Android IME container/insets path that could plausibly affect tablet bottom-row visibility. Platform is not confirmed by the reporter yet.
-- iOS/iPadOS: possible only if the reporter confirms the tablet is an iPad. Existing #139 covers a related but separate iOS bottom-content coverage class.
+- Android: confirmed reporter platform. The bug is currently scoped to Android 10 tablet / iPlay 30 / LIME 6.1.27 / 嘸蝦米, with screenshot evidence and rotation/IME switching restoring the row.
+- iOS/iPadOS: not implicated by #145. Existing #139 covers a related but separate iOS bottom-content coverage class.
 
 ## Follow-up / retest condition
 
-Post one clarification acknowledgement asking for platform/version/device/orientation/settings/evidence, label the issue as a plausible bug, and assign maintainer attention. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK, Google Play build, or TestFlight build contains a targeted fix for the confirmed platform path.
+The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details plus screenshot evidence. The current live follow-up asks for the active Boshiamy keyboard layout. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK or Google Play build contains a targeted fix for this Android tablet path.
 
-No `docs/BACKLOG.md` entry is added yet because the platform and exact fix direction are not confirmed. Add a `fix#145` backlog item after reporter details or maintainer reproduction confirms the affected platform and implementation scope.
+No `docs/BACKLOG.md` entry is added yet because the exact fix direction is not confirmed. Add a `fix#145 Android` backlog item after the remaining layout details, maintainer reproduction, or source fix direction confirms the implementation scope.
