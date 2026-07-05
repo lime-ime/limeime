@@ -8,7 +8,8 @@ final class SyncContractTest: XCTestCase {
         let base = URL(fileURLWithPath: "/tmp/x")
 
         XCTAssertEqual(SyncPaths.coldDB(base).path, "/tmp/x/cold.limedb")
-        XCTAssertEqual(SyncPaths.coldMeta(base).path, "/tmp/x/cold.meta.json")
+        XCTAssertEqual(SyncPaths.inboxDir(base).path, "/tmp/x/inbox")
+        XCTAssertEqual(SyncPaths.imInbox(base).path, "/tmp/x/inbox/im.json")
         XCTAssertEqual(SyncPaths.outboxDir(base).path, "/tmp/x/outbox")
         XCTAssertEqual(SyncPaths.exportRequest(base).path, "/tmp/x/outbox/export.request.json")
         XCTAssertEqual(SyncPaths.backupSnapshot(base).path, "/tmp/x/outbox/backup.limedb")

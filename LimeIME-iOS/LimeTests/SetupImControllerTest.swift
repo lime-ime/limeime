@@ -38,6 +38,10 @@ final class SetupImControllerTest: XCTestCase {
         return (url, db)
     }
 
+    private func syncMeta(for url: URL) throws -> SyncMetaStore {
+        try SyncMetaStore(databaseURL: url)
+    }
+
     private func makePrefs() -> LimeIME.LIMEPreferenceManager {
         let suiteName = "test.setup.ctrl.\(UUID().uuidString)"
         let ud = UserDefaults(suiteName: suiteName)!
@@ -208,6 +212,9 @@ final class SetupImControllerTest: XCTestCase {
         await MainActor.run {
             XCTAssertFalse(progress.isVisible, "Async DB import must dismiss progress after success")
         }
+        let meta = try syncMeta(for: url)
+        XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
+        XCTAssertEqual(try meta.generation(), 1)
     }
 
     func testAsyncImportDBFileImportsAndroidShapeZippedLimedb() async throws {
@@ -387,6 +394,28 @@ final class SetupImControllerTest: XCTestCase {
             XCTFail("Expected .lime re-import to succeed, got \(error)")
         }
         XCTAssertEqual(customRecordSnapshot(db, prefix: prefix), before)
+    }
+
+    func testAsyncImportTxtFileBumpsRevisionAndPublishes() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "i3\t同步\n".write(to: importURL, atomically: true, encoding: .utf8)
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: importURL, tableName: "custom")
+
+        if case .failure(let error) = result {
+            XCTFail("Expected text import to succeed, got \(error)")
+        }
+        let meta = try syncMeta(for: url)
+        XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
+        XCTAssertEqual(try meta.generation(), 1)
     }
 
     func testExportIMAsTextIncludesImMetadataFromDatabase() async throws {

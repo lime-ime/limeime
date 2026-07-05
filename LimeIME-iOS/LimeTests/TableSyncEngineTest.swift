@@ -86,6 +86,67 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
+    private func makeIMDatabase(at url: URL,
+                                rows: [[String: String?]] = [],
+                                epoch: String = "epoch-a",
+                                generation: Int = 1,
+                                applied: Bool = false) throws {
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: url.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: "PRAGMA user_version = 104")
+            try db.execute(sql: """
+                CREATE TABLE im (
+                    _id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code       TEXT,
+                    title      TEXT,
+                    desc       TEXT,
+                    keyboard   TEXT,
+                    disable    BOOLEAN,
+                    selkey     TEXT,
+                    endkey     TEXT,
+                    spacestyle TEXT
+                )
+                """)
+            for row in rows {
+                try db.execute(sql: """
+                    INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, arguments: [
+                        row["code"] ?? nil,
+                        row["title"] ?? nil,
+                        row["desc"] ?? nil,
+                        row["keyboard"] ?? nil,
+                        row["disable"] ?? nil,
+                        row["selkey"] ?? nil,
+                        row["endkey"] ?? nil,
+                        row["spacestyle"] ?? nil
+                    ])
+            }
+        }
+        let meta = try SyncMetaStore(databaseURL: url)
+        try meta.setValue(epoch, forKey: SyncMetaStore.epochUUIDKey)
+        try meta.setValue(String(generation), forKey: SyncMetaStore.generationKey)
+        if applied {
+            try meta.setAppliedEpoch(epoch)
+            try meta.setAppliedGeneration(generation)
+        }
+    }
+
+    private func imRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT code, title, desc, keyboard FROM im ORDER BY code, title
+                """).map {
+                    "\($0["code"] as String? ?? "")|\($0["title"] as String? ?? "")|\($0["desc"] as String? ?? "")|\($0["keyboard"] as String? ?? "")"
+                }
+        }
+    }
+
     func testScanAndApplyImportsChangedTableFromPublishedCold() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -209,5 +270,38 @@ final class TableSyncEngineTest: XCTestCase {
 
         XCTAssertFalse(try tableExists("custom", in: hot))
         XCTAssertEqual(try hotMeta.revision(forTable: "custom"), 0)
+    }
+
+    func testScanAndApplyDrainsIMInboxWithoutColdGenerationChange() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        try makeIMDatabase(at: coldSnapshot, rows: [], applied: false)
+        try makeIMDatabase(at: hot,
+                           rows: [
+                               ["code": "old", "title": "keyboard", "desc": "Old", "keyboard": "oldkb"]
+                           ],
+                           applied: true)
+        let inbox = IMInboxFile(records: [
+            IMInboxRecord(op: .upsert, row: [
+                "code": "custom",
+                "title": "keyboard",
+                "desc": "New",
+                "keyboard": "lime"
+            ]),
+            IMInboxRecord(op: .delete, row: ["code": "old"])
+        ])
+        let inboxURL = SyncPaths.imInbox(appGroup)
+        try FileManager.default.createDirectory(at: inboxURL.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        try JSONEncoder().encode(inbox).write(to: inboxURL)
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try imRows(in: hot), ["custom|keyboard|New|lime"])
+        XCTAssertTrue(try imRows(in: coldSnapshot).isEmpty)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
     }
 }

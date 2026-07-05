@@ -23,7 +23,10 @@ final class TableSyncEngine {
 
     func scanAndApply() throws {
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
-        guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else { return }
+        guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else {
+            try drainIMInboxIfNeeded()
+            return
+        }
 
         let coldMeta = try SyncMetaStore(databaseURL: coldSnapshotURL)
         let hotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
@@ -33,6 +36,7 @@ final class TableSyncEngine {
         let appliedGeneration = try hotMeta.appliedGeneration()
 
         if coldGeneration == appliedGeneration, coldEpoch == appliedEpoch {
+            try drainIMInboxIfNeeded()
             return
         }
 
@@ -45,6 +49,7 @@ final class TableSyncEngine {
                 try refreshedHotMeta.removeValue(forKey: SyncMetaStore.appliedEpochKey)
             }
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
+            try drainIMInboxIfNeeded()
             return
         }
 
@@ -53,6 +58,31 @@ final class TableSyncEngine {
             try hotMeta.setAppliedEpoch(coldEpoch)
         }
         try hotMeta.setAppliedGeneration(coldGeneration)
+        try drainIMInboxIfNeeded()
+    }
+
+    private func drainIMInboxIfNeeded() throws {
+        let inboxURL = SyncPaths.imInbox(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
+        let inbox = try JSONDecoder().decode(IMInboxFile.self, from: Data(contentsOf: inboxURL))
+        guard !inbox.records.isEmpty else {
+            try? FileManager.default.removeItem(at: inboxURL)
+            return
+        }
+
+        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        try connection.write { db in
+            try Self.ensureIMTable(in: db)
+            for record in inbox.records {
+                switch record.op {
+                case .upsert:
+                    try Self.upsertIM(record.row, in: db)
+                case .delete:
+                    try Self.deleteIM(record.row, in: db)
+                }
+            }
+        }
+        try FileManager.default.removeItem(at: inboxURL)
     }
 
     private func applyIncremental(from coldSnapshotURL: URL) throws {
@@ -147,6 +177,53 @@ final class TableSyncEngine {
 
     private static func deleteMeta(_ key: String, in db: Database) throws {
         try db.execute(sql: "DELETE FROM sync_meta WHERE key = ?", arguments: [key])
+    }
+
+    private static func ensureIMTable(in db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS im (
+                _id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                code       TEXT,
+                title      TEXT,
+                desc       TEXT,
+                keyboard   TEXT,
+                disable    BOOLEAN,
+                selkey     TEXT,
+                endkey     TEXT,
+                spacestyle TEXT
+            )
+            """)
+    }
+
+    private static func upsertIM(_ row: [String: String?], in db: Database) throws {
+        guard let code = row["code"] ?? nil, !code.isEmpty,
+              let title = row["title"] ?? nil, !title.isEmpty
+        else { return }
+        try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
+                       arguments: [code, title])
+        try db.execute(sql: """
+            INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, arguments: [
+                code,
+                title,
+                row["desc"] ?? nil,
+                row["keyboard"] ?? nil,
+                row["disable"] ?? nil,
+                row["selkey"] ?? nil,
+                row["endkey"] ?? nil,
+                row["spacestyle"] ?? nil
+            ])
+    }
+
+    private static func deleteIM(_ row: [String: String?], in db: Database) throws {
+        guard let code = row["code"] ?? nil, !code.isEmpty else { return }
+        if let title = row["title"] ?? nil, !title.isEmpty {
+            try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
+                           arguments: [code, title])
+        } else {
+            try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [code])
+        }
     }
 
     private static func quotedIdentifier(_ identifier: String) -> String {

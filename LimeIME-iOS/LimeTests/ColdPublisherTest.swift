@@ -49,7 +49,6 @@ final class ColdPublisherTest: XCTestCase {
         let snapshotMeta = try SyncMetaStore(databaseURL: snapshotURL)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: snapshotURL.path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.coldMeta(appGroup).path))
         XCTAssertEqual(try liveMeta.generation(), 1)
         XCTAssertEqual(try snapshotMeta.generation(), 1)
         XCTAssertEqual(try snapshotMeta.epochUUID(), "epoch-a")

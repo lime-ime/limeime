@@ -63,6 +63,19 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(source.contains("btn.backgroundColor = isModifier ? modifierKeyColor : normalKeyColor"))
     }
 
+    func testI3SyncTriggerWiringIsFullAccessGatedAndOffMainThread() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("SyncSignalObserver(signal: .tablesUpdated"))
+        XCTAssertTrue(source.contains("syncScanInProgress"))
+        XCTAssertTrue(source.contains("guard hasFullAccess else { return }"))
+        XCTAssertTrue(source.contains("syncQueue.async"))
+        XCTAssertTrue(source.contains("TableSyncEngine(locator: locator).scanAndApply()"))
+        XCTAssertFalse(source.contains("UITextInputMode.activeInputModes"))
+        XCTAssertFalse(source.contains("value(forKey: \"activeInputMode\")"))
+    }
+
     func testIPhoneEnglishJsonLayoutsHaveChineseSwitchOnBottomRow() throws {
         for layoutID in ["lime_english", "lime_english_number"] {
             let layout = try loadKeyboardLayoutFixture(layoutID)

@@ -36,6 +36,10 @@ final class ManageRelatedControllerTest: XCTestCase {
         return (url, db)
     }
 
+    private func syncMeta(for url: URL) throws -> SyncMetaStore {
+        try SyncMetaStore(databaseURL: url)
+    }
+
     // MARK: - loadRelated
 
     func testLoadRelatedEmptyTable() async throws {
@@ -85,6 +89,41 @@ final class ManageRelatedControllerTest: XCTestCase {
         XCTAssertTrue(phrases.contains {
             $0.parentWord == "分數" && $0.childWord == "新增" && $0.score == 42
         })
+    }
+
+    func testRelatedEditorSavesBumpRevisionAndPublish() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
+        let meta = try syncMeta(for: url)
+
+        let add = await controller.addRelated(parentWord: "i3", childWord: "新增", score: 1)
+        guard case .success = add,
+              let first = db.getRelated(nil, 10, 0).first(where: { $0.parentWord == "i3" }) else {
+            XCTFail("Expected addRelated to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: "related"), 1)
+        XCTAssertEqual(try meta.generation(), 1)
+
+        let update = await controller.updateRelated(id: first.id,
+                                                    parentWord: "i3",
+                                                    childWord: "更新",
+                                                    score: 2)
+        guard case .success = update else {
+            XCTFail("Expected updateRelated to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: "related"), 2)
+        XCTAssertEqual(try meta.generation(), 2)
+
+        let delete = await controller.deleteRelated(id: first.id)
+        guard case .success = delete else {
+            XCTFail("Expected deleteRelated to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: "related"), 3)
+        XCTAssertEqual(try meta.generation(), 3)
     }
 
     func testAddRelatedEmptyParentReportsError() async throws {

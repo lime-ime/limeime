@@ -1,4 +1,4 @@
-// ManageImControllerTest.swift
+﻿// ManageImControllerTest.swift
 // LimeIMETests
 //
 // CRUD + pagination tests for ManageImController.
@@ -40,6 +40,10 @@ final class ManageImControllerTest: XCTestCase {
         return (url, db)
     }
 
+    private func syncMeta(for url: URL) throws -> SyncMetaStore {
+        try SyncMetaStore(databaseURL: url)
+    }
+
     // MARK: - loadRecords
 
     func testLoadRecordsEmptyTable() async throws {
@@ -69,7 +73,7 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "abc", word: "測試",
+            controller.addRecord(table: testTable, code: "abc", word: "æ¸¬è©¦",
                                  score: 5, view: mock)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
@@ -80,6 +84,39 @@ final class ManageImControllerTest: XCTestCase {
         }
     }
 
+    func testEditorSavesBumpRevisionAndPublish() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
+        let meta = try syncMeta(for: url)
+
+        let add = await controller.addRecord(table: testTable, code: "i3", word: "æ°å¢", score: 1)
+        guard case .success = add else {
+            XCTFail("Expected add to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: testTable), 1)
+        XCTAssertEqual(try meta.generation(), 1)
+
+        let record = try XCTUnwrap(db.getRecordList(testTable, "i3", searchByCode: true, 10, 0).first)
+        let update = await controller.updateRecord(table: testTable, id: record.id,
+                                                   code: "i3", word: "æ´æ°", score: 2)
+        guard case .success = update else {
+            XCTFail("Expected update to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: testTable), 2)
+        XCTAssertEqual(try meta.generation(), 2)
+
+        let delete = await controller.deleteRecord(table: testTable, id: record.id)
+        guard case .success = delete else {
+            XCTFail("Expected delete to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: testTable), 3)
+        XCTAssertEqual(try meta.generation(), 3)
+    }
+
     func testAddRecordEmptyCodeReportsError() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
@@ -87,7 +124,7 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "", word: "測試",
+            controller.addRecord(table: testTable, code: "", word: "æ¸¬è©¦",
                                  score: 0, view: mock)
             XCTAssertFalse(mock.errors.isEmpty)
         }
@@ -182,6 +219,29 @@ final class ManageImControllerTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(testTable, "limeendkey"), "")
     }
 
+    func testIMMetadataEditWritesInboxRecord() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
+
+        let result = await controller.updateIMMetadataField(tableNick: testTable,
+                                                            field: "version",
+                                                            value: "I3")
+
+        guard case .success = result else {
+            XCTFail("Expected metadata update to succeed")
+            return
+        }
+        let inboxURL = SyncPaths.imInbox(url.deletingLastPathComponent())
+        let inbox = try JSONDecoder().decode(IMInboxFile.self, from: Data(contentsOf: inboxURL))
+        XCTAssertTrue(inbox.records.contains {
+            $0.op == .upsert
+                && ($0.row["code"] ?? nil) == testTable
+                && ($0.row["title"] ?? nil) == "version"
+                && ($0.row["desc"] ?? nil) == "I3"
+        })
+    }
+
     // MARK: - updateRecord
 
     func testUpdateRecordAfterAdd() async throws {
@@ -190,7 +250,7 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "xyz", word: "原文",
+            controller.addRecord(table: testTable, code: "xyz", word: "åæ",
                                  score: 1, view: nil)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
@@ -204,7 +264,7 @@ final class ManageImControllerTest: XCTestCase {
         let updateMock = await MockManageImView()
         await MainActor.run {
             controller.updateRecord(table: testTable, id: first.id,
-                                    code: "xyz", word: "新文", score: 2, view: updateMock)
+                                    code: "xyz", word: "æ°æ", score: 2, view: updateMock)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
@@ -214,7 +274,7 @@ final class ManageImControllerTest: XCTestCase {
         }
 
         let updated = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
-        XCTAssertTrue(updated.contains { $0.word == "新文" })
+        XCTAssertTrue(updated.contains { $0.word == "æ°æ" })
     }
 
     func testUpdateRecordEmptyCodeReportsError() async throws {
@@ -238,14 +298,14 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "del", word: "刪除",
+            controller.addRecord(table: testTable, code: "del", word: "åªé¤",
                                  score: 0, view: nil)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
         let records = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
-        guard let toDelete = records.first(where: { $0.word == "刪除" }) else {
-            XCTFail("Expected to find 刪除 record")
+        guard let toDelete = records.first(where: { $0.word == "åªé¤" }) else {
+            XCTFail("Expected to find åªé¤ record")
             return
         }
 
@@ -260,7 +320,24 @@ final class ManageImControllerTest: XCTestCase {
         }
 
         let after = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
-        XCTAssertFalse(after.contains { $0.word == "刪除" })
+        XCTAssertFalse(after.contains { $0.word == "åªé¤" })
+    }
+
+    func testClearTableBumpsRevisionAndPublishes() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        db.addOrUpdateMappingRecord(testTable, "clear_i3", "æ¸é¤", 0)
+        let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
+        let meta = try syncMeta(for: url)
+
+        let result = await controller.clearTable(tableNick: testTable)
+
+        guard case .success = result else {
+            XCTFail("Expected clearTable to succeed")
+            return
+        }
+        XCTAssertEqual(try meta.revision(forTable: testTable), 1)
+        XCTAssertEqual(try meta.generation(), 1)
     }
 
     // MARK: - Pagination
@@ -275,9 +352,9 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "a", word: "一", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "b", word: "二", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "c", word: "三", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "a", word: "ä¸", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "b", word: "äº", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "c", word: "ä¸", score: 0, view: nil)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
@@ -302,8 +379,8 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "search1", word: "找到", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "other",   word: "其他", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "search1", word: "æ¾å°", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "other",   word: "å¶ä»", score: 0, view: nil)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
@@ -325,20 +402,20 @@ final class ManageImControllerTest: XCTestCase {
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRecord(table: testTable, code: "w1", word: "測試詞", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "w2", word: "其他",   score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "w1", word: "æ¸¬è©¦è©", score: 0, view: nil)
+            controller.addRecord(table: testTable, code: "w2", word: "å¶ä»",   score: 0, view: nil)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
         let mock = await MockManageImView()
         await MainActor.run {
-            controller.loadRecords(table: testTable, query: "測試", searchByCode: false,
+            controller.loadRecords(table: testTable, query: "æ¸¬è©¦", searchByCode: false,
                                    page: 0, view: mock)
         }
         try await Task.sleep(nanoseconds: 300_000_000)
 
         await MainActor.run {
-            XCTAssertTrue(mock.displayedRecords.allSatisfy { $0.word.contains("測試") })
+            XCTAssertTrue(mock.displayedRecords.allSatisfy { $0.word.contains("æ¸¬è©¦") })
         }
     }
 

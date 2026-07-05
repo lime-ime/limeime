@@ -258,6 +258,59 @@ final class DBServer {
         try fm.moveItem(at: tempURL, to: dbURL)
     }
 
+    func markTableChangedAndPublish(_ table: String) throws {
+        guard !table.isEmpty else { return }
+        let liveURL = liveDatabaseURL()
+        try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
+        try ColdPublisher(liveColdDatabaseURL: liveURL,
+                          appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+    }
+
+    func writeIMInboxUpserts(for imCode: String, postSignal shouldPost: Bool = true) throws {
+        let records = getImConfigList(imCode, nil).map { row in
+            IMInboxRecord(op: .upsert, row: [
+                "code": row.code,
+                "title": row.title,
+                "desc": row.desc,
+                "keyboard": row.keyboard,
+                "disable": row.disable ? "true" : "false",
+                "selkey": row.selkey,
+                "endkey": row.endkey,
+                "spacestyle": row.spacestyle
+            ])
+        }
+        try appendIMInbox(records, postSignal: shouldPost)
+    }
+
+    func writeIMInboxDelete(for imCode: String, postSignal shouldPost: Bool = true) throws {
+        try appendIMInbox([IMInboxRecord(op: .delete, row: ["code": imCode])],
+                          postSignal: shouldPost)
+    }
+
+    private func appendIMInbox(_ records: [IMInboxRecord], postSignal shouldPost: Bool) throws {
+        guard !records.isEmpty else { return }
+        let url = SyncPaths.imInbox(liveDatabaseURL().deletingLastPathComponent())
+        let existing: IMInboxFile
+        if let data = try? Data(contentsOf: url),
+           let decoded = try? JSONDecoder().decode(IMInboxFile.self, from: data) {
+            existing = decoded
+        } else {
+            existing = IMInboxFile(records: [])
+        }
+        let file = IMInboxFile(records: existing.records + records)
+        try atomicWrite(try JSONEncoder().encode(file), to: url)
+        if shouldPost {
+            postSyncSignal(.tablesUpdated)
+        }
+    }
+
+    private func liveDatabaseURL() -> URL {
+        if let path = datasource?.dbPath(), !path.isEmpty {
+            return URL(fileURLWithPath: path)
+        }
+        return dataDirURL.appendingPathComponent(Self.databaseName)
+    }
+
     // MARK: - 1. isDatabaseOnHold
     func isDatabaseOnHold() -> Bool {
         return datasource?.isDatabaseOnHold() ?? false
@@ -1046,10 +1099,12 @@ final class DBServer {
 
     func setImConfig(_ imCode: String, _ field: String, _ value: String) {
         datasource?.setImConfig(imCode, field, value)
+        try? writeIMInboxUpserts(for: imCode)
     }
 
     func updateIMEnabled(imName: String, enabled: Bool) {
         datasource?.updateIMEnabled(imName: imName, enabled: enabled)
+        try? writeIMInboxUpserts(for: imName)
     }
 
     func updateIMSortOrder(id: Int64, sortOrder: Int) throws {
@@ -1063,6 +1118,7 @@ final class DBServer {
 
     func setImConfigKeyboard(_ imCode: String, _ keyboard: KeyboardConfig) {
         datasource?.setImConfigKeyboard(imCode, keyboard)
+        try? writeIMInboxUpserts(for: imCode)
     }
 
     // MARK: - Record CRUD Proxies
@@ -1193,12 +1249,14 @@ final class DBServer {
     func importFromAttachedDB(sourcePath: String, tableName: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importFromAttachedDB(sourcePath: sourcePath, tableName: tableName)
+        try markTableChangedAndPublish(tableName)
     }
 
     func importTxtFile(at path: String, tableName: String,
                        progress: ((Int) -> Void)?) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importTxtFile(at: path, tableName: tableName, progress: progress)
+        try markTableChangedAndPublish(tableName)
     }
 
     func exportDB(to destPath: String) throws {
@@ -1218,6 +1276,8 @@ final class DBServer {
     func registerIM(imName: String, tableName: String, label: String, keyboardId: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.registerIM(imName: imName, tableName: tableName, label: label, keyboardId: keyboardId)
+        try writeIMInboxUpserts(for: imName, postSignal: false)
+        try markTableChangedAndPublish(tableName)
     }
 
     func seedCustomIM() throws {

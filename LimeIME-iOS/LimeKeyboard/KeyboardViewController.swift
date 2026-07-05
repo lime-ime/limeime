@@ -18,6 +18,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var keyboardView:  KeyboardView!
     private var emojiPanelView: EmojiPanelView?
     private var emojiPanelSource: EmojiPanelSource = .english
+    private let syncQueue = DispatchQueue(label: "org.limeime.keyboard.sync", qos: .utility)
+    private var syncScanInProgress = false
+    private var tablesUpdatedObserver: SyncSignalObserver?
 
     // MARK: - SearchServer
     private var searchServer: SearchServer?
@@ -293,6 +296,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         setupKeyboardUI()
         applyHeight()
         reportFullAccessStatus()
+        tablesUpdatedObserver = SyncSignalObserver(signal: .tablesUpdated) { [weak self] in
+            self?.triggerSyncScanIfFullAccess()
+        }
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
         // app (0x8BADF00D) when it presents the keyboard extension for the first time.
@@ -307,8 +313,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         isKeyboardVisible = true
         didAnswerRelayThisAppearance = false
         reportFullAccessStatus()
+        triggerSyncScanIfFullAccess()
         scheduleRelayResponse()
         initOnStartInput()
+    }
+
+    private func triggerSyncScanIfFullAccess() {
+        guard hasFullAccess else { return }
+        syncQueue.async { [weak self] in
+            guard let self else { return }
+            guard !self.syncScanInProgress else { return }
+            self.syncScanInProgress = true
+            defer { self.syncScanInProgress = false }
+            let locator = SyncDatabaseLocator.production()
+            do {
+                _ = try DBServer.shared.prepareKeyboardRuntimeDatabase()
+                try TableSyncEngine(locator: locator).scanAndApply()
+            } catch {
+                UserDefaults.standard.set(error.localizedDescription,
+                                          forKey: "keyboard_db_last_error")
+            }
+        }
     }
 
     private func reportFullAccessStatus() {

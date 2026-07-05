@@ -82,14 +82,21 @@ final class ManageImController: BaseController {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
         let ss = searchServer
-        let rowID = await Task.detached(priority: .userInitiated) {
-            ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
+            guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
+            do {
+                try server.markTableChangedAndPublish(table)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if rowID > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("新增失敗"))
+        return result
     }
 
     // MARK: - Update record
@@ -100,29 +107,43 @@ final class ManageImController: BaseController {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
         let ss = searchServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            ss?.updateRecord(table, ["code": code, "word": word, "score": score],
-                             "_id = ?", [id]) ?? 0
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
+                                            "_id = ?", [id]) ?? 0
+            guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
+            do {
+                try server.markTableChangedAndPublish(table)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if affected > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("更新失敗"))
+        return result
     }
 
     // MARK: - Delete record
 
     func deleteRecord(table: String, id: String) async -> Result<Void, Error> {
         let ss = searchServer
-        let affected = await Task.detached(priority: .userInitiated) {
-            ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
+        let server = self.dbServer
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
+            let affected = ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
+            guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
+            do {
+                try server.markTableChangedAndPublish(table)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        if affected > 0 {
+        if case .success = result {
             ManageImController.markKeyboardCacheDirty()
-            return .success(())
         }
-        return .failure(ControllerError.operation("刪除失敗"))
+        return result
     }
 
     // MARK: - IM list
@@ -250,8 +271,12 @@ final class ManageImController: BaseController {
             view?.onError("字根和文字不能為空"); return
         }
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
+            if rowID > 0 {
+                try? server.markTableChangedAndPublish(table)
+            }
             await MainActor.run {
                 rowID > 0 ? view?.refreshRecordList() : view?.onError("新增失敗")
             }
@@ -264,9 +289,13 @@ final class ManageImController: BaseController {
             view?.onError("字根和文字不能為空"); return
         }
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
                                             "_id = ?", [id]) ?? 0
+            if affected > 0 {
+                try? server.markTableChangedAndPublish(table)
+            }
             await MainActor.run {
                 affected > 0 ? view?.refreshRecordList() : view?.onError("更新失敗")
             }
@@ -275,8 +304,12 @@ final class ManageImController: BaseController {
 
     func deleteRecord(table: String, id: String, view: (any ManageImView)?) {
         let ss = searchServer
+        let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let affected = ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
+            if affected > 0 {
+                try? server.markTableChangedAndPublish(table)
+            }
             await MainActor.run {
                 affected > 0 ? view?.refreshRecordList() : view?.onError("刪除失敗")
             }
@@ -328,16 +361,25 @@ final class ManageImController: BaseController {
         let ss = searchServer
         let server = self.dbServer
         let localPrefs = self.prefs
-        await Task.detached(priority: .userInitiated) {
+        let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             if backupLearning {
                 ss?.backupUserRecords(tableNick)
             }
             ss?.clearTable(tableNick)
             await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
+            do {
+                try server.writeIMInboxDelete(for: tableNick, postSignal: false)
+                try server.markTableChangedAndPublish(tableNick)
+                return .success(())
+            } catch {
+                return .failure(error)
+            }
         }.value
-        ManageImController.markKeyboardCacheDirty()
-        invalidate()
-        return .success(())
+        if case .success = result {
+            ManageImController.markKeyboardCacheDirty()
+            invalidate()
+        }
+        return result
     }
 }
 

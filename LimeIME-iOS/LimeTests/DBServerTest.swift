@@ -50,6 +50,28 @@ final class DBServerTest: XCTestCase {
             .appendingPathComponent(UUID().uuidString + ext)
     }
 
+    private func syncMeta(for db: LimeDB) throws -> SyncMetaStore {
+        try SyncMetaStore(databaseURL: URL(fileURLWithPath: db.dbPath()))
+    }
+
+    // Sync invariant (§2.4): keyboard learning must NOT bump sync_meta — the sync
+    // layer has no learning hook. (Relocated from the frozen SearchServerTest.)
+    func testKeyboardLearningDoesNotBumpSyncRevision() throws {
+        let db = try makeLimeDB()
+        let ss = SearchServer(db: db)
+        ss.initialCache()
+        ss.setTableName(LIME.DB_TABLE_PHONETIC, hasNumberMapping: true, hasSymbolMapping: true)
+
+        ss.learnRelatedPhraseAndUpdateScore(Mapping(id: 1, code: "a", word: "學",
+                                                    score: 0, baseScore: 0,
+                                                    recordType: Mapping.RecordType.exactMatchToCode))
+
+        let meta = try syncMeta(for: db)
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 0)
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_RELATED), 0)
+        XCTAssertEqual(try meta.generation(), 0)
+    }
+
     // MARK: - Phase 1: Basic Singleton & State
 
     func testDBServerInitialization() {
@@ -130,6 +152,18 @@ final class DBServerTest: XCTestCase {
 
         XCTAssertEqual(server.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "Edited Name")
         XCTAssertEqual(server.getImConfig(LIME.DB_TABLE_CUSTOM, "version"), "Edited Version")
+    }
+
+    func testRegisterIMBumpsRevisionAndPublishes() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+
+        try server.registerIM(imName: "i3_custom", tableName: LIME.DB_TABLE_CUSTOM,
+                              label: "I3 Custom", keyboardId: "lime")
+
+        let meta = try syncMeta(for: db)
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try meta.generation(), 1)
     }
 
     // MARK: - Phase 1: importDbRelated / importDb basic
@@ -233,6 +267,20 @@ final class DBServerTest: XCTestCase {
         let server = DBServer()
         server.importTxtTable(sourcefile: txtURL, tablename: LIME.DB_TABLE_CUSTOM) { _, _ in }
         XCTAssertTrue(true, "importTxtTable with progress listener should complete")
+    }
+
+    func testImportTxtFileBumpsRevisionAndPublishes() throws {
+        let txtURL = tempFile(".txt")
+        defer { try? FileManager.default.removeItem(at: txtURL) }
+        try "i3\t同步\n".write(to: txtURL, atomically: true, encoding: .utf8)
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+
+        try server.importTxtFile(at: txtURL.path, tableName: LIME.DB_TABLE_CUSTOM, progress: nil)
+
+        let meta = try syncMeta(for: db)
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try meta.generation(), 1)
     }
 
     func testDBServerImportTxtTableDelegatesToLimeDB() throws {

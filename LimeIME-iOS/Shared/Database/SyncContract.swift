@@ -6,8 +6,12 @@ enum SyncPaths {
         base.appendingPathComponent("cold.limedb")
     }
 
-    static func coldMeta(_ base: URL) -> URL {
-        base.appendingPathComponent("cold.meta.json")
+    static func inboxDir(_ base: URL) -> URL {
+        base.appendingPathComponent("inbox", isDirectory: true)
+    }
+
+    static func imInbox(_ base: URL) -> URL {
+        inboxDir(base).appendingPathComponent("im.json")
     }
 
     static func outboxDir(_ base: URL) -> URL {
@@ -43,6 +47,20 @@ struct LearnedScoreRow: Codable {
 
 struct LearnedScoresFile: Codable {
     var tables: [String: [LearnedScoreRow]]
+}
+
+struct IMInboxFile: Codable, Equatable {
+    var records: [IMInboxRecord]
+}
+
+struct IMInboxRecord: Codable, Equatable {
+    enum Operation: String, Codable {
+        case upsert
+        case delete
+    }
+
+    var op: Operation
+    var row: [String: String?]
 }
 
 enum SyncSignal: String {
@@ -511,6 +529,46 @@ final class FAPingObserver {
                 }
                 DispatchQueue.main.async {
                     monitor.onPing(hasFullAccess)
+                }
+            },
+            signal.rawValue as CFString,
+            nil,
+            .deliverImmediately)
+    }
+}
+
+final class SyncSignalObserver {
+    private let signal: SyncSignal
+    private let onSignal: () -> Void
+    private var observer: UnsafeRawPointer?
+
+    init(signal: SyncSignal, onSignal: @escaping () -> Void) {
+        self.signal = signal
+        self.onSignal = onSignal
+        self.observer = UnsafeRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        addObserver()
+    }
+
+    deinit {
+        guard let observer else { return }
+        CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+                                           observer,
+                                           CFNotificationName(signal.rawValue as CFString),
+                                           nil)
+    }
+
+    private func addObserver() {
+        guard let observer else { return }
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            observer,
+            { _, observer, _, _, _ in
+                guard let observer else { return }
+                let monitor = Unmanaged<SyncSignalObserver>
+                    .fromOpaque(observer)
+                    .takeUnretainedValue()
+                DispatchQueue.main.async {
+                    monitor.onSignal()
                 }
             },
             signal.rawValue as CFString,
