@@ -7,11 +7,13 @@ Last reviewed: 2026-07-02
 ## Active issue follow-up
 
 - #139: private iOS TestFlight reporter says 6.1.27 still covers bottom content, while native iOS and other third-party keyboards reportedly do not. Follow-up on 2026-07-02 says the symptom is not limited to Array10: Dayi also covers bottom content, with a larger covered range. Track as iOS table-keyboard bottom-content coverage / keyboard height or safe-area follow-up in `docs/#139_ISSUE.md`. No Android APK retest applies.
+- #147: maintainer-created iOS hybrid English input bug where candidate 0 lowercases typed uppercase/mixed-case English such as `ABC` or `iPhone`. Track as iOS composing-code echo preservation in `docs/#147_ISSUE.md`. No Android APK retest applies.
 
 ## Pending fixes
 
 - fix#139 iOS: reopened private-email/TestFlight issue for bottom-content coverage on TestFlight 6.1.27. Current focus is LIME custom-keyboard height / safe-area behavior across Array10 and Dayi, including `KeyboardView.preferredHeight`, `activeCandidateBarHeight`, `emojiSearchHeaderHeight`, layout row counts, and `KeyboardViewController.applyHeight()`. Keep numeric-field routing as prior investigated context, not the active defect unless new private evidence arrives. Track in `docs/#139_ISSUE.md`.
 - fix#142 Android: phone English keyboard (`電話英文鍵盤`) key-face labels can become nearly invisible in the light keyboard theme when used with `行列10` on LIME 6.1.27. Suspected Android path: `phone.xml` / `phone_shift.xml` use static `phone_*` bitmap key faces that do not contrast with the current light key background. Track in `docs/#142_ISSUE.md`. No reporter retest until a newer Android APK or Google Play build contains a targeted visibility fix.
+- fix#147 iOS: hybrid English input candidate 0 should preserve the user's typed capitalization. Suspected iOS path: the phonetic branch of `SearchServer.getMappingByCode(_:)` lowercases the composing-code echo before `assembleResultList` inserts it at index 0, while lookup normalization can remain lowercased. Track in `docs/#147_ISSUE.md`. No Android APK retest applies.
 
 ## New features / product work
 
