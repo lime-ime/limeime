@@ -218,13 +218,17 @@
 		EA5199243A781A843C22C763 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */; };
 		EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3A5071216F1AB96116BC3F /* DBServerTest.swift */; };
 		6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */; };
+		D1B100000000000000000002 /* SyncMetaStoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000001 /* SyncMetaStoreTest.swift */; };
+		D1B100000000000000000004 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
 		EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
+		D1B100000000000000000005 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */; };
 		F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AF70BA22361D8084D34B7F /* Keyboard.swift */; };
+		D1B100000000000000000006 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
 		F2B817702A0EB8A2941473F6 /* SearchServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70669219C0D562C4F98D828D /* SearchServerTest.swift */; };
 		F2C8C872E8796234504622A6 /* popup_smileys.json in Resources */ = {isa = PBXBuildFile; fileRef = CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */; };
@@ -466,6 +470,7 @@
 		A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordEditingCapabilityTest.swift; sourceTree = "<group>"; };
 		F00D14A00000000000000001 /* RelayPrefSyncTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPrefSyncTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
+		D1B100000000000000000001 /* SyncMetaStoreTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncMetaStoreTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
 		D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad.json; sourceTree = "<group>"; };
 		D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mapping.swift; sourceTree = "<group>"; };
@@ -510,6 +515,7 @@
 		FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_symbol_mode.json; sourceTree = "<group>"; };
 		FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBProtocol.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContract.swift; sourceTree = "<group>"; };
+		D1B100000000000000000003 /* SyncConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncConnection.swift; sourceTree = "<group>"; };
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -587,6 +593,7 @@
 					A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */,
 					F00D14A00000000000000001 /* RelayPrefSyncTest.swift */,
 					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
+					D1B100000000000000000001 /* SyncMetaStoreTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
@@ -688,6 +695,7 @@
 				3F0B16D9D4D0A632C53E2076 /* lime.db */,
 				C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */,
 				FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */,
+				D1B100000000000000000003 /* SyncConnection.swift */,
 				6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */,
 			);
 			path = Database;
@@ -1272,6 +1280,8 @@
 					A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */,
 					F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */,
 					6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
+					D1B100000000000000000002 /* SyncMetaStoreTest.swift in Sources */,
+					D1B100000000000000000004 /* SyncConnection.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,
 				8D62ED56761A14A0C42204A9 /* KeyLayout.swift in Sources */,
@@ -1312,6 +1322,7 @@
 				9FB37AFD7E021F497B9BC5C7 /* ChineseSymbol.swift in Sources */,
 				9F2367C0D0894DAA927C14D5 /* DBManagerView.swift in Sources */,
 				90A2992BD492D2D9B8D1ECB5 /* DBServer.swift in Sources */,
+				D1B100000000000000000005 /* SyncConnection.swift in Sources */,
 				E8E5B5DA570FE25A0B191DB8 /* EditRecordView.swift in Sources */,
 				AA9958D46518A84859225554 /* EditRelatedView.swift in Sources */,
 				AAB43ADB780D8C94FCFF9D68 /* IMCatalog.swift in Sources */,
@@ -1362,6 +1373,7 @@
 				FB1C3B404DFFA9F23F06F7A5 /* CandidateBarView.swift in Sources */,
 				8AC6B7DC76692A7FBFDDF3F9 /* ChineseSymbol.swift in Sources */,
 				05CE854A1417A2D45839D8D2 /* DBServer.swift in Sources */,
+				D1B100000000000000000006 /* SyncConnection.swift in Sources */,
 				A2E7579A48126A3587829923 /* ImConfig.swift in Sources */,
 				1D81EC3041A854E106B5F67F /* KeyLayout.swift in Sources */,
 				54537083062A7847A6BAE8BC /* Keyboard.swift in Sources */,

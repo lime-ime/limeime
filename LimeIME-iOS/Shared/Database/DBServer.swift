@@ -21,17 +21,12 @@ final class SharedDatabase {
 
     var dataDirURL: URL {
         if let dataDirOverride { return dataDirOverride }
-        if let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) {
-            return url
-        }
-        let fallback = FileManager.default.urls(for: .applicationSupportDirectory,
-                                                in: .userDomainMask).first?
-            .appendingPathComponent("LimeIME", isDirectory: true)
-        let url = fallback ?? FileManager.default.temporaryDirectory
-            .appendingPathComponent("LimeIME", isDirectory: true)
+        let url = SyncDatabaseLocator.liveDatabaseDirectory()
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        print("[DBServer] App Group unavailable; using persistent fallback database directory: \(url.path)")
+        if SyncDatabaseLocator.appGroupDirectory() == nil,
+           !SyncDatabaseLocator.isKeyboardExtension() {
+            print("[DBServer] App Group unavailable; using persistent fallback database directory: \(url.path)")
+        }
         return url
     }
 
@@ -76,12 +71,34 @@ final class SharedDatabase {
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
     }
 
-    private func openDatasource() -> LimeDB? {
+    func ensureDatabaseFile() throws -> URL {
         let directoryURL = dataDirURL
-        try? FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         let dbURL = directoryURL.appendingPathComponent(Self.databaseName)
-        if !FileManager.default.fileExists(atPath: dbURL.path) {
-            try? copyBundledDatabase(to: dbURL)
+        guard !FileManager.default.fileExists(atPath: dbURL.path) else { return dbURL }
+
+        if dataDirOverride == nil,
+           SyncDatabaseLocator.isKeyboardExtension(),
+           let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
+            let legacyURL = SyncDatabaseLocator.appGroupDirectory()?
+                .appendingPathComponent(Self.databaseName)
+            _ = try SyncDatabaseBootstrap.ensureKeyboardHotDatabase(
+                hotDatabaseURL: dbURL,
+                legacyDatabaseURL: legacyURL,
+                bundledDefaultURL: bundledURL)
+        } else {
+            try copyBundledDatabase(to: dbURL)
+        }
+        return dbURL
+    }
+
+    private func openDatasource() -> LimeDB? {
+        let dbURL: URL
+        do {
+            dbURL = try ensureDatabaseFile()
+        } catch {
+            print("[DBServer] openDatasource: database bootstrap failed: \(error)")
+            return nil
         }
         guard let db = try? LimeDB(path: dbURL.path) else { return nil }
         if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
@@ -1065,10 +1082,7 @@ final class DBServer {
     ///   stale GRDB queue bound to the pre-restore inode is replaced and IM reads
     ///   see the restored data instead of returning zero IMs.
     func prepareKeyboardRuntimeDatabase(forceReopen: Bool = false) throws -> KeyboardRuntimeContext {
-        let dbURL = dataDirURL.appendingPathComponent(DBServer.databaseName)
-        if !FileManager.default.fileExists(atPath: dbURL.path) {
-            try copyBundledDatabase(to: dbURL)
-        }
+        _ = try database.ensureDatabaseFile()
 
         if forceReopen { reopenDatabaseFromDisk() }
 
