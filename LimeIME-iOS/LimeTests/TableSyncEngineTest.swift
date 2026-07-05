@@ -105,9 +105,22 @@ final class TableSyncEngineTest: XCTestCase {
                         to: SyncPaths.editorRefreshRequest(appGroup))
     }
 
+    private func writeExportRequest(appGroup: URL,
+                                    requestUUID: String = UUID().uuidString) throws {
+        let request = ExportRequest(requestUUID: requestUUID,
+                                    expiresAt: Date().addingTimeInterval(60).timeIntervalSince1970)
+        try atomicWrite(try JSONEncoder().encode(request),
+                        to: SyncPaths.exportRequest(appGroup))
+    }
+
     private func editorRefreshReceipt(appGroup: URL) throws -> EditorRefreshReceipt {
         let data = try Data(contentsOf: SyncPaths.editorRefreshReceipt(appGroup))
         return try JSONDecoder().decode(EditorRefreshReceipt.self, from: data)
+    }
+
+    private func exportReceipt(appGroup: URL) throws -> ExportReceipt {
+        let data = try Data(contentsOf: SyncPaths.receipt(appGroup))
+        return try JSONDecoder().decode(ExportReceipt.self, from: data)
     }
 
     private func makeRelatedDatabase(at url: URL,
@@ -278,6 +291,48 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try hotMeta.appliedGeneration(), 1)
     }
 
+    func testEpochFullReplaceClearsStaleIMInbox() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let hot = hotDir.appendingPathComponent("lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeIMDatabase(at: cold,
+                           rows: [
+                               ["code": "restored", "title": "keyboard", "desc": "Restored", "keyboard": "lime"]
+                           ],
+                           epoch: "epoch-restored",
+                           generation: 1)
+        try makeIMDatabase(at: hot,
+                           rows: [
+                               ["code": "old", "title": "keyboard", "desc": "Old", "keyboard": "oldkb"]
+                           ],
+                           epoch: "epoch-old",
+                           generation: 1)
+        let staleInbox = IMInboxFile(records: [
+            IMInboxRecord(op: .upsert, row: [
+                "code": "stale",
+                "title": "keyboard",
+                "desc": "Stale",
+                "keyboard": "stale"
+            ])
+        ])
+        let inboxURL = SyncPaths.imInbox(appGroup)
+        try atomicWrite(try JSONEncoder().encode(staleInbox), to: inboxURL)
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+
+        try publish(cold, appGroup: appGroup)
+        try TableSyncEngine(appGroupBaseURL: appGroup,
+                            hotDatabaseURL: hot,
+                            dbServer: server).scanAndApply()
+
+        let rows = try imRows(in: hot)
+        XCTAssertTrue(rows.contains("restored|keyboard|Restored|lime"))
+        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") })
+        XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
+    }
+
     func testSameGenerationAndEpochNoOpsEvenWhenRevisionsDiffer() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -383,6 +438,27 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try imRows(in: hot), ["custom|keyboard|New|lime"])
         XCTAssertTrue(try imRows(in: coldSnapshot).isEmpty)
         XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
+    }
+
+    func testBackupExportRequestVacuumHotSnapshotAndWritesReceipt() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: hot,
+                         rows: [("learned", "學", 42)],
+                         epoch: "hot-epoch",
+                         generation: 7)
+        try writeExportRequest(appGroup: appGroup, requestUUID: "backup-1")
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: SyncPaths.backupSnapshot(appGroup)),
+                       ["learned|學|42"])
+        let receipt = try exportReceipt(appGroup: appGroup)
+        XCTAssertEqual(receipt.requestUUID, "backup-1")
+        XCTAssertEqual(receipt.epochUUID, "hot-epoch")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(appGroup).path))
     }
 
     func testEditorRefreshHarvestsNewAndScoreChangedRowsIntoLiveCold() throws {

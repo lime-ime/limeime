@@ -1,5 +1,6 @@
 ﻿import Foundation
 import GRDB
+import Darwin
 
 final class TableSyncEngine {
     private let appGroupBaseURL: URL
@@ -22,6 +23,7 @@ final class TableSyncEngine {
     }
 
     func scanAndApply() throws {
+        try processBackupExportRequestIfNeeded()
         try processEditorRefreshRequestIfNeeded()
 
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
@@ -51,7 +53,7 @@ final class TableSyncEngine {
                 try refreshedHotMeta.removeValue(forKey: SyncMetaStore.appliedEpochKey)
             }
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
-            try drainIMInboxIfNeeded()
+            try clearIMInboxIfNeeded()
             return
         }
 
@@ -61,6 +63,34 @@ final class TableSyncEngine {
         }
         try hotMeta.setAppliedGeneration(coldGeneration)
         try drainIMInboxIfNeeded()
+    }
+
+    private func processBackupExportRequestIfNeeded() throws {
+        let requestURL = SyncPaths.exportRequest(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
+        defer { try? FileManager.default.removeItem(at: requestURL) }
+
+        let request = try JSONDecoder().decode(ExportRequest.self,
+                                               from: Data(contentsOf: requestURL))
+        guard request.expiresAt >= Date().timeIntervalSince1970 else { return }
+
+        let snapshotURL = SyncPaths.backupSnapshot(appGroupBaseURL)
+        let tempURL = SyncPaths.outboxDir(appGroupBaseURL)
+            .appendingPathComponent(".backup.\(UUID().uuidString).limedb.tmp")
+        defer { try? FileManager.default.removeItem(at: tempURL) }
+
+        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        try connection.writeWithoutTransaction { db in
+            try db.execute(sql: "VACUUM INTO ?", arguments: [tempURL.path])
+        }
+        try Self.renameReplacing(tempURL, with: snapshotURL)
+
+        let epoch = try SyncMetaStore(databaseURL: hotDatabaseURL).epochUUID() ?? ""
+        let receipt = ExportReceipt(requestUUID: request.requestUUID,
+                                    epochUUID: epoch,
+                                    at: Date().timeIntervalSince1970)
+        try atomicWrite(try JSONEncoder().encode(receipt),
+                        to: SyncPaths.receipt(appGroupBaseURL))
     }
 
     private func processEditorRefreshRequestIfNeeded() throws {
@@ -201,6 +231,12 @@ final class TableSyncEngine {
                 }
             }
         }
+        try FileManager.default.removeItem(at: inboxURL)
+    }
+
+    private func clearIMInboxIfNeeded() throws {
+        let inboxURL = SyncPaths.imInbox(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
         try FileManager.default.removeItem(at: inboxURL)
     }
 
@@ -358,6 +394,12 @@ final class TableSyncEngine {
 
     private static func quotedIdentifier(_ identifier: String) -> String {
         "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    private static func renameReplacing(_ source: URL, with destination: URL) throws {
+        guard rename(source.path, destination.path) == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
     }
 
     private static func isSafeTableName(_ table: String) -> Bool {

@@ -304,7 +304,7 @@ final class DBServer {
         }
     }
 
-    private func liveDatabaseURL() -> URL {
+    func liveDatabaseURL() -> URL {
         if let path = datasource?.dbPath(), !path.isEmpty {
             return URL(fileURLWithPath: path)
         }
@@ -1250,6 +1250,16 @@ final class DBServer {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importFromAttachedDB(sourcePath: sourcePath, tableName: tableName)
         try markTableChangedAndPublish(tableName)
+    }
+
+    @discardableResult
+    func restoreUserRecords(_ tableName: String) throws -> Int {
+        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
+        let restoredCount = ds.restoreUserRecords(tableName)
+        if restoredCount > 0 {
+            try markTableChangedAndPublish(tableName)
+        }
+        return restoredCount
     }
 
     func importTxtFile(at path: String, tableName: String,

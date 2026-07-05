@@ -107,7 +107,10 @@ final class SetupImController: BaseController {
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable)
+                try importDatabaseFile(server: server,
+                                       url: url,
+                                       tableName: safeTable,
+                                       restoreLearning: restoreLearning)
                 return .success(safeTable)
             } catch {
                 return .failure(error)
@@ -125,6 +128,7 @@ final class SetupImController: BaseController {
         let result: Result<String, Error> = await Task.detached(priority: .userInitiated) {
             do {
                 try server.restoreBundledDatabase()
+                try publishRestoredCold(server: server)
                 return .success("已還原預設資料庫")
             } catch {
                 return .failure(error)
@@ -157,19 +161,39 @@ final class SetupImController: BaseController {
     /// Backup the database to a temp .zip file and return its URL for sharing.
     /// Caller is responsible for deleting the temp file after sharing.
     func backupDB() throws -> URL {
-        throw SetupImControllerError.backupDeferred  // TODO(I5): backup transport rebuilt in I5
+        try requestKeyboardBackup(server: dbServer)
     }
 
     func backupDBAsync() async -> Result<URL, Error> {
-        // TODO(I5): backup transport rebuilt in I5; deferred so I0 compiles + the gate stays.
-        return .failure(SetupImControllerError.backupDeferred)
+        let server = self.dbServer
+        return await Task.detached(priority: .userInitiated) {
+            do {
+                return .success(try requestKeyboardBackup(server: server))
+            } catch {
+                return .failure(error)
+            }
+        }.value
     }
 
 #if DEBUG
-    // ponytail: UI-test backup snapshots cold DB directly; hot relay is already covered by EpochRestoreTest.testBackupRelayRoundTrip.
     func backupColdDBToDocumentsForUITest(fileName: String = "lime_backup.zip") async -> Result<URL, Error> {
-        // TODO(I5): backup transport rebuilt in I5.
-        return .failure(SetupImControllerError.backupDeferred)
+        let server = self.dbServer
+        return await Task.detached(priority: .userInitiated) {
+            do {
+                let backupURL = try requestKeyboardBackup(server: server)
+                defer { try? FileManager.default.removeItem(at: backupURL) }
+                let documentsURL = FileManager.default.urls(for: .documentDirectory,
+                                                            in: .userDomainMask)[0]
+                try FileManager.default.createDirectory(at: documentsURL,
+                                                        withIntermediateDirectories: true)
+                let destinationURL = documentsURL.appendingPathComponent(fileName)
+                try? FileManager.default.removeItem(at: destinationURL)
+                try FileManager.default.copyItem(at: backupURL, to: destinationURL)
+                return .success(destinationURL)
+            } catch {
+                return .failure(error)
+            }
+        }.value
     }
 
     // ponytail: row-count fallback is a UI-test proof that restored cold tables are real when keyboard driving is flaky.
@@ -319,7 +343,6 @@ final class SetupImController: BaseController {
 
 enum SetupImControllerError: Error {
     case backupTimedOut
-    case backupDeferred  // TODO(I5): backup/restore transport rebuilt in I5
     case editorRefreshTimedOut
     case editorRefreshFailed(String?)
     case restoreSchemaTooNew(Int)
@@ -330,8 +353,6 @@ extension SetupImControllerError: LocalizedError {
         switch self {
         case .backupTimedOut:
             return "備份逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
-        case .backupDeferred:
-            return "備份功能暫未啟用"  // TODO(I5): backup transport rebuilt in I5
         case .editorRefreshTimedOut:
             return "同步逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
         case .editorRefreshFailed(let message):
@@ -361,7 +382,6 @@ private let maxRestoreExtractTotalBytes: UInt64 = 500 * 1024 * 1024
 private let maxRestoreExtractEntries = 10_000
 private let maxRestoreCompressionRatio = 100.0
 
-// TODO(I5): App Group base for the backup/restore outbox — I1 restores DBServer.syncBaseURL.
 private func appGroupBaseURL() -> URL {
     FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName)
         ?? FileManager.default.temporaryDirectory
@@ -381,12 +401,20 @@ private func restoreBackupIntoCold(server: DBServer, from url: URL) throws {
     try validateRestoreDatabase(payload.databaseURL)
     try server.restoreDatabase(srcFilePath: localURL.path)
     reregisterKnownIMs(server: server)
+    try publishRestoredCold(server: server)
 }
 
 private func requestKeyboardBackup(server: DBServer) throws -> URL {
     let snapshotURL = try requestKeyboardSnapshot(server: server)
     defer { try? FileManager.default.removeItem(at: snapshotURL) }
     return try buildBackupArchive(server: server, snapshotURL: snapshotURL)
+}
+
+private func publishRestoredCold(server: DBServer) throws {
+    let liveURL = server.liveDatabaseURL()
+    _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
+    try ColdPublisher(liveColdDatabaseURL: liveURL,
+                      appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
 }
 
 private func requestKeyboardSnapshot(server: DBServer) throws -> URL {
@@ -663,7 +691,10 @@ private func fileSizeBytes(at url: URL) -> Int64 {
     return size?.int64Value ?? 0
 }
 
-func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
+func importDatabaseFile(server: DBServer,
+                        url: URL,
+                        tableName: String,
+                        restoreLearning: Bool = false) throws {
     let sourceURL: URL
     let cleanupURL: URL?
     if isZipArchive(at: url) {
@@ -681,6 +712,9 @@ func importDatabaseFile(server: DBServer, url: URL, tableName: String) throws {
     }
     try validateImportDatabaseSource(sourceURL, tableName: tableName)
     try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName)
+    if restoreLearning {
+        _ = try server.restoreUserRecords(tableName)
+    }
 }
 
 private func isZipArchive(at url: URL) -> Bool {

@@ -139,6 +139,59 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    private func rawRowCount(_ table: String, in dbURL: URL) throws -> Int {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
+        }
+    }
+
+    private func rawCustomRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT code, word, score FROM custom ORDER BY code, word
+                """).map {
+                    "\($0["code"] as String? ?? "")|\($0["word"] as String? ?? "")|\($0["score"] as Int? ?? 0)"
+                }
+        }
+    }
+
+    private func insertRawCustomRow(code: String, word: String, score: Int, into dbURL: URL) throws {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                INSERT INTO custom (code, word, score) VALUES (?, ?, ?)
+                """, arguments: [code, word, score])
+        }
+    }
+
+    private func makeWholeDatabaseBackupZip(from db: LimeIME.LimeDB,
+                                            removingEmojiTables: Bool = false) throws -> URL {
+        let snapshotURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".db")
+        let zipURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".zip")
+        try db.exportDB(to: snapshotURL.path)
+        if removingEmojiTables {
+            let queue = try DatabaseQueue(path: snapshotURL.path)
+            defer { try? queue.close() }
+            try queue.write { db in
+                try db.execute(sql: "DROP TABLE IF EXISTS emoji_fts")
+                try db.execute(sql: "DROP TABLE IF EXISTS emoji_user")
+                try db.execute(sql: "DROP TABLE IF EXISTS emoji_data")
+                try db.execute(sql: "DELETE FROM im WHERE code = 'emoji'")
+            }
+        }
+        let archive = try Archive(url: zipURL, accessMode: .create)
+        try archive.addEntry(with: DBServer.databaseName, fileURL: snapshotURL)
+        try? FileManager.default.removeItem(at: snapshotURL)
+        return zipURL
+    }
+
     private func rawTableColumns(_ dbURL: URL, tableName: String) throws -> [String] {
         let queue = try DatabaseQueue(path: dbURL.path)
         defer { try? queue.close() }
@@ -531,6 +584,18 @@ final class SetupImControllerTest: XCTestCase {
 
     // MARK: - restoreDB
 
+    func testEmojiTablesPresentOnFreshDB() throws {
+        let (url, _) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let tables = try rawTableNames(url)
+
+        XCTAssertTrue(tables.contains("emoji_data"))
+        XCTAssertTrue(tables.contains("emoji_fts"))
+        XCTAssertTrue(tables.contains("emoji_user"))
+        XCTAssertGreaterThan(try rawRowCount("emoji_data", in: url), 0)
+    }
+
     func testRestoreDBFromInvalidURLReportsError() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
@@ -569,6 +634,62 @@ final class SetupImControllerTest: XCTestCase {
         await MainActor.run {
             XCTAssertFalse(progress.isVisible, "Restore must dismiss progress after failure")
         }
+    }
+
+    func testRestoreDBPublishesEpochSnapshotRefreshesEmojiAndKeyboardFullReplaces() async throws {
+        let coldDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        let coldURL = coldDir.appendingPathComponent(DBServer.databaseName)
+        let coldDB = try LimeIME.LimeDB(path: coldURL.path)
+        _ = coldDB.openDBConnection(false)
+        let (sourceURL, sourceDB) = try makeDB()
+        let hotDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        let hotURL = hotDir.appendingPathComponent("lime.db")
+        let hotDB = try LimeIME.LimeDB(path: hotURL.path)
+        _ = hotDB.openDBConnection(false)
+        defer {
+            try? FileManager.default.removeItem(at: coldDir)
+            try? FileManager.default.removeItem(at: sourceURL)
+            try? FileManager.default.removeItem(at: hotDir)
+        }
+        coldDB.addOrUpdateMappingRecord("custom", "old", "舊", 1)
+        sourceDB.addOrUpdateMappingRecord("custom", "restored", "還", 7)
+        hotDB.addOrUpdateMappingRecord("custom", "hot", "熱", 3)
+        let backupURL = try makeWholeDatabaseBackupZip(from: sourceDB, removingEmojiTables: true)
+        defer { try? FileManager.default.removeItem(at: backupURL) }
+        let appGroup = coldURL.deletingLastPathComponent()
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: coldDB), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.restoreDB(from: backupURL)
+
+        if case .failure(let error) = result {
+            XCTFail("Expected restore to succeed, got \(error)")
+        }
+        XCTAssertEqual(try rawCustomRows(in: coldURL), ["restored|還|7"])
+        XCTAssertGreaterThan(try rawRowCount("emoji_data", in: coldURL), 0)
+        let epoch = try syncMeta(for: coldURL).epochUUID()
+        XCTAssertNotNil(epoch)
+        let publishedSnapshot = SyncPaths.coldDB(appGroup)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: publishedSnapshot.path))
+        XCTAssertEqual(try syncMeta(for: publishedSnapshot).epochUUID(), epoch)
+
+        let hotServer = DBServer(_testDatabaseDirectory: hotURL.deletingLastPathComponent())
+        try TableSyncEngine(appGroupBaseURL: appGroup,
+                            hotDatabaseURL: hotURL,
+                            dbServer: hotServer).scanAndApply()
+        XCTAssertEqual(try rawCustomRows(in: hotURL), ["restored|還|7"])
+
+        try insertRawCustomRow(code: "local", word: "本機", score: 2, into: hotURL)
+        try TableSyncEngine(appGroupBaseURL: appGroup,
+                            hotDatabaseURL: hotURL,
+                            dbServer: hotServer).scanAndApply()
+        XCTAssertEqual(try rawCustomRows(in: hotURL), ["local|本機|2", "restored|還|7"])
     }
 
     // MARK: - syncIMActivatedState

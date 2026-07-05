@@ -31,8 +31,6 @@ final class IntegrationTestBackupRestore: XCTestCase {
 
     @MainActor
     func testCloudIMInstallBackupAndRestoreLearningThroughSettingsImport() async throws {
-        // TODO(I5): backup/restore transport is deferred in I0; re-enable when I5 rebuilds it.
-        try XCTSkipIf(true, "backup/restore transport deferred to I5 (cold/hot rework)")
         let (db, controller) = try makeHarness()
 
         for fixture in cloudFixtures {
