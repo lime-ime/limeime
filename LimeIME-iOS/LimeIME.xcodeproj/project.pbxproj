@@ -221,6 +221,14 @@
 		D1B100000000000000000002 /* SyncMetaStoreTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000001 /* SyncMetaStoreTest.swift */; };
 		D1B100000000000000000004 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
+		C01D2A000000000000000006 /* ColdPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000005 /* ColdPublisher.swift */; };
+		C01D2A000000000000000007 /* ColdPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000005 /* ColdPublisher.swift */; };
+		C01D2A000000000000000008 /* ColdPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000005 /* ColdPublisher.swift */; };
+		C01D2A000000000000000010 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000009 /* TableSyncEngine.swift */; };
+		C01D2A000000000000000011 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000009 /* TableSyncEngine.swift */; };
+		C01D2A000000000000000012 /* TableSyncEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000009 /* TableSyncEngine.swift */; };
+		C01D2A000000000000000002 /* ColdPublisherTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000001 /* ColdPublisherTest.swift */; };
+		C01D2A000000000000000004 /* TableSyncEngineTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C01D2A000000000000000003 /* TableSyncEngineTest.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
@@ -471,6 +479,10 @@
 		F00D14A00000000000000001 /* RelayPrefSyncTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPrefSyncTest.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
 		D1B100000000000000000001 /* SyncMetaStoreTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncMetaStoreTest.swift; sourceTree = "<group>"; };
+		C01D2A000000000000000005 /* ColdPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColdPublisher.swift; sourceTree = "<group>"; };
+		C01D2A000000000000000009 /* TableSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSyncEngine.swift; sourceTree = "<group>"; };
+		C01D2A000000000000000001 /* ColdPublisherTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColdPublisherTest.swift; sourceTree = "<group>"; };
+		C01D2A000000000000000003 /* TableSyncEngineTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableSyncEngineTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
 		D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad.json; sourceTree = "<group>"; };
 		D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mapping.swift; sourceTree = "<group>"; };
@@ -594,6 +606,8 @@
 					F00D14A00000000000000001 /* RelayPrefSyncTest.swift */,
 					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 					D1B100000000000000000001 /* SyncMetaStoreTest.swift */,
+					C01D2A000000000000000001 /* ColdPublisherTest.swift */,
+					C01D2A000000000000000003 /* TableSyncEngineTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
@@ -692,6 +706,8 @@
 			isa = PBXGroup;
 			children = (
 				ADE1BC618A27E7629062FC20 /* DBServer.swift */,
+				C01D2A000000000000000005 /* ColdPublisher.swift */,
+				C01D2A000000000000000009 /* TableSyncEngine.swift */,
 				3F0B16D9D4D0A632C53E2076 /* lime.db */,
 				C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */,
 				FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */,
@@ -1281,6 +1297,10 @@
 					F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */,
 					6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
 					D1B100000000000000000002 /* SyncMetaStoreTest.swift in Sources */,
+					C01D2A000000000000000002 /* ColdPublisherTest.swift in Sources */,
+					C01D2A000000000000000004 /* TableSyncEngineTest.swift in Sources */,
+					C01D2A000000000000000006 /* ColdPublisher.swift in Sources */,
+					C01D2A000000000000000010 /* TableSyncEngine.swift in Sources */,
 					D1B100000000000000000004 /* SyncConnection.swift in Sources */,
 				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,
@@ -1322,6 +1342,8 @@
 				9FB37AFD7E021F497B9BC5C7 /* ChineseSymbol.swift in Sources */,
 				9F2367C0D0894DAA927C14D5 /* DBManagerView.swift in Sources */,
 				90A2992BD492D2D9B8D1ECB5 /* DBServer.swift in Sources */,
+				C01D2A000000000000000007 /* ColdPublisher.swift in Sources */,
+				C01D2A000000000000000011 /* TableSyncEngine.swift in Sources */,
 				D1B100000000000000000005 /* SyncConnection.swift in Sources */,
 				E8E5B5DA570FE25A0B191DB8 /* EditRecordView.swift in Sources */,
 				AA9958D46518A84859225554 /* EditRelatedView.swift in Sources */,
@@ -1373,6 +1395,8 @@
 				FB1C3B404DFFA9F23F06F7A5 /* CandidateBarView.swift in Sources */,
 				8AC6B7DC76692A7FBFDDF3F9 /* ChineseSymbol.swift in Sources */,
 				05CE854A1417A2D45839D8D2 /* DBServer.swift in Sources */,
+				C01D2A000000000000000008 /* ColdPublisher.swift in Sources */,
+				C01D2A000000000000000012 /* TableSyncEngine.swift in Sources */,
 				D1B100000000000000000006 /* SyncConnection.swift in Sources */,
 				A2E7579A48126A3587829923 /* ImConfig.swift in Sources */,
 				1D81EC3041A854E106B5F67F /* KeyLayout.swift in Sources */,

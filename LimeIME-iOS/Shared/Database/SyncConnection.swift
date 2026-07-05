@@ -26,6 +26,10 @@ final class SyncDatabaseConnection {
         try queue.write(body)
     }
 
+    func writeWithoutTransaction<T>(_ body: (Database) throws -> T) throws -> T {
+        try queue.writeWithoutTransaction(body)
+    }
+
     func busyTimeoutMilliseconds() throws -> Int {
         try read { db in
             try Int.fetchOne(db, sql: "PRAGMA busy_timeout") ?? 0
@@ -36,6 +40,8 @@ final class SyncDatabaseConnection {
 final class SyncMetaStore {
     static let epochUUIDKey = "epoch_uuid"
     static let generationKey = "generation"
+    static let appliedEpochKey = "applied_epoch"
+    static let appliedGenerationKey = "applied_generation"
 
     private let connection: SyncDatabaseConnection
 
@@ -81,6 +87,22 @@ final class SyncMetaStore {
 
     func generation() throws -> Int {
         try intValue(forKey: Self.generationKey)
+    }
+
+    func appliedEpoch() throws -> String? {
+        try value(forKey: Self.appliedEpochKey)
+    }
+
+    func setAppliedEpoch(_ epoch: String) throws {
+        try setValue(epoch, forKey: Self.appliedEpochKey)
+    }
+
+    func appliedGeneration() throws -> Int {
+        try intValue(forKey: Self.appliedGenerationKey)
+    }
+
+    func setAppliedGeneration(_ generation: Int) throws {
+        try setValue(String(generation), forKey: Self.appliedGenerationKey)
     }
 
     @discardableResult
@@ -131,7 +153,11 @@ final class SyncMetaStore {
     }
 
     private static func isAllowedKey(_ key: String) -> Bool {
-        key == epochUUIDKey || key == generationKey || key.hasPrefix("rev:")
+        key == epochUUIDKey
+            || key == generationKey
+            || key == appliedEpochKey
+            || key == appliedGenerationKey
+            || key.hasPrefix("rev:")
     }
 }
 

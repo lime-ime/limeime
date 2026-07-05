@@ -226,6 +226,38 @@ final class DBServer {
         database.reopenFromDisk()
     }
 
+    func replaceDatabaseFromSnapshot(_ snapshotURL: URL) throws {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: snapshotURL.path) else {
+            throw DBServerError.fileNotFound(snapshotURL.path)
+        }
+        let dbURL = dataDirURL.appendingPathComponent(Self.databaseName)
+        let tempURL = dataDirURL.appendingPathComponent(Self.databaseName + ".sync_tmp")
+
+        try fm.createDirectory(at: dataDirURL, withIntermediateDirectories: true)
+        try? fm.removeItem(at: tempURL)
+        try fm.copyItem(at: snapshotURL, to: tempURL)
+
+        let liveDatasource = datasource
+        liveDatasource?.holdDBConnection()
+        closeDatabase()
+        datasource = nil
+        defer {
+            reopenDatabaseFromDisk()
+            datasource?.unHoldDBConnection()
+            try? fm.removeItem(at: tempURL)
+        }
+
+        for url in [
+            dbURL,
+            URL(fileURLWithPath: dbURL.path + "-wal"),
+            URL(fileURLWithPath: dbURL.path + "-shm")
+        ] {
+            try? fm.removeItem(at: url)
+        }
+        try fm.moveItem(at: tempURL, to: dbURL)
+    }
+
     // MARK: - 1. isDatabaseOnHold
     func isDatabaseOnHold() -> Bool {
         return datasource?.isDatabaseOnHold() ?? false
