@@ -482,5 +482,33 @@ the same gate, re-run the Final Gate. Loop until green. No other stop conditions
 
 ## Flight log
 
-_(Appended in-flight: one row per iteration — commit, result, any design-doc
-write-backs.)_
+Autonomous goal-mode run. Codex-built (GPT-5.5 · xhigh · priority), Claude-reviewed
+every result (boundary + gap + /code-review + ponytail + BOM + fresh gate) before each
+commit. Frozen four + frozen tests stayed byte-identical to master throughout.
+
+| Iter | Commit | Result / notes |
+| --- | --- | --- |
+| I0 | `557de977` | Reconcile baseline; 967 tests. Backup/restore glue deferred (`.backupDeferred`); 1 integration test `XCTSkip`'d to I5. |
+| I1 | `f975c1b6` | Sync foundation: `SyncConnection`/`SyncMetaStore` (own WAL connection, `sync_meta` = epoch/generation/rev, `user_version` frozen 104), run-mode split. 974 tests. |
+| I2 | `f7df2ae7` | `ColdPublisher` (VACUUM→`cold.limedb`, epoch in `sync_meta`) + `TableSyncEngine.scanAndApply` (generation no-op / epoch full-replace / rev incremental). 980 tests. |
+| I3 | `cb4d3a40` | Rev-bump+publish at ops; §1.5 one-way `im` inbox; FA-gated keyboard sync trigger. Caught+relocated a frozen-`SearchServerTest` violation. 990 tests. |
+| I4 | `61b6d7f3` | §1.4 editor sync — entry harvest (hot→cold `LEFT JOIN`) via request/receipt, close via incremental, commit-on-background. 1000 tests. |
+| I5-T1 | `96ed8528` | §1.1/§1.2/§1.3 — backup handshake (keyboard VACUUM hot), wholesale restore (epoch bump→publish→full-replace, inbox-clear), emoji Model-B verified. Re-enabled the I0-skipped integration test (2 green). 1004 tests. |
+| I5-T2 | `0b5abf35` | §1.6 hot-side `<table>_user` lifecycle (backup-before-clear on delete, restore-after-import on install) via a lifecycle inbox. 1010 tests. |
+| I6 | `7a9e11f0` | Removed the dead JSON learned-score path; grep gates zero; ponytail-debt documented. 1008 tests. |
+
+**As-built channel filenames** (design write-back): `inbox/im.json` (§1.5 im meta),
+`inbox/lifecycle.json` = `IMLifecycleRecord{table, action, preserveLearning}` (§1.6),
+`outbox/editor.refresh.request.json` / `editor.refresh.receipt.json` (§1.4 harvest),
+`outbox/export.request.json` / `backup.limedb` / `receipt.json` (§1.1). Epoch lives in
+each DB's `sync_meta` (never a `cold.meta.json` sidecar, never `LimeDB.bumpEpoch`).
+
+**Ponytail-debt ledger:** (1) `EditorRefreshViewSourceTest` uses source-string
+assertions (brittle on editor-view refactor); (2) `applyDeleteLifecycle` opens a fresh
+`LimeDB` per lifecycle record (heavyweight; rare delete path). Both deliberate ceilings.
+
+**Residual (Final Gate item 4):** the on-simulator `ios-visual-verify` end-to-end pass
+requires a booted sim with LimeIME enabled + Full Access and Safari-driven UITests — a
+partly-interactive setup. The headless unit gate (1008 tests, incl. the backup/restore
+integration round-trip) is green and is the project's reliable oracle; the visual pass
+is the one item that needs an interactive device session.
