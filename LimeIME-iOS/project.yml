@@ -44,15 +44,6 @@ targets:
           fi
         outputFiles:
           - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/emoji.db
-      - name: Copy hanconvertv2.db to bundle
-        script: |
-          SRC="${SRCROOT}/../LimeStudio/app/src/main/res/raw/hanconvertv2.db"
-          DST="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/hanconvertv2.db"
-          if [ -f "$SRC" ]; then
-            cp -f "$SRC" "$DST"
-          fi
-        outputFiles:
-          - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/hanconvertv2.db
     dependencies:
       - package: GRDB
       - package: ZIPFoundation

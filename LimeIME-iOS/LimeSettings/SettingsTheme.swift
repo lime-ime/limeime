@@ -49,7 +49,7 @@ enum SettingsTheme {
     // ink (dark) — matching Android's #1F (light) and #26 (dark) alpha.
     static let statusTintGreen  = adaptive(light: successInkLight.withAlphaComponent(0.12),
                                            dark:  successInkDark.withAlphaComponent(0.15))
-    static let statusTintYellow = adaptive(light: warningInkLight.withAlphaComponent(0.12),
+    static let statusTintOrange = adaptive(light: warningInkLight.withAlphaComponent(0.12),
                                            dark:  warningInkDark.withAlphaComponent(0.15))
     static let statusTintRed    = adaptive(light: dangerInkLight.withAlphaComponent(0.12),
                                            dark:  dangerInkDark.withAlphaComponent(0.15))

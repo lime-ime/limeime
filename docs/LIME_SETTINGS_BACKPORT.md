@@ -128,14 +128,14 @@ NestedScrollView
     ├── StatusCard  (Material 3 elevated card; colour reflects state — see §4.2)
     │   └── TextView statusText
     │
-    ├── TextView "設定 LimeIME"   (titleLarge)
+    ├── TextView "設定萊姆輸入法"   (titleLarge)
     │
     ├── SetupStepList   (2 steps — matches the two CTA buttons below; Android has no Full-Access equivalent)
-    │   ├── SetupStepRow icon=ic_keyboard       text="於系統設定中啟用 LimeIME"
-    │   └── SetupStepRow icon=ic_toggle_on      text="將輸入法切換為 LimeIME"
+    │   ├── SetupStepRow icon=ic_keyboard       text="於系統設定中啟用萊姆輸入法"
+    │   └── SetupStepRow icon=ic_toggle_on      text="將輸入法切換為萊姆輸入法"
     │
     ├── TextView footnote
-    │   text=@string/setup_im_privacy_note  (existing string — LimeIME 不會收集任何輸入內容…)
+    │   text=@string/setup_im_privacy_note  (existing string — 萊姆輸入法不會收集任何輸入內容…)
     │
     ├── // Two action buttons — kept from current Android, restyled as Material 3 filled buttons
     │   Button @+id/btnSetupImSystemSetting     text=@string/setup_im_wizard_nextstep
@@ -157,9 +157,9 @@ Re-evaluate on `onResume()` and on `Lifecycle.Event.ON_START`:
 
 | Condition | Source | Card colour | Message |
 |---|---|---|---|
-| LimeIME service is in `getEnabledInputMethodList()` AND `Settings.Secure.DEFAULT_INPUT_METHOD == LIMEService component` | `InputMethodManager` | Green (`?attr/colorPrimaryContainer` w/ green tint) | "LimeIME 鍵盤已啟用且為目前輸入法 ✓" |
-| Enabled but not current | same | Yellow | "已啟用，但尚未切換為 LimeIME — 點按下方按鈕切換" |
-| Not in enabled list | same | Red | "尚未在系統中啟用 LimeIME — 點按下方按鈕前往系統設定" |
+| LimeIME service is in `getEnabledInputMethodList()` AND `Settings.Secure.DEFAULT_INPUT_METHOD == LIMEService component` | `InputMethodManager` | Green (`?attr/colorPrimaryContainer` w/ green tint) | "萊姆輸入法已啟用且為目前輸入法 ✓" |
+| Enabled but not current | same | Orange | "已啟用，但尚未切換萊姆輸入法 — 點按下方按鈕切換" |
+| Not in enabled list | same | Red | "尚未在系統中啟用萊姆輸入法 — 點按下方按鈕前往系統設定" |
 
 Implementation note: a small `KeyboardActivationProbe` helper (View-layer, in the new fragment file) wraps these calls. It does **not** replace any controller — it queries `InputMethodManager` directly, exactly as `SetupImFragment` does today via `LIMEUtilities`.
 
@@ -442,7 +442,7 @@ New view-layer tests recommended (additive only):
 | Test | Type | Asserts |
 |---|---|---|
 | `ImListFragmentTest` | Espresso/Robolectric | toggling switch calls expected controller method via `MockManageImController` |
-| `SetupFragmentActivationProbeTest` | Robolectric | three banner states (green/yellow/red) for the three `InputMethodManager` shadow configurations |
+| `SetupFragmentActivationProbeTest` | Robolectric | three banner states (green/orange/red) for the three `InputMethodManager` shadow configurations |
 | `ManageImAddSheetTest` | Robolectric | empty-field validation; non-empty triggers controller `addRecord` |
 | `TwoPaneHostFragmentTest` | Robolectric (sw600dp config) | both panes inflated on tablet config; single pane on phone config |
 

@@ -1,16 +1,19 @@
-// RelatedListView.swift
+﻿// RelatedListView.swift
 // LimeIME-iOS
 //
 // Related-phrase CRUD — the 關聯字 tab.
 // Spec §6.2.
 
 import SwiftUI
+import UIKit
 
 // MARK: - RelatedListView
 
 struct RelatedListView: View {
 
     @EnvironmentObject private var manageRelatedController: ManageRelatedController
+    @EnvironmentObject private var setupController: SetupImController
+    @EnvironmentObject private var relayActiveState: RelayActiveState
 
     var isEmbedded: Bool = false
 
@@ -18,6 +21,10 @@ struct RelatedListView: View {
     @State private var totalCount: Int = 0
     @State private var page: Int = 0
     @State private var query: String = ""
+    @State private var statusMessage = ""
+    @State private var isRefreshingHotSnapshot = false
+    @State private var didAttemptHotRefresh = false
+    @State private var hotRefreshFailed = false
 
     @State private var loadTask: Task<Void, Never>?
     @State private var showAdd = false
@@ -34,6 +41,12 @@ struct RelatedListView: View {
 
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
+    private var relayEditingCapability: RecordEditingCapability { relayActiveState.editingCapability }
+    private var editingCapability: RecordEditingCapability {
+        hotRefreshFailed ? .readOnly : relayEditingCapability
+    }
+    private var canEdit: Bool { editingCapability == .live }
+    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯關聯字庫（顯示實際分數）" }
 
     var body: some View {
         if isEmbedded {
@@ -66,6 +79,14 @@ struct RelatedListView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 6)
 
+                Label(statusMessage.isEmpty ? capabilityMessage : statusMessage,
+                      systemImage: canEdit ? "checkmark.circle" : "lock")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.bottom, 6)
+
                 List {
                     ForEach(phrases, id: \.id) { phrase in
                         HStack(spacing: 0) {
@@ -73,21 +94,27 @@ struct RelatedListView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text(phrase.childWord)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("\(phrase.score)")
+                            Text(canEdit ? "\(phrase.score)" : "—")
                                 .frame(width: 48, alignment: .trailing)
                                 .foregroundColor(.secondary)
                         }
                         .font(.body)
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            guard canEdit else {
+                                statusMessage = unlockHint
+                                return
+                            }
                             editingPhrase = IdentifiableRelated(phrase: phrase)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                deleteCandidate = IdentifiableRelated(phrase: phrase)
-                                showDeleteConfirm = true
-                            } label: {
-                                Label("刪除", systemImage: "trash")
+                            if canEdit {
+                                Button(role: .destructive) {
+                                    deleteCandidate = IdentifiableRelated(phrase: phrase)
+                                    showDeleteConfirm = true
+                                } label: {
+                                    Label("刪除", systemImage: "trash")
+                                }
                             }
                         }
                     }
@@ -109,6 +136,7 @@ struct RelatedListView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 .background(Color(.systemGroupedBackground))
+
             }
             .navigationTitle("關聯字管理")
             .toolbar {
@@ -118,10 +146,17 @@ struct RelatedListView: View {
                     } label: {
                         Image(systemName: "plus")
                     }
+                    .disabled(!canEdit)
                 }
             }
-            .onAppear { loadPhrases() }
+            .onAppear {
+                refreshHotSnapshotIfNeeded()
+                loadPhrases()
+            }
             .onChange(of: manageRelatedController.refreshToken) { _ in resetAndLoad() }
+            .onChange(of: relayActiveState.editingCapability) { _ in
+                refreshHotSnapshotIfNeeded()
+            }
             .sheet(isPresented: $showAdd, onDismiss: { loadPhrases() }) {
                 AddRelatedView()
             }
@@ -161,9 +196,34 @@ struct RelatedListView: View {
     }
 
     private func deletePhrase(_ phrase: Related) {
+        guard canEdit else { return }
         Task {
             _ = await manageRelatedController.deleteRelated(id: phrase.id)
             loadPhrases()
+        }
+    }
+
+    private var capabilityMessage: String {
+        if isRefreshingHotSnapshot { return "更新實際分數中…" }
+        return canEdit ? "完整取用已開啟，顯示實際分數" : unlockHint
+    }
+
+    private func refreshHotSnapshotIfNeeded() {
+        guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }
+        didAttemptHotRefresh = true
+        isRefreshingHotSnapshot = true
+        statusMessage = ""
+        Task {
+            let result = await setupController.refreshTableFromKeyboard(stem: "related")
+            isRefreshingHotSnapshot = false
+            switch result {
+            case .success:
+                statusMessage = ""
+                loadPhrases()
+            case .failure:
+                hotRefreshFailed = true
+                statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
+            }
         }
     }
 }

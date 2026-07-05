@@ -5,10 +5,74 @@
 // Replaces the old 4-tab version per spec §2.
 
 import SwiftUI
+import UIKit
 
 // MARK: - Shared UserDefaults for @AppStorage
 
 let sharedDefaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)!
+
+// MARK: - RelayProbeField
+
+/// UIKit-backed probe field for the keyboard→app relay. A SwiftUI `TextField`'s
+/// programmatically-set text is invisible to a custom keyboard's
+/// `documentContextBeforeInput`; a real `UITextField` exposes its `.text` to the proxy,
+/// so the keyboard can read the relay token and type its payload back.
+struct RelayProbeField: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var isFocused: Bool
+
+    func makeUIView(context: Context) -> UITextField {
+        let tf = UITextField()
+        tf.autocorrectionType = .no
+        tf.autocapitalizationType = .none
+        tf.smartQuotesType = .no
+        tf.smartDashesType = .no
+        tf.spellCheckingType = .no
+        tf.delegate = context.coordinator
+        tf.addTarget(context.coordinator,
+                     action: #selector(Coordinator.editingChanged(_:)),
+                     for: .editingChanged)
+        return tf
+    }
+
+    func updateUIView(_ tf: UITextField, context: Context) {
+        if tf.text != text { tf.text = text }
+        // Keep the cursor at the end so the token isn't split oddly (relay reads
+        // before+after anyway, but this is tidy).
+        if let end = tf.position(from: tf.endOfDocument, offset: 0) {
+            tf.selectedTextRange = tf.textRange(from: end, to: end)
+        }
+        DispatchQueue.main.async {
+            if isFocused, !tf.isFirstResponder { tf.becomeFirstResponder() }
+            if !isFocused, tf.isFirstResponder { tf.resignFirstResponder() }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        private let parent: RelayProbeField
+        init(_ parent: RelayProbeField) { self.parent = parent }
+
+        @objc func editingChanged(_ tf: UITextField) {
+            parent.text = tf.text ?? ""
+        }
+
+        // A keyboard extension's insertText is a CROSS-PROCESS edit that does not fire
+        // .editingChanged; this delegate callback does. Capture the projected text so the
+        // app sees the payload (and updateUIView won't overwrite the keyboard's insert).
+        func textField(_ tf: UITextField,
+                       shouldChangeCharactersIn range: NSRange,
+                       replacementString string: String) -> Bool {
+            let current = tf.text ?? ""
+            if let r = Range(range, in: current) {
+                let projected = current.replacingCharacters(in: r, with: string)
+                DispatchQueue.main.async { self.parent.text = projected }
+            }
+            return true
+        }
+    }
+}
 
 // MARK: - LimeSettingsView (5-tab root)
 
@@ -19,6 +83,21 @@ struct LimeSettingsView: View {
     @StateObject private var setupController: SetupImController
     @StateObject private var manageImController: ManageImController
     @StateObject private var manageRelatedController: ManageRelatedController
+    @StateObject private var relayActiveState = RelayActiveState()
+    @State private var rootRelayText = ""
+    @State private var rootRelayFiredAt: TimeInterval?
+    @State private var rootRelayPending = false
+    @State private var rootRelayDidReceivePayload = false
+    @State private var rootFAPingAt: TimeInterval?
+    @State private var rootRelayMode: ActiveKeyboardProbeMode = .automatic
+    @State private var rootRelayFocused = false
+#if DEBUG
+    @State private var didRunUITestRestore = false
+    @State private var didPrepareRelayOnlyPrefs = false
+    @State private var uiTestRestoreStatus: String?
+    @State private var uiTestRestoreCounts: String?
+    @State private var relayPayloadReceived = false
+#endif
 
     init() {
         let pm = ProgressManager()
@@ -65,10 +144,14 @@ struct LimeSettingsView: View {
         .environmentObject(setupController)
         .environmentObject(manageImController)
         .environmentObject(manageRelatedController)
+        .environmentObject(relayActiveState)
         .onAppear {
             Task {
                 await setupController.seedRelatedIfNeeded()
                 manageRelatedController.invalidate()
+#if DEBUG
+                await runUITestRestoreIfNeeded()
+#endif
             }
             // Cold-launch deep link (URL arrived before view appeared).
             if let url = pendingLimeDeepLinkURL {
@@ -78,6 +161,7 @@ struct LimeSettingsView: View {
             if pendingLimeExternalImportURL != nil {
                 navManager.selectTab(1)
             }
+            triggerRootRelay()
         }
         .onReceive(NotificationCenter.default.publisher(for: .limeDeepLink)) { note in
             // Warm-launch deep link (app already running).
@@ -88,7 +172,22 @@ struct LimeSettingsView: View {
             // chooses the destination IM instead of deriving it from filename.
             navManager.selectTab(1)
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            triggerRootRelay()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .limeTriggerRelay)) { note in
+            triggerRootRelay(mode: ActiveKeyboardProbeMode(notificationUserInfo: note.userInfo))
+        }
+        .onChange(of: rootRelayText) { _ in
+            handleRootRelayTextChange()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .limeRelayPayloadReceived)) { _ in
+#if DEBUG
+            relayPayloadReceived = true
+#endif
+        }
         .overlay {
+            rootRelayProbe
             if progressManager.isVisible {
                 ZStack {
                     SettingsTheme.globalOverlayScrim.ignoresSafeArea()
@@ -108,7 +207,109 @@ struct LimeSettingsView: View {
                             .shadow(radius: SettingsMetrics.modalShadowRadius))
                 }
             }
+#if DEBUG
+            relayPayloadReceivedStatusView
+            uiTestRestoreStatusViews
+#endif
         }
+    }
+
+    private var rootActiveThisSession: Bool {
+        FAStateResolver.isActiveThisSession(faPingAt: rootFAPingAt,
+                                            probeFiredAt: rootRelayFiredAt,
+                                            mode: rootRelayMode)
+    }
+
+    @ViewBuilder
+    private var rootRelayProbe: some View {
+        // UIKit UITextField (not SwiftUI TextField): the keyboard's documentContextProxy
+        // does NOT see a SwiftUI TextField's programmatically-set text, so the relay token
+        // was invisible to the keyboard. A real UITextField exposes its .text to the proxy.
+        RelayProbeField(text: $rootRelayText, isFocused: $rootRelayFocused)
+            .frame(width: SettingsMetrics.invisibleProbeSize,
+                   height: SettingsMetrics.invisibleProbeSize)
+            .opacity(SettingsMetrics.invisibleProbeOpacity)
+            .accessibilityHidden(true)
+    }
+
+    private func triggerRootRelay(mode: ActiveKeyboardProbeMode = .automatic) {
+#if DEBUG
+        if !didPrepareRelayOnlyPrefs {
+            RelayPrefSync.prepareRelayOnlyIfNeeded(in: sharedDefaults)
+            didPrepareRelayOnlyPrefs = true
+        }
+#endif
+        guard !rootRelayPending else { return }
+        let firedAt = Date().timeIntervalSince1970
+        rootRelayPending = true
+        rootRelayDidReceivePayload = false
+        rootRelayFiredAt = firedAt
+        rootRelayMode = mode
+        rootRelayText = RelayToken.request
+        DispatchQueue.main.async {
+            rootRelayFocused = true
+        }
+        // Window covers keyboard cold-load + the round-trip; on a payload the relay
+        // finishes immediately, so this is only the not-active timeout.
+        DispatchQueue.main.asyncAfter(deadline: .now() + mode.timeout) {
+            if rootRelayPending && rootRelayFiredAt == firedAt && !rootActiveThisSession {
+                finishRootRelay()
+            }
+        }
+    }
+
+    private func handleRootRelayTextChange() {
+        guard let payload = decodeRelayPayload(rootRelayText) else { return }
+        relayActiveState.markActive(fullAccess: payload.faOn)
+        RelayPrefSync.apply(han: payload.han,
+                            split: payload.split,
+                            reverseLookupIM: payload.rlim,
+                            reverseLookupValue: payload.rlval,
+                            pts: payload.pts,
+                            to: sharedDefaults)
+        rootRelayDidReceivePayload = true
+        let relayFiredAt = rootRelayFiredAt ?? payload.ts
+        rootRelayFiredAt = FAStateResolver.isActiveThisSession(faPingAt: payload.ts,
+                                                               probeFiredAt: relayFiredAt,
+                                                               mode: rootRelayMode)
+            ? relayFiredAt
+            : payload.ts
+        rootFAPingAt = payload.ts
+#if DEBUG
+        relayPayloadReceived = true
+#endif
+        NotificationCenter.default.post(name: .limeRelayPayloadReceived,
+                                        object: nil,
+                                        userInfo: ["faOn": payload.faOn,
+                                                   "ts": payload.ts,
+                                                   "firedAt": rootRelayFiredAt ?? payload.ts,
+                                                   "source": "root"])
+        finishRootRelay()
+    }
+
+    private func finishRootRelay() {
+        let resolvedNotActive = rootRelayPending && !rootRelayDidReceivePayload
+        rootRelayPending = false
+        rootRelayFocused = false
+        rootRelayText = ""
+        // A non-LIME keyboard summoned by the probe does not reliably dismiss just from the
+        // hidden field resigning on device — end editing globally to close it.
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+        if resolvedNotActive {
+            relayActiveState.markNotActive(fullAccess: rootFullAccessConfirmedOn)
+            NotificationCenter.default.post(name: .limeRelayResolvedNotActive, object: nil)
+        }
+    }
+
+    private var rootFullAccessConfirmedOn: Bool {
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+              let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL)),
+              let heartbeat = try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+        else { return false }
+        return FAStateResolver.resolve(heartbeat: heartbeat,
+                                       faPingThisSession: nil) == .confirmedOn
     }
 
     // MARK: - Deep link
@@ -122,6 +323,62 @@ struct LimeSettingsView: View {
             break
         }
     }
+
+#if DEBUG
+    // ponytail: launch-arg restore seam exercises the normal cold restore path after SwiftUI is ready.
+    private func runUITestRestoreIfNeeded() async {
+        guard !didRunUITestRestore,
+              let fileName = UserDefaults.standard.string(forKey: "limeUITestRestoreFromDocuments"),
+              !fileName.isEmpty
+        else { return }
+        didRunUITestRestore = true
+        let url = FileManager.default.urls(for: .documentDirectory,
+                                           in: .userDomainMask)[0]
+            .appendingPathComponent(fileName)
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            uiTestRestoreStatus = "restore_failed missing \(url.path)"
+            return
+        }
+        let result = await setupController.restoreDB(from: url)
+        switch result {
+        case .success:
+            manageImController.invalidate()
+            manageRelatedController.invalidate()
+            uiTestRestoreCounts = await setupController.restoredTableCountsForUITest()
+            uiTestRestoreStatus = "restore_done \(url.path)"
+        case .failure(let error):
+            uiTestRestoreStatus = "restore_failed \(error.localizedDescription)"
+        }
+    }
+
+    @ViewBuilder
+    private var relayPayloadReceivedStatusView: some View {
+        if relayPayloadReceived {
+            Text("relay")
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier("relayPayloadReceived")
+        }
+    }
+
+    @ViewBuilder
+    private var uiTestRestoreStatusViews: some View {
+        if let status = uiTestRestoreStatus {
+            Text(status)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier(status.hasPrefix("restore_done") ? "restore_done" : "restore_failed")
+                .accessibilityLabel(status)
+        }
+        if let counts = uiTestRestoreCounts {
+            Text(counts)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier("restore_table_counts")
+                .accessibilityLabel(counts)
+        }
+    }
+#endif
 
 }
 
@@ -165,6 +422,7 @@ struct ConstrainedDetailLayout<Trailing: View>: ViewModifier {
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.tint)
                 }
+                .accessibilityIdentifier("detail_back_button")
                 Spacer()
             }
             .padding(.horizontal, 20)

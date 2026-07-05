@@ -1,10 +1,11 @@
-// RecordListView.swift
+﻿// RecordListView.swift
 // LimeIME-iOS
 //
 // Paginated mapping record list with search, add, edit, delete.
 // Spec §6.1.
 
 import SwiftUI
+import UIKit
 
 // MARK: - RecordListView
 
@@ -14,12 +15,18 @@ struct RecordListView: View {
     let imLabel: String
 
     @EnvironmentObject private var manageImController: ManageImController
+    @EnvironmentObject private var setupController: SetupImController
+    @EnvironmentObject private var relayActiveState: RelayActiveState
 
     @State private var records: [LimeRecord] = []
     @State private var totalCount: Int = 0
     @State private var page: Int = 0
     @State private var query: String = ""
     @State private var searchByCode: Bool = true
+    @State private var statusMessage = ""
+    @State private var isRefreshingHotSnapshot = false
+    @State private var didAttemptHotRefresh = false
+    @State private var hotRefreshFailed = false
 
     @State private var showAdd = false
     @State private var editingRecord: IdentifiableRecord?
@@ -36,6 +43,12 @@ struct RecordListView: View {
 
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
+    private var relayEditingCapability: RecordEditingCapability { relayActiveState.editingCapability }
+    private var editingCapability: RecordEditingCapability {
+        hotRefreshFailed ? .readOnly : relayEditingCapability
+    }
+    private var canEdit: Bool { editingCapability == .live }
+    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）" }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -68,6 +81,14 @@ struct RecordListView: View {
             .padding(.horizontal)
             .padding(.bottom, 6)
 
+            Label(statusMessage.isEmpty ? capabilityMessage : statusMessage,
+                  systemImage: canEdit ? "checkmark.circle" : "lock")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+                .padding(.bottom, 6)
+
             List {
                 ForEach(records, id: \.id) { record in
                     HStack(spacing: 0) {
@@ -76,21 +97,27 @@ struct RecordListView: View {
                             .font(.system(.body, design: .monospaced))
                         Text(record.word)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text("\(record.score)")
+                        Text(canEdit ? "\(record.score)" : "—")
                             .frame(width: 48, alignment: .trailing)
                             .foregroundColor(.secondary)
                     }
                     .font(.body)
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        guard canEdit else {
+                            statusMessage = unlockHint
+                            return
+                        }
                         editingRecord = IdentifiableRecord(record: record)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            deleteCandidate = IdentifiableRecord(record: record)
-                            showDeleteConfirm = true
-                        } label: {
-                            Label("刪除", systemImage: "trash")
+                        if canEdit {
+                            Button(role: .destructive) {
+                                deleteCandidate = IdentifiableRecord(record: record)
+                                showDeleteConfirm = true
+                            } label: {
+                                Label("刪除", systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -112,6 +139,7 @@ struct RecordListView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             .background(Color(.systemGroupedBackground))
+
         }
         .onChange(of: query) { _ in resetAndLoad() }
         .onChange(of: searchByCode) { _ in resetAndLoad() }
@@ -123,9 +151,16 @@ struct RecordListView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
+                .disabled(!canEdit)
             }
         }
-        .onAppear { loadRecords() }
+        .onAppear {
+            refreshHotSnapshotIfNeeded()
+            loadRecords()
+        }
+        .onChange(of: relayActiveState.editingCapability) { _ in
+            refreshHotSnapshotIfNeeded()
+        }
         .sheet(isPresented: $showAdd, onDismiss: { loadRecords() }) {
             AddRecordView(tableName: tableName)
         }
@@ -176,9 +211,34 @@ struct RecordListView: View {
     }
 
     private func deleteRecord(_ record: LimeRecord) {
+        guard canEdit else { return }
         Task {
             _ = await manageImController.deleteRecord(table: tableName, id: record.id)
             loadRecords()   // count changed — full reload
+        }
+    }
+
+    private var capabilityMessage: String {
+        if isRefreshingHotSnapshot { return "更新實際分數中…" }
+        return canEdit ? "完整取用已開啟，顯示實際分數" : unlockHint
+    }
+
+    private func refreshHotSnapshotIfNeeded() {
+        guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }
+        didAttemptHotRefresh = true
+        isRefreshingHotSnapshot = true
+        statusMessage = ""
+        Task {
+            let result = await setupController.refreshTableFromKeyboard(stem: tableName)
+            isRefreshingHotSnapshot = false
+            switch result {
+            case .success:
+                statusMessage = ""
+                loadRecords()
+            case .failure:
+                hotRefreshFailed = true
+                statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
+            }
         }
     }
 }

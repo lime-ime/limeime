@@ -5,6 +5,7 @@
 // Spec §5.2.
 
 import SwiftUI
+import UIKit
 
 // MARK: - IMDetailView
 
@@ -52,6 +53,7 @@ struct IMDetailView: View {
     @EnvironmentObject private var manageImController: ManageImController
     @EnvironmentObject private var manageRelatedController: ManageRelatedController
     @EnvironmentObject private var setupController: SetupImController
+    @EnvironmentObject private var relayActiveState: RelayActiveState
 
     private let sharedUD = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
 
@@ -122,6 +124,9 @@ struct IMDetailView: View {
     private var backupOnDeleteBinding: Binding<Bool> {
         Binding(get: { backupOnDelete }, set: { backupOnDelete = $0 })
     }
+    private var relatedEditingCapability: RecordEditingCapability { relayActiveState.editingCapability }
+    private var canClearRelated: Bool { relatedEditingCapability == .live }
+    private var relatedUnlockHint: String { "開啟完整取用以編輯關聯字庫（顯示實際分數）" }
 
     var body: some View {
         List {
@@ -256,6 +261,12 @@ struct IMDetailView: View {
                             Spacer()
                         }
                     }
+                    .disabled(!canClearRelated)
+                    if !canClearRelated {
+                        Text(relatedUnlockHint)
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .setupMatchedSectionBlock()
             }
@@ -389,6 +400,7 @@ struct IMDetailView: View {
         }
         .alert("清除關聯字庫", isPresented: $showClearRelatedAlert) {
             Button("清除", role: .destructive) {
+                guard canClearRelated else { return }
                 Task {
                     _ = await manageRelatedController.clearRelated()
                     totalRecord = "0"

@@ -262,7 +262,7 @@ public class SetupFragment extends Fragment {
      * problem and route the user to fix it:
      *   none     → danger  (no IM installed)     → 「安裝輸入法」
      *   disabled → warning (installed, all off)  → 「啟用輸入法」
-     *   ok       → ≥1 installed & enabled        → card hidden (nothing to fix)
+     *   ok       → ≥1 installed & enabled        → green card, no CTA
      * Reads the same IM config list as the IM tab. Identical states to iOS.
      */
     private void refreshImStatus() {

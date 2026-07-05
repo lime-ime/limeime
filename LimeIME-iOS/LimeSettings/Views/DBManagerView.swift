@@ -5,6 +5,7 @@
 // Spec §7.
 
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 // MARK: - DBManagerView
@@ -14,6 +15,7 @@ struct DBManagerView: View {
     @EnvironmentObject private var setupController: SetupImController
     @EnvironmentObject private var manageImController: ManageImController
     @EnvironmentObject private var manageRelatedController: ManageRelatedController
+    @EnvironmentObject private var relayActiveState: RelayActiveState
 
     @State private var statusMessage: String = ""
     @State private var isWorking = false
@@ -24,6 +26,22 @@ struct DBManagerView: View {
     @State private var showShareSheet = false
     @State private var backupProgress: Double = 0
     @State private var preparingShare = false
+    @State private var faState: FAState = .unknown
+    @State private var faPingThisSession: Bool?
+    @State private var faPingAt: TimeInterval?
+    @State private var hasFreshFAEvidence = false
+    @State private var faPingObserver: FAPingObserver?
+    @State private var faPollTimer: Timer?
+    @State private var backupAwaitingReceipt = false
+    @State private var faPingSeenDuringBackup = false
+    @State private var backupProbeFiredAt: TimeInterval?
+    @State private var probeText = ""
+    @FocusState private var probeFocused: Bool
+#if DEBUG
+    @State private var uiTestBackupStatus: String?
+#endif
+
+    private let groupSuite = LIMEPreferenceManager.suiteName
 
     var body: some View {
         NavigationStack {
@@ -35,14 +53,14 @@ struct DBManagerView: View {
                         .padding(.bottom, 20)
 
                     // 備份 — filled (primary) action.
-                    dbAction(footer: "備份包含所有字根、關聯字及喜好設定。") {
+                    dbAction(footer: backupFooter) {
                         Button { performBackup() } label: {
                             Label("備份資料庫", systemImage: "square.and.arrow.up")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
-                        .disabled(isWorking)
+                        .disabled(isWorking || !backupEnabled)
                     }
 
                     // 還原 — bordered action.
@@ -51,7 +69,6 @@ struct DBManagerView: View {
                             Label("還原資料庫", systemImage: "arrow.down.circle")
                         }
                         .buttonStyle(LimeTonalButtonStyle())
-                        .disabled(isWorking)
                     }
 
                     // 初始資料庫 — bordered destructive action + red warning footer.
@@ -63,7 +80,6 @@ struct DBManagerView: View {
                             Label("還原預設資料庫", systemImage: "arrow.counterclockwise.circle")
                         }
                         .buttonStyle(LimeTonalButtonStyle(tint: SettingsTheme.destructive))
-                        .disabled(isWorking)
                     }
 
                     if !statusMessage.isEmpty {
@@ -73,6 +89,18 @@ struct DBManagerView: View {
                             .padding(.top, 4)
                             .padding(.horizontal, SettingsMetrics.formHeaderLeadingPadding)
                     }
+
+                    TextField("", text: $probeText)
+                        .focused($probeFocused)
+                        .frame(width: SettingsMetrics.invisibleProbeSize,
+                               height: SettingsMetrics.invisibleProbeSize)
+                        .opacity(SettingsMetrics.invisibleProbeOpacity)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .accessibilityHidden(true)
+#if DEBUG
+                    uiTestBackupStatusView
+#endif
                 }
                 .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
                 .padding(.bottom, SettingsMetrics.setupBottomPadding)
@@ -80,6 +108,28 @@ struct DBManagerView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Color(UIColor.systemBackground).ignoresSafeArea())
+            .onAppear {
+                ensureFAPingObserver()
+                refreshFAState()
+                startFAPolling()
+                triggerProbeIfNeeded()
+            }
+            .onDisappear {
+                stopFAPolling()
+            }
+            .onChange(of: probeText) { _ in
+                refreshFAState()
+            }
+            .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
+                if hasFreshEvidence { probeFocused = false }
+            }
+            .onReceive(NotificationCenter.default.publisher(
+                for: UIApplication.didBecomeActiveNotification)) { _ in
+                ensureFAPingObserver()
+                refreshFAState()
+                startFAPolling()
+                triggerProbeIfNeeded()
+            }
             // Static inline title only (matches the other tab roots). Hide the
             // system nav bar so the title doesn't render twice on iPhone.
             .toolbar(.hidden, for: .navigationBar)
@@ -166,9 +216,101 @@ struct DBManagerView: View {
         .padding(.bottom, SettingsMetrics.dbActionBottomSpacing)
     }
 
+    private var backupEnabled: Bool {
+#if DEBUG
+        if isUITestColdBackupEnabled { return true }
+#endif
+        return relayActiveState.editingCapability == .live
+    }
+
+    private var backupFooter: String {
+        if backupEnabled {
+            return "備份包含所有字根、關聯字及喜好設定。"
+        }
+        if faState == .confirmedOn && relayActiveState.isActive != true {
+            return "啓用備份資料庫功能需切換目前鍵盤為萊姆輸入法。"
+        }
+        return "開啟完整取用權限以備份已學習字詞"
+    }
+
+    private func refreshFAState() {
+        let heartbeat = readKeyboardHeartbeat()
+        faState = FAStateResolver.resolve(heartbeat: heartbeat,
+                                          faPingThisSession: faPingThisSession,
+                                          faPingAt: faPingAt)
+        hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
+                                                              faPingThisSession: faPingThisSession)
+    }
+
+    private func readKeyboardHeartbeat() -> KeyboardHeartbeat? {
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupSuite),
+              let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL))
+        else { return nil }
+        return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+    }
+
+    private func ensureFAPingObserver() {
+        guard faPingObserver == nil else { return }
+        faPingObserver = FAPingObserver { hasFullAccess in
+            faPingThisSession = hasFullAccess
+            faPingAt = Date().timeIntervalSince1970
+            if backupAwaitingReceipt {
+                faPingSeenDuringBackup = true
+            }
+            refreshFAState()
+            if hasFreshFAEvidence && !backupAwaitingReceipt {
+                probeFocused = false
+            }
+        }
+    }
+
+    private func startFAPolling() {
+        guard faPollTimer == nil else { return }
+        faPollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            refreshFAState()
+        }
+    }
+
+    private func stopFAPolling() {
+        faPollTimer?.invalidate()
+        faPollTimer = nil
+    }
+
+    private func triggerProbeIfNeeded() {
+        guard !hasFreshFAEvidence else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            if !hasFreshFAEvidence {
+                probeFocused = true
+                // Auto-dismiss the FA-detection probe keyboard (see SetupTabView). The
+                // BACKUP probe (triggerBackupProbe) is intentionally NOT auto-dismissed —
+                // backup needs the keyboard running long enough to write its snapshot.
+                // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    if !backupAwaitingReceipt { probeFocused = false }
+                }
+            }
+        }
+    }
+
+    private func triggerBackupProbe() {
+        let probeFiredAt = Date().timeIntervalSince1970
+        backupProbeFiredAt = probeFiredAt
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            probeFocused = true
+        }
+    }
+
     // MARK: - Backup
 
     private func performBackup() {
+#if DEBUG
+        if isUITestColdBackupEnabled {
+            performUITestColdBackup()
+            return
+        }
+#endif
+        guard backupEnabled else { return }
         var presentationState = BackupSharePresentationState(
             isWorking: isWorking,
             backupProgress: backupProgress,
@@ -176,45 +318,55 @@ struct DBManagerView: View {
             showShareSheet: showShareSheet)
         presentationState.startBackup()
         apply(presentationState)
-        let server = DBServer.shared
-        let progress = Progress()
-        // KVO observer publishes fractionCompleted updates back to SwiftUI.
-        // Captured in the Task closure so it stays alive for the duration of
-        // the backup; invalidated when the Task completes.
-        let observer = progress.observe(\.fractionCompleted, options: [.new]) { p, _ in
-            let value = p.fractionCompleted
-            Task { @MainActor in backupProgress = value }
-        }
-        Task.detached(priority: .userInitiated) {
-            // Run the zip + file-copy on a background priority so the
-            // overlay actually renders. The previous version hopped back to
-            // the main actor for backupDB(), which blocked SwiftUI from
-            // drawing isWorking=true until the work finished.
-            defer { observer.invalidate() }
-            do {
-                let dest = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("lime_backup_\(Int(Date().timeIntervalSince1970)).zip")
-                try server.backupDatabase(uri: dest, progress: progress)
-                await MainActor.run {
-                    var presentationState = BackupSharePresentationState(
-                        isWorking: self.isWorking,
-                        backupProgress: self.backupProgress,
-                        preparingShare: self.preparingShare,
-                        showShareSheet: self.showShareSheet)
-                    presentationState.finishBackupAndPresentShare()
-                    self.apply(presentationState)
-                    self.backupURL = dest
-                    self.statusMessage = "資料庫備份完成"
-                }
-            } catch {
-                await MainActor.run {
-                    self.isWorking = false
-                    self.backupProgress = 0
-                    self.preparingShare = false
-                    self.statusMessage = "備份失敗：\(error.localizedDescription)"
-                }
+        backupAwaitingReceipt = true
+        faPingSeenDuringBackup = false
+        triggerBackupProbe()
+        Task {
+            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
+            guard FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                      probeFiredAt: backupProbeFiredAt) else {
+                backupAwaitingReceipt = false
+                isWorking = false
+                backupProgress = 0
+                preparingShare = false
+                backupProbeFiredAt = nil
+                probeFocused = false
+                statusMessage = "備份失敗：請將鍵盤切換至萊姆輸入法後再試"
+                return
+            }
+            let result = await setupController.backupDBAsync()
+            backupAwaitingReceipt = false
+            backupProbeFiredAt = nil
+            probeFocused = false
+            switch result {
+            case .success(let dest):
+                refreshFAState()
+                var presentationState = BackupSharePresentationState(
+                    isWorking: self.isWorking,
+                    backupProgress: self.backupProgress,
+                    preparingShare: self.preparingShare,
+                    showShareSheet: self.showShareSheet)
+                presentationState.finishBackupAndPresentShare()
+                self.apply(presentationState)
+                self.backupURL = dest
+                self.statusMessage = "資料庫備份完成"
+            case .failure(let error):
+                self.isWorking = false
+                self.backupProgress = 0
+                self.preparingShare = false
+                self.statusMessage = backupFailureMessage(error)
             }
         }
+    }
+
+    private func backupFailureMessage(_ error: Error) -> String {
+        if let setupError = error as? SetupImControllerError,
+           case .backupTimedOut = setupError {
+            return faPingSeenDuringBackup
+                ? "備份失敗：開啟完整取用權限以備份已學習字詞"
+                : "備份失敗：請將鍵盤切換至萊姆輸入法後再試"
+        }
+        return "備份失敗：\(error.localizedDescription)"
     }
 
     private func apply(_ presentationState: BackupSharePresentationState) {
@@ -234,6 +386,43 @@ struct DBManagerView: View {
     private var shouldShowLocalWorkingOverlay: Bool {
         isWorking && (preparingShare || backupProgress > 0)
     }
+
+#if DEBUG
+    // ponytail: debug launch arg bypasses FA/keyboard relay for the cold-restore e2e only.
+    private var isUITestColdBackupEnabled: Bool {
+        let arg = UserDefaults.standard.object(forKey: "limeUITestBackupColdToDocuments")
+        return (arg as? String) == "1" || (arg as? Bool) == true
+    }
+
+    private func performUITestColdBackup() {
+        isWorking = true
+        statusMessage = "備份中…"
+        uiTestBackupStatus = nil
+        Task {
+            let result = await setupController.backupColdDBToDocumentsForUITest()
+            switch result {
+            case .success(let url):
+                statusMessage = "資料庫備份完成"
+                uiTestBackupStatus = "backup_done \(url.path)"
+            case .failure(let error):
+                statusMessage = "備份失敗：\(error.localizedDescription)"
+                uiTestBackupStatus = "backup_failed \(error.localizedDescription)"
+            }
+            isWorking = false
+        }
+    }
+
+    @ViewBuilder
+    private var uiTestBackupStatusView: some View {
+        if let status = uiTestBackupStatus {
+            Text(status)
+                .frame(width: 1, height: 1)
+                .opacity(0.01)
+                .accessibilityIdentifier(status.hasPrefix("backup_done") ? "backup_done" : "backup_failed")
+                .accessibilityLabel(status)
+        }
+    }
+#endif
 
     // MARK: - Init DB
 
@@ -282,7 +471,7 @@ struct BackupSharePresentationState {
     mutating func startBackup() {
         isWorking = true
         backupProgress = 0
-        preparingShare = false
+        preparingShare = true
         showShareSheet = false
     }
 

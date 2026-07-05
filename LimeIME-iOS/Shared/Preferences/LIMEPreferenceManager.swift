@@ -24,7 +24,6 @@ final class LIMEPreferenceManager {
     // MARK: - Constants
 
     static let suiteName = "group.org.limeime"
-    static let keyboardRuntimeGenerationKey = "lime_keyboard_runtime_generation"
 
     // MARK: - Storage
 
@@ -190,6 +189,14 @@ final class LIMEPreferenceManager {
     var acceptSymbolIndex: Bool {
         get { boolValue("accept_symbol_index", default: false) }
         set { defaults.set(newValue, forKey: "accept_symbol_index") }
+    }
+
+    func restoreOnImport(for tableNick: String) -> Bool {
+        boolValue("restore_on_import_\(tableNick)", default: true)
+    }
+
+    func setRestoreOnImport(_ enabled: Bool, for tableNick: String) {
+        defaults.set(enabled, forKey: "restore_on_import_\(tableNick)")
     }
 
     // MARK: - §8.5 Han Conversion
@@ -393,11 +400,13 @@ final class LIMEPreferenceManager {
         guard let configs = try? dbServer.getAllImConfigs() else { return }
         let enabledConfigs = configs.enumerated()
             .filter { $0.element.enabled }
+        // Codes, not list indices: the app's im list and the keyboard's canonical-DB
+        // im list are DIFFERENT databases since the FA re-arch, so positional indices
+        // no longer identify the same IM on both sides. The keyboard-side reader
+        // still accepts legacy numeric tokens from pre-re-arch prefs.
         keyboardState = enabledConfigs
-            .map { "\($0.offset)" }
+            .map { $0.element.tableNick }
             .joined(separator: ";")
-        defaults.set(defaults.integer(forKey: Self.keyboardRuntimeGenerationKey) + 1,
-                     forKey: Self.keyboardRuntimeGenerationKey)
 
         // Keep the current IM preference coherent with the newly synced enabled list.
         // Cloud/download installs run from the Settings process; without this, the

@@ -202,23 +202,23 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 **Brand hero**: a centered `HStack(spacing: 16)` — the logo **beside** the wordmark. The logo is the **transparent-background** brand mark `Image("LimeLogo")` (92×92pt, `scaledToFit`, no clip mask — adapts to light/dark; source `Resources/Limeicon/Icon.png`, **not** the white-background app icon); fallback is `Image(systemName: "keyboard.fill")` (60pt) in an accent-colored tile. Wordmark `Text("萊姆輸入法")` `.system(size: 30, weight: .bold)`. Top padding 20pt.
 
-**Status banner**: color-coded `Label` over a subtle status tint in a rounded card, placed **between the brand hero and the setup title** (directly below the hero). See §4.2 for detection logic, colours, and exact text. Auto-refreshes on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`.
+**Setup title**: `Text("設定萊姆輸入法")` `.system(size: 28, weight: .bold)`, leading-aligned, **directly below the brand hero**. The title **leads** the setup section — it sits above every status banner (matching the Android `setupHeading` and the demo). This order is load-bearing: **never place a status banner above the title.**
 
-**Setup title**: `Text("設定萊姆輸入法")` `.system(size: 28, weight: .bold)`, leading-aligned, directly below the status banner.
+**Status sections**: three setup/status sections (see §4.2 and §4.3 for detection logic, colours, and exact text). They use normal vertical spacing only — **no separator lines/dividers between sections**. **Section 1** is the iOS Settings setup section: it reports keyboard-enabled + Full Access status and owns the Settings-style setup guide plus `前往設定` CTA. **Section 2** is the switch-to-LIME section: it is hidden until `keyboardEnabled == true`, then reports whether LIME is the current keyboard and owns the `選用萊姆輸入法` CTA. **Section 3** is the installed-IM status section (§4.3) and remains visible even before LIME is active. Sections 1 and 2 auto-refresh on `.onAppear`, `scenePhase → .active`, and 1-second polling `Timer`; Section 3 refreshes on appear/active and IM-list changes.
 
-**Setup steps** — three `SetupStepRow` rows (icon 32pt left, label `.body` right):
+**Setup steps** — Section 1 shows one row leading into an iOS Settings-style keyboard card. Hidden once Section 1 is complete (`setupStatusState == .fullyEnabled`), matching Android's green state which leaves only the success status:
 
-| Step | Icon | Label |
+| Element | Icon | Label / trailing |
 | --- | --- | --- |
-| 1 | `Image(systemName: "keyboard")` `.title3` `.accentColor` | `"輕觸「鍵盤」"` |
-| 2 | `ToggleSwitchIcon()` (green capsule + white thumb) | `"開啟萊姆輸入法"` |
-| 3 | `ToggleSwitchIcon()` | `"開啟「允許完整取用」"` |
+| Step row | `Image(systemName: "keyboard")` `.title3` `.accentColor` | `"點「前往設定」後，輕觸「鍵盤」，開啓萊姆輸入法與允許完整取用（建議）"` |
+| Settings card row 1 | none | `"萊姆輸入法"` + trailing `ToggleSwitchIcon()` |
+| Settings card row 2 | grey keyboard tile (`Image(systemName: "keyboard")`) | `"允許完整取用"` + trailing `ToggleSwitchIcon()` |
 
-**Explanatory note** (`.subheadline`, `.secondary`, centered): `"萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"` — **hidden once Full Access is granted** (`fullAccessEnabled`), since the note only explains why to turn it on.
+**Explanatory note** (`.subheadline`, `.secondary`, centered): `"開啓完整取用以啓用備份資料庫、輸入法碼表編輯、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。"` — hidden once Section 1 is complete (`setupStatusState == .fullyEnabled`), since the note only explains the optional unlock.
 
-**CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). A `.footnote`/`.secondary` hint follows it: `"若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。"` — **hidden once the banner is green** (`detectionState == .fullyEnabled`), since the hint only helps while the keyboard isn't fully enabled yet.
+**CTA**: `Button("前往設定")` styled with `LimeTonalButtonStyle()` (full-width tonal — legible in dark mode, matching the 資料庫 restore buttons) → `openLimeKeyboardSettings()` (§4.1.2). This belongs to Section 1 and is hidden once Section 1 is complete. A `.footnote`/`.secondary` hint follows it while keyboard setup or Full Access is still incomplete: `"若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。"`
 
-**Invisible probe field**: 1×1pt `TextField`, opacity 0.01, `accessibilityHidden`. Auto-focused via `@FocusState` when `keyboardEnabled && !fullAccessEnabled`; causes the keyboard extension's `viewWillAppear` to write a fresh `keyboard_has_full_access` to the App Group.
+**Active-keyboard probe**: Section 2 uses the root 1×1pt UIKit `RelayProbeField` hosted by `LimeSettingsView`, not a local SwiftUI `TextField` in `SetupTabView`. When `keyboardEnabled && !activeThisSession`, `SetupTabView` posts `.limeTriggerRelay`; the root field focuses and writes `RelayToken.request`. LIME proves it is the active keyboard by reading that token and inserting a relay payload back into the field. See [IOS_ACTIVE_KB_DETECT.md](IOS_ACTIVE_KB_DETECT.md).
 
 **Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders just above the About footer.
 
@@ -243,54 +243,64 @@ NavigationStack (.navigationBarHidden(true))
         │   }
         │   .padding(.top, 20)
         │
-        ├── // ── Status banner (between hero and title) ───────────────
-        │   statusBanner              // see §4.2
-        │       .padding(.horizontal, 24)
-        │
-        ├── // ── Setup title ──────────────────────────────────────────
+        ├── // ── Setup title (LEADS the section — above every banner) ──
         │   Text("設定萊姆輸入法")
         │       .font(.system(size: 28, weight: .bold))
         │       .frame(maxWidth: .infinity, alignment: .leading)
         │       .padding(.horizontal, 24)
         │
-        ├── // ── Step list ────────────────────────────────────────────
-        │   VStack(alignment: .leading, spacing: 16) {
-        │       SetupStepRow(text: "輕觸「鍵盤」") {
-        │           Image(systemName: "keyboard")
-        │               .font(.title3).foregroundColor(.accentColor)
-        │       }
-        │       SetupStepRow(text: "開啟萊姆輸入法")         { ToggleSwitchIcon() }
-        │       SetupStepRow(text: "開啟「允許完整取用」")   { ToggleSwitchIcon() }
-        │   }
-        │   .padding(.horizontal, 24)
-        │
-        ├── // ── Explanatory note (hidden once Full Access is on) ──────
-        │   if !fullAccessEnabled {
-        │       Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
-        │           .font(.subheadline).foregroundColor(.secondary)
-        │           .multilineTextAlignment(.center)
-        │           .padding(.horizontal, 24)
-        │   }
-        │
-        ├── // ── CTA button (full-width tonal — legible in dark) ───────
-        │   Button("前往設定") { openLimeKeyboardSettings() }
-        │       .buttonStyle(LimeTonalButtonStyle())
+        ├── // ── Section 1: iOS Settings setup status ───────────────────
+        │   setupStatusBanner
         │       .padding(.horizontal, 24)
         │
-        ├── // ── Settings hint (hidden once banner is green) ──────────
-        │   if detectionState != .fullyEnabled {
+        ├── if setupStatusState != .fullyEnabled {
+        │   ├── // ── Section 1 settings guide ───────────────────────────
+        │   │   VStack(alignment: .leading, spacing: 16) {
+        │   │       SetupStepRow(text: "點「前往設定」後，輕觸「鍵盤」，開啓萊姆輸入法與允許完整取用（建議）") {
+        │   │           Image(systemName: "keyboard")
+        │   │               .font(.title3).foregroundColor(.accentColor)
+        │   │       }
+        │   │       KeyboardSettingsPreviewCard {
+        │   │           KeyboardSettingsPreviewRow(text: "萊姆輸入法") { ToggleSwitchIcon() }
+        │   │           Divider().padding(.leading, 52)
+        │   │           KeyboardSettingsPreviewRow(text: "允許完整取用") {
+        │   │               Image(systemName: "keyboard")
+        │   │                   .font(.body)
+        │   │                   .foregroundColor(.white)
+        │   │                   .frame(width: 32, height: 32)
+        │   │                   .background(Color(.systemGray3))
+        │   │                   .clipShape(RoundedRectangle(cornerRadius: 7))
+        │   │           } trailing: {
+        │   │               ToggleSwitchIcon()
+        │   │           }
+        │   │       }
+        │   │   }
+        │   │   .padding(.horizontal, 24)
+        │   │
+        │   ├── // ── Section 1 note ─────────────────────────────────────
+        │   │   Text("開啓完整取用以啓用備份資料庫、輸入法碼表編輯、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。")
+        │   │       .font(.subheadline).foregroundColor(.secondary)
+        │   │       .multilineTextAlignment(.center)
+        │   │       .padding(.horizontal, 24)
+        │   │
+        │   ├── // ── Section 1 CTA (full-width tonal — legible in dark) ─
+        │   │   Button("前往設定") { openLimeKeyboardSettings() }
+        │   │       .buttonStyle(LimeTonalButtonStyle())
+        │   │       .padding(.horizontal, 24)
+        │   │
+        │   └── // ── Settings hint ──────────────────────────────────────
         │       Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」…")
         │           .font(.footnote).foregroundColor(.secondary)
         │           .multilineTextAlignment(.center).padding(.horizontal, 24)
         │   }
         │
-        ├── // ── Invisible probe field ────────────────────────────────
-        │   TextField("", text: $probeText)   // 1×1 pt, opacity 0.01, accessibilityHidden
-        │       .focused($probeFocused)       // auto-focused when keyboard enabled but Full
-        │       .frame(width: 1, height: 1)   // Access not confirmed; causes LimeKeyboard's
-        │       .opacity(0.01)               // viewWillAppear to write keyboard_has_full_access
+        ├── // ── Section 2: switch to LIME keyboard ─────────────────────
+        │   if keyboardEnabled {
+        │       activeKeyboardStatusBanner
+        │           .padding(.horizontal, 24)
+        │   }
         │
-        ├── // ── Installed-IM status (§4.3) ───────────────────────────
+        ├── // ── Section 3: Installed-IM status (§4.3) ─────────────────
         │   imStatusSection          // none/disabled/ok banner + optional CTA → 輸入法 tab
         │       .padding(.horizontal, 24)
         │
@@ -318,6 +328,9 @@ NavigationStack (.navigationBarHidden(true))
         // VStack modifiers:
         //   .frame(maxWidth: 560)        // iPad reading-width cap
         //   .frame(maxWidth: .infinity)  // center the column horizontally
+        //
+        // Active-keyboard relay probe lives in LimeSettingsView's root overlay:
+        //   RelayProbeField(text: $rootRelayText, isFocused: $rootRelayFocused)
 ```
 
 #### 4.1.1 SetupStepRow
@@ -343,12 +356,19 @@ private struct SetupStepRow<Icon: View>: View {
 
 #### 4.1.2 openLimeKeyboardSettings()
 
-Opens the app's own Settings page via `openSettingsURLString`. `App-Prefs:` deep links are intentionally not used — `canOpenURL` returns `true` for whitelisted schemes regardless of path, causing silent navigation to the wrong page.
+Opens the app's own Settings page via the bundle-ID-suffixed `openSettingsURLString` first, falling back to plain `openSettingsURLString` if `open` reports failure. `App-Prefs:` deep links are intentionally not used — `canOpenURL` returns `true` for whitelisted schemes regardless of path, causing silent navigation to the wrong page.
 
 ```swift
 private func openLimeKeyboardSettings() {
-    if let url = URL(string: UIApplication.openSettingsURLString) {
-        UIApplication.shared.open(url)
+    let plainURL = URL(string: UIApplication.openSettingsURLString)
+    let firstURL = Bundle.main.bundleIdentifier
+        .flatMap { URL(string: "\(UIApplication.openSettingsURLString)/\($0)") }
+        ?? plainURL
+    guard let firstURL else { return }
+    UIApplication.shared.open(firstURL) { opened in
+        if !opened, let plainURL {
+            UIApplication.shared.open(plainURL)
+        }
     }
 }
 ```
@@ -377,52 +397,73 @@ to `RecognizerIntent`. This is **not** part of the iOS setup tab.
 |---|---|---|---|---|
 | Granted | Green | `萊姆內建語音輸入已啟用 ✓` | `可直接在萊姆鍵盤內使用語音輸入。` | Hidden |
 | Not requested / denied but askable | Red | `萊姆內建語音輸入尚未啟用 ✕` | `若要在萊姆鍵盤內直接語音輸入，請允許麥克風權限；也可略過，改用 Google 語音輸入。` | `允許麥克風權限` requests `RECORD_AUDIO` |
-| Permanently denied | Yellow | `需至系統設定開啟麥克風權限 ⚠` | `Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。` | `前往系統設定` opens app info and shows a short toast guide |
+| Permanently denied | Orange | `需至系統設定開啟麥克風權限 ⚠` | `Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。` | `前往系統設定` opens app info and shows a short toast guide |
 
 **About footer** (`fragment_setup.xml` + `SetupFragment.java`): a full-bleed separator, then three equal-width tonal link chips (使用手冊 / 版權說明 / 原始碼 — icon over label) above a one-line copyright banner `© LIME 萊姆輸入法 <version> - <year>`. Chip labels use `?attr/colorPrimary` (Material You). **使用手冊** (`https://lime-ime.github.io/limeime/pages/index.html`) and **版權說明** (`https://lime-ime.github.io/limeime/pages/license.html`) open **in-place** via Chrome Custom Tabs (`openInAppTab()` — `CustomTabsIntent.Builder().setShowTitle(true)`, with an `ACTION_VIEW` fallback). **原始碼** (`txtGithubUrl`) opens **externally** via `ACTION_VIEW`.
 
-### 4.2 Status Banner
+### 4.2 Status Sections
 
-Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The invisible probe field (§4.1) is auto-focused when `keyboardEnabled && !fullAccessEnabled` to trigger the keyboard extension's `viewWillAppear`, which writes a fresh `keyboard_has_full_access` to the App Group.
+Re-checks on `.onAppear`, on each `scenePhase → .active` transition, and via a 1-second polling `Timer` while the app is active. The active-keyboard probe (§4.1) is fired when `keyboardEnabled && !activeThisSession`; during the probe window Section 2 stays neutral `checking` so it does not flash "not active" before the ping can arrive.
 
 **Detection logic** (`refreshStatus()`):
 
-- `keyboardEnabled`: `UITextInputMode.activeInputModes` filtered by private `identifier` KVC key matching prefix `"org.limeime"`. Does not use `keyboard_extension_loaded`.
-- `fullAccessEnabled`: reads `keyboard_has_full_access` from `UserDefaults(suiteName: "group.org.limeime")`. If the key is absent (extension has never run), assumes `true` to avoid a false-positive orange banner right after first enable.
+- `keyboardEnabled`: the system `AppleKeyboards` list filtered for bundle IDs with prefix `"org.limeime"`. Does not use `keyboard_extension_loaded` or private `UITextInputMode` KVC. DEBUG UI tests may force only this axis with `-limeUITestForceKeyboardEnabled 1`; active/full-access still require the real Darwin ping/heartbeat.
+- `activeThisSession`: `FAStateResolver.isActiveThisSession(faPingAt:probeFiredAt:mode:)`, where the probe timestamp and probe mode are captured when the setup probe focuses. No ping inside the mode-specific active window resolves Section 2 to enabled-but-not-active.
+- `faState`: ignores legacy shared-default heartbeat keys. `confirmedOn` requires `outbox/heartbeat.json` to decode, be fresh (≤120 seconds), and report `hasFullAccess == true`. `confirmedOff` requires a live `org.limeime.fa.off` ping this app session. Everything else is `unknown`.
+
+**Section 1 / Banner 1 — iOS Settings setup status** (`SetupDetection.fullAccessBannerState(keyboardEnabled:faConfirmedOn:activeThisSession:)`). This section is always visible and covers both "enable the LIME keyboard" and "allow Full Access". If LIME is already the current keyboard but Full Access is still off, it uses the dedicated `activeNoFullAccess` state instead of the generic enabled-but-not-full-access state.
 
 | State | Color | SF Symbol | Banner text |
 | --- | --- | --- | --- |
-| `fullyEnabled` | `.green` | `checkmark.circle.fill` | `"萊姆輸入法已啟用"` |
-| `enabledNoFullAccess` | `.orange` | `exclamationmark.triangle.fill` | `"鍵盤已啟用，但尚未允許完整取用"` |
-| `notEnabled` | `.red` | `xmark.circle.fill` | `"尚未啟用萊姆輸入法鍵盤"` |
+| `notEnabled` | red | `xmark.circle.fill` | `"尚未啟用萊姆輸入法鍵盤"` |
+| `enabledNoFullAccess` | orange | `info.circle.fill` | `"萊姆輸入法已啓用，完整取用未開啓"` |
+| `activeNoFullAccess` | orange | `info.circle.fill` | `"萊姆輸入法已啓用，完整取用未開啓"` |
+| `fullyEnabled` | green | `checkmark.circle.fill` | `"萊姆輸入法已啓用、完整取用已開啓 ✓"` |
 
-Banner renders as `Label(text, systemImage:)` in `.subheadline` font, inside a `secondarySystemBackground` rounded-rect card (`.cornerRadius(10)`).
+**Section 2 / Banner 2 — Switch to LIME keyboard** (`SetupDetection.activeKeyboardBannerState(activeThisSession:probePending:)`). This section is hidden while `keyboardEnabled == false`. If the keyboard is enabled but not active, it may focus the probe field to bring up the keyboard; iOS still requires the user to choose LIME manually from the globe menu. Active-keyboard detection is the relay probe described in [IOS_ACTIVE_KB_DETECT.md](IOS_ACTIVE_KB_DETECT.md).
+
+| State | Color | SF Symbol | Banner text | Extra |
+| --- | --- | --- | --- | --- |
+| `hidden` | — | — | — | hidden until `keyboardEnabled == true` |
+| `checking` | neutral | `hourglass` | `"萊姆輸入法檢查中…"` | — |
+| `notActive` | red | `xmark.circle.fill` | `"已啟用，但尚未切換萊姆輸入法"` | full-width tonal `"選用萊姆輸入法"` button plus `"長按 🌐 選用萊姆輸入法"` hint |
+| `active` | green | `checkmark.circle.fill` | `"萊姆輸入法已啟用且為目前輸入法 ✓"` | — |
+
+**Section 2 note** (`.footnote`, `.secondary`, centered): shown under the `notActive` button/hint only when `faState == .confirmedOn && activeThisSession == false`. Text: `"啓用備份資料庫與輸入法碼表編輯需切換目前鍵盤為萊姆輸入法。"`
+
+Banner text follows Android's `setup_status_*` strings (`strings_settings.xml`) where the platform action matches, brand-adapted to 萊姆輸入法 and with Android's "點按下方按鈕切換" replaced by the iOS globe reality (iOS has no `showInputMethodPicker()`). The button `"選用萊姆輸入法"` is Android's `setup_im_system_selectLIME` verbatim, but it only focuses the probe field; it does not programmatically switch keyboards.
+
+**Section 3 — Installed-IM status** is specified in §4.3. It remains visible even before LIME is active so the user can fix a missing or disabled IM table after completing keyboard setup.
+
+**Layout:** Section 1 sits directly under the setup title and owns the setup steps plus `前往設定` CTA. Section 2 sits after Section 1 and is hidden until the keyboard is enabled. Section 3 sits after Section 2. The three sections use normal `VStack` spacing only — no separator lines/dividers between them. Only the status label carries the colored tint; the `"選用萊姆輸入法"` button, `"長按 🌐 選用萊姆輸入法"` hint, and Section 2 note sit outside the tinted card. Section 2 `notActive`'s button focuses the probe field and suppresses the short auto-dismiss so the keyboard stays up while the user opens the globe menu; a Darwin ping flips Section 2 to `active` and dismisses the keyboard.
+
+Banners render as `Label(text, systemImage:)` in `.subheadline` font, inside rounded-rect cards (`.cornerRadius(10)`) with the red / orange / green status ink over matching status tints; Section 2 `checking` uses `.secondary` over `secondarySystemBackground`.
 
 ### 4.3 Installed-IM Status
 
-A second status block below the About footer separator that mirrors the **輸入法**
-tab's reality, so a problem surfaces on the first screen the user lands on and the
-Setup tab can route them straight to the fix. The §4.2 banner reports whether the
-*keyboard* is enabled; §4.3 reports whether any *input method table* is actually
-installed and active — a keyboard with no IM still cannot type.
+Section 3 mirrors the **輸入法** tab's reality, so a problem surfaces on the first
+screen the user lands on and the Setup tab can route them straight to the fix.
+The §4.2 status sections report whether the
+*keyboard* is enabled and current; §4.3 reports whether any *input method table* is actually
+installed and enabled — a keyboard with no enabled IM still cannot type.
 
 It derives one of three states from the IM list (`im.enabled` across all installed
 IMs) and renders a §4.2-style status banner plus an optional prominent CTA that
 deep-links into the IM Manager (§5):
 
-| State | Condition | Color | iOS SF Symbol / Android icon | Banner text | CTA |
-| --- | --- | --- | --- | --- | --- |
-| `none` | no IM table installed | danger / red (`var(--md-error)`) | `error` | `"尚未安裝任何輸入法"` | `"安裝輸入法"` |
-| `disabled` | ≥1 installed, all disabled | warning / orange (`#b56500`) | `warning` | `"已安裝 N 個輸入法，但全部停用"` | `"啟用輸入法"` |
-| `ok` | ≥1 installed & enabled | success / green | `check_circle` | `"已安裝 N 個輸入法"` | none |
+| State | Condition | Color | iOS SF Symbol | Android icon | Banner text | CTA |
+| --- | --- | --- | --- | --- | --- | --- |
+| `none` | no IM table installed | red | `xmark.circle.fill` | `error` | `"尚未安裝任何輸入法"` | `"安裝輸入法"` |
+| `disabled` | ≥1 installed, all disabled | orange (`#EF6C00` light / `#FFB951` dark) | `exclamationmark.triangle.fill` | `warning` | `"已安裝 N 個輸入法，但全部停用"` | `"啟用輸入法"` |
+| `ok` | ≥1 installed & enabled | green | `checkmark.circle.fill` | `check_circle` | `"已安裝 N 個輸入法"` | none |
 
 - **`N`** is the installed-IM count; the `ok` and `disabled` rows substitute it into
   the text, so the `none` text is the only fully-static string.
 - **CTA** is shown only for `none` / `disabled`. Tapping it navigates to the **輸入法**
   tab — to the IM install flow (§5.3) for `none`, or to the IM list (§5.1) for
   `disabled` so the user can re-enable.
-- The block is preceded by a full-bleed separator (`0 -24px` inset), matching the
-  About footer divider, so it reads as its own section.
+- The block uses normal vertical spacing only. Do not add a divider/separator
+  between Section 2 and this installed-IM status section.
 - iOS renders the banner via the shared `StatusBanner` component (same as §4.2);
   Android renders an icon + label row (`fill: true`, tinted to the state colour)
   over the `STATUS_BG` tonal fill, with a `filled` Material button for the CTA.
@@ -743,6 +784,15 @@ When a **related-DB import** runs (`pickerType == .relatedDb`), show a centred `
 
 Reached via NavigationLink from §5.2 ("瀏覽 / 編輯資料表").
 
+The editor status line is state-specific:
+
+| State | Status / unlock hint |
+| --- | --- |
+| Full Access confirmed, LIME active | `"完整取用已開啟，碼表編輯功能已啓用。"` |
+| Full Access off, LIME active | `"開啟完整取用以顯示實際分數及啓用碼表編輯功能"` |
+| Full Access confirmed, LIME not active | `"將目前鍵盤切換為萊姆輸入法以顯示實際分數及開啓編輯功能"` |
+| Full Access missing/unknown, LIME not active/unknown | `"開啟完整取用並將鍵盤切換至萊姆輸入法以顯示實際分數及開啓編輯功能"` |
+
 | iOS | Android |
 |---|---|
 | ![iPhone 17 Pro Max simulator screenshot of the mapping record list](assets/lime_settings_ios_record_list.png) | ![Android emulator screenshot of the mapping record list](assets/lime_settings_android_record_list.png) |
@@ -833,7 +883,7 @@ rectangular `刪除`, and framed rectangular `儲存`.
 
 ### 6.2 Related Phrase List — RelatedListView (embedded in §5.2)
 
-The related-phrase editor is reached via **輸入法 → 關聯字庫 → 瀏覽 / 編輯關聯字庫**. It is no longer a standalone tab. `RelatedListView` accepts `isEmbedded: Bool`; when `true` the inner `NavigationView` wrapper is omitted so it can be pushed as a navigation destination without nesting. Equivalent to Android's `ManageRelatedFragment`.
+The related-phrase editor is reached via **輸入法 → 關聯字庫 → 瀏覽 / 編輯關聯字庫**. It is no longer a standalone tab. `RelatedListView` accepts `isEmbedded: Bool`; when `true` the inner `NavigationView` wrapper is omitted so it can be pushed as a navigation destination without nesting. Equivalent to Android's `ManageRelatedFragment`. It uses the same state-specific read-only unlock copy as §6.1.
 
 | iOS | Android |
 |---|---|
@@ -984,9 +1034,10 @@ NavigationStack
         │
         ├── Text("資料庫管理").font(.largeTitle).bold()   // rendered in-content on ALL devices
         │
-        ├── dbAction(footer: "備份包含所有字根、關聯字及喜好設定。")     // no section header
+        ├── dbAction(footer: backupFooter)     // ready: backup note; otherwise unlock guidance
         │   └── Button "備份資料庫"  systemImage: "square.and.arrow.up"
         │       .buttonStyle(.borderedProminent).controlSize(.large)   // filled primary action
+        │       .disabled(isWorking || faState != .confirmedOn || !activeThisSession)
         │       → performBackup() → UIActivityViewController (Files, AirDrop, Mail…)
         │
         ├── dbAction(footer: "還原後鍵盤將重新載入資料庫。")
@@ -1019,15 +1070,17 @@ layout is identical on iPhone and iPad.
 
 ### 7.2 Backup Behaviour
 
-1. Call `DBServer.shared.backupDatabase(uri: tempZip, progress:)` from a `Task.detached(priority: .userInitiated)`. The call is dispatched off the main actor — calling it via `MainActor.run` would block SwiftUI from rendering the progress overlay until the work finished. `DBServer` is a plain class (not `@MainActor`-isolated) and GRDB serializes the queue internally, so background dispatch is safe.
-2. `backupDatabase` zips `lime.db` (+ journal + filtered shared-prefs plist) into a temp `.zip` and accepts an optional `Progress` for ZIPFoundation to update during `addEntry`. The view observes `progress.fractionCompleted` via KVO and republishes to a `@State backupProgress: Double`.
+Backup is disabled unless `faState == .confirmedOn && activeThisSession == true`. Footer copy is state-specific: Full Access not confirmed → `"開啟完整取用權限以備份已學習字詞"`; Full Access confirmed but LIME not active → `"啓用備份資料庫功能需切換目前鍵盤為萊姆輸入法。"`; ready → `"備份包含所有字根、關聯字及喜好設定。"` Restore buttons stay enabled regardless of FA/active-keyboard state.
+
+1. Call `SetupImController.backupDBAsync()` from a SwiftUI `Task`; the controller writes the keyboard export request, waits for a matching receipt, and builds the shareable zip off the main actor.
+2. Timeout copy is split by live FA pings during the backup window: ping seen but no receipt → Full Access guidance; no ping → `"請將鍵盤切換至萊姆輸入法後再試"`.
 3. After `closeDatabase()` (required to checkpoint GRDB's WAL into the main file), the `defer` block **must** rebuild the datasource: `datasource = try? LimeDB(path: livePath)`. `LimeDB.openDBConnection()` is a no-op stub on iOS, so without the explicit rebuild every later `dbQueue.write` throws SQLITE_MISUSE 21 ("out of memory" in `sqlite3_errmsg`), the IM list silently empties (`tableHasData` swallows the error via `try?`), and reinstall fails with the same error. Mirror the pattern used by `restoreDatabase()`.
 4. Present via a `UIActivityViewController` bridge (`ShareSheet`) so the user can save to Files, send via AirDrop, etc.
 5. Clean up temp file after the share sheet is dismissed.
 
 ### 7.3 Restore Behaviour
 
-1. Show a **confirmation alert** (title `確認還原`, buttons `還原` destructive / `取消`) before proceeding: "還原後目前所有資料將被取代，確定繼續？". Both restore actions share this alert.
+1. Show a **confirmation alert** (title `確認還原`, buttons `還原` destructive / `取消`) before proceeding: "還原後目前所有資料將被取代，確定繼續？". Both restore actions share this alert and remain enabled regardless of Full Access state.
 2. On confirm, open a `.fileImporter` restricted to `.item` (to pick `.db` / `.limedb` files).
 3. On file selection:
    a. Stop any in-flight DB access (notify keyboard extension via App Group flag if needed).
@@ -1054,7 +1107,7 @@ State transitions:
 
 Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupProgress = 0`, and writes the error to `statusMessage`.
 
-**Why the preparing-share phase exists.** Verified on WJIP17 (iPhone 17 Pro): with a real-sized `lime.db` (post-learning, multi-MB), the dominant cost is *not* the zip — it is the `UIActivityViewController` initialization that runs synchronously on the main thread when SwiftUI presents `.sheet(isPresented: $showShareSheet)`. Tapping `備份資料庫` previously flashed the determinate bar for a fraction of a second and then locked the DB Manager view for ~20 seconds with no spinner until the share sheet eventually drew. Keeping `isWorking = true` and pivoting the overlay text to `準備備份中…` covers the whole window so the user always sees feedback. Do not move the `isWorking = false` / `preparingShare = false` resets back into the `MainActor.run` block that follows `try server.backupDatabase(...)` — that re-introduces the freeze.
+**Why the preparing-share phase exists.** Verified on WJIP17 (iPhone 17 Pro): with a real-sized backup, the dominant visible cost can be request/receipt wait plus `UIActivityViewController` initialization. The DB Manager keeps `isWorking = true` and pivots the overlay text to `準備備份中…` so the user always sees feedback before the share sheet appears.
 
 ---
 
@@ -1252,7 +1305,7 @@ All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 
 | Feature | Notes |
 |---|---|
-| Three-state status banner | Real-time green / yellow / red detection on scene activation |
+| Three-state status banner | Real-time green / orange / red detection on scene activation |
 | Split keyboard (iPad-only) | `split_keyboard_mode` row hidden on `UIDevice.current.userInterfaceIdiom == .phone` |
 | Share-sheet backup | `UIActivityViewController` bridge (`ShareSheet`) for `.limedb` output |
 | `@AppStorage(store:)` | Shared suite ensures keyboard extension reads prefs without IPC |
@@ -1304,7 +1357,7 @@ guard let db = openDB() else {
 
 ### App Setup (§4)
 - [x] Step-by-step keyboard activation guide
-- [x] Real-time keyboard-enabled status banner (green / yellow / red)
+- [x] Real-time keyboard-enabled status banner (green / orange / red)
 - [x] Full Access detection
 - [x] "前往系統設定" deep-link button
 - [ ] Optional `RECORD_AUDIO` setup step for LIME inline dictation — Android-only; not part of the iOS setup tab

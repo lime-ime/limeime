@@ -13,6 +13,11 @@
 		05CE854A1417A2D45839D8D2 /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
 		0638AFC436CE8D769E24B98D /* SetupImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9627C2D44209CBC7935864D /* SetupImControllerTest.swift */; };
 		06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */; };
+		FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */; };
+		3A5E7D0C0000000000000002 /* SetupDetectionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */; };
+		A1B2C3D4E5F6071828394B71 /* RelayPayloadTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */; };
+		A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */; };
+		F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00D14A00000000000000001 /* RelayPrefSyncTest.swift */; };
 		079D51B244090D1F399274BD /* ViewProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A52F55888952FFB32FC /* ViewProtocols.swift */; };
 		08271101006B46D88ED3D38C /* lime_dayi_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = F7D18AE89D0A449F88EDC8FE /* lime_dayi_ipad_shift.json */; };
 		094B465BCDEFDF86BD7A871E /* lime_abc_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 7DF8C1AAF4AC999552F27EF3 /* lime_abc_ipad_narrow.json */; };
@@ -82,6 +87,7 @@
 		5D1920F9FEA04D59A8EE5F23 /* lime_phonetic_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 086EF4DE9DDC4C8FAB4060D9 /* lime_phonetic_ipad.json */; };
 		5DD92C8B2C002D0BE7C6211F /* lime_hs_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = E1B9BBE872D2C3AB9F274121 /* lime_hs_ipad_narrow.json */; };
 		60877D3DCDD874F7F0FE15A6 /* LimeDBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */; };
+		6E1A5C0D9B234F0187A6D424 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		626F627EBB3DBBF4B25CFE1F /* lime_array_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 02D9118E421AFE4258810FEA /* lime_array_ipad_narrow_shift.json */; };
 		65B48ECD66FBB98FA64DE8CD /* popup_punctuation.json in Resources */ = {isa = PBXBuildFile; fileRef = F04435F2855594DD68DDAB57 /* popup_punctuation.json */; };
 		6A2B456E9E54D00FE08276CB /* lime_dayi_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = FCCC8E71C5E48A1A81AB896E /* lime_dayi_shift.json */; };
@@ -169,6 +175,7 @@
 		BB11223344556677889900CC /* phone.json in Resources */ = {isa = PBXBuildFile; fileRef = AA11223344556677889900BB /* phone.json */; };
 		BCBFE011E27ED97F41C1A1DB /* lime_hsu.json in Resources */ = {isa = PBXBuildFile; fileRef = B2E2CC2294E9DD745CA44937 /* lime_hsu.json */; };
 		BD134223224AF768213904BA /* LimeDBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */; };
+		6E1A5C0D9B234F0187A6D425 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		BD958D0BA5A814EF01A5C2AD /* RelatedListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4100A6E7F721B8C08183DAF3 /* RelatedListView.swift */; };
 		C29DD224E7D5797D71BFD56C /* LayoutLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84CB76CFC92DAA008483771 /* LayoutLoader.swift */; };
 		C2F049D8D6FD4264BC9BD086 /* lime_ez_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 7739FF41AE20434AABB12224 /* lime_ez_ipad_shift.json */; };
@@ -210,6 +217,8 @@
 		E8E5B5DA570FE25A0B191DB8 /* EditRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D003E6B950F019B0269750C6 /* EditRecordView.swift */; };
 		EA5199243A781A843C22C763 /* AddRecordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECF3F8B20C28BBE4D97C3104 /* AddRecordView.swift */; };
 		EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3A5071216F1AB96116BC3F /* DBServerTest.swift */; };
+		6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */; };
+		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		ECC6875166947EFFA1140D0B /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48B5C1F9A381B91371CE5694 /* GRDB */; };
 		EEBE3123079A0761711F29AA /* ManageImControllerTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5742CE7E6AE114FF37312A03 /* ManageImControllerTest.swift */; };
 		EFBC852F9176543E0F0EE2BA /* lime_hs.json in Resources */ = {isa = PBXBuildFile; fileRef = FD47F81F6585217423024BE3 /* lime_hs.json */; };
@@ -451,6 +460,12 @@
 		CB92E7B40C1C7C8BE4561773 /* popup_smileys.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_smileys.json; sourceTree = "<group>"; };
 		CC11223344556677889900DD /* phone_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_shift.json; sourceTree = "<group>"; };
 		CC3A5071216F1AB96116BC3F /* DBServerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBServerTest.swift; sourceTree = "<group>"; };
+		FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FAStateTest.swift; sourceTree = "<group>"; };
+		3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupDetectionTest.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPayloadTest.swift; sourceTree = "<group>"; };
+		A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordEditingCapabilityTest.swift; sourceTree = "<group>"; };
+		F00D14A00000000000000001 /* RelayPrefSyncTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelayPrefSyncTest.swift; sourceTree = "<group>"; };
+		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
 		D003E6B950F019B0269750C6 /* EditRecordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditRecordView.swift; sourceTree = "<group>"; };
 		D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_ipad.json; sourceTree = "<group>"; };
 		D0956117FEB1C2F5C09EB5C5 /* Mapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mapping.swift; sourceTree = "<group>"; };
@@ -494,6 +509,7 @@
 		FD47F81F6585217423024BE3 /* lime_hs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_hs.json; sourceTree = "<group>"; };
 		FEB7554DFA2B6A6F31A1D39C /* popup_symbol_mode.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = popup_symbol_mode.json; sourceTree = "<group>"; };
 		FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimeDBProtocol.swift; sourceTree = "<group>"; };
+		6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContract.swift; sourceTree = "<group>"; };
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -564,7 +580,13 @@
 			isa = PBXGroup;
 			children = (
 				B4F8A3C2D6E95F0A3B2C7D8E /* EngineLatencyBenchmark.swift */,
-				CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
+					CC3A5071216F1AB96116BC3F /* DBServerTest.swift */,
+					FA51A7E0C0DEFACE00000002 /* FAStateTest.swift */,
+					3A5E7D0C0000000000000001 /* SetupDetectionTest.swift */,
+					A1B2C3D4E5F6071828394B70 /* RelayPayloadTest.swift */,
+					A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */,
+					F00D14A00000000000000001 /* RelayPrefSyncTest.swift */,
+					6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
 				06A7B8C9D0E1F20314253646 /* IntegrationTestBackupRestore.swift */,
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
@@ -666,6 +688,7 @@
 				3F0B16D9D4D0A632C53E2076 /* lime.db */,
 				C413C5F3C96DA0D6411EAD4B /* LimeDB.swift */,
 				FEBC0913BEADBB79C0E0CBBB /* LimeDBProtocol.swift */,
+				6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */,
 			);
 			path = Database;
 			sourceTree = "<group>";
@@ -882,7 +905,6 @@
 			buildPhases = (
 				F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */,
 				A103DBE00100000000000001 /* Copy emoji.db to bundle */,
-				A103DBE00100000000000002 /* Copy hanconvertv2.db to bundle */,
 				A2A322193FD1089E054DCD60 /* Sources */,
 				5CDE9B03925CC3482ECA1228 /* Resources */,
 				34D06C4DC6A0297415E88E79 /* Frameworks */,
@@ -906,6 +928,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 48AD57F172DCC0C2BD747A7B /* Build configuration list for PBXNativeTarget "LimeKeyboard" */;
 			buildPhases = (
+				8C33CDE3F88441899C2DAA42 /* Copy lime.db to bundle */,
 				7773AA62913279E155050F6F /* Copy emoji.db to bundle */,
 				B1DDA941604063AA655294A3 /* Sources */,
 				F3F12614B80FA93D90347100 /* Resources */,
@@ -1184,7 +1207,7 @@
 			shellPath = /bin/sh;
 			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/emoji.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/emoji.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
-		A103DBE00100000000000002 /* Copy hanconvertv2.db to bundle */ = {
+		F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1193,17 +1216,17 @@
 			);
 			inputPaths = (
 			);
-			name = "Copy hanconvertv2.db to bundle";
+			name = "Copy lime.db to bundle";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/hanconvertv2.db",
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/lime.db",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/hanconvertv2.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/hanconvertv2.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
+			shellScript = "SRC=\"${SRCROOT}/../LimeStudio/app/src/main/res/raw/lime.db\"\nDST=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/lime.db\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\nfi\n";
 		};
-		F5E01FBCA298C9F9AAE9A8A9 /* Copy lime.db to bundle */ = {
+		8C33CDE3F88441899C2DAA42 /* Copy lime.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1243,6 +1266,13 @@
 				EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */,
 				A3E7F1B2C5D84E9F2A1B6C7D /* EngineLatencyBenchmark.swift in Sources */,
 				EAD28C8417B2750D41E39C3A /* DBServerTest.swift in Sources */,
+					FA51A7E0C0DEFACE00000001 /* FAStateTest.swift in Sources */,
+					3A5E7D0C0000000000000002 /* SetupDetectionTest.swift in Sources */,
+					A1B2C3D4E5F6071828394B71 /* RelayPayloadTest.swift in Sources */,
+					A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */,
+					F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */,
+					6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
+				6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */,
 				2EE2BFCC6A02AFA1E73E7D27 /* ImConfig.swift in Sources */,
 				8D62ED56761A14A0C42204A9 /* KeyLayout.swift in Sources */,
 				F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */,
@@ -1299,6 +1329,7 @@
 				8C4D2C17B8A1495297103E45 /* LimeToastState.swift in Sources */,
 				F9D73852B20448B404C09BAB /* LimeDB.swift in Sources */,
 				60877D3DCDD874F7F0FE15A6 /* LimeDBProtocol.swift in Sources */,
+				6E1A5C0D9B234F0187A6D424 /* SyncContract.swift in Sources */,
 				D82AE1FA73F859BBABBF644C /* LimeSettingsView.swift in Sources */,
 				C9C4D445F9D778B1F3CB5102 /* MainViewController.swift in Sources */,
 				2A964733C022A582DDF047D5 /* ManageImController.swift in Sources */,
@@ -1347,6 +1378,7 @@
 				A1B2C3D40E5F6071829304A6 /* LayoutMetrics.swift in Sources */,
 				8B8D5CEFF8EB0D19EEB0F35C /* LimeDB.swift in Sources */,
 				19DCADEDF3021C74C1F1DF4B /* LimeDBProtocol.swift in Sources */,
+				6E1A5C0D9B234F0187A6D425 /* SyncContract.swift in Sources */,
 				17766B10C8DE7763C32633C1 /* Mapping.swift in Sources */,
 				77F10738CE2887D86C549599 /* PopupKeyboardView.swift in Sources */,
 				A0B1C2D3E4F5061728394A53 /* PreferenceBackupAdapter.swift in Sources */,

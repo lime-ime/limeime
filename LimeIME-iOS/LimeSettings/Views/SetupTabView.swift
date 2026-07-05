@@ -1,4 +1,4 @@
-// SetupTabView.swift
+﻿// SetupTabView.swift
 // LimeIME-iOS
 //
 // App Setup tab — keyboard activation guide, status detection, about.
@@ -61,6 +61,36 @@ private struct SetupStepRow<Icon: View>: View {
                 .font(.body)
             Spacer()
         }
+    }
+}
+
+// MARK: - KeyboardSettingsPreviewRow
+
+private struct KeyboardSettingsPreviewRow: View {
+    let text: String
+    var showsKeyboardIcon = false
+
+    var body: some View {
+        HStack(spacing: SettingsMetrics.setupStepSpacing) {
+            if showsKeyboardIcon {
+                Image(systemName: "keyboard")
+                    .font(.body.weight(.medium))
+                    .foregroundColor(.white)
+                    .frame(width: SettingsMetrics.setupStepIconWidth,
+                           height: SettingsMetrics.setupStepIconWidth)
+                    .background(Color(uiColor: .systemGray3))
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+            }
+
+            Text(text)
+                .font(.body)
+
+            Spacer()
+
+            ToggleSwitchIcon()
+        }
+        .padding(.vertical, SettingsMetrics.rowVerticalPadding)
+        .padding(.horizontal, SettingsMetrics.groupedSectionHorizontalPadding)
     }
 }
 
@@ -145,21 +175,20 @@ struct SetupTabView: View {
     @State private var imCount = 0
     @State private var imAnyEnabled = false
 
-    // keyboardEnabled: checked via UITextInputMode.activeInputModes — this is the
-    // same system API iOS uses to build the keyboard switcher.  It updates the
-    // moment the user adds or removes a keyboard in Settings, no heartbeat needed.
+    // keyboardEnabled: checked via the system AppleKeyboards bundle-ID list.
+    // Active/current-keyboard status is a separate relay probe.
     @State private var keyboardEnabled   = false
-    // fullAccessEnabled: can only be known once the keyboard extension has run at
-    // least once and written the value to the shared App Group.
-    @State private var fullAccessEnabled = false
+    @State private var faState: FAState = .unknown
+    @State private var faPingThisSession: Bool?
+    @State private var hasFreshFAEvidence = false
+    @State private var faPingObserver: FAPingObserver?
+    @State private var faPingAt: TimeInterval?
+    @State private var activeProbeFiredAt: TimeInterval?
+    @State private var activeProbeMode: ActiveKeyboardProbeMode = .automatic
+    @State private var activeProbePending = false
+    @State private var activating = false
 
     @State private var pollTimer: Timer?
-
-    // Invisible probe field: when the user taps it and types with the keyboard,
-    // the extension writes keyboard_has_full_access to the App Group so the Full
-    // Access state becomes accurate without leaving this screen.
-    @State private var probeText: String = ""
-    @FocusState private var probeFocused: Bool
 
     // PrimaryLanguage from LimeKeyboard/Info.plist
     private let groupSuite   = LIMEPreferenceManager.suiteName
@@ -180,71 +209,64 @@ struct SetupTabView: View {
                     }
                     .padding(.top, SettingsMetrics.setupHeroTopPadding)
 
-                    // ── Status banner ─────────────────────────────────────
-                    statusBanner
-                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-
                     // ── Title ─────────────────────────────────────────────
                     Text("設定萊姆輸入法")
                         .font(.system(size: SettingsMetrics.setupTitleFontSize, weight: .bold))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
-                    // ── Step list ─────────────────────────────────────────
-                    VStack(alignment: .leading, spacing: SettingsMetrics.setupListSpacing) {
-                        SetupStepRow(text: "輕觸「鍵盤」") {
-                            Image(systemName: "keyboard")
-                                .font(.title3)
-                                .foregroundColor(.accentColor)
-                        }
-                        SetupStepRow(text: "開啟萊姆輸入法") {
-                            ToggleSwitchIcon()
-                        }
-                        SetupStepRow(text: "開啟「允許完整取用」") {
-                            ToggleSwitchIcon()
-                        }
-                    }
-                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    // ── Full Access status banner ─────────────────────────
+                    fullAccessStatusBanner
+                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
-                    // ── Explanatory note (hidden once Full Access is on) ──
-                    if !fullAccessEnabled {
-                        Text("萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。")
+                    if fullAccessBannerState != .fullyEnabled {
+                        // ── Step list ─────────────────────────────────────
+                        VStack(alignment: .leading, spacing: SettingsMetrics.setupListSpacing) {
+                            SetupStepRow(text: "點「前往設定」後，輕觸「鍵盤」，開啓萊姆輸入法與允許完整取用（建議）") {
+                                Image(systemName: "keyboard")
+                                    .font(.title3)
+                                    .foregroundColor(.accentColor)
+                            }
+
+                            VStack(spacing: 0) {
+                                KeyboardSettingsPreviewRow(text: "萊姆輸入法")
+
+                                Divider()
+                                    .padding(.leading, SettingsMetrics.groupedSectionHorizontalPadding)
+
+                                KeyboardSettingsPreviewRow(text: "允許完整取用",
+                                                           showsKeyboardIcon: true)
+                            }
+                            .background(Color(UIColor.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
+                        }
+                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+
+                        // ── Explanatory note (hidden once Full Access is on) ─
+                        Text("開啓完整取用以啓用備份資料庫、輸入法碼表編輯、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+
+                        // ── CTA button (full-width tonal — same legible style as the
+                        //    資料庫 restore buttons; readable in dark mode). ─────
+                        Button {
+                            openLimeKeyboardSettings()
+                        } label: {
+                            Text("前往設定")
+                        }
+                        .buttonStyle(LimeTonalButtonStyle())
+                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+
+                        settingsGuidance
                     }
 
-                    // ── CTA button (full-width tonal — same legible style as the
-                    //    資料庫 restore buttons; readable in dark mode). ─────────
-                    Button {
-                        openLimeKeyboardSettings()
-                    } label: {
-                        Text("前往設定")
-                    }
-                    .buttonStyle(LimeTonalButtonStyle())
-                    .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-
-                    // Hidden once fully enabled (green banner) — the hint only
-                    // helps while the user is still hunting for the keyboard.
-                    if detectionState != .fullyEnabled {
-                        Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
-                    }
-
-                    // Invisible 1 × 1 probe — preserves heartbeat polling
-                    // without showing a text field in the new layout.
-                    TextField("", text: $probeText)
-                        .focused($probeFocused)
-                        .frame(width: SettingsMetrics.invisibleProbeSize,
-                               height: SettingsMetrics.invisibleProbeSize)
-                        .opacity(SettingsMetrics.invisibleProbeOpacity)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .accessibilityHidden(true)
+                    // ── Active-keyboard status + CTA — placed BELOW the keyboard
+                    //    activation steps: once LIME is enabled, switch to it as
+                    //    the current keyboard. Hidden until the keyboard is enabled.
+                    activeKeyboardStatusBanner
+                        .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
                     // ── Installed-IM status (§4.3) ────────────────────────
                     imStatusSection
@@ -282,32 +304,33 @@ struct SetupTabView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
+                ensureFAPingObserver()
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
-                // Auto-focus the invisible probe so the LimeIME extension's
-                // viewWillAppear fires (if LimeIME is the active keyboard)
-                // and writes fresh hasFullAccess to the App Group.
-                triggerProbeIfNeeded()
+                triggerRootRelayIfNeeded()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
                     refreshStatus()
                     refreshIMStatus()
                     startPolling()
-                    // Re-trigger each time app comes to foreground — covers the
-                    // common case: user grants Full Access in Settings, returns.
-                    triggerProbeIfNeeded()
+                    triggerRootRelayIfNeeded()
                 } else if phase == .background {
                     stopPolling()
                 }
             }
-            .onChange(of: fullAccessEnabled) { enabled in
-                // Once Full Access is confirmed, dismiss the keyboard.
-                if enabled { probeFocused = false }
+            .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
+                if hasFreshEvidence && activeThisSession { finishActiveProbe() }
             }
-            .onChange(of: probeText) { _ in refreshStatus() }
             .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
+            .onReceive(NotificationCenter.default.publisher(for: .limeRelayPayloadReceived)) { note in
+                handleRelayPayloadNotification(note)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .limeRelayResolvedNotActive)) { _ in
+                activeProbePending = false
+                activating = false
+            }
             // scenePhase → .active is unreliable when SwiftUI is hosted in a
             // UIHostingController under a UIKit SceneDelegate, so the §4.3 IM
             // count could stay stale (showing 0) after returning from system
@@ -316,10 +339,11 @@ struct SetupTabView: View {
             // view context, where the @EnvironmentObject and @State are valid.
             .onReceive(NotificationCenter.default.publisher(
                 for: UIApplication.didBecomeActiveNotification)) { _ in
+                ensureFAPingObserver()
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
-                triggerProbeIfNeeded()
+                triggerRootRelayIfNeeded()
             }
         }
     }
@@ -340,11 +364,6 @@ struct SetupTabView: View {
     @ViewBuilder
     private var imStatusSection: some View {
         VStack(spacing: SettingsMetrics.aboutFooterSpacing) {
-            // Full-bleed separator so the block reads as its own section,
-            // matching the About footer divider. Spec §4.3.
-            Divider()
-                .padding(.horizontal, -SettingsMetrics.pageHorizontalPadding)
-
             Label(imStatusText, systemImage: imStatusSymbol)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(imStatusInk)
@@ -359,7 +378,6 @@ struct SetupTabView: View {
                     .buttonStyle(LimeTonalButtonStyle())
             }
         }
-        .padding(.top, SettingsMetrics.aboutFooterTopPadding)
     }
 
     private var imStatusText: String {
@@ -389,7 +407,7 @@ struct SetupTabView: View {
     private var imStatusTint: Color {
         switch imStatusState {
         case .none:     return SettingsTheme.statusTintRed
-        case .disabled: return SettingsTheme.statusTintYellow
+        case .disabled: return SettingsTheme.statusTintOrange
         case .ok:       return SettingsTheme.statusTintGreen
         }
     }
@@ -435,112 +453,239 @@ struct SetupTabView: View {
         }
     }
 
-    // MARK: - Status banner
+    // MARK: - Status banners
 
-    // Status banner (§4.2): a filled status glyph + label in the state's deep
-    // "ink" colour over a subtle status tint, matching the design StatusBanner.
-    private var statusBanner: some View {
-        Label(statusText, systemImage: statusSymbol)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(statusInk)
-            .padding(.vertical, SettingsMetrics.statusVerticalPadding)
-            .padding(.horizontal, SettingsMetrics.statusHorizontalPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(statusTint)
-            .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
+    // Status banners (§4.2): Banner 1 is Full Access only; Banner 2 is the
+    // active-keyboard axis and owns the switch-keyboard CTA.
+    private var fullAccessStatusBanner: some View {
+        statusBanner(text: fullAccessStatusText,
+                     systemImage: fullAccessStatusSymbol,
+                     ink: fullAccessStatusInk,
+                     tint: fullAccessStatusTint)
     }
 
-    private var statusText: String {
-        switch detectionState {
-        case .fullyEnabled:        return "萊姆輸入法已啟用"
-        case .enabledNoFullAccess: return "鍵盤已啟用，但尚未允許完整取用"
-        case .notEnabled:          return "尚未啟用萊姆輸入法鍵盤"
+    @ViewBuilder
+    private var activeKeyboardStatusBanner: some View {
+        switch activeKeyboardBannerState {
+        case .hidden:
+            EmptyView()
+        case .checking:
+            statusBanner(text: "萊姆輸入法檢查中…",
+                         systemImage: "hourglass",
+                         ink: .secondary,
+                         tint: Color(UIColor.secondarySystemBackground))
+        case .notActive:
+            statusBanner(text: "已啟用，但尚未切換萊姆輸入法",
+                         systemImage: "xmark.circle.fill",
+                         ink: SettingsTheme.dangerInk,
+                         tint: SettingsTheme.statusTintRed) {
+                Button { activateKeyboard() } label: { Text("選用萊姆輸入法") }
+                    .buttonStyle(LimeTonalButtonStyle())
+
+                Text("長按 🌐 選用萊姆輸入法")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+
+                if faState == .confirmedOn && !activeThisSession {
+                    Text("啓用備份資料庫與輸入法碼表編輯需切換目前鍵盤為萊姆輸入法。")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+        case .active:
+            statusBanner(text: "萊姆輸入法已啟用且為目前輸入法 ✓",
+                         systemImage: "checkmark.circle.fill",
+                         ink: SettingsTheme.successInk,
+                         tint: SettingsTheme.statusTintGreen)
         }
     }
 
-    private var statusSymbol: String {
-        switch detectionState {
-        case .fullyEnabled:        return "checkmark.circle.fill"
-        case .enabledNoFullAccess: return "exclamationmark.triangle.fill"
-        case .notEnabled:          return "xmark.circle.fill"
+    private func statusBanner(text: String,
+                              systemImage: String,
+                              ink: Color,
+                              tint: Color) -> some View {
+        statusBanner(text: text, systemImage: systemImage, ink: ink, tint: tint) {
+            EmptyView()
         }
     }
 
-    private var statusInk: Color {
-        switch detectionState {
-        case .fullyEnabled:        return SettingsTheme.successInk
-        case .enabledNoFullAccess: return SettingsTheme.warningInk
-        case .notEnabled:          return SettingsTheme.dangerInk
+    private func statusBanner<Content: View>(text: String,
+                                             systemImage: String,
+                                             ink: Color,
+                                             tint: Color,
+                                             @ViewBuilder extra: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Only the status label carries the tinted background — any button or
+            // notes below sit outside the colored card.
+            Label(text, systemImage: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(ink)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, SettingsMetrics.statusVerticalPadding)
+                .padding(.horizontal, SettingsMetrics.statusHorizontalPadding)
+                .background(tint)
+                .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.groupedSectionCornerRadius))
+
+            extra()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var fullAccessStatusText: String {
+        switch fullAccessBannerState {
+        case .notEnabled:           return "尚未啟用萊姆輸入法鍵盤"
+        case .enabledNoFullAccess:  return "萊姆輸入法已啓用，完整取用未開啓"
+        case .activeNoFullAccess:   return "萊姆輸入法已啓用，完整取用未開啓"
+        case .fullyEnabled:         return "萊姆輸入法已啓用、完整取用已開啓 ✓"
         }
     }
 
-    private var statusTint: Color {
-        switch detectionState {
-        case .fullyEnabled:        return SettingsTheme.statusTintGreen
-        case .enabledNoFullAccess: return SettingsTheme.statusTintYellow
-        case .notEnabled:          return SettingsTheme.statusTintRed
+    private var fullAccessStatusSymbol: String {
+        switch fullAccessBannerState {
+        case .notEnabled:           return "xmark.circle.fill"
+        case .enabledNoFullAccess:  return "info.circle.fill"
+        case .activeNoFullAccess:   return "info.circle.fill"
+        case .fullyEnabled:         return "checkmark.circle.fill"
+        }
+    }
+
+    private var fullAccessStatusInk: Color {
+        switch fullAccessBannerState {
+        case .notEnabled:           return SettingsTheme.dangerInk
+        case .enabledNoFullAccess:  return SettingsTheme.warningInk
+        case .activeNoFullAccess:   return SettingsTheme.warningInk
+        case .fullyEnabled:         return SettingsTheme.successInk
+        }
+    }
+
+    private var fullAccessStatusTint: Color {
+        switch fullAccessBannerState {
+        case .notEnabled:           return SettingsTheme.statusTintRed
+        case .enabledNoFullAccess:  return SettingsTheme.statusTintOrange
+        case .activeNoFullAccess:   return SettingsTheme.statusTintOrange
+        case .fullyEnabled:         return SettingsTheme.statusTintGreen
+        }
+    }
+
+    @ViewBuilder
+    private var settingsGuidance: some View {
+        if fullAccessBannerState != .fullyEnabled {
+            Text("若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」，開啟萊姆輸入法與允許完整取用。")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
         }
     }
 
     // MARK: - Detection
 
-    private enum DetectionState {
-        case fullyEnabled, enabledNoFullAccess, notEnabled
+    private var fullAccessBannerState: FullAccessBannerState {
+        SetupDetection.fullAccessBannerState(keyboardEnabled: keyboardEnabled,
+                                             faConfirmedOn: faState == .confirmedOn,
+                                             activeThisSession: activeThisSession)
     }
 
-    private var detectionState: DetectionState {
-        guard keyboardEnabled else { return .notEnabled }
-        return fullAccessEnabled ? .fullyEnabled : .enabledNoFullAccess
+    private var activeKeyboardBannerState: ActiveKeyboardBannerState {
+        SetupDetection.activeKeyboardBannerState(keyboardEnabled: keyboardEnabled,
+                                                activeThisSession: activeThisSession,
+                                                probePending: activeProbePending)
+    }
+
+    private var activeThisSession: Bool {
+        #if DEBUG
+        if SetupDetection.forceNotActive() { return false }
+        #endif
+        return FAStateResolver.isActiveThisSession(faPingAt: faPingAt,
+                                                   probeFiredAt: activeProbeFiredAt,
+                                                   mode: activeProbeMode)
     }
 
     private func refreshStatus() {
-        // UITextInputMode.activeInputModes reflects the live system keyboard list.
-        // The public API only exposes `primaryLanguage`, which is "zh-Hant" for
-        // LimeIME — but also for Apple's built-in Traditional Chinese keyboards,
-        // causing false positives.
-        //
-        // The correct way to identify a specific extension is via the private
-        // `identifier` KVC key, which returns the extension's bundle ID
-        // (e.g. "org.limeime.LimeKeyboard"). This pattern is used by
-        // Gboard, SwiftKey and other third-party keyboards.
-        // We guard with responds(to:) so if Apple ever removes this private
-        // property the code degrades gracefully to false rather than crashing.
-        // Method A — private `identifier` KVC on UITextInputMode.activeInputModes.
-        let limeSelector = NSSelectorFromString("identifier")
-        let viaInputModes = UITextInputMode.activeInputModes.contains { mode in
-            guard mode.responds(to: limeSelector),
-                  let id = mode.value(forKey: "identifier") as? String
-            else { return false }
-            return id.hasPrefix("org.limeime")
-        }
-
-        // Method B — the system "AppleKeyboards" list of enabled keyboard bundle IDs.
-        // The private KVC in Method A can stop resolving on newer iOS (e.g. iOS 26),
-        // which makes the banner stick on red even when the keyboard IS added. This
-        // list reflects "added in Settings" directly; it lives in the global domain.
+        // The system "AppleKeyboards" list reflects keyboards added in Settings.
+        // Avoid UITextInputMode private KVC here: an Objective-C exception on
+        // foreground would terminate the app, and Section 2's relay owns active
+        // keyboard detection anyway.
         let appleKeyboards: [String] =
             (UserDefaults.standard.array(forKey: "AppleKeyboards") as? [String] ?? [])
             + (UserDefaults(suiteName: ".GlobalPreferences")?.array(forKey: "AppleKeyboards") as? [String] ?? [])
-        let viaAppleKeyboards = appleKeyboards.contains { $0.hasPrefix("org.limeime") }
 
-        keyboardEnabled = viaInputModes || viaAppleKeyboards
+        keyboardEnabled = SetupDetection.keyboardEnabled(
+            appleKeyboards: appleKeyboards,
+            forceEnabled: SetupDetection.forceKeyboardEnabled())
 
         if keyboardEnabled {
-            let suite = UserDefaults(suiteName: groupSuite)
-            suite?.synchronize()  // force cross-process refresh
-            // `bool(forKey:)` returns false for missing keys, which creates a
-            // false-positive orange banner when the extension has never run yet
-            // (e.g. keyboard just enabled + Full Access just granted).
-            // Instead: treat MISSING key as "unknown → assume enabled".
-            // The extension explicitly writes `false` when it finds Full Access
-            // denied, so orange only appears when we KNOW it is actually denied.
-            if let storedValue = suite?.object(forKey: "keyboard_has_full_access") as? Bool {
-                fullAccessEnabled = storedValue   // definitive value from extension
-            } else {
-                fullAccessEnabled = true          // never ran yet — assume granted
+            let heartbeat = readKeyboardHeartbeat()
+            faState = FAStateResolver.resolve(heartbeat: heartbeat,
+                                              faPingThisSession: faPingThisSession,
+                                              faPingAt: faPingAt)
+            hasFreshFAEvidence = FAStateResolver.hasFreshEvidence(heartbeat: heartbeat,
+                                                                  faPingThisSession: faPingThisSession)
+            if activeThisSession {
+                activeProbePending = false
+            } else if let firedAt = activeProbeFiredAt,
+                      Date().timeIntervalSince1970 - firedAt >= activeProbeMode.timeout {
+                activeProbePending = false
             }
         } else {
-            fullAccessEnabled = false
+            faState = .unknown
+            hasFreshFAEvidence = false
+            activeProbeFiredAt = nil
+            activeProbePending = false
+            activating = false
+        }
+    }
+
+    private func readKeyboardHeartbeat() -> KeyboardHeartbeat? {
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: groupSuite),
+              let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL))
+        else { return nil }
+        return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+    }
+
+    private func handleRelayPayloadNotification(_ note: Notification) {
+        guard note.userInfo?["source"] as? String == "root",
+              let faOn = note.userInfo?["faOn"] as? Bool,
+              let ts = note.userInfo?["ts"] as? TimeInterval
+        else { return }
+        let firedAt = note.userInfo?["firedAt"] as? TimeInterval
+        applyRelayPayload((proto: 1, faOn: faOn, ts: ts), firedAt: firedAt)
+    }
+
+    private func applyRelayPayload(_ payload: (proto: Int, faOn: Bool, ts: TimeInterval),
+                                   firedAt: TimeInterval?) {
+        let relayFiredAt = firedAt ?? payload.ts
+        activeProbeFiredAt = FAStateResolver.isActiveThisSession(faPingAt: payload.ts,
+                                                                 probeFiredAt: relayFiredAt,
+                                                                 mode: activeProbeMode)
+            ? relayFiredAt
+            : payload.ts
+        faPingThisSession = payload.faOn
+        faPingAt = payload.ts
+        activeProbePending = false
+        activating = false
+        refreshStatus()
+        if activeThisSession {
+            finishActiveProbe()
+        }
+    }
+
+    private func ensureFAPingObserver() {
+        guard faPingObserver == nil else { return }
+        faPingObserver = FAPingObserver { hasFullAccess in
+            let pingAt = Date().timeIntervalSince1970
+            faPingThisSession = hasFullAccess
+            faPingAt = pingAt
+            if activating {
+                activeProbeFiredAt = pingAt
+            }
+            refreshStatus()
+            if activeThisSession {
+                finishActiveProbe()
+            }
         }
     }
 
@@ -561,22 +706,46 @@ struct SetupTabView: View {
         pollTimer = nil
     }
 
-    /// Focuses the invisible probe field (with a short delay) when the keyboard
-    /// is enabled but Full Access hasn't been confirmed yet.  Focusing any text
-    /// field causes iOS to load whichever keyboard is currently active; if that
-    /// is LimeIME, its UIInputViewController.viewWillAppear fires and writes a
-    /// fresh `keyboard_has_full_access` value to the App Group — which the
-    /// 1-second poll then picks up automatically.
-    private func triggerProbeIfNeeded() {
-        guard keyboardEnabled && !fullAccessEnabled else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            probeFocused = true
-        }
+    private func triggerRootRelayIfNeeded() {
+        // Re-detect on every foreground/appear even if we currently believe LIME is active —
+        // the user may have switched to another keyboard while away. requestRootRelay bumps
+        // activeProbeFiredAt, which invalidates the stale "active this session" match so the
+        // ladder can fall back to enabled-but-not-active when LIME no longer responds.
+        guard keyboardEnabled && !activeProbePending && !activating else { return }
+        requestRootRelay(mode: .automatic)
+    }
+
+    private func requestRootRelay(mode: ActiveKeyboardProbeMode) {
+        let firedAt = Date().timeIntervalSince1970
+        activeProbeMode = mode
+        activeProbePending = true
+        activeProbeFiredAt = firedAt
+        NotificationCenter.default.post(name: .limeTriggerRelay,
+                                        object: nil,
+                                        userInfo: mode.notificationUserInfo)
+    }
+
+    private func activateKeyboard() {
+        activating = true
+        requestRootRelay(mode: .manualSwitch)
+    }
+
+    private func finishActiveProbe() {
+        activeProbePending = false
+        activating = false
     }
 
     private func openLimeKeyboardSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
+        let plainURL = URL(string: UIApplication.openSettingsURLString)
+        let firstURL = Bundle.main.bundleIdentifier
+            .flatMap { URL(string: "\(UIApplication.openSettingsURLString)/\($0)") }
+            ?? plainURL
+        guard let firstURL else { return }
+        UIApplication.shared.open(firstURL) { opened in
+            if !opened, let plainURL {
+                UIApplication.shared.open(plainURL)
+            }
+        }
     }
 
     // MARK: - Version

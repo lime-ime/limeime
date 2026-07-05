@@ -7,8 +7,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
+        Self.removeLegacyV1Artifacts(in: FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName))
         applyUITestKeyboardPrefsIfNeeded()
         return true
+    }
+
+    static func removeLegacyV1Artifacts(in baseURL: URL?) {
+        guard let baseURL else { return }
+        let fm = FileManager.default
+        [
+            baseURL.appendingPathComponent("tables", isDirectory: true),
+            baseURL.appendingPathComponent("restore.limedb"),
+            baseURL.appendingPathComponent("restore.meta.json"),
+        ].forEach { try? fm.removeItem(at: $0) }
     }
 
     /// Test-only hook: when launched by the screenshot UITest with theme / IM launch

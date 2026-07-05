@@ -56,7 +56,6 @@ final class IMDownloadManager: ObservableObject {
     func refreshInstalledTables() {
         Task.detached(priority: .background) { [weak self] in
             let server = DBServer.shared
-            // Use tableHasData() — all tables exist in bundled lime.db, only populated ones are installed
             let tables = IMCatalog.allVariants
                 .map { $0.tableName }
                 .filter { server.tableHasData($0) }
@@ -122,14 +121,8 @@ final class IMDownloadManager: ObservableObject {
             let server = DBServer.shared
 
             do {
+                LIMEPreferenceManager.shared.setRestoreOnImport(restoreLearning, for: variant.tableName)
                 try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName)
-
-                if restoreLearning {
-                    if let ss = server.makeSearchServer() {
-                        let restored = ss.restoreUserRecords(variant.tableName)
-                        if restored > 0 { ss.dropBackupTable(variant.tableName) }
-                    }
-                }
 
                 // Register in im table so the keyboard can see it
                 try server.registerIM(imName: variant.imName, tableName: variant.tableName,
@@ -310,6 +303,7 @@ struct VariantRow: View {
                     manager.install(variant)
                 }
             }
+            .accessibilityIdentifier("install_variant_\(variant.id)")
         }
         .padding(.vertical, 4)
         // Error banner

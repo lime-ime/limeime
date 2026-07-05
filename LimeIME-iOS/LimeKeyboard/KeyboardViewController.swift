@@ -1,11 +1,11 @@
 ﻿import UIKit
-
 // Full keyboard extension entry point.
 // Implements IMService behavior per IM_SERVICE.md spec.
 
 final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedback {
 
     var enableInputClicksWhenVisible: Bool { true }
+    // ponytail: fixed DB setup retries; make configurable only if device logs show startup flakiness.
     private static let databaseSetupAttempts = 3
     private static let databaseSetupRetryDelay: TimeInterval = 0.15
 
@@ -21,8 +21,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - SearchServer
     private var searchServer: SearchServer?
-    private var lastKnownDatabaseGeneration: Int = 0
-    private var lastKnownKeyboardRuntimeGeneration: Int = 0
 
     // MARK: - Composing State (spec §3)
     private var mComposing:      String = ""  // current composing code buffer
@@ -144,6 +142,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var expandedComposingLabel: UILabel?
     private var limeToastState = LimeToastState()
     private var limeToastTimer: Timer?
+    private let databaseQueue = DispatchQueue(label: "org.limeime.keyboard.database", qos: .userInitiated)
+    private var isKeyboardVisible = false
 
     // MARK: - Chinese Punctuation (spec §11)
     private var hasChineseSymbolCandidatesShown: Bool = false
@@ -166,6 +166,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - Self-Update Guard (spec §12)
     // Set true around our own insertText/deleteBackward calls to suppress textDidChange checks
     private var isSelfUpdate = false
+    private var didAnswerRelayThisAppearance = false
+    private let relayPrefStore = KeyboardRelayPrefStore()
 
     // MARK: - English Pick-Space Punctuation Swap (ENGLISH_KB.md #0 / §2a)
     // After an English suggestion pick auto-appends a space (word ), typing punctuation
@@ -290,20 +292,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         LayoutLoader.prefetchCommonLayouts()
         setupKeyboardUI()
         applyHeight()
-        // Heartbeat for the Settings app's Setup tab. Writes current state, not a
-        // one-way latch — the host app clears these on foreground and we re-assert
-        // them here (and again in viewWillAppear) so the banner can reflect reality
-        // across enable/disable/Full-Access toggles.
-        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
-        sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
-        lastKnownDatabaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
-        lastKnownKeyboardRuntimeGeneration = sharedDefaults?.integer(
-            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
+        reportFullAccessStatus()
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
         // app (0x8BADF00D) when it presents the keyboard extension for the first time.
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        databaseQueue.async { [weak self] in
             self?.setupDatabase()
         }
     }
@@ -311,29 +304,59 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Called every time the keyboard becomes visible (spec §2 initOnStartInput).
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Refresh if Settings replaced lime.db or changed the active IM set while this extension was alive.
-        let databaseGeneration = sharedDefaults?.integer(forKey: DBServer.databaseGenerationKey) ?? 0
-        let keyboardRuntimeGeneration = sharedDefaults?.integer(
-            forKey: LIMEPreferenceManager.keyboardRuntimeGenerationKey) ?? 0
-        let databaseWasReplaced = databaseGeneration != lastKnownDatabaseGeneration
-        let keyboardRuntimeChanged = keyboardRuntimeGeneration != lastKnownKeyboardRuntimeGeneration
-        if databaseWasReplaced || keyboardRuntimeChanged {
-            lastKnownDatabaseGeneration = databaseGeneration
-            lastKnownKeyboardRuntimeGeneration = keyboardRuntimeGeneration
-            // DB replacement needs a reopen; IM install/enable changes only need a runtime refresh.
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                self?.setupDatabase(forceReopen: databaseWasReplaced)
-            }
-        }
-        sharedDefaults?.set(true, forKey: "keyboard_extension_loaded")
-        sharedDefaults?.set(hasFullAccess, forKey: "keyboard_has_full_access")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_last_seen_at")
+        isKeyboardVisible = true
+        didAnswerRelayThisAppearance = false
+        reportFullAccessStatus()
+        scheduleRelayResponse()
         initOnStartInput()
+    }
+
+    private func reportFullAccessStatus() {
+        let currentHasFullAccess = hasFullAccess
+        let now = Date().timeIntervalSince1970
+        let lastDBError = UserDefaults.standard.string(forKey: "keyboard_db_last_error")
+
+        let localDefaults = UserDefaults.standard
+        localDefaults.set(true, forKey: "keyboard_extension_loaded")
+        localDefaults.set(currentHasFullAccess, forKey: "keyboard_has_full_access")
+        localDefaults.set(now, forKey: "keyboard_last_seen_at")
+        if let lastDBError, !lastDBError.isEmpty {
+            localDefaults.set(lastDBError, forKey: "keyboard_db_last_error")
+        } else {
+            localDefaults.removeObject(forKey: "keyboard_db_last_error")
+        }
+        localDefaults.synchronize()
+
+        postSyncSignal(currentHasFullAccess ? .faOn : .faOff)
+        guard let baseURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+              let data = try? JSONEncoder().encode(KeyboardHeartbeat(
+                hasFullAccess: currentHasFullAccess,
+                lastSeenAt: now,
+                lastDBError: lastDBError))
+        else { return }
+        try? atomicWrite(data, to: SyncPaths.heartbeat(baseURL))
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         disableKeyboardWindowTouchDelay()
+        scheduleRelayResponse()
+    }
+
+    /// The app's invisible probe *loads* the keyboard (viewWillAppear fires — that's the
+    /// FA ping) but may never *present* it, so viewDidAppear can be skipped entirely.
+    /// textDocumentProxy is already connected at viewWillAppear, so answer from there too.
+    /// Poll because iOS populates documentContextBeforeInput asynchronously and a token set
+    /// programmatically by the app fires no textDidChange; the once-per-appearance guard
+    /// makes repeats no-ops.
+    private func scheduleRelayResponse() {
+        answerRelayRequestIfNeeded()
+        for delay in [0.05, 0.15, 0.3, 0.6, 1.0, 1.5] as [Double] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.answerRelayRequestIfNeeded()
+            }
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -349,6 +372,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Triggers deferred Tier 2 learning: RP learning + LD phrase learning (spec §9, §13.5).
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        isKeyboardVisible = false
         dismissPopupKeyboard()
         // Detach window-attached composing popup so it doesn't linger after
         // the keyboard is dismissed.
@@ -438,6 +462,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func textDidChange(_ textInput: UITextInput?) {
         // Guard: skip checks triggered by our own insertText/deleteBackward (spec §12)
         guard !isSelfUpdate else { return }
+        if answerRelayRequestIfNeeded() { return }
 
         // Field-change detection. When the user taps a new input while the
         // keyboard is still on screen, `viewWillAppear` does NOT re-fire, so
@@ -468,6 +493,26 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // would stick until the next layout pass (spec: docs/IPHONE_LEGACY_KB.md
         // § Risks/pitfalls — first-tap latency).
         updateGlobeAndDismissBindings()
+    }
+
+    @discardableResult
+    private func answerRelayRequestIfNeeded() -> Bool {
+        guard !didAnswerRelayThisAppearance,
+              isRelayRequestContext(before: textDocumentProxy.documentContextBeforeInput,
+                                    after: textDocumentProxy.documentContextAfterInput)
+        else { return false }
+
+        didAnswerRelayThisAppearance = true
+        isSelfUpdate = true
+        defer { isSelfUpdate = false }
+        let prefs = (try? relayPrefStore.read())
+            ?? RelayPrefState(hanConvert: hanConvertOption,
+                              splitKeyboard: splitKeyboardMode,
+                              updatedAt: 0)
+        textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
+                                                        ts: Date().timeIntervalSince1970,
+                                                        prefs: prefs))
+        return true
     }
 
     // MARK: - Initialization (spec §2 initOnStartInput)
@@ -616,13 +661,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - Database Setup
 
-    /// - Parameter forceReopen: passed through to `prepareKeyboardRuntimeDatabase`
-    ///   so a Settings-app restore (#86) rebuilds the stale DB connection before
-    ///   resolving the activated IM list. First load (viewDidLoad) passes false.
-    private func setupDatabase(forceReopen: Bool = false) {
+    private func setupDatabase() {
         let context: DBServer.KeyboardRuntimeContext
         do {
-            context = try prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: forceReopen)
+            context = try prepareKeyboardRuntimeDatabaseWithRetry()
         } catch {
             recordDatabaseSetupFailure(error)
             return
@@ -693,11 +735,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
-    private func prepareKeyboardRuntimeDatabaseWithRetry(forceReopen: Bool) throws -> DBServer.KeyboardRuntimeContext {
+    private func prepareKeyboardRuntimeDatabaseWithRetry() throws -> DBServer.KeyboardRuntimeContext {
         var lastError: Error?
         for attempt in 1...Self.databaseSetupAttempts {
             do {
-                return try DBServer.shared.prepareKeyboardRuntimeDatabase(forceReopen: forceReopen)
+                return try DBServer.shared.prepareKeyboardRuntimeDatabase()
             } catch {
                 lastError = error
                 NSLog("[Keyboard] DB setup attempt \(attempt) failed: \(error)")
@@ -712,15 +754,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func recordDatabaseSetupFailure(_ error: Error) {
         let message = String(describing: error)
         NSLog("[Keyboard] DB setup failed after \(Self.databaseSetupAttempts) attempts: \(message)")
-        sharedDefaults?.set(message, forKey: "keyboard_db_last_error")
-        sharedDefaults?.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
-        sharedDefaults?.synchronize()
+        UserDefaults.standard.set(message, forKey: "keyboard_db_last_error")
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "keyboard_db_last_error_at")
+        UserDefaults.standard.synchronize()
     }
 
     private func clearDatabaseSetupFailure() {
-        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error")
-        sharedDefaults?.removeObject(forKey: "keyboard_db_last_error_at")
-        sharedDefaults?.synchronize()
+        UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error")
+        UserDefaults.standard.removeObject(forKey: "keyboard_db_last_error_at")
+        UserDefaults.standard.synchronize()
     }
 
     private func applyResolvedActiveIMLayout() {
@@ -3898,14 +3940,22 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
         showInlineMenu(entries: entries, onDismiss: { [weak self] in
             guard let self else { return }
+            var changed = false
             if pendingHan != hanStart {
                 self.hanConvertOption = pendingHan
                 self.sharedDefaults?.set(pendingHan, forKey: "han_convert_option")
+                changed = true
             }
             if pendingSplit != splitStart {
                 self.splitKeyboardMode = pendingSplit
                 self.sharedDefaults?.set(pendingSplit, forKey: "split_keyboard_mode")
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
+                changed = true
+            }
+            if changed {
+                try? self.relayPrefStore.write(RelayPrefState(hanConvert: self.hanConvertOption,
+                                                              splitKeyboard: self.splitKeyboardMode,
+                                                              updatedAt: Date().timeIntervalSince1970))
             }
         })
     }
@@ -3919,6 +3969,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
             items.append((display, { [weak self] in
                 guard let self else { return }
                 LIMEPreferenceManager.shared.setReverseLookup(option.value, for: self.activeIM)
+                // FA-off durable copy + relay delivery back to the app's Preferences tab.
+                try? self.relayPrefStore.update(reverseLookupIM: self.activeIM,
+                                                reverseLookupValue: option.value)
                 self.showLimeToast("字根反查：\(option.label)")
             }))
         }
@@ -3933,8 +3986,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
         for (opt, title) in options.enumerated() {
             let display = (hanConvertOption == opt) ? "✓ \(title)" : title
             items.append((display, { [weak self] in
-                self?.hanConvertOption = opt
-                self?.sharedDefaults?.set(opt, forKey: "han_convert_option")
+                guard let self else { return }
+                self.hanConvertOption = opt
+                self.sharedDefaults?.set(opt, forKey: "han_convert_option")
+                try? self.relayPrefStore.update(hanConvert: opt,
+                                                splitKeyboard: self.splitKeyboardMode)
             }))
         }
         items.append(("取消", {}))

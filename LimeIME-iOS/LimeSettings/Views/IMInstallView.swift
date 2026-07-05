@@ -363,13 +363,15 @@ struct IMInstallView: View {
                 statusMessage = "關聯字庫匯入完成"
                 manageRelatedController.invalidate()
             } else if ext == "limedb" || ext == "zip" {
-                let restoreLearning = UserDefaults.standard.object(
-                    forKey: "restore_on_import_\(tableName)") as? Bool ?? true
+                let restoreLearning = LIMEPreferenceManager.shared.restoreOnImport(for: tableName)
+                LIMEPreferenceManager.shared.setRestoreOnImport(restoreLearning, for: tableName)
                 let r = await setupController.importDBFile(url: importURL, tableName: tableName,
                                                            restoreLearning: restoreLearning)
                 switch r {
                 case .success(let table):
-                    if seedCustomAfter { try? DBServer.shared.seedCustomIM() }
+                    if seedCustomAfter {
+                        try? DBServer.shared.seedCustomIM()
+                    }
                     statusMessage = "已成功匯入 \(table)"
                     downloadManager.refreshInstalledTables()
                     onRefresh?()
@@ -377,13 +379,15 @@ struct IMInstallView: View {
                     statusMessage = "匯入失敗：\(error.localizedDescription)"
                 }
             } else {
-                let restoreLearning = UserDefaults.standard.object(
-                    forKey: "restore_on_import_\(tableName)") as? Bool ?? true
+                let restoreLearning = LIMEPreferenceManager.shared.restoreOnImport(for: tableName)
+                LIMEPreferenceManager.shared.setRestoreOnImport(restoreLearning, for: tableName)
                 let r = await setupController.importTxtFile(url: importURL, tableName: tableName,
                                                             restoreLearning: restoreLearning)
                 switch r {
                 case .success(let count):
-                    if seedCustomAfter { try? DBServer.shared.seedCustomIM() }
+                    if seedCustomAfter {
+                        try? DBServer.shared.seedCustomIM()
+                    }
                     statusMessage = "文字檔匯入完成，共 \(count) 筆"
                     downloadManager.refreshInstalledTables()
                     onRefresh?()
@@ -408,8 +412,8 @@ private struct FamilyInstallGroup: View {
     @State private var hasBackup: Bool = false
 
     private var restoreOnImport: Bool {
-        get { UserDefaults.standard.object(forKey: "restore_on_import_\(family.id)") as? Bool ?? true }
-        nonmutating set { UserDefaults.standard.set(newValue, forKey: "restore_on_import_\(family.id)") }
+        get { LIMEPreferenceManager.shared.restoreOnImport(for: family.id) }
+        nonmutating set { LIMEPreferenceManager.shared.setRestoreOnImport(newValue, for: family.id) }
     }
     private var restoreOnImportBinding: Binding<Bool> {
         Binding(get: { restoreOnImport }, set: { restoreOnImport = $0 })
