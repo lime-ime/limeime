@@ -5,11 +5,12 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/145
 - Classification: `bug` + `Usability`
 - Reporter: `james631025`
-- Live state after the 2026-07-05 follow-up comment: open, labeled `bug` + `Usability`, assigned to `jrywu`.
+- Live state after the 2026-07-05 reporter reply: open, labeled `bug` + `Usability`, assigned to `jrywu`.
 - Public acknowledgement / clarification request: https://github.com/lime-ime/limeime/issues/145#issuecomment-4874848760 asked for platform, version/device details, active layout, app scope, whether other actions besides switching IMEs restore the row, and screenshot evidence.
 - Reporter follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4880870984 confirms Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation also restores the row, and includes a screenshot.
-- Latest maintainer/project-account follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884643621 asks which Boshiamy keyboard layout is active, such as standard keyboard, phone keyboard, or another custom/special layout.
-- Current state: Android tablet UI/layout bug with screenshot evidence. The exact Boshiamy keyboard layout, orientation/navigation mode, split-keyboard setting, keyboard-size setting, and reproduction timing still need confirmation before choosing a fix path.
+- Maintainer/project-account follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884643621 asked which Boshiamy keyboard layout is active, such as standard keyboard, phone keyboard, or another custom/special layout.
+- Latest reporter reply: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884708378 says the active Boshiamy layout is the standard keyboard and the reporter has not changed special settings. The attached settings screenshots show keyboard style set to system setting, keyboard size `一般`, font size `一般`, direction keys `無`, split keyboard `關閉`, and physical-keyboard auto-hide enabled.
+- Current state: Android tablet UI/layout bug with screenshot and settings evidence. The report is now scoped to LIME 6.1.27 on Android 10 / iPlay 30 using Boshiamy standard keyboard with normal keyboard size and split keyboard off. Orientation/navigation mode and reproduction timing still need confirmation during implementation, but enough layout detail exists to track the Android fix in `docs/BACKLOG.md`.
 
 ## Problem statement
 
@@ -21,8 +22,8 @@ The reporter has now identified the platform as Android tablet, specifically iPl
 
 - Initial report: the lowest keyboard row containing Space is often covered on a tablet, and switching to another input method and back makes the row appear again.
 - Follow-up details: Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation restores the row.
-- Screenshot evidence: the attached image shows the LIME keyboard with the bottom functional row visibly at the lower screen edge and partially cut off/covered. Do not infer the exact Boshiamy layout from the screenshot alone.
-- Remaining missing detail after the latest project-account comment: which Boshiamy keyboard layout is selected, for example standard keyboard, phone keyboard, or another custom/special layout.
+- Screenshot evidence: the first attached image shows the LIME keyboard with the bottom functional row visibly at the lower screen edge and partially cut off/covered. Do not infer the exact Boshiamy layout from that screenshot alone.
+- Latest layout/settings evidence: the reporter says the Boshiamy layout is standard keyboard and that they did not change special settings. The attached settings screenshots visibly show normal/general keyboard and font size, no direction keys, split keyboard disabled, and physical-keyboard auto-hide enabled.
 
 ## Source evidence inspected
 
@@ -56,12 +57,12 @@ The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path 
 
 ## Proposed investigation plan
 
-1. Confirm the active Boshiamy keyboard layout, orientation, navigation mode, keyboard size setting, split-keyboard setting, and whether the symptom happens on first open, every open, or intermittently.
+1. Reproduce with Boshiamy standard keyboard on Android 10 tablet settings matching the reporter's screenshots: normal/general keyboard size, split keyboard off, no direction keys, and physical-keyboard auto-hide enabled.
 2. On Android, reproduce on a tablet or emulator with gesture navigation and 3-button navigation, in both portrait and landscape, with normal and split-keyboard settings.
 3. Instrument the Android IME view path around `onCreateInputView()`, `setOnApplyWindowInsetsListener(...)`, `mCandidateInInputView` measured height/padding, and `LIMEKeyboardBaseView.onMeasure()` to compare the broken state against the restored state after switching IMEs.
 4. Verify whether API level, system navigation bar height, `fitsSystemWindows`, host app `adjustResize` behavior, or tablet resource key heights are causing the bottom row to be clipped.
-5. Rotation is now confirmed to restore the row. Still ask whether closing/reopening the keyboard, changing keyboard size, or expanding/collapsing candidates also restores it, because this distinguishes a full input-view recreation problem from a lighter remeasure/inset problem.
-6. Ask whether the symptom happens every time, first open only, or intermittently, because that separates stale initial measurement from ongoing resize/inset behavior.
+5. Rotation is now confirmed to restore the row. During debugging, compare the broken state against the restored state after rotation and after switching IMEs.
+6. If maintainers cannot reproduce, ask the reporter only for the remaining targeted details: navigation mode, orientation, and whether the symptom happens every time, first open only, or intermittently.
 
 ## Verification plan
 
@@ -75,11 +76,11 @@ The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path 
 
 ## Platform impact
 
-- Android: confirmed reporter platform. The bug is currently scoped to Android 10 tablet / iPlay 30 / LIME 6.1.27 / 嘸蝦米, with screenshot evidence and rotation/IME switching restoring the row.
+- Android: confirmed reporter platform. The bug is currently scoped to Android 10 tablet / iPlay 30 / LIME 6.1.27 / 嘸蝦米 standard keyboard, normal keyboard size, split keyboard off, with screenshot evidence and rotation/IME switching restoring the row.
 - iOS/iPadOS: not implicated by #145. Existing #139 covers a related but separate iOS bottom-content coverage class.
 
 ## Follow-up / retest condition
 
-The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details plus screenshot evidence. The current live follow-up asks for the active Boshiamy keyboard layout. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK or Google Play build contains a targeted fix for this Android tablet path.
+The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details, screenshot evidence, and the active Boshiamy standard-keyboard layout/settings. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK or Google Play build contains a targeted fix for this Android tablet path.
 
-No `docs/BACKLOG.md` entry is added yet because the exact fix direction is not confirmed. Add a `fix#145 Android` backlog item after the remaining layout details, maintainer reproduction, or source fix direction confirms the implementation scope.
+`docs/BACKLOG.md` now tracks `fix#145 Android` because the reporter supplied the remaining layout detail requested by the project-account follow-up. Keep the backlog item scoped to Android tablet bottom-row clipping until a source fix or separate platform evidence broadens it.
