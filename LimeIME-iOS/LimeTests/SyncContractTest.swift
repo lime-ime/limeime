@@ -13,7 +13,6 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(SyncPaths.outboxDir(base).path, "/tmp/x/outbox")
         XCTAssertEqual(SyncPaths.exportRequest(base).path, "/tmp/x/outbox/export.request.json")
         XCTAssertEqual(SyncPaths.backupSnapshot(base).path, "/tmp/x/outbox/backup.limedb")
-        XCTAssertEqual(SyncPaths.learnedScores(base).path, "/tmp/x/outbox/learned-scores.json")
         XCTAssertEqual(SyncPaths.receipt(base).path, "/tmp/x/outbox/receipt.json")
         XCTAssertEqual(SyncPaths.editorRefreshRequest(base).path, "/tmp/x/outbox/editor.refresh.request.json")
         XCTAssertEqual(SyncPaths.editorRefreshReceipt(base).path, "/tmp/x/outbox/editor.refresh.receipt.json")
@@ -89,17 +88,4 @@ final class SyncContractTest: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: keep.path))
     }
 
-    func testLearnedScoresFileRoundTrip() throws {
-        let file = LearnedScoresFile(tables: [
-            "custom": [LearnedScoreRow(a: "abc", b: "測", s: 3)]
-        ])
-
-        let data = try JSONEncoder().encode(file)
-        let decoded = try JSONDecoder().decode(LearnedScoresFile.self, from: data)
-
-        let row = try XCTUnwrap(decoded.tables["custom"]?.first)
-        XCTAssertEqual(row.a, "abc")
-        XCTAssertEqual(row.b, "測")
-        XCTAssertEqual(row.s, 3)
-    }
 }

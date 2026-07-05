@@ -30,10 +30,6 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("backup.limedb")
     }
 
-    static func learnedScores(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("learned-scores.json")
-    }
-
     static func receipt(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("receipt.json")
     }
@@ -49,16 +45,6 @@ enum SyncPaths {
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
     }
-}
-
-struct LearnedScoreRow: Codable {
-    let a: String
-    let b: String
-    let s: Int
-}
-
-struct LearnedScoresFile: Codable {
-    var tables: [String: [LearnedScoreRow]]
 }
 
 struct IMInboxFile: Codable, Equatable {
