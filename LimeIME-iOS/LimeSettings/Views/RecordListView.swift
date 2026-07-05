@@ -17,6 +17,7 @@ struct RecordListView: View {
     @EnvironmentObject private var manageImController: ManageImController
     @EnvironmentObject private var setupController: SetupImController
     @EnvironmentObject private var relayActiveState: RelayActiveState
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var records: [LimeRecord] = []
     @State private var totalCount: Int = 0
@@ -27,6 +28,7 @@ struct RecordListView: View {
     @State private var isRefreshingHotSnapshot = false
     @State private var didAttemptHotRefresh = false
     @State private var hotRefreshFailed = false
+    @State private var didPublishEditorClose = false
 
     @State private var showAdd = false
     @State private var editingRecord: IdentifiableRecord?
@@ -47,7 +49,7 @@ struct RecordListView: View {
     private var editingCapability: RecordEditingCapability {
         hotRefreshFailed ? .readOnly : relayEditingCapability
     }
-    private var canEdit: Bool { editingCapability == .live }
+    private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }
     private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）" }
 
     var body: some View {
@@ -82,7 +84,7 @@ struct RecordListView: View {
             .padding(.bottom, 6)
 
             Label(statusMessage.isEmpty ? capabilityMessage : statusMessage,
-                  systemImage: canEdit ? "checkmark.circle" : "lock")
+                  systemImage: capabilityIcon)
                 .font(.footnote)
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,6 +125,8 @@ struct RecordListView: View {
                 }
             }
             .listStyle(.plain)
+            .redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])
+            .disabled(isRefreshingHotSnapshot)
 
             // Pagination bar
             HStack {
@@ -161,6 +165,12 @@ struct RecordListView: View {
         .onChange(of: relayActiveState.editingCapability) { _ in
             refreshHotSnapshotIfNeeded()
         }
+        .onChange(of: scenePhase) { _ in
+            if scenePhase == .background {
+                publishEditorCloseIfNeeded()
+            }
+        }
+        .onDisappear { publishEditorCloseIfNeeded() }
         .sheet(isPresented: $showAdd, onDismiss: { loadRecords() }) {
             AddRecordView(tableName: tableName)
         }
@@ -219,8 +229,13 @@ struct RecordListView: View {
     }
 
     private var capabilityMessage: String {
-        if isRefreshingHotSnapshot { return "更新實際分數中…" }
-        return canEdit ? "完整取用已開啟，顯示實際分數" : unlockHint
+        if isRefreshingHotSnapshot { return "同步中..." }
+        return canEdit ? "完整取用已開啟，碼表編輯功能已啓用。" : unlockHint
+    }
+
+    private var capabilityIcon: String {
+        if isRefreshingHotSnapshot { return "clock.arrow.circlepath" }
+        return canEdit ? "checkmark.circle" : "lock"
     }
 
     private func refreshHotSnapshotIfNeeded() {
@@ -239,6 +254,15 @@ struct RecordListView: View {
                 hotRefreshFailed = true
                 statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
             }
+        }
+    }
+
+    private func publishEditorCloseIfNeeded() {
+        guard didAttemptHotRefresh, !isRefreshingHotSnapshot, !didPublishEditorClose, !hotRefreshFailed else { return }
+        didPublishEditorClose = true
+        // ponytail: background publish closes the only editor/keyboard learning interleave.
+        Task {
+            _ = await setupController.publishEditorChanges(stem: tableName)
         }
     }
 }

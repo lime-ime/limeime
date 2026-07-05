@@ -50,3 +50,42 @@ final class RelayActiveStateTest: XCTestCase {
         XCTAssertEqual(state.editingCapability, .readOnly)
     }
 }
+
+final class EditorRefreshViewSourceTest: XCTestCase {
+    func testRecordEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
+        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RecordListView.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
+        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
+        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
+        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
+        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
+        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
+        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
+        XCTAssertTrue(source.contains("scenePhase == .background"))
+        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+    }
+
+    func testRelatedEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
+        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RelatedListView.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
+        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
+        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
+        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
+        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
+        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
+        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
+        XCTAssertTrue(source.contains("scenePhase == .background"))
+        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+    }
+
+    private func projectFileURL(_ relativePath: String) -> URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+    }
+}

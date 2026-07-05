@@ -34,6 +34,14 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("receipt.json")
     }
 
+    static func editorRefreshRequest(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("editor.refresh.request.json")
+    }
+
+    static func editorRefreshReceipt(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("editor.refresh.receipt.json")
+    }
+
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
     }
@@ -279,6 +287,25 @@ struct ExportRequest: Codable, Equatable {
 struct ExportReceipt: Codable, Equatable {
     var requestUUID: String
     var epochUUID: String
+    var at: TimeInterval
+}
+
+struct EditorRefreshRequest: Codable, Equatable {
+    var requestUUID: String
+    var table: String
+    var expiresAt: TimeInterval
+}
+
+struct EditorRefreshReceipt: Codable, Equatable {
+    enum Status: String, Codable {
+        case done
+        case failed
+    }
+
+    var requestUUID: String
+    var table: String
+    var status: Status
+    var error: String?
     var at: TimeInterval
 }
 

@@ -67,6 +67,86 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
+    private func customRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT code, word, score FROM custom ORDER BY code, word
+                """).map {
+                    "\($0["code"] as String? ?? "")|\($0["word"] as String? ?? "")|\($0["score"] as Int? ?? 0)"
+                }
+        }
+    }
+
+    private func customRowID(code: String, word: String, in dbURL: URL) throws -> Int64? {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Int64.fetchOne(db,
+                               sql: "SELECT _id FROM custom WHERE code = ? AND word = ?",
+                               arguments: [code, word])
+        }
+    }
+
+    private func editCustomRows(in dbURL: URL, _ body: (Database) throws -> Void) throws {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        try queue.write(body)
+    }
+
+    private func writeEditorRefreshRequest(appGroup: URL,
+                                           table: String,
+                                           requestUUID: String = UUID().uuidString) throws {
+        let request = EditorRefreshRequest(requestUUID: requestUUID,
+                                           table: table,
+                                           expiresAt: Date().addingTimeInterval(60).timeIntervalSince1970)
+        try atomicWrite(try JSONEncoder().encode(request),
+                        to: SyncPaths.editorRefreshRequest(appGroup))
+    }
+
+    private func editorRefreshReceipt(appGroup: URL) throws -> EditorRefreshReceipt {
+        let data = try Data(contentsOf: SyncPaths.editorRefreshReceipt(appGroup))
+        return try JSONDecoder().decode(EditorRefreshReceipt.self, from: data)
+    }
+
+    private func makeRelatedDatabase(at url: URL,
+                                     rows: [(pword: String, cword: String, score: Int)]) throws {
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: url.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE related (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pword TEXT,
+                    cword TEXT,
+                    score INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0
+                )
+                """)
+            for row in rows {
+                try db.execute(sql: """
+                    INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)
+                    """, arguments: [row.pword, row.cword, row.score])
+            }
+        }
+        _ = try SyncMetaStore(databaseURL: url)
+    }
+
+    private func relatedRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT pword, cword, score FROM related ORDER BY pword, cword
+                """).map {
+                    "\($0["pword"] as String? ?? "")|\($0["cword"] as String? ?? "")|\($0["score"] as Int? ?? 0)"
+                }
+        }
+    }
+
     private func tableExists(_ table: String, in dbURL: URL) throws -> Bool {
         let queue = try DatabaseQueue(path: dbURL.path)
         defer { try? queue.close() }
@@ -303,5 +383,131 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try imRows(in: hot), ["custom|keyboard|New|lime"])
         XCTAssertTrue(try imRows(in: coldSnapshot).isEmpty)
         XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
+    }
+
+    func testEditorRefreshHarvestsNewAndScoreChangedRowsIntoLiveCold() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: liveCold,
+                         rows: [
+                            ("changed", "分", 1),
+                            ("same", "同", 2),
+                         ])
+        try makeDatabase(at: hot,
+                         rows: [
+                            ("changed", "分", 9),
+                            ("learned", "學", 5),
+                            ("same", "同", 2),
+                         ])
+        let unchangedID = try customRowID(code: "same", word: "同", in: liveCold)
+        try writeEditorRefreshRequest(appGroup: appGroup, table: "custom", requestUUID: "refresh-1")
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: liveCold),
+                       ["changed|分|9", "learned|學|5", "same|同|2"])
+        XCTAssertEqual(try customRowID(code: "same", word: "同", in: liveCold), unchangedID)
+        let receipt = try editorRefreshReceipt(appGroup: appGroup)
+        XCTAssertEqual(receipt.requestUUID, "refresh-1")
+        XCTAssertEqual(receipt.status, .done)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(appGroup).path))
+    }
+
+    func testEditorRefreshHarvestsRelatedRowsByParentChildKey() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeRelatedDatabase(at: liveCold,
+                                rows: [("你", "好", 1)])
+        try makeRelatedDatabase(at: hot,
+                                rows: [
+                                    ("你", "好", 8),
+                                    ("天", "氣", 2),
+                                ])
+        try writeEditorRefreshRequest(appGroup: appGroup, table: "related", requestUUID: "related-1")
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
+        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
+    }
+
+    func testCloseReconcileAppliesColdAddEditAndDeleteToHot() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let initialRows = [
+            (code: "delete", word: "刪", score: 1),
+            (code: "edit", word: "改", score: 2),
+            (code: "keep", word: "留", score: 3),
+        ]
+        try makeDatabase(at: liveCold,
+                         rows: initialRows,
+                         epoch: "epoch-a",
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot,
+                         rows: initialRows,
+                         epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        let hotMeta = try SyncMetaStore(databaseURL: hot)
+        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setAppliedGeneration(1)
+        try editCustomRows(in: liveCold) { db in
+            try db.execute(sql: "DELETE FROM custom WHERE code = ?", arguments: ["delete"])
+            try db.execute(sql: "UPDATE custom SET score = ? WHERE code = ?", arguments: [7, "edit"])
+            try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                           arguments: ["add", "加", 4])
+        }
+        _ = try SyncMetaStore(databaseURL: liveCold).bumpRevision(forTable: "custom")
+        try publish(liveCold, appGroup: appGroup)
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot), ["add|加|4", "edit|改|7", "keep|留|3"])
+    }
+
+    func testEditorRefreshThenCloseReconcileRoundTripsLearningAndAppEdits() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: liveCold,
+                         rows: [
+                            ("delete", "刪", 1),
+                            ("edit", "改", 2),
+                         ])
+        try makeDatabase(at: hot,
+                         rows: [
+                            ("delete", "刪", 1),
+                            ("edit", "改", 2),
+                            ("learned", "學", 9),
+                         ])
+        try writeEditorRefreshRequest(appGroup: appGroup, table: "custom")
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+        XCTAssertEqual(try customRows(in: liveCold),
+                       ["delete|刪|1", "edit|改|2", "learned|學|9"])
+
+        try editCustomRows(in: liveCold) { db in
+            try db.execute(sql: "DELETE FROM custom WHERE code = ?", arguments: ["delete"])
+            try db.execute(sql: "UPDATE custom SET score = ? WHERE code = ?", arguments: [6, "edit"])
+            try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                           arguments: ["app", "編", 4])
+        }
+        _ = try SyncMetaStore(databaseURL: liveCold).bumpRevision(forTable: "custom")
+        try publish(liveCold, appGroup: appGroup)
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot),
+                       ["app|編|4", "edit|改|6", "learned|學|9"])
     }
 }

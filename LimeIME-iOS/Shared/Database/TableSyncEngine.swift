@@ -22,6 +22,8 @@ final class TableSyncEngine {
     }
 
     func scanAndApply() throws {
+        try processEditorRefreshRequestIfNeeded()
+
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else {
             try drainIMInboxIfNeeded()
@@ -59,6 +61,123 @@ final class TableSyncEngine {
         }
         try hotMeta.setAppliedGeneration(coldGeneration)
         try drainIMInboxIfNeeded()
+    }
+
+    private func processEditorRefreshRequestIfNeeded() throws {
+        let requestURL = SyncPaths.editorRefreshRequest(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
+        defer { try? FileManager.default.removeItem(at: requestURL) }
+
+        let request = try JSONDecoder().decode(EditorRefreshRequest.self,
+                                               from: Data(contentsOf: requestURL))
+        do {
+            guard request.expiresAt >= Date().timeIntervalSince1970 else {
+                throw TableSyncEngineError.editorRefreshExpired
+            }
+            guard Self.isSafeTableName(request.table) else {
+                throw TableSyncEngineError.unsafeTableName(request.table)
+            }
+            let liveColdURL = appGroupBaseURL.appendingPathComponent(SyncDatabaseLocator.databaseName)
+            guard FileManager.default.fileExists(atPath: liveColdURL.path) else {
+                throw TableSyncEngineError.liveColdMissing
+            }
+            try harvestEditorRefresh(table: request.table, into: liveColdURL)
+            try writeEditorRefreshReceipt(for: request, status: .done, error: nil)
+            postSyncSignal(.importDone)
+        } catch {
+            try? writeEditorRefreshReceipt(for: request,
+                                           status: .failed,
+                                           error: error.localizedDescription)
+            postSyncSignal(.importFailed)
+        }
+    }
+
+    private func harvestEditorRefresh(table: String, into coldDatabaseURL: URL) throws {
+        let keyColumns = Self.editorRefreshKeyColumns(for: table)
+        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        try connection.write { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS cold_editor",
+                           arguments: [coldDatabaseURL.path])
+            defer {
+                try? db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
+                try? db.execute(sql: "DETACH DATABASE cold_editor")
+            }
+
+            guard try Self.tableExists(table, in: db),
+                  try Self.tableExists(table, schema: "cold_editor", in: db)
+            else {
+                throw TableSyncEngineError.tableMissing(table)
+            }
+
+            let hotColumns = Set(try Self.columns(in: table, schema: nil, db: db))
+            let coldColumns = try Self.columns(in: table, schema: "cold_editor", db: db)
+            guard keyColumns.allSatisfy({ hotColumns.contains($0) && coldColumns.contains($0) }),
+                  hotColumns.contains("score"),
+                  coldColumns.contains("score")
+            else {
+                throw TableSyncEngineError.unsupportedEditorTable(table)
+            }
+
+            let copyColumns = coldColumns.filter { $0 != "_id" && hotColumns.contains($0) }
+            guard !copyColumns.isEmpty else { return }
+
+            let tableName = Self.quotedIdentifier(table)
+            let keyList = keyColumns.map(Self.quotedIdentifier).joined(separator: ", ")
+            let keyDefinitions = keyColumns
+                .map { "\(Self.quotedIdentifier($0)) TEXT" }
+                .joined(separator: ", ")
+            let hotColdJoin = keyColumns
+                .map { "cold.\(Self.quotedIdentifier($0)) IS hot.\(Self.quotedIdentifier($0))" }
+                .joined(separator: " AND ")
+            let dirtyHotJoin = keyColumns
+                .map { "hot.\(Self.quotedIdentifier($0)) IS dirty.\(Self.quotedIdentifier($0))" }
+                .joined(separator: " AND ")
+            let dirtyColdJoin = keyColumns
+                .map { "cold.\(Self.quotedIdentifier($0)) IS dirty.\(Self.quotedIdentifier($0))" }
+                .joined(separator: " AND ")
+            let columnList = copyColumns.map(Self.quotedIdentifier).joined(separator: ", ")
+            let hotColumnList = copyColumns
+                .map { "hot.\(Self.quotedIdentifier($0))" }
+                .joined(separator: ", ")
+            let firstKey = Self.quotedIdentifier(keyColumns[0])
+
+            try db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
+            try db.execute(sql: "CREATE TEMP TABLE editor_refresh_dirty_keys (\(keyDefinitions))")
+            try db.execute(sql: """
+                INSERT INTO temp.editor_refresh_dirty_keys (\(keyList))
+                SELECT \(keyColumns.map { "hot.\(Self.quotedIdentifier($0))" }.joined(separator: ", "))
+                FROM main.\(tableName) hot
+                LEFT JOIN cold_editor.\(tableName) cold ON \(hotColdJoin)
+                WHERE cold.\(firstKey) IS NULL
+                   OR IFNULL(cold.\(Self.quotedIdentifier("score")), 0) <> IFNULL(hot.\(Self.quotedIdentifier("score")), 0)
+                """)
+            try db.execute(sql: """
+                DELETE FROM cold_editor.\(tableName)
+                WHERE rowid IN (
+                    SELECT cold.rowid
+                    FROM cold_editor.\(tableName) cold
+                    JOIN temp.editor_refresh_dirty_keys dirty ON \(dirtyColdJoin)
+                )
+                """)
+            try db.execute(sql: """
+                INSERT INTO cold_editor.\(tableName) (\(columnList))
+                SELECT \(hotColumnList)
+                FROM main.\(tableName) hot
+                JOIN temp.editor_refresh_dirty_keys dirty ON \(dirtyHotJoin)
+                """)
+        }
+    }
+
+    private func writeEditorRefreshReceipt(for request: EditorRefreshRequest,
+                                           status: EditorRefreshReceipt.Status,
+                                           error: String?) throws {
+        let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
+                                           table: request.table,
+                                           status: status,
+                                           error: error,
+                                           at: Date().timeIntervalSince1970)
+        try atomicWrite(try JSONEncoder().encode(receipt),
+                        to: SyncPaths.editorRefreshReceipt(appGroupBaseURL))
     }
 
     private func drainIMInboxIfNeeded() throws {
@@ -168,6 +287,17 @@ final class TableSyncEngine {
             """, arguments: [table]) ?? 0) > 0
     }
 
+    private static func columns(in table: String, schema: String?, db: Database) throws -> [String] {
+        let tableName = quotedIdentifier(table)
+        if let schema {
+            return try Row.fetchAll(db, sql: """
+                PRAGMA \(quotedIdentifier(schema)).table_info(\(tableName))
+                """).compactMap { $0["name"] as String? }
+        }
+        return try Row.fetchAll(db, sql: "PRAGMA table_info(\(tableName))")
+            .compactMap { $0["name"] as String? }
+    }
+
     private static func upsertMeta(_ key: String, value: String, in db: Database) throws {
         try db.execute(sql: """
             INSERT INTO sync_meta(key, value) VALUES (?, ?)
@@ -234,5 +364,32 @@ final class TableSyncEngine {
         guard table != "sync_meta", !table.hasPrefix("sqlite_") else { return false }
         return table.range(of: #"^[A-Za-z][A-Za-z0-9_]*$"#,
                            options: .regularExpression) != nil
+    }
+
+    private static func editorRefreshKeyColumns(for table: String) -> [String] {
+        table == "related" ? ["pword", "cword"] : ["code", "word"]
+    }
+}
+
+private enum TableSyncEngineError: LocalizedError {
+    case editorRefreshExpired
+    case liveColdMissing
+    case tableMissing(String)
+    case unsupportedEditorTable(String)
+    case unsafeTableName(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .editorRefreshExpired:
+            return "Editor refresh request expired"
+        case .liveColdMissing:
+            return "Live cold database is missing"
+        case .tableMissing(let table):
+            return "Editor refresh table is missing: \(table)"
+        case .unsupportedEditorTable(let table):
+            return "Editor refresh table has unsupported columns: \(table)"
+        case .unsafeTableName(let table):
+            return "Unsafe editor refresh table name: \(table)"
+        }
     }
 }

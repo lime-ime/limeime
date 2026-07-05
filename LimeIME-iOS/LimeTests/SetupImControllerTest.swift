@@ -149,6 +149,19 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
+    private func waitForEditorRefreshRequest(at baseURL: URL,
+                                             timeout: TimeInterval = 1) async -> EditorRefreshRequest? {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() <= deadline {
+            if let data = try? Data(contentsOf: SyncPaths.editorRefreshRequest(baseURL)),
+               let request = try? JSONDecoder().decode(EditorRefreshRequest.self, from: data) {
+                return request
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+        return nil
+    }
+
     // MARK: - importDBFile
 
     func testImportDBFileInvalidPathReportsError() async throws {
@@ -573,6 +586,67 @@ final class SetupImControllerTest: XCTestCase {
 
         let state = prefs.keyboardState
         XCTAssertNotNil(state)
+    }
+
+    // MARK: - editor refresh
+
+    func testRefreshTableFromKeyboardWaitsForMatchingDoneReceipt() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+        let responder = Task {
+            guard let request = await waitForEditorRefreshRequest(at: root) else { return }
+            let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
+                                               table: request.table,
+                                               status: .done,
+                                               error: nil,
+                                               at: Date().timeIntervalSince1970)
+            try? atomicWrite(try JSONEncoder().encode(receipt),
+                             to: SyncPaths.editorRefreshReceipt(root))
+            postSyncSignal(SyncSignal.importDone)
+        }
+
+        let result = await controller.refreshTableFromKeyboard(stem: "custom",
+                                                               baseURL: root,
+                                                               timeout: 1,
+                                                               pollInterval: 0.01)
+        await responder.value
+
+        if case .failure(let error) = result {
+            XCTFail("Expected matching done receipt to succeed, got \(error)")
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(root).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshReceipt(root).path))
+    }
+
+    func testRefreshTableFromKeyboardTimesOutAndRemovesRequest() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.refreshTableFromKeyboard(stem: "custom",
+                                                               baseURL: root,
+                                                               timeout: 0.05,
+                                                               pollInterval: 0.01)
+
+        if case .success = result {
+            XCTFail("Expected editor refresh to time out without a receipt")
+        }
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(root).path))
     }
 
     // MARK: - backupDB
