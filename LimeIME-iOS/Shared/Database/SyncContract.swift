@@ -14,6 +14,10 @@ enum SyncPaths {
         inboxDir(base).appendingPathComponent("im.json")
     }
 
+    static func imLifecycleInbox(_ base: URL) -> URL {
+        inboxDir(base).appendingPathComponent("lifecycle.json")
+    }
+
     static func outboxDir(_ base: URL) -> URL {
         base.appendingPathComponent("outbox", isDirectory: true)
     }
@@ -69,6 +73,17 @@ struct IMInboxRecord: Codable, Equatable {
 
     var op: Operation
     var row: [String: String?]
+}
+
+struct IMLifecycleRecord: Codable, Equatable {
+    enum Action: String, Codable {
+        case delete
+        case install
+    }
+
+    var table: String
+    var action: Action
+    var preserveLearning: Bool
 }
 
 enum SyncSignal: String {

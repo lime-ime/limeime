@@ -30,16 +30,25 @@ final class SetupImController: BaseController {
     func importTxtFile(url: URL, tableName: String, view: (any SetupImView)?) {
         progress.show(status: "匯入中…")
         let server = self.dbServer
+        let restoreLearning = self.prefs.restoreOnImport(for: tableName)
         Task.detached(priority: .userInitiated) {
             final class CountBox: @unchecked Sendable { var value: Int = 0 }
             let counter = CountBox()
             do {
-                try server.importTxtFile(at: url.path, tableName: tableName) { count in
+                try server.importTxtFile(at: url.path,
+                                         tableName: tableName,
+                                         publish: false,
+                                         progress: { count in
                     counter.value = count
                     Task { @MainActor in
                         view?.onProgress(50, status: "已匯入 \(count) 筆…")
                     }
-                }
+                })
+                try server.writeIMLifecycleRecord(table: tableName,
+                                                  action: .install,
+                                                  preserveLearning: restoreLearning,
+                                                  postSignal: false)
+                try server.markTableChangedAndPublish(tableName)
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onProgress(100, status: "文字檔匯入完成，共 \(counter.value) 筆")
@@ -63,9 +72,17 @@ final class SetupImController: BaseController {
         let result: Result<Int, Error> = await Task.detached(priority: .userInitiated) {
             do {
                 var lastCount = 0
-                try server.importTxtFile(at: url.path, tableName: tableName) { count in
+                try server.importTxtFile(at: url.path,
+                                         tableName: tableName,
+                                         publish: false,
+                                         progress: { count in
                     lastCount = count
-                }
+                })
+                try server.writeIMLifecycleRecord(table: tableName,
+                                                  action: .install,
+                                                  preserveLearning: restoreLearning,
+                                                  postSignal: false)
+                try server.markTableChangedAndPublish(tableName)
                 return .success(lastCount)
             } catch {
                 return .failure(error)
@@ -81,9 +98,13 @@ final class SetupImController: BaseController {
         progress.show(status: "匯入中…")
         let server = self.dbServer
         let safeTable = server.isValidTableName(tableName) ? tableName : "custom"
+        let restoreLearning = self.prefs.restoreOnImport(for: safeTable)
         Task.detached(priority: .userInitiated) {
             do {
-                try importDatabaseFile(server: server, url: url, tableName: safeTable)
+                try importDatabaseFile(server: server,
+                                       url: url,
+                                       tableName: safeTable,
+                                       restoreLearning: restoreLearning)
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onProgress(100, status: "已成功匯入 \(safeTable)")
@@ -711,10 +732,12 @@ func importDatabaseFile(server: DBServer,
         }
     }
     try validateImportDatabaseSource(sourceURL, tableName: tableName)
-    try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName)
-    if restoreLearning {
-        _ = try server.restoreUserRecords(tableName)
-    }
+    try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName, publish: false)
+    try server.writeIMLifecycleRecord(table: tableName,
+                                      action: .install,
+                                      preserveLearning: restoreLearning,
+                                      postSignal: false)
+    try server.markTableChangedAndPublish(tableName)
 }
 
 private func isZipArchive(at url: URL) -> Bool {

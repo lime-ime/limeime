@@ -79,6 +79,34 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
+    private func customBackupRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db, sql: """
+                SELECT code, word, score FROM custom_user ORDER BY code, word
+                """).map {
+                    "\($0["code"] as String? ?? "")|\($0["word"] as String? ?? "")|\($0["score"] as Int? ?? 0)"
+                }
+        }
+    }
+
+    private func lifecycleInboxURL(_ appGroup: URL) -> URL {
+        appGroup.appendingPathComponent("inbox", isDirectory: true)
+            .appendingPathComponent("lifecycle.json")
+    }
+
+    private func writeLifecycleRecords(appGroup: URL, _ records: [[String: Any]]) throws {
+        let data = try JSONSerialization.data(withJSONObject: records)
+        try atomicWrite(data, to: lifecycleInboxURL(appGroup))
+    }
+
+    private func createCustomUserBackup(in dbURL: URL) throws {
+        let db = try LimeDB(path: dbURL.path)
+        db.backupUserRecords("custom")
+        db.clearTable("custom")
+    }
+
     private func customRowID(code: String, word: String, in dbURL: URL) throws -> Int64? {
         let queue = try DatabaseQueue(path: dbURL.path)
         defer { try? queue.close() }
@@ -585,5 +613,130 @@ final class TableSyncEngineTest: XCTestCase {
 
         XCTAssertEqual(try customRows(in: hot),
                        ["app|編|4", "edit|改|6", "learned|學|9"])
+    }
+
+    func testLifecycleDeleteWithBackupCreatesHotUserTableBeforeClearing() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeDatabase(at: cold, epoch: "epoch-a", revisions: ["custom": 2])
+        try makeDatabase(at: hot,
+                         rows: [("learned", "學", 8), ("base", "基", 0)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        let hotMeta = try SyncMetaStore(databaseURL: hot)
+        try hotMeta.setAppliedEpoch("epoch-a")
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "delete", "preserveLearning": true]
+        ])
+
+        try publish(cold, appGroup: appGroup)
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot), [])
+        XCTAssertEqual(try customBackupRows(in: hot), ["learned|學|8"])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
+    }
+
+    func testLifecycleImportWithRestoreRestoresHotUserTableAfterCopy() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeDatabase(at: cold,
+                         rows: [("learned", "學", 0), ("base", "基", 0)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 2])
+        try makeDatabase(at: hot,
+                         rows: [("learned", "學", 8)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try createCustomUserBackup(in: hot)
+        let hotMeta = try SyncMetaStore(databaseURL: hot)
+        try hotMeta.setAppliedEpoch("epoch-a")
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "install", "preserveLearning": true]
+        ])
+
+        try publish(cold, appGroup: appGroup)
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot), ["base|基|0", "learned|學|8"])
+        XCTAssertFalse(try tableExists("custom_user", in: hot))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
+    }
+
+    func testLifecycleOptOutSkipsBackupAndRestore() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeDatabase(at: cold, epoch: "epoch-a", revisions: ["custom": 2])
+        try makeDatabase(at: hot,
+                         rows: [("learned", "學", 8)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        let hotMeta = try SyncMetaStore(databaseURL: hot)
+        try hotMeta.setAppliedEpoch("epoch-a")
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "delete", "preserveLearning": false]
+        ])
+        try publish(cold, appGroup: appGroup)
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+
+        try engine.scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot), [])
+        XCTAssertFalse(try tableExists("custom_user", in: hot))
+
+        try editCustomRows(in: cold) { db in
+            try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                           arguments: ["learned", "學", 0])
+        }
+        _ = try SyncMetaStore(databaseURL: cold).bumpRevision(forTable: "custom")
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "install", "preserveLearning": false]
+        ])
+        try publish(cold, appGroup: appGroup)
+
+        try engine.scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot), ["learned|學|0"])
+        XCTAssertFalse(try tableExists("custom_user", in: hot))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
+    }
+
+    func testLifecycleDeleteThenReimportRoundTripPreservesLearnedScores() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeDatabase(at: cold,
+                         rows: [("learned", "學", 0), ("base", "基", 0)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 3])
+        try makeDatabase(at: hot,
+                         rows: [("learned", "學", 8), ("hotonly", "熱", 4)],
+                         epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        let hotMeta = try SyncMetaStore(databaseURL: hot)
+        try hotMeta.setAppliedEpoch("epoch-a")
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "delete", "preserveLearning": true],
+            ["table": "custom", "action": "install", "preserveLearning": true]
+        ])
+
+        try publish(cold, appGroup: appGroup)
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        XCTAssertEqual(try customRows(in: hot),
+                       ["base|基|0", "hotonly|熱|4", "learned|學|8"])
+        XCTAssertFalse(try tableExists("custom_user", in: hot))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
     }
 }

@@ -42,6 +42,16 @@ final class SetupImControllerTest: XCTestCase {
         try SyncMetaStore(databaseURL: url)
     }
 
+    private func lifecycleRecords(in baseURL: URL) throws -> [[String: Any]] {
+        let data = try Data(contentsOf: lifecycleInboxURL(in: baseURL))
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+    }
+
+    private func lifecycleInboxURL(in baseURL: URL) -> URL {
+        baseURL.appendingPathComponent("inbox", isDirectory: true)
+            .appendingPathComponent("lifecycle.json")
+    }
+
     private func makePrefs() -> LimeIME.LIMEPreferenceManager {
         let suiteName = "test.setup.ctrl.\(UUID().uuidString)"
         let ud = UserDefaults(suiteName: suiteName)!
@@ -281,6 +291,34 @@ final class SetupImControllerTest: XCTestCase {
         let meta = try syncMeta(for: url)
         XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
         XCTAssertEqual(try meta.generation(), 1)
+    }
+
+    func testAsyncImportDBFileWritesInstallLifecycleRecord() async throws {
+        let (url, db) = try makeDB()
+        let zipped = try makeZippedCustomLimedb()
+        defer {
+            try? FileManager.default.removeItem(at: url)
+            try? FileManager.default.removeItem(at: zipped.dbURL)
+            try? FileManager.default.removeItem(at: zipped.zipURL)
+        }
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+        try? FileManager.default.removeItem(at: lifecycleInboxURL(in: url.deletingLastPathComponent()))
+
+        let result = await controller.importDBFile(url: zipped.zipURL,
+                                                   tableName: "custom",
+                                                   restoreLearning: true)
+
+        if case .failure(let error) = result {
+            XCTFail("Expected zipped .limedb import to succeed, got \(error)")
+        }
+        let records = try lifecycleRecords(in: url.deletingLastPathComponent())
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0]["table"] as? String, "custom")
+        XCTAssertEqual(records[0]["action"] as? String, "install")
+        XCTAssertEqual(records[0]["preserveLearning"] as? Bool, true)
     }
 
     func testAsyncImportDBFileImportsAndroidShapeZippedLimedb() async throws {

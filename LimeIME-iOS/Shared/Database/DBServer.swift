@@ -287,6 +287,17 @@ final class DBServer {
                           postSignal: shouldPost)
     }
 
+    func writeIMLifecycleRecord(table: String,
+                                action: IMLifecycleRecord.Action,
+                                preserveLearning: Bool,
+                                postSignal shouldPost: Bool = true) throws {
+        guard !table.isEmpty else { return }
+        let record = IMLifecycleRecord(table: table,
+                                       action: action,
+                                       preserveLearning: preserveLearning)
+        try appendIMLifecycle([record], postSignal: shouldPost)
+    }
+
     private func appendIMInbox(_ records: [IMInboxRecord], postSignal shouldPost: Bool) throws {
         guard !records.isEmpty else { return }
         let url = SyncPaths.imInbox(liveDatabaseURL().deletingLastPathComponent())
@@ -299,6 +310,22 @@ final class DBServer {
         }
         let file = IMInboxFile(records: existing.records + records)
         try atomicWrite(try JSONEncoder().encode(file), to: url)
+        if shouldPost {
+            postSyncSignal(.tablesUpdated)
+        }
+    }
+
+    private func appendIMLifecycle(_ records: [IMLifecycleRecord], postSignal shouldPost: Bool) throws {
+        guard !records.isEmpty else { return }
+        let url = SyncPaths.imLifecycleInbox(liveDatabaseURL().deletingLastPathComponent())
+        let existing: [IMLifecycleRecord]
+        if let data = try? Data(contentsOf: url),
+           let decoded = try? JSONDecoder().decode([IMLifecycleRecord].self, from: data) {
+            existing = decoded
+        } else {
+            existing = []
+        }
+        try atomicWrite(try JSONEncoder().encode(existing + records), to: url)
         if shouldPost {
             postSyncSignal(.tablesUpdated)
         }
@@ -1246,10 +1273,12 @@ final class DBServer {
 
     // MARK: - Import / Export Proxies
 
-    func importFromAttachedDB(sourcePath: String, tableName: String) throws {
+    func importFromAttachedDB(sourcePath: String, tableName: String, publish: Bool = true) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importFromAttachedDB(sourcePath: sourcePath, tableName: tableName)
-        try markTableChangedAndPublish(tableName)
+        if publish {
+            try markTableChangedAndPublish(tableName)
+        }
     }
 
     @discardableResult
@@ -1263,10 +1292,13 @@ final class DBServer {
     }
 
     func importTxtFile(at path: String, tableName: String,
+                       publish: Bool = true,
                        progress: ((Int) -> Void)?) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.importTxtFile(at: path, tableName: tableName, progress: progress)
-        try markTableChangedAndPublish(tableName)
+        if publish {
+            try markTableChangedAndPublish(tableName)
+        }
     }
 
     func exportDB(to destPath: String) throws {

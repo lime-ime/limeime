@@ -362,12 +362,13 @@ final class ManageImController: BaseController {
         let server = self.dbServer
         let localPrefs = self.prefs
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            if backupLearning {
-                ss?.backupUserRecords(tableNick)
-            }
             ss?.clearTable(tableNick)
             await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
             do {
+                try server.writeIMLifecycleRecord(table: tableNick,
+                                                  action: .delete,
+                                                  preserveLearning: backupLearning,
+                                                  postSignal: false)
                 try server.writeIMInboxDelete(for: tableNick, postSignal: false)
                 try server.markTableChangedAndPublish(tableNick)
                 return .success(())

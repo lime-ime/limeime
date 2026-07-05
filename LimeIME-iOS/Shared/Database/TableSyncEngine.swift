@@ -54,6 +54,7 @@ final class TableSyncEngine {
             }
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
             try clearIMInboxIfNeeded()
+            try clearIMLifecycleInboxIfNeeded()
             return
         }
 
@@ -240,33 +241,103 @@ final class TableSyncEngine {
         try FileManager.default.removeItem(at: inboxURL)
     }
 
+    private func readIMLifecycleRecords() throws -> [IMLifecycleRecord] {
+        let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return [] }
+        let records = try JSONDecoder().decode([IMLifecycleRecord].self,
+                                               from: Data(contentsOf: inboxURL))
+        if records.isEmpty {
+            try? FileManager.default.removeItem(at: inboxURL)
+        }
+        return records
+    }
+
+    private func writeRemainingIMLifecycleRecords(_ records: [IMLifecycleRecord]) throws {
+        let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
+        guard !records.isEmpty else {
+            try? FileManager.default.removeItem(at: inboxURL)
+            return
+        }
+        try atomicWrite(try JSONEncoder().encode(records), to: inboxURL)
+    }
+
+    private func clearIMLifecycleInboxIfNeeded() throws {
+        let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
+        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
+        try FileManager.default.removeItem(at: inboxURL)
+    }
+
     private func applyIncremental(from coldSnapshotURL: URL) throws {
         let coldRevisions = try revisions(in: coldSnapshotURL)
         let hotRevisions = try revisions(in: hotDatabaseURL)
         let tables = Set(coldRevisions.keys).union(hotRevisions.keys).sorted()
         guard !tables.isEmpty else { return }
 
+        let lifecycleRecords = try readIMLifecycleRecords()
+        var consumedLifecycleIndexes = Set<Int>()
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
-        try connection.write { db in
-            try db.execute(sql: "ATTACH DATABASE ? AS cold_snapshot",
-                           arguments: [coldSnapshotURL.path])
-            defer { try? db.execute(sql: "DETACH DATABASE cold_snapshot") }
-
-            for table in tables where Self.isSafeTableName(table) {
-                guard let coldRevision = coldRevisions[table] else {
+        for table in tables where Self.isSafeTableName(table) {
+            guard let coldRevision = coldRevisions[table] else {
+                let records = lifecycleRecords.enumerated().filter { $0.element.table == table }
+                try applyDeleteLifecycle(records.map(\.element), for: table)
+                consumedLifecycleIndexes.formUnion(records.map(\.offset))
+                try connection.write { db in
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
-                    continue
                 }
-                guard coldRevision != hotRevisions[table] else { continue }
+                continue
+            }
+            guard coldRevision != hotRevisions[table] else { continue }
+
+            let records = lifecycleRecords.enumerated().filter { $0.element.table == table }
+            try applyDeleteLifecycle(records.map(\.element), for: table)
+
+            var copied = false
+            try connection.write { db in
+                try db.execute(sql: "ATTACH DATABASE ? AS cold_snapshot",
+                               arguments: [coldSnapshotURL.path])
+                defer { try? db.execute(sql: "DETACH DATABASE cold_snapshot") }
+
                 guard try Self.tableExists(table, schema: "cold_snapshot", in: db) else {
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
-                    continue
+                    return
                 }
                 try Self.copy(table, fromSchema: "cold_snapshot", in: db)
                 try Self.upsertMeta("rev:\(table)", value: String(coldRevision), in: db)
+                copied = true
             }
+
+            if copied {
+                try applyInstallLifecycle(records.map(\.element), for: table)
+            }
+            consumedLifecycleIndexes.formUnion(records.map(\.offset))
+        }
+
+        if !consumedLifecycleIndexes.isEmpty {
+            let remaining = lifecycleRecords.enumerated()
+                .filter { !consumedLifecycleIndexes.contains($0.offset) }
+                .map(\.element)
+            try writeRemainingIMLifecycleRecords(remaining)
+        }
+    }
+
+    private func applyDeleteLifecycle(_ records: [IMLifecycleRecord], for table: String) throws {
+        for record in records where record.action == .delete {
+            let db = try LimeDB(path: hotDatabaseURL.path)
+            if record.preserveLearning {
+                db.backupUserRecords(table)
+            }
+            db.clearTable(table)
+        }
+    }
+
+    private func applyInstallLifecycle(_ records: [IMLifecycleRecord], for table: String) throws {
+        for record in records where record.action == .install && record.preserveLearning {
+            let db = try LimeDB(path: hotDatabaseURL.path)
+            guard db.checkBackupTable(table) else { continue }
+            _ = db.restoreUserRecords(table)
+            _ = db.dropBackupTable(table)
         }
     }
 

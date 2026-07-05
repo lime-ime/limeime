@@ -16,16 +16,19 @@ final class IntegrationTestBackupRestore: XCTestCase {
         CloudIMFixture(table: "dayi", fileName: "dayi.zip")
     ]
 
+    private var tempDir: URL!
     private var tempURL: URL!
 
     override func setUp() {
         super.setUp()
-        tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        tempURL = tempDir.appendingPathComponent("lime.db")
     }
 
     override func tearDown() {
-        try? FileManager.default.removeItem(at: tempURL)
+        try? FileManager.default.removeItem(at: tempDir)
         super.tearDown()
     }
 
@@ -56,6 +59,8 @@ final class IntegrationTestBackupRestore: XCTestCase {
                                     table: fixture.table,
                                     controller: controller,
                                     restoreLearning: true)
+            try forceHotLifecycleApply(table: fixture.table)
+            try TableSyncEngine(appGroupBaseURL: tempDir, hotDatabaseURL: tempURL).scanAndApply()
 
             XCTAssertEqual(learnedScores(db, table: fixture.table, code: code),
                            [word1: 220, word2: 210],
@@ -126,6 +131,10 @@ final class IntegrationTestBackupRestore: XCTestCase {
             scores[record.word] = record.score
         }
         return scores
+    }
+
+    private func forceHotLifecycleApply(table: String) throws {
+        try SyncMetaStore(databaseURL: tempURL).setValue("0", forKey: "rev:\(table)")
     }
 
     private func cloudFixtureURL(_ fileName: String) throws -> URL {

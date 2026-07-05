@@ -44,6 +44,16 @@ final class ManageImControllerTest: XCTestCase {
         try SyncMetaStore(databaseURL: url)
     }
 
+    private func lifecycleRecords(in baseURL: URL) throws -> [[String: Any]] {
+        let data = try Data(contentsOf: lifecycleInboxURL(in: baseURL))
+        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+    }
+
+    private func lifecycleInboxURL(in baseURL: URL) -> URL {
+        baseURL.appendingPathComponent("inbox", isDirectory: true)
+            .appendingPathComponent("lifecycle.json")
+    }
+
     // MARK: - loadRecords
 
     func testLoadRecordsEmptyTable() async throws {
@@ -329,8 +339,9 @@ final class ManageImControllerTest: XCTestCase {
         db.addOrUpdateMappingRecord(testTable, "clear_i3", "æ¸é¤", 0)
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
         let meta = try syncMeta(for: url)
+        try? FileManager.default.removeItem(at: lifecycleInboxURL(in: url.deletingLastPathComponent()))
 
-        let result = await controller.clearTable(tableNick: testTable)
+        let result = await controller.clearTable(tableNick: testTable, backupLearning: true)
 
         guard case .success = result else {
             XCTFail("Expected clearTable to succeed")
@@ -338,6 +349,11 @@ final class ManageImControllerTest: XCTestCase {
         }
         XCTAssertEqual(try meta.revision(forTable: testTable), 1)
         XCTAssertEqual(try meta.generation(), 1)
+        let records = try lifecycleRecords(in: url.deletingLastPathComponent())
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0]["table"] as? String, testTable)
+        XCTAssertEqual(records[0]["action"] as? String, "delete")
+        XCTAssertEqual(records[0]["preserveLearning"] as? Bool, true)
     }
 
     // MARK: - Pagination

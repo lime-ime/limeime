@@ -122,7 +122,10 @@ final class IMDownloadManager: ObservableObject {
 
             do {
                 LIMEPreferenceManager.shared.setRestoreOnImport(restoreLearning, for: variant.tableName)
-                try importDatabaseFile(server: server, url: tempURL, tableName: variant.tableName)
+                try importDatabaseFile(server: server,
+                                       url: tempURL,
+                                       tableName: variant.tableName,
+                                       restoreLearning: restoreLearning)
 
                 // Register in im table so the keyboard can see it
                 try server.registerIM(imName: variant.imName, tableName: variant.tableName,
