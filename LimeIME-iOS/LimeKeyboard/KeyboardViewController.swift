@@ -727,7 +727,31 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         activated.contains(requested) ? requested : firstAvailable
     }
 
+    // Ordering guard for the two concurrent setupDatabase paths (viewDidLoad's databaseQueue
+    // and the sync apply's syncQueue). `nextSetupToken()` is thread-safe; `lastAppliedSetupToken`
+    // is touched only on the main thread inside setupDatabase's assignment block.
+    private let setupTokenLock = NSLock()
+    private var setupTokenCounter = 0
+    private var lastAppliedSetupToken = 0
+
+    private func nextSetupToken() -> Int {
+        setupTokenLock.lock()
+        defer { setupTokenLock.unlock() }
+        setupTokenCounter += 1
+        return setupTokenCounter
+    }
+
     private func setupDatabase() {
+        // setupDatabase runs from BOTH viewDidLoad (databaseQueue) and a sync apply
+        // (syncQueue) — two serial queues that run concurrently. After a restore, the
+        // viewDidLoad read sees the PRE-restore (empty) hot while the sync's read sees the
+        // freshly-replaced hot; if the stale main-thread assignment lands last it clobbers
+        // the fresh one, leaving an empty picker + "同步中"/no-active-IM until the next
+        // appearance re-reads the applied hot (the "double copy / first empty, second good"
+        // report). Guard the assignment with a monotonic token captured at read start: a
+        // read that STARTED later saw a fresher hot (sync only moves hot forward), so only
+        // the newest read may apply — a stale earlier read is dropped.
+        let setupToken = nextSetupToken()
         let context: DBServer.KeyboardRuntimeContext
         do {
             context = try prepareKeyboardRuntimeDatabaseWithRetry()
@@ -743,6 +767,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Marshal all state assignments back to the main thread
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
+            guard setupToken > self.lastAppliedSetupToken else { return }
+            self.lastAppliedSetupToken = setupToken
             self.searchServer = ss
             self.activatedIMs  = resolved
 
