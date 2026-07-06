@@ -692,6 +692,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // detector doesn't re-trigger on the next keystroke.
         lastSeenKeyboardType  = textDocumentProxy.keyboardType  ?? .default
         lastSeenReturnKeyType = textDocumentProxy.returnKeyType ?? .default
+
+        // Surface the persistent no-active-IM hint whenever the keyboard resolves to no
+        // IM (and clear it once one is available). Runs on every appearance / field change.
+        refreshNoActiveIMHint()
     }
 
     // MARK: - Database Setup
@@ -2970,17 +2974,34 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - LIME Toast / Reverse Lookup Display (spec §8, §13)
 
-    private func showLimeToast(_ message: String) {
+    /// Guides the user back to the Settings app when the keyboard has no IM to activate.
+    static let noActiveIMHintText = "請回到LIME設定程式安裝並啓用輸入法"
+
+    private func showLimeToast(_ message: String, persistent: Bool = false) {
         guard limeToastState.show(message), let text = limeToastState.message else { return }
         limeToastTimer?.invalidate()
+        limeToastTimer = nil
         candidateBar.composingText = text
         if let lbl = expandedComposingLabel {
             lbl.attributedText = CandidateBarView.attributedKeyname(
                 text, baseFont: candidateBar.composingStripFont,
                 color: lbl.textColor ?? .label)
         }
+        // A persistent toast (the no-active-IM hint) stays until an IM becomes
+        // available or another toast replaces it — no auto-dismiss timer.
+        guard !persistent else { return }
         limeToastTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
             self?.hideLimeToast()
+        }
+    }
+
+    /// Show/refresh the persistent "no active IM" hint: shown whenever the keyboard has
+    /// no installed+enabled IM to activate, cleared as soon as one becomes available.
+    private func refreshNoActiveIMHint() {
+        if activatedIMs.isEmpty {
+            showLimeToast(Self.noActiveIMHintText, persistent: true)
+        } else if limeToastState.message == Self.noActiveIMHintText {
+            hideLimeToast()
         }
     }
 
@@ -4034,7 +4055,12 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// Long-press on space key: LIME-internal IM picker (spec §10).
     private func showLimeIMPicker() {
-        guard !activatedIMs.isEmpty else { return }
+        // Long-press space and the ≡ menu both route here. With no IM there is nothing
+        // to switch to — re-surface the install hint instead of doing nothing.
+        guard !activatedIMs.isEmpty else {
+            showLimeToast(Self.noActiveIMHintText, persistent: true)
+            return
+        }
         var items: [(title: String, action: () -> Void)] = []
         for (i, im) in activatedIMs.enumerated() {
             let label = im.label
