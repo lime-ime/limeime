@@ -37,6 +37,10 @@ struct DBManagerView: View {
     @State private var backupProbeFiredAt: TimeInterval?
     @State private var probeText = ""
     @FocusState private var probeFocused: Bool
+    /// True while a post-restore "sync probe" holds LimeIME on screen so its cold→hot
+    /// scan can finish before this app returns to the background. Keeps the FA-evidence
+    /// handlers from dismissing the keyboard early.
+    @State private var syncProbeActive = false
 #if DEBUG
     @State private var uiTestBackupStatus: String?
 #endif
@@ -121,7 +125,7 @@ struct DBManagerView: View {
                 refreshFAState()
             }
             .onChange(of: hasFreshFAEvidence) { hasFreshEvidence in
-                if hasFreshEvidence { probeFocused = false }
+                if hasFreshEvidence, !syncProbeActive { probeFocused = false }
             }
             .onReceive(NotificationCenter.default.publisher(
                 for: UIApplication.didBecomeActiveNotification)) { _ in
@@ -259,7 +263,7 @@ struct DBManagerView: View {
                 faPingSeenDuringBackup = true
             }
             refreshFAState()
-            if hasFreshFAEvidence && !backupAwaitingReceipt {
+            if hasFreshFAEvidence && !backupAwaitingReceipt && !syncProbeActive {
                 probeFocused = false
             }
         }
@@ -287,7 +291,7 @@ struct DBManagerView: View {
                 // backup needs the keyboard running long enough to write its snapshot.
                 // ponytail: fixed 1 s probe window; lengthen only if device timing shows the FA ping is slower.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    if !backupAwaitingReceipt { probeFocused = false }
+                    if !backupAwaitingReceipt && !syncProbeActive { probeFocused = false }
                 }
             }
         }
@@ -435,6 +439,7 @@ struct DBManagerView: View {
             case .success(let msg):
                 statusMessage = msg
                 manageImController.invalidate()
+                triggerSyncProbe()
             case .failure:
                 statusMessage = "還原失敗"
             }
@@ -454,10 +459,26 @@ struct DBManagerView: View {
                 statusMessage = "資料庫還原完成"
                 manageImController.invalidate()
                 manageRelatedController.invalidate()
+                triggerSyncProbe()
             case .failure(let error):
                 statusMessage = "還原失敗：\(error.localizedDescription)"
             }
             isWorking = false
+        }
+    }
+
+    /// After a restore, summon LimeIME with the invisible probe so the extension runs
+    /// and performs the cold→hot sync now — before the user leaves this app — so the
+    /// active IM shows on the first keyboard appearance instead of only after a re-open.
+    private func triggerSyncProbe() {
+        syncProbeActive = true
+        probeFocused = true
+        // Hold the keyboard on screen long enough for the extension to launch + run its
+        // cold→hot scan, then release. The scan has no app-visible receipt (unlike
+        // backup), so use a fixed window; it is idempotent and re-runs on next appear.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            syncProbeActive = false
+            probeFocused = false
         }
     }
 }

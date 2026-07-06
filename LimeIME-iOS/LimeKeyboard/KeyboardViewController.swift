@@ -323,6 +323,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // the App Group DB + shared prefs FA-off). So cold→hot sync must run regardless of
         // FA — otherwise FA-off installs land in cold and never reach the keyboard's hot DB,
         // leaving no active IM. See IOS_DB_COLD_HOT.md §1.0.2.
+        // Feedback while a restore/install sync runs: if there is no active IM yet, show
+        // "同步中，請稍侯…" so the keyboard isn't just blank. Resolved when the scan ends.
+        DispatchQueue.main.async { [weak self] in self?.beginSyncToastIfNeeded() }
         syncQueue.async { [weak self] in
             guard let self else { return }
             guard !self.syncScanInProgress else { return }
@@ -336,12 +339,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     // The sync changed hot's IM data (e.g. a newly-installed IM). Reload
                     // activatedIMs + re-apply keyboard_list so the IM shows on THIS
                     // appearance — otherwise activatedIMs (loaded once) stays stale and the
-                    // installed IM never appears. setupDatabase re-prepares + reloads.
+                    // installed IM never appears. setupDatabase re-prepares + reloads
+                    // (and resolves the sync toast at the end of its main-thread block).
                     self.setupDatabase()
+                } else {
+                    DispatchQueue.main.async { [weak self] in self?.resolveSyncToast() }
                 }
             } catch {
                 UserDefaults.standard.set(error.localizedDescription,
                                           forKey: "keyboard_db_last_error")
+                DispatchQueue.main.async { [weak self] in self?.resolveSyncToast() }
             }
         }
     }
@@ -771,6 +778,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             self.updateInputModeForCurrentField()
             self.applyLayoutForCurrentInputField()
             self.updateGlobeAndDismissBindings()
+            // If this reload was driven by a sync that put up the "同步中…" toast, resolve
+            // it now — confirm the active IM, or fall back to the no-active-IM hint.
+            self.resolveSyncToast()
         }
     }
 
@@ -2976,6 +2986,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     /// Guides the user back to the Settings app when the keyboard has no IM to activate.
     static let noActiveIMHintText = "請回到LIME設定程式安裝並啓用輸入法"
+    /// Shown while a restore/install cold→hot sync runs and no IM is active yet.
+    static let syncingHintText = "同步中，請稍侯…"
+    /// True while the "同步中…" toast is up (main-thread only): keeps the no-active-IM hint
+    /// from clobbering it and gates the sync-done confirmation.
+    private var syncToastActive = false
 
     private func showLimeToast(_ message: String, persistent: Bool = false) {
         guard limeToastState.show(message), let text = limeToastState.message else { return }
@@ -2998,10 +3013,32 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Show/refresh the persistent "no active IM" hint: shown whenever the keyboard has
     /// no installed+enabled IM to activate, cleared as soon as one becomes available.
     private func refreshNoActiveIMHint() {
+        // While a sync is running, leave the "同步中…" toast up — a restore/install sync
+        // may be about to load an IM.
+        if syncToastActive { return }
         if activatedIMs.isEmpty {
             showLimeToast(Self.noActiveIMHintText, persistent: true)
         } else if limeToastState.message == Self.noActiveIMHintText {
             hideLimeToast()
+        }
+    }
+
+    /// Put up the "同步中，請稍侯…" toast while a scan runs and no IM is active yet.
+    private func beginSyncToastIfNeeded() {
+        guard activatedIMs.isEmpty, !syncToastActive else { return }
+        syncToastActive = true
+        showLimeToast(Self.syncingHintText, persistent: true)
+    }
+
+    /// Resolve the "同步中…" toast when a scan ends: brief confirmation of the now-active
+    /// IM, or the no-active-IM hint if still none. No-op unless the toast was shown.
+    private func resolveSyncToast() {
+        guard syncToastActive else { return }
+        syncToastActive = false
+        if let config = activatedIMs.first(where: { $0.tableNick == activeIM }) ?? activatedIMs.first {
+            showLimeToast(displayName(for: config))
+        } else {
+            refreshNoActiveIMHint()
         }
     }
 

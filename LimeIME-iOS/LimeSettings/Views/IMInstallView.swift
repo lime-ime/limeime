@@ -21,6 +21,11 @@ struct IMInstallView: View {
     @State private var pendingTableName: String = ""  // §13.3: fixed tableName for the pending import
     @State private var isImporting = false
     @State private var showsLocalImportOverlay = false
+    // Invisible probe: focusing it summons LimeIME so the extension runs its cold→hot
+    // sync right after an install — the active IM then shows on the first keyboard
+    // appearance instead of only after a re-open. Mirrors DBManagerView's sync probe.
+    @State private var probeText = ""
+    @FocusState private var probeFocused: Bool
     @State private var statusMessage = ""
 
     // Cloud download state
@@ -220,6 +225,26 @@ struct IMInstallView: View {
         }
         .onChange(of: downloadManager.installedTables) { _ in
             onRefresh?()
+            triggerSyncProbe()
+        }
+        .background(
+            TextField("", text: $probeText)
+                .focused($probeFocused)
+                .frame(width: SettingsMetrics.invisibleProbeSize,
+                       height: SettingsMetrics.invisibleProbeSize)
+                .opacity(SettingsMetrics.invisibleProbeOpacity)
+                .autocorrectionDisabled(true)
+                .accessibilityHidden(true)
+        )
+    }
+
+    /// After an install/uninstall, summon LimeIME with the invisible probe so the
+    /// extension runs its cold→hot sync now — the active IM then shows on the first
+    /// keyboard appearance instead of only after a re-open.
+    private func triggerSyncProbe() {
+        probeFocused = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            probeFocused = false
         }
     }
 
