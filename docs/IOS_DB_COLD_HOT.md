@@ -105,7 +105,8 @@ never `UserDefaults`, never a Darwin payload.
 
 | Key | Where | Required? | Meaning |
 | --- | --- | --- | --- |
-| `epoch_uuid` | cold **and** hot (each DB carries its own) | **yes** | full-replace lineage. **Hot's own copy is the "which restore have I applied" marker** — there is no separate `applied_epoch`. The whole-file swap that applies a restore copies cold's `sync_meta` (epoch included) into hot **atomically with the data**, so `hot.epoch_uuid == cold.epoch_uuid` ⟺ hot holds that exact restore. |
+| `epoch_uuid` | cold **and** hot (each DB carries its own) | **yes** | full-replace lineage. Cold stamps a **fresh** one only on a restore/reset; installs never touch it, so an install-only cold has **no `epoch_uuid` (nil)**. |
+| `applied_epoch` | hot | **yes** | the cold epoch hot has applied — **decoupled from hot's own `epoch_uuid`**. Hot's own `epoch_uuid` is hot's *identity* (a **random value at bootstrap**, or cold's epoch after a completed full-replace copy), so it is not a reliable applied-marker by itself: an install-only cold is nil while a hot that synced incrementally keeps its bootstrap epoch, so `coldEpoch(nil) != hotEpoch(bootstrap)` would falsely read as a new lineage and full-replace. `applied_epoch` records the applied cold epoch (nil for an install-only lineage) so `nil == nil` ⟺ converged. Cold's lineage is **applied when EITHER** `applied_epoch` **or** hot's own `epoch_uuid` matches cold — the latter is a fast-path so a completed restore copy is never re-copied when its `applied_epoch` stamp was interrupted. |
 | `generation` | cold; hot stores `applied_generation` | fast-path | monotonic publish counter — the "anything changed within this epoch?" gate. The **incremental** path edits hot's tables **in place**, so (unlike the epoch) it gets no free atomic marker and keeps an explicit `applied_generation`. |
 | per-table `rev` | cold | **yes** | scopes each cold→hot reconcile to the tables the **app** changed, protecting unharvested keyboard learning elsewhere |
 
@@ -240,20 +241,29 @@ live Darwin notification. The doorbell only makes a live FA-on keyboard scan
 
 **Keyboard side — apply (requires FA ON):**
 
-1. On scan, open cold and read `cold.sync_meta.epoch_uuid`; ≠ **hot's own**
-   `epoch_uuid` → run the full replace. The replace copies `cold.limedb` to a **temp
-   file**, then **atomically renames** it over hot (`copyItem` → `moveItem`). Cold's
-   `sync_meta` — epoch included — rides inside that file, so the rename **sets
-   `hot.epoch_uuid = cold.epoch_uuid` atomically with the data**. There is **no separate
-   `applied_epoch` stamp**, so there is no window where the copy lands but the marker does
-   not — **the apply is self-marking.**
+1. On scan, open cold and read `cold.sync_meta.epoch_uuid`. Cold's lineage is **applied**
+   when it matches **either** hot's `applied_epoch` (the decoupled marker) **or** hot's own
+   `epoch_uuid` (the self-marking fast-path). Applied to **neither** → run the full replace.
+   The replace copies `cold.limedb` to a **temp file**, then **atomically renames** it over
+   hot (`copyItem` → `moveItem`); cold's `sync_meta` — epoch included — rides inside that
+   file, so the rename **sets `hot.epoch_uuid = cold.epoch_uuid` atomically with the data**,
+   and the engine then **stamps `applied_epoch = cold.epoch_uuid`** (nil for an install-only
+   cold, so the marker is *removed*).
+   **Why two markers.** `applied_epoch` is what makes an **install-only cold** (which has
+   **no `epoch_uuid`**) read as converged: `nil == nil`. Hot's own `epoch_uuid` is hot's
+   *identity* — a **random value at bootstrap** — so it does not, on its own, mean "I applied
+   cold's nil epoch"; comparing it to cold's nil would falsely trigger a full replace that
+   clears pending IM/lifecycle inboxes and wipes hot (the empty-picker / 同步中 regression).
+   Hot's `epoch_uuid` is kept only as the interrupt-safety fast-path below.
    **Interrupt safety (no re-copy, no partial hot).** Killed during the copy → the temp
    file is discarded and **hot is untouched** (still the old, complete DB, old epoch) → the
-   next scan re-copies. Killed after the rename → hot is the new complete DB with the new
-   epoch → the next scan sees `hot.epoch_uuid == cold.epoch_uuid` and **does nothing**. The
-   old "completed-but-unmarked" failure — a redundant multi-second re-copy on the next
+   next scan re-copies. Killed after the rename but **before** the `applied_epoch` stamp →
+   hot's own `epoch_uuid` already equals cold's (it rode in atomically), so the next scan's
+   **fast-path** sees them equal and **does nothing** — no redundant re-copy. The old
+   "completed-but-unmarked" failure — a redundant multi-second re-copy on the next
    appearance that closed the live connection (wrong layout, no candidates until it
-   reopened) — is now **structurally impossible**, because the marker and the data are one
+   reopened) — stays **structurally impossible**, because the self-marking epoch and the
+   data are one
    atomic file. This is why the restore probe (§1.7) dismissing "soon" no longer strands the
    keyboard: either the swap landed (done) or it didn't (cleanly re-applied), never a
    half-applied re-copy.

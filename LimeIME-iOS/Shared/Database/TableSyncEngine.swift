@@ -39,37 +39,57 @@ final class TableSyncEngine {
         let hotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
         let coldEpoch = try coldMeta.epochUUID()
         let coldGeneration = try coldMeta.generation()
-        // Hot's OWN epoch_uuid is the applied marker (§1.0.3): the whole-file swap that
-        // applies a restore copies cold's sync_meta — epoch included — into hot atomically
-        // with the data, so there is no separate applied_epoch to stamp (or to lose). The
-        // incremental path edits tables in place and so keeps an explicit applied_generation.
+        // Is cold's lineage already applied to hot? hot.epoch_uuid is hot's OWN identity — a
+        // random value at bootstrap (ensureKeyboardHotDatabase), or cold's epoch after a
+        // completed full-replace copy — so it is NOT a reliable applied-marker on its own: an
+        // install-only cold has no epoch_uuid (nil), and a hot that synced incrementally keeps
+        // its bootstrap epoch, so coldEpoch(nil) != hotEpoch(bootstrap) would falsely read as a
+        // NEW lineage and full-replace (clearing pending inboxes, wiping hot). The decoupled
+        // applied_epoch marker records the applied cold epoch (nil for an install-only lineage)
+        // — nil == nil → converged. hot.epoch_uuid is kept only as a fast-path so a completed
+        // restore copy is not re-copied when its applied_epoch stamp was interrupted (§1.2).
+        // Applied when EITHER marker matches cold.
+        let appliedEpoch = try hotMeta.appliedEpoch()
         let hotEpoch = try hotMeta.epochUUID()
         let appliedGeneration = try hotMeta.appliedGeneration()
+        let epochApplied = coldEpoch == appliedEpoch || coldEpoch == hotEpoch
 
-        if coldEpoch == hotEpoch, coldGeneration == appliedGeneration {
+        if epochApplied, coldGeneration == appliedGeneration {
             try drainIMInboxIfNeeded()
             return false
         }
 
-        if coldEpoch != hotEpoch {
-            // Different lineage → wholesale full replace. replaceDatabaseFromSnapshot copies
-            // to a temp file then atomically renames it over hot, so the swap sets
-            // hot.epoch_uuid = cold.epoch_uuid together with the data — self-marking, no
-            // stamp, no re-copy window (§1.2). An interrupted copy leaves hot untouched (old
-            // epoch) and re-applies here next scan; a completed copy makes coldEpoch ==
-            // hotEpoch above, so we never re-copy what hot already holds.
+        if !epochApplied {
+            // Different lineage (a restore stamps a fresh non-nil epoch) → wholesale full
+            // replace. The whole-file swap carries cold's epoch_uuid into hot (self-marking);
+            // also stamp applied_epoch so an install-only (nil-epoch) cold is not re-read as a
+            // new lineage next scan. An interrupted copy leaves hot on its old epoch and
+            // re-applies here; a completed copy matches above via hot.epoch_uuid — no re-copy.
             try dbServer.replaceDatabaseFromSnapshot(coldSnapshotURL)
-            try SyncMetaStore(databaseURL: hotDatabaseURL).setAppliedGeneration(coldGeneration)
+            let refreshedHotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
+            try Self.stampAppliedEpoch(coldEpoch, on: refreshedHotMeta)
+            try refreshedHotMeta.setAppliedGeneration(coldGeneration)
             try clearIMInboxIfNeeded()
             try clearIMLifecycleInboxIfNeeded()
             return true
         }
 
-        // Same epoch, generation moved → per-table incremental reconcile.
+        // Same lineage (applied), generation moved → per-table incremental reconcile.
         try applyIncremental(from: coldSnapshotURL)
+        try Self.stampAppliedEpoch(coldEpoch, on: hotMeta)
         try hotMeta.setAppliedGeneration(coldGeneration)
         try drainIMInboxIfNeeded()
         return true
+    }
+
+    /// Record the applied cold epoch on hot. A nil cold epoch (install-only lineage) removes
+    /// the marker so `nil == nil` reads as converged on the next scan.
+    private static func stampAppliedEpoch(_ epoch: String?, on meta: SyncMetaStore) throws {
+        if let epoch {
+            try meta.setAppliedEpoch(epoch)
+        } else {
+            try meta.removeValue(forKey: SyncMetaStore.appliedEpochKey)
+        }
     }
 
     private func processBackupExportRequestIfNeeded() throws {

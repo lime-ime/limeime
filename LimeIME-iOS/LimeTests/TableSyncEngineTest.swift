@@ -460,6 +460,174 @@ final class TableSyncEngineTest: XCTestCase {
                       "installed IMs must resolve as active on the keyboard; got \(nicks)")
     }
 
+    /// Regression: restore-a-backup after a converged sync must full-replace hot with the
+    /// backup's IMs. Mirrors the REAL restore sequence — publishRestoredCold stamps a FRESH
+    /// epoch (replaceEpochUUID) on cold then republishes — which the old applied_epoch design
+    /// handled and the epoch_uuid design must too. The failure symptom was an empty IM picker
+    /// (hot's im table wiped/empty) + a "同步中" toast on every keyboard appearance.
+    func testRestoreFreshEpochFullReplacesHotWithBackupIMs() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = hotDir.appendingPathComponent("lime.db")
+
+        let base: [[String: String?]] = [
+            ["code": "cj", "title": "倉頡", "desc": "", "keyboard": "lime"],
+            ["code": "dayi", "title": "大易", "desc": "", "keyboard": "lime"]
+        ]
+        // Converged working keyboard: hot == cold, epoch-1, [cj, dayi].
+        try makeIMDatabase(at: cold, rows: base, epoch: "epoch-1", generation: 1)
+        try makeIMDatabase(at: hot, rows: base, epoch: "epoch-1", generation: 1, applied: true)
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+        try publish(cold, appGroup: appGroup)
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                dbServer: server).scanAndApply()
+        XCTAssertTrue(try imRows(in: hot).contains { $0.hasPrefix("cj|") })
+
+        // RESTORE: replace cold with the backup ([cj,dayi,phonetic]), stamp a FRESH epoch
+        // (publishRestoredCold's replaceEpochUUID), then publish — the exact real sequence.
+        try FileManager.default.removeItem(at: cold)
+        try makeIMDatabase(at: cold, rows: base + [
+            ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"]
+        ], epoch: "epoch-1", generation: 1)
+        _ = try SyncMetaStore(databaseURL: cold).replaceEpochUUID()
+        try publish(cold, appGroup: appGroup)
+
+        let applied = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                          dbServer: server).scanAndApply()
+        let rows = try imRows(in: hot)
+        XCTAssertTrue(applied, "restore's fresh epoch must trigger an apply")
+        XCTAssertTrue(rows.contains { $0.hasPrefix("phonetic|") },
+                      "restored phonetic must reach hot; got \(rows)")
+
+        // Re-open: converged, no re-copy, IMs stay.
+        let secondApplied = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                                dbServer: server).scanAndApply()
+        XCTAssertFalse(secondApplied, "second scan must be a no-op (converged)")
+        XCTAssertTrue(try imRows(in: hot).contains { $0.hasPrefix("phonetic|") })
+    }
+
+    /// Regression, real enabled-state path: after a real registerIM install + converged sync,
+    /// a restore (fresh epoch → full replace) must leave the IMs ENABLED as read by the real
+    /// `getAllImConfigs` (KV `title="disable"` rows), which is what `prepareKeyboardRuntimeDatabase`
+    /// filters `activatedIMs` on. Empty enabled list == the empty-picker / 同步中 symptom.
+    func testRestoreAfterInstallKeepsIMsEnabledViaGetAllImConfigs() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let coldDir = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        let coldURL = coldDir.appendingPathComponent("lime.db")
+        let hotURL = hotDir.appendingPathComponent("lime.db")
+
+        // App installs cj + dayi via the REAL path (writes enabled KV rows + im inbox + publish).
+        let coldServer = DBServer(_testDatabaseDirectory: coldDir)
+        try coldServer.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "lime")
+        try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime")
+
+        // Keyboard first sync → hot gets the enabled IMs.
+        let hotServer = DBServer(_testDatabaseDirectory: hotDir)
+        _ = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
+                                dbServer: hotServer).scanAndApply()
+        XCTAssertTrue(try hotServer.getAllImConfigs().contains { $0.tableNick == "cj" && $0.enabled },
+                      "baseline: cj enabled on hot after install")
+
+        // RESTORE: stamp a fresh cold epoch + republish (publishRestoredCold), keyboard re-syncs.
+        _ = try SyncMetaStore(databaseURL: coldURL).replaceEpochUUID()
+        try ColdPublisher(liveColdDatabaseURL: coldURL, appGroupBaseURL: coldDir).publish()
+        let applied = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
+                                          dbServer: hotServer).scanAndApply()
+
+        let configs = try hotServer.getAllImConfigs()
+        let enabledNicks = configs.filter { $0.enabled }.map { $0.tableNick }
+        XCTAssertTrue(applied, "restore's fresh epoch must apply")
+        XCTAssertTrue(enabledNicks.contains("cj") && enabledNicks.contains("dayi"),
+                      "restored IMs must stay ENABLED on keyboard; got enabled=\(enabledNicks) all=\(configs.map { "\($0.tableNick):\($0.enabled)" })")
+    }
+
+    /// Most faithful non-UI reproduction of "restore a backup → empty IM picker / 同步中".
+    /// Drives the REAL backup→restore path: backupDatabase (zip + pref sidecars) →
+    /// restoreDatabase (extract + file swap + restore shared prefs incl. keyboard_state) →
+    /// reregisterKnownIMs → publishRestoredCold (fresh epoch + publish) → keyboard scanAndApply
+    /// → getAllImConfigs enabled resolution. If restore ever leaves hot with no enabled IMs,
+    /// this fails exactly as the device does.
+    func testRealBackupRestoreRoundTripKeepsIMsEnabledOnKeyboard() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let coldDir = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+
+        // App installs cj + dayi, then makes a real backup zip.
+        let coldServer = DBServer(_testDatabaseDirectory: coldDir)
+        try coldServer.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "lime")
+        try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime")
+        let backupURL = root.appendingPathComponent("backup.zip")
+        try coldServer.backupDatabase(uri: backupURL)
+
+        // Restore it via the REAL path (SetupImController.restoreBackupIntoCold sequence).
+        try coldServer.restoreDatabase(srcFilePath: backupURL.path)
+        for (name, title, kb) in [("cj", "倉頡", "lime_cj_number"), ("dayi", "大易", "lime_dayi")]
+        where coldServer.tableHasData(name) {
+            try? coldServer.registerIM(imName: name, tableName: name, label: title, keyboardId: kb)
+        }
+        let liveCold = coldServer.liveDatabaseURL()
+        _ = try SyncMetaStore(databaseURL: liveCold).replaceEpochUUID()
+        try ColdPublisher(liveColdDatabaseURL: liveCold, appGroupBaseURL: coldDir).publish()
+
+        // Keyboard syncs and resolves its enabled IM list.
+        let hotServer = DBServer(_testDatabaseDirectory: hotDir)
+        let hotURL = hotDir.appendingPathComponent("lime.db")
+        _ = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
+                                dbServer: hotServer).scanAndApply()
+
+        let configs = try hotServer.getAllImConfigs()
+        let enabled = configs.filter { $0.enabled }.map { $0.tableNick }
+        XCTAssertTrue(enabled.contains("cj") && enabled.contains("dayi"),
+                      "restored IMs must be ENABLED on keyboard; got enabled=\(enabled) all=\(configs.map { "\($0.tableNick):\($0.enabled)" })")
+    }
+
+    /// ROOT-CAUSE regression (real device state): an install-only cold has NO epoch_uuid
+    /// (registerIM/publish never stamps one), while a hot that synced via the incremental path
+    /// keeps its RANDOM bootstrap epoch_uuid (ensureKeyboardHotDatabase). coldEpoch(nil) !=
+    /// hotEpoch(bootstrap) must NOT be read as "different lineage → full replace" — that clears
+    /// the pending IM/lifecycle inboxes without applying them and wipes hot-only state, which
+    /// is the empty-picker / 同步中 symptom. hot's own epoch is its identity, NOT the applied
+    /// cold-epoch marker; the decoupled applied_epoch marker (nil == nil) proves "converged".
+    func testInstallOnlyColdNilEpochDoesNotSpuriouslyFullReplace() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let hot = hotDir.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+
+        // Cold snapshot: install-only, NO epoch_uuid, generation 4, phonetic enabled.
+        try makeIMDatabase(at: coldSnapshot, rows: [
+            ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"]
+        ], generation: 4)
+        try SyncMetaStore(databaseURL: coldSnapshot).removeValue(forKey: SyncMetaStore.epochUUIDKey)
+
+        // Hot: phonetic + a hot-only sentinel IM, converged (applied_gen 4), bootstrap epoch.
+        try makeIMDatabase(at: hot, rows: [
+            ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"],
+            ["code": "sentinel", "title": "哨", "desc": "", "keyboard": "lime"]
+        ], epoch: "boot-276A", generation: 4, applied: true)
+
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                dbServer: server).scanAndApply()
+
+        let codes = Set(try imRows(in: hot).map { String($0.prefix(while: { $0 != "|" })) })
+        XCTAssertTrue(codes.contains("sentinel"),
+                      "install-only cold (nil epoch) must NOT full-replace a converged hot; got \(codes)")
+        XCTAssertTrue(codes.contains("phonetic"))
+    }
+
     func testEpochFullReplaceClearsStaleIMInbox() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

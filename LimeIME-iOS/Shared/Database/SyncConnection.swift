@@ -40,6 +40,12 @@ final class SyncDatabaseConnection {
 final class SyncMetaStore {
     static let epochUUIDKey = "epoch_uuid"
     static let generationKey = "generation"
+    /// Hot-side record of the cold epoch_uuid hot has applied. DECOUPLED from `epochUUIDKey`
+    /// (which is hot's OWN identity — a random value at bootstrap): an install-only cold has
+    /// no epoch_uuid, so comparing hot's own (bootstrap) epoch to cold's nil would falsely
+    /// read "different lineage". This marker records the applied cold epoch instead (nil for
+    /// an install-only lineage), so nil == nil → "converged". See TableSyncEngine.scanAndApply.
+    static let appliedEpochKey = "applied_epoch"
     static let appliedGenerationKey = "applied_generation"
 
     private let connection: SyncDatabaseConnection
@@ -86,6 +92,14 @@ final class SyncMetaStore {
 
     func generation() throws -> Int {
         try intValue(forKey: Self.generationKey)
+    }
+
+    func appliedEpoch() throws -> String? {
+        try value(forKey: Self.appliedEpochKey)
+    }
+
+    func setAppliedEpoch(_ epoch: String) throws {
+        try setValue(epoch, forKey: Self.appliedEpochKey)
     }
 
     func appliedGeneration() throws -> Int {
@@ -146,6 +160,7 @@ final class SyncMetaStore {
     private static func isAllowedKey(_ key: String) -> Bool {
         key == epochUUIDKey
             || key == generationKey
+            || key == appliedEpochKey
             || key == appliedGenerationKey
             || key.hasPrefix("rev:")
     }
