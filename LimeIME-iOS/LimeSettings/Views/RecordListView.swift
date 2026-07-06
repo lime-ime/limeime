@@ -29,6 +29,13 @@ struct RecordListView: View {
     @State private var didAttemptHotRefresh = false
     @State private var hotRefreshFailed = false
     @State private var didPublishEditorClose = false
+    // Hidden probe field: focusing it summons the LimeIME keyboard so the extension
+    // process actually runs and can answer the hot→cold harvest. Same mechanism the
+    // DB backup uses. An iOS keyboard extension only executes while it is presented,
+    // so without this it is never on screen while this app is foreground and the
+    // harvest can never complete → editor stuck read-only.
+    @State private var probeText = ""
+    @FocusState private var probeFocused: Bool
 
     @State private var showAdd = false
     @State private var editingRecord: IdentifiableRecord?
@@ -144,6 +151,16 @@ struct RecordListView: View {
             .padding(.vertical, 8)
             .background(Color(.systemGroupedBackground))
 
+            // Invisible probe field that summons LimeIME for the hot→cold harvest
+            // (see the field's declaration). Mirrors DBManagerView's backup probe.
+            TextField("", text: $probeText)
+                .focused($probeFocused)
+                .frame(width: SettingsMetrics.invisibleProbeSize,
+                       height: SettingsMetrics.invisibleProbeSize)
+                .opacity(SettingsMetrics.invisibleProbeOpacity)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .accessibilityHidden(true)
         }
         .onChange(of: query) { _ in resetAndLoad() }
         .onChange(of: searchByCode) { _ in resetAndLoad() }
@@ -239,13 +256,25 @@ struct RecordListView: View {
     }
 
     private func refreshHotSnapshotIfNeeded() {
-        guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }
+        // Do NOT gate on relayEditingCapability == .live here: that state is only
+        // established once the keyboard relays, which needs the probe below to summon
+        // it — a chicken-and-egg that would leave the editor permanently read-only.
+        // Always summon + attempt the harvest; if LIME isn't the active keyboard it
+        // simply times out → read-only.
+        guard !didAttemptHotRefresh else { return }
         didAttemptHotRefresh = true
         isRefreshingHotSnapshot = true
         statusMessage = ""
+        // Summon LimeIME (hidden probe) so the extension is actually running when the
+        // harvest handshake fires — it can only harvest hot while presented. Keep it
+        // focused for the whole handshake; dismiss it when done (success or timeout).
+        probeFocused = true
         Task {
+            // Give the summoned keyboard a moment to come up before the handshake.
+            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
             let result = await setupController.refreshTableFromKeyboard(stem: tableName)
             isRefreshingHotSnapshot = false
+            probeFocused = false
             switch result {
             case .success:
                 statusMessage = ""
