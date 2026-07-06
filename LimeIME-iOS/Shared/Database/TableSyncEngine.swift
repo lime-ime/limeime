@@ -22,14 +22,17 @@ final class TableSyncEngine {
                   dbServer: dbServer)
     }
 
-    func scanAndApply() throws {
+    /// Returns `true` when a cold→hot change was applied to hot's IM data (full replace
+    /// or incremental import) — the caller reloads the keyboard's IM list only then.
+    @discardableResult
+    func scanAndApply() throws -> Bool {
         try processBackupExportRequestIfNeeded()
         try processEditorRefreshRequestIfNeeded()
 
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else {
             try drainIMInboxIfNeeded()
-            return
+            return false
         }
 
         let coldMeta = try SyncMetaStore(databaseURL: coldSnapshotURL)
@@ -41,7 +44,7 @@ final class TableSyncEngine {
 
         if coldGeneration == appliedGeneration, coldEpoch == appliedEpoch {
             try drainIMInboxIfNeeded()
-            return
+            return false
         }
 
         if coldEpoch != appliedEpoch {
@@ -55,7 +58,7 @@ final class TableSyncEngine {
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
             try clearIMInboxIfNeeded()
             try clearIMLifecycleInboxIfNeeded()
-            return
+            return true
         }
 
         try applyIncremental(from: coldSnapshotURL)
@@ -64,6 +67,7 @@ final class TableSyncEngine {
         }
         try hotMeta.setAppliedGeneration(coldGeneration)
         try drainIMInboxIfNeeded()
+        return true
     }
 
     private func processBackupExportRequestIfNeeded() throws {

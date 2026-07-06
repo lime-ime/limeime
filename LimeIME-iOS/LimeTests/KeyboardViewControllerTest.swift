@@ -63,13 +63,17 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(source.contains("btn.backgroundColor = isModifier ? modifierKeyColor : normalKeyColor"))
     }
 
-    func testI3SyncTriggerWiringIsFullAccessGatedAndOffMainThread() throws {
+    func testSyncTriggerWiringIsOffMainThreadAndNotFAGated() throws {
         let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
                                 encoding: .utf8)
 
         XCTAssertTrue(source.contains("SyncSignalObserver(signal: .tablesUpdated"))
         XCTAssertTrue(source.contains("syncScanInProgress"))
-        XCTAssertTrue(source.contains("guard hasFullAccess else { return }"))
+        // App Group access does NOT require Full Access, so the cold→hot sync must run
+        // regardless of FA — else FA-off installs never reach the keyboard's hot DB and
+        // there is no active IM. See IOS_DB_COLD_HOT.md §1.0.2.
+        XCTAssertTrue(source.contains("private func triggerSyncScan()"))
+        XCTAssertFalse(source.contains("guard hasFullAccess else { return }"))
         XCTAssertTrue(source.contains("syncQueue.async"))
         XCTAssertTrue(source.contains("TableSyncEngine(locator: locator).scanAndApply()"))
         XCTAssertFalse(source.contains("UITextInputMode.activeInputModes"))

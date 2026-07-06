@@ -297,7 +297,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         applyHeight()
         reportFullAccessStatus()
         tablesUpdatedObserver = SyncSignalObserver(signal: .tablesUpdated) { [weak self] in
-            self?.triggerSyncScanIfFullAccess()
+            self?.triggerSyncScan()
         }
         // Run DB setup off the main thread — avoids blocking the keyboard's view
         // lifecycle and prevents the Settings watchdog from killing the Preferences
@@ -313,13 +313,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         isKeyboardVisible = true
         didAnswerRelayThisAppearance = false
         reportFullAccessStatus()
-        triggerSyncScanIfFullAccess()
+        triggerSyncScan()
         scheduleRelayResponse()
         initOnStartInput()
     }
 
-    private func triggerSyncScanIfFullAccess() {
-        guard hasFullAccess else { return }
+    private func triggerSyncScan() {
+        // App Group container access does NOT require Full Access (confirmed: master read
+        // the App Group DB + shared prefs FA-off). So cold→hot sync must run regardless of
+        // FA — otherwise FA-off installs land in cold and never reach the keyboard's hot DB,
+        // leaving no active IM. See IOS_DB_COLD_HOT.md §1.0.2.
         syncQueue.async { [weak self] in
             guard let self else { return }
             guard !self.syncScanInProgress else { return }
@@ -328,7 +331,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             let locator = SyncDatabaseLocator.production()
             do {
                 _ = try DBServer.shared.prepareKeyboardRuntimeDatabase()
-                try TableSyncEngine(locator: locator).scanAndApply()
+                let applied = try TableSyncEngine(locator: locator).scanAndApply()
+                if applied {
+                    // The sync changed hot's IM data (e.g. a newly-installed IM). Reload
+                    // activatedIMs + re-apply keyboard_list so the IM shows on THIS
+                    // appearance — otherwise activatedIMs (loaded once) stays stale and the
+                    // installed IM never appears. setupDatabase re-prepares + reloads.
+                    self.setupDatabase()
+                }
             } catch {
                 UserDefaults.standard.set(error.localizedDescription,
                                           forKey: "keyboard_db_last_error")

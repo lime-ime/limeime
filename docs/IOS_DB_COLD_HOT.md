@@ -76,13 +76,23 @@ folder." There is no shared memory, RPC, or `UserDefaults` correctness signal.
   the tables the **app** changed, so it never clobbers unharvested keyboard learning
   in untouched tables.
 
-**Full Access is the gate.** A keyboard extension can access the App Group
-container **only when Full Access is ON**. With FA **off** the keyboard is
-confined to its own container: it still types and learns into hot, but it cannot
-read cold, cannot see an export request, and cannot write a snapshot. So every
-cross-process step below — incremental sync, backup, applying a restore —
-**requires FA on the keyboard side**. The **app side always works** (it owns cold
-outright).
+**Full Access is NOT the gate for App Group access.** A keyboard extension **can**
+read and write the App Group container (the cold DB, shared prefs, inbox/outbox) with
+Full Access **off** — App Group access is entitlement-based, not FA-gated. *(Verified:
+master's keyboard read the App Group DB + `group.org.limeime` prefs FA-off and shipped;
+FA-gating the keyboard's cold→hot sync left FA-off installs stranded in cold with no
+active IM on the keyboard — the run-mode split's original FA premise was wrong.)* So
+every cross-process step below — **incremental sync, backup, applying a restore — runs
+regardless of FA**, on the keyboard's own connection. The cold/hot **split exists for
+write isolation** (the app editing cold must not race the keyboard learning into hot),
+**not** as an FA workaround. Full Access gates network / open-access features, which the
+sync path never touches. The **app side always works** (it owns cold outright).
+
+> **UI gating is a separate, deliberate choice.** The 備份 button (§1.1) and the table
+> editor's live-edit unlock (§1.4) may still require FA-Confirmed-ON + active-keyboard
+> as a conservative product decision — that is a UX gate on the *button*, not a
+> technical requirement of App Group access. The **cold→hot sync that surfaces installed
+> IMs is never FA-gated.**
 
 ### 1.0.3 Sync metadata — the `sync_meta` table (in-DB, not a sidecar)
 
