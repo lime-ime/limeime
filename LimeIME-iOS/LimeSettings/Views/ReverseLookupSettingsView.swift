@@ -59,6 +59,14 @@ struct ReverseLookupSettingsView: View {
             set: { value in
                 selections[tableNick] = value
                 prefs.setReverseLookup(value, for: tableNick)
+                // §1.8: reverse-lookup is keyboard-owned; push the change through the
+                // one-time app→kb inbox (the keyboard no longer reads it from cold).
+                if let base = FileManager.default.containerURL(
+                    forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+                   let defaults = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) {
+                    try? PrefInbox.write(base: base, defaults: defaults,
+                                         reverseLookup: (im: tableNick, value: value))
+                }
             }
         )
     }

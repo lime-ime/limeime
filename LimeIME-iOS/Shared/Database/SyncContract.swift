@@ -18,6 +18,13 @@ enum SyncPaths {
         inboxDir(base).appendingPathComponent("lifecycle.json")
     }
 
+    /// §1.8 two-writer hamburger prefs: the app→keyboard one-time channel. The app writes
+    /// the changed field(s) here on a Preferences-tab change; the keyboard drains + clears
+    /// it on appearance and applies it to its own (hot) store.
+    static func prefInbox(_ base: URL) -> URL {
+        inboxDir(base).appendingPathComponent("prefs.json")
+    }
+
     static func outboxDir(_ base: URL) -> URL {
         base.appendingPathComponent("outbox", isDirectory: true)
     }
@@ -138,6 +145,68 @@ final class KeyboardRelayPrefStore {
                                    reverseLookupValue: reverseLookupValue ?? current?.reverseLookupValue)
         try write(state)
         return state
+    }
+}
+
+/// §1.8 app→keyboard pref inbox payload (one-time). Only the changed field(s) are set;
+/// `nil` means "unchanged". Reverse-lookup is per-IM (`tableNick → value`).
+struct PrefInboxRecord: Codable, Equatable {
+    /// Monotonic app-bumped consume marker. The keyboard applies a record only when
+    /// `seq` exceeds its own last-consumed (kept in the keyboard's own container). This is
+    /// what makes the inbox one-time FA-off, where the keyboard cannot delete the file.
+    var seq: Int
+    var hanConvert: Int?
+    var splitKeyboard: Int?
+    var reverseLookup: [String: String]?
+    /// Active IM — only ever set by a wholesale restore (the restored backup's active IM).
+    var activeIM: String?
+}
+
+/// §1.8 app→keyboard one-time pref channel for the three two-writer hamburger prefs
+/// (漢字轉換 / 分離鍵盤 / 字根反查). The app writes; the keyboard reads (FA-off OK) and
+/// applies once, guarded by `seq`. Distinct from the kb→app relay (`RelayPrefSync`).
+enum PrefInbox {
+    static let seqCounterKey = "pref_inbox_seq"
+
+    /// App side: bump the App-Group seq counter and merge the changed field(s) into the
+    /// inbox (later writes win per field; unread fields carry forward).
+    static func write(base: URL,
+                      defaults: UserDefaults,
+                      hanConvert: Int? = nil,
+                      splitKeyboard: Int? = nil,
+                      reverseLookup: (im: String, value: String)? = nil,
+                      activeIM: String? = nil) throws {
+        let url = SyncPaths.prefInbox(base)
+        let current = (try? Data(contentsOf: url)).flatMap {
+            try? JSONDecoder().decode(PrefInboxRecord.self, from: $0)
+        }
+        let seq = defaults.integer(forKey: seqCounterKey) + 1
+        defaults.set(seq, forKey: seqCounterKey)
+        var mergedReverse = current?.reverseLookup ?? [:]
+        if let reverseLookup { mergedReverse[reverseLookup.im] = reverseLookup.value }
+        let record = PrefInboxRecord(
+            seq: seq,
+            hanConvert: hanConvert ?? current?.hanConvert,
+            splitKeyboard: splitKeyboard ?? current?.splitKeyboard,
+            reverseLookup: mergedReverse.isEmpty ? nil : mergedReverse,
+            activeIM: activeIM ?? current?.activeIM)
+        try FileManager.default.createDirectory(at: SyncPaths.inboxDir(base),
+                                                withIntermediateDirectories: true)
+        try atomicWrite(try JSONEncoder().encode(record), to: url)
+    }
+
+    /// Keyboard side: read WITHOUT deleting (the keyboard cannot write the App Group
+    /// FA-off). Returns nil when empty. Consumption is gated by `seq` at the call site.
+    static func read(base: URL) -> PrefInboxRecord? {
+        let url = SyncPaths.prefInbox(base)
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(PrefInboxRecord.self, from: data)
+    }
+
+    /// Keyboard side: best-effort cleanup (succeeds FA-on; a no-op FA-off — the `seq`
+    /// guard keeps a lingering file from being re-applied).
+    static func clearBestEffort(base: URL) {
+        try? FileManager.default.removeItem(at: SyncPaths.prefInbox(base))
     }
 }
 

@@ -80,6 +80,41 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(source.contains("value(forKey: \"activeInputMode\")"))
     }
 
+    // §1.7 Rule 2: after a cold→hot sync, keep the current active IM when it survives in
+    // the freshly-activated list, else the first available; empty request → first available.
+    func testReconciledActiveIMKeepsSurvivorElseFallsToFirstAvailable() {
+        XCTAssertEqual(
+            KeyboardViewController.reconciledActiveIM(
+                requested: "dayi", activated: ["cj4", "dayi", "phonetic"], firstAvailable: "cj4"),
+            "dayi", "current IM still activated → keep it, query table follows the active keyboard")
+        XCTAssertEqual(
+            KeyboardViewController.reconciledActiveIM(
+                requested: "dayi", activated: ["cj4", "phonetic"], firstAvailable: "cj4"),
+            "cj4", "current IM removed by the sync → first available (original active keyboard gone)")
+        XCTAssertEqual(
+            KeyboardViewController.reconciledActiveIM(
+                requested: "", activated: ["cj4", "phonetic"], firstAvailable: "cj4"),
+            "cj4", "cold start with no saved IM → first available")
+    }
+
+    // §1.7 Rule 1: a no-op keyboard appearance must NOT rebuild the SearchServer. The scan
+    // only ensures the hot DB file exists; prepareKeyboardRuntimeDatabase (which reseeds the
+    // shared LimeDB.currentTableName to firstNick) must run only when a sync applies, via
+    // setupDatabase() — never on every triggerSyncScan, or Dayi re-opens query cj4.
+    func testSyncScanNoOpAppearanceDoesNotRebuildSearchServer() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        guard let scanRange = source.range(of: "private func triggerSyncScan()"),
+              let scanEnd = source.range(of: "private func reportFullAccessStatus()", range: scanRange.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate triggerSyncScan body")
+        }
+        let body = String(source[scanRange.upperBound..<scanEnd.lowerBound])
+        XCTAssertTrue(body.contains("DBServer.shared.ensureDatabaseFileReady()"),
+                      "no-op appearance should only ensure the hot DB file, not rebuild the runtime")
+        XCTAssertFalse(body.contains("DBServer.shared.prepareKeyboardRuntimeDatabase("),
+                       "triggerSyncScan must not call prepareKeyboardRuntimeDatabase — it reseeds the shared query table")
+    }
+
     func testIPhoneEnglishJsonLayoutsHaveChineseSwitchOnBottomRow() throws {
         for layoutID in ["lime_english", "lime_english_number"] {
             let layout = try loadKeyboardLayoutFixture(layoutID)
@@ -703,7 +738,13 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("private func applyResolvedActiveIMLayout()"),
                       "setupDatabase fallback path must apply the resolved first IM layout after async DB setup")
         XCTAssertTrue(source.contains("self.applyResolvedActiveIMLayout()"))
-        XCTAssertTrue(source.contains("self.activeIM      = resolvedIM"))
+        // §1.7 Rule 2: setupDatabase reconciles via reconciledActiveIM — a missing/absent
+        // active IM falls back to the first available (resolvedIM).
+        XCTAssertTrue(source.contains("Self.reconciledActiveIM("),
+                      "setupDatabase reconciles the active IM (keep survivor, else first available)")
+        XCTAssertTrue(source.contains("firstAvailable: resolvedIM"),
+                      "the fallback (removed/absent active IM) resolves to the first available IM")
+        XCTAssertTrue(source.contains("self.activeIM      = survivingIM"))
         XCTAssertTrue(source.contains("self.activeIMIndex = resolved.firstIndex"))
     }
 

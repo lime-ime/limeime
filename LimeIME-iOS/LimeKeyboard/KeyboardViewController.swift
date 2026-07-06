@@ -171,6 +171,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var isSelfUpdate = false
     private var didAnswerRelayThisAppearance = false
     private let relayPrefStore = KeyboardRelayPrefStore()
+    /// §1.8: the keyboard-owned hot store for the 3 two-writer hamburger prefs
+    /// (han_convert_option / split_keyboard_mode / <im>_im_reverselookup). Backed by the
+    /// extension-private `UserDefaults.standard`, NOT the App Group — so a stale cold value
+    /// can never clobber a hamburger change. Fed by the hamburger (direct) and the pref
+    /// inbox drain; seeded once from cold on first run. Cold is never read for these three.
+    private let hotPrefs = LIMEPreferenceManager(defaults: .standard)
 
     // MARK: - English Pick-Space Punctuation Swap (ENGLISH_KB.md #0 / §2a)
     // After an English suggestion pick auto-appends a space (word ), typing punctuation
@@ -314,6 +320,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         didAnswerRelayThisAppearance = false
         reportFullAccessStatus()
         triggerSyncScan()
+        drainPrefInbox()          // §1.8: apply app→kb pref changes BEFORE answering the relay
         scheduleRelayResponse()
         initOnStartInput()
     }
@@ -333,7 +340,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             defer { self.syncScanInProgress = false }
             let locator = SyncDatabaseLocator.production()
             do {
-                _ = try DBServer.shared.prepareKeyboardRuntimeDatabase()
+                // Only ensure the hot DB file exists (no-op when it does) — do NOT rebuild
+                // the SearchServer here. prepareKeyboardRuntimeDatabase() reseeds the shared
+                // LimeDB.currentTableName to the first activated IM, clobbering the active
+                // keyboard's query table on every appearance (§1.7 Rule 1). scanAndApply's
+                // own generation/epoch check bails fast when nothing changed; the full
+                // rebuild happens only when a sync applies, via setupDatabase() below.
+                try DBServer.shared.ensureDatabaseFileReady()
                 let applied = try TableSyncEngine(locator: locator).scanAndApply()
                 if applied {
                     // The sync changed hot's IM data (e.g. a newly-installed IM). Reload
@@ -591,9 +604,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         updateInputModeForCurrentField()
 
-        // Restore last-used LIME IM (mirrors Android mLIMEPref.getActiveIM(), key "keyboard_list")
+        // Restore last-used LIME IM from the keyboard-owned hot store (§1.8 active_im)
         if !mEnglishOnly {
-            let saved = sharedDefaults?.string(forKey: "keyboard_list") ?? ""
+            let saved = hotActiveIM()
             if !saved.isEmpty && saved != activeIM {
                 // Find the saved IM in the activated list and restore index
                 if let idx = activatedIMs.firstIndex(where: { $0.tableNick == saved }) {
@@ -707,6 +720,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     // MARK: - Database Setup
 
+    /// §1.7 Rule 2: after a cold→hot sync, keep the requested active IM when it survived in
+    /// the freshly-activated list; otherwise fall to the first available IM. Empty
+    /// `requested` (cold start with no saved IM) also falls through to `firstAvailable`.
+    static func reconciledActiveIM(requested: String, activated: [String], firstAvailable: String) -> String {
+        activated.contains(requested) ? requested : firstAvailable
+    }
+
     private func setupDatabase() {
         let context: DBServer.KeyboardRuntimeContext
         do {
@@ -738,27 +758,31 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     forPartialWordRange: range, in: word, language: "en_US") ?? []
             }
 
-            // Restore the last-used IM from keyboard_list (written by cycleIM / switchIM).
-            // setupDatabase runs once, async — this is the only reliable place to apply
-            // the saved IM because activatedIMs is empty when initOnStartInput runs.
-            let savedIM = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)?.string(forKey: "keyboard_list") ?? ""
-            if !savedIM.isEmpty, let idx = resolved.firstIndex(where: { $0.tableNick == savedIM }) {
-                self.activeIM      = savedIM
-                self.activeIMIndex = idx
-                let savedCaps = ss.detectIMCapabilities(tableName: savedIM)
-                ss.setTableName(savedIM, hasNumberMapping: savedCaps.hasNumber, hasSymbolMapping: savedCaps.hasSymbol)
-                if self.activeIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-                    ss.setSymbolMapping(true)
-                }
-                self.applyResolvedActiveIMLayout()
-            } else {
-                self.activeIM      = resolvedIM
-                self.activeIMIndex = resolved.firstIndex { $0.tableNick == resolvedIM } ?? 0
-                if self.activeIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-                    ss.setSymbolMapping(true)
-                }
-                self.applyResolvedActiveIMLayout()
+            // Reconcile the active IM after a (re)prepare (§1.7 Rule 2). Prefer the LIVE
+            // active keyboard (self.activeIM) — a cold→hot sync must keep the user on their
+            // current IM and the query table must follow it, never the cold keyboard_list
+            // pref. keyboard_list is read ONLY on cold start (nothing active yet), to
+            // restore the last-used IM — activatedIMs is empty when initOnStartInput runs.
+            let requestedIM = self.activeIM.isEmpty
+                ? hotActiveIM()
+                : self.activeIM
+            let survivingIM = Self.reconciledActiveIM(
+                requested: requestedIM,
+                activated: resolved.map { $0.tableNick },
+                firstAvailable: resolvedIM)
+            // If the LIVE active keyboard was removed by this sync, the controller has just
+            // switched it to the first available — remember the switch as last-used.
+            if !self.activeIM.isEmpty, self.activeIM != survivingIM {
+                self.persistHotActiveIM(survivingIM)
             }
+            self.activeIM      = survivingIM
+            self.activeIMIndex = resolved.firstIndex { $0.tableNick == survivingIM } ?? 0
+            let survivingCaps = ss.detectIMCapabilities(tableName: survivingIM)
+            ss.setTableName(survivingIM, hasNumberMapping: survivingCaps.hasNumber, hasSymbolMapping: survivingCaps.hasSymbol)
+            if survivingIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
+                ss.setSymbolMapping(true)
+            }
+            self.applyResolvedActiveIMLayout()
 
             // Load settings from shared UserDefaults (spec §15)
             // loadSettings() calls applyPrefsToSearchEngine() which pushes all prefs to SearchServer.
@@ -930,6 +954,85 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         return currentKeyboardTheme
     }
 
+    /// §1.8: read a two-writer hamburger pref from the hot store (extension-private
+    /// `UserDefaults.standard`), seeding it once from cold (App Group) when the hot value is
+    /// absent (first run / reinstall). Cold is never read again for this key after the seed.
+    private func seededHotInt(_ key: String, cold: UserDefaults?) -> Int {
+        let hot = UserDefaults.standard
+        if hot.object(forKey: key) == nil, let seed = cold?.object(forKey: key) as? Int {
+            hot.set(seed, forKey: key)
+        }
+        return hot.integer(forKey: key)
+    }
+
+    /// §1.8: reverse-lookup (per-IM) from the hot store, seeded once from cold on first read.
+    private func hotReverseLookup(for im: String) -> String {
+        let key = "\(im)_im_reverselookup"
+        if UserDefaults.standard.object(forKey: key) == nil,
+           let seed = sharedDefaults?.string(forKey: key) {
+            UserDefaults.standard.set(seed, forKey: key)
+        }
+        return hotPrefs.reverseLookup(for: im)
+    }
+
+    /// §1.8: drain the app→keyboard pref inbox into the hot store (one-time). Runs on
+    /// appearance BEFORE the relay so the relay reports the post-drain value. Layout is
+    /// re-applied by `initOnStartInput()` right after, so a split-mode change takes effect.
+    @discardableResult
+    private func drainPrefInbox() -> Bool {
+        let base = SyncDatabaseLocator.production().appGroupDirectory
+        let lastConsumed = UserDefaults.standard.integer(forKey: "last_consumed_pref_seq")
+        // seq guard: apply a record only once, even if the file lingers because the keyboard
+        // cannot delete it FA-off. The consumed marker lives in the keyboard's own container.
+        guard let rec = PrefInbox.read(base: base), rec.seq > lastConsumed else { return false }
+        if let han = rec.hanConvert {
+            UserDefaults.standard.set(han, forKey: "han_convert_option")
+            hanConvertOption = han
+        }
+        if let split = rec.splitKeyboard {
+            UserDefaults.standard.set(split, forKey: "split_keyboard_mode")
+            splitKeyboardMode = split
+        }
+        if let reverse = rec.reverseLookup {
+            for (im, value) in reverse { hotPrefs.setReverseLookup(value, for: im) }
+        }
+        if let restoredIM = rec.activeIM, !restoredIM.isEmpty {
+            // Only a wholesale restore sets this — it overrides the live active IM (§1.2:
+            // the backup's state wins). §1.7's reconcile then validates it against the
+            // freshly-restored enabled list.
+            persistHotActiveIM(restoredIM)
+            activeIM = restoredIM
+        }
+        UserDefaults.standard.set(rec.seq, forKey: "last_consumed_pref_seq")
+        PrefInbox.clearBestEffort(base: base)   // FA-on cleanup; FA-off relies on the seq guard
+        // Mirror the post-drain value into relay-prefs.json so the kb→app relay reports it.
+        let firstReverse = rec.reverseLookup?.first
+        try? relayPrefStore.update(hanConvert: hanConvertOption,
+                                   splitKeyboard: splitKeyboardMode,
+                                   reverseLookupIM: firstReverse?.key,
+                                   reverseLookupValue: firstReverse?.value)
+        return true
+    }
+
+    /// §1.8: the active IM (`active_im`) is keyboard-owned in the hot store. Read from there,
+    /// seeding once from the legacy cold `keyboard_list` on first run (a read — FA-off OK).
+    /// Empty → §1.7's reconcile falls to the first enabled IM. Cold is never read again.
+    private func hotActiveIM() -> String {
+        if UserDefaults.standard.object(forKey: "active_im") == nil {
+            // seed from cold active_im, falling back to the legacy keyboard_list key
+            let seed = sharedDefaults?.string(forKey: "active_im")
+                ?? sharedDefaults?.string(forKey: "keyboard_list") ?? ""
+            if !seed.isEmpty { UserDefaults.standard.set(seed, forKey: "active_im") }
+        }
+        return UserDefaults.standard.string(forKey: "active_im") ?? ""
+    }
+
+    /// §1.8: persist the active IM into the keyboard's own container (FA-off-safe; a cold
+    /// write would be dropped FA-off). Cold only ever gets it at backup time (FA-on).
+    private func persistHotActiveIM(_ im: String) {
+        UserDefaults.standard.set(im, forKey: "active_im")
+    }
+
     private func loadSettings() {
         let d = sharedDefaults
         // Note: d?.bool(forKey:) and d?.integer(forKey:) return false/0 when the key is
@@ -938,7 +1041,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         currentKeyboardTheme    = (d?.object(forKey: "keyboard_theme") != nil)
             ? (d?.integer(forKey: "keyboard_theme") ?? 6)
             : 6
-        hanConvertOption        = d?.integer(forKey: "han_convert_option")                       ?? 0
+        hanConvertOption        = seededHotInt("han_convert_option", cold: d)   // §1.8 hot store
         autoChineseSymbol       = d?.bool(forKey: "auto_chinese_symbol")                        ?? false
         sortSuggestions         = (d?.object(forKey: "learning_switch")          as? Bool)      ?? true
         smartChineseInput       = d?.bool(forKey: "smart_chinese_input")                        ?? false
@@ -971,7 +1074,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // See LIMEPreferenceManager.candidateSwitch (always true).
         candidateSwitch = true
         showArrowKey      = d?.integer(forKey: "show_arrow_key")      ?? 0
-        splitKeyboardMode = d?.integer(forKey: "split_keyboard_mode") ?? 0
+        splitKeyboardMode = seededHotInt("split_keyboard_mode", cold: d)   // §1.8 hot store
         applyPrefsToSearchEngine()
     }
 
@@ -2833,8 +2936,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             : (activeIMIndex - 1 + count) % count
         let im = activatedIMs[activeIMIndex]
         activeIM = im.tableNick.isEmpty ? "phonetic" : im.tableNick
-        // Persist last-used IM (mirrors Android mLIMEPref.setActiveIM(), key "keyboard_list")
-        sharedDefaults?.set(activeIM, forKey: "keyboard_list")
+        // Persist last-used IM to the keyboard-owned hot store (§1.8 active_im)
+        persistHotActiveIM(activeIM)
 
         // Clear composing and candidates before switching
         clearShiftState()
@@ -3640,8 +3743,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
         let im = activatedIMs[i]
         activeIMIndex = i
         activeIM = im.tableNick.isEmpty ? "phonetic" : im.tableNick
-        // Persist last-used IM (mirrors Android mLIMEPref.setActiveIM(), key "keyboard_list")
-        sharedDefaults?.set(activeIM, forKey: "keyboard_list")
+        // Persist last-used IM to the keyboard-owned hot store (§1.8 active_im)
+        persistHotActiveIM(activeIM)
         clearShiftState()
         clearComposing(force: false)
         mEnglishOnly = false
@@ -4036,12 +4139,12 @@ extension KeyboardViewController: KeyboardViewDelegate {
             var changed = false
             if pendingHan != hanStart {
                 self.hanConvertOption = pendingHan
-                self.sharedDefaults?.set(pendingHan, forKey: "han_convert_option")
+                self.hotPrefs.hanConvertOption = pendingHan   // §1.8 hot store, not cold
                 changed = true
             }
             if pendingSplit != splitStart {
                 self.splitKeyboardMode = pendingSplit
-                self.sharedDefaults?.set(pendingSplit, forKey: "split_keyboard_mode")
+                self.hotPrefs.splitKeyboardMode = pendingSplit   // §1.8 hot store, not cold
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
                 changed = true
             }
@@ -4055,14 +4158,14 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     /// Reverse lookup source sub-picker for the current active IM.
     private func showReverseLookupPicker() {
-        let current = LIMEPreferenceManager.shared.reverseLookup(for: activeIM)
+        let current = hotReverseLookup(for: activeIM)   // §1.8 hot store
         var items: [(title: String, action: () -> Void)] = []
         for option in LIMEPreferenceManager.reverseLookupOptions(from: activatedIMs) {
             let display = option.value == current ? "✓ \(option.label)" : option.label
             items.append((display, { [weak self] in
                 guard let self else { return }
-                LIMEPreferenceManager.shared.setReverseLookup(option.value, for: self.activeIM)
-                // FA-off durable copy + relay delivery back to the app's Preferences tab.
+                self.hotPrefs.setReverseLookup(option.value, for: self.activeIM)   // §1.8 hot store
+                // relay delivery back to the app's Preferences tab.
                 try? self.relayPrefStore.update(reverseLookupIM: self.activeIM,
                                                 reverseLookupValue: option.value)
                 self.showLimeToast("字根反查：\(option.label)")
@@ -4081,7 +4184,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
             items.append((display, { [weak self] in
                 guard let self else { return }
                 self.hanConvertOption = opt
-                self.sharedDefaults?.set(opt, forKey: "han_convert_option")
+                self.hotPrefs.hanConvertOption = opt   // §1.8 hot store, not cold
                 try? self.relayPrefStore.update(hanConvert: opt,
                                                 splitKeyboard: self.splitKeyboardMode)
             }))

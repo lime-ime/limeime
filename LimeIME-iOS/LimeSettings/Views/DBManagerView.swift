@@ -439,6 +439,7 @@ struct DBManagerView: View {
             case .success(let msg):
                 statusMessage = msg
                 manageImController.invalidate()
+                pushRestoredPrefsToInbox()
                 triggerSyncProbe()
             case .failure:
                 statusMessage = "還原失敗"
@@ -459,11 +460,33 @@ struct DBManagerView: View {
                 statusMessage = "資料庫還原完成"
                 manageImController.invalidate()
                 manageRelatedController.invalidate()
+                pushRestoredPrefsToInbox()
                 triggerSyncProbe()
             case .failure(let error):
                 statusMessage = "還原失敗：\(error.localizedDescription)"
             }
             isWorking = false
+        }
+    }
+
+    /// §1.8: deliver the just-restored two-writer prefs to the keyboard's hot store via the
+    /// one-time inbox — the keyboard reads these from hot, not cold, so a restore must push
+    /// them (the active IM included; a restore overrides the live one). Runs before the
+    /// probe so the summoned keyboard drains a fresh inbox.
+    private func pushRestoredPrefsToInbox() {
+        guard let base = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName),
+              let cold = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) else { return }
+        try? PrefInbox.write(base: base, defaults: cold,
+                             hanConvert: cold.object(forKey: "han_convert_option") as? Int,
+                             splitKeyboard: cold.object(forKey: "split_keyboard_mode") as? Int,
+                             activeIM: cold.string(forKey: "active_im")
+                                       ?? cold.string(forKey: "keyboard_list"))
+        for (key, value) in cold.dictionaryRepresentation()
+        where key.hasSuffix("_im_reverselookup") {
+            guard let v = value as? String else { continue }
+            let im = String(key.dropLast("_im_reverselookup".count))
+            try? PrefInbox.write(base: base, defaults: cold, reverseLookup: (im: im, value: v))
         }
     }
 

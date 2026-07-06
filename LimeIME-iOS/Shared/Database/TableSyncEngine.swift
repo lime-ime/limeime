@@ -39,32 +39,34 @@ final class TableSyncEngine {
         let hotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
         let coldEpoch = try coldMeta.epochUUID()
         let coldGeneration = try coldMeta.generation()
-        let appliedEpoch = try hotMeta.appliedEpoch()
+        // Hot's OWN epoch_uuid is the applied marker (§1.0.3): the whole-file swap that
+        // applies a restore copies cold's sync_meta — epoch included — into hot atomically
+        // with the data, so there is no separate applied_epoch to stamp (or to lose). The
+        // incremental path edits tables in place and so keeps an explicit applied_generation.
+        let hotEpoch = try hotMeta.epochUUID()
         let appliedGeneration = try hotMeta.appliedGeneration()
 
-        if coldGeneration == appliedGeneration, coldEpoch == appliedEpoch {
+        if coldEpoch == hotEpoch, coldGeneration == appliedGeneration {
             try drainIMInboxIfNeeded()
             return false
         }
 
-        if coldEpoch != appliedEpoch {
+        if coldEpoch != hotEpoch {
+            // Different lineage → wholesale full replace. replaceDatabaseFromSnapshot copies
+            // to a temp file then atomically renames it over hot, so the swap sets
+            // hot.epoch_uuid = cold.epoch_uuid together with the data — self-marking, no
+            // stamp, no re-copy window (§1.2). An interrupted copy leaves hot untouched (old
+            // epoch) and re-applies here next scan; a completed copy makes coldEpoch ==
+            // hotEpoch above, so we never re-copy what hot already holds.
             try dbServer.replaceDatabaseFromSnapshot(coldSnapshotURL)
-            let refreshedHotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
-            if let coldEpoch {
-                try refreshedHotMeta.setAppliedEpoch(coldEpoch)
-            } else {
-                try refreshedHotMeta.removeValue(forKey: SyncMetaStore.appliedEpochKey)
-            }
-            try refreshedHotMeta.setAppliedGeneration(coldGeneration)
+            try SyncMetaStore(databaseURL: hotDatabaseURL).setAppliedGeneration(coldGeneration)
             try clearIMInboxIfNeeded()
             try clearIMLifecycleInboxIfNeeded()
             return true
         }
 
+        // Same epoch, generation moved → per-table incremental reconcile.
         try applyIncremental(from: coldSnapshotURL)
-        if let coldEpoch {
-            try hotMeta.setAppliedEpoch(coldEpoch)
-        }
         try hotMeta.setAppliedGeneration(coldGeneration)
         try drainIMInboxIfNeeded()
         return true
@@ -90,12 +92,36 @@ final class TableSyncEngine {
         }
         try Self.renameReplacing(tempURL, with: snapshotURL)
 
+        // §1.8: the four keyboard-owned hamburger prefs live in the extension's own
+        // container, not this hot DB. Backup is the one FA-on moment the keyboard may write
+        // the App Group, so flush them to cold now — the app's preference sidecar then
+        // captures the CURRENT values, not cold's stale copy.
+        flushHotPrefsToColdForBackup()
+
         let epoch = try SyncMetaStore(databaseURL: hotDatabaseURL).epochUUID() ?? ""
         let receipt = ExportReceipt(requestUUID: request.requestUUID,
                                     epochUUID: epoch,
                                     at: Date().timeIntervalSince1970)
         try atomicWrite(try JSONEncoder().encode(receipt),
                         to: SyncPaths.receipt(appGroupBaseURL))
+    }
+
+    /// §1.8: copy the four keyboard-owned prefs from the extension's own container
+    /// (`UserDefaults.standard`) to the App Group (cold) so a backup's preference sidecar
+    /// captures current values. Runs only inside the FA-on backup handshake — the one time
+    /// the keyboard may write the App Group.
+    private func flushHotPrefsToColdForBackup() {
+        let hot = UserDefaults.standard
+        guard let cold = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) else { return }
+        for key in ["han_convert_option", "split_keyboard_mode"] {
+            if let value = hot.object(forKey: key) { cold.set(value, forKey: key) }
+        }
+        if let activeIM = hot.string(forKey: "active_im"), !activeIM.isEmpty {
+            cold.set(activeIM, forKey: "active_im")
+        }
+        for (key, value) in hot.dictionaryRepresentation() where key.hasSuffix("_im_reverselookup") {
+            cold.set(value, forKey: key)
+        }
     }
 
     private func processEditorRefreshRequestIfNeeded() throws {

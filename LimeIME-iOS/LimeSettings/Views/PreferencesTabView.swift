@@ -254,7 +254,18 @@ struct PreferencesTabView: View {
             // back button.
             .toolbar(.hidden, for: .navigationBar)
             .onAppear(perform: migrateRemovedPreferences)
+            // §1.8: these two are keyboard-owned; the keyboard no longer reads them from
+            // cold, so push each edit through the one-time app→kb inbox. @AppStorage still
+            // writes cold for this view's own display + the keyboard's first-run seed.
+            .onChange(of: hanConvertOption) { newValue in writeHamburgerPrefInbox(han: newValue) }
+            .onChange(of: splitKeyboardMode) { newValue in writeHamburgerPrefInbox(split: newValue) }
         }
+    }
+
+    private func writeHamburgerPrefInbox(han: Int? = nil, split: Int? = nil) {
+        guard let base = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) else { return }
+        try? PrefInbox.write(base: base, defaults: sharedDefaults, hanConvert: han, splitKeyboard: split)
     }
 
     private func migrateRemovedPreferences() {

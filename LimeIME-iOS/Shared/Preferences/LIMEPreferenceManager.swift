@@ -382,9 +382,17 @@ final class LIMEPreferenceManager {
 
     // MARK: - Navigation state
 
-    var keyboardList: String {
-        get { stringValue("keyboard_list", default: "phonetic") }
-        set { defaults.set(newValue, forKey: "keyboard_list") }
+    /// The current active IM (a single IM nick). §1.8 renamed the misleading `keyboard_list`
+    /// key → `active_im`; the legacy value is migrated once on read.
+    var activeIM: String {
+        get {
+            if defaults.object(forKey: "active_im") == nil,
+               let legacy = defaults.string(forKey: "keyboard_list") {
+                defaults.set(legacy, forKey: "active_im")
+            }
+            return stringValue("active_im", default: "phonetic")
+        }
+        set { defaults.set(newValue, forKey: "active_im") }
     }
 
     var keyboardState: String {
@@ -413,10 +421,10 @@ final class LIMEPreferenceManager {
         // keyboard extension can warm-start with a stale/default keyboard_list value
         // while setupDatabase() resolves a different active IM from keyboard_state (#121).
         let enabledTableNicks = Set(enabledConfigs.map { $0.element.tableNick })
-        let current = keyboardList
+        let current = activeIM
         if let firstEnabled = enabledConfigs.first?.element.tableNick,
            (current.isEmpty || !enabledTableNicks.contains(current)) {
-            keyboardList = firstEnabled
+            activeIM = firstEnabled
         }
         defaults.synchronize()
     }

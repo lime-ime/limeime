@@ -105,8 +105,8 @@ never `UserDefaults`, never a Darwin payload.
 
 | Key | Where | Required? | Meaning |
 | --- | --- | --- | --- |
-| `epoch_uuid` | cold (authoritative); hot stores `applied_epoch` | **yes** | full-replace lineage — the one thing a state diff cannot reconstruct |
-| `generation` | cold | fast-path | monotonic publish counter — the "anything changed?" gate |
+| `epoch_uuid` | cold **and** hot (each DB carries its own) | **yes** | full-replace lineage. **Hot's own copy is the "which restore have I applied" marker** — there is no separate `applied_epoch`. The whole-file swap that applies a restore copies cold's `sync_meta` (epoch included) into hot **atomically with the data**, so `hot.epoch_uuid == cold.epoch_uuid` ⟺ hot holds that exact restore. |
+| `generation` | cold; hot stores `applied_generation` | fast-path | monotonic publish counter — the "anything changed within this epoch?" gate. The **incremental** path edits hot's tables **in place**, so (unlike the epoch) it gets no free atomic marker and keeps an explicit `applied_generation`. |
 | per-table `rev` | cold | **yes** | scopes each cold→hot reconcile to the tables the **app** changed, protecting unharvested keyboard learning elsewhere |
 
 Everything heavier is **cut**:
@@ -122,12 +122,24 @@ Everything heavier is **cut**:
 - **No `schema_version` copy** — the portable schema version already lives in
   LimeDB's `user_version`; the sync layer reads *that*, never a duplicate.
 
-**How the epoch drives apply.** The keyboard, FA-on, opens cold on its own
-connection, reads `cold.sync_meta.epoch_uuid`, compares it to its own
-`hot.applied_epoch`: **differ → full replace**, then stamps `applied_epoch =
-cold.epoch`. Same epoch → per-table reconcile for whatever `rev` moved. Because the
-epoch is **persisted in the DB**, a keyboard that was FA-off or not running still
-notices the change on its next launch — no reliance on catching the live doorbell.
+**How the epoch drives apply.** The keyboard opens cold on its own connection, reads
+`cold.sync_meta.epoch_uuid`, and compares it to **hot's own** `epoch_uuid`: **differ →
+full replace**; same → per-table reconcile for whatever `rev` moved. The full replace is a
+whole-file swap, so it **sets `hot.epoch_uuid = cold.epoch_uuid` as part of the copy** —
+there is **no separate "applied" stamp to write**, and therefore no two-step window where
+the copy lands but the marker doesn't. Because the epoch is **persisted in the DB**, a
+keyboard that was FA-off or not running still notices the change on its next launch — no
+reliance on catching the live doorbell.
+
+**Why hot's own epoch is a safe marker (no integrity check needed).** The swap copies the
+snapshot to a **temp file**, then **atomically renames** it into hot's place (§1.2). So hot
+is never a partial file: an interrupted copy leaves hot **untouched** (old epoch, complete
+old DB), and the rename only lands after the full copy. `hot.epoch_uuid == cold.epoch_uuid`
+therefore **implies a complete copy** — the epoch rides *inside* the file, so it cannot
+appear without the data attached to it. Any incomplete / missing / wrong-epoch hot has a
+non-matching epoch and is re-applied on the next scan: the compare is **idempotent and
+self-healing**, so no `PRAGMA integrity_check` is needed (that would only guard against disk
+bit-rot, orthogonal to this design).
 
 #### Freeze-safe: no LimeDB modification
 
@@ -146,7 +158,8 @@ The table rides **in the file** but sits **outside the LimeDB class's concern** 
 §2 "own connection, invisible to LimeDB" contract, achievable *because* of WAL +
 close/reopen. The lone thing that would force a LimeDB change — an epoch bump atomic
 in the **same transaction** as a LimeDB data write — is never needed: restore is a
-whole-file swap (atomic by rename) with a coarse epoch stamped after.
+whole-file swap (atomic by rename), and the epoch rides **inside** the swapped file, so it
+is applied atomically with the data — no post-swap stamp.
 
 #### Portable Android ↔ iOS: the schema does **not** change
 
@@ -227,9 +240,23 @@ live Darwin notification. The doorbell only makes a live FA-on keyboard scan
 
 **Keyboard side — apply (requires FA ON):**
 
-1. On scan, open cold and read `cold.sync_meta.epoch_uuid`; ≠ the stored
-   `hot.applied_epoch` → run the full replace: wipe hot, rebuild it from
-   `cold.limedb`, then stamp `hot.applied_epoch = cold.epoch_uuid`.
+1. On scan, open cold and read `cold.sync_meta.epoch_uuid`; ≠ **hot's own**
+   `epoch_uuid` → run the full replace. The replace copies `cold.limedb` to a **temp
+   file**, then **atomically renames** it over hot (`copyItem` → `moveItem`). Cold's
+   `sync_meta` — epoch included — rides inside that file, so the rename **sets
+   `hot.epoch_uuid = cold.epoch_uuid` atomically with the data**. There is **no separate
+   `applied_epoch` stamp**, so there is no window where the copy lands but the marker does
+   not — **the apply is self-marking.**
+   **Interrupt safety (no re-copy, no partial hot).** Killed during the copy → the temp
+   file is discarded and **hot is untouched** (still the old, complete DB, old epoch) → the
+   next scan re-copies. Killed after the rename → hot is the new complete DB with the new
+   epoch → the next scan sees `hot.epoch_uuid == cold.epoch_uuid` and **does nothing**. The
+   old "completed-but-unmarked" failure — a redundant multi-second re-copy on the next
+   appearance that closed the live connection (wrong layout, no candidates until it
+   reopened) — is now **structurally impossible**, because the marker and the data are one
+   atomic file. This is why the restore probe (§1.7) dismissing "soon" no longer strands the
+   keyboard: either the swap landed (done) or it didn't (cleanly re-applied), never a
+   half-applied re-copy.
 2. The full replace is **wholesale**: hot ends up exactly as cold (= the restored
    backup, or the bundled default for a factory reset) — learned IM / related scores,
    `emoji_user`, and every other table come **straight from cold**. There is **no
@@ -453,6 +480,137 @@ hot-side `<table>_user` mechanism — no new stash, no App Group learned-data fi
 `LimeDB` / `SearchServer` change (`backupUserRecords` / `restoreUserRecords` already
 exist). Delete and import are `DBServer` / controller operations that bump `rev` and
 ring the bell, like every other §2.5 app-side change.
+
+### 1.7 Keyboard runtime: the query table follows the active IM
+
+The keyboard's candidate query resolves its table from **`LimeDB.currentTableName`** — a
+single mutable field on the shared, per-process `LimeDB` (`db.getMappingByCode` reads it;
+a `SearchServer`'s own `currentTableName` is only a cache key). So **whichever call last
+ran `db.setTableName` wins**, and the invariant the runtime must hold is:
+
+> **The query table always equals the active LIME keyboard's IM (`activeIM`).** It is
+> never re-derived from the cold `keyboard_list` pref on a re-open, and never reset to a
+> "first activated" default while an IM is active.
+
+**The bug this closes.** `prepareKeyboardRuntimeDatabase` builds a `SearchServer` and
+seeds it to the **first activated IM** (`firstNick`); `SearchServer.setTableName` also
+sets the shared `LimeDB.currentTableName` (the two files stay frozen — §2.2 — so this
+coupling is a given). `triggerSyncScan` used to call `prepareKeyboardRuntimeDatabase()`
+on **every** keyboard appearance purely for DB-readiness and discard the result — but the
+shared-table side effect stuck. Restore a DB with `cj4, dayi, phonetic`, type in **Dayi**,
+dismiss, re-open: the layout stays Dayi (driven by `activeIM`) while candidates come from
+**cj4** (the `firstNick` clobber), because nothing re-asserted the active table.
+
+**Rule 1 — a no-op appearance does nothing.** On every appearance `triggerSyncScan` only
+ensures the hot DB file exists (`DBServer.ensureDatabaseFile()`, a no-op when it already
+does) and runs `scanAndApply()`, whose own generation/epoch check returns `false` fast
+when cold and hot agree. **No `SearchServer` is rebuilt and the shared table is never
+touched** when there is nothing to sync — so `activeIM` and the query table stay put. The
+heavy `prepareKeyboardRuntimeDatabase` runs **only when a sync actually applies**.
+
+**Rule 2 — a sync that applies reconciles the active IM.** When `scanAndApply()` returns
+`true` the hot IM set changed (install / delete / restore), so the keyboard rebuilds its
+runtime (`setupDatabase`, a new `SearchServer` on the new DB) and reconciles the active IM
+against the **freshly-activated list**:
+
+- **Current IM survived** → keep it; the new `SearchServer`'s table is set to the current
+  `activeIM`, so the user stays on their keyboard and the query follows it.
+- **Current IM is gone** (its table was removed / disabled by the sync) → switch to the
+  **first available** IM, set the query table to it, persist it as `keyboard_list`, and
+  re-apply the layout. `KeyboardViewController` now holds the new `activeIM` — it **knows
+  the original active keyboard is gone**.
+
+The reconcile keys off the **live `activeIM`** (in-memory, authoritative), not the cold
+`keyboard_list` pref; the pref is read **only** on cold start, when no IM is active yet,
+to restore the last-used IM. The fix lives in `DBServer` (the readiness/rebuild split) and
+the keyboard-side `setupDatabase` reconcile — **`SearchServer.swift` / `LimeDB.swift` stay
+frozen (§2.2).**
+
+### 1.8 Keyboard-owned prefs — hot store, seq-guarded app→kb inbox, kb→app relay
+
+**The FA fact this section is built on.** Per `docs/IOS_FULL_ACCESS.md` (Apple's wording):
+with Full Access **off** a keyboard extension has **read-only** access to the App Group and
+**read/write** access to **its own container**. So a keyboard **cannot write the App Group
+FA-off** — only read it. *(This corrects §1.0.2's loose "read and write the App Group FA-off":
+the cold→hot sync works FA-off only because it **reads** cold and **writes hot** (own
+container); it never writes cold. Backup, which writes the outbox, is correctly FA-gated, §1.1.)*
+
+**Scope — four keyboard-owned prefs; everything else is unchanged.** Four prefs can change on
+the **keyboard** side: `han_convert_option` (漢字轉換), `split_keyboard_mode` (分離鍵盤), the
+per-IM `<im>_im_reverselookup` (字根反查), and the **active IM** (`active_im`, renamed from the
+misleading `keyboard_list` — it holds one IM nick, not a list). **Every other pref is
+app-write-only:** the keyboard only *reads* it and never changes it, so — like §1.5 — the App
+Group value stays authoritative and the keyboard **reads it directly from cold**. This section
+covers only the four keyboard-writable prefs.
+
+**Why cold can't hold them (the bug).** The keyboard writes these to the App Group today, but
+**FA-off that write is silently dropped** (read-only). So a hamburger change / IM switch never
+persists to cold; then the keyboard re-reads cold on the next appearance and **reverts** to the
+stale value. That is the whole "prefs / active IM get replaced by the cold value" bug.
+
+**Model — the keyboard owns the value in its own container.**
+
+- **Hot store = the keyboard's own container** (`UserDefaults.standard`, extension-private).
+  Read/write **always** works — FA-on, FA-off, across restarts and reboots (wiped only by a
+  reinstall). The keyboard reads and writes all four **only** here. This is the durable,
+  FA-independent home for the value.
+- **kb→app — the relay.** The keyboard reports its current value in the probe relay payload
+  (`encodeRelayPayload` / `RelayPrefSync.apply`) — a **typed text payload, not an App-Group
+  write**, so it works FA-off. The app's `sharedDefaults` becomes the **app's display store**.
+- **Cold is written for exactly one purpose: backup.** These prefs reach cold only when the
+  keyboard snapshots for a backup — which is **FA-on** (§1.1), the one time the keyboard may
+  write the App Group. There is no ongoing cold write.
+
+**app→kb — one seq-guarded inbox (the three prefs; active IM only on restore).**
+
+- The app writes an App-Group **pref inbox** (`inbox/prefs.json`) — App→App Group is always
+  writable. It stamps each write with a **monotonic `seq`** (a counter it bumps in the App
+  Group).
+- The keyboard **reads** the inbox on appearance (read-only ✓ FA-off) and applies it **only
+  when `seq >` its own last-consumed seq**, which it stores **in its own container**
+  (FA-off-writable). Then it best-effort deletes the file (**succeeds FA-on; a no-op FA-off —
+  the seq guard is what makes it one-time**, since the keyboard cannot delete the file FA-off).
+- Writers of the inbox: the **Preferences tab** for the three prefs; a **wholesale restore**
+  for the active IM (the restored backup's active IM — see below). Normal app enable/disable
+  never writes the active IM.
+
+**Ordering — drain before relay.** The keyboard drains the inbox **before** answering the
+relay, so the relay always reports the post-drain value and an app change is never bounced back.
+
+**Active IM specifics.**
+
+- **Keyboard-switch-only.** The app has **no path** to set the active IM except a wholesale
+  restore. So it needs no ongoing app→kb — it is a pure keyboard-owned hot value.
+- **No cold seed.** On a fresh / reinstalled keyboard the hot value is absent → §1.7's reconcile
+  **defaults to the first enabled IM** (the enabled list `keyboard_state`/`activatedIMs` is the
+  real cold-owned source). A one-time *read* of the legacy `keyboard_list` may migrate an
+  existing user's current IM on upgrade; there is no ongoing cold dependency.
+- **Wholesale restore is the only cold→active-IM path:** a restore delivers the restored active
+  IM through the same inbox; the keyboard adopts it (a restore overrides the live value — the
+  backup's state wins, consistent with §1.2's wholesale semantics).
+
+**Backup / restore of the four prefs.** They live in the keyboard's own container, not the hot
+DB, so backup and restore route them explicitly:
+
+- **Backup (FA-on, §1.1).** A backup must capture the *keyboard's* current four, not cold's
+  stale copy. At snapshot time the keyboard is FA-on — the one moment it may write the App
+  Group — so it **flushes its four hot prefs to cold**, and the app zips them into the backup's
+  cold preference sidecar. This is the only ongoing cold write named in §1.8.
+- **Restore (wholesale, §1.2).** The restored backup lands the four back in cold. The app then
+  **writes them to the pref inbox** (bumped `seq`); the keyboard drains it on its next
+  appearance and adopts them into its hot store — active IM included (a restore **overrides**
+  the live active IM, matching §1.2's "the backup's state wins"). The keyboard still never reads
+  them from cold directly — the inbox is the delivery path, so restore stays FA-off-safe
+  (read-only inbox read + own-container writes; the active IM then also survives the wholesale
+  hot-DB replace because it is owned outside the DB).
+
+**Why no cross-writer timestamps.** The `seq` is only a *consumption* marker ("have I applied
+this inbox record?") forced by the FA-off no-delete — not a newness comparison between stores.
+The two writers are never simultaneous (the keyboard runs only on-screen), so app→kb (inbox
+drain) and keyboard→own (hamburger) never race; the relay reflects whichever happened last. The
+clobber is gone because the keyboard **never reads cold** for these four. Reverse-lookup is
+per-IM via `LIMEPreferenceManager` pointed at the hot store; the pref inbox + `seq` live in
+`SyncContract.swift`, per §2.1.
 
 ---
 

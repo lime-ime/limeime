@@ -1196,6 +1196,15 @@ final class DBServer {
     ///   keyboard extension passes `true` after a Settings-app restore (#86) so the
     ///   stale GRDB queue bound to the pre-restore inode is replaced and IM reads
     ///   see the restored data instead of returning zero IMs.
+    /// Ensure the hot DB file exists (seeded from the bundle when missing) WITHOUT
+    /// building or seeding a `SearchServer`. The keyboard's per-appearance sync scan uses
+    /// this so a no-op appearance never rebuilds the runtime or reseeds the shared
+    /// `LimeDB.currentTableName` — which would clobber the active keyboard's query table
+    /// (§1.7 Rule 1). `scanAndApply` opens its own connections; it only needs the file.
+    func ensureDatabaseFileReady() throws {
+        _ = try database.ensureDatabaseFile()
+    }
+
     func prepareKeyboardRuntimeDatabase(forceReopen: Bool = false) throws -> KeyboardRuntimeContext {
         _ = try database.ensureDatabaseFile()
 

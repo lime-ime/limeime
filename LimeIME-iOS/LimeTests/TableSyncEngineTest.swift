@@ -251,7 +251,6 @@ final class TableSyncEngineTest: XCTestCase {
         try meta.setValue(epoch, forKey: SyncMetaStore.epochUUIDKey)
         try meta.setValue(String(generation), forKey: SyncMetaStore.generationKey)
         if applied {
-            try meta.setAppliedEpoch(epoch)
             try meta.setAppliedGeneration(generation)
         }
     }
@@ -280,7 +279,7 @@ final class TableSyncEngineTest: XCTestCase {
                          revisions: ["custom": 1])
         try makeDatabase(at: hot, epoch: "epoch-a")
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
 
         try publish(cold, appGroup: appGroup)
         try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
@@ -290,7 +289,7 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try hotMeta.revision(forTable: "custom"), 1)
     }
 
-    func testEpochDifferenceFullReplacesHotAndStampsAppliedEpoch() throws {
+    func testEpochDifferenceFullReplacesHotAndHotCarriesColdEpoch() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
         let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
@@ -315,8 +314,40 @@ final class TableSyncEngineTest: XCTestCase {
         let hotMeta = try SyncMetaStore(databaseURL: hot)
         XCTAssertEqual(server.countRecords("custom", "code = 'old'", nil), 0)
         XCTAssertEqual(server.countRecords("custom", "code = 'new'", nil), 1)
-        XCTAssertEqual(try hotMeta.appliedEpoch(), "epoch-new")
+        XCTAssertEqual(try hotMeta.epochUUID(), "epoch-new",
+                       "the whole-file swap carries cold's epoch into hot — no separate stamp")
         XCTAssertEqual(try hotMeta.appliedGeneration(), 1)
+    }
+
+    /// §1.2 self-marking apply: once hot carries cold's `epoch_uuid` (a completed restore
+    /// copy), the next scan must NOT full-replace — hot's own epoch IS the applied marker,
+    /// so there is no re-copy. A hot-only sentinel proves it: a full replace would wipe it.
+    /// This is the old "interrupted probe → redundant 3-5s re-copy on the next appearance"
+    /// bug, now structurally impossible.
+    func testHotAlreadyOnColdEpochIsNotReplaced() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let hot = hotDir.appendingPathComponent("lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeDatabase(at: cold, rows: [("new", "新", 9)], epoch: "epoch-new")
+        // Hot already carries cold's epoch (the swap that applied the restore brought it in),
+        // plus a hot-only "sentinel" row that cold does not have.
+        try makeDatabase(at: hot,
+                         rows: [("new", "新", 9), ("sentinel", "哨", 5)],
+                         epoch: "epoch-new")
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+        try publish(cold, appGroup: appGroup)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup,
+                                hotDatabaseURL: hot,
+                                dbServer: server).scanAndApply()
+
+        // hot.epoch_uuid == cold.epoch_uuid → no full replace → the hot-only sentinel survives.
+        XCTAssertEqual(server.countRecords("custom", "code = 'sentinel'", nil), 1,
+                       "hot already on cold's epoch → no re-copy → hot-only row survives")
+        XCTAssertEqual(server.countRecords("custom", "code = 'new'", nil), 1)
     }
 
     /// End-to-end guard for the FA-off "install two IMs → nothing active on the keyboard"
@@ -487,7 +518,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try hotMeta.setAppliedGeneration(4)
         try SyncDatabaseConnection(databaseURL: cold).writeWithoutTransaction { db in
             try db.execute(sql: "VACUUM INTO ?", arguments: [SyncPaths.coldDB(appGroup).path])
@@ -511,7 +542,7 @@ final class TableSyncEngineTest: XCTestCase {
                          revisions: ["custom": 1])
         try makeDatabase(at: hot, epoch: "epoch-a")
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try publish(cold, appGroup: appGroup)
         let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
 
@@ -536,7 +567,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
 
         try publish(cold, appGroup: appGroup)
         try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
@@ -672,7 +703,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try hotMeta.setAppliedGeneration(1)
         try editCustomRows(in: liveCold) { db in
             try db.execute(sql: "DELETE FROM custom WHERE code = ?", arguments: ["delete"])
@@ -737,7 +768,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try writeLifecycleRecords(appGroup: appGroup, [
             ["table": "custom", "action": "delete", "preserveLearning": true]
         ])
@@ -766,7 +797,7 @@ final class TableSyncEngineTest: XCTestCase {
                          revisions: ["custom": 1])
         try createCustomUserBackup(in: hot)
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try writeLifecycleRecords(appGroup: appGroup, [
             ["table": "custom", "action": "install", "preserveLearning": true]
         ])
@@ -791,7 +822,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try writeLifecycleRecords(appGroup: appGroup, [
             ["table": "custom", "action": "delete", "preserveLearning": false]
         ])
@@ -835,7 +866,7 @@ final class TableSyncEngineTest: XCTestCase {
                          epoch: "epoch-a",
                          revisions: ["custom": 1])
         let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
+        try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try writeLifecycleRecords(appGroup: appGroup, [
             ["table": "custom", "action": "delete", "preserveLearning": true],
             ["table": "custom", "action": "install", "preserveLearning": true]

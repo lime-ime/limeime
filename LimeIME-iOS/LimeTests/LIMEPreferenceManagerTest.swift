@@ -33,7 +33,7 @@ final class LIMEPreferenceManagerTest: XCTestCase {
 
         XCTAssertTrue(source.contains("let enabledTableNicks = Set(enabledConfigs.map { $0.element.tableNick })"))
         XCTAssertTrue(source.contains("current.isEmpty || !enabledTableNicks.contains(current)"))
-        XCTAssertTrue(source.contains("keyboardList = firstEnabled"))
+        XCTAssertTrue(source.contains("activeIM = firstEnabled"))
     }
 
     // MARK: - Default values
@@ -278,9 +278,9 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         XCTAssertEqual(options.map(\.value), ["none", "phonetic", "custom"])
     }
 
-    func testRoundTripKeyboardList() {
-        prefs.keyboardList = "cj"
-        XCTAssertEqual(prefs.keyboardList, "cj")
+    func testRoundTripActiveIM() {
+        prefs.activeIM = "cj"
+        XCTAssertEqual(prefs.activeIM, "cj")
     }
 
     func testRoundTripKeyboardState() {

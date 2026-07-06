@@ -562,7 +562,7 @@ final class LimeUITests: XCTestCase {
     private func configureKeyboardThemeCaptureDefaults(theme: Int) {
         guard let defaults = UserDefaults(suiteName: "group.org.limeime") else { return }
         defaults.set(theme, forKey: "keyboard_theme")
-        defaults.set("phonetic", forKey: "keyboard_list")
+        defaults.set("phonetic", forKey: "active_im")
         defaults.set("standard", forKey: "phonetic_keyboard_type")
         defaults.set(true, forKey: "enable_emoji")
         defaults.set(5, forKey: "enable_emoji_position")

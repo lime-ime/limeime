@@ -42,7 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             shared.set(args.integer(forKey: "LimeUITestKeyboardTheme"), forKey: "keyboard_theme")
         }
         if let imNick = args.string(forKey: "LimeUITestKeyboardList"), !imNick.isEmpty {
-            shared.set(imNick, forKey: "keyboard_list")
+            shared.set(imNick, forKey: "active_im")
         }
         // Standard phonetic layout and a clean keyboard_state so the keyboard restores
         // the requested IM rather than a stale index map.

@@ -35,6 +35,7 @@ enum PreferenceBackupAdapter {
         Spec(key: "enable_emoji_position", type: .int, iosSupported: true),
         Spec(key: "similiar_list", type: .int, iosSupported: true),
         Spec(key: "han_convert_option", type: .int, iosSupported: true),
+        Spec(key: "active_im", type: .string, iosSupported: true),   // §1.8 active IM (was keyboard_list)
         Spec(key: "similiar_enable", type: .bool, iosSupported: true),
         Spec(key: "candidate_suggestion", type: .bool, iosSupported: true),
         Spec(key: "learn_phrase", type: .bool, iosSupported: true),
