@@ -319,6 +319,116 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try hotMeta.appliedGeneration(), 1)
     }
 
+    /// End-to-end guard for the FA-off "install two IMs → nothing active on the keyboard"
+    /// failure. Drives the REAL cross-process chain the engine-only tests never covered:
+    /// app installs two enabled IMs into cold → publishes → keyboard syncs cold→hot →
+    /// keyboard resolves its active IM list from `keyboard_state`. The app writes
+    /// `keyboard_state` as tableNicks (syncIMActivatedState format); the keyboard must
+    /// resolve them, not treat them as numeric row offsets.
+    func testInstalledIMsResolveAsActiveOnKeyboardAfterSync() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = hotDir.appendingPathComponent("lime.db")
+
+        // Cold (app side): two IMs installed + enabled, as registerIM leaves them
+        // (seed row title = display label, no title="disable" row → enabled).
+        try makeIMDatabase(at: cold, rows: [
+            ["code": "cj",   "title": "倉頡", "desc": "", "keyboard": "lime"],
+            ["code": "dayi", "title": "大易", "desc": "", "keyboard": "lime"]
+        ], epoch: "epoch-install", generation: 1)
+        // Hot (keyboard side): fresh, no IMs, no applied epoch.
+        try makeIMDatabase(at: hot, rows: [], epoch: "epoch-hot-initial", generation: 0)
+
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+
+        // App publishes; keyboard syncs (epoch differs → wholesale replace hot from cold).
+        try publish(cold, appGroup: appGroup)
+        try TableSyncEngine(appGroupBaseURL: appGroup,
+                            hotDatabaseURL: hot,
+                            dbServer: server).scanAndApply()
+
+        // The im rows DID reach hot (this part the old tests already proved).
+        let rows = try imRows(in: hot)
+        XCTAssertTrue(rows.contains { $0.hasPrefix("cj|") }, "hot should hold cj after sync; got \(rows)")
+        XCTAssertTrue(rows.contains { $0.hasPrefix("dayi|") }, "hot should hold dayi after sync; got \(rows)")
+
+        // App side records the enabled list as tableNicks (syncIMActivatedState format).
+        let suite = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)!
+        let savedState = suite.string(forKey: "keyboard_state")
+        defer {
+            if let savedState { suite.set(savedState, forKey: "keyboard_state") }
+            else { suite.removeObject(forKey: "keyboard_state") }
+        }
+        suite.set("cj;dayi", forKey: "keyboard_state")
+
+        // Keyboard resolves its active IM list — the untested cross-process contract.
+        let context = try server.prepareKeyboardRuntimeDatabase()
+        let nicks = context.activatedIMs.map { $0.tableNick }
+        XCTAssertTrue(nicks.contains("cj"),
+                      "cj must resolve as active from tableNick keyboard_state; got \(nicks)")
+        XCTAssertTrue(nicks.contains("dayi"),
+                      "dayi must resolve as active from tableNick keyboard_state; got \(nicks)")
+    }
+
+    /// Same failure, but through the REAL install write-path (`registerIM`) instead of a
+    /// hand-built cold snapshot — the incremental path a real "install after first run"
+    /// takes (shared/absent epoch, generation bumped). Proves registerIM writes the im
+    /// inbox + publishes, the keyboard drains it into hot, AND scanAndApply reports the
+    /// change so the keyboard reloads (`applied == true`).
+    func testRealRegisterIMInstallReachesKeyboardActiveList() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let coldDir = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        let coldURL = coldDir.appendingPathComponent("lime.db")
+        let hotURL = hotDir.appendingPathComponent("lime.db")
+
+        // App side: real install path (two IMs).
+        let coldDB = try LimeDB(path: coldURL.path)
+        let coldServer = DBServer(_testDatasource: coldDB)
+        try coldServer.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "lime")
+        try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime")
+
+        // registerIM must have written the im inbox AND published cold.limedb.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.imInbox(coldDir).path),
+                      "install must write the im inbox")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.coldDB(coldDir).path),
+                      "install must publish cold.limedb")
+
+        // Keyboard side: real sync.
+        let hotDB = try LimeDB(path: hotURL.path)
+        let hotServer = DBServer(_testDatasource: hotDB)
+        let applied = try TableSyncEngine(appGroupBaseURL: coldDir,
+                                          hotDatabaseURL: hotURL,
+                                          dbServer: hotServer).scanAndApply()
+
+        let rows = try imRows(in: hotURL)
+        XCTAssertTrue(rows.contains { $0.hasPrefix("cj|") },
+                      "hot must hold cj after real install+sync; applied=\(applied) rows=\(rows)")
+        XCTAssertTrue(rows.contains { $0.hasPrefix("dayi|") },
+                      "hot must hold dayi after real install+sync; applied=\(applied) rows=\(rows)")
+        XCTAssertTrue(applied,
+                      "scanAndApply must report a change so the keyboard reloads its IM list")
+
+        let suite = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)!
+        let saved = suite.string(forKey: "keyboard_state")
+        defer {
+            if let saved { suite.set(saved, forKey: "keyboard_state") }
+            else { suite.removeObject(forKey: "keyboard_state") }
+        }
+        suite.set("cj;dayi", forKey: "keyboard_state")
+
+        let context = try hotServer.prepareKeyboardRuntimeDatabase()
+        let nicks = context.activatedIMs.map { $0.tableNick }
+        XCTAssertTrue(nicks.contains("cj") && nicks.contains("dayi"),
+                      "installed IMs must resolve as active on the keyboard; got \(nicks)")
+    }
+
     func testEpochFullReplaceClearsStaleIMInbox() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

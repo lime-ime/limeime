@@ -280,6 +280,23 @@ final class TableSyncEngine {
         let lifecycleRecords = try readIMLifecycleRecords()
         var consumedLifecycleIndexes = Set<Int>()
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+
+        // Attach the cold snapshot ONCE for the whole loop. Per-table ATTACH/DETACH on
+        // the shared connection is unsafe: a DETACH issued inside GRDB's write
+        // transaction fails silently, leaving `cold_snapshot` attached, so the NEXT
+        // changed table's ATTACH throws "database cold_snapshot is already in use" and
+        // aborts the entire sync whenever 2+ tables changed at once (e.g. installing two
+        // IMs). Attach outside a transaction, reuse it across iterations, detach once.
+        try connection.writeWithoutTransaction { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS cold_snapshot",
+                           arguments: [coldSnapshotURL.path])
+        }
+        defer {
+            try? connection.writeWithoutTransaction { db in
+                try? db.execute(sql: "DETACH DATABASE cold_snapshot")
+            }
+        }
+
         for table in tables where Self.isSafeTableName(table) {
             guard let coldRevision = coldRevisions[table] else {
                 let records = lifecycleRecords.enumerated().filter { $0.element.table == table }
@@ -298,10 +315,6 @@ final class TableSyncEngine {
 
             var copied = false
             try connection.write { db in
-                try db.execute(sql: "ATTACH DATABASE ? AS cold_snapshot",
-                               arguments: [coldSnapshotURL.path])
-                defer { try? db.execute(sql: "DETACH DATABASE cold_snapshot") }
-
                 guard try Self.tableExists(table, schema: "cold_snapshot", in: db) else {
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
