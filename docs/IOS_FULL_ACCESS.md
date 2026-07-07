@@ -71,8 +71,9 @@ correctness signal.
 | File | Written by | Meaning |
 | --- | --- | --- |
 | `cold.limedb` | app | the published cold snapshot; carries its own `sync_meta` (epoch + generation) |
-| `im.json` | app | published `im`-table snapshot (`schemaVersion` + `generation`); keyboard reads it **fresh, FA-off** via the §1.5 decorator |
+| `im.json` | app | published `im`-table snapshot (`schemaVersion` + `generation`); keyboard reads it **fresh, FA-off** via the §1.5 reader |
 | `inbox/prefs.json` | app (writes) | app→keyboard preference deltas, `seq`-stamped (keyboard best-effort deletes) |
+| `inbox/lifecycle.json` | app (writes) | app→keyboard IM install / delete records, `rev`-gated (keyboard reads, never deletes) |
 | `outbox/export.request.json` | app | "please snapshot hot" `{requestUUID, expiresAt}` |
 | `outbox/backup.limedb` | keyboard (FA-on) | the hot snapshot produced on request |
 | `outbox/receipt.json` | keyboard (FA-on) | snapshot ready `{requestUUID, epochUUID, at}` |
@@ -177,11 +178,12 @@ marker (seq cursor or `rev`), never the file's presence.
 
 > **`im` is *not* on this inbox transport.** IM metadata is read from the app-published
 > **`im.json`** (cold/hot doc §1.5) — a plain-file snapshot the keyboard reads **fresh on demand**
-> through a `LimeDBProtocol` decorator, not a `seq`/cursor inbox. There is no `im` inbox, cursor,
-> or GC; and (unlike the abandoned overlay) **no live open of the cold DB** — reading `im.json`
-> *bytes* is the FA-off-safe carve-out, the same one that keeps `cold.limedb` a copy-then-read
-> rather than an in-place open. That whole seq-inbox mechanism, and its races, was retired once
-> `im` became an on-demand file read.
+> through a narrow **`ImConfigReading` reader** (`ImJsonLimeDB`, behind `DBServer.imConfigSource`),
+> not a `seq`/cursor inbox. There is no `im` inbox, cursor, or GC; and (unlike the abandoned
+> overlay) **no live open of the cold DB** — reading `im.json` *bytes* is the FA-off-safe carve-out,
+> the same one that keeps `cold.limedb` a copy-then-read rather than an in-place open. That whole
+> seq-inbox mechanism, and its races, was retired once `im` became an on-demand file read. (The
+> **prefs** and **IM-lifecycle** inboxes above are unaffected — only the `im`-metadata inbox went.)
 
 **The relay (keyboard → app, FA-off).** Typing is the keyboard's core function, so `insertText`
 works in every FA state. The probe field doubles as a **keyboard→app channel**: the app

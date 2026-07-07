@@ -416,48 +416,56 @@ an IM's Chinese name), and the keyboard only ever reads the committed file.
 - `im` — every non-emoji `im` row, columns verbatim. The emoji `im` version row is **excluded**
   — it stays with the emoji data (§1.3).
 
-**Keyboard read — the reroute, `LimeDB.swift` frozen.** Every keyboard `im` read funnels through
-**three methods**: `getImConfig(code, field)` (runtime imkeys / endkey / layout, via
-`SearchServer.getImConfig`), `getImConfigList(code?, field?)`, and **`getAllImConfigs()`** (the
-picker's IM set, `DBServer.getAllImConfigs` → §1.7). `LimeDB` is `final` (no subclassing) but
-**conforms to `LimeDBProtocol`**, so a thin **decorator** — `ImJsonLimeDB: LimeDBProtocol` —
-wraps the real hot `LimeDB`, **answers those three from a parsed, cached `im.json`** (reload when
-the file's inode / mtime moves), and **forwards every other protocol call** to the wrapped
-`LimeDB`. On the **keyboard side** the datasource is typed as `any LimeDBProtocol` and set to the
-decorator:
+**Keyboard read — a narrow reader, `LimeDB.swift` frozen.** The keyboard's `im` reads are served
+by a **tiny reader, not a full-protocol decorator**. `ImConfigReading` is a **narrow 3-method
+protocol** — `getImConfig`, `getImConfigList`, `getAllImConfigs` — that `LimeDB` already satisfies
+(`extension LimeDB: ImConfigReading {}`, retroactive, no `LimeDB` change). `ImJsonLimeDB:
+ImConfigReading` answers those three from a parsed, cached `im.json` (reload on the file's
+mtime / size change), and forwards `code='emoji'` lookups **and** the absent-file case to a
+**fallback `LimeDB`** (hot's own `im`, §1.3). It lives in `SyncContract.swift` (no separate file)
+and is deliberately **not** a `LimeDBProtocol` decorator — that would mean ~60 forwarding stubs for
+methods no `im` read needs.
 
-- `SearchServer` already holds `db: any LimeDBProtocol`, so its `getImConfig` /
-  `getImConfigList` route through the decorator with **no change**.
-- `DBServer.cachedDatasource` / `datasource` is **widened from concrete `LimeDB?` to
-  `(any LimeDBProtocol)?`**, and **`getAllImConfigs()` is added to `LimeDBProtocol`** so the
-  picker routes through the decorator too — `LimeDB` already implements it, so it conforms
-  **unchanged**.
+`DBServer` exposes **`imConfigSource: (any ImConfigReading)?`** — on the **keyboard** the
+`ImJsonLimeDB` reader (fallback = the live hot `LimeDB`), on the **app** the concrete cold
+`datasource`. Its three `im`-config proxies (`getImConfig` / `getImConfigList` /
+`getAllImConfigs`) **and the picker** (§1.7) read through it, so the picker's IM set is `im.json`
+on the keyboard and cold's `im` on the app. **`DBServer.datasource` stays concrete `LimeDB?`** (it
+still calls LimeDB-only methods like `updateIMEnabled`), and **`LimeDBProtocol` is untouched** —
+`getAllImConfigs` is **not** added to it.
+
+The keyboard's runtime `im` reads (imkeys / endkey / layout) went through `SearchServer.getImConfig`.
+`SearchServer` keeps the real hot `LimeDB` (§2.2, **unchanged** — not wrapped), so those **three
+call sites in `KeyboardViewController` are rerouted to `DBServer.getImConfig`** instead, which hits
+the reader. `SearchServer`'s own internal `getImConfigList` calls are Settings-only (never reached
+on the keyboard), so hot's `im` going stale there is harmless.
 
 Result: **`LimeDB.swift` and `SearchServer.swift` stay byte-for-byte frozen (§2.2)**, and hot's
 `im` table is **never read on the keyboard side** (and never written — the mirror is gone).
 
-> **Why a decorator, not a caller rewrite.** `getAllImConfigs` lives on the concrete `LimeDB` and
-> **self-calls `getImConfigList(nil,nil)` internally** — a call a frozen `final` class cannot
-> redirect. Rerouting only the two protocol methods would leave the picker reading hot's stale
-> `im` through that internal self-call. Overriding all three in a protocol decorator is the
-> freeze-safe fix. The decorator **forwards `code='emoji'` config lookups to the wrapped
-> `LimeDB`** (the emoji version row lives in hot's `im`, §1.3, and is excluded from `im.json`).
+> **Why override all three, not just `getImConfigList`.** `getAllImConfigs` lives on the concrete
+> `LimeDB` and **self-calls `getImConfigList(nil,nil)` internally** — a call a frozen `final` class
+> cannot redirect. Overriding only `getImConfigList` would leave the picker reading hot's stale
+> `im` through that internal self-call, so `ImConfigReading` overrides all three. Grouping stays
+> app-side: `ImJsonPublisher` calls cold's real `getAllImConfigs()` and ships the grouped
+> `configs` in `im.json`, so the keyboard never re-implements the KV-schema grouping.
 
-**App side keeps the DB path.** The decorator is a **keyboard-only** install. In the app process
-the datasource stays the real `LimeDB` over **cold**, and `im` reads / writes hit cold's `im`
-table directly (the app is the writer of record); the app then re-publishes `im.json`. No
-decorator app-side.
+**App side keeps the DB path.** `imConfigSource` is the reader **only on the keyboard**. In the app
+process it is the concrete cold `datasource`: `im` reads / writes hit cold's `im` table directly
+(the app is the writer of record), and the app then re-publishes `im.json`. No reader app-side.
 
-**Picker alignment.** `im.json` can list an IM whose **content table** has not yet synced into
-hot (content still flows cold → hot separately, §1.4 / §1.6). So the picker shows an IM only when
-it is **enabled in `im.json` AND its content table is present in hot** (`tableHasData`); the
-`generation` stamp lets a reader detect an `im.json`-vs-content skew and re-check. This closes the
-"installed-first IM disappears" drift **structurally** — the IM set is a single fresh file read,
-with no second in-hot copy to fall out of step.
+**Picker alignment.** `im.json` can list an IM whose **content table** has not yet synced into hot
+(content still flows cold → hot separately, §1.4 / §1.6). The picker currently filters on the
+`enabled` flag **alone** — parity with the prior picker — and does **not** yet guard each IM on
+`tableHasData` (deferred, `// ponytail:`; content applies before the picker in the same scan, so the
+skew window is nil in practice — add the guard if device traces show it). The `generation` stamp is
+carried for that future skew check. Either way the IM set is a single fresh `im.json` read with no
+second in-hot copy to drift — which is what structurally closes the "installed-first IM disappears"
+class.
 
 **FA-off-safe / fallback.** Reading `im.json` is a plain file read of the App Group container —
 allowed FA-off, exactly like the cold snapshot the sync already `ATTACH`es each scan. File absent
-(fresh keyboard / App Group unavailable) → the decorator **falls back to the wrapped `LimeDB`**
+(fresh keyboard / App Group unavailable) → the reader **falls back to the wrapped `LimeDB`**
 (hot's bundled-default `im`), so a never-published keyboard still boots its default IM.
 
 Installing / importing / deleting an IM changes table **content** — that is §1.6, unchanged — and
@@ -602,14 +610,13 @@ The layer lives **only** in these files, plus the App Group relay files (§1.0.2
 
 | File | Responsibility |
 | --- | --- |
-| `DBServer.swift` | orchestration + the boundary API the app/keyboard call; installs the keyboard-side `im.json` decorator (§1.5) |
-| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) + the `sync_meta` stamp (epoch / generation) + the **`im.json` publish** (§1.5) |
+| `DBServer.swift` | orchestration + the boundary API the app/keyboard call; `publishImJson()` (app) and `imConfigSource` — the keyboard-side `im.json` reader (§1.5) |
+| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) + the `sync_meta` stamp (epoch / generation) |
 | `TableSyncEngine.swift` | cold → hot import, epoch / generation / per-table rev, the §1.4 editor state diff, the **§1.3 version-gated emoji mirror** (the `im` table is **not** synced — §1.5 publishes `im.json`) |
-| `ImJsonLimeDB.swift` (keyboard) | `LimeDBProtocol` decorator: answers `getImConfig` / `getImConfigList` / `getAllImConfigs` from `im.json`, forwards the rest to the hot `LimeDB` (§1.5) |
-| `SyncContract.swift` | App Group paths, `im.json` path, inbox / outbox shapes, Darwin signal names |
+| `SyncContract.swift` | App Group paths (incl. `im.json`), inbox / outbox shapes, Darwin signal names; **and the `im.json` layer** — codec, the `ImConfigReading` reader (`ImJsonLimeDB`), and `ImJsonPublisher` (§1.5) |
 
 Everything the design needs — `sync_meta` (epoch / generation / per-table rev), the
-§1.4 editor state diff (both directions), the §1.5 `im.json` publish + decorator, the §1.3 emoji
+§1.4 editor state diff (both directions), the §1.5 `im.json` publish + reader, the §1.3 emoji
 mirror, backup / restore, emoji seed / upgrade orchestration — is owned here. This layer opens its
 **own** GRDB connection(s) to the hot and cold DB files (WAL makes that safe alongside
 LimeDB's queue; §1.0.3) and sets its own `busy_timeout`; it does **not** borrow the
@@ -654,7 +661,8 @@ verified in code:
   session (hot frozen while the editor is open), so cold → hot is a plain **state
   diff** — a hot-only row is unambiguously an app delete. No op log, no `LimeDB` hook.
 - **The `im` table is app-write-only** (§1.5) — the keyboard never writes it; its metadata is
-  published as `im.json` and read through a `LimeDBProtocol` decorator, so no `LimeDB` hook.
+  published as `im.json` and read through a narrow `ImConfigReading` reader (`DBServer.imConfigSource`),
+  so no `LimeDB` hook.
 - **Emoji is app-authoritative** (§1.3) — the keyboard never reseeds it; it rides a
   version-gated one-way cold → hot mirror, so no `LimeDB` hook.
 
@@ -689,8 +697,9 @@ never needed their cooperation.
   is epoch + generation + per-table rev + the `applied_emoji_version` gate only (§1.0.3, §1.4) —
   not a per-record ledger.
 - **No `im` inbox / cursor / GC**, and **no hot `im` mirror** — `im` is published as `im.json`
-  and read via the decorator (§1.5), so the seq-cursor delivery apparatus and the wholesale mirror
-  are both gone.
+  and read via the `ImConfigReading` reader (§1.5), so the seq-cursor delivery apparatus and the
+  wholesale mirror are both gone. (The prefs and IM-lifecycle inboxes are unrelated and stay —
+  see IOS_FULL_ACCESS.md.)
 - **No `user_version` bump for `sync_meta`** — the portable schema stays at 104.
 
 UI states, the editor flow, and the delta strategy live in §1.4 — not duplicated here.
