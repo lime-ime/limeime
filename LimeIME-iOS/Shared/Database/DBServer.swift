@@ -300,19 +300,22 @@ final class DBServer {
 
     private func appendIMInbox(_ records: [IMInboxRecord], postSignal shouldPost: Bool) throws {
         guard !records.isEmpty else { return }
-        let url = SyncPaths.imInbox(liveDatabaseURL().deletingLastPathComponent())
-        let existing: IMInboxFile
-        if let data = try? Data(contentsOf: url),
-           let decoded = try? JSONDecoder().decode(IMInboxFile.self, from: data) {
-            existing = decoded
-        } else {
-            existing = IMInboxFile(records: [])
-        }
-        let file = IMInboxFile(records: existing.records + records)
-        try atomicWrite(try JSONEncoder().encode(file), to: url)
+        // §1.5: append seq-stamped so the keyboard consumes each record once via its
+        // own-container cursor (it cannot delete this App Group file FA-off). App owns the
+        // seq counter + the GC (see gcIMInbox, called on the relay).
+        let base = liveDatabaseURL().deletingLastPathComponent()
+        let defaults = UserDefaults(suiteName: DBServer.appGroupID) ?? .standard
+        try IMInbox.append(records, base: base, defaults: defaults)
         if shouldPost {
             postSyncSignal(.tablesUpdated)
         }
+    }
+
+    /// §1.5: app-side GC — remove `im`-inbox records the keyboard has consumed (`seq <=`
+    /// the cursor it relayed back). App→App Group is always writable.
+    func gcIMInbox(throughSeq cursor: Int) {
+        guard cursor > 0 else { return }
+        IMInbox.gc(base: liveDatabaseURL().deletingLastPathComponent(), throughSeq: cursor)
     }
 
     private func appendIMLifecycle(_ records: [IMLifecycleRecord], postSignal shouldPost: Bool) throws {

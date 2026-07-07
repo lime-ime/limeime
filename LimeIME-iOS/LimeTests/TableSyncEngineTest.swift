@@ -12,6 +12,22 @@ final class TableSyncEngineTest: XCTestCase {
         return url
     }
 
+    private var testSuiteNames: [String] = []
+
+    override func tearDown() {
+        for name in testSuiteNames { UserDefaults().removePersistentDomain(forName: name) }
+        testSuiteNames = []
+        super.tearDown()
+    }
+
+    /// A fresh UserDefaults suite for the im-inbox seq counter + consume cursor, so the
+    /// seq-guarded drain is deterministic and isolated between tests.
+    private func isolatedDefaults() throws -> UserDefaults {
+        let name = "test.iminbox.\(UUID().uuidString)"
+        testSuiteNames.append(name)
+        return try XCTUnwrap(UserDefaults(suiteName: name))
+    }
+
     private func makeDatabase(at url: URL,
                               rows: [(code: String, word: String, score: Int)] = [],
                               epoch: String? = nil,
@@ -628,7 +644,11 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertTrue(codes.contains("phonetic"))
     }
 
-    func testEpochFullReplaceClearsStaleIMInbox() throws {
+    /// A stale, ALREADY-CONSUMED im-inbox record (lingering because the keyboard can't delete
+    /// the App Group FA-off) must NOT resurrect after a full-replace — the seq cursor lives in
+    /// UserDefaults (survives the whole-file swap), so the record stays below it. This is the
+    /// restore-to-default → install-one → "picker shows the old IMs, only the new works" bug.
+    func testStaleConsumedIMInboxNotResurrectedByFullReplace() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
         let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
@@ -647,27 +667,64 @@ final class TableSyncEngineTest: XCTestCase {
                            ],
                            epoch: "epoch-old",
                            generation: 1)
-        let staleInbox = IMInboxFile(records: [
-            IMInboxRecord(op: .upsert, row: [
-                "code": "stale",
-                "title": "keyboard",
-                "desc": "Stale",
-                "keyboard": "stale"
-            ])
-        ])
-        let inboxURL = SyncPaths.imInbox(appGroup)
-        try atomicWrite(try JSONEncoder().encode(staleInbox), to: inboxURL)
+        // A stale im record the keyboard has ALREADY consumed: its seq (1) is at/below the
+        // cursor, which lives outside the hot DB so the full-replace can't reset it.
+        let suite = try isolatedDefaults()
+        try IMInbox.append([
+            IMInboxRecord(op: .upsert, row: ["code": "stale", "title": "keyboard", "desc": "Stale", "keyboard": "stale"])
+        ], base: appGroup, defaults: suite)
+        suite.set(1, forKey: IMInbox.consumedSeqKey)
         let server = DBServer(_testDatabaseDirectory: hotDir)
 
         try publish(cold, appGroup: appGroup)
         try TableSyncEngine(appGroupBaseURL: appGroup,
                             hotDatabaseURL: hot,
-                            dbServer: server).scanAndApply()
+                            dbServer: server,
+                            consumeDefaults: suite).scanAndApply()
 
         let rows = try imRows(in: hot)
         XCTAssertTrue(rows.contains("restored|keyboard|Restored|lime"))
-        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") })
-        XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
+        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") },
+                       "consumed stale record must not resurrect after the full-replace; got \(rows)")
+    }
+
+    /// The reported bug, end-to-end through the picker's real source (`getAllImConfigs`):
+    /// restore-to-default wipes hot; the pre-restore installs linger in the inbox but are
+    /// already consumed (cursor); installing ONE new IM must leave ONLY that IM enabled — the
+    /// wiped ones do not reappear.
+    func testInstallAfterRestoreWipeEnablesOnlyTheNewIM() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let hot = hotDir.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+        let suite = try isolatedDefaults()
+
+        // Pre-restore: cj + dayi were installed (inbox seq 1,2) and already consumed.
+        try IMInbox.append([
+            IMInboxRecord(op: .upsert, row: ["code": "cj", "title": "倉頡", "desc": "", "keyboard": "lime"]),
+            IMInboxRecord(op: .upsert, row: ["code": "dayi", "title": "大易", "desc": "", "keyboard": "lime"])
+        ], base: appGroup, defaults: suite)
+        suite.set(2, forKey: IMInbox.consumedSeqKey)
+
+        // restore-to-default left hot wiped (empty im, same lineage as the restored cold).
+        try makeIMDatabase(at: hot, rows: [], epoch: "epoch-default", generation: 1, applied: true)
+        // Then install phonetic: cold now carries it (gen bumped) + inbox gets phonetic@3.
+        try makeIMDatabase(at: coldSnapshot, rows: [
+            ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"]
+        ], epoch: "epoch-default", generation: 2)
+        try IMInbox.append([
+            IMInboxRecord(op: .upsert, row: ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"])
+        ], base: appGroup, defaults: suite)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                dbServer: server, consumeDefaults: suite).scanAndApply()
+
+        let enabled = try server.getAllImConfigs().filter { $0.enabled }.map { $0.tableNick }.sorted()
+        XCTAssertEqual(enabled, ["phonetic"],
+                       "only the newly-installed IM should be enabled; the wiped cj/dayi must not reappear. got \(enabled)")
     }
 
     func testSameGenerationAndEpochNoOpsEvenWhenRevisionsDiffer() throws {
@@ -756,25 +813,23 @@ final class TableSyncEngineTest: XCTestCase {
                                ["code": "old", "title": "keyboard", "desc": "Old", "keyboard": "oldkb"]
                            ],
                            applied: true)
-        let inbox = IMInboxFile(records: [
+        // Isolated suite holds the seq counter (append stamps 1,2) + the consume cursor
+        // (fresh 0), so the seq-guarded drain applies both records deterministically.
+        let suite = try isolatedDefaults()
+        try IMInbox.append([
             IMInboxRecord(op: .upsert, row: [
-                "code": "custom",
-                "title": "keyboard",
-                "desc": "New",
-                "keyboard": "lime"
+                "code": "custom", "title": "keyboard", "desc": "New", "keyboard": "lime"
             ]),
             IMInboxRecord(op: .delete, row: ["code": "old"])
-        ])
-        let inboxURL = SyncPaths.imInbox(appGroup)
-        try FileManager.default.createDirectory(at: inboxURL.deletingLastPathComponent(),
-                                                withIntermediateDirectories: true)
-        try JSONEncoder().encode(inbox).write(to: inboxURL)
+        ], base: appGroup, defaults: suite)
 
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                            consumeDefaults: suite).scanAndApply()
 
         XCTAssertEqual(try imRows(in: hot), ["custom|keyboard|New|lime"])
         XCTAssertTrue(try imRows(in: coldSnapshot).isEmpty)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: inboxURL.path))
+        // Consumed via the cursor, NOT by deleting the App Group inbox (read-only FA-off).
+        XCTAssertEqual(suite.integer(forKey: IMInbox.consumedSeqKey), 2)
     }
 
     func testBackupExportRequestVacuumHotSnapshotAndWritesReceipt() throws {
@@ -945,9 +1000,7 @@ final class TableSyncEngineTest: XCTestCase {
         try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
 
         XCTAssertEqual(try customRows(in: hot), [])
-        XCTAssertEqual(try customBackupRows(in: hot), ["learned|學|8"])
-        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
-    }
+        XCTAssertEqual(try customBackupRows(in: hot), ["learned|學|8"])    }
 
     func testLifecycleImportWithRestoreRestoresHotUserTableAfterCopy() throws {
         let root = try tempDir()
@@ -974,9 +1027,7 @@ final class TableSyncEngineTest: XCTestCase {
         try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
 
         XCTAssertEqual(try customRows(in: hot), ["base|基|0", "learned|學|8"])
-        XCTAssertFalse(try tableExists("custom_user", in: hot))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
-    }
+        XCTAssertFalse(try tableExists("custom_user", in: hot))    }
 
     func testLifecycleOptOutSkipsBackupAndRestore() throws {
         let root = try tempDir()
@@ -1015,9 +1066,7 @@ final class TableSyncEngineTest: XCTestCase {
         try engine.scanAndApply()
 
         XCTAssertEqual(try customRows(in: hot), ["learned|學|0"])
-        XCTAssertFalse(try tableExists("custom_user", in: hot))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
-    }
+        XCTAssertFalse(try tableExists("custom_user", in: hot))    }
 
     func testLifecycleDeleteThenReimportRoundTripPreservesLearnedScores() throws {
         let root = try tempDir()
@@ -1045,7 +1094,5 @@ final class TableSyncEngineTest: XCTestCase {
 
         XCTAssertEqual(try customRows(in: hot),
                        ["base|基|0", "hotonly|熱|4", "learned|學|8"])
-        XCTAssertFalse(try tableExists("custom_user", in: hot))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
-    }
+        XCTAssertFalse(try tableExists("custom_user", in: hot))    }
 }

@@ -6,28 +6,39 @@ final class TableSyncEngine {
     private let appGroupBaseURL: URL
     private let hotDatabaseURL: URL
     private let dbServer: DBServer
+    /// Own-container store for the `im`-inbox consume cursor (`UserDefaults.standard` in the
+    /// keyboard; an isolated suite in tests). Survives the full-replace (§1.5).
+    private let consumeDefaults: UserDefaults
 
     init(appGroupBaseURL: URL,
          hotDatabaseURL: URL,
-         dbServer: DBServer = .shared) {
+         dbServer: DBServer = .shared,
+         consumeDefaults: UserDefaults = .standard) {
         self.appGroupBaseURL = appGroupBaseURL
         self.hotDatabaseURL = hotDatabaseURL
         self.dbServer = dbServer
+        self.consumeDefaults = consumeDefaults
     }
 
     convenience init(locator: SyncDatabaseLocator = .production(),
-                     dbServer: DBServer = .shared) {
+                     dbServer: DBServer = .shared,
+                     consumeDefaults: UserDefaults = .standard) {
         self.init(appGroupBaseURL: locator.appGroupDirectory,
                   hotDatabaseURL: locator.hotDatabaseURL,
-                  dbServer: dbServer)
+                  dbServer: dbServer,
+                  consumeDefaults: consumeDefaults)
     }
 
     /// Returns `true` when a cold→hot change was applied to hot's IM data (full replace
     /// or incremental import) — the caller reloads the keyboard's IM list only then.
+    /// `hasFullAccess` gates the App Group **writers** (backup snapshot / editor receipt):
+    /// those are FA-on operations, so a stale request never triggers an FA-off write.
     @discardableResult
-    func scanAndApply() throws -> Bool {
-        try processBackupExportRequestIfNeeded()
-        try processEditorRefreshRequestIfNeeded()
+    func scanAndApply(hasFullAccess: Bool = true) throws -> Bool {
+        if hasFullAccess {
+            try processBackupExportRequestIfNeeded()
+            try processEditorRefreshRequestIfNeeded()
+        }
 
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else {
@@ -69,8 +80,13 @@ final class TableSyncEngine {
             let refreshedHotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
             try Self.stampAppliedEpoch(coldEpoch, on: refreshedHotMeta)
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
-            try clearIMInboxIfNeeded()
-            try clearIMLifecycleInboxIfNeeded()
+            // The snapshot already carries the authoritative `im` table + all data tables, so
+            // there is nothing to clear (and the keyboard cannot delete the App Group inbox
+            // FA-off anyway). Drain seq-guarded: consumed records are skipped by the cursor —
+            // which lives in UserDefaults, NOT the just-overwritten hot sync_meta — so a stale
+            // pre-restore record can't resurrect a wiped IM. Lifecycle records are rev-gated,
+            // so a lingering one is never re-applied; the app GCs both inboxes.
+            try drainIMInboxIfNeeded()
             return true
         }
 
@@ -262,18 +278,18 @@ final class TableSyncEngine {
     }
 
     private func drainIMInboxIfNeeded() throws {
-        let inboxURL = SyncPaths.imInbox(appGroupBaseURL)
-        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
-        let inbox = try JSONDecoder().decode(IMInboxFile.self, from: Data(contentsOf: inboxURL))
-        guard !inbox.records.isEmpty else {
-            try? FileManager.default.removeItem(at: inboxURL)
-            return
-        }
+        guard let inbox = IMInbox.read(base: appGroupBaseURL), !inbox.records.isEmpty else { return }
+        // §1.5: consume via an own-container cursor (UserDefaults, so it survives a
+        // full-replace) — never by deleting the App Group inbox (read-only FA-off). Skip
+        // already-consumed records; the app GCs the file via the relayed cursor.
+        let cursor = consumeDefaults.integer(forKey: IMInbox.consumedSeqKey)
+        let pending = inbox.records.filter { $0.seq > cursor }
+        guard !pending.isEmpty else { return }
 
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
         try connection.write { db in
             try Self.ensureIMTable(in: db)
-            for record in inbox.records {
+            for record in pending {
                 switch record.op {
                 case .upsert:
                     try Self.upsertIM(record.row, in: db)
@@ -282,39 +298,18 @@ final class TableSyncEngine {
                 }
             }
         }
-        try FileManager.default.removeItem(at: inboxURL)
-    }
-
-    private func clearIMInboxIfNeeded() throws {
-        let inboxURL = SyncPaths.imInbox(appGroupBaseURL)
-        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
-        try FileManager.default.removeItem(at: inboxURL)
+        let applied = pending.map(\.seq).max() ?? cursor
+        consumeDefaults.set(max(cursor, applied), forKey: IMInbox.consumedSeqKey)
     }
 
     private func readIMLifecycleRecords() throws -> [IMLifecycleRecord] {
         let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: inboxURL.path) else { return [] }
-        let records = try JSONDecoder().decode([IMLifecycleRecord].self,
-                                               from: Data(contentsOf: inboxURL))
-        if records.isEmpty {
-            try? FileManager.default.removeItem(at: inboxURL)
-        }
-        return records
-    }
-
-    private func writeRemainingIMLifecycleRecords(_ records: [IMLifecycleRecord]) throws {
-        let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
-        guard !records.isEmpty else {
-            try? FileManager.default.removeItem(at: inboxURL)
-            return
-        }
-        try atomicWrite(try JSONEncoder().encode(records), to: inboxURL)
-    }
-
-    private func clearIMLifecycleInboxIfNeeded() throws {
-        let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
-        guard FileManager.default.fileExists(atPath: inboxURL.path) else { return }
-        try FileManager.default.removeItem(at: inboxURL)
+        // Read-only: the keyboard never deletes/rewrites this App Group file (FA-off). A
+        // record is applied only when its table's rev moves (rev-gated in applyIncremental),
+        // so a lingering one is never re-applied; the app GCs consumed records via the relay.
+        return (try? JSONDecoder().decode([IMLifecycleRecord].self,
+                                          from: Data(contentsOf: inboxURL))) ?? []
     }
 
     private func applyIncremental(from coldSnapshotURL: URL) throws {
@@ -323,8 +318,10 @@ final class TableSyncEngine {
         let tables = Set(coldRevisions.keys).union(hotRevisions.keys).sorted()
         guard !tables.isEmpty else { return }
 
+        // Read-only: apply lifecycle records per table (rev-gated below), never write the
+        // App Group back (§1.6). A consumed record simply lingers until the app GCs it; the
+        // rev gate keeps it from being re-applied.
         let lifecycleRecords = try readIMLifecycleRecords()
-        var consumedLifecycleIndexes = Set<Int>()
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
 
         // Attach the cold snapshot ONCE for the whole loop. Per-table ATTACH/DETACH on
@@ -345,9 +342,8 @@ final class TableSyncEngine {
 
         for table in tables where Self.isSafeTableName(table) {
             guard let coldRevision = coldRevisions[table] else {
-                let records = lifecycleRecords.enumerated().filter { $0.element.table == table }
-                try applyDeleteLifecycle(records.map(\.element), for: table)
-                consumedLifecycleIndexes.formUnion(records.map(\.offset))
+                let records = lifecycleRecords.filter { $0.table == table }
+                try applyDeleteLifecycle(records, for: table)
                 try connection.write { db in
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
@@ -356,8 +352,8 @@ final class TableSyncEngine {
             }
             guard coldRevision != hotRevisions[table] else { continue }
 
-            let records = lifecycleRecords.enumerated().filter { $0.element.table == table }
-            try applyDeleteLifecycle(records.map(\.element), for: table)
+            let records = lifecycleRecords.filter { $0.table == table }
+            try applyDeleteLifecycle(records, for: table)
 
             var copied = false
             try connection.write { db in
@@ -372,16 +368,8 @@ final class TableSyncEngine {
             }
 
             if copied {
-                try applyInstallLifecycle(records.map(\.element), for: table)
+                try applyInstallLifecycle(records, for: table)
             }
-            consumedLifecycleIndexes.formUnion(records.map(\.offset))
-        }
-
-        if !consumedLifecycleIndexes.isEmpty {
-            let remaining = lifecycleRecords.enumerated()
-                .filter { !consumedLifecycleIndexes.contains($0.offset) }
-                .map(\.element)
-            try writeRemainingIMLifecycleRecords(remaining)
         }
     }
 

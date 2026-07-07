@@ -261,6 +261,14 @@ struct LimeSettingsView: View {
     private func handleRootRelayTextChange() {
         guard let payload = decodeRelayPayload(rootRelayText) else { return }
         relayActiveState.markActive(fullAccess: payload.faOn)
+        // §1.5: GC the im inbox up to the keyboard's relayed consume cursor. The app owns the
+        // App Group (the keyboard can't delete it FA-off), so this is where consumed records
+        // are trimmed. Fired on every probe — install / backup / restore all probe.
+        if let cursor = payload.imseq, cursor > 0,
+           let base = FileManager.default.containerURL(
+               forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) {
+            IMInbox.gc(base: base, throughSeq: cursor)
+        }
         RelayPrefSync.apply(han: payload.han,
                             split: payload.split,
                             reverseLookupIM: payload.rlim,

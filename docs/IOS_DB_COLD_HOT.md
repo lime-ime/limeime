@@ -50,7 +50,7 @@ folder." There is no shared memory, RPC, or `UserDefaults` correctness signal.
 | File | Written by | Meaning |
 | --- | --- | --- |
 | `cold.limedb` | app | the published cold snapshot; **carries its own `sync_meta` table** (epoch + generation) — no JSON sidecar (§1.0.3) |
-| `inbox/im.*` | app | changed `im` record(s) for one-way cold → hot metadata sync (§1.5) |
+| `inbox/im.*` | app (writes + GCs) | changed `im` record(s) for one-way cold → hot metadata sync (§1.5); each `seq`-stamped, keyboard reads only, app trims at/below the relayed cursor |
 | `outbox/export.request.json` | app | `{requestUUID, expiresAt}` — "please snapshot hot" |
 | `outbox/backup.limedb` | keyboard | the hot snapshot produced on request |
 | `outbox/receipt.json` | keyboard | `{requestUUID, epochUUID, at}` — snapshot ready |
@@ -76,17 +76,22 @@ folder." There is no shared memory, RPC, or `UserDefaults` correctness signal.
   the tables the **app** changed, so it never clobbers unharvested keyboard learning
   in untouched tables.
 
-**Full Access is NOT the gate for App Group access.** A keyboard extension **can**
-read and write the App Group container (the cold DB, shared prefs, inbox/outbox) with
-Full Access **off** — App Group access is entitlement-based, not FA-gated. *(Verified:
-master's keyboard read the App Group DB + `group.org.limeime` prefs FA-off and shipped;
-FA-gating the keyboard's cold→hot sync left FA-off installs stranded in cold with no
-active IM on the keyboard — the run-mode split's original FA premise was wrong.)* So
-every cross-process step below — **incremental sync, backup, applying a restore — runs
-regardless of FA**, on the keyboard's own connection. The cold/hot **split exists for
-write isolation** (the app editing cold must not race the keyboard learning into hot),
-**not** as an FA workaround. Full Access gates network / open-access features, which the
-sync path never touches. The **app side always works** (it owns cold outright).
+**Full Access gates the keyboard's *writes* to the App Group, not its reads.** Per
+`IOS_FULL_ACCESS.md` (Apple's wording): with Full Access **off** a keyboard extension has
+**read-only** access to the App Group and **read/write** access to **its own container**.
+So the cold→hot sync runs FA-off **because it only reads the App Group** (cold DB + inbox)
+and **writes only the keyboard's own container** (hot DB + its `sync_meta` cursors), and
+reports back over the **typed-text relay** (§1.8) — never an App Group write. *(An earlier
+draft claimed the keyboard could **read and write** the App Group FA-off; that is wrong.
+FA-gating the sync had stranded FA-off installs, but the correct fix is own-container writes
+plus a read-only inbox consumed by a cursor, **not** App Group writes — see §1.8 (prefs),
+§1.5 (`im` inbox), §1.6 (lifecycle).)* The keyboard's App Group **writes** — the backup snapshot /
+receipt (§1.1) and the editor-refresh receipt (§1.4) — are **FA-on** operations, correctly
+gated; the FA-off sync path never writes the App Group. So: **applying a restore and
+incremental sync run regardless of FA** (read cold, write hot); **backup does not** (it
+writes the outbox → FA-on, §1.1). The cold/hot **split exists for write isolation** (the app
+editing cold must not race the keyboard learning into hot). The **app side always works** (it
+owns cold outright, read/write regardless of FA).
 
 > **UI gating is a separate, deliberate choice.** The 備份 button (§1.1) and the table
 > editor's live-edit unlock (§1.4) may still require FA-Confirmed-ON + active-keyboard
@@ -108,6 +113,7 @@ never `UserDefaults`, never a Darwin payload.
 | `epoch_uuid` | cold **and** hot (each DB carries its own) | **yes** | full-replace lineage. Cold stamps a **fresh** one only on a restore/reset; installs never touch it, so an install-only cold has **no `epoch_uuid` (nil)**. |
 | `applied_epoch` | hot | **yes** | the cold epoch hot has applied — **decoupled from hot's own `epoch_uuid`**. Hot's own `epoch_uuid` is hot's *identity* (a **random value at bootstrap**, or cold's epoch after a completed full-replace copy), so it is not a reliable applied-marker by itself: an install-only cold is nil while a hot that synced incrementally keeps its bootstrap epoch, so `coldEpoch(nil) != hotEpoch(bootstrap)` would falsely read as a new lineage and full-replace. `applied_epoch` records the applied cold epoch (nil for an install-only lineage) so `nil == nil` ⟺ converged. Cold's lineage is **applied when EITHER** `applied_epoch` **or** hot's own `epoch_uuid` matches cold — the latter is a fast-path so a completed restore copy is never re-copied when its `applied_epoch` stamp was interrupted. |
 | `generation` | cold; hot stores `applied_generation` | fast-path | monotonic publish counter — the "anything changed within this epoch?" gate. The **incremental** path edits hot's tables **in place**, so (unlike the epoch) it gets no free atomic marker and keeps an explicit `applied_generation`. |
+| `last_consumed_im_seq` | hot | consume cursor | the `im`-inbox `seq` the keyboard has applied. Its **own-container** consume gate — FA-off the keyboard cannot delete the App Group inbox (§1.5), so a lingering already-applied record is skipped by this cursor, not by removal. **Echoed on the relay** so the **app** GCs records at or below it. A single monotonic int, not a ledger. |
 | per-table `rev` | cold | **yes** | scopes each cold→hot reconcile to the tables the **app** changed, protecting unharvested keyboard learning elsewhere |
 
 Everything heavier is **cut**:
@@ -253,8 +259,8 @@ live Darwin notification. The doorbell only makes a live FA-on keyboard scan
    **no `epoch_uuid`**) read as converged: `nil == nil`. Hot's own `epoch_uuid` is hot's
    *identity* — a **random value at bootstrap** — so it does not, on its own, mean "I applied
    cold's nil epoch"; comparing it to cold's nil would falsely trigger a full replace that
-   clears pending IM/lifecycle inboxes and wipes hot (the empty-picker / 同步中 regression).
-   Hot's `epoch_uuid` is kept only as the interrupt-safety fast-path below.
+   wipes hot's applied IMs and forces a redundant re-sync (the empty-picker / 同步中
+   regression). Hot's `epoch_uuid` is kept only as the interrupt-safety fast-path below.
    **Interrupt safety (no re-copy, no partial hot).** Killed during the copy → the temp
    file is discarded and **hot is untouched** (still the old, complete DB, old epoch) → the
    next scan re-copies. Killed after the rename but **before** the `applied_epoch` stamp →
@@ -429,14 +435,36 @@ table** — it only *reads* it to know which IMs exist and how they are configur
 there is no harvest-back, no `LEFT JOIN` entry step, and none of §1.4's
 delete-vs-learn ambiguity: **cold is unconditionally authoritative for `im`.**
 
+**FA-off-safe consumption — the keyboard is a pure App Group reader (per §1.8).** With
+Full Access **off** a keyboard has **read-only** App Group access (`IOS_FULL_ACCESS.md`),
+so the inbox is **never consumed by deleting it** — that write silently fails FA-off and
+the file lingers, and a re-drain would resurrect a wiped IM (the *restore-to-default →
+install-one → picker shows the old IMs, only the new one works* bug). Instead consumption
+is a **seq cursor the keyboard keeps in its own container**, and the **app** — the sole
+App Group writer — garbage-collects the file. This is exactly the §1.8 pref-inbox pattern,
+applied to the `im` inbox.
+
 Flow:
 
-1. **App** applies the edit to cold's `im`, then writes the changed `im` record(s)
-   to the App Group **inbox** (the app → keyboard record channel) and posts
-   `org.limeime.tables.updated`.
-2. **Keyboard (FA on)** drains the inbox and applies each record to hot's `im` in one
-   transaction — upsert for an add / edit, delete for a removal — then clears the
-   inbox.
+1. **App — append, stamped with a seq.** The app applies the edit to cold's `im`, then
+   **appends** the changed `im` record(s) to the App Group **inbox**, each carrying a
+   **monotonic `seq`** (a counter the app bumps in the App Group), and posts
+   `org.limeime.tables.updated`. App → App Group is writable regardless of FA.
+2. **Keyboard — read + apply against an own-container cursor (works FA-off).** On its
+   scan the keyboard **reads** the inbox (read-only ✓ FA-off) and applies each record with
+   `seq > last_consumed_im_seq` to hot's `im` in one transaction — upsert for an
+   add / edit, delete for a removal — then advances `last_consumed_im_seq` in hot's
+   `sync_meta` (its **own** container, FA-off-writable). It **never deletes or rewrites the
+   inbox**: an already-consumed record that lingers is simply skipped by the cursor, so a
+   wiped IM can't resurrect and a stale `delete` can't re-fire after a reinstall — the
+   **cursor, not the file's presence, is the consume gate**.
+3. **App — GC via the relayed cursor.** The keyboard echoes `last_consumed_im_seq` in its
+   **relay** payload (the kb→app typed-text channel, §1.8 — no App Group write, FA-off ✓).
+   On the next probe the app already runs — **install, backup, and restore all probe** — it
+   **deletes inbox records with `seq <= cursor`**. Append-new + trim-consumed are the same
+   owner's ops (only the app writes the App Group), so there is no cross-process file race.
+   The trim is **best-effort / eventual**: a missed probe just leaves a **bounded** tail for
+   the next one — never incorrect, because correctness is the cursor, not the GC.
 
 Because the direction is one-way and the keyboard is a pure reader of `im`, applying
 the record directly is safe — nothing of the keyboard's to clobber — so no full cold
@@ -468,7 +496,8 @@ storage — the backup captures the freshest learning and survives until restore
 
 1. **App** writes the base into cold's table `t` (a new IM is empty in hot), adds the
    `im` row (§1.5), bumps `t`'s `rev`, rings the bell.
-2. **Keyboard (FA on)** reconciles `t` cold → hot (a full copy for a new table).
+2. **Keyboard** reconciles `t` cold → hot (a full copy for a new table) — reads cold,
+   writes hot, so it runs **FA-off** like the rest of the sync path.
 3. **If restore-on-import is ON and `checkBackupTable(t)`** (hot has `t_user`), run
    `restoreUserRecords(t)` on hot, then `dropBackupTable(t)`. The restored scores reach
    cold on the next editor-entry harvest (§1.4). Off / no backup → base scores.
@@ -477,8 +506,9 @@ storage — the backup captures the freshest learning and survives until restore
 
 1. **App** clears cold's table `t`, removes its `im` row (§1.5), bumps `t`'s `rev`, and
    rings the bell carrying the backup flag.
-2. **Keyboard (FA on)**: if the flag is ON, `backupUserRecords(t)` on hot (→ `t_user`),
-   then clear hot's `t`. If OFF, clear outright — learning is gone.
+2. **Keyboard**: if the flag is ON, `backupUserRecords(t)` on hot (→ `t_user`),
+   then clear hot's `t`. If OFF, clear outright — learning is gone. Both are hot-side
+   writes, so this runs **FA-off**.
 
 **3. Delete then re-import** — the `t_user` backup, living in hot, bridges the two even
 across FA-off: the delete creates it, the re-import consumes it (on its next FA-on scan
@@ -490,6 +520,14 @@ hot-side `<table>_user` mechanism — no new stash, no App Group learned-data fi
 `LimeDB` / `SearchServer` change (`backupUserRecords` / `restoreUserRecords` already
 exist). Delete and import are `DBServer` / controller operations that bump `rev` and
 ring the bell, like every other §2.5 app-side change.
+
+**FA-off-safe consumption (keyboard never writes the App Group).** A lifecycle record is
+applied **only when its table's `rev` moves** — once hot's `rev` matches cold's the table
+is skipped, so a lingering record is **never re-applied** (this is why a restore-to-default
+then reinstall cannot resurrect a wiped IM's learning). So the keyboard **does not delete or
+write-back** the lifecycle inbox: it reads it (read-only ✓ FA-off), applies per-table against
+`rev`, and lets the **app** GC consumed records on the next probe — the same relayed-cursor
+cleanup as §1.5, so the write-back path is gone entirely.
 
 ### 1.7 Keyboard runtime: the query table follows the active IM
 
@@ -699,6 +737,11 @@ never needed their cooperation.
   are **orchestrated by `DBServer` / its controllers**, which bump the per-table rev and
   `generation` **there** (after calling the frozen `LimeDB` CRUD), then publish cold.
   Never inside `LimeDB` itself.
+- The **`im`-inbox `seq`** is bumped the same place — app-side, when the app appends an
+  `im` record (§1.5) — and the app **GCs the inbox** (deletes records at or below the
+  keyboard's relayed `last_consumed_im_seq`) on each install / backup / restore probe. The
+  keyboard **never writes or deletes** the App Group inbox — it only reads it and advances
+  its own-container cursor.
 - Keyboard learning bumps nothing; it reaches cold only via the §1.4 editor-entry state
   diff.
 
@@ -712,7 +755,8 @@ never needed their cooperation.
 - No keyboard writes into cold outside the §1.4 sync operation.
 - No `sync_rev` / epoch / ledger logic inside `LimeDB` or `SearchServer`.
 - **No editor op-log or ledger state machine** — close is a state diff; `sync_meta`
-  is epoch + generation + per-table rev only (§1.0.3, §1.4).
+  is epoch + generation + per-table rev + the single `im`-inbox consume cursor only
+  (§1.0.3, §1.4, §1.5) — one monotonic int, not a per-record ledger.
 - **No `user_version` bump for `sync_meta`** — the portable schema stays at 104.
 
 UI states, the editor flow, and the delta strategy live in §1.4 — not duplicated here.

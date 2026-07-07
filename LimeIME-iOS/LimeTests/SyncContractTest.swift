@@ -125,4 +125,41 @@ final class SyncContractTest: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: keep.path))
     }
 
+    // §1.5: the keyboard echoes its consume cursor on the relay so the app can GC the inbox.
+    func testRelayPayloadCarriesIMSeqCursor() {
+        let decoded = LimeIME.decodeRelayPayload(LimeIME.encodeRelayPayload(faOn: true, ts: 123.0, imSeq: 7))
+        XCTAssertEqual(decoded?.imseq, 7)
+        XCTAssertEqual(decoded?.faOn, true)
+        // Absent field (older payload) decodes as nil, not a crash.
+        XCTAssertNil(LimeIME.decodeRelayPayload("LIMERLY!v1;fa=1;ts=1.0")?.imseq)
+    }
+
+    // §1.5: append stamps a monotonic seq; the app GC trims consumed records without the
+    // keyboard ever writing the App Group.
+    func testIMInboxAppendStampsSeqAndGCTrimsConsumed() throws {
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let name = "test.iminbox.\(UUID().uuidString)"
+        let suite = try XCTUnwrap(UserDefaults(suiteName: name))
+        defer { UserDefaults().removePersistentDomain(forName: name) }
+
+        try IMInbox.append([IMInboxRecord(op: .upsert, row: ["code": "cj"])], base: base, defaults: suite)
+        try IMInbox.append([IMInboxRecord(op: .upsert, row: ["code": "dayi"])], base: base, defaults: suite)
+        XCTAssertEqual(IMInbox.read(base: base)?.records.map(\.seq), [1, 2])
+
+        IMInbox.gc(base: base, throughSeq: 1)
+        XCTAssertEqual(IMInbox.read(base: base)?.records.map(\.seq), [2])
+
+        IMInbox.gc(base: base, throughSeq: 2)
+        XCTAssertNil(IMInbox.read(base: base), "fully-consumed inbox is removed by the GC")
+    }
+
+    // A pre-seq record (older app) decodes as seq 0 — left to the snapshot, not misread.
+    func testIMInboxRecordDecodesMissingSeqAsZero() throws {
+        let json = Data(#"{"records":[{"op":"upsert","row":{"code":"legacy"}}]}"#.utf8)
+        let file = try JSONDecoder().decode(IMInboxFile.self, from: json)
+        XCTAssertEqual(file.records.first?.seq, 0)
+    }
+
 }

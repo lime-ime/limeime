@@ -71,11 +71,13 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("syncScanInProgress"))
         // App Group access does NOT require Full Access, so the cold→hot sync must run
         // regardless of FA — else FA-off installs never reach the keyboard's hot DB and
-        // there is no active IM. See IOS_DB_COLD_HOT.md §1.0.2.
+        // there is no active IM. `hasFullAccess` is passed only to gate the App Group
+        // WRITERS inside scanAndApply (backup / editor receipt, §1.5 Fix 3); the sync itself
+        // is never FA-gated. See IOS_DB_COLD_HOT.md §1.0.2 / §1.5.
         XCTAssertTrue(source.contains("private func triggerSyncScan()"))
         XCTAssertFalse(source.contains("guard hasFullAccess else { return }"))
         XCTAssertTrue(source.contains("syncQueue.async"))
-        XCTAssertTrue(source.contains("TableSyncEngine(locator: locator).scanAndApply()"))
+        XCTAssertTrue(source.contains(".scanAndApply(hasFullAccess: fa)"))
         XCTAssertFalse(source.contains("UITextInputMode.activeInputModes"))
         XCTAssertFalse(source.contains("value(forKey: \"activeInputMode\")"))
     }

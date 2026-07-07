@@ -333,6 +333,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Feedback while a restore/install sync runs: if there is no active IM yet, show
         // "同步中，請稍侯…" so the keyboard isn't just blank. Resolved when the scan ends.
         DispatchQueue.main.async { [weak self] in self?.beginSyncToastIfNeeded() }
+        // Capture FA on the main thread (UIInputViewController property); the App Group
+        // writers inside scanAndApply (backup / editor receipt) are FA-on only (§1.5 Fix 3).
+        let fa = hasFullAccess
         syncQueue.async { [weak self] in
             guard let self else { return }
             guard !self.syncScanInProgress else { return }
@@ -347,7 +350,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 // own generation/epoch check bails fast when nothing changed; the full
                 // rebuild happens only when a sync applies, via setupDatabase() below.
                 try DBServer.shared.ensureDatabaseFileReady()
-                let applied = try TableSyncEngine(locator: locator).scanAndApply()
+                let applied = try TableSyncEngine(locator: locator).scanAndApply(hasFullAccess: fa)
                 if applied {
                     // The sync changed hot's IM data (e.g. a newly-installed IM). Reload
                     // activatedIMs + re-apply keyboard_list so the IM shows on THIS
@@ -564,8 +567,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             ?? RelayPrefState(hanConvert: hanConvertOption,
                               splitKeyboard: splitKeyboardMode,
                               updatedAt: 0)
+        // Echo the im-inbox consume cursor so the app GCs records at/below it (§1.5).
         textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
                                                         ts: Date().timeIntervalSince1970,
+                                                        imSeq: UserDefaults.standard.integer(forKey: IMInbox.consumedSeqKey),
                                                         prefs: prefs))
         return true
     }

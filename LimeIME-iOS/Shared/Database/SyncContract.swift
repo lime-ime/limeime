@@ -66,6 +66,26 @@ struct IMInboxRecord: Codable, Equatable {
 
     var op: Operation
     var row: [String: String?]
+    /// §1.5: monotonic app-side stamp. The keyboard applies a record only when
+    /// `seq > last_consumed_im_seq` (its own-container cursor) and never deletes the App
+    /// Group inbox FA-off; the app GCs consumed records via the relayed cursor. Optional in
+    /// the wire format so a pre-seq record (written by an older app) still decodes — it
+    /// reads as 0, i.e. already at/below any cursor, so it is left to the snapshot / prior
+    /// drain rather than re-applied.
+    var seq: Int = 0
+
+    init(op: Operation, row: [String: String?], seq: Int = 0) {
+        self.op = op
+        self.row = row
+        self.seq = seq
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        op = try c.decode(Operation.self, forKey: .op)
+        row = try c.decode([String: String?].self, forKey: .row)
+        seq = try c.decodeIfPresent(Int.self, forKey: .seq) ?? 0
+    }
 }
 
 struct IMLifecycleRecord: Codable, Equatable {
@@ -210,6 +230,60 @@ enum PrefInbox {
     }
 }
 
+/// §1.5 `im` inbox — one-way cold→hot metadata channel, consumed FA-off-safe. The app
+/// appends `seq`-stamped records (App→App Group is always writable) and GCs consumed ones;
+/// the keyboard is a **pure reader** — it applies records above its own-container cursor and
+/// never writes/deletes the App Group.
+enum IMInbox {
+    static let seqCounterKey = "im_inbox_seq"
+    /// Keyboard's own-container consume cursor — the highest `seq` it has applied. Lives in
+    /// `UserDefaults.standard` (NOT the hot DB / `sync_meta`), so it **survives a wholesale
+    /// full-replace** (which copies cold's `sync_meta` over hot's) — the same reason §1.8's
+    /// `active_im` lives there. Echoed on the relay so the app GCs at/below it.
+    static let consumedSeqKey = "last_consumed_im_seq"
+
+    /// App side: bump the App-Group seq counter, stamp each record, append to the inbox.
+    static func append(_ records: [IMInboxRecord], base: URL, defaults: UserDefaults) throws {
+        guard !records.isEmpty else { return }
+        let url = SyncPaths.imInbox(base)
+        var existing = (try? Data(contentsOf: url)).flatMap {
+            try? JSONDecoder().decode(IMInboxFile.self, from: $0)
+        }?.records ?? []
+        var seq = defaults.integer(forKey: seqCounterKey)
+        let stamped = records.map { rec -> IMInboxRecord in
+            seq += 1
+            return IMInboxRecord(op: rec.op, row: rec.row, seq: seq)
+        }
+        defaults.set(seq, forKey: seqCounterKey)
+        existing.append(contentsOf: stamped)
+        try FileManager.default.createDirectory(at: SyncPaths.inboxDir(base),
+                                                withIntermediateDirectories: true)
+        try atomicWrite(try JSONEncoder().encode(IMInboxFile(records: existing)), to: url)
+    }
+
+    /// Keyboard side: read WITHOUT deleting (read-only FA-off). Consumption is gated by the
+    /// caller's `last_consumed_im_seq` cursor.
+    static func read(base: URL) -> IMInboxFile? {
+        guard let data = try? Data(contentsOf: SyncPaths.imInbox(base)) else { return nil }
+        return try? JSONDecoder().decode(IMInboxFile.self, from: data)
+    }
+
+    /// App side: garbage-collect records the keyboard has already consumed (`seq <= cursor`,
+    /// the keyboard's relayed cursor). App→App Group is writable, so this always works.
+    static func gc(base: URL, throughSeq cursor: Int) {
+        let url = SyncPaths.imInbox(base)
+        guard let data = try? Data(contentsOf: url),
+              let file = try? JSONDecoder().decode(IMInboxFile.self, from: data) else { return }
+        let remaining = file.records.filter { $0.seq > cursor }
+        if remaining.count == file.records.count { return }
+        if remaining.isEmpty {
+            try? FileManager.default.removeItem(at: url)
+        } else if let encoded = try? JSONEncoder().encode(IMInboxFile(records: remaining)) {
+            try? atomicWrite(encoded, to: url)
+        }
+    }
+}
+
 enum RelayPrefSync {
     static let hanConvertKey = "han_convert_option"
     static let splitKeyboardKey = "split_keyboard_mode"
@@ -266,8 +340,10 @@ enum RelayPrefSync {
     }
 }
 
-func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
-    var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval, imSeq: Int = 0, prefs: RelayPrefState? = nil) -> String {
+    // imseq = the keyboard's last_consumed_im_seq cursor (§1.5); the app GCs im-inbox
+    // records at/below it. Always present so the app has a cursor to trim by.
+    var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts);imseq=\(imSeq)"
     if let prefs {
         payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);pts=\(prefs.updatedAt)"
         if let im = prefs.reverseLookupIM, let val = prefs.reverseLookupValue,
@@ -278,7 +354,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?, imseq: Int?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -301,6 +377,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
+    var imseq: Int?
     // Reverse-lookup IM/value are alphanumeric strings; truncate any concatenated
     // duplicate payload (defensive — the single-probe capture prevents duplicates).
     func stripJunk(_ s: Substring) -> String {
@@ -328,11 +405,14 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             let v = stripJunk(value); if !v.isEmpty { rlim = v }
         case "rlval":
             let v = stripJunk(value); if !v.isEmpty { rlval = v }
+        case "imseq":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            imseq = Int(digits)
         default:
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval, imseq: imseq)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
