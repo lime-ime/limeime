@@ -64,6 +64,7 @@ folder." There is no shared memory, RPC, or `UserDefaults` correctness signal.
 | `outbox.updated` | app | check for an export request |
 | `import.done` / `import.failed` | keyboard | reflect import status |
 | `fa.on` / `fa.off` | keyboard | FA state ping |
+| `sync.scan.done` | keyboard | a cold→hot scan just finished — the app dismisses its sync probe now (§1.7) |
 
 **Version markers live in cold's `sync_meta` table (§1.0.3), not a JSON sidecar:**
 
@@ -270,7 +271,7 @@ live Darwin notification. The doorbell only makes a live FA-on keyboard scan
    appearance that closed the live connection (wrong layout, no candidates until it
    reopened) — stays **structurally impossible**, because the self-marking epoch and the
    data are one
-   atomic file. This is why the restore probe (§1.7) dismissing "soon" no longer strands the
+   atomic file. This is why the restore probe (§1.9) dismissing "soon" no longer strands the
    keyboard: either the swap landed (done) or it didn't (cleanly re-applied), never a
    half-applied re-copy.
 2. The full replace is **wholesale**: hot ends up exactly as cold (= the restored
@@ -659,6 +660,36 @@ drain) and keyboard→own (hamburger) never race; the relay reflects whichever h
 clobber is gone because the keyboard **never reads cold** for these four. Reverse-lookup is
 per-IM via `LIMEPreferenceManager` pointed at the hot store; the pref inbox + `seq` live in
 `SyncContract.swift`, per §2.1.
+
+### 1.9 The sync probe — summon, trigger, dismiss on scan-done
+
+After a restore (§1.2) or an install / delete (§1.6) the app wants the cold→hot sync to
+happen **before the user leaves the app**, so the active IM shows on the **first** keyboard
+appearance instead of only after a re-open. But a keyboard extension is **dormant** — it runs
+only as some app's active input view — so the app **summons** it with an **invisible 1×1
+focused probe field** (`DBManagerView` for restore, `IMInstallView` for install). Focusing the
+field brings the keyboard up; its `viewWillAppear` enqueues `scanAndApply` on the keyboard's own
+queue. That is all the probe needs to do: **trigger** the scan.
+
+**Dismiss on `sync.scan.done`, not a fixed timer.** The probe used to hold the keyboard a fixed
+**3 s** because the scan had no app-visible receipt — a blank keyboard on screen far longer than
+the sub-second scan. Now the keyboard rings the name-only Darwin **`sync.scan.done`** the moment
+`scanAndApply` returns, and the probe dismisses on it (`ensureSyncDoneObserver`). So the popup
+lasts only as long as the scan actually takes.
+
+**Why "done", not "appeared".** Dismissing the instant the keyboard *appears* (right after the
+trigger) would unfocus the field and let iOS **suspend / kill the extension mid-scan** — the
+sync would be cut and re-run (with `同步中`) on the user's first real open. Waiting for the
+**done** ping keeps the extension alive through the scan, so it is **guaranteed complete**. The
+3 s window stays only as a **fallback** for a missed signal; the scan is idempotent and re-runs
+on the next appearance regardless.
+
+**The ping is name-only — the GC seq is not on it.** Darwin notifications carry **no payload**,
+and a dynamic `sync.scan.done.<seq>` name can't be observed without registering for every Darwin
+notification and string-parsing (rejected). So the ping only says *"done"*; the
+`last_consumed_im_seq` cursor for the inbox GC (§1.5) rides the **relay** (typed text), which the
+app already reads. The GC is **safe at any timing** — it only trims records the cursor has
+confirmed consumed — so it needs neither the exact ping timing nor a payload.
 
 ---
 
