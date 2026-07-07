@@ -26,6 +26,8 @@ struct IMInstallView: View {
     // appearance instead of only after a re-open. Mirrors DBManagerView's sync probe.
     @State private var probeText = ""
     @FocusState private var probeFocused: Bool
+    @State private var probeActive = false
+    @State private var syncDoneObserver: SyncSignalObserver?
     @State private var statusMessage = ""
 
     // Cloud download state
@@ -177,6 +179,7 @@ struct IMInstallView: View {
         .onAppear {
             refreshInstallStates()
             prepareExternalImportIfNeeded()
+            ensureSyncDoneObserver()
         }
         .onReceive(NotificationCenter.default.publisher(for: .limeExternalImport)) { note in
             if let url = note.object as? URL { prepareExternalImport(url) }
@@ -242,9 +245,23 @@ struct IMInstallView: View {
     /// extension runs its cold→hot sync now — the active IM then shows on the first
     /// keyboard appearance instead of only after a re-open.
     private func triggerSyncProbe() {
+        probeActive = true
         probeFocused = true
+        // Dismiss the instant the keyboard rings `.syncScanDone` (its scan finished) — the 3 s
+        // window is only a fallback for a missed signal. See DBManagerView for the rationale.
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            probeActive = false
             probeFocused = false
+        }
+    }
+
+    private func ensureSyncDoneObserver() {
+        guard syncDoneObserver == nil else { return }
+        syncDoneObserver = SyncSignalObserver(signal: .syncScanDone) {
+            if probeActive {
+                probeActive = false
+                probeFocused = false
+            }
         }
     }
 

@@ -106,6 +106,10 @@ enum SyncSignal: String {
     case importFailed = "org.limeime.import.failed"
     case faOn = "org.limeime.fa.on"
     case faOff = "org.limeime.fa.off"
+    /// Keyboard → app: a cold→hot scan just finished (hot is synced). Name-only (Darwin
+    /// carries no payload); the app uses it to dismiss the sync probe the instant the sync
+    /// is done, instead of holding a fixed window. The seq for GC rides the relay, not this.
+    case syncScanDone = "org.limeime.sync.scan.done"
 }
 
 func postSyncSignal(_ signal: SyncSignal) {

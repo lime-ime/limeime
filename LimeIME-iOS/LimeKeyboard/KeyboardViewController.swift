@@ -366,6 +366,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                                           forKey: "keyboard_db_last_error")
                 DispatchQueue.main.async { [weak self] in self?.resolveSyncToast() }
             }
+            // The cold→hot scan attempt is done (hot is synced). Ring the app so a sync probe
+            // dismisses now — no fixed hold, and the sync is guaranteed complete first. Darwin
+            // is name-only; the seq for GC rides the relay, not this.
+            postSyncSignal(.syncScanDone)
         }
     }
 

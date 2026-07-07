@@ -31,6 +31,7 @@ struct DBManagerView: View {
     @State private var faPingAt: TimeInterval?
     @State private var hasFreshFAEvidence = false
     @State private var faPingObserver: FAPingObserver?
+    @State private var syncDoneObserver: SyncSignalObserver?
     @State private var faPollTimer: Timer?
     @State private var backupAwaitingReceipt = false
     @State private var faPingSeenDuringBackup = false
@@ -114,6 +115,7 @@ struct DBManagerView: View {
             .background(Color(UIColor.systemBackground).ignoresSafeArea())
             .onAppear {
                 ensureFAPingObserver()
+                ensureSyncDoneObserver()
                 refreshFAState()
                 startFAPolling()
                 triggerProbeIfNeeded()
@@ -252,6 +254,19 @@ struct DBManagerView: View {
               let data = try? Data(contentsOf: SyncPaths.heartbeat(baseURL))
         else { return nil }
         return try? JSONDecoder().decode(KeyboardHeartbeat.self, from: data)
+    }
+
+    /// Dismiss the sync probe the moment the keyboard signals its cold→hot scan finished —
+    /// the sync is complete (guaranteed), so no fixed hold. The 3 s window in triggerSyncProbe
+    /// stays only as a fallback if this signal is missed.
+    private func ensureSyncDoneObserver() {
+        guard syncDoneObserver == nil else { return }
+        syncDoneObserver = SyncSignalObserver(signal: .syncScanDone) {
+            if syncProbeActive {
+                syncProbeActive = false
+                probeFocused = false
+            }
+        }
     }
 
     private func ensureFAPingObserver() {
@@ -496,9 +511,10 @@ struct DBManagerView: View {
     private func triggerSyncProbe() {
         syncProbeActive = true
         probeFocused = true
-        // Hold the keyboard on screen long enough for the extension to launch + run its
-        // cold→hot scan, then release. The scan has no app-visible receipt (unlike
-        // backup), so use a fixed window; it is idempotent and re-runs on next appear.
+        // The keyboard now rings `.syncScanDone` when its scan finishes, so the probe
+        // dismisses via ensureSyncDoneObserver — usually well under a second, and only after
+        // the sync is actually complete. This fixed window is a FALLBACK for the rare miss
+        // (extension failed to launch); the scan is idempotent and re-runs on next appearance.
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             syncProbeActive = false
             probeFocused = false
