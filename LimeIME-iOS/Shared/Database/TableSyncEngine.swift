@@ -6,27 +6,20 @@ final class TableSyncEngine {
     private let appGroupBaseURL: URL
     private let hotDatabaseURL: URL
     private let dbServer: DBServer
-    /// Own-container store for the `im`-inbox consume cursor (`UserDefaults.standard` in the
-    /// keyboard; an isolated suite in tests). Survives the full-replace (§1.5).
-    private let consumeDefaults: UserDefaults
 
     init(appGroupBaseURL: URL,
          hotDatabaseURL: URL,
-         dbServer: DBServer = .shared,
-         consumeDefaults: UserDefaults = .standard) {
+         dbServer: DBServer = .shared) {
         self.appGroupBaseURL = appGroupBaseURL
         self.hotDatabaseURL = hotDatabaseURL
         self.dbServer = dbServer
-        self.consumeDefaults = consumeDefaults
     }
 
     convenience init(locator: SyncDatabaseLocator = .production(),
-                     dbServer: DBServer = .shared,
-                     consumeDefaults: UserDefaults = .standard) {
+                     dbServer: DBServer = .shared) {
         self.init(appGroupBaseURL: locator.appGroupDirectory,
                   hotDatabaseURL: locator.hotDatabaseURL,
-                  dbServer: dbServer,
-                  consumeDefaults: consumeDefaults)
+                  dbServer: dbServer)
     }
 
     /// Returns `true` when a cold→hot change was applied to hot's IM data (full replace
@@ -42,7 +35,8 @@ final class TableSyncEngine {
 
         let coldSnapshotURL = SyncPaths.coldDB(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: coldSnapshotURL.path) else {
-            try drainIMInboxIfNeeded()
+            // No cold snapshot yet (fresh keyboard / App Group unavailable) → nothing to
+            // sync; the keyboard reads its bundled-default `im` (or the last `im.json`, §1.5).
             return false
         }
 
@@ -66,7 +60,6 @@ final class TableSyncEngine {
         let epochApplied = coldEpoch == appliedEpoch || coldEpoch == hotEpoch
 
         if epochApplied, coldGeneration == appliedGeneration {
-            try drainIMInboxIfNeeded()
             return false
         }
 
@@ -80,21 +73,17 @@ final class TableSyncEngine {
             let refreshedHotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
             try Self.stampAppliedEpoch(coldEpoch, on: refreshedHotMeta)
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
-            // The snapshot already carries the authoritative `im` table, so the pending im
-            // inbox is SUPERSEDED — do NOT apply it (a not-yet-drained install would land on
-            // top of the restore, resurrecting a wiped IM; a stale delete would remove a
-            // restored one). Just advance the cursor past every current record so a later
-            // incremental drain skips them; records written AFTER this restore still apply.
-            // The cursor lives in UserDefaults (survives the swap). Lifecycle is rev-gated.
-            markIMInboxConsumed()
+            // `im` is not synced into hot; the keyboard reads it from `im.json` (§1.5), which
+            // the app republishes on restore. Hot's own `im` table rides along in the whole-file
+            // swap but is no longer read on the keyboard side.
             return true
         }
 
         // Same lineage (applied), generation moved → per-table incremental reconcile.
+        // (`im` is not synced here — it is read from `im.json`, §1.5.)
         try applyIncremental(from: coldSnapshotURL)
         try Self.stampAppliedEpoch(coldEpoch, on: hotMeta)
         try hotMeta.setAppliedGeneration(coldGeneration)
-        try drainIMInboxIfNeeded()
         return true
     }
 
@@ -277,41 +266,6 @@ final class TableSyncEngine {
                         to: SyncPaths.editorRefreshReceipt(appGroupBaseURL))
     }
 
-    private func drainIMInboxIfNeeded() throws {
-        guard let inbox = IMInbox.read(base: appGroupBaseURL), !inbox.records.isEmpty else { return }
-        // §1.5: consume via an own-container cursor (UserDefaults, so it survives a
-        // full-replace) — never by deleting the App Group inbox (read-only FA-off). Skip
-        // already-consumed records; the app GCs the file via the relayed cursor.
-        let cursor = consumeDefaults.integer(forKey: IMInbox.consumedSeqKey)
-        let pending = inbox.records.filter { $0.seq > cursor }
-        guard !pending.isEmpty else { return }
-
-        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
-        try connection.write { db in
-            try Self.ensureIMTable(in: db)
-            for record in pending {
-                switch record.op {
-                case .upsert:
-                    try Self.upsertIM(record.row, in: db)
-                case .delete:
-                    try Self.deleteIM(record.row, in: db)
-                }
-            }
-        }
-        let applied = pending.map(\.seq).max() ?? cursor
-        consumeDefaults.set(max(cursor, applied), forKey: IMInbox.consumedSeqKey)
-    }
-
-    /// After a full-replace the snapshot is authoritative for `im`, so the pending inbox is
-    /// superseded — advance the cursor past every current record WITHOUT applying it, so a
-    /// later drain skips them (records written after the restore still apply).
-    private func markIMInboxConsumed() {
-        guard let inbox = IMInbox.read(base: appGroupBaseURL) else { return }
-        let maxSeq = inbox.records.map(\.seq).max() ?? 0
-        let cursor = consumeDefaults.integer(forKey: IMInbox.consumedSeqKey)
-        if maxSeq > cursor { consumeDefaults.set(maxSeq, forKey: IMInbox.consumedSeqKey) }
-    }
-
     private func readIMLifecycleRecords() throws -> [IMLifecycleRecord] {
         let inboxURL = SyncPaths.imLifecycleInbox(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: inboxURL.path) else { return [] }
@@ -326,7 +280,9 @@ final class TableSyncEngine {
         let coldRevisions = try revisions(in: coldSnapshotURL)
         let hotRevisions = try revisions(in: hotDatabaseURL)
         let tables = Set(coldRevisions.keys).union(hotRevisions.keys).sorted()
-        guard !tables.isEmpty else { return }
+        // An empty `tables` set (a metadata-only edit bumps `generation`, not any per-table
+        // `rev`) just no-ops the loop below; the caller still stamps `applied_generation` and
+        // returns true, so the keyboard rebuilds and re-reads `im.json` (§1.5).
 
         // Read-only: apply lifecycle records per table (rev-gated below), never write the
         // App Group back (§1.6). A consumed record simply lingers until the app GCs it; the
@@ -381,6 +337,12 @@ final class TableSyncEngine {
                 try applyInstallLifecycle(records, for: table)
             }
         }
+
+        // §1.5: `im` is NOT synced into hot. It is app-published as `im.json` and read by the
+        // keyboard directly (no mirror, no cold-DB open). A metadata-only edit changes no
+        // per-table `rev`, so `tables` is empty and this loop no-ops — but the caller still
+        // stamps `applied_generation` and returns true, so the runtime rebuild re-reads the
+        // fresh `im.json`. The old wholesale hot `im` mirror is gone.
     }
 
     private func applyDeleteLifecycle(_ records: [IMLifecycleRecord], for table: String) throws {
@@ -475,53 +437,6 @@ final class TableSyncEngine {
 
     private static func deleteMeta(_ key: String, in db: Database) throws {
         try db.execute(sql: "DELETE FROM sync_meta WHERE key = ?", arguments: [key])
-    }
-
-    private static func ensureIMTable(in db: Database) throws {
-        try db.execute(sql: """
-            CREATE TABLE IF NOT EXISTS im (
-                _id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                code       TEXT,
-                title      TEXT,
-                desc       TEXT,
-                keyboard   TEXT,
-                disable    BOOLEAN,
-                selkey     TEXT,
-                endkey     TEXT,
-                spacestyle TEXT
-            )
-            """)
-    }
-
-    private static func upsertIM(_ row: [String: String?], in db: Database) throws {
-        guard let code = row["code"] ?? nil, !code.isEmpty,
-              let title = row["title"] ?? nil, !title.isEmpty
-        else { return }
-        try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
-                       arguments: [code, title])
-        try db.execute(sql: """
-            INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, arguments: [
-                code,
-                title,
-                row["desc"] ?? nil,
-                row["keyboard"] ?? nil,
-                row["disable"] ?? nil,
-                row["selkey"] ?? nil,
-                row["endkey"] ?? nil,
-                row["spacestyle"] ?? nil
-            ])
-    }
-
-    private static func deleteIM(_ row: [String: String?], in db: Database) throws {
-        guard let code = row["code"] ?? nil, !code.isEmpty else { return }
-        if let title = row["title"] ?? nil, !title.isEmpty {
-            try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?",
-                           arguments: [code, title])
-        } else {
-            try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [code])
-        }
     }
 
     private static func quotedIdentifier(_ identifier: String) -> String {

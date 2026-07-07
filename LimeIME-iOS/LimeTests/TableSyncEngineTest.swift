@@ -12,22 +12,6 @@ final class TableSyncEngineTest: XCTestCase {
         return url
     }
 
-    private var testSuiteNames: [String] = []
-
-    override func tearDown() {
-        for name in testSuiteNames { UserDefaults().removePersistentDomain(forName: name) }
-        testSuiteNames = []
-        super.tearDown()
-    }
-
-    /// A fresh UserDefaults suite for the im-inbox seq counter + consume cursor, so the
-    /// seq-guarded drain is deterministic and isolated between tests.
-    private func isolatedDefaults() throws -> UserDefaults {
-        let name = "test.iminbox.\(UUID().uuidString)"
-        testSuiteNames.append(name)
-        return try XCTUnwrap(UserDefaults(suiteName: name))
-    }
-
     private func makeDatabase(at url: URL,
                               rows: [(code: String, word: String, score: Int)] = [],
                               epoch: String? = nil,
@@ -283,6 +267,149 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
+    // MARK: - Repro helpers for "full-replace IM vanishes after later incremental install"
+
+    /// A "downloaded" cloud IM `.limedb`: content rows live in a `custom` table (the cloud
+    /// export format `importFromAttachedDB` reads from). No `im` table, so registerIM's
+    /// `'name'` row is what surfaces the IM (mirrors the real download install).
+    private func makeCloudSourceDB(at url: URL,
+                                   rows: [(code: String, word: String, score: Int)]) throws {
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        let queue = try DatabaseQueue(path: url.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE custom (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT, word TEXT, score INTEGER DEFAULT 0
+                )
+                """)
+            for r in rows {
+                try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                               arguments: [r.code, r.word, r.score])
+            }
+        }
+    }
+
+    /// Faithful device install: importDatabaseFile (importFromAttachedDB publish:false +
+    /// lifecycle .install + markTableChangedAndPublish) then registerIM (im row + im inbox
+    /// + publish). Mirrors IMStoreView.importDownloaded.
+    private func installIMRealPath(server: DBServer,
+                                   appGroup: URL,
+                                   tableName: String,
+                                   imName: String,
+                                   label: String,
+                                   keyboardId: String,
+                                   contentRows: [(code: String, word: String, score: Int)]) throws {
+        let src = appGroup.appendingPathComponent("dl-\(tableName).limedb")
+        try makeCloudSourceDB(at: src, rows: contentRows)
+        defer { try? FileManager.default.removeItem(at: src) }
+        try server.importFromAttachedDB(sourcePath: src.path, tableName: tableName, publish: false)
+        try server.writeIMLifecycleRecord(table: tableName, action: .install,
+                                          preserveLearning: false, postSignal: false)
+        try server.markTableChangedAndPublish(tableName)
+        try server.registerIM(imName: imName, tableName: tableName,
+                              label: label, keyboardId: keyboardId)
+    }
+
+    private func syncMetaDump(in dbURL: URL) throws -> [String: String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            var out: [String: String] = [:]
+            for row in try Row.fetchAll(db, sql: "SELECT key, value FROM sync_meta") {
+                out[row["key"] as String? ?? ""] = row["value"] as String? ?? ""
+            }
+            return out
+        }
+    }
+
+    private func imTitlesForCode(_ code: String, in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            try Row.fetchAll(db,
+                             sql: "SELECT title, desc FROM im WHERE code = ? ORDER BY title",
+                             arguments: [code]).map {
+                "\($0["title"] as String? ?? "")=\($0["desc"] as String? ?? "")"
+            }
+        }
+    }
+
+    /// Repro of the device bug: an IM delivered to hot via the epoch FULL-REPLACE (phonetic)
+    /// must NOT vanish from the keyboard picker (getAllImConfigs enabled) after a later IM
+    /// (dayi) arrives via the INCREMENTAL path. Cold keeps both throughout.
+    func testFullReplacedIMSurvivesLaterIncrementalInstall() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let coldDir = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        let coldURL = coldDir.appendingPathComponent("lime.db")
+        let hotURL = hotDir.appendingPathComponent("lime.db")
+
+        func log(_ s: String) { print(s) }
+
+        // (a) restore-default: build a full cold DB, stamp a FRESH epoch, publish.
+        let coldServer = DBServer(_testDatabaseDirectory: coldDir)
+        _ = try coldServer.getAllImConfigs()          // opens datasource → full schema
+        _ = try SyncMetaStore(databaseURL: coldURL).replaceEpochUUID()
+        try ColdPublisher(liveColdDatabaseURL: coldURL, appGroupBaseURL: coldDir).publish()
+
+        // (b) app installs phonetic via the real download path.
+        try installIMRealPath(server: coldServer, appGroup: coldDir,
+                              tableName: "phonetic", imName: "phonetic",
+                              label: "注音", keyboardId: "lime",
+                              contentRows: [("1", "ㄅ", 0), ("2", "ㄉ", 0)])
+
+        // (c) keyboard first appearance → full replace (hot bootstrap epoch != cold epoch).
+        let hotServer = DBServer(_testDatabaseDirectory: hotDir)
+        // §1.5: the keyboard reads its IM set from `im.json` (published by the installs above),
+        // not hot's `im` table. Inject the reader so getAllImConfigs resolves via im.json.
+        hotServer._testImConfigReader = ImJsonLimeDB(imJsonURL: SyncPaths.imJSON(coldDir),
+                                                     fallback: { nil })
+        let applied1 = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
+                                           dbServer: hotServer).scanAndApply()
+        let enabled1 = try hotServer.getAllImConfigs().filter { $0.enabled }.map { $0.tableNick }.sorted()
+        log("REPRO (c) applied1=\(applied1) enabled=\(enabled1)")
+        log("REPRO (c) COLD meta=\(try syncMetaDump(in: SyncPaths.coldDB(coldDir)))")
+        log("REPRO (c) HOT  meta=\(try syncMetaDump(in: hotURL))")
+        log("REPRO (c) HOT phonetic im rows=\(try imTitlesForCode("phonetic", in: hotURL))")
+        XCTAssertTrue(applied1, "phonetic install must full-replace hot")
+        XCTAssertTrue(enabled1.contains("phonetic"), "phonetic must be enabled on hot after full-replace; got \(enabled1)")
+
+        // (d) app installs dayi via the real download path.
+        try installIMRealPath(server: coldServer, appGroup: coldDir,
+                              tableName: "dayi", imName: "dayi",
+                              label: "大易", keyboardId: "lime_dayi",
+                              contentRows: [("a", "日", 0), ("b", "月", 0)])
+
+        // (e) keyboard second appearance → incremental sync.
+        let applied2 = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
+                                           dbServer: hotServer).scanAndApply()
+
+        let coldConfigs = try coldServer.getAllImConfigs().filter { $0.enabled }.map { $0.tableNick }.sorted()
+        let hotAll = try hotServer.getAllImConfigs().map { "\($0.tableNick):\($0.enabled)" }
+        let enabled2 = try hotServer.getAllImConfigs().filter { $0.enabled }.map { $0.tableNick }.sorted()
+        log("REPRO (f) applied2=\(applied2) enabledHot=\(enabled2) allHot=\(hotAll) enabledCold=\(coldConfigs)")
+        log("REPRO (f) COLD meta=\(try syncMetaDump(in: SyncPaths.coldDB(coldDir)))")
+        log("REPRO (f) HOT  meta=\(try syncMetaDump(in: hotURL))")
+        log("REPRO (f) HOT phonetic im rows=\(try imTitlesForCode("phonetic", in: hotURL))")
+        log("REPRO (f) HOT dayi im rows=\(try imTitlesForCode("dayi", in: hotURL))")
+        log("REPRO (f) HOT phonetic content exists=\(try tableExists("phonetic", in: hotURL)) dayi content exists=\(try tableExists("dayi", in: hotURL))")
+
+        // Cold always keeps both.
+        XCTAssertTrue(coldConfigs.contains("phonetic") && coldConfigs.contains("dayi"),
+                      "cold must keep both IMs; got \(coldConfigs)")
+        // (f) THE BUG: phonetic (full-replace delivered) must STILL be enabled alongside dayi.
+        XCTAssertTrue(enabled2.contains("dayi"),
+                      "dayi installed incrementally must be enabled; got \(hotAll)")
+        XCTAssertTrue(enabled2.contains("phonetic"),
+                      "REGRESSION: phonetic (full-replace delivered) vanished after dayi's incremental install; got enabled=\(enabled2) all=\(hotAll)")
+    }
+
     func testScanAndApplyImportsChangedTableFromPublishedCold() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -441,24 +568,28 @@ final class TableSyncEngineTest: XCTestCase {
         try coldServer.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "lime")
         try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime")
 
-        // registerIM must have written the im inbox AND published cold.limedb.
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.imInbox(coldDir).path),
-                      "install must write the im inbox")
+        // registerIM must have published cold.limedb (the generation bump that re-mirrors
+        // cold's `im` into hot — §1.5). No im inbox any more.
         XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.coldDB(coldDir).path),
                       "install must publish cold.limedb")
 
         // Keyboard side: real sync.
         let hotDB = try LimeDB(path: hotURL.path)
         let hotServer = DBServer(_testDatasource: hotDB)
+        // §1.5: the keyboard resolves its IM set from `im.json` (published by registerIM), not
+        // hot's `im` table (no mirror). Inject the reader so getAllImConfigs reads im.json.
+        hotServer._testImConfigReader = ImJsonLimeDB(imJsonURL: SyncPaths.imJSON(coldDir),
+                                                     fallback: { nil })
         let applied = try TableSyncEngine(appGroupBaseURL: coldDir,
                                           hotDatabaseURL: hotURL,
                                           dbServer: hotServer).scanAndApply()
 
-        let rows = try imRows(in: hotURL)
-        XCTAssertTrue(rows.contains { $0.hasPrefix("cj|") },
-                      "hot must hold cj after real install+sync; applied=\(applied) rows=\(rows)")
-        XCTAssertTrue(rows.contains { $0.hasPrefix("dayi|") },
-                      "hot must hold dayi after real install+sync; applied=\(applied) rows=\(rows)")
+        // The installed IMs reach the keyboard via `im.json`, not hot's `im` table.
+        let published = try hotServer.getAllImConfigs().map { $0.tableNick }
+        XCTAssertTrue(published.contains("cj"),
+                      "cj must be in im.json after real install; applied=\(applied) got=\(published)")
+        XCTAssertTrue(published.contains("dayi"),
+                      "dayi must be in im.json after real install; applied=\(applied) got=\(published)")
         XCTAssertTrue(applied,
                       "scanAndApply must report a change so the keyboard reloads its IM list")
 
@@ -544,16 +675,19 @@ final class TableSyncEngineTest: XCTestCase {
         try coldServer.registerIM(imName: "cj", tableName: "cj", label: "倉頡", keyboardId: "lime")
         try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime")
 
-        // Keyboard first sync → hot gets the enabled IMs.
+        // Keyboard first sync → the IM set reaches the keyboard via `im.json`.
         let hotServer = DBServer(_testDatabaseDirectory: hotDir)
+        hotServer._testImConfigReader = ImJsonLimeDB(imJsonURL: SyncPaths.imJSON(coldDir),
+                                                     fallback: { nil })
         _ = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
                                 dbServer: hotServer).scanAndApply()
         XCTAssertTrue(try hotServer.getAllImConfigs().contains { $0.tableNick == "cj" && $0.enabled },
-                      "baseline: cj enabled on hot after install")
+                      "baseline: cj enabled via im.json after install")
 
         // RESTORE: stamp a fresh cold epoch + republish (publishRestoredCold), keyboard re-syncs.
         _ = try SyncMetaStore(databaseURL: coldURL).replaceEpochUUID()
         try ColdPublisher(liveColdDatabaseURL: coldURL, appGroupBaseURL: coldDir).publish()
+        coldServer.publishImJson()   // §1.5: publishRestoredCold republishes im.json
         let applied = try TableSyncEngine(appGroupBaseURL: coldDir, hotDatabaseURL: hotURL,
                                           dbServer: hotServer).scanAndApply()
 
@@ -644,122 +778,75 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertTrue(codes.contains("phonetic"))
     }
 
-    /// A stale, ALREADY-CONSUMED im-inbox record (lingering because the keyboard can't delete
-    /// the App Group FA-off) must NOT resurrect after a full-replace — the seq cursor lives in
-    /// UserDefaults (survives the whole-file swap), so the record stays below it. This is the
-    /// restore-to-default → install-one → "picker shows the old IMs, only the new works" bug.
-    func testStaleConsumedIMInboxNotResurrectedByFullReplace() throws {
+    /// §1.5: a metadata-only edit on cold bumps `generation` with no per-table `rev` change.
+    /// scanAndApply must report the change (applied=true → the keyboard rebuilds and re-reads
+    /// `im.json`) and advance `applied_generation` — but it must NOT touch hot's `im` table:
+    /// the wholesale mirror is gone, `im` now propagates via `im.json`.
+    func testMetadataEditBumpsGenerationWithoutMirroringIntoHot() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
         let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
-        let hot = hotDir.appendingPathComponent("lime.db")
-        let cold = appGroup.appendingPathComponent("lime.db")
-        try makeIMDatabase(at: cold,
-                           rows: [
-                               ["code": "restored", "title": "keyboard", "desc": "Restored", "keyboard": "lime"]
-                           ],
-                           epoch: "epoch-restored",
-                           generation: 1)
-        try makeIMDatabase(at: hot,
-                           rows: [
-                               ["code": "old", "title": "keyboard", "desc": "Old", "keyboard": "oldkb"]
-                           ],
-                           epoch: "epoch-old",
-                           generation: 1)
-        // A stale im record the keyboard has ALREADY consumed: its seq (1) is at/below the
-        // cursor, which lives outside the hot DB so the full-replace can't reset it.
-        let suite = try isolatedDefaults()
-        try IMInbox.append([
-            IMInboxRecord(op: .upsert, row: ["code": "stale", "title": "keyboard", "desc": "Stale", "keyboard": "stale"])
-        ], base: appGroup, defaults: suite)
-        suite.set(1, forKey: IMInbox.consumedSeqKey)
-        let server = DBServer(_testDatabaseDirectory: hotDir)
-
-        try publish(cold, appGroup: appGroup)
-        try TableSyncEngine(appGroupBaseURL: appGroup,
-                            hotDatabaseURL: hot,
-                            dbServer: server,
-                            consumeDefaults: suite).scanAndApply()
-
-        let rows = try imRows(in: hot)
-        XCTAssertTrue(rows.contains("restored|keyboard|Restored|lime"))
-        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") },
-                       "consumed stale record must not resurrect after the full-replace; got \(rows)")
-    }
-
-    /// The reported bug, end-to-end through the picker's real source (`getAllImConfigs`):
-    /// restore-to-default wipes hot; the pre-restore installs linger in the inbox but are
-    /// already consumed (cursor); installing ONE new IM must leave ONLY that IM enabled — the
-    /// wiped ones do not reappear.
-    func testInstallAfterRestoreWipeEnablesOnlyTheNewIM() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
-        let hot = hotDir.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
         let coldSnapshot = SyncPaths.coldDB(appGroup)
-        let server = DBServer(_testDatabaseDirectory: hotDir)
-        let suite = try isolatedDefaults()
 
-        // Pre-restore: cj + dayi were installed (inbox seq 1,2) and already consumed.
-        try IMInbox.append([
-            IMInboxRecord(op: .upsert, row: ["code": "cj", "title": "倉頡", "desc": "", "keyboard": "lime"]),
-            IMInboxRecord(op: .upsert, row: ["code": "dayi", "title": "大易", "desc": "", "keyboard": "lime"])
-        ], base: appGroup, defaults: suite)
-        suite.set(2, forKey: IMInbox.consumedSeqKey)
-
-        // restore-to-default left hot wiped (empty im, same lineage as the restored cold).
-        try makeIMDatabase(at: hot, rows: [], epoch: "epoch-default", generation: 1, applied: true)
-        // Then install phonetic: cold now carries it (gen bumped) + inbox gets phonetic@3.
+        // Cold snapshot (generation 2): phonetic's desc changed + a newly-added dayi row.
         try makeIMDatabase(at: coldSnapshot, rows: [
-            ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"]
-        ], epoch: "epoch-default", generation: 2)
-        try IMInbox.append([
-            IMInboxRecord(op: .upsert, row: ["code": "phonetic", "title": "注音", "desc": "", "keyboard": "lime"])
-        ], base: appGroup, defaults: suite)
+            ["code": "phonetic", "title": "注音", "desc": "Bopomofo", "keyboard": "lime"],
+            ["code": "dayi", "title": "大易", "desc": "", "keyboard": "lime_dayi"]
+        ], epoch: "epoch-a", generation: 2)
 
-        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
-                                dbServer: server, consumeDefaults: suite).scanAndApply()
+        // Hot converged at generation 1: only the OLD phonetic label, no dayi.
+        try makeIMDatabase(at: hot, rows: [
+            ["code": "phonetic", "title": "注音", "desc": "Old", "keyboard": "lime"]
+        ], epoch: "epoch-a", generation: 1, applied: true)
 
-        let enabled = try server.getAllImConfigs().filter { $0.enabled }.map { $0.tableNick }.sorted()
-        XCTAssertEqual(enabled, ["phonetic"],
-                       "only the newly-installed IM should be enabled; the wiped cj/dayi must not reappear. got \(enabled)")
+        let applied = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+
+        // Generation moved → applied=true so the keyboard rebuilds and re-reads `im.json`.
+        XCTAssertTrue(applied, "a generation bump must report applied=true so the keyboard rebuilds")
+        XCTAssertEqual(try SyncMetaStore(databaseURL: hot).appliedGeneration(), 2)
+        // The mirror is GONE: hot's `im` is left untouched (still the old single phonetic row).
+        // `im` propagates to the keyboard via `im.json`, not into hot's table.
+        XCTAssertEqual(try imRows(in: hot),
+                       ["phonetic|注音|Old|lime"],
+                       "hot's `im` must be untouched — no wholesale mirror (§1.5)")
     }
 
-    /// A full replace must NOT apply a pending (un-consumed, seq > cursor) im record — the
-    /// snapshot is authoritative, so applying it would land a stale IM on top of the restore.
-    /// It marks the record consumed (cursor advances) instead.
-    func testFullReplaceMarksPendingInboxConsumedWithoutApplying() throws {
+    /// §1.5: the app publishes cold's `im` as `im.json` (rows + grouped configs); the keyboard's
+    /// ImJsonLimeDB reads it back — getAllImConfigs and getImConfig — with no cold-DB open and
+    /// no hot mirror. Also verifies the emoji-forward and the absent-file fallback.
+    func testImJsonPublishRoundTripAndFallback() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
-        let hot = hotDir.appendingPathComponent("lime.db")
-        let cold = appGroup.appendingPathComponent("lime.db")
-        try makeIMDatabase(at: cold, rows: [
-            ["code": "restored", "title": "注音", "desc": "", "keyboard": "lime"]
-        ], epoch: "epoch-new", generation: 1)
-        try makeIMDatabase(at: hot, rows: [
-            ["code": "old", "title": "大易", "desc": "", "keyboard": "old"]
-        ], epoch: "epoch-old", generation: 1)
-        // A pending record (seq 1 > cursor 0) for a stale IM the restore snapshot does NOT have.
-        let suite = try isolatedDefaults()
-        try IMInbox.append([
-            IMInboxRecord(op: .upsert, row: ["code": "stale", "title": "舊", "desc": "", "keyboard": "lime"])
-        ], base: appGroup, defaults: suite)
-        let server = DBServer(_testDatabaseDirectory: hotDir)
-        try publish(cold, appGroup: appGroup)
+        let coldDir = root.appendingPathComponent("app-group", isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
 
-        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
-                                dbServer: server, consumeDefaults: suite).scanAndApply()
+        let coldServer = DBServer(_testDatabaseDirectory: coldDir)
+        try coldServer.registerIM(imName: "dayi", tableName: "dayi", label: "大易", keyboardId: "lime_dayi")
 
-        let rows = try imRows(in: hot)
-        XCTAssertTrue(rows.contains { $0.hasPrefix("restored|") })
-        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") },
-                       "un-consumed record must NOT be applied on the restore snapshot; got \(rows)")
-        XCTAssertEqual(suite.integer(forKey: IMInbox.consumedSeqKey), 1,
-                       "cursor advanced past the superseded record so a later drain skips it")
+        // registerIM published im.json — the keyboard reads it back without opening cold.
+        let imJsonURL = SyncPaths.imJSON(coldDir)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: imJsonURL.path),
+                      "registerIM must publish im.json")
+
+        let reader = ImJsonLimeDB(imJsonURL: imJsonURL, fallback: { nil })
+        // getAllImConfigs (the picker path) matches cold's real grouping.
+        XCTAssertEqual(try reader.getAllImConfigs().map { $0.tableNick }.sorted(),
+                       try coldServer.getAllImConfigs().map { $0.tableNick }.sorted(),
+                       "im.json getAllImConfigs must match cold's")
+        XCTAssertTrue(try reader.getAllImConfigs().contains { $0.tableNick == "dayi" && $0.keyboardId == "lime_dayi" },
+                      "im.json must surface dayi with its keyboard id")
+        // getImConfig round-trips a value set on cold — through a republished im.json.
+        coldServer.setImConfig("dayi", "imkeys", "abcdef")   // setImConfig republishes im.json
+        XCTAssertEqual(reader.getImConfig("dayi", "imkeys"), "abcdef",
+                       "getImConfig must read a value set on cold via the republished im.json")
+        // Emoji is excluded from im.json → an emoji lookup forwards to the fallback (nil here).
+        XCTAssertNil(reader.getImConfig("emoji", "version"))
+
+        // Absent im.json → empty / nil via the fallback, never a crash.
+        let missing = ImJsonLimeDB(imJsonURL: coldDir.appendingPathComponent("nope.json"), fallback: { nil })
+        XCTAssertEqual(try missing.getAllImConfigs().count, 0)
+        XCTAssertNil(missing.getImConfig("dayi", "keyboard"))
     }
 
     func testSameGenerationAndEpochNoOpsEvenWhenRevisionsDiffer() throws {
@@ -834,37 +921,6 @@ final class TableSyncEngineTest: XCTestCase {
 
         XCTAssertFalse(try tableExists("custom", in: hot))
         XCTAssertEqual(try hotMeta.revision(forTable: "custom"), 0)
-    }
-
-    func testScanAndApplyDrainsIMInboxWithoutColdGenerationChange() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let hot = root.appendingPathComponent("hot/lime.db")
-        let coldSnapshot = SyncPaths.coldDB(appGroup)
-        try makeIMDatabase(at: coldSnapshot, rows: [], applied: false)
-        try makeIMDatabase(at: hot,
-                           rows: [
-                               ["code": "old", "title": "keyboard", "desc": "Old", "keyboard": "oldkb"]
-                           ],
-                           applied: true)
-        // Isolated suite holds the seq counter (append stamps 1,2) + the consume cursor
-        // (fresh 0), so the seq-guarded drain applies both records deterministically.
-        let suite = try isolatedDefaults()
-        try IMInbox.append([
-            IMInboxRecord(op: .upsert, row: [
-                "code": "custom", "title": "keyboard", "desc": "New", "keyboard": "lime"
-            ]),
-            IMInboxRecord(op: .delete, row: ["code": "old"])
-        ], base: appGroup, defaults: suite)
-
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
-                            consumeDefaults: suite).scanAndApply()
-
-        XCTAssertEqual(try imRows(in: hot), ["custom|keyboard|New|lime"])
-        XCTAssertTrue(try imRows(in: coldSnapshot).isEmpty)
-        // Consumed via the cursor, NOT by deleting the App Group inbox (read-only FA-off).
-        XCTAssertEqual(suite.integer(forKey: IMInbox.consumedSeqKey), 2)
     }
 
     func testBackupExportRequestVacuumHotSnapshotAndWritesReceipt() throws {

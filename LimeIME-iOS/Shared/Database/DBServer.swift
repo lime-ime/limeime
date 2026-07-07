@@ -12,6 +12,12 @@ final class SharedDatabase {
     private static let databaseName = "lime.db"
     private let dataDirOverride: URL?
     private var cachedDatasource: LimeDB?
+    // st_ino the cached datasource is bound to, recorded at open. If another process
+    // replaces lime.db (full-replace = move → new inode), this lets a warm process
+    // notice its handle points at the old, now-unlinked inode (#86, cross-process).
+    // ponytail: plain var, advisory only — a torn/stale read at worst costs one extra
+    // (harmless) reopen; correctness comes from reopenFromDisk rebinding to the file.
+    private var openedInode: Int?
     private let lock = NSLock()
 
     init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
@@ -104,7 +110,21 @@ final class SharedDatabase {
         if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
             db.repairKeyboardCatalogIfNeeded(from: bundledURL)
         }
+        openedInode = (try? FileManager.default.attributesOfItem(atPath: dbURL.path))?[.systemFileNumber] as? Int
         return db
+    }
+
+    /// True when lime.db on disk is a different inode than the one the cached datasource
+    /// was opened against — i.e. another process ran a full-replace (move) while we stayed
+    /// warm, so our handle now reads the old, unlinked file (#86, cross-process). Callers
+    /// should reopenFromDisk() to rebind. Returns false when we never opened, or when the
+    /// file is missing/unstattable (nothing safe to conclude).
+    func fileReplacedSinceOpen() -> Bool {
+        guard let opened = openedInode else { return false }
+        let path = dataDirURL.appendingPathComponent(Self.databaseName).path
+        guard let current = (try? FileManager.default.attributesOfItem(atPath: path))?[.systemFileNumber] as? Int
+        else { return false }
+        return current != opened
     }
 }
 
@@ -209,6 +229,29 @@ final class DBServer {
         }
     }
 
+    // §1.5: source for the three `im`-table reads (getImConfig / getImConfigList /
+    // getAllImConfigs). On the keyboard it is the `im.json` reader — a plain App-Group file
+    // read, no cold-DB open (FA-off-safe); the app reads cold's `im` table directly through
+    // the concrete datasource. The reader is a stable instance so its parse-cache persists;
+    // it reloads on the file's mtime/size change (an app-side edit republishes im.json).
+    private var _imJsonReader: ImJsonLimeDB?
+    /// Test hook: inject the `im.json` reader so tests can exercise the keyboard read path
+    /// (production derives it from `SyncDatabaseLocator`). Do not use in production.
+    var _testImConfigReader: (any ImConfigReading)?
+    private var imConfigSource: (any ImConfigReading)? {
+        if let injected = _testImConfigReader { return injected }
+        guard SyncDatabaseLocator.isKeyboardExtension(),
+              let base = SyncDatabaseLocator.appGroupDirectory() else {
+            return datasource
+        }
+        if _imJsonReader == nil {
+            let database = self.database
+            _imJsonReader = ImJsonLimeDB(imJsonURL: SyncPaths.imJSON(base),
+                                         fallback: { database.current() })
+        }
+        return _imJsonReader
+    }
+
     // MARK: - Private helper: close / reopen database around backup-restore critical sections.
     private func closeDatabase() {
         database.closeCurrentForReplacement()
@@ -224,6 +267,12 @@ final class DBServer {
     /// inline rebuild already used inside `backupDatabase` / `restoreDatabase`.
     func reopenDatabaseFromDisk() {
         database.reopenFromDisk()
+    }
+
+    /// #86 cross-process: true when another process replaced lime.db (full-replace = move)
+    /// while this process stayed warm, leaving our datasource bound to the old inode.
+    func hotFileReplacedSinceOpen() -> Bool {
+        database.fileReplacedSinceOpen()
     }
 
     func replaceDatabaseFromSnapshot(_ snapshotURL: URL) throws {
@@ -264,27 +313,31 @@ final class DBServer {
         try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
         try ColdPublisher(liveColdDatabaseURL: liveURL,
                           appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+        publishImJson()
     }
 
-    func writeIMInboxUpserts(for imCode: String, postSignal shouldPost: Bool = true) throws {
-        let records = getImConfigList(imCode, nil).map { row in
-            IMInboxRecord(op: .upsert, row: [
-                "code": row.code,
-                "title": row.title,
-                "desc": row.desc,
-                "keyboard": row.keyboard,
-                "disable": row.disable ? "true" : "false",
-                "selkey": row.selkey,
-                "endkey": row.endkey,
-                "spacestyle": row.spacestyle
-            ])
-        }
-        try appendIMInbox(records, postSignal: shouldPost)
+    /// §1.5: (re)publish cold's `im` table as `im.json` (rows + grouped configs) by atomic
+    /// rename, so the keyboard reads it FA-off without opening cold. Runs after every app-side
+    /// cold publish. Reads via the concrete cold `datasource`, NOT `imConfigSource`.
+    func publishImJson() {
+        guard let ds = datasource else { return }
+        let liveURL = liveDatabaseURL()
+        let gen = (try? SyncMetaStore(databaseURL: liveURL).generation()) ?? 0
+        ImJsonPublisher.publish(from: ds, generation: gen,
+                                to: SyncPaths.imJSON(liveURL.deletingLastPathComponent()))
     }
 
-    func writeIMInboxDelete(for imCode: String, postSignal shouldPost: Bool = true) throws {
-        try appendIMInbox([IMInboxRecord(op: .delete, row: ["code": imCode])],
-                          postSignal: shouldPost)
+    /// §1.5: an `im`-metadata edit (rename / enable-disable / layout) changes no table
+    /// content, so it bumps only `generation` (a bare `publish()`) — NOT a per-table `rev` —
+    /// and republishes `im.json`. The keyboard's next `scanAndApply` sees the moved generation,
+    /// returns true, and the runtime rebuild re-reads the fresh `im.json`. Replaces the removed
+    /// `im` inbox writes and the wholesale hot mirror.
+    // ponytail: publish per edit; debounce to screen-exit if VACUUM churn bites
+    private func publishColdMetadataOnly() {
+        let liveURL = liveDatabaseURL()
+        try? ColdPublisher(liveColdDatabaseURL: liveURL,
+                           appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+        publishImJson()
     }
 
     func writeIMLifecycleRecord(table: String,
@@ -296,26 +349,6 @@ final class DBServer {
                                        action: action,
                                        preserveLearning: preserveLearning)
         try appendIMLifecycle([record], postSignal: shouldPost)
-    }
-
-    private func appendIMInbox(_ records: [IMInboxRecord], postSignal shouldPost: Bool) throws {
-        guard !records.isEmpty else { return }
-        // §1.5: append seq-stamped so the keyboard consumes each record once via its
-        // own-container cursor (it cannot delete this App Group file FA-off). App owns the
-        // seq counter + the GC (see gcIMInbox, called on the relay).
-        let base = liveDatabaseURL().deletingLastPathComponent()
-        let defaults = UserDefaults(suiteName: DBServer.appGroupID) ?? .standard
-        try IMInbox.append(records, base: base, defaults: defaults)
-        if shouldPost {
-            postSyncSignal(.tablesUpdated)
-        }
-    }
-
-    /// §1.5: app-side GC — remove `im`-inbox records the keyboard has consumed (`seq <=`
-    /// the cursor it relayed back). App→App Group is always writable.
-    func gcIMInbox(throughSeq cursor: Int) {
-        guard cursor > 0 else { return }
-        IMInbox.gc(base: liveDatabaseURL().deletingLastPathComponent(), throughSeq: cursor)
     }
 
     private func appendIMLifecycle(_ records: [IMLifecycleRecord], postSignal shouldPost: Bool) throws {
@@ -1115,26 +1148,26 @@ final class DBServer {
     // MARK: - IM Config Proxies
 
     func getAllImConfigs() throws -> [ImConfig] {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        return try ds.getAllImConfigs()
+        guard let src = imConfigSource else { throw DBServerError.datasourceUnavailable }
+        return try src.getAllImConfigs()
     }
 
     func getImConfig(_ imCode: String, _ field: String) -> String {
-        datasource?.getImConfig(imCode, field) ?? ""
+        imConfigSource?.getImConfig(imCode, field) ?? ""
     }
 
     func getImConfigList(_ code: String?, _ configEntry: String?) -> [LimeImConfigRow] {
-        datasource?.getImConfigList(code, configEntry) ?? []
+        imConfigSource?.getImConfigList(code, configEntry) ?? []
     }
 
     func setImConfig(_ imCode: String, _ field: String, _ value: String) {
         datasource?.setImConfig(imCode, field, value)
-        try? writeIMInboxUpserts(for: imCode)
+        publishColdMetadataOnly()
     }
 
     func updateIMEnabled(imName: String, enabled: Bool) {
         datasource?.updateIMEnabled(imName: imName, enabled: enabled)
-        try? writeIMInboxUpserts(for: imName)
+        publishColdMetadataOnly()
     }
 
     func updateIMSortOrder(id: Int64, sortOrder: Int) throws {
@@ -1148,7 +1181,7 @@ final class DBServer {
 
     func setImConfigKeyboard(_ imCode: String, _ keyboard: KeyboardConfig) {
         datasource?.setImConfigKeyboard(imCode, keyboard)
-        try? writeIMInboxUpserts(for: imCode)
+        publishColdMetadataOnly()
     }
 
     // MARK: - Record CRUD Proxies
@@ -1218,29 +1251,26 @@ final class DBServer {
         // empty IM tables and no phonetic side-file. Restore-to-default => empty IM list.
         importRelatedIfNeeded()
 
-        let allIMs = (try? ds.getAllImConfigs()) ?? []
-        // After a restore (#86), `keyboard_state` holds row offsets captured against
-        // the PRE-restore im-table ordering; applying them to the restored table can
-        // resolve the wrong (or zero) IMs. Ignore the saved index map on forceReopen
-        // and rebuild the activated list from the restored `enabled` flags instead.
-        let keyboardState = forceReopen
-            ? ""
-            : (UserDefaults(suiteName: DBServer.appGroupID)?.string(forKey: "keyboard_state") ?? "")
-        var activated: [ImConfig]
-        if keyboardState.isEmpty {
-            activated = allIMs.filter { $0.enabled }
-        } else {
-            let enabledIndices = Set(keyboardState.components(separatedBy: ";"))
-            activated = allIMs.enumerated()
-                .filter { enabledIndices.contains(String($0.offset)) }
-                .map { $0.element }
-        }
-        // Align with Android buildActivatedIMList(): the activated IM list is built
-        // ONLY from enabled DB rows. When the DB has no enabled IMs (e.g. after
-        // restore-to-default), the list stays empty and the keyboard runs English-only
+        // §1.5: the IM set comes from `imConfigSource` — on the keyboard the published
+        // `im.json` (a fresh file read), on the app the cold `im` table. There is no second
+        // in-hot copy to drift, which is what structurally closes the "installed-first IM
+        // disappears" bug class.
+        let allIMs = (try? imConfigSource?.getAllImConfigs()) ?? []
+        // The activated IM list (the keyboard's IM picker) is built ONLY from the
+        // enabled `im` rows — matching Android buildActivatedIMList(). The legacy
+        // `keyboard_state` offset map is NOT used as a filter: it holds row offsets
+        // captured against the APP's cold-DB ordering, applied to the keyboard's HOT-DB
+        // ordering, so after a restore or a cross-process sync those offsets resolve the
+        // WRONG (or zero) IMs and can DROP an otherwise-present, enabled IM from the
+        // picker (#86 family — the "phonetic installed first disappears after installing
+        // dayi / cj" bug). Cold's enabled state is authoritative (it IS `im.json`), so the
+        // enabled flags alone are the correct, cross-process-safe source. An empty list is
+        // intentional after restore-to-default: the keyboard then runs English-only
         // (initOnStartInput uses the English layout when activatedIMs.isEmpty).
-        // No fabricated fallback IM list — that is what resurrected phonetic on iOS.
-        if activated.isEmpty { activated = allIMs.filter { $0.enabled } }
+        // ponytail: no per-IM `tableHasData` guard — parity with the prior picker (enabled
+        // filter only); add it (§1.5 "picker alignment") if content-vs-im.json skew is seen
+        // on device (content applies before the picker in the same scan, so the window is nil).
+        let activated = allIMs.filter { $0.enabled }
 
         // `initialIM` only seeds the SearchServer's internal table pointer; when
         // `activated` is empty it is never surfaced (keyboard is English-only).
@@ -1330,7 +1360,9 @@ final class DBServer {
     func registerIM(imName: String, tableName: String, label: String, keyboardId: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.registerIM(imName: imName, tableName: tableName, label: label, keyboardId: keyboardId)
-        try writeIMInboxUpserts(for: imName, postSignal: false)
+        // §1.5: the new `im` row reaches the keyboard via `im.json`; markTableChangedAndPublish
+        // publishes cold (generation bump → keyboard rebuild) AND republishes `im.json` with the
+        // new row. No mirror, no inbox.
         try markTableChangedAndPublish(tableName)
     }
 

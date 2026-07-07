@@ -358,6 +358,17 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     // installed IM never appears. setupDatabase re-prepares + reloads
                     // (and resolves the sync toast at the end of its main-thread block).
                     self.setupDatabase()
+                } else if DBServer.shared.hotFileReplacedSinceOpen() {
+                    // Converged, but ANOTHER keyboard process (the Settings sync-probe, or the
+                    // keyboard in a different host app) ran the full-replace that landed this
+                    // restore/install — moving hot lime.db to a new inode. scanAndApply used
+                    // fresh connections so it saw the new file (→ converged, applied=false), but
+                    // THIS warm process's long-lived datasource is still bound to the old,
+                    // now-unlinked inode → zero rows → empty IM picker (#86, cross-process; the
+                    // "restore then switch to Safari shows 同步中 + no active IM" bug). Rebind to
+                    // the swapped-in file, then reload activatedIMs so the picker fills.
+                    DBServer.shared.reopenDatabaseFromDisk()
+                    self.setupDatabase()
                 } else {
                     DispatchQueue.main.async { [weak self] in
                         // Resolve only once the initial setup has loaded activatedIMs. On a
@@ -578,10 +589,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             ?? RelayPrefState(hanConvert: hanConvertOption,
                               splitKeyboard: splitKeyboardMode,
                               updatedAt: 0)
-        // Echo the im-inbox consume cursor so the app GCs records at/below it (§1.5).
         textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
                                                         ts: Date().timeIntervalSince1970,
-                                                        imSeq: UserDefaults.standard.integer(forKey: IMInbox.consumedSeqKey),
                                                         prefs: prefs))
         return true
     }
@@ -918,7 +927,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         // 2. DB-side (controls visible layout via resolvedLayoutId → activatedIMs cache)
         guard let idx = activatedIMs.firstIndex(where: { $0.tableNick == "phonetic" }) else { return }
-        let freshKb = searchServer?.getImConfig("phonetic", "keyboard") ?? ""
+        // §1.5: read `im` config from `im.json` (via DBServer), not SearchServer's hot LimeDB.
+        let freshKb = DBServer.shared.getImConfig("phonetic", "keyboard")
         guard !freshKb.isEmpty, freshKb != activatedIMs[idx].keyboardId else { return }
         let old = activatedIMs[idx]
         activatedIMs[idx] = ImConfig(
@@ -1745,12 +1755,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - LIME Endkey Commit
 
     private func activeImkeysForEndkey() -> String {
-        let configured = searchServer?.getImConfig(activeIM, "imkeys") ?? ""
+        let configured = DBServer.shared.getImConfig(activeIM, "imkeys")   // §1.5: im.json
         return configured.isEmpty ? currentImKeys : configured
     }
 
     private func handleLimeEndkeyCommit(_ primaryCode: Int) -> Bool {
-        let limeendkey = searchServer?.getImConfig(activeIM, "limeendkey") ?? ""
+        let limeendkey = DBServer.shared.getImConfig(activeIM, "limeendkey")   // §1.5: im.json
         guard LimeEndkeyPolicy.isCommitKey(primaryCode: primaryCode,
                                            endkey: limeendkey,
                                            englishOnly: mEnglishOnly) else {

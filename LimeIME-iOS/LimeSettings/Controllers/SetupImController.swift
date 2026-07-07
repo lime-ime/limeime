@@ -436,6 +436,7 @@ private func publishRestoredCold(server: DBServer) throws {
     _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
     try ColdPublisher(liveColdDatabaseURL: liveURL,
                       appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+    server.publishImJson()   // §1.5: republish im.json from the restored cold
     // No inbox cleanup here: stale im records are skipped by the keyboard's own-container
     // seq cursor (which survives the full-replace) and lifecycle records are rev-gated, so
     // neither resurrects a wiped IM; the app GCs both via the relayed cursor (§1.5).

@@ -369,7 +369,8 @@ final class ManageImController: BaseController {
                                                   action: .delete,
                                                   preserveLearning: backupLearning,
                                                   postSignal: false)
-                try server.writeIMInboxDelete(for: tableNick, postSignal: false)
+                // §1.5: no `im` inbox — the `im` row deletion rides the mirror on the
+                // generation bump from markTableChangedAndPublish below (rev + publish).
                 try server.markTableChangedAndPublish(tableNick)
                 return .success(())
             } catch {

@@ -229,7 +229,10 @@ final class ManageImControllerTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(testTable, "limeendkey"), "")
     }
 
-    func testIMMetadataEditWritesInboxRecord() async throws {
+    // §1.5: an `im`-metadata edit no longer writes an inbox — it publishes cold (a bare
+    // generation bump) so the keyboard's next sync re-mirrors `im`. Verify the edit applied
+    // and cold.limedb was published.
+    func testIMMetadataEditPublishesCold() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
@@ -242,14 +245,10 @@ final class ManageImControllerTest: XCTestCase {
             XCTFail("Expected metadata update to succeed")
             return
         }
-        let inboxURL = SyncPaths.imInbox(url.deletingLastPathComponent())
-        let inbox = try JSONDecoder().decode(IMInboxFile.self, from: Data(contentsOf: inboxURL))
-        XCTAssertTrue(inbox.records.contains {
-            $0.op == .upsert
-                && ($0.row["code"] ?? nil) == testTable
-                && ($0.row["title"] ?? nil) == "version"
-                && ($0.row["desc"] ?? nil) == "I3"
-        })
+        XCTAssertEqual(db.getImConfig(testTable, "version"), "I3")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: SyncPaths.coldDB(url.deletingLastPathComponent()).path),
+            "an im-metadata edit must publish cold.limedb so the keyboard re-mirrors im")
     }
 
     // MARK: - updateRecord

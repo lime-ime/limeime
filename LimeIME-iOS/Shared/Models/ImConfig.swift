@@ -2,7 +2,7 @@
 
 /// An input method configuration row from the `im` table in lime.db.
 /// Mirrors Android's ImConfig.java.
-struct ImConfig {
+struct ImConfig: Codable {
     let id: Int64
     let imName: String
     let tableNick: String

@@ -1,214 +1,236 @@
-﻿# iOS Full Access — Permission Model and Architecture
+﻿# iOS Full Access — Permission Model & Cross-Process Communication
 
-Scope: LimeKeyboard extension and LimeSettings — DB ownership, install/import/backup/restore flows, app↔keyboard signaling, and what Full Access actually gates.
+Scope: the **LimeKeyboard** extension and the **LimeSettings** app — what Full Access (FA)
+actually gates, and how the two processes **communicate and stay in sync across the FA
+boundary**. The cold/hot **database data model** those messages carry lives in the companion
+doc; this doc is the transport and permission layer beneath it.
 
-Companion docs: [IOS_FULL_ACCESS_DETECT.md](IOS_FULL_ACCESS_DETECT.md) (enabled / Full Access detection in Settings UI), [IOS_GOTO_SETTINGS.md](IOS_GOTO_SETTINGS.md) (Settings deep-link reliability).
+Companion docs: [IOS_DB_COLD_HOT.md](IOS_DB_COLD_HOT.md) (the cold/hot database design — roles,
+`sync_meta`, full-replace vs. incremental, per-table content sync), [IOS_FULL_ACCESS_DETECT.md](IOS_FULL_ACCESS_DETECT.md)
+(enabled / Full Access detection in the Settings UI), [IOS_GOTO_SETTINGS.md](IOS_GOTO_SETTINGS.md)
+(Settings deep-link reliability).
 
 ## Bottom line
 
-LimeIME cannot require Full Access for the keyboard to function (App Review Guideline 4.4.1: a keyboard must type, provide the globe/next-keyboard path, and remain functional without Full Access).
+LimeIME **cannot require Full Access** for the keyboard to function (App Review Guideline
+4.4.1: a keyboard must type, provide the globe / next-keyboard path, and stay functional
+without FA). So the **entire design works FA-off** — typing, install, import, uninstall,
+restore, learning, learned-record preservation. Full Access **ON** unlocks only three things:
 
-Design (v2 — cold/hot model, supersedes the v1 "desired-state folder of per-table files"): the app owns a full **cold DB** (a complete `lime.db` run by the app's own LimeDB/DBServer — all imports, IM-meta changes, and table edits happen there, so every app screen works natively). The keyboard owns its **hot DB** (canonical for typing; the ONLY home of learned scores). The app publishes an atomic snapshot of the cold DB into the App Group; the keyboard tracks it by generation/epoch/per-table revision and updates the hot DB incrementally. With Full Access OFF, everything works — typing, install, import, uninstall, restore, learning, learned-record preservation. Full Access ON unlocks:
+1. **In-app backup** — the keyboard exports its **hot DB** (the sole home of learned scores;
+   fixed tables are re-downloadable).
+2. **Key haptic feedback** (按鍵震動回饋) — a system restriction: keyboard extensions cannot
+   play haptics FA-off. Key-click *sound* works without it.
+3. **Table-record editing with real scores** — the editor's hot-snapshot refresh needs the
+   same keyboard→App-Group write as backup. FA-off the record screens are read-only.
 
-1. In-app backup (keyboard exports the hot DB — the sole purpose of backup is the user's learned data; fixed tables are re-downloadable).
-2. Key haptic feedback (按鍵震動回饋) — a system restriction: keyboard extensions cannot play haptics without Full Access. Key-click *sound* (`UIDevice.playInputClick()`) works without it.
-3. Table-record editing with real data (the editor's hot-snapshot refresh needs the same keyboard→App-Group write as backup). FA OFF the record screens are read-only; see §Editor policy.
+FA is a **feature unlock, never a requirement**. Settings copy must present it that way.
 
-Ownership principle that drives the whole design: **`code`/`word`/structure/IM-meta are cold-owned (app is the truth); `score` is hot-owned (keyboard is the truth).** The app never displays or accepts a score value it cannot know to be real.
-
-Sources:
-
-- Apple App Review Guidelines 4.4.1: https://developer.apple.com/app-store/review/guidelines/
-- Apple UIKit open-access guide: https://developer.apple.com/documentation/uikit/configuring-open-access-for-a-custom-keyboard
+Sources: [App Review Guidelines 4.4.1](https://developer.apple.com/app-store/review/guidelines/),
+[Apple UIKit open-access guide](https://developer.apple.com/documentation/uikit/configuring-open-access-for-a-custom-keyboard).
 
 ## Permission facts
 
-Apple's open-access documentation, verbatim: without open access a keyboard has "No access to the file system apart from the keyboard's own sandbox container, and read-only access to the containing app's shared containers."
+Apple's open-access documentation, verbatim: without open access a keyboard has *"No access to
+the file system apart from the keyboard's own sandbox container, and read-only access to the
+containing app's shared containers."*
 
-| Actor → Target | Full Access OFF | Full Access ON |
-|---|---|---|
+| Actor → Target | FA OFF | FA ON |
+| --- | --- | --- |
 | App → App Group | read/write | read/write |
 | Keyboard → App Group | **read-only** | read/write |
 | Keyboard → its own container | read/write | read/write |
 | App → keyboard's own container | never | never |
 
-- The containing app is never restricted — Full Access limits only the keyboard extension.
-- The keyboard's own `Application Support` data persists across process restarts, reboot, and Full Access toggles; removed on uninstall.
-- Reading App Group file *bytes* is safe FA OFF; opening the shared DB live is not — even a "read-only" SQLite open of a WAL-mode database wants to create/write `-shm`/`-wal` sidecars. Hence the keyboard never opens the App Group DB; it only reads/copies files.
-- Shared UserDefaults: app-written preferences ARE readable by the keyboard FA OFF (standard settings-sync mechanism; keyboard re-reads on appear). But keyboard writes are dropped FA OFF, cross-process change notifications do not fire, and cfprefsd may serve a stale cache to a long-lived process — so defaults carry user preferences only, never correctness signals (those use files).
-- Darwin notifications (`CFNotificationCenter`) are not Full-Access-gated in either direction, but carry no payload and reach only a live, listening process.
-- Simulator does not enforce the keyboard sandbox — permission behavior MUST be validated on a real device.
+- The **containing app is never restricted** — FA limits only the keyboard extension. The app
+  owns the cold DB outright and always works.
+- The keyboard's own `Application Support` data **persists** across process restarts, reboot,
+  and FA toggles; removed only on uninstall.
+- Reading App Group file *bytes* is safe FA-off; **opening the shared DB live is not** — even a
+  "read-only" SQLite open of a WAL database wants to create `-wal`/`-shm` sidecars. So the
+  keyboard never opens the App Group DB in place; it **copies the file** into its own container
+  first (the cold→hot full replace, cold/hot doc §1.2).
+- **Shared UserDefaults**: app-written prefs are readable by the keyboard FA-off (re-read on
+  appear), but keyboard *writes* are dropped FA-off, change notifications don't fire, and
+  cfprefsd may serve a stale cache — so defaults carry **user preferences only, never
+  correctness signals** (those use files).
+- **Darwin notifications** are not FA-gated in either direction, but carry **no payload** and
+  reach only a live, listening process.
+- The **Simulator does not enforce** the keyboard sandbox — FA behavior MUST be validated on a
+  real device.
 
-## Architecture
+## The cross-process channel
 
-### Canonical DB — keyboard-owned
+The app and the keyboard are **separate processes** that share nothing but the App Group
+container. All coordination is **file-based**, with payload-free **Darwin notifications** as
+doorbells that only mean *"go look at the folder."* No shared memory, no RPC, no `UserDefaults`
+correctness signal.
 
-- Canonical DB: `KeyboardContainer/Application Support/lime.db`. Opened with the normal `LimeDB(path:)` (WAL, migrate, repair) — always writable, in every permission state. Learning writes always succeed and are never clobbered by installs (imports are incremental table loads, not whole-file replacement).
-- DBServer / SearchServer / LimeDB run keyboard-side against this DB.
-- **Static pre-shipped data (emoji, han_convert) lives OUTSIDE the canonical DB**: bundled in the appex as read-only `emoji.db` / `hanconvert.db`, ATTACHed at open (`immutable=1` — code-signed bundle resources truly are immutable; cross-DB joins and FTS work normally). Never synced, never in backup/restore, upgraded automatically by app updates (no version-compare/reseed migration). Exception: `emoji_user` (favorites/recents) is user data — it stays in the canonical DB and therefore in backup. Side effect: the default `lime.db` drops its emoji tables, shrinking first-run copy, `VACUUM INTO` snapshots, backup zips, and restore swaps.
-- **Upgrade rule: static attached DBs upgrade by replacement, the canonical DB upgrades by migration.** An app update shipping a newer emoji/hanconvert DB applies automatically at next attach — no materialized copy exists to go stale, and code + data travel in the same signed bundle so schema changes are atomically paired with the code reading them (`immutable=1` stays safe: iOS kills the extension during updates, no live handle survives a bundle swap). `emoji_user` rows referencing entries removed by a newer emoji DB dangle harmlessly (join semantics — they just stop displaying). The bundled default `lime.db` does NOT auto-apply on update: it is the fresh-install / factory-reset baseline only; existing canonical DBs upgrade via `migrate()`.
-- First run: the keyboard copies its bundled default `lime.db` into the canonical path, then opens it normally (`migrate()` runs only in its usual schema-upgrade role, not as bootstrap). The default DB is "epoch zero" — the identical file the app uses for 還原預設資料庫 — and already carries emoji data and IM metadata (LIME ships with empty IM tables by design). Build requirement: bundle `lime.db` in the LimeKeyboard appex (currently only the app target has the copy phase); ~4 MB appex growth, required for 4.4.1 anyway since the keyboard must work standalone before the app ever runs.
+**Shared files (App Group container):**
 
-### Cold DB — app-owned (v2)
+| File | Written by | Meaning |
+| --- | --- | --- |
+| `cold.limedb` | app | the published cold snapshot; carries its own `sync_meta` (epoch + generation) |
+| `im.json` | app | published `im`-table snapshot (`schemaVersion` + `generation`); keyboard reads it **fresh, FA-off** via the §1.5 decorator |
+| `inbox/prefs.json` | app (writes) | app→keyboard preference deltas, `seq`-stamped (keyboard best-effort deletes) |
+| `outbox/export.request.json` | app | "please snapshot hot" `{requestUUID, expiresAt}` |
+| `outbox/backup.limedb` | keyboard (FA-on) | the hot snapshot produced on request |
+| `outbox/receipt.json` | keyboard (FA-on) | snapshot ready `{requestUUID, epochUUID, at}` |
+| `outbox/heartbeat.json` | keyboard (FA-on) | `{hasFullAccess, lastSeenAt, lastDBError}` — FA / liveness |
 
-- The app runs a full `LimeDB`/`DBServer` against its own **cold DB** (the App-Group `lime.db` location it always used). ALL structural mutations happen here exactly as pre-re-arch: downloads, `.cin`/`.lime`/`.limedb`/zip imports (conversion IS validation — parse errors surface in the app UI), IM registration, IM-meta edits, record edits, clears, restores. Every app screen (IM list, detail, counts, editors) reads this DB natively — no replicas, no read-models.
-- The cold DB carries **no meaningful learned data**: `score` values in it are base/seed values except immediately after a restore or an FA-ON editing session (see below). The app never displays scores from the cold DB as if they were real.
-- Sync bookkeeping inside the cold DB, maintained by the app in the same transactions as the mutations they describe:
-  - `sync_rev(stem TEXT PRIMARY KEY, rev INTEGER, mode TEXT)` — bumped when that table's DATA changes. `mode`: `merge` (installs/downloads — keyboard preserves learned scores on re-import) or `replace` (FA-ON editing sessions — cold wins wholesale, because cold was just seeded from hot).
-  - `sync_meta`: `epoch_uuid` (bumped ONLY by restore-from-backup / 還原預設資料庫 — the destructive events) + `schema_version`.
-  - The `im` table needs no revision — it is mirrored wholesale (≈15 rows).
+**Darwin doorbells (`org.limeime.*`, no payload):**
 
-### Published snapshot — the transport (app → keyboard, works FA OFF)
+| Signal | Posted by | Wakes the reader to… |
+| --- | --- | --- |
+| `tables.updated` | app | re-scan cold (new generation and/or epoch) |
+| `outbox.updated` | app | check for an export request |
+| `import.done` / `import.failed` | keyboard | reflect import status |
+| `fa.on` / `fa.off` | keyboard | FA-state ping (name-encoded, so "Confirmed OFF" is representable) |
+| `sync.scan.done` | keyboard | a cold→hot scan just finished — the app dismisses its sync probe now |
 
-- After each mutation burst (debounced: flow completion / app background), the app **publishes**: `VACUUM INTO` a temp file → atomic rename to `AppGroup/cold.limedb` → write sidecar `cold.meta.json {generation, epochUUID, schemaVersion}` (generation bumps on every publish). Atomic, self-contained (no WAL sidecars), safe for the keyboard to ATTACH `immutable=1` — the rename means an attached inode never changes.
-- One artifact replaces the whole v1 `tables/` folder and `restore.limedb`. Not a queue — the snapshot always states the complete intended cold state; no acks needed for correctness. Publish cost: one whole-DB vacuum per burst (~4–40 MB IO), accepted ceiling.
-- Doorbell: Darwin `org.limeime.tables.updated` after publish (name kept from v1 wiring); scan-on-appear remains the guaranteed path.
+A doorbell only makes a **live** FA-on keyboard act *now*; the durable path is
+**scan-on-appear** — the keyboard re-checks cold every time it becomes visible, so a missed
+notification just delays delivery to the next appearance, never drops it.
 
-### Keyboard sync engine (hot ← cold)
+## What Full Access gates — reads vs. writes
 
-Scan on every `viewWillAppear` (+ doorbell), against the hot DB's ledger:
+The single rule behind the whole design: **FA gates the keyboard's *writes* to the App Group,
+not its reads.**
 
-1. Read `cold.meta.json` — one tiny JSON read. `generation == applied` → done (the common case costs nothing else).
-2. Generation differs → ATTACH `cold.limedb` (`immutable=1`); verify in-DB generation matches the sidecar (mismatch = app mid-publish → skip, retry next scan).
-3. **Epoch differs** → destructive rebuild: hot := fresh copy of the snapshot, learned data handled per the 還原已學習記錄 pref (keyboard-local stash/merge; only the user's *choice* travels — as prefs, readable FA OFF). Ledger reset, epoch recorded.
-4. Same epoch → incremental:
-   - **im mirror, always**: `DELETE FROM im; INSERT … SELECT FROM cold.im` in one transaction — meta-only changes (titles/versions, endkey, selkey, spacestyle, keyboard id, disable) cost milliseconds and never touch table data. Runtime rebuild fires after the mirror so new meta applies immediately.
-   - **Per-stem `sync_rev` diff**: only stems whose rev moved get the clear + chunked attach-copy (20k rows/chunk, resume marker, kill-safe) — in `merge` mode learned scores carry over; in `replace` mode cold wins wholesale. A record-edit session re-imports that one table; nothing else moves.
-   - Stems registered in the hot ledger but absent/unregistered in cold → dropped (table cleared + im row removed).
-5. Ledger (`applied generation/epoch/revs`) lives INSIDE the hot DB, updated in the same transactions — ledger and data cannot desync.
+- The **cold→hot sync runs FA-off** because it only **reads** the App Group (cold DB + inboxes)
+  and **writes** the keyboard's own container (hot DB + its cursors). Applying a restore, an
+  install, an incremental sync — all FA-independent.
+- The keyboard's **App Group writes are FA-on**: the backup snapshot + receipt, the
+  editor-refresh receipt, the durable heartbeat. These are the only FA-gated operations.
+- The **app side always works** — it owns cold read/write regardless of FA.
 
-Status surfaces (unchanged from v1): keyboard banner rides LimeToast (匯入中… / 已安裝 / 匯入失敗, no new chrome over the UIInputView blur); Darwin `org.limeime.import.done/.failed` live pings; FA-ON receipts/heartbeat as durable status; FA-OFF app copy stays honest ("已交付鍵盤").
+So the cold/hot **split exists for write isolation** (the app editing cold must not race the
+keyboard learning into hot), and it makes the keyboard FA-off-functional for free: everything
+the keyboard needs to *apply* is a read-cold / write-own-container operation.
 
-### Signal channels
+> **UI gating is a separate, deliberate choice.** The 備份 button and the table editor's
+> live-edit unlock may still require FA-Confirmed-ON as a conservative product decision — a UX
+> gate on the *button*, not a technical requirement of App Group access. The **cold→hot sync
+> that surfaces installed IMs is never FA-gated.**
+
+**Behavior when FA is toggled OFF later:** nothing changes for typing, IMs, or learning — the
+hot DB is keyboard-owned and unaffected. Only backup export, haptics, live record editing, and
+durable status stop; the Settings UI degrades to neutral copy and editors fall back to
+read-only. FA can be turned on and off freely with no data loss.
+
+## Signal channels (summary)
 
 | Channel | App → Keyboard | Keyboard → App |
-|---|---|---|
-| App Group files | ✅ backbone (FA OFF ok: keyboard reads) | ✅ FA ON only (receipts, status, snapshots) |
+| --- | --- | --- |
+| App Group files | ✅ backbone (keyboard reads FA-off) | ✅ FA-**ON** only (receipts, status, snapshots) |
 | Scan-on-appear | ✅ guaranteed eventual delivery | — |
-| Darwin notification | ✅ instant doorbell, not FA-gated | ✅ live-only ping, not FA-gated (no payload, no persistence) |
-| Probe text field | ✅ forces keyboard to load & scan now | — (also forces a fresh heartbeat, see detection doc) |
-| Shared UserDefaults | ⚠️ user prefs only (reads work FA OFF; re-read on appear; may be one session stale — not for signaling) | ❌ writes dropped FA OFF |
+| Darwin notification | ✅ instant doorbell, not FA-gated | ✅ live-only ping, not FA-gated (no payload) |
+| Probe text field | ✅ summons the keyboard to load & scan now | ✅ **relay** — typed text, FA-off (below) |
+| Shared UserDefaults | ⚠️ user prefs only (reads FA-off; may be one session stale) | ❌ writes dropped FA-off |
 | Pasteboard / openURL / network | ❌ | ❌ FA-gated or dead for keyboards |
 
-- Names: `org.limeime.tables.updated` (app→kb), `org.limeime.outbox.updated` (kb→app, FA ON), `org.limeime.import.done` (kb→app live toast, works FA OFF while the app is foreground listening — UX garnish only).
-- FA ON status uses outbox *files* (receipts, heartbeat), not shared UserDefaults. App keeps its existing 1-second poll.
-- Install-flow UX: app writes the table file → posts doorbell → focuses probe field → keyboard loads, scans, imports while the user watches; live done-ping gives the toast. If the app misses everything: "已交付鍵盤，將於下次使用鍵盤時完成" — honest, and correct.
+## The summon probe — trigger a sync before the user leaves the app
 
-### Conflict resolution & versioning (v2)
+After a restore or an install / delete the app wants the cold→hot sync to happen **before the
+user leaves Settings**, so the IM shows on the **first** keyboard appearance instead of only
+after a re-open. But a keyboard extension is **dormant** — it runs only as some app's active
+input view — so the app **summons** it with an **invisible focused probe field**. Focusing the
+field brings the keyboard up; its appearance handler enqueues the sync scan. That is all the
+probe needs to do: **trigger** the scan.
 
-1. **Single writer, serialized.** The app is the cold DB's only writer and publishes atomically (temp+rename + sidecar-after). The snapshot at rest is always one coherent statement of the complete cold state — there is nothing else to conflict with.
-2. **Deterministic apply order** in the scan: epoch check → im mirror → rev diffs → drops. A snapshot published mid-scan is picked up next scan (attached inode never changes under the engine).
-3. **Destructive-idempotent applies.** Epoch rebuild replaces hot wholesale; a rev import starts by clearing that table. Resume markers are keyed to `(stem, rev)` — a newer rev or epoch abandons partial work. Replays are always safe.
-4. **Version identity rule: destructive applies key on content, incremental applies key on monotonic revs.** Epoch = UUID in `sync_meta` (+ sidecar mirror; sidecar suspect → read the in-DB stamp) — mtime churn (iCloud device restore, filesystem copies) can never trigger a rebuild. Revs are app-maintained integers, consistent with data by same-transaction construction.
-5. Snapshot staleness is self-healing: generation mismatch between sidecar and in-DB value (app mid-publish) → skip and retry; the sidecar is written after the DB file.
+- **Dismiss on `sync.scan.done`, not a fixed timer.** The keyboard rings the name-only
+  `sync.scan.done` the moment the scan returns, and the probe dismisses on it — so the popup
+  lasts only as long as the scan actually takes (a fixed hold left a blank keyboard on screen
+  far longer than the sub-second scan). A short timeout remains only as a fallback for a missed
+  signal; the scan is idempotent and re-runs on the next appearance regardless.
+- **Why "done", not "appeared".** Dismissing the instant the keyboard *appears* would unfocus
+  the field and let iOS suspend / kill the extension **mid-scan** — the sync cut and re-run
+  (with 同步中) on the user's first real open. Waiting for the **done** ping keeps the extension
+  alive through the scan, so it is guaranteed complete.
+- **The probe runs in a *different process* than the user's next keyboard.** The probe summons
+  the keyboard inside **Settings**; the user's next real keyboard (e.g. Safari's) is a
+  **separate process** of the same extension — iOS runs one keyboard process per host app. The
+  full replace the probe triggers lands in Settings' keyboard process, which can leave the
+  *other* process reading a stale hot-DB file handle; recovering from that is the cross-process
+  reopen (cold/hot doc §1.8).
 
-### Backup / restore / factory reset
+## FA-off-safe transport — how the keyboard consumes without writing the App Group
 
-- **Backup — FA ON (unchanged from v1).** 備份 → `ExportRequest {requestUUID, expiresAt}` → probe summons keyboard → hot `VACUUM INTO` App Group + receipt(requestUUID) → app zips (existing layout) → cleanup. Timeout UX disambiguates via Darwin liveness (fa ping but no receipt → FA guidance; no ping → 請切換至萊姆輸入法).
-- **Restore from backup — works FA OFF.** App-side: legacy restore into the COLD DB (existing code path — zips contain the whole DB including learned scores, which seed the restored baseline) → validate schema (`請先更新 LIME` gate) → bump `epoch_uuid` → publish. Keyboard: epoch rebuild → hot := snapshot copy. Learned data returns because the backup carried it; from then on learning accrues hot-only again. All app screens show the restored content immediately (they read the cold DB — the v1 "empty IM list after restore" defect is structurally impossible).
-- **還原預設資料庫 / factory reset — works FA OFF.** Cold := bundled default, epoch bump, publish; keyboard rebuilds. Learned data wiped by definition of the operation (or preserved per 還原已學習記錄 pref where applicable).
-- FA OFF backup button: honest unlock copy ("開啟完整取用權限以備份已學習字詞"), never an error state.
+The keyboard **cannot delete or rewrite an App Group inbox FA-off** (read-only). So no
+app→keyboard stream is consumed by removing the file. The keyboard tracks what it has applied in
+its **own container** and treats the App Group file as read-only. Two streams use this, with
+different "already applied?" gates:
 
-### Editor policy (v2 — column ownership)
+- **Preference inbox (§1.8) — a `seq` cursor.** The app appends `seq`-stamped records to
+  `inbox/prefs.json` (App→App Group is writable in every FA state) and rings `tables.updated`.
+  The keyboard reads it (read-only ✓ FA-off) and applies each record whose `seq` is beyond a
+  cursor it keeps in its own `UserDefaults`, then advances the cursor. A lingering
+  already-applied record is skipped by the cursor, so it can't re-fire — **the cursor, not the
+  file's presence, is the consume gate.** The keyboard best-effort deletes the file when it can
+  (FA-on); FA-off it just lingers until the app overwrites it, which is harmless.
+- **IM-lifecycle inbox (§1.6) — the table `rev`.** Same read-only contract, but a lifecycle
+  record applies only when its table's `rev` moves (a DB-content gate, cold/hot doc §1.6), so no
+  seq cursor is needed, and the keyboard never deletes it.
 
-- **IM meta (titles/version names, endkey, selkey, spacestyle, keyboard id, enable/disable): cold-owned, editable in EVERY FA state.** Changes ride the im mirror; effective at next keyboard appearance (doorbell makes it immediate when live). No snapshot round-trip needed — there is no hot truth for meta.
-- **Table records (字根資料表 / 關聯字庫): read-only FA OFF.** The score column is hot-owned; FA OFF the app cannot know real scores (mostly-0 base values would be lies), and blind edits could silently fight learned state. Read-only browse shows cold data, labeled with last-sync freshness.
-- **FA ON: full live editing via snapshot refresh.** Entering an edit screen → app requests a hot snapshot (same relay as backup, on-demand) → refreshes that table in the cold DB from it (real rows, REAL scores) → user edits → save bumps `sync_rev` with `mode=replace` → publish → keyboard re-imports that table with cold winning wholesale (a merge here would clobber the user's score edits with pre-edit learned values). Accepted, documented race: typing on that same table between snapshot and save loses those minutes of its learning.
-- Full Access's honest sales pitch is therefore: 備份已學習字詞、按鍵震動回饋、編輯字根資料表（含實際分數）.
+Neither stream needs the keyboard to write the App Group; correctness is the own-container
+marker (seq cursor or `rev`), never the file's presence.
 
-## Product behavior
+> **`im` is *not* on this inbox transport.** IM metadata is read from the app-published
+> **`im.json`** (cold/hot doc §1.5) — a plain-file snapshot the keyboard reads **fresh on demand**
+> through a `LimeDBProtocol` decorator, not a `seq`/cursor inbox. There is no `im` inbox, cursor,
+> or GC; and (unlike the abandoned overlay) **no live open of the cold DB** — reading `im.json`
+> *bytes* is the FA-off-safe carve-out, the same one that keeps `cold.limedb` a copy-then-read
+> rather than an in-place open. That whole seq-inbox mechanism, and its races, was retired once
+> `im` became an on-demand file read.
 
-Never granted Full Access:
+**The relay (keyboard → app, FA-off).** Typing is the keyboard's core function, so `insertText`
+works in every FA state. The probe field doubles as a **keyboard→app channel**: the app
+prefills a magic token and focuses the field; the keyboard recognizes its own app's sync field
+and types **one compact payload** (protocol version, FA bit, timestamp, the current
+keyboard-owned pref values); the app observes its own field binding, parses, applies, and clears it.
+The token handshake guarantees the payload is never typed into a real text field. This is the
+one keyboard→app path FA cannot block, so it carries everything the keyboard must report without
+an App Group write.
 
-- Keyboard types, switches keyboards, uses every installed IM, learns — all normal. Key-click sound available; key haptics unavailable (system restriction).
-- Installs/imports/uninstalls/restores/IM-meta edits made in Settings reach the keyboard through the published snapshot; applied at next keyboard appearance (or instantly via the doorbell + probe during a flow). All app screens are correct at all times (they read the cold DB).
-- Table-record editors are read-only (score is hot-owned); IM-meta editing fully works.
-- In-app backup is unavailable; button shows the honest unlock copy.
-- Settings sees no durable keyboard status — UI uses the tri-state model (see IOS_FULL_ACCESS_DETECT.md), never claims the keyboard is broken.
+## Keyboard-owned preferences across the FA boundary
 
-Full Access granted:
+Four preferences can change on the **keyboard** side — 漢字轉換 (`han_convert_option`),
+分離鍵盤 (`split_keyboard_mode`), the per-IM 字根反查 (`<im>_im_reverselookup`), and the
+**active IM** (`active_im`). **Every other pref is app-write-only**, and the keyboard reads it
+straight from the App Group. These four are *not* in `lime.db` — they are `UserDefaults`, so
+they ride this transport layer, not the cold/hot sync.
 
-- Everything above, plus: backup export works, key haptic feedback works, table-record editing goes live (snapshot-refresh flow, real scores), keyboard writes durable receipts/status/heartbeat, Settings shows confirmed states and instant feedback.
-
-Full Access later turned off:
-
-- Nothing changes for typing, IMs, or learning — the hot DB is keyboard-owned and unaffected.
-- Backup export, haptics, live record editing, and durable status stop; Settings UI degrades to neutral copy; editors fall back to read-only.
+- **The bug this fixes.** The keyboard used to write these to the App Group, but **FA-off that
+  write is silently dropped**. A hamburger-menu change or IM switch never persisted; the
+  keyboard re-read the App Group next appearance and **reverted** to the stale value.
+- **Model — the keyboard owns the value in its own container.** The authoritative store is the
+  keyboard's own `UserDefaults` (extension-private, always writable, survives restarts /
+  reboots / FA toggles). The keyboard reads and writes all four **only** there.
+- **kb→app** is the **relay** (typed text); the app's shared defaults become a **display** copy.
+- **app→kb** is the **seq-guarded inbox** — but only a **wholesale restore** ever sets these
+  from the app (delivering the restored backup's values); normal app enable/disable never
+  writes them. The keyboard **drains the inbox before answering the relay**, so the relay always
+  reports the post-drain value and an app change is never bounced back.
+- **Cold is written for exactly one purpose: backup.** These reach the App Group only when the
+  keyboard snapshots for a backup — an **FA-on** moment — so they ride the backup zip and
+  return on restore through the inbox. There is no ongoing cold write, and no cross-writer race
+  (the keyboard runs only on-screen, so app-drain and keyboard-edit never overlap).
 
 ## What Full Access actually gates (final list)
 
-1. Keyboard→App Group writes: backup snapshot export, editor snapshot refresh, durable receipts/status/heartbeat.
-2. Key haptic feedback (system restriction on keyboard extensions).
-3. Consequences of 1: real-score visibility and therefore table-record editing.
+1. **Keyboard→App Group writes**: backup snapshot export, editor snapshot refresh, durable
+   receipts / status / heartbeat.
+2. **Key haptic feedback** (system restriction on keyboard extensions).
+3. Consequence of 1: **real-score visibility**, and therefore table-record editing.
 
-That's all. Settings UI copy must present Full Access as a feature unlock ("備份已學習字詞、按鍵震動回饋、編輯字根資料表"), never a requirement.
+That's all. FA is presented as a feature unlock (備份已學習字詞、按鍵震動回饋、編輯字根資料表),
+never a requirement.
 
-## Planned LIME_SETTINGS.md updates (spec changes — NOT yet applied to that file)
+## History — the superseded v1 model
 
-Two UI spec changes follow from this design; apply them to LIME_SETTINGS.md when implementation starts:
-
-1. **Setup tab (§4) — Full Access note.** Current copy says Full Access is only for 按鍵震動回饋 (`SetupTabView.swift:211`). Update the toggle note to list both unlocks and keep the never-required framing: "完整取用用於：備份已學習字詞、按鍵震動回饋。不開啟也能正常輸入與安裝輸入法。" The step row 開啟「允許完整取用」 is marked optional (建議), and the status banner follows the tri-state model (see IOS_FULL_ACCESS_DETECT.md) — never an error state for FA off/unknown.
-2. **DB Manager tab (§7) — disable backup when FA is not confirmed ON.** 備份資料庫 button enabled only when FA state = Confirmed ON (fresh heartbeat); otherwise disabled with footnote "開啟完整取用權限以備份已學習字詞". Because FA OFF and never-ran are indistinguishable, the tab triggers the probe-field freshness check on appear so a genuinely-FA-ON user sees the button enable within ~2 s. Restore buttons (還原資料庫 / 還原預設資料庫) stay ENABLED regardless of FA — both work FA OFF by design.
-
-- **Migration from the legacy layout (existing installs).** One-time adoption at keyboard first-run-after-update: canonical DB absent + legacy App Group `lime.db` present → copy the file trio (`db`/`-wal`/`-shm`, all readable FA OFF), open in own container (WAL recovery is legal there), `PRAGMA quick_check`, stamp epoch UUID, adopt as canonical; validation failure → fall back to bundled default. App-side on first launch post-update: clear legacy state; optionally prepare a proper epoch from the legacy DB as a redundant path.
-- **Backup version skew.** `sync_meta` carries the schema version. App-side validation rejects backup zips with schema newer than the running app ("請先更新 LIME"); the keyboard also refuses a future-schema epoch. `migrate()` only goes forward.
-- **Legacy backups contain static tables.** An old-format backup's in-DB `emoji_data` would shadow the attached bundle DB (unqualified names resolve to `main` first). Rule: emoji/hanconvert queries are always schema-qualified (`emoji.emoji_data`), and post-swap hygiene drops legacy static tables from a swapped-in DB.
-- **Concurrent keyboard instances.** iOS runs one extension process per host app; two can be alive across app switches, sharing the canonical DB. Set `busy_timeout`; perform the scan-diff check inside the import transaction so a second instance no-ops (idempotence + ledger already make this safe, this makes it cheap and quiet).
-- **Backup during in-progress import.** The keyboard completes or rolls back pending imports before honoring an export request — otherwise the snapshot captures a half-imported table whose resume marker references a source file that will not exist after restoring that backup.
-- Non-issues checked: App Group container nil → keyboard runs standalone off canonical DB, sync disabled; FA revoked between backup request and snapshot → app times out on the missing receipt and shows FA guidance; device-level iCloud restore → epoch UUID prevents destructive re-apply, table re-imports are harmless; app uninstall wipes everything by iOS design (in-app backup zip is the recourse).
-
-## Open items
-
-- **v1→v2 code migration** (the branch currently implements the v1 desired-state-folder transport, all green): retarget TableSyncEngine to the snapshot (generation/epoch/rev/im-mirror, merge|replace), add cold-DB rev/publish plumbing, revert SetupImController/IMStoreView to app-DB imports + publish hook, dissolve TableStore (validation/conversion folds back into app import paths), implement editor policy, delete v1 artifacts handling (`tables/`, `restore.limedb`; v1 never shipped — cleanup is unconditional). Plan: IOS_FA_SETUP_REARCH.md campaign 2.
-- Import chunk size 20k rows (`// ponytail:` in TableSyncEngine) — revisit only if device timing shows multi-second chunks.
-- DONE in v1 campaign (kept for history): appex `lime.db` copy phase; legacy shared-defaults signals removed; hanconvertv2 iOS phase removed; keyboard-side IM registration; FA tri-state detection; goto-settings variant.
-
-## Test matrix (v2)
-
-- Fresh install, FA never granted, app never opened: keyboard copies bundled default DB and types (empty IM tables, emoji present, English fallback); key-click sound, no haptics.
-- FA OFF, app downloads 倉頡: cold import → publish → keyboard rev-imports on next appear (or instantly via doorbell+probe); IM usable; IM list correct immediately.
-- FA OFF, rename an IM / change endkey (meta only): publish → keyboard im-mirror only — no table data copied; new meta live at next appear.
-- FA OFF, kill keyboard mid-import of 關聯字庫: resumes next session; no corruption (chunk transactions, rev-keyed resume).
-- FA OFF, uninstall IM in app: cold drop → publish → keyboard drops table + im row on next scan.
-- FA OFF, re-install IM (merge mode) with 還原已學習記錄: learned scores survive the re-import.
-- FA OFF, restore backup zip: cold restored (screens correct immediately), epoch bump → keyboard rebuilds hot; tables AND learned data back; typing works.
-- FA OFF, 還原預設資料庫: cold := default, epoch bump → hot rebuilt; learned wiped.
-- FA OFF, record editor: read-only, freshness label, no score lies.
-- FA ON, backup: request → probe → hot VACUUM INTO → receipt → zip; learned data included.
-- FA ON, edit a record: snapshot refresh shows real scores → edit → replace-mode rev → keyboard re-imports that table only; edited score effective when typing; other tables untouched.
-- FA ON, haptics: vibrate; FA OFF → silently stop.
-- FA ON → later OFF: typing/learning unaffected; backup, live editing, durable status stop; UI degrades to neutral copy.
-
-## Implementation-phase addendum (2026-07-04)
-
-The plan above is unchanged. These notes record clarifications and optional extensions from implementation-phase review; none is a prerequisite for the current IOS_FA_REARCH_TASKS.md tasks unless marked.
-
-### Keyboard-side preference edits (hamburger menu) — the FA asymmetry
-
-- The keyboard's long-press options menu writes 簡繁轉換 / 分離鍵盤 / 字根反查 straight to shared UserDefaults (`KeyboardViewController.swift:3903`, `:3907`, `:3937`; `LIMEPreferenceManager.setReverseLookup`). **FA ON: these land durably and the app sees them on its next read — no code change needed.** FA OFF: silently dropped; the change may appear applied inside the live keyboard process (cfprefsd in-process cache) and then evaporates when the extension is killed. Nothing in the current code gates these writes on `hasFullAccess`.
-- The opposite direction is always safe: app-side edits of the same keys reach the keyboard in every FA state (re-read on appear). So every pref remains fully usable FA OFF via the Settings app; the in-keyboard edit path is the only broken leg.
-- **Optional fix (deliberately NOT in the current tasks):** persist hamburger-editable prefs in the keyboard's own container (always writable) as the authoritative copy, and reconcile back to the app via the probe relay below with last-writer-wins timestamps. Adopt only if FA-OFF durability of three prefs justifies the protocol; the accepted lazy alternative is "hamburger edits are FA-ON-only, app-side edits always work".
-
-### Probe relay (insertText) — a keyboard→app channel FA cannot block
-
-Typing is the keyboard's core function; `documentContextBeforeInput` + `insertText` work in every FA state, on device. That makes the existing probe field a two-way channel:
-
-1. App prefills the probe field with a short magic token and focuses it (existing probe moments: Setup tab, DB tab).
-2. Keyboard on appear sees the token in `documentContextBeforeInput` → recognizes its own containing app's sync field → types one compact payload: protocol version, FA bit, timestamp, pending pref deltas.
-3. App observes its own field binding (instant, no poll), parses, applies, clears the field, resigns focus.
-
-Constraints: LIME must be the summoned (currently active) keyboard; the keyboard visibly pops up (unavoidable — ride the existing probe moments, or gate on a Darwin "pending edits" ping so it only fires when there is something to sync); keep the token short (`documentContextBeforeInput` truncates around the cursor) and read it at `viewDidAppear`/`textDidChange`, not `viewWillAppear` (context can be nil early); debounce once per appear. The token handshake guarantees the payload is never typed into a real text field.
-
-Status: **design option, not yet validated on hardware.** Needs a step-0 spike (WJIP17: token field → keyboard branch → one `insertText`) before anything is built on it. If adopted, FA detection, heartbeat freshness, and pref write-back merge into one round-trip on the existing probe.
-
-### Darwin name-encoded FA report (cheap, recommended alongside Task 5.1)
-
-Darwin notifications carry no payload, but the *name* is free: the keyboard posts `org.limeime.fa.on` or `org.limeime.fa.off` on appear (it reads `hasFullAccess` directly — no write-attempt inference needed). Live-only, but during a probe the app is foreground and listening by construction. This gives:
-
-- **Confirmed OFF** becomes representable (see detection doc addendum) — a state the heartbeat file can never produce.
-- Disambiguation for the backup flow: no Darwin ping during the receipt window → LIME never ran → show "請將鍵盤切換至萊姆輸入法後再試"; ping received but no receipt/heartbeat file → LIME ran and FA is off → show FA unlock guidance. Without liveness these two failures are indistinguishable and the timeout message has to hedge.
-
-### Backup: permission ≠ execution, and request hygiene
-
-- Even FA ON, backup requires a **running LIME instance** — only the keyboard process can read its own container and execute `VACUUM INTO`. The probe summons whatever keyboard is active; if that is Apple's, the request sits until LIME next appears. The user is the fallback switch (globe key), so timeout UX should surface the probe field and the switch instruction rather than only FA guidance.
-- `export.request.json` persists in the App Group, so a timed-out request could be honored hours later, producing a snapshot nobody consumes. Stamp each request with a UUID + TTL: the keyboard ignores expired requests; the app accepts only a receipt matching its current request UUID. (Refines Task 4.2; same files.)
+An earlier **v1** design moved IM data as a **desired-state folder of per-table files**
+(`tables/`, `restore.limedb`) plus shared-UserDefaults signals. It is **superseded** by the
+current cold/hot snapshot model: a single atomic `cold.limedb` snapshot the keyboard tracks by
+epoch / generation / per-table rev (see [IOS_DB_COLD_HOT.md](IOS_DB_COLD_HOT.md)), with
+file-based signals only. The v1 per-table transport, its migration steps, and its test matrix
+are removed; nothing in the shipping design depends on them.

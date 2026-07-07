@@ -6,12 +6,13 @@ enum SyncPaths {
         base.appendingPathComponent("cold.limedb")
     }
 
-    static func inboxDir(_ base: URL) -> URL {
-        base.appendingPathComponent("inbox", isDirectory: true)
+    /// §1.5: the published `im`-table snapshot the keyboard reads FA-off (no cold-DB open).
+    static func imJSON(_ base: URL) -> URL {
+        base.appendingPathComponent("im.json")
     }
 
-    static func imInbox(_ base: URL) -> URL {
-        inboxDir(base).appendingPathComponent("im.json")
+    static func inboxDir(_ base: URL) -> URL {
+        base.appendingPathComponent("inbox", isDirectory: true)
     }
 
     static func imLifecycleInbox(_ base: URL) -> URL {
@@ -54,40 +55,6 @@ enum SyncPaths {
     }
 }
 
-struct IMInboxFile: Codable, Equatable {
-    var records: [IMInboxRecord]
-}
-
-struct IMInboxRecord: Codable, Equatable {
-    enum Operation: String, Codable {
-        case upsert
-        case delete
-    }
-
-    var op: Operation
-    var row: [String: String?]
-    /// §1.5: monotonic app-side stamp. The keyboard applies a record only when
-    /// `seq > last_consumed_im_seq` (its own-container cursor) and never deletes the App
-    /// Group inbox FA-off; the app GCs consumed records via the relayed cursor. Optional in
-    /// the wire format so a pre-seq record (written by an older app) still decodes — it
-    /// reads as 0, i.e. already at/below any cursor, so it is left to the snapshot / prior
-    /// drain rather than re-applied.
-    var seq: Int = 0
-
-    init(op: Operation, row: [String: String?], seq: Int = 0) {
-        self.op = op
-        self.row = row
-        self.seq = seq
-    }
-
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        op = try c.decode(Operation.self, forKey: .op)
-        row = try c.decode([String: String?].self, forKey: .row)
-        seq = try c.decodeIfPresent(Int.self, forKey: .seq) ?? 0
-    }
-}
-
 struct IMLifecycleRecord: Codable, Equatable {
     enum Action: String, Codable {
         case delete
@@ -108,7 +75,7 @@ enum SyncSignal: String {
     case faOff = "org.limeime.fa.off"
     /// Keyboard → app: a cold→hot scan just finished (hot is synced). Name-only (Darwin
     /// carries no payload); the app uses it to dismiss the sync probe the instant the sync
-    /// is done, instead of holding a fixed window. The seq for GC rides the relay, not this.
+    /// is done, instead of holding a fixed window.
     case syncScanDone = "org.limeime.sync.scan.done"
 }
 
@@ -234,60 +201,6 @@ enum PrefInbox {
     }
 }
 
-/// §1.5 `im` inbox — one-way cold→hot metadata channel, consumed FA-off-safe. The app
-/// appends `seq`-stamped records (App→App Group is always writable) and GCs consumed ones;
-/// the keyboard is a **pure reader** — it applies records above its own-container cursor and
-/// never writes/deletes the App Group.
-enum IMInbox {
-    static let seqCounterKey = "im_inbox_seq"
-    /// Keyboard's own-container consume cursor — the highest `seq` it has applied. Lives in
-    /// `UserDefaults.standard` (NOT the hot DB / `sync_meta`), so it **survives a wholesale
-    /// full-replace** (which copies cold's `sync_meta` over hot's) — the same reason §1.8's
-    /// `active_im` lives there. Echoed on the relay so the app GCs at/below it.
-    static let consumedSeqKey = "last_consumed_im_seq"
-
-    /// App side: bump the App-Group seq counter, stamp each record, append to the inbox.
-    static func append(_ records: [IMInboxRecord], base: URL, defaults: UserDefaults) throws {
-        guard !records.isEmpty else { return }
-        let url = SyncPaths.imInbox(base)
-        var existing = (try? Data(contentsOf: url)).flatMap {
-            try? JSONDecoder().decode(IMInboxFile.self, from: $0)
-        }?.records ?? []
-        var seq = defaults.integer(forKey: seqCounterKey)
-        let stamped = records.map { rec -> IMInboxRecord in
-            seq += 1
-            return IMInboxRecord(op: rec.op, row: rec.row, seq: seq)
-        }
-        defaults.set(seq, forKey: seqCounterKey)
-        existing.append(contentsOf: stamped)
-        try FileManager.default.createDirectory(at: SyncPaths.inboxDir(base),
-                                                withIntermediateDirectories: true)
-        try atomicWrite(try JSONEncoder().encode(IMInboxFile(records: existing)), to: url)
-    }
-
-    /// Keyboard side: read WITHOUT deleting (read-only FA-off). Consumption is gated by the
-    /// caller's `last_consumed_im_seq` cursor.
-    static func read(base: URL) -> IMInboxFile? {
-        guard let data = try? Data(contentsOf: SyncPaths.imInbox(base)) else { return nil }
-        return try? JSONDecoder().decode(IMInboxFile.self, from: data)
-    }
-
-    /// App side: garbage-collect records the keyboard has already consumed (`seq <= cursor`,
-    /// the keyboard's relayed cursor). App→App Group is writable, so this always works.
-    static func gc(base: URL, throughSeq cursor: Int) {
-        let url = SyncPaths.imInbox(base)
-        guard let data = try? Data(contentsOf: url),
-              let file = try? JSONDecoder().decode(IMInboxFile.self, from: data) else { return }
-        let remaining = file.records.filter { $0.seq > cursor }
-        if remaining.count == file.records.count { return }
-        if remaining.isEmpty {
-            try? FileManager.default.removeItem(at: url)
-        } else if let encoded = try? JSONEncoder().encode(IMInboxFile(records: remaining)) {
-            try? atomicWrite(encoded, to: url)
-        }
-    }
-}
-
 enum RelayPrefSync {
     static let hanConvertKey = "han_convert_option"
     static let splitKeyboardKey = "split_keyboard_mode"
@@ -344,10 +257,8 @@ enum RelayPrefSync {
     }
 }
 
-func encodeRelayPayload(faOn: Bool, ts: TimeInterval, imSeq: Int = 0, prefs: RelayPrefState? = nil) -> String {
-    // imseq = the keyboard's last_consumed_im_seq cursor (§1.5); the app GCs im-inbox
-    // records at/below it. Always present so the app has a cursor to trim by.
-    var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts);imseq=\(imSeq)"
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
+    var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
     if let prefs {
         payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);pts=\(prefs.updatedAt)"
         if let im = prefs.reverseLookupIM, let val = prefs.reverseLookupValue,
@@ -358,7 +269,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, imSeq: Int = 0, prefs: Rel
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?, imseq: Int?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -381,7 +292,6 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
-    var imseq: Int?
     // Reverse-lookup IM/value are alphanumeric strings; truncate any concatenated
     // duplicate payload (defensive — the single-probe capture prevents duplicates).
     func stripJunk(_ s: Substring) -> String {
@@ -409,14 +319,11 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             let v = stripJunk(value); if !v.isEmpty { rlim = v }
         case "rlval":
             let v = stripJunk(value); if !v.isEmpty { rlval = v }
-        case "imseq":
-            let digits = value.prefix { $0.isNumber || $0 == "-" }
-            imseq = Int(digits)
         default:
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval, imseq: imseq)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
@@ -801,5 +708,134 @@ func atomicWrite(_ data: Data, to url: URL) throws {
         _ = try fm.replaceItemAt(url, withItemAt: tmp)
     } else {
         try fm.moveItem(at: tmp, to: url)
+    }
+}
+
+// MARK: - §1.5 im.json — app-published IM metadata, keyboard reads it (no mirror, no cold-DB open)
+
+/// The three `im`-table reads the keyboard reroutes to `im.json`. `LimeDB` already
+/// implements all three (retroactive conformance below); `ImJsonLimeDB` answers them from
+/// the published file instead. Deliberately NOT `LimeDBProtocol` — only these three reads
+/// move to `im.json`; every other query stays on the real (hot) `LimeDB`.
+protocol ImConfigReading: AnyObject {
+    func getImConfig(_ imCode: String?, _ field: String?) -> String?
+    func getImConfigList(_ code: String?, _ configEntry: String?) -> [LimeImConfigRow]
+    func getAllImConfigs() throws -> [ImConfig]
+}
+
+extension LimeDB: ImConfigReading {}
+
+/// One `im` row, verbatim columns. Codable mirror of `LimeImConfigRow` (which lives in the
+/// frozen LimeDB.swift and can't gain Codable there).
+struct ImRowDTO: Codable {
+    var id: Int
+    var code: String
+    var title: String
+    var desc: String
+    var keyboard: String
+    var disable: Bool
+    var selkey: String
+    var endkey: String
+    var spacestyle: String
+
+    init(_ r: LimeImConfigRow) {
+        id = r.id; code = r.code; title = r.title; desc = r.desc
+        keyboard = r.keyboard; disable = r.disable
+        selkey = r.selkey; endkey = r.endkey; spacestyle = r.spacestyle
+    }
+
+    var row: LimeImConfigRow {
+        LimeImConfigRow(id: id, code: code, title: title, desc: desc,
+                        keyboard: keyboard, disable: disable,
+                        selkey: selkey, endkey: endkey, spacestyle: spacestyle)
+    }
+}
+
+/// The published `im.json`. `im` serves `getImConfig` / `getImConfigList`; `configs` is the
+/// app's real `getAllImConfigs()` grouping (so the keyboard never re-implements the KV-schema
+/// grouping that lives in frozen LimeDB). `generation` is advisory — it pairs the file with
+/// the content generation synced into hot.
+struct ImJsonFile: Codable {
+    var schemaVersion: Int
+    var generation: Int
+    var im: [ImRowDTO]
+    var configs: [ImConfig]
+
+    static let currentSchemaVersion = 1
+}
+
+/// App-side: serialise cold's `im` (rows + grouped configs, emoji excluded) to `im.json` by
+/// atomic rename. Best-effort — a failure leaves the previous file, so the keyboard keeps
+/// reading the last good publish.
+enum ImJsonPublisher {
+    static func publish(from source: ImConfigReading, generation: Int, to url: URL) {
+        let rows = source.getImConfigList(nil, nil).filter { $0.code != "emoji" }
+        let configs = (try? source.getAllImConfigs()) ?? []   // getAllImConfigs already drops emoji
+        let file = ImJsonFile(schemaVersion: ImJsonFile.currentSchemaVersion,
+                              generation: generation,
+                              im: rows.map(ImRowDTO.init),
+                              configs: configs)
+        guard let data = try? JSONEncoder().encode(file) else { return }
+        try? atomicWrite(data, to: url)
+    }
+}
+
+/// Keyboard-side reader: answers the three `im` reads from `im.json`; forwards to a fallback
+/// `LimeDB` when the file is absent/unreadable (fresh keyboard → hot's bundled-default `im`),
+/// and forwards `code='emoji'` lookups (the emoji version row lives in hot's `im`, §1.3).
+/// Reloads when the file's (mtime, size) moves. FA-off-safe: a plain App-Group file read,
+/// never a cold-DB open (docs/IOS_FA_OVERLAY.md preface).
+final class ImJsonLimeDB: ImConfigReading {
+    private let imJsonURL: URL
+    private let fallback: () -> (any ImConfigReading)?
+    private let lock = NSLock()
+    private var cached: ImJsonFile?
+    private var cachedStamp: (mtime: TimeInterval, size: Int)?
+
+    init(imJsonURL: URL, fallback: @escaping () -> (any ImConfigReading)?) {
+        self.imJsonURL = imJsonURL
+        self.fallback = fallback
+    }
+
+    /// Reload iff the file's (mtime, size) changed since last parse. nil when no valid
+    /// im.json exists → callers fall back to the wrapped `LimeDB`.
+    private func current() -> ImJsonFile? {
+        lock.lock(); defer { lock.unlock() }
+        guard let attrs = try? FileManager.default.attributesOfItem(atPath: imJsonURL.path),
+              let mtime = (attrs[.modificationDate] as? Date)?.timeIntervalSince1970,
+              let size = attrs[.size] as? Int else {
+            cached = nil; cachedStamp = nil
+            return nil
+        }
+        if let s = cachedStamp, s.mtime == mtime, s.size == size, let c = cached { return c }
+        guard let data = try? Data(contentsOf: imJsonURL),
+              let file = try? JSONDecoder().decode(ImJsonFile.self, from: data),
+              file.schemaVersion == ImJsonFile.currentSchemaVersion else {
+            cached = nil; cachedStamp = nil
+            return nil
+        }
+        cached = file; cachedStamp = (mtime, size)
+        return file
+    }
+
+    func getImConfig(_ imCode: String?, _ field: String?) -> String? {
+        if imCode == "emoji" { return fallback()?.getImConfig(imCode, field) }
+        guard let file = current() else { return fallback()?.getImConfig(imCode, field) }
+        guard let imCode, !imCode.isEmpty, let field, !field.isEmpty else { return nil }
+        return file.im.first { $0.code == imCode && $0.title == field }?.desc
+    }
+
+    func getImConfigList(_ code: String?, _ configEntry: String?) -> [LimeImConfigRow] {
+        guard let file = current() else { return fallback()?.getImConfigList(code, configEntry) ?? [] }
+        // Mirror LimeDB.getImConfigList: only filter when the arg has >1 char; ORDER BY desc ASC.
+        var rows = file.im
+        if let c = code, c.count > 1 { rows = rows.filter { $0.code == c } }
+        if let ce = configEntry, ce.count > 1 { rows = rows.filter { $0.title == ce } }
+        return rows.sorted { $0.desc < $1.desc }.map { $0.row }
+    }
+
+    func getAllImConfigs() throws -> [ImConfig] {
+        guard let file = current() else { return (try fallback()?.getAllImConfigs()) ?? [] }
+        return file.configs
     }
 }

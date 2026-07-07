@@ -1,10 +1,15 @@
 ﻿# iOS DB Cold/Hot Architecture
 
-Design for LIME's two-database (cold/hot) model on iOS: how the Settings app and
-the keyboard extension share IM data across the process boundary, how
-backup / restore / factory reset behave, how the emoji dataset is shipped and
-upgraded, and how the table editor pulls the keyboard's latest data before
-editing.
+Design for LIME's two-database (cold/hot) model on iOS: the **cold** (app-owned) and **hot**
+(keyboard-owned) databases, how data flows cold → hot, how backup / restore / factory reset
+behave, how the emoji dataset is shipped and upgraded, and how the table editor pulls the
+keyboard's latest data before editing.
+
+The **cross-process transport and Full Access permission model** this design rides on — the App
+Group channel, Darwin doorbells, the summon probe, the FA-off-safe inbox / relay, and the
+keyboard-owned preferences — live in the companion doc
+**[IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)**. This doc is the **database** layer; that one is the
+**communication** layer beneath it.
 
 > §1 is the current architecture design. §2 retains the original table-sync-only
 > spec verbatim.
@@ -35,70 +40,20 @@ editing.
   - **Incremental** — per-table refresh while both DBs already share a lineage
     (the running sync engine; reworked separately).
   - **Full replace (epoch)** — the whole hot DB is discarded and rebuilt from
-    cold. Used for restore and factory reset (emoji upgrade is **not** here — it
-    is local per-process, §1.3).
+    cold. Used for restore and factory reset (an emoji upgrade is **not** here — it
+    rides its own version-gated cold → hot mirror, §1.3).
 
-### 1.0.2 Cross-process channel and Full Access
+### 1.0.2 Cross-process channel and Full Access — see IOS_FULL_ACCESS.md
 
-The Settings app and the keyboard extension are **separate processes** that share
-nothing but the App Group container. All coordination is **file-based**, with
-payload-free **Darwin notifications** as doorbells that only mean "go look at the
-folder." There is no shared memory, RPC, or `UserDefaults` correctness signal.
-
-**Shared files (App Group container):**
-
-| File | Written by | Meaning |
-| --- | --- | --- |
-| `cold.limedb` | app | the published cold snapshot; **carries its own `sync_meta` table** (epoch + generation) — no JSON sidecar (§1.0.3) |
-| `inbox/im.*` | app (writes + GCs) | changed `im` record(s) for one-way cold → hot metadata sync (§1.5); each `seq`-stamped, keyboard reads only, app trims at/below the relayed cursor |
-| `outbox/export.request.json` | app | `{requestUUID, expiresAt}` — "please snapshot hot" |
-| `outbox/backup.limedb` | keyboard | the hot snapshot produced on request |
-| `outbox/receipt.json` | keyboard | `{requestUUID, epochUUID, at}` — snapshot ready |
-| `outbox/heartbeat.json` | keyboard | `{hasFullAccess, lastSeenAt, lastDBError}` — FA / liveness |
-
-**Darwin doorbells (`org.limeime.*`, no payload):**
-
-| Signal | Posted by | Wakes the reader to… |
-| --- | --- | --- |
-| `tables.updated` | app | re-scan cold (new generation and/or epoch) |
-| `outbox.updated` | app | check for an export request |
-| `import.done` / `import.failed` | keyboard | reflect import status |
-| `fa.on` / `fa.off` | keyboard | FA state ping |
-| `sync.scan.done` | keyboard | a cold→hot scan just finished — the app dismisses its sync probe now (§1.7) |
-
-**Version markers live in cold's `sync_meta` table (§1.0.3), not a JSON sidecar:**
-
-- **`epoch_uuid`** — the DB **lineage** identity, bumped **only** on restore and
-  factory reset. A changed epoch → the keyboard does a **full replace** (§1.2).
-  **This is the durable "bell," and the one marker correctness truly requires.**
-- **`generation`** + per-table **`rev`** — the incremental selectors: same epoch +
-  newer generation → the keyboard reconciles only the tables whose `rev` moved. `rev`
-  is **load-bearing, not a mere optimization**: it scopes each cold→hot reconcile to
-  the tables the **app** changed, so it never clobbers unharvested keyboard learning
-  in untouched tables.
-
-**Full Access gates the keyboard's *writes* to the App Group, not its reads.** Per
-`IOS_FULL_ACCESS.md` (Apple's wording): with Full Access **off** a keyboard extension has
-**read-only** access to the App Group and **read/write** access to **its own container**.
-So the cold→hot sync runs FA-off **because it only reads the App Group** (cold DB + inbox)
-and **writes only the keyboard's own container** (hot DB + its `sync_meta` cursors), and
-reports back over the **typed-text relay** (§1.8) — never an App Group write. *(An earlier
-draft claimed the keyboard could **read and write** the App Group FA-off; that is wrong.
-FA-gating the sync had stranded FA-off installs, but the correct fix is own-container writes
-plus a read-only inbox consumed by a cursor, **not** App Group writes — see §1.8 (prefs),
-§1.5 (`im` inbox), §1.6 (lifecycle).)* The keyboard's App Group **writes** — the backup snapshot /
-receipt (§1.1) and the editor-refresh receipt (§1.4) — are **FA-on** operations, correctly
-gated; the FA-off sync path never writes the App Group. So: **applying a restore and
-incremental sync run regardless of FA** (read cold, write hot); **backup does not** (it
-writes the outbox → FA-on, §1.1). The cold/hot **split exists for write isolation** (the app
-editing cold must not race the keyboard learning into hot). The **app side always works** (it
-owns cold outright, read/write regardless of FA).
-
-> **UI gating is a separate, deliberate choice.** The 備份 button (§1.1) and the table
-> editor's live-edit unlock (§1.4) may still require FA-Confirmed-ON + active-keyboard
-> as a conservative product decision — that is a UX gate on the *button*, not a
-> technical requirement of App Group access. The **cold→hot sync that surfaces installed
-> IMs is never FA-gated.**
+The app and the keyboard are **separate processes** sharing only the App Group container; all
+coordination is **file-based** with payload-free **Darwin doorbells**, and **Full Access gates
+the keyboard's App Group *writes*, not its reads** — so the cold→hot sync runs FA-off (it reads
+cold and writes the keyboard's own container). The full channel inventory (App Group files and
+Darwin signal names), the FA permission matrix, the summon probe, the FA-off-safe inbox / relay
+transport, and the keyboard-owned prefs all live in
+**[IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)**. This doc covers only what those messages carry:
+the cold/hot database itself. The version markers the channel delivers — `epoch_uuid`,
+`generation`, per-table `rev` — are the subject of §1.0.3.
 
 ### 1.0.3 Sync metadata — the `sync_meta` table (in-DB, not a sidecar)
 
@@ -114,8 +69,8 @@ never `UserDefaults`, never a Darwin payload.
 | `epoch_uuid` | cold **and** hot (each DB carries its own) | **yes** | full-replace lineage. Cold stamps a **fresh** one only on a restore/reset; installs never touch it, so an install-only cold has **no `epoch_uuid` (nil)**. |
 | `applied_epoch` | hot | **yes** | the cold epoch hot has applied — **decoupled from hot's own `epoch_uuid`**. Hot's own `epoch_uuid` is hot's *identity* (a **random value at bootstrap**, or cold's epoch after a completed full-replace copy), so it is not a reliable applied-marker by itself: an install-only cold is nil while a hot that synced incrementally keeps its bootstrap epoch, so `coldEpoch(nil) != hotEpoch(bootstrap)` would falsely read as a new lineage and full-replace. `applied_epoch` records the applied cold epoch (nil for an install-only lineage) so `nil == nil` ⟺ converged. Cold's lineage is **applied when EITHER** `applied_epoch` **or** hot's own `epoch_uuid` matches cold — the latter is a fast-path so a completed restore copy is never re-copied when its `applied_epoch` stamp was interrupted. |
 | `generation` | cold; hot stores `applied_generation` | fast-path | monotonic publish counter — the "anything changed within this epoch?" gate. The **incremental** path edits hot's tables **in place**, so (unlike the epoch) it gets no free atomic marker and keeps an explicit `applied_generation`. |
-| `last_consumed_im_seq` | hot | consume cursor | the `im`-inbox `seq` the keyboard has applied. Its **own-container** consume gate — FA-off the keyboard cannot delete the App Group inbox (§1.5), so a lingering already-applied record is skipped by this cursor, not by removal. **Echoed on the relay** so the **app** GCs records at or below it. A single monotonic int, not a ledger. |
 | per-table `rev` | cold | **yes** | scopes each cold→hot reconcile to the tables the **app** changed, protecting unharvested keyboard learning elsewhere |
+| `applied_emoji_version` | hot | emoji gate | the emoji version hot has mirrored (§1.3). Gates the version-gated emoji mirror; kept **outside** the `im` table (where the emoji version itself lives) so the `im.json` publish (§1.5) — which excludes emoji — can never desync the version from the data. |
 
 Everything heavier is **cut**:
 
@@ -271,7 +226,8 @@ live Darwin notification. The doorbell only makes a live FA-on keyboard scan
    appearance that closed the live connection (wrong layout, no candidates until it
    reopened) — stays **structurally impossible**, because the self-marking epoch and the
    data are one
-   atomic file. This is why the restore probe (§1.9) dismissing "soon" no longer strands the
+   atomic file. This is why the restore probe ([IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md))
+   dismissing "soon" no longer strands the
    keyboard: either the swap landed (done) or it didn't (cleanly re-applied), never a
    half-applied re-copy.
 2. The full replace is **wholesale**: hot ends up exactly as cold (= the restored
@@ -294,50 +250,43 @@ next runs with FA on, sees the epoch change, and applies it. The user is warned
 that everything will be replaced; losing local state on an explicit restore is
 the defined, expected behavior — the same as before the cold/hot split.
 
-### 1.3 Emoji: shipping and upgrade — local per-process, **not synced**
+### 1.3 Emoji — cold-authoritative, mirrored to hot; the keyboard never reseeds
 
-Emoji uses the **Android-aligned model**: it lives *in* each database and is
-**not** part of the cold/hot sync. Cold and hot each carry their own emoji tables
-and keep them current **independently, from the app- / appex-bundled `emoji.db`**.
-Emoji never rides the epoch, never triggers a full replace on its own, and is
-never diffed cross-process.
+Emoji lives *in* each database (Android-aligned: `emoji_data` + prebuilt **FTS5**, plus
+`emoji_user` for recency). But it is **app-authoritative**: **only the app upgrades emoji**, on
+cold, and hot receives it by a **cold → hot mirror**. The keyboard runs **no** emoji upgrade of
+its own — its `refreshEmojiDataIfNeeded` is removed on the keyboard side.
 
-- `emoji_data` (+ prebuilt **FTS5**) ships **populated** in the bundled default DB
-  — so a fresh install already has emoji — and in the bundled `emoji.db` (the seed
-  / upgrade source). Queries read `emoji_data` in the DB, in place.
-- `emoji_user` (recency / usage) is a **normal table** carried with the DB. It is
-  not a sync stem and is **never special-cased**: backup captures it, restore
-  restores it, and the emoji refresh leaves it alone (rows orphaned by a new set
-  are harmless — they simply don't JOIN). Nothing stashes, wipes, or resets it.
-- The emoji **version stamp is tracked per-DB** (local meta, e.g. `sync_meta`) —
-  **not** in the `im` table — so a cross-process `im` mirror never clobbers a
-  process's emoji-version bookkeeping.
+- **`emoji_data` (+ FTS5)** is read-only reference data. The **app** reseeds it on **cold** from
+  the app-bundled `emoji.db` when the bundle is newer (Android's `refreshEmojiDataIfNeeded`, app
+  side only), then publishes.
+- **The version stamp lives in the `im` table** (`code='emoji', title='version'`) — it travels
+  with `emoji_data`. Hot records the version it has applied in **`hot.sync_meta`
+  (`applied_emoji_version`)**, *outside* the `im` table, so the `im.json` export (§1.5), which
+  excludes emoji, can never desync the version from the data.
+- **`emoji_user`** (recency / usage) is **hot-owned and keyboard-authoritative**
+  (`recordEmojiUsage`). It is a normal table carried in backups; the mirror never touches it.
+  Rows orphaned by a new emoji set are harmless (they simply don't JOIN).
 
-**Upgrade — each side finishes its own, on launch:**
+**The emoji mirror — cold → hot, version-gated, inside the sync:**
 
-- On launch, **each process** compares its DB's emoji version against its bundled
-  `emoji.db`. If the bundle is newer it re-seeds its own DB: the **app** refreshes
-  **cold**, the **keyboard** refreshes **hot** ("hot finishes it").
-- The re-seed **copies the prebuilt `emoji_data` + FTS5** from the bundle (attach,
-  then copy the FTS shadow tables), so **neither side rebuilds the FTS index** —
-  the keyboard does no heavy FTS work in the extension.
-- This is Android's `refreshEmojiDataIfNeeded`, run per-process. **No epoch bump,
-  no cold republish, no `tables.updated`** for a plain emoji upgrade.
+- On sync, if `cold.im`'s emoji version ≠ `hot.sync_meta.applied_emoji_version`, the keyboard
+  **mirrors emoji from the attached cold snapshot into hot**: copy `emoji_data`, **copy the FTS5
+  shadow tables** (no in-process FTS rebuild — the keyboard does no heavy FTS work in the
+  extension), and copy the emoji `im` rows; then set `applied_emoji_version`. Otherwise (the
+  common case) it is a no-op. *(FTS shadow-table copy is the v2 intent; if it proves fragile
+  across FTS versions, fall back to an in-process rebuild — revisitable.)*
+- Because it is **version-gated**, the emoji mirror does **not** run on every generation bump —
+  only when the app actually upgraded emoji. A plain `im` edit never copies emoji.
 
-**Interaction with restore:** on restore the emoji refresh runs **app-side, on
-cold, before the bell** (§1.2 step 2) — an old or emoji-absent backup is brought
-to the current emoji set *in cold*, and the subsequent full replace (cold → hot)
-carries it to the keyboard. So the keyboard needs no separate post-restore emoji
-step: cold is already current when the bell rings. This is also the **backfill**
-path for a backup that predates emoji (absent tables read as "older than bundle"
-→ seeded, in cold).
+**Restore / factory reset:** the app brings cold's emoji current **before the bell** (§1.2), and
+the full replace carries `emoji_data` + FTS + the emoji `im` version to hot wholesale; the full
+replace stamps `applied_emoji_version` so the version-gated mirror reads converged next scan. An
+emoji-absent backup is backfilled on cold (absent = "older than bundle" → seeded).
 
-**Not editable app-side — out of §1.4 scope.** There is **no app-side editor for
-emoji**. `emoji_data` is read-only reference data (changed only by the emoji
-refresh above); `emoji_user` is written **only** by the keyboard
-(`recordEmojiUsage` on an emoji commit) and replaced wholesale by a restore. So
-emoji never flows through the §1.4 hot → cold table-editor sync — its only two
-mutation sources are **keyboard usage** and a **full-DB restore**, nothing else.
+**Not editable app-side — out of §1.4 scope.** `emoji_data` changes only via the app reseed;
+`emoji_user` is written only by keyboard usage and replaced wholesale by a restore. Emoji never
+flows through the §1.4 hot → cold table-editor sync.
 
 ### 1.4 Table editor sync (DB operation, not JSON)
 
@@ -427,50 +376,92 @@ tracked op log **only** if device traces later show this edge bites.
 The sync boundary stays in `DBServer` **on the keyboard side**. No `SearchServer`
 callback, no dirty hook in IM / learning logic (see §2 "Hard Boundary").
 
-### 1.5 IM-metadata sync (`im` table) — one-way, cold → hot only
+### 1.5 IM metadata (`im` table) — published as `im.json`; the keyboard reads the file, never syncs it
 
-Editing IM **metadata** on the details page (`IMDetailView` — keyboard layout,
-title, enabled state) changes cold's **`im`** table. This is the **simplest** sync
-case: it flows **one-way, cold → hot**, because the **keyboard never writes the `im`
-table** — it only *reads* it to know which IMs exist and how they are configured. So
-there is no harvest-back, no `LEFT JOIN` entry step, and none of §1.4's
-delete-vs-learn ambiguity: **cold is unconditionally authoritative for `im`.**
+The `im` table (which IMs exist, plus each IM's config: display label, `keyboard` layout,
+`selkey` / `endkey` / `spacestyle`, enabled state) is **app-authoritative and never written by
+the keyboard**. It is **not copied into hot.** The mirror, and the seq-inbox before it, are both
+gone — every copy lagged its source, and that lag was the race (see the
+[IOS_FA_OVERLAY.md](IOS_FA_OVERLAY.md) preface). Instead the app **publishes the `im` table as a
+small `im.json`** in the App Group, and the keyboard **reads that file** for every `im` lookup —
+no SQLite handle on cold, no App-Group DB open, so it is FA-off-safe and `0xdead10cc`-free
+(reading file *bytes* is the safe carve-out; opening a shared DB is not).
 
-**FA-off-safe consumption — the keyboard is a pure App Group reader (per §1.8).** With
-Full Access **off** a keyboard has **read-only** App Group access (`IOS_FULL_ACCESS.md`),
-so the inbox is **never consumed by deleting it** — that write silently fails FA-off and
-the file lingers, and a re-drain would resurrect a wiped IM (the *restore-to-default →
-install-one → picker shows the old IMs, only the new one works* bug). Instead consumption
-is a **seq cursor the keyboard keeps in its own container**, and the **app** — the sole
-App Group writer — garbage-collects the file. This is exactly the §1.8 pref-inbox pattern,
-applied to the `im` inbox.
+**Publish — app side (atomic rename, debounced).** On any `im` edit — `updateIMEnabled`
+(enable/disable), `setImConfig` (rename), `setImConfigKeyboard` (layout) — or an IM lifecycle
+change that adds / removes an `im` row (§1.6), the app serialises cold's `im` rows (excluding
+`code='emoji'`) to a temp file and **atomically renames** it over `<AppGroup>/im.json`. Atomic
+rename means a concurrent keyboard reader sees either the whole old file or the whole new one —
+never a torn write. Publish is **debounced to the edit's commit event** (Save / field-resign /
+screen-exit), never per keystroke: a metadata edit may be authored **with LIME itself** (typing
+an IM's Chinese name), and the keyboard only ever reads the committed file.
 
-Flow:
+**Format.**
 
-1. **App — append, stamped with a seq.** The app applies the edit to cold's `im`, then
-   **appends** the changed `im` record(s) to the App Group **inbox**, each carrying a
-   **monotonic `seq`** (a counter the app bumps in the App Group), and posts
-   `org.limeime.tables.updated`. App → App Group is writable regardless of FA.
-2. **Keyboard — read + apply against an own-container cursor (works FA-off).** On its
-   scan the keyboard **reads** the inbox (read-only ✓ FA-off) and applies each record with
-   `seq > last_consumed_im_seq` to hot's `im` in one transaction — upsert for an
-   add / edit, delete for a removal — then advances `last_consumed_im_seq` in hot's
-   `sync_meta` (its **own** container, FA-off-writable). It **never deletes or rewrites the
-   inbox**: an already-consumed record that lingers is simply skipped by the cursor, so a
-   wiped IM can't resurrect and a stale `delete` can't re-fire after a reinstall — the
-   **cursor, not the file's presence, is the consume gate**.
-3. **App — GC via the relayed cursor.** The keyboard echoes `last_consumed_im_seq` in its
-   **relay** payload (the kb→app typed-text channel, §1.8 — no App Group write, FA-off ✓).
-   On the next probe the app already runs — **install, backup, and restore all probe** — it
-   **deletes inbox records with `seq <= cursor`**. Append-new + trim-consumed are the same
-   owner's ops (only the app writes the App Group), so there is no cross-process file race.
-   The trim is **best-effort / eventual**: a missed probe just leaves a **bounded** tail for
-   the next one — never incorrect, because correctness is the cursor, not the GC.
+```json
+{
+  "schemaVersion": 1,
+  "generation": 42,
+  "im": [
+    { "_id": 1, "code": "phonetic", "title": "desc", "desc": "注音",
+      "keyboard": "…", "disable": "…", "selkey": "…", "endkey": "…", "spacestyle": "…" }
+  ]
+}
+```
 
-Because the direction is one-way and the keyboard is a pure reader of `im`, applying
-the record directly is safe — nothing of the keyboard's to clobber — so no full cold
-republish and no per-table state diff are needed for a metadata tweak. (Installing /
-importing an IM changes table *content* — that is §1.6 — not just `im` meta.)
+- `schemaVersion` — the JSON shape version; bumped only if the field set changes. **Independent
+  of the DB `user_version` (104)** — `im.json` is iOS-local transport, never portable payload.
+- `generation` — cold's publish counter (§1.0.3) at write time, so a reader can tell whether
+  `im.json` is paired with the content that has synced into hot (the picker gate below).
+- `im` — every non-emoji `im` row, columns verbatim. The emoji `im` version row is **excluded**
+  — it stays with the emoji data (§1.3).
+
+**Keyboard read — the reroute, `LimeDB.swift` frozen.** Every keyboard `im` read funnels through
+**three methods**: `getImConfig(code, field)` (runtime imkeys / endkey / layout, via
+`SearchServer.getImConfig`), `getImConfigList(code?, field?)`, and **`getAllImConfigs()`** (the
+picker's IM set, `DBServer.getAllImConfigs` → §1.7). `LimeDB` is `final` (no subclassing) but
+**conforms to `LimeDBProtocol`**, so a thin **decorator** — `ImJsonLimeDB: LimeDBProtocol` —
+wraps the real hot `LimeDB`, **answers those three from a parsed, cached `im.json`** (reload when
+the file's inode / mtime moves), and **forwards every other protocol call** to the wrapped
+`LimeDB`. On the **keyboard side** the datasource is typed as `any LimeDBProtocol` and set to the
+decorator:
+
+- `SearchServer` already holds `db: any LimeDBProtocol`, so its `getImConfig` /
+  `getImConfigList` route through the decorator with **no change**.
+- `DBServer.cachedDatasource` / `datasource` is **widened from concrete `LimeDB?` to
+  `(any LimeDBProtocol)?`**, and **`getAllImConfigs()` is added to `LimeDBProtocol`** so the
+  picker routes through the decorator too — `LimeDB` already implements it, so it conforms
+  **unchanged**.
+
+Result: **`LimeDB.swift` and `SearchServer.swift` stay byte-for-byte frozen (§2.2)**, and hot's
+`im` table is **never read on the keyboard side** (and never written — the mirror is gone).
+
+> **Why a decorator, not a caller rewrite.** `getAllImConfigs` lives on the concrete `LimeDB` and
+> **self-calls `getImConfigList(nil,nil)` internally** — a call a frozen `final` class cannot
+> redirect. Rerouting only the two protocol methods would leave the picker reading hot's stale
+> `im` through that internal self-call. Overriding all three in a protocol decorator is the
+> freeze-safe fix. The decorator **forwards `code='emoji'` config lookups to the wrapped
+> `LimeDB`** (the emoji version row lives in hot's `im`, §1.3, and is excluded from `im.json`).
+
+**App side keeps the DB path.** The decorator is a **keyboard-only** install. In the app process
+the datasource stays the real `LimeDB` over **cold**, and `im` reads / writes hit cold's `im`
+table directly (the app is the writer of record); the app then re-publishes `im.json`. No
+decorator app-side.
+
+**Picker alignment.** `im.json` can list an IM whose **content table** has not yet synced into
+hot (content still flows cold → hot separately, §1.4 / §1.6). So the picker shows an IM only when
+it is **enabled in `im.json` AND its content table is present in hot** (`tableHasData`); the
+`generation` stamp lets a reader detect an `im.json`-vs-content skew and re-check. This closes the
+"installed-first IM disappears" drift **structurally** — the IM set is a single fresh file read,
+with no second in-hot copy to fall out of step.
+
+**FA-off-safe / fallback.** Reading `im.json` is a plain file read of the App Group container —
+allowed FA-off, exactly like the cold snapshot the sync already `ATTACH`es each scan. File absent
+(fresh keyboard / App Group unavailable) → the decorator **falls back to the wrapped `LimeDB`**
+(hot's bundled-default `im`), so a never-published keyboard still boots its default IM.
+
+Installing / importing / deleting an IM changes table **content** — that is §1.6, unchanged — and
+*also* rewrites `im.json` (the `im` row add / remove).
 
 ### 1.6 IM-table lifecycle — install / import / delete (app-driven, cold → hot)
 
@@ -522,13 +513,12 @@ hot-side `<table>_user` mechanism — no new stash, no App Group learned-data fi
 exist). Delete and import are `DBServer` / controller operations that bump `rev` and
 ring the bell, like every other §2.5 app-side change.
 
-**FA-off-safe consumption (keyboard never writes the App Group).** A lifecycle record is
-applied **only when its table's `rev` moves** — once hot's `rev` matches cold's the table
-is skipped, so a lingering record is **never re-applied** (this is why a restore-to-default
-then reinstall cannot resurrect a wiped IM's learning). So the keyboard **does not delete or
-write-back** the lifecycle inbox: it reads it (read-only ✓ FA-off), applies per-table against
-`rev`, and lets the **app** GC consumed records on the next probe — the same relayed-cursor
-cleanup as §1.5, so the write-back path is gone entirely.
+**The `rev` apply-gate (DB-content half).** A lifecycle record is applied **only when its
+table's `rev` moves** — once hot's `rev` matches cold's the table is skipped, so a lingering
+record is **never re-applied** (this is why a restore-to-default then reinstall cannot
+resurrect a wiped IM's learning). That gate is the only lifecycle-specific piece; **delivery
+and cleanup are the shared FA-off-safe inbox transport** ([IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)) —
+the keyboard reads, never deletes, and the app GCs on the next probe.
 
 ### 1.7 Keyboard runtime: the query table follows the active IM
 
@@ -575,121 +565,28 @@ to restore the last-used IM. The fix lives in `DBServer` (the readiness/rebuild 
 the keyboard-side `setupDatabase` reconcile — **`SearchServer.swift` / `LimeDB.swift` stay
 frozen (§2.2).**
 
-### 1.8 Keyboard-owned prefs — hot store, seq-guarded app→kb inbox, kb→app relay
+### 1.8 Cross-process reopen — the probe and Safari are different keyboard processes
 
-**The FA fact this section is built on.** Per `docs/IOS_FULL_ACCESS.md` (Apple's wording):
-with Full Access **off** a keyboard extension has **read-only** access to the App Group and
-**read/write** access to **its own container**. So a keyboard **cannot write the App Group
-FA-off** — only read it. *(This corrects §1.0.2's loose "read and write the App Group FA-off":
-the cold→hot sync works FA-off only because it **reads** cold and **writes hot** (own
-container); it never writes cold. Backup, which writes the outbox, is correctly FA-gated, §1.1.)*
+iOS runs a **separate keyboard-extension process per host app**: the sync probe
+([IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)) summons
+the keyboard **inside the Settings app**, but when the user switches to Safari that is a
+**different, independently-lived process** of the *same* extension, sharing the *same* hot
+`lime.db` file. The full replace (§1.2, `replaceDatabaseFromSnapshot`) is a **move** — it
+unlinks the old `lime.db` and renames a fresh copy into place, so the file gets a **new inode**.
+The process that *does* the replace reopens its own `LimeDB` (the `defer` in
+`replaceDatabaseFromSnapshot`), but any **other warm process** still holds a GRDB queue bound to
+the **old, now-unlinked inode** → every read returns **zero rows → empty IM picker**. This is
+issue **#86**, but *across processes* rather than across apps.
 
-**Scope — four keyboard-owned prefs; everything else is unchanged.** Four prefs can change on
-the **keyboard** side: `han_convert_option` (漢字轉換), `split_keyboard_mode` (分離鍵盤), the
-per-IM `<im>_im_reverselookup` (字根反查), and the **active IM** (`active_im`, renamed from the
-misleading `keyboard_list` — it holds one IM nick, not a list). **Every other pref is
-app-write-only:** the keyboard only *reads* it and never changes it, so — like §1.5 — the App
-Group value stays authoritative and the keyboard **reads it directly from cold**. This section
-covers only the four keyboard-writable prefs.
-
-**Why cold can't hold them (the bug).** The keyboard writes these to the App Group today, but
-**FA-off that write is silently dropped** (read-only). So a hamburger change / IM switch never
-persists to cold; then the keyboard re-reads cold on the next appearance and **reverts** to the
-stale value. That is the whole "prefs / active IM get replaced by the cold value" bug.
-
-**Model — the keyboard owns the value in its own container.**
-
-- **Hot store = the keyboard's own container** (`UserDefaults.standard`, extension-private).
-  Read/write **always** works — FA-on, FA-off, across restarts and reboots (wiped only by a
-  reinstall). The keyboard reads and writes all four **only** here. This is the durable,
-  FA-independent home for the value.
-- **kb→app — the relay.** The keyboard reports its current value in the probe relay payload
-  (`encodeRelayPayload` / `RelayPrefSync.apply`) — a **typed text payload, not an App-Group
-  write**, so it works FA-off. The app's `sharedDefaults` becomes the **app's display store**.
-- **Cold is written for exactly one purpose: backup.** These prefs reach cold only when the
-  keyboard snapshots for a backup — which is **FA-on** (§1.1), the one time the keyboard may
-  write the App Group. There is no ongoing cold write.
-
-**app→kb — one seq-guarded inbox (the three prefs; active IM only on restore).**
-
-- The app writes an App-Group **pref inbox** (`inbox/prefs.json`) — App→App Group is always
-  writable. It stamps each write with a **monotonic `seq`** (a counter it bumps in the App
-  Group).
-- The keyboard **reads** the inbox on appearance (read-only ✓ FA-off) and applies it **only
-  when `seq >` its own last-consumed seq**, which it stores **in its own container**
-  (FA-off-writable). Then it best-effort deletes the file (**succeeds FA-on; a no-op FA-off —
-  the seq guard is what makes it one-time**, since the keyboard cannot delete the file FA-off).
-- Writers of the inbox: the **Preferences tab** for the three prefs; a **wholesale restore**
-  for the active IM (the restored backup's active IM — see below). Normal app enable/disable
-  never writes the active IM.
-
-**Ordering — drain before relay.** The keyboard drains the inbox **before** answering the
-relay, so the relay always reports the post-drain value and an app change is never bounced back.
-
-**Active IM specifics.**
-
-- **Keyboard-switch-only.** The app has **no path** to set the active IM except a wholesale
-  restore. So it needs no ongoing app→kb — it is a pure keyboard-owned hot value.
-- **No cold seed.** On a fresh / reinstalled keyboard the hot value is absent → §1.7's reconcile
-  **defaults to the first enabled IM** (the enabled list `keyboard_state`/`activatedIMs` is the
-  real cold-owned source). A one-time *read* of the legacy `keyboard_list` may migrate an
-  existing user's current IM on upgrade; there is no ongoing cold dependency.
-- **Wholesale restore is the only cold→active-IM path:** a restore delivers the restored active
-  IM through the same inbox; the keyboard adopts it (a restore overrides the live value — the
-  backup's state wins, consistent with §1.2's wholesale semantics).
-
-**Backup / restore of the four prefs.** They live in the keyboard's own container, not the hot
-DB, so backup and restore route them explicitly:
-
-- **Backup (FA-on, §1.1).** A backup must capture the *keyboard's* current four, not cold's
-  stale copy. At snapshot time the keyboard is FA-on — the one moment it may write the App
-  Group — so it **flushes its four hot prefs to cold**, and the app zips them into the backup's
-  cold preference sidecar. This is the only ongoing cold write named in §1.8.
-- **Restore (wholesale, §1.2).** The restored backup lands the four back in cold. The app then
-  **writes them to the pref inbox** (bumped `seq`); the keyboard drains it on its next
-  appearance and adopts them into its hot store — active IM included (a restore **overrides**
-  the live active IM, matching §1.2's "the backup's state wins"). The keyboard still never reads
-  them from cold directly — the inbox is the delivery path, so restore stays FA-off-safe
-  (read-only inbox read + own-container writes; the active IM then also survives the wholesale
-  hot-DB replace because it is owned outside the DB).
-
-**Why no cross-writer timestamps.** The `seq` is only a *consumption* marker ("have I applied
-this inbox record?") forced by the FA-off no-delete — not a newness comparison between stores.
-The two writers are never simultaneous (the keyboard runs only on-screen), so app→kb (inbox
-drain) and keyboard→own (hamburger) never race; the relay reflects whichever happened last. The
-clobber is gone because the keyboard **never reads cold** for these four. Reverse-lookup is
-per-IM via `LIMEPreferenceManager` pointed at the hot store; the pref inbox + `seq` live in
-`SyncContract.swift`, per §2.1.
-
-### 1.9 The sync probe — summon, trigger, dismiss on scan-done
-
-After a restore (§1.2) or an install / delete (§1.6) the app wants the cold→hot sync to
-happen **before the user leaves the app**, so the active IM shows on the **first** keyboard
-appearance instead of only after a re-open. But a keyboard extension is **dormant** — it runs
-only as some app's active input view — so the app **summons** it with an **invisible 1×1
-focused probe field** (`DBManagerView` for restore, `IMInstallView` for install). Focusing the
-field brings the keyboard up; its `viewWillAppear` enqueues `scanAndApply` on the keyboard's own
-queue. That is all the probe needs to do: **trigger** the scan.
-
-**Dismiss on `sync.scan.done`, not a fixed timer.** The probe used to hold the keyboard a fixed
-**3 s** because the scan had no app-visible receipt — a blank keyboard on screen far longer than
-the sub-second scan. Now the keyboard rings the name-only Darwin **`sync.scan.done`** the moment
-`scanAndApply` returns, and the probe dismisses on it (`ensureSyncDoneObserver`). So the popup
-lasts only as long as the scan actually takes.
-
-**Why "done", not "appeared".** Dismissing the instant the keyboard *appears* (right after the
-trigger) would unfocus the field and let iOS **suspend / kill the extension mid-scan** — the
-sync would be cut and re-run (with `同步中`) on the user's first real open. Waiting for the
-**done** ping keeps the extension alive through the scan, so it is **guaranteed complete**. The
-3 s window stays only as a **fallback** for a missed signal; the scan is idempotent and re-runs
-on the next appearance regardless.
-
-**The ping is name-only — the GC seq is not on it.** Darwin notifications carry **no payload**,
-and a dynamic `sync.scan.done.<seq>` name can't be observed without registering for every Darwin
-notification and string-parsing (rejected). So the ping only says *"done"*; the
-`last_consumed_im_seq` cursor for the inbox GC (§1.5) rides the **relay** (typed text), which the
-app already reads. The GC is **safe at any timing** — it only trims records the cursor has
-confirmed consumed — so it needs neither the exact ping timing nor a payload.
+The trap is that the other process's `scanAndApply` opens **fresh** connections, so it reads the
+swapped-in file and reports **converged** (`applied == false`) — the "nothing changed, skip the
+rebuild" path (§1.7). That path must therefore also check `DBServer.hotFileReplacedSinceOpen()`
+(the on-disk `lime.db` inode vs. the one the live datasource was opened against). When it
+differs, the keyboard **`reopenDatabaseFromDisk()` + reloads** (`setupDatabase`) even though the
+sync itself was a no-op — rebinding the warm datasource to the file another process swapped in.
+The check is self-healing under races (whoever moved last wins the path; every stale process
+notices on its next appearance) and is the reason "restore → switch to Safari" no longer shows
+`同步中` + no active IM.
 
 ---
 
@@ -705,14 +602,15 @@ The layer lives **only** in these files, plus the App Group relay files (§1.0.2
 
 | File | Responsibility |
 | --- | --- |
-| `DBServer.swift` | orchestration + the boundary API the app/keyboard call |
-| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) + the `sync_meta` stamp (epoch / generation) |
-| `TableSyncEngine.swift` | cold → hot import, epoch / generation / per-table rev, the §1.4 editor state diff, the §1.5 `im` inbox apply |
-| `SyncContract.swift` | App Group paths, inbox / outbox shapes, Darwin signal names |
+| `DBServer.swift` | orchestration + the boundary API the app/keyboard call; installs the keyboard-side `im.json` decorator (§1.5) |
+| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) + the `sync_meta` stamp (epoch / generation) + the **`im.json` publish** (§1.5) |
+| `TableSyncEngine.swift` | cold → hot import, epoch / generation / per-table rev, the §1.4 editor state diff, the **§1.3 version-gated emoji mirror** (the `im` table is **not** synced — §1.5 publishes `im.json`) |
+| `ImJsonLimeDB.swift` (keyboard) | `LimeDBProtocol` decorator: answers `getImConfig` / `getImConfigList` / `getAllImConfigs` from `im.json`, forwards the rest to the hot `LimeDB` (§1.5) |
+| `SyncContract.swift` | App Group paths, `im.json` path, inbox / outbox shapes, Darwin signal names |
 
 Everything the design needs — `sync_meta` (epoch / generation / per-table rev), the
-§1.4 editor state diff (both directions), the §1.5 one-way `im` sync, backup /
-restore, emoji seed / upgrade orchestration — is owned here. This layer opens its
+§1.4 editor state diff (both directions), the §1.5 `im.json` publish + decorator, the §1.3 emoji
+mirror, backup / restore, emoji seed / upgrade orchestration — is owned here. This layer opens its
 **own** GRDB connection(s) to the hot and cold DB files (WAL makes that safe alongside
 LimeDB's queue; §1.0.3) and sets its own `busy_timeout`; it does **not** borrow the
 keyboard's live `LimeDB` connection, and it creates `sync_meta` **invisibly to
@@ -755,9 +653,10 @@ verified in code:
 - **All deletes are app-editor-originated**, and entry re-mirrors cold from hot each
   session (hot frozen while the editor is open), so cold → hot is a plain **state
   diff** — a hot-only row is unambiguously an app delete. No op log, no `LimeDB` hook.
-- **The `im` table is app-write-only** (§1.5) — the keyboard only reads it, so its
-  metadata sync is a one-way record push, again with no `LimeDB` hook.
-- **Emoji is local per-process** (§1.3) — not part of the sync at all.
+- **The `im` table is app-write-only** (§1.5) — the keyboard never writes it; its metadata is
+  published as `im.json` and read through a `LimeDBProtocol` decorator, so no `LimeDB` hook.
+- **Emoji is app-authoritative** (§1.3) — the keyboard never reseeds it; it rides a
+  version-gated one-way cold → hot mirror, so no `LimeDB` hook.
 
 This is *why* the reverted (HEAD) `LimeDB` / `SearchServer` are sufficient: the sync
 never needed their cooperation.
@@ -768,26 +667,30 @@ never needed their cooperation.
   are **orchestrated by `DBServer` / its controllers**, which bump the per-table rev and
   `generation` **there** (after calling the frozen `LimeDB` CRUD), then publish cold.
   Never inside `LimeDB` itself.
-- The **`im`-inbox `seq`** is bumped the same place — app-side, when the app appends an
-  `im` record (§1.5) — and the app **GCs the inbox** (deletes records at or below the
-  keyboard's relayed `last_consumed_im_seq`) on each install / backup / restore probe. The
-  keyboard **never writes or deletes** the App Group inbox — it only reads it and advances
-  its own-container cursor.
+- **`im` has no inbox and no `seq`** — it is published as `im.json` (§1.5). An IM meta edit
+  rewrites cold's `im`, **`publish()`es** (a generation bump, debounced to the edit's commit
+  event), and re-writes `im.json`; the keyboard reads the file fresh. Nothing to bump or GC for
+  metadata.
 - Keyboard learning bumps nothing; it reaches cold only via the §1.4 editor-entry state
   diff.
 
 ### 2.6 Non-goals
 
-- No JSON learned-score file path, and **no JSON metadata sidecar** — all sync
-  metadata is the in-DB `sync_meta` table (§1.0.3).
+- No JSON learned-score file path, and **no JSON sidecar for sync bookkeeping** — epoch /
+  generation / per-table rev live in the in-DB `sync_meta` table (§1.0.3), never a file.
+  (`im.json` (§1.5) is a different thing: the app-authoritative `im` *table* published as a plain
+  file the keyboard reads — IM metadata, not sync bookkeeping.)
 - No `SearchServer` dirty notification or callback.
 - No learning-path instrumentation.
 - No candidate-query changes.
 - No keyboard writes into cold outside the §1.4 sync operation.
 - No `sync_rev` / epoch / ledger logic inside `LimeDB` or `SearchServer`.
 - **No editor op-log or ledger state machine** — close is a state diff; `sync_meta`
-  is epoch + generation + per-table rev + the single `im`-inbox consume cursor only
-  (§1.0.3, §1.4, §1.5) — one monotonic int, not a per-record ledger.
+  is epoch + generation + per-table rev + the `applied_emoji_version` gate only (§1.0.3, §1.4) —
+  not a per-record ledger.
+- **No `im` inbox / cursor / GC**, and **no hot `im` mirror** — `im` is published as `im.json`
+  and read via the decorator (§1.5), so the seq-cursor delivery apparatus and the wholesale mirror
+  are both gone.
 - **No `user_version` bump for `sync_meta`** — the portable schema stays at 104.
 
 UI states, the editor flow, and the delta strategy live in §1.4 — not duplicated here.
