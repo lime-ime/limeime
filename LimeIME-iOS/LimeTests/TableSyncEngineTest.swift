@@ -727,6 +727,41 @@ final class TableSyncEngineTest: XCTestCase {
                        "only the newly-installed IM should be enabled; the wiped cj/dayi must not reappear. got \(enabled)")
     }
 
+    /// A full replace must NOT apply a pending (un-consumed, seq > cursor) im record — the
+    /// snapshot is authoritative, so applying it would land a stale IM on top of the restore.
+    /// It marks the record consumed (cursor advances) instead.
+    func testFullReplaceMarksPendingInboxConsumedWithoutApplying() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let hot = hotDir.appendingPathComponent("lime.db")
+        let cold = appGroup.appendingPathComponent("lime.db")
+        try makeIMDatabase(at: cold, rows: [
+            ["code": "restored", "title": "注音", "desc": "", "keyboard": "lime"]
+        ], epoch: "epoch-new", generation: 1)
+        try makeIMDatabase(at: hot, rows: [
+            ["code": "old", "title": "大易", "desc": "", "keyboard": "old"]
+        ], epoch: "epoch-old", generation: 1)
+        // A pending record (seq 1 > cursor 0) for a stale IM the restore snapshot does NOT have.
+        let suite = try isolatedDefaults()
+        try IMInbox.append([
+            IMInboxRecord(op: .upsert, row: ["code": "stale", "title": "舊", "desc": "", "keyboard": "lime"])
+        ], base: appGroup, defaults: suite)
+        let server = DBServer(_testDatabaseDirectory: hotDir)
+        try publish(cold, appGroup: appGroup)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot,
+                                dbServer: server, consumeDefaults: suite).scanAndApply()
+
+        let rows = try imRows(in: hot)
+        XCTAssertTrue(rows.contains { $0.hasPrefix("restored|") })
+        XCTAssertFalse(rows.contains { $0.hasPrefix("stale|") },
+                       "un-consumed record must NOT be applied on the restore snapshot; got \(rows)")
+        XCTAssertEqual(suite.integer(forKey: IMInbox.consumedSeqKey), 1,
+                       "cursor advanced past the superseded record so a later drain skips it")
+    }
+
     func testSameGenerationAndEpochNoOpsEvenWhenRevisionsDiffer() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

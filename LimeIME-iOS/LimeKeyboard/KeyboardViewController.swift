@@ -359,7 +359,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     // (and resolves the sync toast at the end of its main-thread block).
                     self.setupDatabase()
                 } else {
-                    DispatchQueue.main.async { [weak self] in self?.resolveSyncToast() }
+                    DispatchQueue.main.async { [weak self] in
+                        // Resolve only once the initial setup has loaded activatedIMs. On a
+                        // fresh process it hasn't yet — setupDatabase (viewDidLoad) resolves the
+                        // toast when it lands; resolving here off a still-empty activatedIMs
+                        // would clobber "同步中" with "no active IM" (the first-empty race).
+                        guard let self, self.didCompleteInitialSetup else { return }
+                        self.resolveSyncToast()
+                    }
                 }
             } catch {
                 UserDefaults.standard.set(error.localizedDescription,
@@ -742,6 +749,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private let setupTokenLock = NSLock()
     private var setupTokenCounter = 0
     private var lastAppliedSetupToken = 0
+    /// True once the first setupDatabase has loaded activatedIMs on this process. Until then a
+    /// no-op (converged) scan must NOT resolve the sync toast — its read of the still-empty
+    /// activatedIMs would clobber the "同步中" with "no active IM" before setupDatabase lands
+    /// (the "first empty, second good" race). setupDatabase resolves the toast itself. Main-thread.
+    private var didCompleteInitialSetup = false
 
     private func nextSetupToken() -> Int {
         setupTokenLock.lock()
@@ -840,6 +852,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             // If this reload was driven by a sync that put up the "同步中…" toast, resolve
             // it now — confirm the active IM, or fall back to the no-active-IM hint.
             self.resolveSyncToast()
+            self.didCompleteInitialSetup = true
         }
     }
 

@@ -80,13 +80,13 @@ final class TableSyncEngine {
             let refreshedHotMeta = try SyncMetaStore(databaseURL: hotDatabaseURL)
             try Self.stampAppliedEpoch(coldEpoch, on: refreshedHotMeta)
             try refreshedHotMeta.setAppliedGeneration(coldGeneration)
-            // The snapshot already carries the authoritative `im` table + all data tables, so
-            // there is nothing to clear (and the keyboard cannot delete the App Group inbox
-            // FA-off anyway). Drain seq-guarded: consumed records are skipped by the cursor —
-            // which lives in UserDefaults, NOT the just-overwritten hot sync_meta — so a stale
-            // pre-restore record can't resurrect a wiped IM. Lifecycle records are rev-gated,
-            // so a lingering one is never re-applied; the app GCs both inboxes.
-            try drainIMInboxIfNeeded()
+            // The snapshot already carries the authoritative `im` table, so the pending im
+            // inbox is SUPERSEDED — do NOT apply it (a not-yet-drained install would land on
+            // top of the restore, resurrecting a wiped IM; a stale delete would remove a
+            // restored one). Just advance the cursor past every current record so a later
+            // incremental drain skips them; records written AFTER this restore still apply.
+            // The cursor lives in UserDefaults (survives the swap). Lifecycle is rev-gated.
+            markIMInboxConsumed()
             return true
         }
 
@@ -300,6 +300,16 @@ final class TableSyncEngine {
         }
         let applied = pending.map(\.seq).max() ?? cursor
         consumeDefaults.set(max(cursor, applied), forKey: IMInbox.consumedSeqKey)
+    }
+
+    /// After a full-replace the snapshot is authoritative for `im`, so the pending inbox is
+    /// superseded — advance the cursor past every current record WITHOUT applying it, so a
+    /// later drain skips them (records written after the restore still apply).
+    private func markIMInboxConsumed() {
+        guard let inbox = IMInbox.read(base: appGroupBaseURL) else { return }
+        let maxSeq = inbox.records.map(\.seq).max() ?? 0
+        let cursor = consumeDefaults.integer(forKey: IMInbox.consumedSeqKey)
+        if maxSeq > cursor { consumeDefaults.set(maxSeq, forKey: IMInbox.consumedSeqKey) }
     }
 
     private func readIMLifecycleRecords() throws -> [IMLifecycleRecord] {
