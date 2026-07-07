@@ -131,6 +131,44 @@ final class SearchServerTest: XCTestCase {
         }
     }
 
+    func test_getMappingByCode_phoneticComposingEchoPreservesTypedCase() throws {
+        let spy = SpyLimeDB()
+        spy.getMappingByCodeResponses["ABC"] = [
+            Mapping(id: 1, code: "abc", word: "候選", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode)
+        ]
+        let ss = makeSearchServerWithSpy(spy, tableName: LIME.DB_TABLE_PHONETIC)
+
+        let result = ss.getMappingByCode("ABC")
+
+        XCTAssertFalse(result.isEmpty)
+        XCTAssertTrue(result[0].isComposingCodeRecord)
+        XCTAssertEqual("ABC", result[0].code)
+        XCTAssertEqual("ABC", result[0].word)
+    }
+
+    func test_getMappingByCode_cacheHitRefreshesComposingEchoCase() throws {
+        let lowerFirstSpy = SpyLimeDB()
+        lowerFirstSpy.getMappingByCodeResponses["abc"] = [
+            Mapping(id: 1, code: "abc", word: "候選", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode)
+        ]
+        let lowerFirstServer = makeSearchServerWithSpy(lowerFirstSpy, tableName: LIME.DB_TABLE_PHONETIC)
+
+        XCTAssertEqual("abc", lowerFirstServer.getMappingByCode("abc").first?.word)
+        XCTAssertEqual("ABC", lowerFirstServer.getMappingByCode("ABC").first?.word)
+
+        let upperFirstSpy = SpyLimeDB()
+        upperFirstSpy.getMappingByCodeResponses["ABC"] = [
+            Mapping(id: 1, code: "abc", word: "候選", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode)
+        ]
+        let upperFirstServer = makeSearchServerWithSpy(upperFirstSpy, tableName: LIME.DB_TABLE_PHONETIC)
+
+        XCTAssertEqual("ABC", upperFirstServer.getMappingByCode("ABC").first?.word)
+        XCTAssertEqual("abc", upperFirstServer.getMappingByCode("abc").first?.word)
+    }
+
     func test_3_1_6_1_getMappingByCode_long_code_english_fallback() throws {
         let ss = try makeSearchServer()
         let result = ss.getMappingByCode("abcdefg")

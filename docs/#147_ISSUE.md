@@ -1,4 +1,4 @@
-# Issue #147: iOS hybrid English candidate 0 should preserve capital letters
+# Issue #147: iOS Chinese input candidate 0 should preserve capital letters
 
 ## Status
 
@@ -10,78 +10,74 @@
 
 ## Problem statement
 
-In iOS English / hybrid-English input, candidate 0 should preserve the exact casing typed by the user. If the user types `ABC` or `iPhone`, the first candidate should remain `ABC` or `iPhone` so acronyms, names, brands, accounts, and other case-sensitive text can be committed without being changed to lowercase.
+In iOS Chinese input / mixed input mode, candidate 0 is the raw composing-code echo. It should preserve the exact casing typed by the user. If the user types `ABC` or `iPhone`, candidate 0 should display and commit `ABC` or `iPhone`, not `abc` or `iphone`.
 
-The current reported behavior is that candidate 0 is normalized to lowercase, for example `ABC` becomes `abc` and `iPhone` becomes `iphone`.
+Lowercasing for lookup, cache keys, and database matching is fine. The bug is only that the user-visible candidate 0 echo is lowercased.
 
 ## Source evidence inspected
 
-### iOS English prediction path
+### iOS Chinese candidate path
 
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-  - `handleEnglishCharacter(code:char:)` appends the typed character to `tempEnglishWord` using `insertChar`, which can preserve one-shot Shift / caps-lock casing.
-  - `updateEnglishPrediction()` reads `word = tempEnglishWord`, validates that the host text before the cursor has that suffix, asks `UITextChecker` for completions, and currently builds `mappings` only from those completions.
-  - The current iOS prediction code does not prepend a self / composing-code candidate for `word` before the `UITextChecker` suggestions. When `UITextChecker` returns lowercased suggestions, the candidate list can therefore omit the exact typed-case word.
-  - If `UITextChecker` returns no completions, `updateEnglishPrediction()` clears suggestions instead of showing the typed word as candidate 0.
-  - `commitEnglishSuggestion(_:)` commits only the suffix after `tempEnglishWord`, then appends a space. This is compatible with a candidate whose `word` equals `tempEnglishWord` only if the self-candidate selection path is handled carefully so it does not duplicate text or append an unwanted space.
-
-### iOS SearchServer composing-code path
+  - `updateCandidates()` sends the current composing buffer `mComposing` to `SearchServer.getMappingByCode(...)`.
+  - `setSuggestions(_:)` shows the returned list as normal Chinese candidates.
+  - Candidate 0 is expected to remain a `Mapping.RecordType.composingCode` record so tapping it commits the raw mixed-mode letters through the existing Chinese candidate path.
 
 - `LimeIME-iOS/Shared/Search/SearchServer.swift`
-  - `getMappingByCode(_:)` prepends a `Mapping.RecordType.composingCode` echo candidate when table lookup returns results.
-  - In the phonetic-table branch, the echo candidate is currently constructed with `code.lowercased()` for both `code` and `word`.
-  - In the non-phonetic branch, the echo candidate is constructed with the original `code` for both `code` and `word`.
-- This is a second casing-sensitive path to audit if the reported symptom is reproduced while composing through the Chinese IM candidate flow rather than pure English prediction. Lookup/cache normalization can remain lowercase, but the user-visible composing echo should preserve typed casing if it is used as candidate 0.
+  - `getMappingByCode(_:)` prepends a composing-code echo candidate as candidate 0.
+  - In the phonetic-table branch, the echo is currently built with `code.lowercased()` for both `code` and `word`.
+  - Both phonetic and non-phonetic branches cache the assembled final candidate list under a lowercased key. Because the cached list includes candidate 0, a cache hit can replay an echo from an earlier casing instead of the current typed casing.
 
 ### Android comparison
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-  - `buildEnglishPredictionCandidates(String word, List<Mapping> suggestions)` creates a first `Mapping` whose `word` is the passed non-empty `word`, marks it as a composing-code record, and then appends any suggestion records. It returns an empty list for null or empty input.
-  - Android `updateEnglishPrediction()` calls `buildEnglishPredictionCandidates(tempEnglishWord.toString(), suggestions)`, so the first candidate is based on the raw typed English buffer.
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
-  - `englishPredictionCandidatesKeepComposingWordWhenSuggestionsAreEmpty()` asserts that the typed word remains the only candidate when suggestions are empty.
-  - `englishPredictionCandidatesKeepSuggestionsAfterComposingWord()` asserts that suggestion records follow the typed self candidate.
+- `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+  - Android creates the composing-code echo fresh in `getMappingByCode(...)`:
+    - `self.setWord(code)`
+    - `self.setCode(code)`
+    - `self.setComposingCodeRecord()`
+  - This uses the original typed `code`, so candidate 0 preserves casing.
+- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+  - Android lowercases inside database lookup with `code = code.toLowerCase(Locale.US)`.
+  - That means Android lowercases for query matching but keeps candidate 0 display based on the original input.
+- Android caches database result lists, then adds the `self` echo outside the cached DB results. iOS currently caches the assembled list that already contains candidate 0, so iOS needs to rebuild or replace candidate 0 on cache returns.
 
 ### Existing iOS tests
 
-- `LimeIME-iOS/LimeTests/SearchServerTest.swift` has provider-injection coverage for English suggestions through `SearchServer.getEnglishSuggestions(...)`, but that does not cover `KeyboardViewController.updateEnglishPrediction()` building the visible English candidate list.
-- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift` has source-level coverage for English layout, auto-capitalization, browse-only lists, and candidate-selection policy, but no focused guard that iOS English prediction prepends the exact typed-case self candidate.
-- Existing SearchServer tests that compare `result[0].word.lowercased()` also would not catch a regression where the candidate word has already been lowercased.
+- `LimeIME-iOS/LimeTests/SearchServerTest.swift`
+  - `test_3_1_5_3_getMappingByCode_self_mapping_creation()` checks `result[0].word.lowercased()`, which cannot catch this bug.
+  - Add exact-case assertions for candidate 0.
+  - Add a cache-hit case so `abc` followed by `ABC`, or the reverse, returns candidate 0 for the current typed casing.
 
 ## Likely root cause / investigation hypothesis
 
-The higher-confidence iOS root cause is a parity gap with Android's English prediction candidate builder. Android intentionally inserts the typed English buffer as candidate 0 before dictionary / suggestion results, while iOS currently displays only `UITextChecker` completions. Because `UITextChecker` can normalize suggestions to lowercase and iOS has no typed-word self candidate in front of them, mixed-case input can lose its original casing in the candidate strip.
+iOS is lowercasing the composing-code echo in the phonetic `SearchServer.getMappingByCode(_:)` branch and may return stale echo casing from the assembled-list cache. Android avoids this by lowercasing only in the DB query layer and creating candidate 0 fresh from the original typed code after fetching cached/DB results.
 
-There is also a separate iOS `SearchServer` phonetic-table echo path that lowercases the composing-code echo. If reproduction shows the problem occurs through Chinese IM composing rather than English prediction, that branch should also be fixed or covered so candidate 0 remains a user-facing echo of the typed input.
+## Proposed fix
 
-Keep the final implementation scoped to the path verified by tests/manual reproduction. Do not change lookup normalization unless a focused test proves it is part of the visible-candidate bug.
-
-## Proposed fix / investigation plan
-
-1. Add an iOS helper equivalent to Android `buildEnglishPredictionCandidates(...)` that prepends a self / composing-code `Mapping` for the exact `tempEnglishWord` before appending `UITextChecker` suggestions.
-2. Use the helper from `updateEnglishPrediction()` so `ABC`, `iPhone`, and suggestion-empty inputs still show the exact typed string as candidate 0.
-3. Decide whether selecting the self candidate should be a no-op / explicit commit path or can safely use the existing English suggestion suffix-commit path. Preserve current text in the host field and avoid duplicating the typed word or adding an unexpected space.
-4. Add focused iOS tests for:
-   - typed word candidate 0 preserves casing when suggestions are empty
-   - suggestions appear after the self candidate
-   - mixed-case examples such as `ABC` and `iPhone` are not lowercased by candidate construction
-   - selecting candidate 0 does not duplicate the already-inserted typed word
-5. Audit the `SearchServer` phonetic composing-code echo if reproduction or tests show the issue goes through that Chinese IM candidate path.
+1. Keep lookup and cache normalization lowercase.
+2. Build the composing-code echo from the original typed `code`:
+   - `Mapping(id: 0, code: code, word: code, recordType: Mapping.RecordType.composingCode)`
+3. Ensure cache hits return a fresh candidate 0 echo for the current typed `code` by replacing cached index 0 before returning.
+4. Do not change candidate 0 to `englishSuggestion`. In Chinese input mode it must stay `composingCode`.
+5. Leave English keyboard prediction out of this issue unless a separate repro shows a separate English-prediction bug.
 
 ## Verification plan
 
-- Add or update iOS unit tests for the candidate builder / English prediction list ordering described above.
+- Add or update `SearchServerTest`:
+  - `getMappingByCode("ABC")` returns candidate 0 `word == "ABC"` when candidates exist.
+  - `getMappingByCode("iPhone")` returns candidate 0 `word == "iPhone"` when candidates exist.
+  - Cache case: call `getMappingByCode("abc")`, then `getMappingByCode("ABC")`; the second result candidate 0 is `ABC`.
+  - Reverse cache case if cheap: call `ABC`, then `abc`; the second result candidate 0 is `abc`.
 - Manual iOS keyboard verification after a TestFlight or local simulator build:
-  - In English / hybrid-English input, type `ABC` and confirm candidate 0 shows `ABC`, not `abc`.
+  - In Chinese input / mixed input mode, type `ABC` and confirm candidate 0 shows `ABC`, not `abc`.
   - Type `iPhone` and confirm candidate 0 shows `iPhone`, not `iphone`.
-  - Confirm regular English completions still appear after candidate 0.
-  - Confirm selecting candidate 0 does not duplicate the typed word and does not break punctuation-after-picked-English behavior.
-- If the Chinese IM composing path is also changed, manually verify table/phonetic lookup still returns expected Chinese candidates and candidate ordering.
+  - Tap candidate 0 and confirm the raw typed text is committed exactly as displayed.
+  - Confirm normal Chinese candidates still appear after candidate 0 and lookup behavior is unchanged.
 
 ## Platform impact
 
-- iOS: confirmed tracking scope. The inspected iOS English prediction path lacks Android's typed self-candidate builder, and the iOS SearchServer phonetic echo has a separate lowercasing risk if that path is involved.
-- Android: analogous Android English prediction code already prepends the raw typed English word via `buildEnglishPredictionCandidates(...)`, and Android tests guard the suggestion-empty and suggestion-present cases. No Android APK retest applies unless Android is changed separately.
+- iOS: affected. The fix is in `SearchServer.getMappingByCode(_:)` and its cache return behavior.
+- Android: reference behavior already lowercases only for lookup and creates candidate 0 from the original typed code. No Android change or APK retest is needed.
 
 ## Follow-up / retest condition
 

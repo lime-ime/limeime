@@ -202,18 +202,21 @@ final class SearchServer {
         if isPhoneticTable {
             let cacheKey = "\(currentTableName):\(code.lowercased()):\(effectiveLimit)"
             cacheLock.lock()
-            if let cached = mappingCache[cacheKey] { cacheLock.unlock(); return cached }
+            if let cached = mappingCache[cacheKey] {
+                cacheLock.unlock()
+                return refreshComposingEcho(in: cached, code: code)
+            }
             // Fallback: if Stage 1 misses but Stage 2 (full) result is already cached
             // (e.g. populated by prefetch), use it — no hasMoreMark means Stage 2 never fires.
             if !getAllRecords, let fullCached = mappingCache["\(currentTableName):\(code.lowercased()):210"] {
-                cacheLock.unlock(); return fullCached
+                cacheLock.unlock()
+                return refreshComposingEcho(in: fullCached, code: code)
             }
             cacheLock.unlock()
 
             let dbResults = db.getMappingByCode(code, softKeyboard: isSoftKeyboard,
                                                 getAllRecords: getAllRecords) ?? []
-            let echo = Mapping(id: 0, code: code.lowercased(), word: code.lowercased(),
-                               score: 0, baseScore: 0, recordType: Mapping.RecordType.composingCode)
+            let echo = composingEcho(for: code)
             if dbResults.isEmpty { return [] }
             if smartChineseInput && !isPrefetch {
                 makeRunTimeSuggestion(code: code, completeCodeResultList: dbResults)
@@ -228,21 +231,24 @@ final class SearchServer {
         let cacheKey = "\(currentTableName):\(lowered):\(effectiveLimit)"
 
         cacheLock.lock()
-        if let cached = mappingCache[cacheKey] { cacheLock.unlock(); return cached }
+        if let cached = mappingCache[cacheKey] {
+            cacheLock.unlock()
+            return refreshComposingEcho(in: cached, code: code)
+        }
         // Fallback: if Stage 1 misses but the full (Stage 2) result is already cached
         // (populated by prefetch with getAllRecords:true), return it directly.
         // The full result has no hasMoreMark sentinel, so wasTruncated=false in
         // KeyboardViewController and Stage 2 never fires for this code.
         if !getAllRecords, let fullCached = mappingCache["\(currentTableName):\(lowered):210"] {
-            cacheLock.unlock(); return fullCached
+            cacheLock.unlock()
+            return refreshComposingEcho(in: fullCached, code: code)
         }
         cacheLock.unlock()
 
         let dbResults: [Mapping] = db.getMappingByCode(
             code, softKeyboard: isSoftKeyboard, getAllRecords: getAllRecords) ?? []
 
-        let echo = Mapping(id: 0, code: code, word: code,
-                           score: 0, baseScore: 0, recordType: Mapping.RecordType.composingCode)
+        let echo = composingEcho(for: code)
         if dbResults.isEmpty { return [] }
         if smartChineseInput && !isPrefetch {
             makeRunTimeSuggestion(code: code, completeCodeResultList: dbResults)
@@ -250,6 +256,22 @@ final class SearchServer {
         let finalList = assembleResultList(echo: echo, dbResults: dbResults)
         cacheLock.lock(); evictIfNeeded(); mappingCache[cacheKey] = finalList; cacheLock.unlock()
         return finalList
+    }
+
+    private func composingEcho(for code: String) -> Mapping {
+        Mapping(id: 0, code: code, word: code,
+                score: 0, baseScore: 0, recordType: Mapping.RecordType.composingCode)
+    }
+
+    private func refreshComposingEcho(in list: [Mapping], code: String) -> [Mapping] {
+        guard !list.isEmpty else { return list }
+        let echo = composingEcho(for: code)
+        guard list[0].isComposingCodeRecord else {
+            return assembleResultList(echo: echo, dbResults: list)
+        }
+        var refreshed = list
+        refreshed[0] = echo
+        return refreshed
     }
 
     /// Assemble final candidate list: echo at 0, optional bestSuggestion/englishSuggestion at 1,
