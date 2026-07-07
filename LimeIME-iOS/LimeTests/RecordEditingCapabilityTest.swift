@@ -57,7 +57,11 @@ final class EditorRefreshViewSourceTest: XCTestCase {
                                 encoding: .utf8)
 
         XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
+        // RecordListView summons a probe and ALWAYS attempts the harvest — it does NOT gate on
+        // `.live` (chicken-and-egg: `.live` needs the keyboard summoned first). Editing still
+        // gates on `.live` via `canEdit` below.
+        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
+        XCTAssertTrue(source.contains("probeFocused = true"))
         XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
         XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
         XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))

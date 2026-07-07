@@ -123,6 +123,36 @@ final class DBServerTest: XCTestCase {
                         "DBServer should retry opening after the directory becomes available")
     }
 
+    func testHotFileReplacedSinceOpenDetectsCrossProcessFullReplace() throws {
+        // #86 cross-process: a warm process must notice when ANOTHER process replaced
+        // lime.db (full-replace = move → new inode) so it can rebind its datasource
+        // instead of reading the old, unlinked file (the "restore then switch to Safari
+        // shows 同步中 + no active IM" bug — the converged sync path skips the reopen).
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = DBServer(_testDatabaseDirectory: databaseDir)
+        XCTAssertNotNil(server.makeSearchServer(), "datasource should open (records the inode)")
+        XCTAssertFalse(server.hotFileReplacedSinceOpen(),
+                       "a freshly opened datasource is bound to the current file")
+
+        // Simulate another process's full-replace: swap lime.db for a fresh copy (new inode).
+        let dbURL = databaseDir.appendingPathComponent("lime.db")
+        let swapped = databaseDir.appendingPathComponent("lime.db.swap")
+        try FileManager.default.copyItem(at: dbURL, to: swapped)
+        try FileManager.default.removeItem(at: dbURL)
+        try FileManager.default.moveItem(at: swapped, to: dbURL)
+
+        XCTAssertTrue(server.hotFileReplacedSinceOpen(),
+                      "a moved-in file has a new inode → the replacement must be detected")
+
+        server.reopenDatabaseFromDisk()
+        XCTAssertFalse(server.hotFileReplacedSinceOpen(),
+                       "reopening rebinds to the current inode → no longer stale")
+    }
+
     func testDBServerGetInstanceWithoutContext() {
         // On iOS there is only one access path: DBServer.shared.
         let s1 = DBServer.shared
@@ -1314,6 +1344,7 @@ final class DBServerTest: XCTestCase {
             "auto_commit": 3,
             "accept_number_index": true,
             "accept_symbol_index": true,
+            "active_im": "phonetic",
             "backup_on_delete_phonetic": false,
             "restore_on_import_phonetic": false
         ]
