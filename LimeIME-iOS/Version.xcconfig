@@ -3,5 +3,5 @@
 // LimeKeyboard extension) inherit them via the project-level build config, and
 // the Info.plist files read them through $(MARKETING_VERSION) /
 // $(CURRENT_PROJECT_VERSION). Do not hardcode versions anywhere else.
-MARKETING_VERSION = 6.1.27
-CURRENT_PROJECT_VERSION = 1
+MARKETING_VERSION = 6.1.28
+CURRENT_PROJECT_VERSION = 0
