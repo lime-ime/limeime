@@ -558,7 +558,7 @@ public class LIMEService extends InputMethodService
         // For API 35+, apply window insets to prevent overlap with system gesture navigation bar
         // Apply padding to the entire container to ensure both candidate view and keyboard view
         // have proper spacing from the navigation bar
-        if (inputView != null && android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+        if (inputView != null && shouldForceImeEdgeToEdge(android.os.Build.VERSION.SDK_INT)) {
             ViewCompat.setOnApplyWindowInsetsListener(mCandidateInInputView, (v, insets) -> {
                 int systemBarsType = WindowInsetsCompat.Type.systemBars();
                 int bottomInset = insets.getInsets(systemBarsType).bottom;
@@ -7015,7 +7015,9 @@ public class LIMEService extends InputMethodService
         android.view.Window window = dialog.getWindow();
         if (window == null) return;
 
-        WindowCompat.setDecorFitsSystemWindows(window, false);
+        if (shouldForceImeEdgeToEdge(android.os.Build.VERSION.SDK_INT)) {
+            WindowCompat.setDecorFitsSystemWindows(window, false);
+        }
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
 
@@ -7049,6 +7051,10 @@ public class LIMEService extends InputMethodService
         mAppliedNavigationBarLightBackground = lightBackground;
         // API 21-22 cannot toggle nav-bar icon brightness; the colored bar alone
         // still gives the user the matching look.
+    }
+
+    static boolean shouldForceImeEdgeToEdge(int sdkInt) {
+        return sdkInt >= Build.VERSION_CODES.VANILLA_ICE_CREAM;
     }
 
     private boolean isAppliedNavigationBarThemeCurrent(android.view.Window window,

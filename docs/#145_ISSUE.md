@@ -10,11 +10,12 @@
 - Reporter follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4880870984 confirms Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation also restores the row, and includes a screenshot.
 - Maintainer/project-account follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884643621 asked which Boshiamy keyboard layout is active, such as standard keyboard, phone keyboard, or another custom/special layout.
 - Latest reporter reply: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884708378 says the active Boshiamy layout is the standard keyboard and the reporter has not changed special settings. The attached settings screenshots show keyboard style set to system setting, keyboard size `一般`, font size `一般`, direction keys `無`, split keyboard `關閉`, and physical-keyboard auto-hide enabled.
-- Current state: Android tablet UI/layout bug with screenshot and settings evidence. The report is now scoped to LIME 6.1.27 on Android 10 / iPlay 30 using Boshiamy standard keyboard with normal keyboard size and split keyboard off. Orientation/navigation mode and reproduction timing still need confirmation during implementation, but enough layout detail exists to track the Android fix in `docs/BACKLOG.md`.
+- Local confirmation: API 29 Android Studio emulator looked fine with 3-button navigation, while the bottom-row coverage reproduced with gesture navigation.
+- Current state: fixed locally for Android 10 / API 29 gesture navigation. The 2026-07-08 source fix gates LIME's forced IME edge-to-edge opt-in to API 35+ only, so pre-35 gesture navigation keeps the system-managed nav-bar fit behavior.
 
 ## Problem statement
 
-The reporter says that on an Android tablet, the bottom row of the keyboard is often hidden or covered, and the workaround is to switch away to another input method and then switch back to LIME. A later comment confirms that rotating the tablet also restores the row. The visible symptom suggests the IME view can enter a stale or incorrectly inset layout state where the keyboard container does not reserve enough visible space for the bottom row.
+The reporter says that on an Android tablet, the bottom row of the keyboard is often hidden or covered, and the workaround is to switch away to another input method and then switch back to LIME. A later comment confirms that rotating the tablet also restores the row. Local testing narrowed this to gesture navigation: Android API 29 with 3-button navigation is fine, while gesture navigation can cover the bottom row before the fix.
 
 The reporter has now identified the platform as Android tablet, specifically iPlay 30 / Android 10 / LIME 6.1.27 while using 嘸蝦米. Keep iOS/iPadOS bottom-content coverage as related context only, not the active #145 platform path, unless a separate iPad report appears.
 
@@ -24,6 +25,7 @@ The reporter has now identified the platform as Android tablet, specifically iPl
 - Follow-up details: Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation restores the row.
 - Screenshot evidence: the first attached image shows the LIME keyboard with the bottom functional row visibly at the lower screen edge and partially cut off/covered. Do not infer the exact Boshiamy layout from that screenshot alone.
 - Latest layout/settings evidence: the reporter says the Boshiamy layout is standard keyboard and that they did not change special settings. The attached settings screenshots visibly show normal/general keyboard and font size, no direction keys, split keyboard disabled, and physical-keyboard auto-hide enabled.
+- Local emulator evidence: Android API 29 with 3-button navigation is fine; gesture navigation reproduces the bottom-row coverage.
 
 ## Source evidence inspected
 
@@ -32,8 +34,8 @@ The reporter has now identified the platform as Android tablet, specifically iPl
 - `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
   - `onCreateInputView()` inflates/returns the fixed candidate + keyboard container `mCandidateInInputView`.
   - For API 35+ (`VANILLA_ICE_CREAM`), it installs a `ViewCompat.setOnApplyWindowInsetsListener(...)` on `mCandidateInInputView` and applies `systemBars().bottom` as the container bottom padding.
-  - The surrounding comment says this is meant to prevent overlap with the system gesture navigation bar.
-  - The debug log mentions `mLastKnownBottomPadding`, but the field is currently a final `-1` and is not actually updated. That makes any intended stale-padding recovery ineffective today.
+  - `applyNavigationBarTheme()` previously called `WindowCompat.setDecorFitsSystemWindows(window, false)` on every API level, which forced Android 10 gesture navigation into an edge-to-edge IME window without the matching pre-35 bottom inset padding.
+  - 2026-07-08 source fix: `shouldForceImeEdgeToEdge(...)` keeps both the forced edge-to-edge opt-in and the explicit bottom-inset listener on API 35+ only.
 - `LimeStudio/app/src/main/res/layout/inputcandidate.xml`
   - The IME view is a vertical `CandidateInInputViewContainer` with `wrap_content` height, `fitsSystemWindows="true"`, an embedded candidate strip, and a `LIMEKeyboardView` with `wrap_content` height and `layout_alignParentBottom="true"`.
 - `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
@@ -47,22 +49,18 @@ The reporter has now identified the platform as Android tablet, specifically iPl
 - Existing issue #139 tracks an iOS TestFlight bottom-content coverage issue from a private reporter. Its active scope is host-app bottom content being covered by LIME's custom keyboard height/safe-area behavior.
 - #145 is not the same active platform path as #139: the reporter confirmed Android tablet, and the described workaround is about the LIME keyboard row itself reappearing after IME switching or rotation.
 
-## Likely root cause / investigation hypothesis
+## Root cause
 
-The most plausible Android hypothesis is a stale IME window/insets or measurement state on tablets: after LIME is shown, the keyboard container may apply an incorrect bottom inset or be measured under a host/system layout state that leaves the bottom row behind the system navigation/gesture area or host app edge. Switching to another input method and back likely forces the framework to recreate or remeasure the input view, which temporarily restores the missing bottom row.
-
-The current source has a suspicious Android clue: `onCreateInputView()` applies API 35+ bottom system-bar padding directly to the full input container, while the `mLastKnownBottomPadding` recovery variable referenced in the debug log is not functional. This does not prove the reported tablet path yet, but it is a concrete area to inspect with device logs and layout measurements.
+#46's navigation-bar theming path forced the IME dialog window into edge-to-edge layout on every API level, but the matching explicit bottom inset padding only existed for API 35+. On Android 10 gesture navigation, that can place the bottom row behind the gesture bar. 3-button navigation is fine because it does not expose the same gesture-bar overlap.
 
 The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path is not the active #145 investigation path.
 
-## Proposed investigation plan
+## Current fix
 
-1. Reproduce with Boshiamy standard keyboard on Android 10 tablet settings matching the reporter's screenshots: normal/general keyboard size, split keyboard off, no direction keys, and physical-keyboard auto-hide enabled.
-2. On Android, reproduce on a tablet or emulator with gesture navigation and 3-button navigation, in both portrait and landscape, with normal and split-keyboard settings.
-3. Instrument the Android IME view path around `onCreateInputView()`, `setOnApplyWindowInsetsListener(...)`, `mCandidateInInputView` measured height/padding, and `LIMEKeyboardBaseView.onMeasure()` to compare the broken state against the restored state after switching IMEs.
-4. Verify whether API level, system navigation bar height, `fitsSystemWindows`, host app `adjustResize` behavior, or tablet resource key heights are causing the bottom row to be clipped.
-5. Rotation is now confirmed to restore the row. During debugging, compare the broken state against the restored state after rotation and after switching IMEs.
-6. If maintainers cannot reproduce, ask the reporter only for the remaining targeted details: navigation mode, orientation, and whether the symptom happens every time, first open only, or intermittently.
+- `LIMEService.applyNavigationBarTheme()` now calls `WindowCompat.setDecorFitsSystemWindows(window, false)` only when `shouldForceImeEdgeToEdge(Build.VERSION.SDK_INT)` is true.
+- `LIMEService.onCreateInputView()` uses the same predicate for the explicit bottom-inset listener, keeping edge-to-edge opt-in and inset compensation paired.
+- `ImeEdgeToEdgePolicyTest` locks the policy: API 29 does not force IME edge-to-edge; API 35+ does.
+- Local retest: Android API 29 gesture navigation no longer covers the bottom row after the fix.
 
 ## Verification plan
 
@@ -70,17 +68,17 @@ The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path 
   - Bottom row remains visible when LIME first appears.
   - Bottom row remains visible after switching away from and back to LIME.
   - Portrait/landscape, gesture navigation, and 3-button navigation do not cover the Space row.
-  - Split keyboard and keyboard-size settings do not leave stale bottom padding or excessive height.
-- Add focused regression coverage or logging-backed assertions for any Android inset/measurement helper introduced during the fix.
+  - Split keyboard and keyboard-size settings do not introduce bottom padding or height regressions.
+- Automated regression: `./gradlew :app:testDebugUnitTest --tests net.toload.main.hd.ImeEdgeToEdgePolicyTest`.
 - iOS/iPadOS: no #145 retest path unless separate matching iPad evidence appears.
 
 ## Platform impact
 
-- Android: confirmed reporter platform. The bug is currently scoped to Android 10 tablet / iPlay 30 / LIME 6.1.27 / 嘸蝦米 standard keyboard, normal keyboard size, split keyboard off, with screenshot evidence and rotation/IME switching restoring the row.
+- Android: confirmed reporter platform. The bug is scoped to Android 10 tablet / iPlay 30 / LIME 6.1.27 / 嘸蝦米 standard keyboard, normal keyboard size, split keyboard off, and gesture navigation, with screenshot evidence and rotation/IME switching restoring the row.
 - iOS/iPadOS: not implicated by #145. Existing #139 covers a related but separate iOS bottom-content coverage class.
 
 ## Follow-up / retest condition
 
-The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details, screenshot evidence, and the active Boshiamy standard-keyboard layout/settings. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK or Google Play build contains a targeted fix for this Android tablet path.
+The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details, screenshot evidence, and the active Boshiamy standard-keyboard layout/settings. Do not ask the reporter to retest the same APK/build. A retest request should wait until a newer Android APK or Google Play build contains this targeted gesture-navigation fix.
 
-`docs/BACKLOG.md` now tracks `fix#145 Android` because the reporter supplied the remaining layout detail requested by the project-account follow-up. Keep the backlog item scoped to Android tablet bottom-row clipping until a source fix or separate platform evidence broadens it.
+`docs/BACKLOG.md` tracks `fix#145 Android` until a newer Android APK or Google Play build with this fix is available for reporter/device retest.
