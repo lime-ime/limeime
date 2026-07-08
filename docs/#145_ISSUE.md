@@ -12,7 +12,7 @@
 - Latest reporter reply: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884708378 says the active Boshiamy layout is the standard keyboard and the reporter has not changed special settings. The attached settings screenshots show keyboard style set to system setting, keyboard size `一般`, font size `一般`, direction keys `無`, split keyboard `關閉`, and physical-keyboard auto-hide enabled.
 - Local confirmation: API 29 Android Studio emulator looked fine with 3-button navigation, while the bottom-row coverage reproduced with gesture navigation.
 - Release / retest request: v6.1.28 includes the Android tablet / gesture-navigation bottom-row clipping fix. Earlier retest comment URLs recorded during overlapping release closeout are no longer live; the retained reporter retest request is https://github.com/lime-ime/limeime/issues/145#issuecomment-4917044757.
-- Current state: shipped in GitHub APK / Google Play closed-test v6.1.28 for Android 10 / API 29 gesture navigation. The 2026-07-08 source fix gates LIME's forced IME edge-to-edge opt-in to API 35+ only, so pre-35 gesture navigation keeps the system-managed nav-bar fit behavior. Keep the issue open pending reporter confirmation.
+- Current state: shipped in GitHub APK v6.1.28 for Android 10 / API 29 gesture navigation; Google Play delivery was not verified in this release webhook run. The 2026-07-08 source fix gates LIME's forced IME edge-to-edge opt-in to API 35+ only, so pre-35 gesture navigation keeps the system-managed nav-bar fit behavior. Keep the issue open pending reporter confirmation.
 
 ## Problem statement
 
