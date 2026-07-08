@@ -4716,6 +4716,7 @@ extension KeyboardViewController: PopupKeyboardViewDelegate {
     }
 
     func popupKeyboardView(_ popup: PopupKeyboardView, didHighlight keyDef: KeyDef?) {
+        if keyDef != nil { fireHapticIfEnabled() }
         showPopupKeyPreview(for: keyDef)
     }
 

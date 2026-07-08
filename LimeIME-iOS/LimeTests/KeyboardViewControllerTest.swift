@@ -980,6 +980,20 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(method.contains("overlay.backgroundColor = LayoutMetrics.TouchTrap.fill"))
     }
 
+    func testPopupKeyboardTapHighlightFiresHapticBeforePreview() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let pattern = #"func popupKeyboardView\(_ popup: PopupKeyboardView, didHighlight keyDef: KeyDef\?\) \{[\s\S]*?\n    \}"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(source.startIndex..<source.endIndex, in: source)
+        let match = try XCTUnwrap(regex.firstMatch(in: source, range: range))
+        let method = String(source[Range(match.range, in: source)!])
+
+        let hapticRange = try XCTUnwrap(method.range(of: "if keyDef != nil { fireHapticIfEnabled() }"))
+        let previewRange = try XCTUnwrap(method.range(of: "showPopupKeyPreview(for: keyDef)"))
+        XCTAssertLessThan(hapticRange.lowerBound, previewRange.lowerBound)
+    }
+
     // docs/AUTO_CHINESE_PUNC.md cases c/d/g (T-iOS-1): the candidate-bar dismiss (✕)
     // button hides the auto Chinese-punctuation strip when it is already showing
     // (case d, via cancelComposing() which does NOT re-enter clearSuggestions), and
