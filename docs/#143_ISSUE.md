@@ -6,9 +6,15 @@
 - Classification: `enhancement` + `Usability`
 - Reporter / creator: `limeimetw`
 - Created: 2026-07-02
-- Current live state checked 2026-07-08: open, no comments.
-- Backlog entry: `docs/BACKLOG.md` `feat#143`.
+- Current live state checked 2026-07-09: closed as completed with maintainer/project-account comment https://github.com/lime-ime/limeime/issues/143#issuecomment-4916962552.
+- Backlog entry: removed from `docs/BACKLOG.md` after v6.1.28 delivery because the implementation is complete and the issue is closed.
 - Parent context: issue #140 follow-up. The old cj4-specific semicolon preference shipped in v6.1.27, but the next direction is explicit selectable Cangjie semicolon layouts so custom/self-built tables can choose the semicolon-capable keyboard directly.
+
+## Implementation result
+
+GitHub Release/APK v6.1.28 contains the Android implementation for selectable Cangjie semicolon layouts. iOS source implementation is also present on `master` and will be delivered through the normal TestFlight/App Store path.
+
+Retained closure comment: https://github.com/lime-ime/limeime/issues/143#issuecomment-4916962552.
 
 ## Request
 
@@ -210,4 +216,4 @@ Open decision:
 
 ## Public response note
 
-No public reply is needed until source work is ready for a test build. When ready, describe the change as replacing the old cj4-only semicolon toggle with selectable Cangjie semicolon keyboard layouts, including numeric, shifted, iPad, and iPad narrow variants.
+Public completion note was posted in https://github.com/lime-ime/limeime/issues/143#issuecomment-4916962552. Do not post duplicate completion comments unless a future build supersedes v6.1.28 or a reporter asks about the delivered layouts.
