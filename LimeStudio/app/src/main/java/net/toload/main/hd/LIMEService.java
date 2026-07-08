@@ -2215,6 +2215,7 @@ public class LIMEService extends InputMethodService
                 primaryCode -= 32;
             }
         }
+        mLastShiftTime = shiftDoubleTapWindowAfterKey(primaryCode, mLastShiftTime);
         // Adjust metaKeyState on printed key pressed.
         if (hasPhysicalKeyPressed) {  //Jeremy '12,6,11 moved from handleCharacter()
             mMetaState = LIMEMetaKeyKeyListener.adjustMetaAfterKeypress(mMetaState);
@@ -5127,10 +5128,17 @@ public class LIMEService extends InputMethodService
 
     private boolean isShiftDoubleTap() {
         long now = SystemClock.uptimeMillis();
-        boolean doubleTap = mLastShiftTime > 0
-                && now - mLastShiftTime <= ViewConfiguration.getDoubleTapTimeout();
+        boolean doubleTap = isShiftDoubleTap(mLastShiftTime, now, ViewConfiguration.getDoubleTapTimeout());
         mLastShiftTime = now;
         return doubleTap;
+    }
+
+    static long shiftDoubleTapWindowAfterKey(int primaryCode, long lastShiftTime) {
+        return primaryCode == LIMEBaseKeyboard.KEYCODE_SHIFT ? lastShiftTime : -1;
+    }
+
+    static boolean isShiftDoubleTap(long lastShiftTime, long now, long timeout) {
+        return lastShiftTime > 0 && now - lastShiftTime <= timeout;
     }
 
     static ShiftTapState nextShiftTapState(boolean shifted, boolean capsLock, boolean doubleTap) {

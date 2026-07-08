@@ -1475,6 +1475,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // CapsLock pre-processing: lowercase → uppercase (spec §4)
         var code = primaryCode
         if mCapsLock && code >= 97 && code <= 122 { code -= 32 }
+        lastShiftTapTime = ShiftDoubleTapPolicy.lastTapTimeAfterKey(primaryCode: code,
+                                                                    lastShiftTapTime: lastShiftTapTime)
 
         switch code {
         case LimeKeyCode.delete.rawValue:      handleBackspace()
@@ -1993,8 +1995,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     private func isShiftDoubleTap(now: TimeInterval = Date().timeIntervalSinceReferenceDate) -> Bool {
         defer { lastShiftTapTime = now }
-        guard lastShiftTapTime > 0 else { return false }
-        return now - lastShiftTapTime <= LayoutMetrics.Gesture.shiftDoubleTapTimeout
+        return ShiftDoubleTapPolicy.isDoubleTap(lastShiftTapTime: lastShiftTapTime,
+                                                now: now,
+                                                timeout: LayoutMetrics.Gesture.shiftDoubleTapTimeout)
     }
 
     /// Apply the current shift/capsLock state to the keyboard view (icon) and layout.

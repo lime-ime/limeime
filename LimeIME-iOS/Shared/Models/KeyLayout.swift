@@ -496,6 +496,19 @@ enum ShiftTapPolicy {
     }
 }
 
+enum ShiftDoubleTapPolicy {
+    static func lastTapTimeAfterKey(primaryCode: Int,
+                                    lastShiftTapTime: TimeInterval) -> TimeInterval {
+        primaryCode == LimeKeyCode.shift.rawValue ? lastShiftTapTime : 0
+    }
+
+    static func isDoubleTap(lastShiftTapTime: TimeInterval,
+                            now: TimeInterval,
+                            timeout: TimeInterval) -> Bool {
+        lastShiftTapTime > 0 && now - lastShiftTapTime <= timeout
+    }
+}
+
 enum ShiftHoldTouchPolicy {
     static func isShiftStillHeld(activeTouchCount: Int) -> Bool {
         activeTouchCount > 1

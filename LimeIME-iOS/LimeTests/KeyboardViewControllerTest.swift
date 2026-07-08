@@ -504,6 +504,26 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(state.capsLock)
     }
 
+    func testShiftDoubleTapWindowNonShiftCancelsPendingShiftTap() {
+        let firstShiftTime: TimeInterval = 1.0
+        let afterLetter = ShiftDoubleTapPolicy.lastTapTimeAfterKey(primaryCode: 97,
+                                                                   lastShiftTapTime: firstShiftTime)
+
+        XCTAssertFalse(ShiftDoubleTapPolicy.isDoubleTap(lastShiftTapTime: afterLetter,
+                                                        now: firstShiftTime + 0.1,
+                                                        timeout: 0.3))
+    }
+
+    func testShiftDoubleTapWindowShiftKeepsPendingShiftTap() {
+        let firstShiftTime: TimeInterval = 1.0
+        let afterShift = ShiftDoubleTapPolicy.lastTapTimeAfterKey(primaryCode: LimeKeyCode.shift.rawValue,
+                                                                  lastShiftTapTime: firstShiftTime)
+
+        XCTAssertTrue(ShiftDoubleTapPolicy.isDoubleTap(lastShiftTapTime: afterShift,
+                                                       now: firstShiftTime + 0.1,
+                                                       timeout: 0.3))
+    }
+
     func testShiftHoldTouchPolicyRequiresAnotherActiveTouch() {
         XCTAssertTrue(ShiftHoldTouchPolicy.isShiftStillHeld(activeTouchCount: 2))
         XCTAssertFalse(ShiftHoldTouchPolicy.isShiftStillHeld(activeTouchCount: 1))

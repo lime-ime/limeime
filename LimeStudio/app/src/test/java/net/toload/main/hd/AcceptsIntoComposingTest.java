@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import net.toload.main.hd.keyboard.LIMEBaseKeyboard;
+
 // Exhaustive branch coverage for the imkeys-migration acceptance path:
 //   isKeyInImkeys       — ',' '.' rule / empty / membership (case-insensitive)
 //   acceptsIntoComposing — imkeys path (root / non-root / phonetic-space) + all 5 fallback branches
@@ -94,5 +96,20 @@ public class AcceptsIntoComposingTest {
         assertTrue(LIMEService.acceptsIntoComposing('0', "", true, true, false));      // digit
         assertTrue(LIMEService.acceptsIntoComposing(';', "", true, true, false));      // symbol
         assertTrue(LIMEService.acceptsIntoComposing('a', "", true, true, false));      // letter
+    }
+
+    @Test public void shiftDoubleTapWindow_nonShiftCancelsPendingShiftTap() {
+        long firstShiftTime = 1_000L;
+        long afterLetter = LIMEService.shiftDoubleTapWindowAfterKey('a', firstShiftTime);
+
+        assertFalse(LIMEService.isShiftDoubleTap(afterLetter, firstShiftTime + 100L, 300L));
+    }
+
+    @Test public void shiftDoubleTapWindow_shiftKeepsPendingShiftTap() {
+        long firstShiftTime = 1_000L;
+        long afterShift = LIMEService.shiftDoubleTapWindowAfterKey(
+                LIMEBaseKeyboard.KEYCODE_SHIFT, firstShiftTime);
+
+        assertTrue(LIMEService.isShiftDoubleTap(afterShift, firstShiftTime + 100L, 300L));
     }
 }
