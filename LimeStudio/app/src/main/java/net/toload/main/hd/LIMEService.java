@@ -49,7 +49,6 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
-import androidx.preference.PreferenceManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -149,9 +148,8 @@ public class LIMEService extends InputMethodService
         return (inputType & EditorInfo.TYPE_MASK_CLASS) != EditorInfo.TYPE_CLASS_NUMBER;
     }
 
-    private boolean isCj4SemicolonKeyEnabled() {
-        return PreferenceManager.getDefaultSharedPreferences(this)
-                .getBoolean("cj4_semicolon_key", false);
+    static boolean hasSymbolMappingForKeyboard(boolean baseHasSymbolMapping, String keyboardCode) {
+        return baseHasSymbolMapping || LIMEKeyboardSwitcher.isCjSemicolonKeyboardCode(keyboardCode);
     }
 
     static boolean isForcedEnglishTextVariation(int variation) {
@@ -5455,6 +5453,8 @@ public class LIMEService extends InputMethodService
         if (tablename.equals("custom") || tablename.equals("phone")) {
             tablename = "custom";
         }
+        hasSymbolMapping = hasSymbolMappingForKeyboard(hasSymbolMapping,
+                mKeyboardSwitcher.getImConfigKeyboard(activeIM));
         //Jeremy '11,6,10 pass hasnumbermapping and hassymbolmapping to searchservice for selkey validation.
         if (DEBUG)
             Log.i(TAG, "switchKeyboard() current keyboard:" +
@@ -5469,10 +5469,6 @@ public class LIMEService extends InputMethodService
                 ? SearchSrv.getPhoneticImKeys(mLIMEPref.getPhoneticKeyboardType())
                 : SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
         currentImKeys = (activeImKeys == null) ? "" : activeImKeys;
-        if (LIME.DB_TABLE_CJ4.equals(tablename) && isCj4SemicolonKeyEnabled()) {
-            hasSymbolMapping = true;
-            SearchSrv.setSymbolMapping(true);
-        }
     }
 
     private boolean handleSelkey(int primaryCode) {

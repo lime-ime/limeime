@@ -311,6 +311,7 @@ final class LimeDB {
                 try LimeDB.createEmojiTables(db, forceRecreate: false)
                 try LimeDB.ensureCj4Schema(db)
                 try LimeDB.ensureComputerNumKeyboard(db)
+                try LimeDB.ensureCangjieSemicolonKeyboards(db)
                 let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
                 if version < LimeDB.CURRENT_DB_VERSION {
                     try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
@@ -359,6 +360,8 @@ final class LimeDB {
                         extendedkb, extendedshiftkb, disable
                     FROM bundled_keyboard_seed.keyboard
                 """)
+                try LimeDB.ensureComputerNumKeyboard(db)
+                try LimeDB.ensureCangjieSemicolonKeyboards(db)
             }
         } catch {
             NSLog("LimeDB keyboard catalog repair failed: \(error)")
@@ -2682,6 +2685,66 @@ final class LimeDB {
         """)
     }
 
+    private static func ensureCangjieSemicolonKeyboards(_ db: Database) throws {
+        try insertKeyboardIfAbsent(db,
+            code: "cj_semi",
+            name: "倉頡分號",
+            desc: "倉頡分號鍵盤",
+            imkb: "lime_cj_semi",
+            imshiftkb: "lime_cj_semi_shift",
+            engkb: "lime",
+            engshiftkb: "lime_shift",
+            defaultkb: "lime_cj_semi",
+            defaultshiftkb: "lime_cj_semi_shift",
+            extendedkb: "lime_cj_number_semi",
+            extendedshiftkb: "lime_cj_number_semi_shift")
+        try insertKeyboardIfAbsent(db,
+            code: "cj_num_semi",
+            name: "倉頡數字分號",
+            desc: "倉頡數字分號鍵盤",
+            imkb: "lime_cj_number_semi",
+            imshiftkb: "lime_cj_number_semi_shift",
+            engkb: "lime_number",
+            engshiftkb: "lime_number_shift",
+            defaultkb: "lime_cj_number_semi",
+            defaultshiftkb: "lime_cj_number_semi_shift",
+            extendedkb: "",
+            extendedshiftkb: "")
+    }
+
+    private static func insertKeyboardIfAbsent(_ db: Database,
+                                               code: String,
+                                               name: String,
+                                               desc: String,
+                                               imkb: String,
+                                               imshiftkb: String,
+                                               engkb: String,
+                                               engshiftkb: String,
+                                               defaultkb: String,
+                                               defaultshiftkb: String,
+                                               extendedkb: String,
+                                               extendedshiftkb: String) throws {
+        let exists = (try Int.fetchOne(db,
+            sql: "SELECT COUNT(*) FROM keyboard WHERE code = ?",
+            arguments: [code]) ?? 0) > 0
+        guard !exists else { return }
+        try db.execute(sql: """
+            INSERT INTO keyboard (code, name, desc, type, image,
+                imkb, imshiftkb, engkb, engshiftkb,
+                symbolkb, symbolshiftkb, defaultkb, defaultshiftkb,
+                extendedkb, extendedshiftkb, disable)
+            VALUES (?, ?, ?, 'phone', 'cj_keyboard_preview',
+                ?, ?, ?, ?,
+                'symbols', 'symbols_shift', ?, ?,
+                ?, ?, 0)
+        """, arguments: [
+            code, name, desc,
+            imkb, imshiftkb, engkb, engshiftkb,
+            defaultkb, defaultshiftkb,
+            extendedkb, extendedshiftkb
+        ])
+    }
+
     private static func rebuildEmojiFTS(_ db: Database) throws {
         try db.execute(sql: "INSERT INTO \(EMOJI_TABLE_FTS)(\(EMOJI_TABLE_FTS)) VALUES ('rebuild')")
     }
@@ -3818,8 +3881,7 @@ final class LimeDB {
             return LimeDB.BPMF_KEY
         default:
             let stored = getImConfig(tableName, "imkeys") ?? ""
-            let storedNames = getImConfig(tableName, "imkeynames") ?? ""
-            if !stored.isEmpty && !storedNames.isEmpty { return stored }
+            if !stored.isEmpty { return stored }
 
             switch tableName {
             case "cj", "cj4", "scj", "cj5", "ecj":

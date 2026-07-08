@@ -975,6 +975,14 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.imKeysForTable(LIME.DB_TABLE_CJ), "abc;'")
     }
 
+    func testImKeysForTableUsesStoredImkeysWhenNamesAreMissing() throws {
+        let db = try makeLimeDB()
+        db.setImConfig("cj4", "imkeys", "abc;'")
+        db.removeImConfig("cj4", "imkeynames")
+
+        XCTAssertEqual(db.imKeysForTable("cj4"), "abc;'")
+    }
+
     func testImKeysForTableFallsBackToCjKeyWhenStoredMetadataMissing() throws {
         let db = try makeLimeDB()
         db.removeImConfig("cj4", "imkeys")
@@ -2731,6 +2739,57 @@ final class LimeDBTest: XCTestCase {
         XCTAssertNotNil(kb, "computernum keyboard row should be seeded into the keyboard table")
         XCTAssertEqual(kb?.imkb, "computer_simple", "computernum must load the computer_simple layout")
         XCTAssertEqual(kb?.imshiftkb, "computer_simple")
+    }
+
+    func testCangjieSemicolonKeyboardsAreSeededAndPointAtSemicolonLayouts() throws {
+        let db = try makeLimeDB()
+
+        let standard = try XCTUnwrap(db.getKeyboardConfig("cj_semi"),
+                                     "cj_semi keyboard row should be seeded into the keyboard table")
+        XCTAssertEqual(standard.imkb, "lime_cj_semi")
+        XCTAssertEqual(standard.imshiftkb, "lime_cj_semi_shift")
+        XCTAssertEqual(db.getKeyboardInfo("cj_semi", "extendedkb"), "lime_cj_number_semi")
+        XCTAssertEqual(db.getKeyboardInfo("cj_semi", "extendedshiftkb"), "lime_cj_number_semi_shift")
+
+        let numeric = try XCTUnwrap(db.getKeyboardConfig("cj_num_semi"),
+                                    "cj_num_semi keyboard row should be seeded into the keyboard table")
+        XCTAssertEqual(numeric.imkb, "lime_cj_number_semi")
+        XCTAssertEqual(numeric.imshiftkb, "lime_cj_number_semi_shift")
+    }
+
+    func testKeyboardCatalogRepairKeepsRuntimeSeededKeyboardRows() throws {
+        let db = try makeLimeDB()
+        let bundledURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + "-keyboard-seed.db")
+        defer { try? FileManager.default.removeItem(at: bundledURL) }
+
+        let bundledQueue = try DatabaseQueue(path: bundledURL.path)
+        try bundledQueue.write { bundled in
+            try bundled.execute(sql: """
+                CREATE TABLE keyboard (
+                    code TEXT, name TEXT, desc TEXT, type TEXT, image TEXT,
+                    imkb TEXT, imshiftkb TEXT, engkb TEXT, engshiftkb TEXT,
+                    symbolkb TEXT, symbolshiftkb TEXT, defaultkb TEXT, defaultshiftkb TEXT,
+                    extendedkb TEXT, extendedshiftkb TEXT, disable INTEGER
+                )
+            """)
+            try bundled.execute(sql: """
+                INSERT INTO keyboard (code, name, desc, type, image,
+                    imkb, imshiftkb, engkb, engshiftkb,
+                    symbolkb, symbolshiftkb, defaultkb, defaultshiftkb,
+                    extendedkb, extendedshiftkb, disable)
+                VALUES ('phonetic', '注音', '注音輸入法鍵盤', 'phone', 'phonetic_keyboard_preview',
+                    'lime_phonetic', 'lime_phonetic_shift', 'lime', 'lime_shift',
+                    'symbols', 'symbols_shift', '', '', '', '', 0)
+            """)
+        }
+
+        db.repairKeyboardCatalogIfNeeded(from: bundledURL)
+
+        XCTAssertNotNil(db.getKeyboardConfig("phonetic"))
+        XCTAssertEqual(db.getKeyboardConfig("computernum")?.imkb, "computer_simple")
+        XCTAssertEqual(db.getKeyboardConfig("cj_semi")?.imkb, "lime_cj_semi")
+        XCTAssertEqual(db.getKeyboardConfig("cj_num_semi")?.imkb, "lime_cj_number_semi")
     }
 
     func testImportTxtFileAssignsDefaultKeyboardRows() throws {

@@ -974,6 +974,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
         ensureCj4Schema(db);
         ensureComputerNumKeyboard(db);
+        ensureCangjieSemicolonKeyboards(db);
         if (db.getVersion() < DATABASE_VERSION) {
             db.setVersion(DATABASE_VERSION);
         }
@@ -5710,6 +5711,59 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         cv.put(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB, "lime_shift");
         cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB, "symbols");
         cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB, "symbols_shift");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DISABLE, false);
+        targetDb.insert(LIME.DB_TABLE_KEYBOARD, null, cv);
+    }
+
+    private static void ensureCangjieSemicolonKeyboards(SQLiteDatabase targetDb) {
+        insertKeyboardIfAbsent(targetDb, "cj_semi", "倉頡分號", "倉頡分號鍵盤",
+                "lime_cj_semi", "lime_cj_semi_shift",
+                "lime", "lime_shift",
+                "lime_cj_semi", "lime_cj_semi_shift",
+                "lime_cj_number_semi", "lime_cj_number_semi_shift");
+        insertKeyboardIfAbsent(targetDb, "cj_num_semi", "倉頡數字分號", "倉頡數字分號鍵盤",
+                "lime_cj_number_semi", "lime_cj_number_semi_shift",
+                "lime_number", "lime_number_shift",
+                "lime_cj_number_semi", "lime_cj_number_semi_shift",
+                "", "");
+    }
+
+    private static void insertKeyboardIfAbsent(SQLiteDatabase targetDb,
+                                               String code,
+                                               String name,
+                                               String desc,
+                                               String imkb,
+                                               String imshiftkb,
+                                               String engkb,
+                                               String engshiftkb,
+                                               String defaultkb,
+                                               String defaultshiftkb,
+                                               String extendedkb,
+                                               String extendedshiftkb) {
+        try (Cursor cursor = targetDb.query(LIME.DB_TABLE_KEYBOARD,
+                new String[]{LIME.DB_KEYBOARD_COLUMN_CODE},
+                LIME.DB_KEYBOARD_COLUMN_CODE + " = ?", new String[]{code},
+                null, null, null, "1")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                return;
+            }
+        }
+        ContentValues cv = new ContentValues();
+        cv.put(LIME.DB_KEYBOARD_COLUMN_CODE, code);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_NAME, name);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DESC, desc);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_TYPE, "phone");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, "cj_keyboard_preview");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMKB, imkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB, imshiftkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_ENGKB, engkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_ENGSHIFTKB, engshiftkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLKB, "symbols");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_SYMBOLSHIFTKB, "symbols_shift");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DEFAULTKB, defaultkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_DEFAULTSHIFTKB, defaultshiftkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_EXTENDEDKB, extendedkb);
+        cv.put(LIME.DB_KEYBOARD_COLUMN_EXTENDEDSHIFTKB, extendedshiftkb);
         cv.put(LIME.DB_KEYBOARD_COLUMN_DISABLE, false);
         targetDb.insert(LIME.DB_TABLE_KEYBOARD, null, cv);
     }

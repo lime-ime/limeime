@@ -38,8 +38,6 @@ import net.toload.main.hd.keyboard.LIMEKeyboardView;
 import android.content.Context;
 import android.util.Log;
 
-import androidx.preference.PreferenceManager;
-
 public class LIMEKeyboardSwitcher {
 
 	static final boolean DEBUG = false;
@@ -73,6 +71,26 @@ public class LIMEKeyboardSwitcher {
         // There is no user-facing English layout picker, so ignore legacy engkb fields in lime.db.
         if (showNumberRow) return isShift ? "lime_english_number_shift" : "lime_english_number";
         return isShift ? "lime_english_shift" : "lime_english";
+    }
+
+    static boolean isCjSemicolonKeyboardCode(String keyboardCode) {
+        return "cj_semi".equals(keyboardCode) || "cj_num_semi".equals(keyboardCode);
+    }
+
+    static boolean isCjSemicolonLayoutId(String keyboardId) {
+        return keyboardId != null && (keyboardId.startsWith("lime_cj_semi")
+                || keyboardId.startsWith("lime_cj_number_semi"));
+    }
+
+    static String resolveCjSemicolonSourceLayoutId(String keyboardId) {
+        if (keyboardId == null) return null;
+        if (keyboardId.startsWith("lime_cj_number_semi")) {
+            return "lime_cj_number" + keyboardId.substring("lime_cj_number_semi".length());
+        }
+        if (keyboardId.startsWith("lime_cj_semi")) {
+            return "lime_cj" + keyboardId.substring("lime_cj_semi".length());
+        }
+        return keyboardId;
     }
 
     LIMEKeyboardView mInputView;
@@ -232,17 +250,17 @@ public class LIMEKeyboardSwitcher {
         public int mXml;
         public int mMode;
         public boolean mEnableShiftLock;
-        public boolean mCj4SemicolonKey;
+        public boolean mCjSemicolonKey;
 
         public KeyboardId(int xml, int mode, boolean enableShiftLock) {
             this(xml, mode, enableShiftLock, false);
         }
 
-        public KeyboardId(int xml, int mode, boolean enableShiftLock, boolean cj4SemicolonKey) {
+        public KeyboardId(int xml, int mode, boolean enableShiftLock, boolean cjSemicolonKey) {
             this.mXml = xml;
             this.mMode = mode;
             this.mEnableShiftLock = enableShiftLock;
-            this.mCj4SemicolonKey = cj4SemicolonKey;
+            this.mCjSemicolonKey = cjSemicolonKey;
         }
 
         public KeyboardId(int xml) {
@@ -256,14 +274,14 @@ public class LIMEKeyboardSwitcher {
         public boolean equals(KeyboardId other) {
             return other.mXml == this.mXml && other.mMode == this.mMode
                     && other.mEnableShiftLock == this.mEnableShiftLock
-                    && other.mCj4SemicolonKey == this.mCj4SemicolonKey;
+                    && other.mCjSemicolonKey == this.mCjSemicolonKey;
         }
 
         public int hashCode() {
             int result = mXml;
             result = 31 * result + mMode;
             result = 31 * result + (mEnableShiftLock ? 1 : 0);
-            result = 31 * result + (mCj4SemicolonKey ? 2 : 1);
+            result = 31 * result + (mCjSemicolonKey ? 2 : 1);
             return result;
         }
     }
@@ -287,7 +305,7 @@ public class LIMEKeyboardSwitcher {
 	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
                 );
                 keyboard.setKeyboardSwitcher(this);
-                if (id.mCj4SemicolonKey) {
+                if (id.mCjSemicolonKey) {
                     keyboard.addCj4SemicolonKey();
                 }
                 if (id.mEnableShiftLock) {
@@ -308,6 +326,7 @@ public class LIMEKeyboardSwitcher {
 		if (keyboardId == null || keyboardId.isEmpty()) {
 			return 0;
 		}
+        keyboardId = resolveCjSemicolonSourceLayoutId(keyboardId);
 		
 		// Use direct R.xml references for all keyboard layouts (compile-time verified, more efficient)
 		switch (keyboardId) {
@@ -448,20 +467,6 @@ public class LIMEKeyboardSwitcher {
 		}
     }
 
-    private boolean shouldAddCj4SemicolonKey(String imCode, int keyboardXml) {
-        return LIME.DB_TABLE_CJ4.equals(imCode)
-                && isCjKeyboardXml(keyboardXml)
-                && PreferenceManager.getDefaultSharedPreferences(mService)
-                        .getBoolean("cj4_semicolon_key", false);
-    }
-
-    private static boolean isCjKeyboardXml(int keyboardXml) {
-        return keyboardXml == R.xml.lime_cj
-                || keyboardXml == R.xml.lime_cj_shift
-                || keyboardXml == R.xml.lime_cj_number
-                || keyboardXml == R.xml.lime_cj_number_shift;
-    }
-
 	public void setKeyboardMode(String imCode, int mode, int imeOptions, boolean isIm, boolean isSymbol, boolean isShift) {
     	if(DEBUG){
     		Log.i(TAG, "setKeyboardMode () imCode:"+imCode + ", mode:"+mode + ", imOptions:"+imeOptions+
@@ -532,16 +537,16 @@ public class LIMEKeyboardSwitcher {
 	                break;
                 default:
                     if(isIm){  // Chinese IM keyboards
+                        String layoutId = isShift ? kConfig.getImshiftkb() : kConfig.getImkb();
+                        int xml = getKeyboardXMLID(layoutId);
                         if(isShift){
                             //Log.i("ART","KBMODE ->: " + kConfig.getImshiftkb());
-                            int xml = getKeyboardXMLID(kConfig.getImshiftkb());
                             kid = new KeyboardId(xml, KEYBOARD_MODE_NORMAL, true,
-                                    shouldAddCj4SemicolonKey(imCode, xml));
+                                    isCjSemicolonLayoutId(layoutId));
                         }else{
                             //Log.i("ART","KBMODE ->: " + kConfig.getImkb());
-                            int xml = getKeyboardXMLID(kConfig.getImkb());
                             kid = new KeyboardId(xml, KEYBOARD_MODE_NORMAL, true,
-                                    shouldAddCj4SemicolonKey(imCode, xml));
+                                    isCjSemicolonLayoutId(layoutId));
                         }
                         mIsChinese = true;
                     }else {//if(!isIm){  //English normal keyboard
