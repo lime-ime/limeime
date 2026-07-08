@@ -7,7 +7,6 @@ Last reviewed: 2026-07-08
 ## Pending fixes
 
 - fix#139 iOS: private-email/TestFlight bottom-content coverage remains pending. The attempted iPhone portrait height cap was abandoned because it made the `keyboard_size` preference ineffective on real device; `applyHeight()` must report the height derived from `KeyboardView.preferredHeight` without rewriting `KeyboardView.keySizeScale`. Continue investigating LIME custom-keyboard height / safe-area behavior across Array10 and Dayi. Track in `docs/#139_ISSUE.md`. No Android APK retest applies.
-- fix#145 Android: Android tablet bottom Space/function row can be hidden or clipped on LIME 6.1.27 with Android 10 / iPlay 30 / Boshiamy standard keyboard, normal keyboard size, split keyboard off, and gesture navigation; 3-button navigation is fine. Source fix prepared by limiting LIME's forced IME edge-to-edge mode to API 35+ only. Track in `docs/#145_ISSUE.md`. Pending Android 10 gesture-nav retest in a newer APK/build.
 
 ## Product work
 
