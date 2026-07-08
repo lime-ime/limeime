@@ -70,7 +70,7 @@ SPECIAL_CODES = {
 
 SKIP_FILES = {
     "file_paths.xml", "method.xml", "preference.xml",
-    "templime.xml", "symbols1.xml", "symbols2.xml", "symbols3.xml",
+    "symbols1.xml", "symbols2.xml", "symbols3.xml",
     # These are hand-authored from symbols1/2/3.xml (3-page symbol keyboard).
     # The lime_number_symbol*.xml files are Dayi IM layouts — NOT the symbol keyboard.
     "lime_number_symbol.xml", "lime_number_symbol_shift.xml",

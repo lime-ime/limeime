@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "lime_wb",
   "defaultWidthPercent": 10.0,
   "rows": [
@@ -48,6 +48,7 @@
       "keys": [
         {
           "code": -2,
+          "longPressCode": -106,
           "label": "@string/label_symbol_key",
           "sublabel": "",
           "widthPercent": 25.0,

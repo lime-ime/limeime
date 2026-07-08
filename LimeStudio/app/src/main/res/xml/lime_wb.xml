@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <!--
   ~ /*
@@ -38,7 +38,7 @@
     </Row>
     
     <Row>
-        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:keyWidth="25%p" limehd:isModifier="true"  limehd:keyEdgeFlags="left"/> 
+        <Key limehd:codes="-2"  limehd:keyLabel="@string/label_symbol_key" limehd:keyWidth="25%p" limehd:isModifier="true"  limehd:keyEdgeFlags="left" limehd:popupKeyboard="@xml/phone_simple" />
         <Key limehd:codes="46" limehd:keyLabel="丶" limehd:keyWidth="25%p"/> 
         <Key limehd:codes="110" limehd:keyLabel="ㄣ" limehd:keyWidth="25%p"/>
         <Key limehd:codes="-5" limehd:keyIcon="@drawable/sym_keyboard_delete_light" limehd:isModifier="true"
@@ -54,4 +54,3 @@
     </Row>
     
 </Keyboard>
-    

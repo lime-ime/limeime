@@ -1,4 +1,4 @@
-{
+﻿{
   "id": "lime_et26",
   "defaultWidthPercent": 10.0,
   "rows": [
@@ -543,6 +543,7 @@
         },
         {
           "code": -2,
+          "longPressCode": -106,
           "label": "@string/label_symbol_key",
           "sublabel": "",
           "widthPercent": 10.0,
