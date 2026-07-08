@@ -963,6 +963,28 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 5000)
+    public void testCangjieSemicolonKeyboardsAreSeededAndPointAtSemicolonLayouts() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+
+        if (!initializeDatabase(limeDB)) {
+            fail("ERROR: Cannot initialize database connection. Database may be on hold from a previous operation. Test cannot proceed.");
+        }
+
+        Keyboard standard = limeDB.getKeyboardConfig("cj_semi");
+        assertNotNull("cj_semi keyboard row should be seeded into the keyboard table", standard);
+        assertEquals("lime_cj_semi", standard.getImkb());
+        assertEquals("lime_cj_semi_shift", standard.getImshiftkb());
+        assertEquals("lime_cj_number_semi", standard.getExtendedkb());
+        assertEquals("lime_cj_number_semi_shift", standard.getExtendedshiftkb());
+
+        Keyboard numeric = limeDB.getKeyboardConfig("cj_num_semi");
+        assertNotNull("cj_num_semi keyboard row should be seeded into the keyboard table", numeric);
+        assertEquals("lime_cj_number_semi", numeric.getImkb());
+        assertEquals("lime_cj_number_semi_shift", numeric.getImshiftkb());
+    }
+
+    @Test(timeout = 5000)
     public void testSetIMConfigKeyboardInvalidatesStartupKeyboardSnapshot() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);

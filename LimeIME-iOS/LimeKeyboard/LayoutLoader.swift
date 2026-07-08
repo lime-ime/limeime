@@ -74,11 +74,15 @@ final class LayoutLoader {
             }
             lock.unlock()
 
-            if let layout = parseFromBundle(id: resourceId) {
+            let sourceId = cangjieSemicolonSourceLayoutId(for: resourceId)
+            if let layout = parseFromBundle(id: sourceId) {
+                let resolved = isCjSemicolonLayoutId(resourceId)
+                    ? applyingCjSemicolon(to: layout, preservingId: resourceId)
+                    : layout
                 lock.lock()
-                cache[resourceId] = layout
+                cache[resourceId] = resolved
                 lock.unlock()
-                return layout
+                return resolved
             }
         }
         return nil
@@ -86,6 +90,10 @@ final class LayoutLoader {
 
     static func iPadVariantCandidates(for id: String) -> [String] {
         resourceCandidates(for: id).filter { $0.contains("_ipad") }
+    }
+
+    static func isCjSemicolonLayoutId(_ id: String) -> Bool {
+        id.hasPrefix("lime_cj_semi") || id.hasPrefix("lime_cj_number_semi")
     }
 
     static func applyingCj4Semicolon(to layout: LimeKeyLayout) -> LimeKeyLayout {
@@ -127,6 +135,21 @@ final class LayoutLoader {
                           isBottomRow: row.isBottomRow)
         }
         return didAppend ? LimeKeyLayout(id: layout.id, rows: rows) : layout
+    }
+
+    static func applyingCjSemicolon(to layout: LimeKeyLayout, preservingId id: String) -> LimeKeyLayout {
+        let adjusted = applyingCj4Semicolon(to: layout)
+        return LimeKeyLayout(id: id, rows: adjusted.rows)
+    }
+
+    static func cangjieSemicolonSourceLayoutId(for id: String) -> String {
+        if id.hasPrefix("lime_cj_number_semi") {
+            return "lime_cj_number" + String(id.dropFirst("lime_cj_number_semi".count))
+        }
+        if id.hasPrefix("lime_cj_semi") {
+            return "lime_cj" + String(id.dropFirst("lime_cj_semi".count))
+        }
+        return id
     }
 
     // MARK: - Private

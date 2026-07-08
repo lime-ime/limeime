@@ -30,4 +30,25 @@ public class LIMEKeyboardSwitcherPolicyTest {
         assertEquals("lime_english_number", LIMEKeyboardSwitcher.resolveEnglishLayoutId(keyboard, true, false));
         assertEquals("lime_english_number_shift", LIMEKeyboardSwitcher.resolveEnglishLayoutId(keyboard, true, true));
     }
+
+    @Test
+    public void cangjieSemicolonLayoutIdsAliasToCurrentCangjieResources() {
+        assertEquals("lime_cj", LIMEKeyboardSwitcher.resolveCjSemicolonSourceLayoutId("lime_cj_semi"));
+        assertEquals("lime_cj_shift", LIMEKeyboardSwitcher.resolveCjSemicolonSourceLayoutId("lime_cj_semi_shift"));
+        assertEquals("lime_cj_number", LIMEKeyboardSwitcher.resolveCjSemicolonSourceLayoutId("lime_cj_number_semi"));
+        assertEquals("lime_cj_number_shift", LIMEKeyboardSwitcher.resolveCjSemicolonSourceLayoutId("lime_cj_number_semi_shift"));
+
+        assertTrue(LIMEKeyboardSwitcher.isCjSemicolonLayoutId("lime_cj_semi"));
+        assertTrue(LIMEKeyboardSwitcher.isCjSemicolonLayoutId("lime_cj_number_semi_shift"));
+        assertFalse(LIMEKeyboardSwitcher.isCjSemicolonLayoutId("lime_cj"));
+        assertFalse(LIMEKeyboardSwitcher.isCjSemicolonLayoutId("lime_cj_number"));
+    }
+
+    @Test
+    public void cangjieSemicolonKeyboardCodesForceSymbolMapping() {
+        assertTrue(LIMEService.hasSymbolMappingForKeyboard(false, "cj_semi"));
+        assertTrue(LIMEService.hasSymbolMappingForKeyboard(false, "cj_num_semi"));
+        assertFalse(LIMEService.hasSymbolMappingForKeyboard(false, "cjnum"));
+        assertTrue(LIMEService.hasSymbolMappingForKeyboard(true, "cjnum"));
+    }
 }

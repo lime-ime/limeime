@@ -1712,6 +1712,58 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(accepts(47)) // /
     }
 
+    func testComposingImKeysPreferPublishedMetadataForImportedTables() {
+        XCTAssertEqual(
+            KeyboardViewController.composingImKeys(
+                activeIM: "freenewcj",
+                publishedImKeys: "qwertyuiopasdfghjkl;'zxcvbnm",
+                fallbackImKeys: "qwertyuiopasdfghjklzxcvbnm"),
+            "qwertyuiopasdfghjkl;'zxcvbnm")
+    }
+
+    func testComposingImKeysKeepPhoneticKeyboardTypeFallback() {
+        XCTAssertEqual(
+            KeyboardViewController.composingImKeys(
+                activeIM: "phonetic",
+                publishedImKeys: ",-./0123456789;abcdefghijklmnopqrstuvwxyz'",
+                fallbackImKeys: "1234567890"),
+            "1234567890")
+    }
+
+    func testPublishedKeynameUsesImJsonMetadataForImportedTables() {
+        XCTAssertEqual(
+            KeyboardViewController.publishedKeyname(
+                ";'",
+                activeIM: "freenewcj",
+                imkeys: "qwertyuiopasdfghjkl;'zxcvbnm",
+                imkeynames: "手|田|水|口|廿|卜|山|戈|人|心|日|尸|木|火|土|竹|十|大|中|分|撇|重|難|金|女|月|弓|一"),
+            "分撇")
+    }
+
+    func testPublishedKeynameSkipsPhoneticSoKeyboardTypeMappingWins() {
+        XCTAssertNil(
+            KeyboardViewController.publishedKeyname(
+                "1",
+                activeIM: "phonetic",
+                imkeys: "1234567890",
+                imkeynames: "ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄢ"))
+    }
+
+    @MainActor
+    func testAcceptsIntoComposingUsesImportedSymbolRootsFromImkeys() {
+        let controller = KeyboardViewController()
+        controller.currentImKeys = "qwertyuiopasdfghjkl;'zxcvbnm"
+        func accepts(_ code: Int) -> Bool {
+            controller.acceptsIntoComposing(code: code,
+                                            hasSymbol: false,
+                                            hasNumber: false,
+                                            isPhonetic: false)
+        }
+
+        XCTAssertTrue(accepts(59)) // ;
+        XCTAssertTrue(accepts(39)) // '
+    }
+
     @MainActor
     func testAcceptsIntoComposingCharacterizesDayiPhoneAcceptance() {
         let controller = KeyboardViewController()
@@ -1793,6 +1845,80 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(rewritten.sublabel, ";")
         XCTAssertEqual(rewritten.longPressCode, 39)
         XCTAssertEqual(rewritten.widthPercent, 7)
+    }
+
+    func testCangjieSemicolonLayoutIdsLoadThroughCurrentLayoutsAcrossVariants() throws {
+        func semicolonLayout(id: String, sourceId: String) throws -> LimeKeyLayout {
+            XCTAssertEqual(LayoutLoader.cangjieSemicolonSourceLayoutId(for: id), sourceId)
+            return LayoutLoader.applyingCjSemicolon(
+                to: try loadKeyLayoutFixture(sourceId),
+                preservingId: id)
+        }
+
+        try assertPhoneCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_semi", sourceId: "lime_cj"),
+            expectedId: "lime_cj_semi")
+        try assertPhoneCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_semi_shift", sourceId: "lime_cj_shift"),
+            expectedId: "lime_cj_semi_shift")
+        try assertPhoneCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_number_semi", sourceId: "lime_cj_number"),
+            expectedId: "lime_cj_number_semi")
+        try assertPhoneCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_number_semi_shift", sourceId: "lime_cj_number_shift"),
+            expectedId: "lime_cj_number_semi_shift")
+
+        try assertIPadCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_semi_ipad", sourceId: "lime_cj_ipad"),
+            expectedId: "lime_cj_semi_ipad")
+        try assertIPadCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_semi_ipad_narrow", sourceId: "lime_cj_ipad_narrow"),
+            expectedId: "lime_cj_semi_ipad_narrow")
+        try assertIPadCangjieSemicolon(
+            try semicolonLayout(id: "lime_cj_number_semi_ipad_shift", sourceId: "lime_cj_number_ipad_shift"),
+            expectedId: "lime_cj_number_semi_ipad_shift")
+    }
+
+    private func assertPhoneCangjieSemicolon(_ layout: LimeKeyLayout,
+                                             expectedId: String,
+                                             file: StaticString = #filePath,
+                                             line: UInt = #line) throws {
+        let cangjieHomeRowCodes = expectedId.contains("_shift")
+            ? [65, 83, 68, 70, 71, 72, 74, 75, 76]
+            : [97, 115, 100, 102, 103, 104, 106, 107, 108]
+        let phoneHomeRow = try XCTUnwrap(layout.rows.first {
+            Array($0.keys.prefix(cangjieHomeRowCodes.count).map(\.code)) == cangjieHomeRowCodes
+        }, file: file, line: line)
+
+        XCTAssertEqual(layout.id, expectedId, file: file, line: line)
+        XCTAssertEqual(phoneHomeRow.keys.map(\.code), cangjieHomeRowCodes + [59], file: file, line: line)
+        XCTAssertEqual(phoneHomeRow.keys.last?.label, "'", file: file, line: line)
+        XCTAssertEqual(phoneHomeRow.keys.last?.sublabel, ";", file: file, line: line)
+        XCTAssertEqual(phoneHomeRow.keys.last?.longPressCode, 39, file: file, line: line)
+        XCTAssertEqual(phoneHomeRow.keys.last?.widthPercent, 10, file: file, line: line)
+    }
+
+    private func assertIPadCangjieSemicolon(_ layout: LimeKeyLayout,
+                                            expectedId: String,
+                                            file: StaticString = #filePath,
+                                            line: UInt = #line) throws {
+        let keys = layout.rows.flatMap(\.keys)
+        let rewritten = try XCTUnwrap(keys.first {
+            $0.code == 59 && $0.longPressCode == 39
+        }, file: file, line: line)
+
+        XCTAssertEqual(layout.id, expectedId, file: file, line: line)
+        XCTAssertFalse(keys.contains { $0.code == 65306 || $0.code == 65307 }, file: file, line: line)
+        XCTAssertEqual(rewritten.label, "'", file: file, line: line)
+        XCTAssertEqual(rewritten.sublabel, ";", file: file, line: line)
+    }
+
+    func testCangjieSemicolonKeyboardCodesForceSymbolMapping() {
+        XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_semi"))
+        XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_num_semi"))
+        XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "lime_cj_semi"))
+        XCTAssertFalse(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cjnum"))
+        XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(true, keyboardId: "cjnum"))
     }
 
     // A fullwidth-punctuation cell (slim advance) must still get a Han-sized

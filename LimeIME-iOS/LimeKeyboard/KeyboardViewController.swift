@@ -639,12 +639,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     activeIMIndex = idx
                     let caps = searchServer?.detectIMCapabilities(tableName: activeIM)
                         ?? (hasNumber: false, hasSymbol: false)
+                    let symbolMapping = Self.hasSymbolMappingForKeyboard(
+                        caps.hasSymbol,
+                        keyboardId: activatedIMs[idx].keyboardId)
                     searchServer?.setTableName(activeIM,
                         hasNumberMapping: caps.hasNumber,
-                        hasSymbolMapping: caps.hasSymbol)
-                    if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-                        searchServer?.setSymbolMapping(true)
-                    }
+                        hasSymbolMapping: symbolMapping)
                     searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
                     refreshImKeys()
                 }
@@ -752,6 +752,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         activated.contains(requested) ? requested : firstAvailable
     }
 
+    static func hasSymbolMappingForKeyboard(_ baseHasSymbolMapping: Bool, keyboardId: String) -> Bool {
+        baseHasSymbolMapping
+            || keyboardId == "cj_semi"
+            || keyboardId == "cj_num_semi"
+            || LayoutLoader.isCjSemicolonLayoutId(keyboardId)
+    }
+
     // Ordering guard for the two concurrent setupDatabase paths (viewDidLoad's databaseQueue
     // and the sync apply's syncQueue). `nextSetupToken()` is thread-safe; `lastAppliedSetupToken`
     // is touched only on the main thread inside setupDatabase's assignment block.
@@ -833,10 +840,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             self.activeIM      = survivingIM
             self.activeIMIndex = resolved.firstIndex { $0.tableNick == survivingIM } ?? 0
             let survivingCaps = ss.detectIMCapabilities(tableName: survivingIM)
-            ss.setTableName(survivingIM, hasNumberMapping: survivingCaps.hasNumber, hasSymbolMapping: survivingCaps.hasSymbol)
-            if survivingIM == "cj4", self.sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-                ss.setSymbolMapping(true)
-            }
+            let survivingKeyboardId = resolved.first { $0.tableNick == survivingIM }?.keyboardId ?? ""
+            ss.setTableName(survivingIM,
+                            hasNumberMapping: survivingCaps.hasNumber,
+                            hasSymbolMapping: Self.hasSymbolMappingForKeyboard(
+                                survivingCaps.hasSymbol,
+                                keyboardId: survivingKeyboardId))
             self.applyResolvedActiveIMLayout()
 
             // Load settings from shared UserDefaults (spec §15)
@@ -993,12 +1002,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     private func cj4SemicolonAdjusted(_ layout: LimeKeyLayout) -> LimeKeyLayout {
-        guard activeIM == "cj4",
-              sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true,
-              layout.id.hasPrefix("lime_cj") else {
-            return layout
-        }
-        return LayoutLoader.applyingCj4Semicolon(to: layout)
+        layout
     }
 
     /// Load all user preferences from shared UserDefaults (spec §15).
@@ -1206,7 +1210,21 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// Reads through `SearchServer.imKeysForTable`, which prefers stored table
     /// metadata and uses hardcoded keymaps only as fallback.
     private func refreshImKeys() {
-        currentImKeys = searchServer?.imKeysForTable(activeIM) ?? ""
+        currentImKeys = Self.composingImKeys(
+            activeIM: activeIM,
+            publishedImKeys: DBServer.shared.getImConfig(activeIM, "imkeys"),
+            fallbackImKeys: searchServer?.imKeysForTable(activeIM) ?? "")
+    }
+
+    static func composingImKeys(activeIM: String,
+                                publishedImKeys: String,
+                                fallbackImKeys: String) -> String {
+        switch activeIM {
+        case "phonetic", "et41", "et_41", "eten":
+            return fallbackImKeys
+        default:
+            return publishedImKeys.isEmpty ? fallbackImKeys : publishedImKeys
+        }
     }
 
     // MARK: - UI Setup
@@ -2693,7 +2711,38 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     private func keyname(_ code: String) -> String {
-        searchServer?.keyToKeyname(code) ?? code
+        if let published = Self.publishedKeyname(
+            code,
+            activeIM: activeIM,
+            imkeys: DBServer.shared.getImConfig(activeIM, "imkeys"),
+            imkeynames: DBServer.shared.getImConfig(activeIM, "imkeynames")) {
+            return published
+        }
+        return searchServer?.keyToKeyname(code) ?? code
+    }
+
+    static func publishedKeyname(_ code: String,
+                                 activeIM: String,
+                                 imkeys: String,
+                                 imkeynames: String) -> String? {
+        switch activeIM {
+        case "phonetic", "et41", "et_41", "eten":
+            return nil
+        default:
+            guard !imkeys.isEmpty, !imkeynames.isEmpty else { return nil }
+            let names = imkeynames.components(separatedBy: "|")
+            let keys = Array(imkeys)
+            var result = ""
+            for ch in code {
+                if let idx = keys.firstIndex(of: ch) {
+                    let offset = keys.distance(from: keys.startIndex, to: idx)
+                    result += offset < names.count ? names[offset] : String(ch)
+                } else {
+                    result.append(ch)
+                }
+            }
+            return result
+        }
     }
 
     // MARK: - Composing Popup (mirrors Android mComposingTextPopup)
@@ -3016,10 +3065,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         // Reconfigure SearchServer for the new IM
         let caps = ss.detectIMCapabilities(tableName: activeIM)
-        ss.setTableName(activeIM, hasNumberMapping: caps.hasNumber, hasSymbolMapping: caps.hasSymbol)
-        if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-            ss.setSymbolMapping(true)
-        }
+        ss.setTableName(activeIM,
+                        hasNumberMapping: caps.hasNumber,
+                        hasSymbolMapping: Self.hasSymbolMappingForKeyboard(
+                            caps.hasSymbol,
+                            keyboardId: im.keyboardId))
         ss.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
 
@@ -3825,11 +3875,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
         resetTempEnglishWord()
         let caps = searchServer?.detectIMCapabilities(tableName: activeIM)
             ?? (hasNumber: false, hasSymbol: false)
+        let keyboardId = activatedIMs.first { $0.tableNick == activeIM }?.keyboardId ?? ""
         searchServer?.setTableName(activeIM, hasNumberMapping: caps.hasNumber,
-                                   hasSymbolMapping: caps.hasSymbol)
-        if activeIM == "cj4", sharedDefaults?.bool(forKey: "cj4_semicolon_key") == true {
-            searchServer?.setSymbolMapping(true)
-        }
+                                   hasSymbolMapping: Self.hasSymbolMappingForKeyboard(
+                                       caps.hasSymbol,
+                                       keyboardId: keyboardId))
         searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
         if let layout = LayoutLoader.load(resolvedLayoutId(for: activeIM)) {
