@@ -814,14 +814,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     forPartialWordRange: range, in: word, language: "en_US") ?? []
             }
 
-            // Reconcile the active IM after a (re)prepare (§1.7 Rule 2). Prefer the LIVE
-            // active keyboard (self.activeIM) — a cold→hot sync must keep the user on their
-            // current IM and the query table must follow it, never the cold keyboard_list
-            // pref. keyboard_list is read ONLY on cold start (nothing active yet), to
-            // restore the last-used IM — activatedIMs is empty when initOnStartInput runs.
-            let requestedIM = self.activeIM.isEmpty
-                ? hotActiveIM()
-                : self.activeIM
+            // Reconcile the active IM after a (re)prepare (§1.7 Rule 2). First setup has
+            // no trustworthy live IM yet (a fresh process may open in English mode), so
+            // restore the keyboard-owned hot active_im. Later sync reloads prefer the live
+            // active keyboard, keeping the query table aligned with the current IM.
+            let requestedIM = self.didCompleteInitialSetup
+                ? self.activeIM
+                : hotActiveIM()
             let survivingIM = Self.reconciledActiveIM(
                 requested: requestedIM,
                 activated: resolved.map { $0.tableNick },

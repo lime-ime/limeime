@@ -766,6 +766,8 @@ final class KeyboardViewControllerTest: XCTestCase {
                       "setupDatabase reconciles the active IM (keep survivor, else first available)")
         XCTAssertTrue(source.contains("firstAvailable: resolvedIM"),
                       "the fallback (removed/absent active IM) resolves to the first available IM")
+        XCTAssertTrue(source.contains("let requestedIM = self.didCompleteInitialSetup\n                ? self.activeIM\n                : hotActiveIM()"),
+                      "cold-start setup must restore keyboard-owned active_im, even when opening in English mode")
         XCTAssertTrue(source.contains("self.activeIM      = survivingIM"))
         XCTAssertTrue(source.contains("self.activeIMIndex = resolved.firstIndex"))
     }
