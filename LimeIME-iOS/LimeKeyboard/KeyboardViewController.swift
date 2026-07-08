@@ -1442,8 +1442,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     private func applyHeight() {
         // Use KeyboardView.preferredHeight so the outer extension view is sized to
-        // exactly match the sum of each row's actual height (54 pt regular, 56 pt
-        // bottom row), rather than a flat per-row constant that would squish keys.
+        // match the current row-height policy rather than a flat per-row constant.
         let keysHeight = keyboardView?.preferredHeight
             ?? CGFloat(currentLayout.rows.count) * LayoutMetrics.KeyboardRow.fallbackRowHeight
         let barH = activeCandidateBarHeight
@@ -1459,14 +1458,25 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let totalHeight = isEmojiPanelVisible && !isEmojiSearchMode
             ? max(keyboardHeight, emojiPanelView?.preferredPanelHeight ?? keyboardHeight)
             : keyboardHeight
+        let didChangeHeight: Bool
         if let existing = keyboardHeightConstraint {
-            existing.constant = totalHeight
+            didChangeHeight = abs(existing.constant - totalHeight) > 0.5
+            if didChangeHeight { existing.constant = totalHeight }
         } else {
             let c = view.heightAnchor.constraint(equalToConstant: totalHeight)
             c.priority = UILayoutPriority(rawValue: 999)
             c.isActive = true
             keyboardHeightConstraint = c
+            didChangeHeight = true
         }
+        if didChangeHeight {
+            publishKeyboardHeightToUIKit()
+        }
+    }
+
+    private func publishKeyboardHeightToUIKit() {
+        view.setNeedsUpdateConstraints()
+        inputView?.setNeedsUpdateConstraints()
     }
 
     // MARK: - Key Event Dispatch (spec §4 onKey)

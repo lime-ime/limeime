@@ -887,6 +887,51 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("showEmojiSearchCandidates([])"))
     }
 
+    func testApplyHeightDoesNotOverrideKeyboardSizePreference() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("keyboardView?.keySizeScale      = keyboardSize"))
+        XCTAssertTrue(source.contains("let keysHeight = keyboardView?.preferredHeight"))
+        XCTAssertTrue(source.contains("view.heightAnchor.constraint(equalToConstant: totalHeight)"))
+        XCTAssertFalse(source.contains("applyEffectiveKeySizeScaleForHeight()"))
+        XCTAssertFalse(source.contains("private func effectiveKeySizeScaleForHeight()"))
+        XCTAssertTrue(source.contains("publishKeyboardHeightToUIKit()"))
+        guard let helperStart = source.range(of: "private func publishKeyboardHeightToUIKit()"),
+              let helperEnd = source.range(of: "\n    }\n\n    // MARK: - Key Event Dispatch",
+                                           range: helperStart.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate publishKeyboardHeightToUIKit")
+        }
+        let helper = String(source[helperStart.upperBound..<helperEnd.lowerBound])
+        XCTAssertTrue(helper.contains("view.setNeedsUpdateConstraints()"))
+        XCTAssertTrue(source.contains("if didChangeHeight"))
+        XCTAssertFalse(helper.contains("setNeedsLayout()"))
+        XCTAssertFalse(helper.contains("layoutIfNeeded()"))
+    }
+
+    func testKeyboardPreferredHeightTracksLayoutRowsAndScale() {
+        let fourRow = KeyboardView(layout: testLayout(id: "four_row", regularRows: 3))
+        let fiveRow = KeyboardView(layout: testLayout(id: "five_row", regularRows: 4))
+        let row = LayoutMetrics.KeyboardRow.rowHeight(
+            isPadHardware: UIDevice.current.userInterfaceIdiom == .pad,
+            isPad: LayoutLoader.hostIsPad,
+            isLandscape: false)
+        let bottom = LayoutMetrics.KeyboardRow.bottomRowHeight(
+            isPadHardware: UIDevice.current.userInterfaceIdiom == .pad,
+            isPad: LayoutLoader.hostIsPad,
+            isLandscape: false)
+
+        XCTAssertEqual(fourRow.preferredHeight, 3.0 * row + bottom, accuracy: 0.001)
+        XCTAssertEqual(fiveRow.preferredHeight, 4.0 * row + bottom, accuracy: 0.001)
+        XCTAssertEqual(fiveRow.preferredHeight - fourRow.preferredHeight, row, accuracy: 0.001)
+
+        fiveRow.keySizeScale = 1.2
+        XCTAssertEqual(fiveRow.preferredHeight, (4.0 * row + bottom) * 1.2, accuracy: 0.001)
+
+        fiveRow.showArrowKey = 1
+        XCTAssertEqual(fiveRow.preferredHeight, (5.0 * row + bottom) * 1.2, accuracy: 0.001)
+    }
+
     func testEmojiCategoryBarKeepsScrollableContentWidth() throws {
         let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
         let source = try String(contentsOf: sourceURL, encoding: .utf8)
@@ -1801,6 +1846,13 @@ final class KeyboardViewControllerTest: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .appendingPathComponent(relativePath)
+    }
+
+    private func testLayout(id: String, regularRows: Int) -> LimeKeyLayout {
+        let regular = KeyRow(keys: [KeyDef(code: 97, label: "a", widthPercent: 100)])
+        let bottom = KeyRow(keys: [KeyDef(code: LimeKeyCode.space.rawValue, label: "space", widthPercent: 100)],
+                            isBottomRow: true)
+        return LimeKeyLayout(id: id, rows: Array(repeating: regular, count: regularRows) + [bottom])
     }
 
     private func candidateButtons(in view: UIView) -> [CandidateButton] {
