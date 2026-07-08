@@ -819,8 +819,8 @@ Excluded from generator output and intentionally absent here: `lime_ez_ipad*.jso
 ### lime_phonetic_ipad_shift.json
 - Row 1 (row, 14 keys): `~` | `!/ㄅ` | `@/ㄉ` | `#/ˇ` | `$/ˋ` | `%/ㄓ` | `^/ˊ` | `&/˙` | `*/ㄚ` | `(/ㄞ` | `)/ㄢ` | `…` | `+` | `backspace`
 - Row 2 (row, 14 keys): `tab` | `Q/ㄆ` | `W/ㄊ` | `E/ㄍ` | `R/ㄐ` | `T/ㄔ` | `Y/ㄗ` | `U/一` | `I/ㄛ` | `O/ㄟ` | `P/ㄣ` | `『` | `』` | `？`
-- Row 3 (row, 13 keys): `abc` | `A/ㄇ` | `S/ㄋ` | `D/ㄎ` | `F/ㄑ` | `G/ㄕ` | `H/ㄘ` | `J/ㄨ` | `K/ㄜ` | `L/ㄠ` | `;/ㄤ` | `。` | `enter`
-- Row 4 (row, 12 keys): `shift` | `Z/ㄈ` | `X/ㄌ` | `C/ㄏ` | `V/ㄒ` | `B/ㄖ` | `N/ㄙ` | `M/ㄩ` | `,/ㄝ` | `./ㄡ` | `//ㄥ` | `shift`
+- Row 3 (row, 13 keys): `abc` | `A/ㄇ` | `S/ㄋ` | `D/ㄎ` | `F/ㄑ` | `G/ㄕ` | `H/ㄘ` | `J/ㄨ` | `K/ㄜ` | `L/ㄠ` | `:` | `。` | `enter`
+- Row 4 (row, 12 keys): `shift` | `Z/ㄈ` | `X/ㄌ` | `C/ㄏ` | `V/ㄒ` | `B/ㄖ` | `N/ㄙ` | `M/ㄩ` | `<` | `>` | `?` | `shift`
 - Row 5 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
 
 ### lime_array_ipad.json
@@ -831,8 +831,8 @@ Excluded from generator output and intentionally absent here: `lime_ez_ipad*.jso
 
 ### lime_array_ipad_shift.json
 - Row 1 (row, 14 keys): `tab` | `Q/1⇡` | `W/2⇡` | `E/3⇡` | `R/4⇡` | `T/5⇡` | `Y/6⇡` | `U/7⇡` | `I/8⇡` | `O/9⇡` | `P/0⇡` | `『` | `』` | `backspace`
-- Row 2 (row, 13 keys): `abc` | `A/1−` | `S/2−` | `D/3−` | `F/4−` | `G/5−` | `H/6−` | `J/7−` | `K/8−` | `L/9−` | `;/0−` | `。` | `enter`
-- Row 3 (row, 12 keys): `shift` | `Z/1⇣` | `X/2⇣` | `C/3⇣` | `V/4⇣` | `B/5⇣` | `N/6⇣` | `M/7⇣` | `,/8⇣` | `./9⇣` | `//0⇣` | `shift`
+- Row 2 (row, 13 keys): `abc` | `A/1−` | `S/2−` | `D/3−` | `F/4−` | `G/5−` | `H/6−` | `J/7−` | `K/8−` | `L/9−` | `:/0−` | `。` | `enter`
+- Row 3 (row, 12 keys): `shift` | `Z/1⇣` | `X/2⇣` | `C/3⇣` | `V/4⇣` | `B/5⇣` | `N/6⇣` | `M/7⇣` | `</8⇣` | `>/9⇣` | `?/0⇣` | `shift`
 - Row 4 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
 
 ### lime_array_number_ipad.json
@@ -845,8 +845,8 @@ Excluded from generator output and intentionally absent here: `lime_ez_ipad*.jso
 ### lime_array_number_ipad_shift.json
 - Row 1 (row, 14 keys): `~` | `!` | `@` | `#` | `$` | `%` | `^` | `&` | `*` | `(` | `)` | `…` | `+` | `backspace`
 - Row 2 (row, 14 keys): `tab` | `Q/1⇡` | `W/2⇡` | `E/3⇡` | `R/4⇡` | `T/5⇡` | `Y/6⇡` | `U/7⇡` | `I/8⇡` | `O/9⇡` | `P/0⇡` | `『` | `』` | `？`
-- Row 3 (row, 13 keys): `abc` | `A/1−` | `S/2−` | `D/3−` | `F/4−` | `G/5−` | `H/6−` | `J/7−` | `K/8−` | `L/9−` | `;/0−` | `。` | `enter`
-- Row 4 (row, 12 keys): `shift` | `Z/1⇣` | `X/2⇣` | `C/3⇣` | `V/4⇣` | `B/5⇣` | `N/6⇣` | `M/7⇣` | `,/8⇣` | `./9⇣` | `//0⇣` | `shift`
+- Row 3 (row, 13 keys): `abc` | `A/1−` | `S/2−` | `D/3−` | `F/4−` | `G/5−` | `H/6−` | `J/7−` | `K/8−` | `L/9−` | `:/0−` | `。` | `enter`
+- Row 4 (row, 12 keys): `shift` | `Z/1⇣` | `X/2⇣` | `C/3⇣` | `V/4⇣` | `B/5⇣` | `N/6⇣` | `M/7⇣` | `</8⇣` | `>/9⇣` | `?/0⇣` | `shift`
 - Row 5 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
 
 ### lime_cj_ipad.json
@@ -927,8 +927,8 @@ Excluded from generator output and intentionally absent here: `lime_ez_ipad*.jso
 ### lime_et_41_ipad_shift.json
 - Row 1 (row, 14 keys): `~` | `!/˙` | `@/ˊ` | `#/ˇ` | `$/ˋ` | `%` | `^` | `&/ㄑ` | `*/ㄢ` | `(/ㄣ` | `)/ㄤ` | `…` | `+` | `backspace`
 - Row 2 (row, 14 keys): `tab` | `Q/ㄟ` | `W/ㄝ` | `E/一` | `R/ㄜ` | `T/ㄊ` | `Y/ㄡ` | `U/ㄩ` | `I/ㄞ` | `O/ㄛ` | `P/ㄆ` | `『` | `』` | `？`
-- Row 3 (row, 13 keys): `abc` | `A/ㄚ` | `S/ㄙ` | `D/ㄉ` | `F/ㄈ` | `G/ㄐ` | `H/ㄏ` | `J/ㄖ` | `K/ㄎ` | `L/ㄌ` | `;/ㄗ` | `。` | `enter`
-- Row 4 (row, 12 keys): `shift` | `Z/ㄠ` | `X/ㄨ` | `C/ㄒ` | `V/ㄍ` | `B/ㄅ` | `N/ㄋ` | `M/ㄇ` | `,/ㄓ` | `./ㄔ` | `//ㄕ` | `shift`
+- Row 3 (row, 13 keys): `abc` | `A/ㄚ` | `S/ㄙ` | `D/ㄉ` | `F/ㄈ` | `G/ㄐ` | `H/ㄏ` | `J/ㄖ` | `K/ㄎ` | `L/ㄌ` | `:` | `。` | `enter`
+- Row 4 (row, 12 keys): `shift` | `Z/ㄠ` | `X/ㄨ` | `C/ㄒ` | `V/ㄍ` | `B/ㄅ` | `N/ㄋ` | `M/ㄇ` | `<` | `>` | `?` | `shift`
 - Row 5 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
 
 ### lime_hsu_ipad.json

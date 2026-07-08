@@ -679,7 +679,7 @@
           "isModifier": false,
           "isRepeatable": false,
           "isSticky": false,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_c_punctuation",
           "popupCharacters": "",
           "longPressCode": 62
         },

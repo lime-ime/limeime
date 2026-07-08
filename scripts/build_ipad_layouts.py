@@ -17,6 +17,8 @@ EXCLUDED_IPAD_LAYOUTS = {
     "lime_ez_shift",
     "lime_hs",
     "lime_hs_shift",
+    "lime_wb",
+    "lime_wb_shift",
 }
 
 # -------------------------------------------------------------------------
@@ -74,7 +76,7 @@ def is_number_top_row(row):
         return False
     # Check if codes are the standard 1-0 number row: 49,50,51,52,53,54,55,56,57,48
     codes = [k["code"] for k in keys]
-    return codes == [49, 50, 51, 52, 53, 54, 55, 56, 57, 48]
+    return codes == [49, 50, 51, 52, 53, 54, 55, 56, 57, 48] or codes == [49, 50, 51, 52, 55, 56, 57, 48, 45, 61]
 
 
 def is_symbol_top_row(row):
@@ -86,7 +88,7 @@ def is_symbol_top_row(row):
         return False
     codes = [k["code"] for k in keys]
     # !@#$%^&*(  )
-    return codes == [33, 64, 35, 36, 37, 94, 38, 42, 40, 41]
+    return codes == [33, 64, 35, 36, 37, 94, 38, 42, 40, 41] or codes == [33, 64, 35, 36, 38, 42, 40, 41, 95, 43]
 
 
 # -------------------------------------------------------------------------
@@ -224,6 +226,22 @@ def harvest_bottom_row_symbols(phone, exclude_codes=()):
     return []
 
 
+def harvest_popup_for_codes(phone, codes):
+    """Return the first approved popup tuple for one of the requested codes."""
+    for row in phone.get("rows", []):
+        for k in row.get("keys", []):
+            if k.get("code") not in codes:
+                continue
+            popup = k.get("popupKeyboard", "")
+            chars = k.get("popupCharacters", "")
+            if not popup and not chars:
+                continue
+            if k.get("isModifier") or popup == "@xml/phone_simple" or k.get("longPressCode", 0) == -106:
+                continue
+            return (popup, chars)
+    return None
+
+
 # Dual-sliding labels for punctuation keys promoted to the zxcv row.
 # Format: longPressCode, "hint\nprimary"  (top = long-press hint, bottom = tap).
 _PUNCT_SLIDING = {
@@ -295,6 +313,21 @@ def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
     # Per the shift mirroring rule: each dual-sliding key becomes its fixed slide output.
     if is_symbol_top_row(row):
         W = 7.0
+        keys[:] = [k for k in keys if k.get("code") not in (95, 43)]
+        codes = [k.get("code") for k in keys]
+        if 37 not in codes:
+            keys.insert(next((i for i, k in enumerate(keys) if k.get("code") == 38), len(keys)), {
+                "code": 37, "label": "%", "sublabel": "", "widthPercent": W, "icon": "",
+                "isModifier": False, "isRepeatable": False, "isSticky": False,
+                "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0,
+            })
+        codes = [k.get("code") for k in keys]
+        if 94 not in codes:
+            keys.insert(next((i for i, k in enumerate(keys) if k.get("code") == 38), len(keys)), {
+                "code": 94, "label": "^", "sublabel": "", "widthPercent": W, "icon": "",
+                "isModifier": False, "isRepeatable": False, "isSticky": False,
+                "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0,
+            })
         keys.insert(0, {
             "code": 126, "label": "~", "sublabel": "", "widthPercent": W, "icon": "",
             "isModifier": False, "isRepeatable": False, "isSticky": False,
@@ -339,6 +372,20 @@ def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
 
     # Remove any -/= that strip_dash_and_equals may have left (safety).
     keys[:] = [k for k in keys if k.get("code") not in (45, 61)]
+    current_codes = {k.get("code") for k in keys}
+    if 53 not in current_codes and digit_dash and digit_dash.get("popupCharacters") == "5":
+        keys.insert(next((i for i, k in enumerate(keys) if k.get("code") == 55), len(keys)), {
+            "code": 53, "label": "%\\n5", "sublabel": "", "widthPercent": W, "icon": "",
+            "isModifier": False, "isRepeatable": False, "isSticky": False,
+            "popupKeyboard": "", "popupCharacters": "", "longPressCode": 37,
+        })
+    current_codes = {k.get("code") for k in keys}
+    if 54 not in current_codes and eq_key and eq_key.get("popupCharacters") == "6":
+        keys.insert(next((i for i, k in enumerate(keys) if k.get("code") == 55), len(keys)), {
+            "code": 54, "label": "^\\n6", "sublabel": "", "widthPercent": W, "icon": "",
+            "isModifier": False, "isRepeatable": False, "isSticky": False,
+            "popupKeyboard": "", "popupCharacters": "", "longPressCode": 94,
+        })
 
     # Add symbol long-press to digit keys that have no sublabel.
     # Layouts with IM-component sublabels (phonetic=ã, dayi=è¨ â¦) are left
@@ -359,6 +406,10 @@ def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
         # Dash promoted from bottom row â move it right of 0.
         d = normalise_key(copy.deepcopy(digit_dash))
         d["widthPercent"] = W
+        if d.get("popupCharacters"):
+            d["label"] = d.get("label", "").split()[0]
+            d["popupKeyboard"] = ""
+            d["popupCharacters"] = ""
         if not d.get("sublabel", ""):
             d["label"] = "_\\n-"
             d["longPressCode"] = 95
@@ -379,6 +430,10 @@ def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
     if eq_key is not None:
         ek = normalise_key(copy.deepcopy(eq_key))
         ek["widthPercent"] = W
+        if ek.get("popupCharacters"):
+            ek["label"] = ek.get("label", "").split()[0]
+            ek["popupKeyboard"] = ""
+            ek["popupCharacters"] = ""
         if not ek.get("sublabel", ""):
             ek["label"] = "+\\n="
             ek["longPressCode"] = 43
@@ -574,7 +629,7 @@ def apply_zxcv_punct_sliding(row):
     return row
 
 
-def append_semicolon_key(row):
+def append_semicolon_key(row, semicolon_popup=None):
     """Detect the asdf row (last primary code â {58, 59, 108, 76}) and add ï¼\\nï¼.
 
     - Source `;` (59) or `:` (58) without sublabel â upgraded in-place to full-shape
@@ -594,12 +649,15 @@ def append_semicolon_key(row):
             lk["code"]         = 65306
             lk["label"]        = "\uff1b\\n\uff1a"
             lk["longPressCode"] = 65307
+            if semicolon_popup:
+                lk["popupKeyboard"], lk["popupCharacters"] = semicolon_popup
         # else: IM component key â leave unchanged
     else:
+        popup, chars = semicolon_popup or ("", "")
         keys.append({
             "code": 65306, "label": "\uff1b\\n\uff1a", "sublabel": "", "widthPercent": 7.0,
             "icon": "", "isModifier": False, "isRepeatable": False, "isSticky": False,
-            "popupKeyboard": "", "popupCharacters": "", "longPressCode": 65307,
+            "popupKeyboard": popup, "popupCharacters": chars, "longPressCode": 65307,
         })
     return row
 
@@ -770,25 +828,11 @@ def normalize_im_row_widths(row):
     return row
 
 
-# Shifted codes that should revert to their base equivalents when the key
-# carries an IM sublabel.  Source shift layouts store the shifted code; IM
-# component keys must show the base char so the display matches the base layout.
-#
-# Punct: < > ? : (60/62/63/58) â , . / ; (44/46/47/59)
-_SHIFTED_PUNCT_REVERT = {60: (44, ','), 62: (46, '.'), 63: (47, '/'), 58: (59, ';')}
-_SHIFTED_PUNCT_REVERT_EXCLUDED_SOURCES = {
-    # The Dayi symbol shift source intentionally maps the 竹 root to "?".
-    # Keep it as a shifted symbol on iPad instead of reverting it to "/".
-    "lime_dayi_sym_shift",
-}
 def apply_shift_key_rules(ipad_layout, source_id):
     """Post-process an iPad shift layout:
     1. Dual-slide keys (label X\\nY, no sublabel) in qwerty/asdf/zxcv rows â
        show only X (the shift-state char).  Digit/symbol-shift top row excluded.
     2. IM sublabel keys whose label is a single lowercase ASCII letter â capitalize.
-    3. IM sublabel keys whose code is a shifted-punct equivalent (< > ?) â
-       revert code and label to base punct (, . /) so IM component display is
-       consistent with the base layout.
     No-op on non-shift layouts.
     """
     if not source_id.endswith("_shift"):
@@ -822,11 +866,24 @@ def apply_shift_key_rules(ipad_layout, source_id):
                 elif sublabel and len(label) == 1 and 'a' <= label <= 'z':
                     # Rule 2: single lowercase letter with IM sublabel â capitalize
                     key["label"] = label.upper()
-                elif sublabel and source_id not in _SHIFTED_PUNCT_REVERT_EXCLUDED_SOURCES:
-                    # Rule 3: shifted-punct with IM sublabel â revert to base punct
-                    entry = _SHIFTED_PUNCT_REVERT.get(key.get("code"))
-                    if entry:
-                        key["code"], key["label"] = entry
+    semicolon_fix = {
+        "lime_phonetic_shift": (58, ":"),
+        "lime_et_41_shift": (58, ":"),
+        "lime_dayi_sym_shift": (58, ":"),
+    }.get(source_id)
+    for row in ipad_layout.get("rows", []):
+        for key in row.get("keys", []):
+            if semicolon_fix and key.get("code") == 65307:
+                key["code"], key["label"] = semicolon_fix
+                key["longPressCode"] = 0
+    if source_id == "lime_et_41_shift":
+        for row in ipad_layout.get("rows", []):
+            codes = {k.get("code") for k in row.get("keys", [])}
+            if 90 in codes:
+                for key in row.get("keys", []):
+                    if key.get("code") == -1:
+                        key["icon"] = "sym_keyboard_shift_shifted"
+                        break
     return ipad_layout
 
 
@@ -906,6 +963,7 @@ def make_ipad_layout(phone, source_id):
     # Harvest keys that are moved to fixed iPad positions.
     dash_key, eq_key = harvest_dash_and_equals(phone)
     lbracket, backslash, rbracket = harvest_qwerty_bracket_keys(phone)
+    semicolon_popup = harvest_popup_for_codes(phone, {58, 59})
 
     content_rows = [r for r in rows_in if not r.get("isBottomRow", False)]
 
@@ -924,7 +982,7 @@ def make_ipad_layout(phone, source_id):
     #   91([) 92(\) 93(])   â qwerty row
     #   58(:) 59(;)         â belong in asdf row; shift-layer IM components
     #   95(_) 43(+)         â shift of -/=, belong in digit row shift layer
-    bottom_syms = harvest_bottom_row_symbols(phone, exclude_codes=(45, 61, 91, 92, 93, 58, 59, 95, 43))
+    bottom_syms = harvest_bottom_row_symbols(phone, exclude_codes=(34, 39, 45, 61, 91, 92, 93, 58, 59, 95, 43))
     digit_dash  = dash_key
 
     had_bottom_row = False
@@ -952,7 +1010,7 @@ def make_ipad_layout(phone, source_id):
         row = augment_im_digit_row(row, digit_dash, layout_dash_key=dash_key, eq_key=eq_key)
         row = transform_qwerty_row(row, lbracket=lbracket, backslash=backslash, rbracket=rbracket, has_digit_row=has_digit_row)
         row = prepend_abc_modifier(row)
-        row = append_semicolon_key(row)
+        row = append_semicolon_key(row, semicolon_popup=semicolon_popup)
         row = append_fullshape_period(row)
         row = append_enter_key(row)
         row = ensure_zxcv_shifts(row, extra_keys=bottom_syms)
@@ -966,13 +1024,6 @@ def make_ipad_layout(phone, source_id):
 
     ipad["rows"] = rows_out
     apply_shift_key_rules(ipad, source_id)
-
-    # Clear popupKeyboard on the period key (code 46) â the iPad zxcv row
-    # already provides > as a long-press, so the popup is redundant and clutters.
-    for row in ipad["rows"]:
-        for key in row.get("keys", []):
-            if key.get("code") == 46:
-                key["popupKeyboard"] = ""
 
     validate_ipad_row_counts(ipad, source_id)
     return ipad
@@ -1033,14 +1084,20 @@ def main():
             errors.append(f"  MISSING source: {src_path}")
             continue
 
-        with open(src_path, "r", encoding="utf-8") as f:
+        with open(src_path, "r", encoding="utf-8-sig") as f:
             phone = json.load(f)
 
         ipad = make_ipad_layout(phone, src_stem)
 
-        with open(out_path, "w", encoding="utf-8") as f:
+        existing = b""
+        if os.path.exists(out_path):
+            with open(out_path, "rb") as old:
+                existing = old.read()
+        encoding = "utf-8-sig" if existing.startswith(b"\xef\xbb\xbf") else "utf-8"
+        ending = "\n" if existing.endswith(b"\n") else ""
+        with open(out_path, "w", encoding=encoding) as f:
             json.dump(ipad, f, indent=2, ensure_ascii=False)
-            f.write("\n")
+            f.write(ending)
 
         generated.append(out_path)
         print(f"  OK  {out_stem}.json")

@@ -247,8 +247,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "èéêë"
         },
         {
           "code": 114,
@@ -295,8 +295,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "ýÿ"
         },
         {
           "code": 117,
@@ -311,8 +311,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "ùúûü"
         },
         {
           "code": 105,
@@ -327,8 +327,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "ìíîï"
         },
         {
           "code": 111,
@@ -343,8 +343,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "òóôõöœø"
         },
         {
           "code": 112,
@@ -428,8 +428,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "àáâãäåæ"
         },
         {
           "code": 115,
@@ -444,8 +444,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "§ß"
         },
         {
           "code": 100,
@@ -657,8 +657,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "ç"
         },
         {
           "code": 118,
@@ -705,8 +705,8 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
-          "popupCharacters": ""
+          "popupKeyboard": "@xml/popup_template",
+          "popupCharacters": "ñ"
         },
         {
           "code": 109,
@@ -753,7 +753,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_punctuation",
           "popupCharacters": ""
         },
         {

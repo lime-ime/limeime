@@ -181,6 +181,41 @@ def alpha_keys(tuples, width, target_n=None):
     return keys
 
 
+def source_popup_map(phone_data):
+    """Return approved source popup metadata by key code."""
+    if phone_data is None:
+        return {}
+    result = {}
+    for row in phone_data.get('rows', []):
+        for key in row.get('keys', []):
+            popup = key.get('popupKeyboard', '')
+            pchars = key.get('popupCharacters', '')
+            if not popup and not pchars:
+                continue
+            code = key.get('code', 0)
+            if key.get('isModifier') or code in _SYSTEM_CODES:
+                continue
+            if popup == '@xml/phone_simple' or key.get('longPressCode', 0) == -106:
+                continue
+            result.setdefault(code, (popup, pchars))
+    return result
+
+
+def apply_source_popups(rows, popups, aliases=None):
+    """Copy source popup metadata onto generated keys with matching codes."""
+    aliases = aliases or {}
+    for row in rows:
+        for key in row:
+            if key.get('isModifier') or key.get('code') in _SYSTEM_CODES:
+                continue
+            codes = [key.get('code')]
+            codes.extend(aliases.get(key.get('code'), ()))
+            for code in codes:
+                if code in popups:
+                    key['popupKeyboard'], key['popupCharacters'] = popups[code]
+                    break
+
+
 # ---------------------------------------------------------------------------
 # Row builders
 # ---------------------------------------------------------------------------
@@ -227,20 +262,25 @@ def build_row3_phonetic(im_code, im_label, phone_alpha_row1, im_sub=''):
     return fix_total(keys)
 
 
-def build_row3_english(im_code, im_label, phone_alpha_row1, im_sub='', is_shift=False):
+def build_row3_english(im_code, im_label, phone_alpha_row1, im_sub='', is_shift=False, wide_edges=False):
     """IM(9) + 11 equal-width keys(7.0 each) + search(14) = 100."""
     # 9 + 11×7.0 + 14 = 9+77+14 = 100
     KEY_W = 7.0
+    IM_W = 11.5 if wide_edges else 9.0
+    ENTER_W = 11.5 if wide_edges else 14.0
     alpha = alpha_keys(phone_alpha_row1, KEY_W, target_n=9)
-    keys = [mk(im_code, label=im_label, sublabel=im_sub, width=9.0, mod=True)]
+    keys = [mk(im_code, label=im_label, sublabel=im_sub, width=IM_W, mod=True)]
     keys += alpha
     if is_shift:
         keys.append(mk(58, label=':', width=KEY_W))   # : only
         keys.append(mk(34, label='"', width=KEY_W))   # " only
+    elif wide_edges:
+        keys.append(mk(59, label=':\\n;', width=KEY_W, lp=58))
+        keys.append(mk(39, label='"\\n\'', width=KEY_W, lp=34))
     else:
         keys.append(mk(59, label=':\\n;', width=KEY_W, lp=58))   # tap=;  slide=:
         keys.append(mk(44, label='"\\n,', width=KEY_W, lp=34))   # tap=,  slide="
-    keys.append(mk(C_ENTER, icon='return', width=14.0, mod=True))
+    keys.append(mk(C_ENTER, icon='return', width=ENTER_W, mod=True))
     return fix_total(keys)
 
 
@@ -298,8 +338,15 @@ def write_layout(lid, rows_data):
         'rows': [{'isBottomRow': bool(b), 'keys': k} for k, b in rows_data],
     }
     path = os.path.join(LAYOUTS_DIR, lid + '.json')
-    with open(path, 'w', encoding='utf-8') as f:
+    existing = b''
+    if os.path.exists(path):
+        with open(path, 'rb') as old:
+            existing = old.read()
+    encoding = 'utf-8-sig' if existing.startswith(b'\xef\xbb\xbf') else 'utf-8'
+    ending = '\n' if existing.endswith(b'\n') else ''
+    with open(path, 'w', encoding=encoding) as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write(ending)
     print(f'  {lid}.json')
 
 
@@ -387,6 +434,8 @@ def make_phonetic_style(lid, phone_name, im_toggle_code, im_toggle_label,
 
 def make_symbols1():
     """symbols1_ipad.json — §4.2.3."""
+    popups = source_popup_map(load_phone('symbols1'))
+
     # Row 1 (13 + backspace = 14): ` 1 2 3 4 5 6 7 8 9 0 < > ⌫
     KEY_R1 = round(92.44/13, 4)
     r1 = fix_total([
@@ -445,6 +494,7 @@ def make_symbols1():
         mk(C_ARRR, icon='arrow.right', width=KEY4, mod=True, rep=True),
         spacer(5.0),
     ])
+    apply_source_popups([r4], popups)
 
     write_layout('symbols1_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
@@ -925,6 +975,9 @@ def extract_im_key(phone_data):
 
 def make_english():
     phone = load_phone('lime_english')
+    shift_phone = load_phone('lime_english_shift') or phone
+    popups = source_popup_map(phone)
+    shift_popups = source_popup_map(shift_phone)
     # English: row0=qwerty, row1=asdf, row2=zxcv(+shift/delete), row3=bottom
     a_r2 = extract_alpha(phone, 0)   # q w e r t y u i o p
     a_r3 = extract_alpha(phone, 1)   # a s d f g h j k l
@@ -932,16 +985,18 @@ def make_english():
     im_code, im_lbl, im_sub = extract_im_key(phone)
 
     r2 = build_row2(a_r2[:10], bracket_cluster='english')
-    r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub)
+    r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub, wide_edges=True)
     r4 = build_row4_english(a_r4[:7])
+    apply_source_popups([r2, r3, r4], popups)
 
     # Shift variant rows: uppercase alpha, single-symbol punctuation
     a_r2u = [(_cap_alpha_tuple(t)) for t in a_r2[:10]]
     a_r3u = [(_cap_alpha_tuple(t)) for t in a_r3[:9]]
     a_r4u = [(_cap_alpha_tuple(t)) for t in a_r4[:7]]
     r2s = build_row2(a_r2u, bracket_cluster='english', is_shift=True)
-    r3s = build_row3_english(im_code, im_lbl, a_r3u, im_sub, is_shift=True)
+    r3s = build_row3_english(im_code, im_lbl, a_r3u, im_sub, is_shift=True, wide_edges=True)
     r4s = build_row4_english(a_r4u, is_shift=True)
+    apply_source_popups([r2s, r3s, r4s], shift_popups)
 
     write_layout('lime_english_ipad', [
         (row1_english(),       False), (r2,  False), (r3,  False), (r4,  False), (bottom_row(), True),
@@ -953,6 +1008,9 @@ def make_english():
 
 def make_abc():
     phone = load_phone('lime_abc')
+    shift_phone = load_phone('lime_abc_shift') or phone
+    popups = source_popup_map(phone)
+    shift_popups = source_popup_map(shift_phone)
     # lime_abc phone layout is alphabetical (a-j, k-s, t-z), NOT QWERTY.
     # iPad must show QWERTY regardless — hardcode standard ASCII positions.
     a_r2 = [(113,'q',''), (119,'w',''), (101,'e',''), (114,'r',''), (116,'t',''),
@@ -964,15 +1022,17 @@ def make_abc():
     im_code, im_lbl, im_sub = extract_im_key(phone)
 
     r2 = build_row2(a_r2[:10], bracket_cluster='english')
-    r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub)
+    r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub, wide_edges=True)
     r4 = build_row4_english(a_r4[:7])
+    apply_source_popups([r2, r3, r4], popups)
 
     a_r2u = [_cap_alpha_tuple(t) for t in a_r2]
     a_r3u = [_cap_alpha_tuple(t) for t in a_r3]
     a_r4u = [_cap_alpha_tuple(t) for t in a_r4]
     r2s = build_row2(a_r2u, bracket_cluster='english', is_shift=True)
-    r3s = build_row3_english(im_code, im_lbl, a_r3u, im_sub, is_shift=True)
+    r3s = build_row3_english(im_code, im_lbl, a_r3u, im_sub, is_shift=True, wide_edges=True)
     r4s = build_row4_english(a_r4u, is_shift=True)
+    apply_source_popups([r2s, r3s, r4s], shift_popups, aliases={58: (59,)})
 
     write_layout('lime_abc_ipad', [
         (row1_english(),       False), (r2,  False), (r3,  False), (r4,  False), (bottom_row(), True),
@@ -1025,7 +1085,10 @@ def make_wb():
 
 def make_number_style(base_name, ipad_id):
     phone = load_phone(base_name)
-    is_shift = ipad_id.endswith('_shift')
+    is_shift = ipad_id.endswith('_shift') and base_name != 'lime_number'
+    popup_phone = (load_phone(base_name + '_shift') if is_shift else None) or phone
+    popups = source_popup_map(popup_phone)
+    wide_edges = base_name == 'lime_english_number'
     if not phone:
         # Create a minimal 5-row layout
         r1 = row1_english_shift() if is_shift else row1_english()
@@ -1048,8 +1111,9 @@ def make_number_style(base_name, ipad_id):
             a_r4 = [_cap_alpha_tuple(t) for t in a_r4]
         r1 = row1_english_shift() if is_shift else row1_english()
         r2 = build_row2(a_r2[:10], bracket_cluster='english', is_shift=is_shift)
-        r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub, is_shift=is_shift)
+        r3 = build_row3_english(im_code, im_lbl, a_r3[:9], im_sub, is_shift=is_shift, wide_edges=wide_edges)
         r4 = build_row4_english(a_r4[:7], is_shift=is_shift)
+    apply_source_popups([r2, r3, r4], popups)
 
     write_layout(ipad_id, [
         (r1, False), (r2, False), (r3, False), (r4, False),
@@ -1065,42 +1129,21 @@ def main():
     print(f'Output directory: {LAYOUTS_DIR}')
     print()
 
-    # 1. lime_phonetic
-    print('Phonetic:')
-    make_phonetic()
-
-    # 2. lime_english + lime_abc
+    # 1. lime_english + lime_abc
     print('English / ABC:')
     make_english()
     make_abc()
 
-    # 3. CJK IMs — clean rebuild from phone layouts
-    print('Array / CJ / Dayi / ET / EZ / HS / HSU / WB:')
-    build_cjk_ipad('lime_array',        'lime_array')
-    build_cjk_ipad('lime_array_number', 'lime_array_number')
-    build_cjk_ipad('lime_cj',           'lime_cj')
-    build_cjk_ipad('lime_cj_number',    'lime_cj_number')
-    build_cjk_ipad('lime_dayi',         'lime_dayi')
-    build_cjk_ipad('lime_dayi_sym',     'lime_dayi_sym')
-    build_cjk_ipad('lime_et26',         'lime_et26')
-    build_cjk_ipad('lime_et_41',        'lime_et_41')
-    build_cjk_ipad('lime_ez',           'lime_ez')
-    build_cjk_ipad('lime_hs',           'lime_hs')
-    build_cjk_ipad('lime_hsu',          'lime_hsu')
-    make_wb()
-
-    # 4. Symbols
+    # 2. Symbols
     print('Symbols:')
     make_symbols1()
     make_symbols2()
     make_symbols3()
 
-    # 5. Misc
+    # 3. Misc
     print('Misc:')
     make_number_style('lime_number',         'lime_number_ipad')
     make_number_style('lime_number',         'lime_number_ipad_shift')
-    make_number_style('lime_email',          'lime_email_ipad')
-    make_number_style('lime_url',            'lime_url_ipad')
     make_number_style('lime_english_number', 'lime_english_number_ipad')
     make_number_style('lime_english_number', 'lime_english_number_ipad_shift')
 

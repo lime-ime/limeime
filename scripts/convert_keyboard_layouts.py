@@ -197,7 +197,7 @@ def resolve_icon(icon_str):
     name = icon_str.replace("@drawable/", "").strip()
     return mapping.get(name, name)
 
-def convert_key(key_elem, default_width_pct=10.0, sublabel_map=None):
+def convert_key(key_elem, default_width_pct=10.0, sublabel_map=None, infer_code_from_label=False, layout_id=""):
     """Convert a <Key> XML element to a JSON key dict.
     sublabel_map: optional char→sublabel dict for IM-specific key labelling
                   (e.g. Dayi '1'→'言', CJ 'q'→'手').
@@ -210,6 +210,21 @@ def convert_key(key_elem, default_width_pct=10.0, sublabel_map=None):
     raw_icon    = attr(key_elem, "keyIcon")
     label, sub  = parse_label(raw_label)
     icon        = resolve_icon(raw_icon)
+    if layout_id in {"lime_english_shift", "lime_english_number_shift"} and len(label) == 1:
+        label = label.upper()
+    if layout_id == "lime_dayi" and code == -9:
+        sub = ""
+    if layout_id == "lime_ez_shift":
+        if code == 33:
+            label, sub = "!儿", "|"
+        elif code == 60:
+            sub = "／"
+        elif code == 62:
+            sub = "＼"
+    if layout_id in {"lime_hs", "lime_hs_shift"} and raw_label == "\\'":
+        code, label = 92, "\\"
+    if not codes and infer_code_from_label and len(label) == 1 and not label.startswith("@"):
+        code = ord(label)
 
     # For special codes, fill in icon/label from the table
     if code in SPECIAL_CODES and not icon and not label:
@@ -240,9 +255,17 @@ def convert_key(key_elem, default_width_pct=10.0, sublabel_map=None):
     # popupCharacters is non-empty. Clear both when chars are empty.
     if popup_kb == "@xml/popup_template" and not popup_chars:
         popup_kb = ""
+    long_press_code = None
+    if popup_kb == "@xml/phone_simple":
+        popup_kb = ""
+        long_press_code = -106
 
-    return {
+    key = {
         "code":             code,
+    }
+    if long_press_code is not None:
+        key["longPressCode"] = long_press_code
+    key.update({
         "label":            label,
         "sublabel":         sub,
         "widthPercent":     round(width_pct, 2),
@@ -252,7 +275,8 @@ def convert_key(key_elem, default_width_pct=10.0, sublabel_map=None):
         "isSticky":         is_sticky,
         "popupKeyboard":    popup_kb,
         "popupCharacters":  popup_chars,
-    }
+    })
+    return key
 
 def convert_keyboard_xml(xml_path):
     """Parse one Android keyboard XML and return a JSON-serialisable dict."""
@@ -266,6 +290,7 @@ def convert_keyboard_xml(xml_path):
     # Build IM-specific key→sublabel map (e.g. for Dayi, CJ, Array)
     sublabel_map = build_sublabel_map(layout_id)
 
+    infer_code_from_label = not layout_id.startswith("popup_")
     rows = []
     for row_elem in root.iter("Row"):
         row_edge = attr(row_elem, "rowEdgeFlags", "")
@@ -284,7 +309,13 @@ def convert_keyboard_xml(xml_path):
 
         keys = []
         for key_elem in row_elem.iter("Key"):
-            key_dict = convert_key(key_elem, row_default_width, sublabel_map=sublabel_map)
+            key_dict = convert_key(
+                key_elem,
+                row_default_width,
+                sublabel_map=sublabel_map,
+                infer_code_from_label=infer_code_from_label,
+                layout_id=layout_id,
+            )
             keys.append(key_dict)
 
         if keys:
@@ -320,8 +351,12 @@ def main():
         try:
             layout = convert_keyboard_xml(xml_path)
             out_path = output_dir / (xml_path.stem + ".json")
-            with open(out_path, "w", encoding="utf-8") as f:
+            existing = out_path.read_bytes() if out_path.exists() else b""
+            encoding = "utf-8-sig" if existing.startswith(b"\xef\xbb\xbf") else "utf-8"
+            ending = "\n" if existing.endswith(b"\n") else ""
+            with open(out_path, "w", encoding=encoding) as f:
                 json.dump(layout, f, ensure_ascii=False, indent=2)
+                f.write(ending)
             print(f"  ✓  {xml_path.name}  →  {out_path.name}  ({len(layout['rows'])} rows)")
             converted += 1
         except Exception as e:

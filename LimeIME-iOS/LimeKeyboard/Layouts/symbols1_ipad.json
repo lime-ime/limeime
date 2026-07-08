@@ -721,7 +721,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_punctuation",
           "popupCharacters": ""
         },
         {

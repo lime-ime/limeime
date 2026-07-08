@@ -833,7 +833,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 62,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_c_punctuation",
           "popupCharacters": ""
         },
         {

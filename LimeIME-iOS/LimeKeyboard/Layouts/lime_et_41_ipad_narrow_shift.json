@@ -461,8 +461,8 @@
           "longPressCode": 0
         },
         {
-          "code": 59,
-          "label": ";",
+          "code": 58,
+          "label": ":",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
@@ -596,8 +596,8 @@
           "longPressCode": 0
         },
         {
-          "code": 44,
-          "label": ",",
+          "code": 60,
+          "label": "<",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
@@ -609,21 +609,21 @@
           "longPressCode": 0
         },
         {
-          "code": 46,
-          "label": ".",
+          "code": 62,
+          "label": ">",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
           "isRepeatable": false,
           "isSticky": false,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_punctuation",
           "popupCharacters": "",
           "longPressCode": 0
         },
         {
-          "code": 47,
-          "label": "/",
+          "code": 63,
+          "label": "?",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",

@@ -572,7 +572,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "longPressCode": 0,
-          "popupKeyboard": "",
+          "popupKeyboard": "@xml/popup_c_punctuation",
           "popupCharacters": ""
         },
         {
