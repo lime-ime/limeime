@@ -90,8 +90,8 @@ phone layouts were the last users of multi-tap `codes` cycling, so:
 `popup_template`/`popupCharacters`; every `phone_*` bitmap face was removed.
 `./gradlew :app:processDebugResources` (with `--rerun-tasks`) passed, so AAPT
 accepted the `\n` sub-labels and `&quot;`/`&amp;` entities. Reporter `gontera`
-confirmed the reported Android `行列10` / `電話英文鍵盤` path works normally after
-updating to v6.1.28.
+confirmed Android v6.1.28 restores the `電話英文鍵盤` layout behavior in
+https://github.com/lime-ime/limeime/issues/142#issuecomment-4925621248.
 
 **iOS/iPad source parity is implemented but remains release-QA scope.**
 `phone.json` / `phone_shift.json` were rewritten to match the new layout design
