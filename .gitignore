@@ -16,6 +16,11 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Release artifacts are uploaded as GitHub Release assets, not committed source.
+# Keeping APK binaries out of the tree keeps GitHub Source code archives source-only.
+LimeStudio/app/release/*.apk
+LimeStudio/app/release/output-metadata.json
 .classpath
 .settings/
 .loadpath
