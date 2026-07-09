@@ -6,7 +6,7 @@
 - Classification: `question` + `Usability`
 - Reporter: `01disney`
 - Reported version/device: LIME IME v6.1.27, Android 16, Poco F6 Pro
-- Current state: open; local parity fix prepared
+- Current state: open; v6.1.28 retest requested in https://github.com/lime-ime/limeime/issues/148#issuecomment-4916998522, pending reporter confirmation
 
 ## Problem statement
 

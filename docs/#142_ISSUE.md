@@ -212,4 +212,8 @@ resolves `phone_ipad`→`phone`, so iPad loads the same `phone.json` /
 
 ## Retest condition
 
-Do not ask the reporter to retest 6.1.27 again. Ask for reporter confirmation only after a newer Android APK or Google Play build contains a targeted phone-key label visibility fix.
+Android/GitHub Release v6.1.28 contains the targeted phone-key label visibility fix. `limeimetw` posted the reporter retest request on 2026-07-08:
+
+- https://github.com/lime-ime/limeime/issues/142#issuecomment-4917008967
+
+Keep the issue open pending reporter confirmation on Android `行列10` with `電話英文鍵盤`. If the reporter uses Google Play, ask them to update through Google Play rather than switching channels.

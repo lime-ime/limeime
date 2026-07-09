@@ -1,4 +1,4 @@
-# 萊姆中文輸入法 - LIME IME v6.1.27
+# 萊姆中文輸入法 - LIME IME v6.1.28
 
 **套件名稱：** `net.toload.main.hd2026`
 
@@ -6,9 +6,9 @@
 
 **最低 SDK：** 21
 
-**前一正式版本：** [v6.1.26](https://github.com/lime-ime/limeime/releases/tag/v6.1.26)
+**前一正式版本：** [v6.1.27](https://github.com/lime-ime/limeime/releases/tag/v6.1.27)
 
-這版 `6.1.27` 繼續使用 GitHub 測試版的舊套件名稱與簽署金鑰，已安裝 GitHub APK 的使用者可以沿著同一條測試版更新路徑升級。這次更新加入倉頡分號鍵與行列10電腦數字鍵盤版面，改善英文鍵盤長按 `123`、候選列清除鍵、倚天注音 41 鍵版面，以及底部輸入框附近的提示位置。iOS 也修正了幾個重要問題，包含螢幕邊緣按鍵長按漏按、中文標點寬度、行列10數字欄位鍵盤與鍵盤大小套用問題。
+這版 `6.1.28` 繼續使用 GitHub 測試版的舊套件名稱與簽署金鑰，已安裝 GitHub APK 的使用者可以沿著同一條測試版更新路徑升級。這次更新修正 Android 電話鍵盤標示、平板與手勢導覽底部列顯示、Shift 連按兩下進入 Caps Lock 的判定，並新增可選的倉頡分號鍵版面。iOS 也包含幾個重要修正，包含表格鍵盤高度回報、英文混合輸入大小寫保留、輸入法還原與同步穩定性，以及 iPad 版面提示。
 
 > **相容性注意：** GitHub Release APK 使用套件名稱 `net.toload.main.hd2026`、versionCode `2026` 與舊 GitHub APK 相容簽署金鑰。Google Play 版本使用不同套件名稱與簽署來源，Android 會把兩者視為不同 App，可以同時安裝，但不能互相直接更新。Google Play 測試版或正式版使用者請從 Google Play 更新。若要在 Google Play 版本與 GitHub APK 之間切換使用，請先備份輸入法資料，再依需要啟用另一個版本。若只想保留其中一個版本，請確認資料已備份後再解除安裝不使用的版本。
 
@@ -18,76 +18,92 @@ GitHub Release 附上的安裝檔是 Android APK。iOS 使用者仍需等待後�
 
 ### Android
 
-- **倉頡鍵盤新增分號鍵支援**
-  - 倉頡鍵盤可加入分號鍵，方便四碼倉頡、四碼倉碩等需要分號字根的表格使用。
-  - 輸入法明細頁新增設定，需要這個字根的倉頡表格可以自行啟用。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/140>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/1004453b8682>
+- **修正電話英文鍵盤標示顯示**
+  - 修正行列10等電話英文鍵盤在淺色主題下，數字鍵與英文字母標示過淡或看不清楚的問題。
+  - 同步改善按鍵預覽的顯示一致性。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/142>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/d466a2ebcd13>
 
-- **行列10新增電腦數字鍵盤版面**
-  - 行列10新增電腦數字鍵盤順序，數字排列為上排 `7 8 9`、中排 `4 5 6`、下排 `1 2 3`。
-  - 原本的電話數字鍵盤順序仍保留，使用者可以依照習慣選用。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/5c8fdf745a75>
+- **修正平板與手勢導覽底部列被裁切**
+  - 改善 Android 平板或手勢導覽環境下，鍵盤最底列可能被螢幕底部裁切的問題。
+  - 這項修正會讓空白鍵與底部功能鍵列更穩定地完整顯示。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/145>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/58c178b55d39>
 
-- **英文鍵盤長按 `123` 可快速切到數字鍵盤**
-  - 點按 `123` 仍維持原本切換符號鍵盤的行為。
-  - 長按 `123` 會切到注音／簡易數字鍵盤，方便快速輸入數字。
+- **改善 Shift 連按兩下 Caps Lock 判定**
+  - 英文鍵盤維持各主要輸入法常見的操作方式，快速連按兩下 Shift 進入 Caps Lock。
+  - 調整連按判定，讓全大寫鎖定更容易穩定觸發。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/148>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/8ec3b4ccb5a9>
+
+- **新增可選的倉頡分號鍵版面**
+  - 新增 `cj_semi` 與 `cj_num_semi` 版面，讓需要分號字根的倉頡類表格可以選用。
+  - 原本的倉頡版面維持不變，舊使用者升級後仍可保留原本設定。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/143>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/bbde989e9af7>
+
+- **補強數字鍵與彈出鍵盤體驗**
+  - 英文鍵盤純數字快捷鍵補上簡易電話數字鍵盤路徑。
+  - 多鍵彈出鍵盤支援滑動選字，觸覺回饋也同步修正。
   - 相關 issue：<https://github.com/lime-ime/limeime/issues/124>
-  - 相關 PR：<https://github.com/lime-ime/limeime/pull/135>
-
-- **候選列清除鍵加寬**
-  - 候選列左側清除鍵加寬，改善拇指輸入時不易點到的問題。
-  - 按鍵高度、顏色、圖示與清除組字功能維持不變。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/124>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/aa7c9875909f>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/c313f8904fe8>
-
-- **倚天注音 41 鍵版面調整**
-  - 調整 `ㄘ` 的位置，並修正 shifted 版面的字根標示。
-  - 補上長按數字提示，讓版面提示更完整。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/137>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/c1c83005bc3c>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/732f818841d5>
-
-- **改善底部輸入框附近的提示位置**
-  - 調整組字提示與反查提示的位置，降低在聊天 App 底部輸入框上方遮住文字的機率。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/124>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/431762f76b28>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a900b82f7597>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/e15eb8fdb186>
 
 ### iOS
 
-- **修正螢幕邊緣按鍵長按漏按**
-  - 修正靠近螢幕邊緣的按鍵在長按時可能沒有預覽、震動或按鍵回應的問題。
-  - 這項修正會改善最右側按鍵在靠近邊框處長按時被系統邊緣手勢延遲吃掉的情況。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/1004453b8682>
+- **重寫未開啟完整取用時的資料同步架構**
+  - 大幅重寫鍵盤端與設定 App 的冷／熱資料同步流程。
+  - 未開啟「完整取用」時，輸入法安裝、切換、備份還原、資料表編輯與鍵盤端同步都更穩定。
+  - 修正還原或首次顯示後，鍵盤端可能看不到已安裝輸入法或狀態不同步的問題。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/557de977f46d>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a336605e78f2>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a454059deaa3>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/710247d7834f>
 
-- **新增倉頡分號鍵、行列10電腦數字鍵盤與英文 `123` 長按功能**
-  - 倉頡鍵盤可加入分號鍵，方便需要分號字根的倉頡表格使用。
-  - 行列10新增電腦數字鍵盤版面，可依照使用習慣選用。
-  - 英文鍵盤的 `123` 鍵可長按切到簡易數字鍵盤。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/1004453b8682>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/5c8fdf745a75>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/4d07d0a796e7>
+- **新增可選的倉頡分號鍵版面**
+  - 新增 `cj_semi` 與 `cj_num_semi` 版面，讓需要分號字根的倉頡類表格可以選用。
+  - 原本的倉頡版面維持不變，舊使用者升級後仍可保留原本設定。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/143>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/bbde989e9af7>
 
-- **行列10數字欄位與鍵盤大小修正**
-  - 改善行列10在數字欄位中的鍵盤選擇邏輯，避免不必要地切到一般符號鍵盤。
-  - 修正簡易數字鍵盤沒有正確套用鍵盤大小設定的問題。
+- **英文鍵盤長按 `123` 可快速切到簡易電話數字鍵盤**
+  - 英文鍵盤與多個表格鍵盤的 `123` 快捷操作補上簡易電話數字鍵盤路徑。
+  - 需要快速輸入數字時，不必先繞到完整符號鍵盤。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/124>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a900b82f7597>
+
+- **修正表格鍵盤高度與底部內容遮擋**
+  - 修正鍵盤高度回報，使行列10、大易等表格鍵盤在輸入時更正確地反映實際高度。
+  - 改善底部內容被鍵盤遮住的情況。
   - 相關 issue：<https://github.com/lime-ime/limeime/issues/139>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/0863e6f07e61>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/f7088f2810b2>
 
-- **中文標點寬度與倚天注音 41 鍵版面修正**
-  - 修正中文標點寬度處理，讓標點顯示與輸入結果更符合中文輸入情境。
-  - 調整倚天注音 41 鍵版面與長按數字提示。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/137>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/c1c83005bc3c>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/732f818841d5>
+- **英文混合輸入保留大小寫**
+  - 混合英文輸入時，候選 0 會保留使用者實際輸入的大小寫。
+  - 例如輸入大寫或大小寫混合字串時，不會再被候選列轉成全小寫。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/147>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/441ab48e1ab4>
+
+- **改善觸控、按鍵預覽與彈出鍵盤操作**
+  - 改善按鍵觸控判定、快速輸入、按鍵預覽與候選列更新效率。
+  - 彈出鍵盤支援更完整的滑動選字，並修正觸覺回饋。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/d6ecce2f47a3>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/8a4189279cca>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/e15eb8fdb186>
+
+- **改善電話英文鍵盤與 iPad 鍵盤版面提示**
+  - 改善電話英文鍵盤的按鍵標示與彈出預覽顯示。
+  - 修正 iPad 版面的鍵盤提示與 Shift 狀態產生邏輯。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/142>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/d466a2ebcd13>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/869304a27d54>
 
 ## APK 資訊
 
-- APK manifest：package `net.toload.main.hd2026`，versionName `6.1.27`，versionCode `2026`，minSdk 21，targetSdk 36
+- APK manifest：package `net.toload.main.hd2026`，versionName `6.1.28`，versionCode `2026`，minSdk 21，targetSdk 36
 - APK 顯示名稱：`萊姆輸入法A`
-- APK 檔案：`LIMEHD2026-6.1.27.apk`
-- APK 檔案大小：7,410,887 bytes
-- APK SHA-256：`299d579df4dc2ffdceabdb038f708b46098dd721bbcd271f522ebd239d4ae653`
+- APK 檔案：`LIMEHD2026-6.1.28.apk`
+- APK 檔案大小：7,192,114 bytes
+- APK SHA-256：`8fbd8468b3c9a6c38f5368c39ce0de51b8dd515e2bbf060b2e28e315d012555e`
 - APK 簽署憑證：舊 GitHub APK 相容簽署金鑰，`C=TW, ST=NA, L=Taipei, O=LIME IME, OU=LIME IME, CN=Jeremy Wu`
 - APK 簽署憑證 SHA-256：`8fc24cc75da9a86ce90a0591f4d74b2a491106e8b1d72d8afe2653b5d604da34`
