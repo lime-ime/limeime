@@ -107,7 +107,7 @@
         React.createElement(StepRow, { icon: React.createElement(GreenToggle), text: "開啟「允許完整取用」" })
       ),
       React.createElement("div", { style: { font: "400 15px/20px var(--font-sans)", color: "var(--text-secondary)", textAlign: "center" } },
-        "萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"),
+        "完整取用用於備份資料庫、按鍵震動回饋與編輯字根資料表。不開啟也能正常輸入、安裝或匯入輸入法，萊姆輸入法不會收集或傳送任何個人資料。"),
       React.createElement(Button, { variant: "prominent", size: "large", fullWidth: true }, "前往設定"),
       React.createElement("div", { style: { font: "400 13px/18px var(--font-sans)", color: "var(--text-secondary)", textAlign: "center" } },
         "若設定未直接顯示萊姆輸入法，請到「設定」>「Apps」>「萊姆輸入法」>「Keyboards」開啟。"),

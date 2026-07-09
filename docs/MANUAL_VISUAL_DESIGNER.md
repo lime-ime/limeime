@@ -65,7 +65,7 @@ Use `.manual-screenshot-pair` for iPhone/Android pairs from `docs/LIME_SETTINGS.
 
 ```html
 <div class="manual-note">
-  「允許完整取用」只用於 LIME 的按鍵震動回饋。
+  「允許完整取用」是選用功能解鎖，用於備份資料庫、按鍵震動回饋與編輯字根資料表。
 </div>
 
 <div class="manual-warning">

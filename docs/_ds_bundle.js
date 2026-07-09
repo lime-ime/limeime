@@ -1582,7 +1582,7 @@ try { (() => {
         color: "var(--md-on-surface-variant)",
         textAlign: "center"
       }
-    }, "萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"), React.createElement(Button, {
+    }, "完整取用用於備份資料庫、按鍵震動回饋與編輯字根資料表。不開啟也能正常輸入、安裝或匯入輸入法，萊姆輸入法不會收集或傳送任何個人資料。"), React.createElement(Button, {
       variant: "filled",
       full: true
     }, "前往設定"), React.createElement("div", {
@@ -2838,7 +2838,7 @@ try { (() => {
         color: "var(--text-secondary)",
         textAlign: "center"
       }
-    }, "萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"), React.createElement(Button, {
+    }, "完整取用用於備份資料庫、按鍵震動回饋與編輯字根資料表。不開啟也能正常輸入、安裝或匯入輸入法，萊姆輸入法不會收集或傳送任何個人資料。"), React.createElement(Button, {
       variant: "prominent",
       size: "large",
       fullWidth: true

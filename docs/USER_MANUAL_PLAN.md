@@ -17,7 +17,7 @@
 - 不寫作者視角前言。
 - 不寫空泛產品介紹，第一段必須直接提供使用者下一步。
 - 使用者可見文句不可使用中文分號，一般完整句應以句號結尾，且句內應有逗號支撐清楚的主詞、動詞與受詞結構。
-- iPhone「允許完整取用」只可描述為按鍵震動回饋所需。
+- iPhone「允許完整取用」應描述為選用功能解鎖，用於備份資料庫、按鍵震動回饋與編輯字根資料表，不可寫成正常打字、安裝或匯入輸入法、還原資料庫的必要條件。
 - iPad 13 吋、11 吋、mini 尺寸分級是未實作規劃，不可寫成現行功能。
 - 手冊頁應使用 [MANUAL_VISUAL_DESIGNER.md](MANUAL_VISUAL_DESIGNER.md) 定義的 CSS 元件改善網頁閱讀性。
 
@@ -26,6 +26,8 @@
 撰寫與審稿前必讀：
 
 - [LIME_SETTINGS.md](LIME_SETTINGS.md)：設定 App 四分頁、DB Manager、喜好設定、輸入法管理、截圖。
+- [IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)：iOS 完整取用權限、FA-off 可用功能、FA-on 解鎖功能。
+- [IOS_DB_COLD_HOT.md](IOS_DB_COLD_HOT.md)：iOS 備份、還原、資料表編輯與 cold/hot 同步的使用者可見行為。
 - [KEYBOARD_THEME.md](KEYBOARD_THEME.md)：鍵盤主題、系統設定主題、注音/英文/Emoji 截圖要求。
 - [ANDROID_IPHONE_KEYBOARD.md](ANDROID_IPHONE_KEYBOARD.md)：特殊鍵、長按、空白鍵游標、iPad 副鍵符號。
 - [KEYBOARD_TYPE.md](KEYBOARD_TYPE.md)：電話、數字、Email、密碼、URL、搜尋欄位行為。
@@ -110,7 +112,8 @@ Raw Markdown 圖片表格只在簡單比較時可用，設定 App 截圖應優�
 - 作者視角前言。
 - 空泛產品定義，且沒有立即給出操作分流。
 - 用不確定語氣描述完整取用權限。
-- 把資料庫、跨程序共享、分享或其他功能寫成完整取用權限的理由。
+- 把正常打字、安裝或匯入輸入法、還原資料庫寫成完整取用權限的必要條件。
+- 把完整取用權限寫成跨程序共享、App Group 或其他內部工程機制的使用者理由。
 - 把「喜好設定」寫成「設定」。
 - 把 DB Manager / 資料庫分頁寫漏。
 - 把 iPad 尺寸分級寫成已實作。

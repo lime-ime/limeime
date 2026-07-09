@@ -49,7 +49,7 @@ Current verified count:
 
 | Claim | Required wording |
 |---|---|
-| iPhone/iPad Full Access | Only required for LIME key vibration feedback. Do not connect it to database, App Group, sharing, backup, restore, or basic typing. |
+| iPhone/iPad Full Access | Optional for typing and setup. Unlocks in-app backup, key vibration feedback, and table editing. Do not describe it as required for basic typing, IM install/import/delete, restore preparation, or normal app use. Manual owners: `quick-start.md`, `database-management.md`, `ime-management.md`, `preferences.md`, `faq.md`, `troubleshooting.md`, `privacy.md`. |
 | DB restore | Restore replaces current LIME data, so users should backup first when current data matters. |
 | Device migration | Users with an old LIME device should backup the full database on the old device and restore it on the new device before rebuilding from scratch. |
 | iPad size tiers | 13-inch, 11-inch, and mini tiers are not implemented as current user functionality. |

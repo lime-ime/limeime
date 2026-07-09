@@ -4,7 +4,8 @@ This auditor protects user trust by checking permission, privacy, version, and p
 
 ## Reject If
 
-- iPhone `允許完整取用` is tied to database, backup/restore, App Group, sharing, or basic input.
+- iPhone `允許完整取用` is described as required for basic input, IM install/import/delete, restore preparation, or normal app use.
+- iPhone `允許完整取用` is described as an internal App Group, cross-process, or generic database-access requirement instead of the user-facing unlock for in-app backup, key vibration feedback, and table editing.
 - Privacy claims are vague or broader than the source docs support.
 - Android, iPhone, and iPad behaviors are mixed together without clear labels.
 - Android voice input omits the distinction between LIME inline dictation, Google/system voice-capable IME, and `RecognizerIntent` fallback.

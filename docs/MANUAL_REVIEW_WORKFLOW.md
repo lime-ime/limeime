@@ -48,8 +48,8 @@ Read the topic-relevant design/spec/reference docs under `docs/`, including:
 - The `喜好設定` tab is described as generic settings instead of IM Preferences.
 - The `資料庫` tab or DB Manager flow is missing.
 - DB Manager does not cover `備份資料庫`, `還原資料庫`, and `還原預設資料庫`.
-- iPhone `允許完整取用` is described as required for database access, backup/restore, App Group, sharing, or basic input.
-- iPhone `允許完整取用` is described as anything other than the permission needed for LIME key vibration feedback.
+- iPhone `允許完整取用` is described as required for basic input, IM install/import/delete, restore preparation, or normal app use.
+- iPhone `允許完整取用` is described as an internal App Group, cross-process, or generic database-access requirement instead of the user-facing unlock for in-app backup, key vibration feedback, and table editing.
 - iPad 13-inch, 11-inch, or mini size tiers are described as implemented functionality.
 - A Settings App screen is described without using the relevant `assets/lime_settings_*` screenshot when one exists in `docs/LIME_SETTINGS.md`.
 
@@ -208,7 +208,7 @@ Prevent the manual from making inaccurate promises, privacy claims, or platform 
 ### Checks
 
 - Android, iOS, and iPad differences are explicit.
-- iOS `允許完整取用` is only described as needed for key vibration feedback.
+- iOS `允許完整取用` is described as optional for typing and setup, and as the unlock for in-app backup, key vibration feedback, and table editing.
 - Android voice input clearly distinguishes LIME inline dictation, Google/system voice-capable IME, and `RecognizerIntent` fallback.
 - Android 13+ notification and vibration restrictions are described accurately when relevant.
 - Legacy backup restore guidance does not promise guaranteed success.
