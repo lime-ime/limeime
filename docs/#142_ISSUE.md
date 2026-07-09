@@ -1,16 +1,10 @@
-﻿# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
-
-## Current status
-
-Resolved / closed. Community reporter `gontera` confirmed that Android v6.1.28 fixed the `行列10` `電話英文鍵盤` layout display problem in https://github.com/lime-ime/limeime/issues/142#issuecomment-4925621248. `limeimetw` added a `+1` reaction and closed the issue as completed with acknowledgement https://github.com/lime-ime/limeime/issues/142#issuecomment-4925638168.
-
-Verified scope: Android v6.1.28 / `行列10` / `電話英文鍵盤` label visibility. The reporter did not separately verify iOS/iPad parity paths.
-
-Issue: https://github.com/lime-ime/limeime/issues/142
+# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
 
 ## Problem statement
 
-Community reporter `gontera` reported that in LIME 6.1.27, when the Android `行列10` input method is changed to the `電話英文鍵盤` keyboard layout, some key labels were not visibly rendered even though typing and composing still worked.
+Community reporter `gontera` reports that in LIME 6.1.27, when the Android `行列10` input method is changed to the `電話英文鍵盤` keyboard layout, some key labels are not visibly rendered even though typing and composing still work.
+
+Issue: https://github.com/lime-ime/limeime/issues/142
 
 ## Reported reproduction
 
@@ -52,7 +46,7 @@ A useful regression test or verification target should cover either:
 - replacing phone-key bitmap faces with normal labels/sublabels that follow theme text colors, or
 - ensuring the bitmap assets have light-theme/dark-theme variants or tinting that preserves contrast.
 
-Manual visual verification is still needed for light theme, dark theme, and any dynamic/accent theme combination that changes key backgrounds.
+Android v6.1.28 reporter verification later confirmed the reported `行列10` / `電話英文鍵盤` label-visibility path. Dark/dynamic-theme and iOS/iPad visual checks remain normal release-QA scope unless a separate report appears.
 
 ## Likely root cause
 
@@ -91,13 +85,18 @@ phone layouts were the last users of multi-tap `codes` cycling, so:
   `phone_cal`, `phone_left`, `phone_right` × 4 densities) were deleted — nothing
   references them anymore.
 
-**Status: implemented (Android + iOS/iPad).** Android `phone.xml` /
-`phone_shift.xml` rewritten to `keyLabel="<hint>\n<digit>"` +
-`popup_template`/`popupCharacters`; every `phone_*` bitmap face removed.
-`./gradlew :app:processDebugResources` (with `--rerun-tasks`) passes, so AAPT
-accepts the `\n` sub-labels and `&quot;`/`&amp;` entities. iOS/iPad
-`phone.json` / `phone_shift.json` rewritten to match (see the iOS + iPad section
-below). Both still need on-device visual/behaviour QA per the plan below.
+**Status: Android implemented, released, and reporter-confirmed in v6.1.28.** Android `phone.xml` /
+`phone_shift.xml` were rewritten to `keyLabel="<hint>\n<digit>"` +
+`popup_template`/`popupCharacters`; every `phone_*` bitmap face was removed.
+`./gradlew :app:processDebugResources` (with `--rerun-tasks`) passed, so AAPT
+accepted the `\n` sub-labels and `&quot;`/`&amp;` entities. Reporter `gontera`
+confirmed the reported Android `行列10` / `電話英文鍵盤` path works normally after
+updating to v6.1.28.
+
+**iOS/iPad source parity is implemented but remains release-QA scope.**
+`phone.json` / `phone_shift.json` were rewritten to match the new layout design
+(see the iOS + iPad section below), but no separate iOS/iPad reporter validation
+is recorded for this Android-reported issue.
 
 **Follow-up fix (flint preview stuck).** Because the letter/symbol keys now open
 popups, the mini keyboard's own key-preview bubble (e.g. "Y") could be left
@@ -105,7 +104,8 @@ orphaned on screen after a flint/slide commit: it is normally hidden by the mini
 keyboard's `onUpEvent`, but a flint commits via one touch stream while the
 container is torn down by another. Fixed at the single teardown chokepoint —
 `dismissPopupKeyboard()` now calls `mMiniKeyboard.dismissKeyPreview()` before
-dismissing the container. Compiles; needs on-device confirmation.
+dismissing the container. This is a separate popup-teardown hardening note from
+the reporter-confirmed #142 label-visibility fix.
 
 ## Target layout
 
@@ -165,31 +165,30 @@ group; the only symbols left unplaced are `\` and `` ` ``, which stay on the
   (`.,?!`) and `=` cal (`+-*/`) keys and the face chars (`1 * 0 #`) are the same
   on both layers.
 
-### Open items (decide before implementing)
+### Resolved layout decisions
 
 - **Cal `=` key = the math key.** The column-5 cal key (face `=`, popup `+ - * /`,
   text label `+-*/\n=`) now owns arithmetic exclusively — the `*` pad key was
   moved off math to `< > ^ ~`, so nothing is reachable from two keys. Its old
   `phone_cal` bitmap is gone. No longer redundant; keep it.
 - **Off the pad.** With both layers, only `\` and `` ` `` are not reachable from
-  the pad; they stay on the `123` symbol layer. Flagging only to confirm that is
-  acceptable.
+  the pad; they stay on the `123` symbol layer.
 
 ## Follow-up questions
 
-No reporter clarification is needed for initial triage. The screenshot and code path are enough to track this as a plausible Android visual bug.
+No reporter clarification remains for the original Android report. The reporter confirmed v6.1.28 fixed the `行列10` / `電話英文鍵盤` label-visibility problem.
 
-If reproduction differs by theme, ask later for the exact LIME keyboard theme and Android light/dark mode only if the maintainer cannot reproduce with the default light appearance.
+If a future report appears for another theme, iOS/iPad, or another phone-keyboard layout, treat it as a new focused follow-up and ask for the exact LIME keyboard theme, platform/build, and screenshot or recording.
 
 ## Platform impact
 
 ### Android
 
-Confirmed reported platform. The suspected path is Android-specific XML layout and bitmap drawable rendering in `phone.xml` / `phone_shift.xml`.
+Confirmed reported platform. The root path was Android-specific XML layout and bitmap drawable rendering in `phone.xml` / `phone_shift.xml`; v6.1.28 reporter confirmation verifies the reported Android `行列10` / `電話英文鍵盤` path.
 
 ### iOS + iPad
 
-**Parity implemented.** `LimeIME-iOS/LimeKeyboard/Layouts/phone.json` and
+**Source-side parity implemented; release QA remains separate.** `LimeIME-iOS/LimeKeyboard/Layouts/phone.json` and
 `phone_shift.json` were rewritten to match the Android design:
 
 - Letter keys converted from multi-tap `codes` cycling to `popupKeyboard`
@@ -206,24 +205,18 @@ Confirmed reported platform. The suspected path is Android-specific XML layout a
 resolves `phone_ipad`→`phone`, so iPad loads the same `phone.json` /
 `phone_shift.json`. No separate iPad phone layout exists or is needed.
 
-## Verification plan
-
-- Android: open `行列10` with `電話英文鍵盤` in the light keyboard theme and verify every pad key now shows a readable text label + sub-label (no blank keys). Repeat in the dark and any accent theme.
-- Android: long-press each letter key (`2`–`9`) and confirm the mini popup shows and commits the correct letters (`abc`…`wxyz`), via both sticky-tap and hold-slide.
-- Android: confirm the bottom row reads `*` `0` `#` (real phone pad) and the base symbol popups: `1`→`( ) ' "`, `*`(left of 0)→`< > ^ ~`, `0`→`. , ? !`, `#`(right of 0)→`@ $ % &`, and the `=` cal key→`+ - * /`.
-- Android: with Shift on (`phone_shift`), confirm letters commit **uppercase**, the `中` mode key replaces `ABC`, and the symbol popups switch to the shift set: `1`→`[ ] { }`, `*`→`: ; _ |`, `#`→`£ € ¥ ¢` (`0`→`. , ? !` and the `=` cal key→`+ - * /` stay the same as base).
-- Android: confirm Shift, Space, Delete, Return, `123`, and `ABC` / `中` keys are visually and functionally unchanged.
-- Android: run the usual Gradle compile check from `LimeStudio/` after the XML changes.
-- iOS/iPad: open the `電話英文鍵盤` (phone) keyboard and verify the pad shows digit big / letters small, long-press opens the letter/symbol popups, and Shift switches to uppercase letters + the shift symbol set. Same layout renders on iPad (shared `phone.json`).
-
-## Final resolution
+## Verification result
 
 Android/GitHub Release v6.1.28 contained the targeted phone-key label visibility fix. `limeimetw` posted the reporter retest request on 2026-07-08:
 
 - https://github.com/lime-ime/limeime/issues/142#issuecomment-4917008967
 
-The reporter confirmed on 2026-07-09 that after updating to v6.1.28, the `電話英文鍵盤` layout works normally:
+Reporter `gontera` confirmed on 2026-07-09 that after updating to v6.1.28, the `電話英文鍵盤` layout works normally:
 
 - https://github.com/lime-ime/limeime/issues/142#issuecomment-4925621248
 
-The issue is closed as completed. No active reporter watch remains unless the issue is reopened or new evidence appears.
+`limeimetw` acknowledged the confirmation and closed the issue as completed:
+
+- https://github.com/lime-ime/limeime/issues/142#issuecomment-4925638168
+
+Verified scope: Android `行列10` with `電話英文鍵盤` on v6.1.28. The iOS/iPad parity changes remain source-side/release-QA scope unless a separate iOS report appears.
