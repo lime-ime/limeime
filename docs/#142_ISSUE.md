@@ -1,10 +1,16 @@
 ﻿# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
 
-## Problem statement
+## Current status
 
-Community reporter `gontera` reports that in LIME 6.1.27, when the Android `行列10` input method is changed to the `電話英文鍵盤` keyboard layout, some key labels are not visibly rendered even though typing and composing still work.
+Resolved / closed. Community reporter `gontera` confirmed that Android v6.1.28 fixed the `行列10` `電話英文鍵盤` layout display problem in https://github.com/lime-ime/limeime/issues/142#issuecomment-4925621248. `limeimetw` added a `+1` reaction and closed the issue as completed with acknowledgement https://github.com/lime-ime/limeime/issues/142#issuecomment-4925638168.
+
+Verified scope: Android v6.1.28 / `行列10` / `電話英文鍵盤` label visibility. The reporter did not separately verify iOS/iPad parity paths.
 
 Issue: https://github.com/lime-ime/limeime/issues/142
+
+## Problem statement
+
+Community reporter `gontera` reported that in LIME 6.1.27, when the Android `行列10` input method is changed to the `電話英文鍵盤` keyboard layout, some key labels were not visibly rendered even though typing and composing still worked.
 
 ## Reported reproduction
 
@@ -210,10 +216,14 @@ resolves `phone_ipad`→`phone`, so iPad loads the same `phone.json` /
 - Android: run the usual Gradle compile check from `LimeStudio/` after the XML changes.
 - iOS/iPad: open the `電話英文鍵盤` (phone) keyboard and verify the pad shows digit big / letters small, long-press opens the letter/symbol popups, and Shift switches to uppercase letters + the shift symbol set. Same layout renders on iPad (shared `phone.json`).
 
-## Retest condition
+## Final resolution
 
-Android/GitHub Release v6.1.28 contains the targeted phone-key label visibility fix. `limeimetw` posted the reporter retest request on 2026-07-08:
+Android/GitHub Release v6.1.28 contained the targeted phone-key label visibility fix. `limeimetw` posted the reporter retest request on 2026-07-08:
 
 - https://github.com/lime-ime/limeime/issues/142#issuecomment-4917008967
 
-Keep the issue open pending reporter confirmation on Android `行列10` with `電話英文鍵盤`. If the reporter uses Google Play, ask them to update through Google Play rather than switching channels.
+The reporter confirmed on 2026-07-09 that after updating to v6.1.28, the `電話英文鍵盤` layout works normally:
+
+- https://github.com/lime-ime/limeime/issues/142#issuecomment-4925621248
+
+The issue is closed as completed. No active reporter watch remains unless the issue is reopened or new evidence appears.
