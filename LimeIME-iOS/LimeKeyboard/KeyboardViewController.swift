@@ -453,6 +453,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         isKeyboardVisible = false
+        keyboardView?.cancelActiveInteractions()
         dismissPopupKeyboard()
         // Detach window-attached composing popup so it doesn't linger after
         // the keyboard is dismissed.
@@ -462,6 +463,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // internally — no outer async wrapper needed.
         searchServer?.postFinishInput()
     }
+
+#if DEBUG
+    func installKeyboardViewForTesting(_ keyboardView: KeyboardView) {
+        self.keyboardView = keyboardView
+    }
+#endif
 
     // MARK: - iOS Input Assistant Bar (iPad only)
 

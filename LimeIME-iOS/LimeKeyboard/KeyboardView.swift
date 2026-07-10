@@ -2,6 +2,39 @@
 import AudioToolbox
 import AVFoundation
 
+protocol KeyboardScheduledTask: AnyObject {
+    func cancel()
+}
+
+protocol KeyboardRepeatScheduling {
+    func schedule(after delay: TimeInterval,
+                  repeating interval: TimeInterval?,
+                  _ action: @escaping () -> Void) -> KeyboardScheduledTask
+}
+
+private final class MainRunLoopKeyboardTask: KeyboardScheduledTask {
+    private var timer: Timer?
+
+    init(timer: Timer) {
+        self.timer = timer
+    }
+
+    func cancel() {
+        timer?.invalidate()
+        timer = nil
+    }
+}
+
+final class MainRunLoopKeyboardScheduler: KeyboardRepeatScheduling {
+    func schedule(after delay: TimeInterval,
+                  repeating interval: TimeInterval?,
+                  _ action: @escaping () -> Void) -> KeyboardScheduledTask {
+        let timer = Timer.scheduledTimer(withTimeInterval: delay,
+                                         repeats: interval != nil) { _ in action() }
+        return MainRunLoopKeyboardTask(timer: timer)
+    }
+}
+
 // Full keyboard view: renders keys from a LimeKeyLayout.
 // Phase 2: UIButton-based; Phase 3 can switch to UICollectionView for more flexibility.
 
@@ -166,6 +199,11 @@ extension KeyboardViewDelegate {
 }
 
 final class KeyboardView: UIView, UIInputViewAudioFeedback {
+    enum RepeatState: Equatable {
+        case idle
+        case pending
+        case repeating
+    }
     /// Keeps the visible input view eligible for UIKit input-click feedback.
     var enableInputClicksWhenVisible: Bool { true }
     private static let keyClickSystemSoundID: SystemSoundID = 1104
@@ -204,8 +242,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private var layout: LimeKeyLayout
     private var isShiftOn: Bool = false
     private var rowViews: [UIView] = []
-    private var repeatTimer: Timer?
+    private var repeatTask: KeyboardScheduledTask?
     private var repeatKeyDef: KeyDef?
+    private let repeatScheduler: KeyboardRepeatScheduling
+    private var repeatGeneration = 0
+    private(set) var repeatStateForTesting: RepeatState = .idle
+    private var wasAttachedToWindow = false
     private weak var globeButton: UIButton?
     /// Weak ref to the bottom-row `-3` (LimeKeyCode.done) button — needed in legacy
     /// iPhone globe mode so we can swap its SF Symbol image when the flag flips.
@@ -340,6 +382,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     //   2. main-thread + haptic-subsystem load during rapid typing → UIKit dropped
     //      intermediate .touchDown events, so middle keys in a fast burst were missed.
     private var hapticGenerator: UIFeedbackGenerator?
+#if DEBUG
+    var hapticRequestedForTesting: (() -> Void)?
+#endif
     private var lastHapticAt: CFTimeInterval = 0
     private let minHapticInterval: CFTimeInterval = 0.025   // 40 Hz ceiling
 
@@ -370,6 +415,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     @inline(__always)
     fileprivate func fireHaptic(force: Bool = false) {
         guard feedbackVibration else { return }
+#if DEBUG
+        hapticRequestedForTesting?()
+#endif
         let now = CACurrentMediaTime()
         // `force` bypasses the 40 Hz throttle for distinct one-off events (e.g. a popup
         // opening mid-flint, whose tick would otherwise be eaten by the just-fired key haptic).
@@ -528,8 +576,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     // MARK: - Init
-    init(layout: LimeKeyLayout) {
+    init(layout: LimeKeyLayout,
+         repeatScheduler: KeyboardRepeatScheduling = MainRunLoopKeyboardScheduler()) {
         self.layout = layout
+        self.repeatScheduler = repeatScheduler
         super.init(frame: .zero)
         backgroundColor = .clear
         buildKeys()
@@ -539,6 +589,16 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     override func layoutSubviews() {
         super.layoutSubviews()
         invalidatePlainTouchContexts()
+    }
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        if window != nil {
+            wasAttachedToWindow = true
+        } else if wasAttachedToWindow {
+            wasAttachedToWindow = false
+            cancelActiveInteractions()
+        }
     }
 
     // MARK: - Layout switch
@@ -1880,6 +1940,10 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         swipeSamples.removeAll()
     }
 
+    func cancelActiveInteractions() {
+        cancelAllActiveTouches()
+    }
+
     private func invalidateOwnerLongPress(_ touchID: ObjectIdentifier) {
         ownerLongPressTimers[touchID]?.invalidate()
         ownerLongPressTimers.removeValue(forKey: touchID)
@@ -1916,11 +1980,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         if keyDef.isRepeatable {
-            repeatKeyDef = keyDef
-            repeatTimer = Timer.scheduledTimer(withTimeInterval: LayoutMetrics.Gesture.repeatStartDelay,
-                                               repeats: false) { [weak self] _ in
-                self?.startRepeating()
-            }
+            scheduleRepeat(for: keyDef)
         }
     }
 
@@ -2083,11 +2143,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
         // Start repeat timer for repeatable keys
         if keyDef.isRepeatable {
-            repeatKeyDef = keyDef
-            repeatTimer = Timer.scheduledTimer(withTimeInterval: LayoutMetrics.Gesture.repeatStartDelay,
-                                               repeats: false) { [weak self] _ in
-                self?.startRepeating()
-            }
+            scheduleRepeat(for: keyDef)
         }
     }
 
@@ -2136,10 +2192,27 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         delegate?.keyboardView(self, didUpdateShiftHoldActive: active)
     }
 
-    private func startRepeating() {
-        repeatTimer = Timer.scheduledTimer(withTimeInterval: LayoutMetrics.Gesture.repeatInterval,
-                                           repeats: true) { [weak self] _ in
-            guard let self = self, let keyDef = self.repeatKeyDef else { return }
+    private func scheduleRepeat(for keyDef: KeyDef) {
+        stopRepeating()
+        repeatKeyDef = keyDef
+        repeatStateForTesting = .pending
+        repeatGeneration += 1
+        let generation = repeatGeneration
+        repeatTask = repeatScheduler.schedule(after: LayoutMetrics.Gesture.repeatStartDelay,
+                                              repeating: nil) { [weak self] in
+            guard let self, self.repeatGeneration == generation else { return }
+            self.startRepeating(generation: generation)
+        }
+    }
+
+    private func startRepeating(generation: Int) {
+        guard repeatGeneration == generation, repeatKeyDef != nil else { return }
+        repeatStateForTesting = .repeating
+        repeatTask = repeatScheduler.schedule(after: LayoutMetrics.Gesture.repeatInterval,
+                                              repeating: LayoutMetrics.Gesture.repeatInterval) { [weak self] in
+            guard let self,
+                  self.repeatGeneration == generation,
+                  let keyDef = self.repeatKeyDef else { return }
             // One haptic tick per repeated character, matching the iOS system keyboard
             // (backspace and arrow keys). Throttled by fireHaptic()'s minHapticInterval.
             self.fireHaptic()
@@ -2148,10 +2221,41 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     }
 
     private func stopRepeating() {
-        repeatTimer?.invalidate()
-        repeatTimer = nil
+        repeatGeneration += 1
+        repeatTask?.cancel()
+        repeatTask = nil
         repeatKeyDef = nil
+        repeatStateForTesting = .idle
     }
+
+#if DEBUG
+    func beginKeyInteractionForTesting(code: Int) {
+        guard let button = allSubviews(of: self)
+            .compactMap({ $0 as? KeyButton })
+            .first(where: { $0.keyDef.code == code }) else {
+            preconditionFailure("Missing test key code \(code)")
+        }
+        beginPlainKeyTouch(button: button, keyDef: button.keyDef)
+    }
+
+    func endKeyInteractionForTesting(code: Int) {
+        guard let button = allSubviews(of: self)
+            .compactMap({ $0 as? KeyButton })
+            .first(where: { $0.keyDef.code == code }) else {
+            preconditionFailure("Missing test key code \(code)")
+        }
+        endPlainKeyTouch(button: button, keyDef: button.keyDef)
+    }
+
+    func cancelKeyInteractionForTesting(code: Int) {
+        guard let button = allSubviews(of: self)
+            .compactMap({ $0 as? KeyButton })
+            .first(where: { $0.keyDef.code == code }) else {
+            preconditionFailure("Missing test key code \(code)")
+        }
+        cancelPlainKeyTouch(button: button, keyDef: button.keyDef)
+    }
+#endif
 
     /// Morphs a dual-row key's label to show only the secondary glyph (or restores original).
     private func setDualRowLabelSecondaryOnly(_ keyBtn: KeyButton, secondaryOnly: Bool) {

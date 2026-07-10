@@ -235,6 +235,7 @@
 		EFD4CBEFA78D4808E9E1178D /* DBServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE1BC618A27E7629062FC20 /* DBServer.swift */; };
 		D1B100000000000000000005 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */; };
+		A7C1E5F90000000000000002 /* KeyboardHapticLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7C1E5F90000000000000001 /* KeyboardHapticLifecycleTests.swift */; };
 		F20EA45656BE08E5A291F4F5 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43AF70BA22361D8084D34B7F /* Keyboard.swift */; };
 		D1B100000000000000000006 /* SyncConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1B100000000000000000003 /* SyncConnection.swift */; };
 		F212C6E64D1F696F612F4B2E /* lime_dayi_sym_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 3C613EA70B0BAEE33E2AA0F7 /* lime_dayi_sym_ipad_narrow_shift.json */; };
@@ -509,6 +510,7 @@
 		F0787C19D84A228F8B9731E4 /* symbols2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = symbols2.json; sourceTree = "<group>"; };
 		F0AD7B903A3658D6EBB77E60 /* SearchServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchServer.swift; sourceTree = "<group>"; };
 		F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchLayerGestureTests.swift; sourceTree = "<group>"; };
+		A7C1E5F90000000000000001 /* KeyboardHapticLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardHapticLifecycleTests.swift; sourceTree = "<group>"; };
 		F485D645136F28A3B5AFED04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F4FC8B91EDE5C18040A0DA6F /* phone_simple.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = phone_simple.json; sourceTree = "<group>"; };
 		FEA702000000000000000001 /* computer_simple.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = computer_simple.json; sourceTree = "<group>"; };
@@ -612,6 +614,7 @@
 				F0BEEF0011223344556677A3 /* KeyDetectorTests.swift */,
 				F0BEEF0011223344556677C3 /* TouchTrackerTests.swift */,
 				F0BEEF0011223344556677E3 /* TouchLayerGestureTests.swift */,
+				A7C1E5F90000000000000001 /* KeyboardHapticLifecycleTests.swift */,
 				8B72D83300CAD566BFCF3FE3 /* KeyboardViewControllerTest.swift */,
 				46C07357EED170657A3BF133 /* LimeDBTest.swift */,
 				A616F712F666B45F6A993A5C /* LIMEPreferenceManagerTest.swift */,
@@ -1313,6 +1316,7 @@
 				F0BEEF0011223344556677B5 /* KeyDetectorTests.swift in Sources */,
 				F0BEEF0011223344556677C5 /* TouchTrackerTests.swift in Sources */,
 				F0BEEF0011223344556677E5 /* TouchLayerGestureTests.swift in Sources */,
+				A7C1E5F90000000000000002 /* KeyboardHapticLifecycleTests.swift in Sources */,
 				8C4D2C17B8A1495297103E44 /* LimeToastState.swift in Sources */,
 				06A7B8C9D0E1F20314253647 /* IntegrationTestBackupRestore.swift in Sources */,
 				E02BE727FF878D591A3D34B5 /* LimeDB.swift in Sources */,
