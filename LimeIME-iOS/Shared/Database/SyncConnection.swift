@@ -236,13 +236,20 @@ enum SyncDatabaseBootstrap {
            fm.fileExists(atPath: legacyDatabaseURL.path),
            quickCheckOK(legacyDatabaseURL) {
             try copySQLiteFiles(from: legacyDatabaseURL, to: hotDatabaseURL)
-            _ = try SyncMetaStore(databaseURL: hotDatabaseURL).replaceEpochUUID()
+            try markBootstrappedHotDatabase(hotDatabaseURL)
             return .adoptedLegacy
         }
 
         try copySQLiteFiles(from: bundledDefaultURL, to: hotDatabaseURL)
-        _ = try SyncMetaStore(databaseURL: hotDatabaseURL).replaceEpochUUID()
+        try markBootstrappedHotDatabase(hotDatabaseURL)
         return .copiedBundledDefault
+    }
+
+    private static func markBootstrappedHotDatabase(_ databaseURL: URL) throws {
+        let meta = try SyncMetaStore(databaseURL: databaseURL)
+        _ = try meta.replaceEpochUUID()
+        try meta.removeValue(forKey: SyncMetaStore.appliedEpochKey)
+        try meta.setAppliedGeneration(try meta.generation())
     }
 
     private static func quickCheckOK(_ databaseURL: URL) -> Bool {

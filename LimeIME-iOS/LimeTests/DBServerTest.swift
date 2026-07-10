@@ -153,6 +153,52 @@ final class DBServerTest: XCTestCase {
                        "reopening rebinds to the current inode → no longer stale")
     }
 
+    func testLegacy6127UpgradeAdoptsHotDBAndReturnsKeyboardCandidates() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let appGroupDir = root.appendingPathComponent("app-group", isDirectory: true)
+        let hotDir = root.appendingPathComponent("hot", isDirectory: true)
+        let bundledDir = root.appendingPathComponent("bundle", isDirectory: true)
+        try FileManager.default.createDirectory(at: appGroupDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: bundledDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let legacyDB = appGroupDir.appendingPathComponent("lime.db")
+        let hotDB = hotDir.appendingPathComponent("lime.db")
+        let bundledDB = bundledDir.appendingPathComponent("lime.db")
+
+        do {
+            let legacy = try LimeDB(path: legacyDB.path)
+            legacy.setTableName(LIME.DB_TABLE_CUSTOM)
+            legacy.addOrUpdateMappingRecord(LIME.DB_TABLE_CUSTOM, "aa", "候選", 11)
+            try legacy.registerIM(imName: LIME.DB_TABLE_CUSTOM,
+                                  tableName: LIME.DB_TABLE_CUSTOM,
+                                  label: "自建",
+                                  keyboardId: "lime_abc")
+        }
+        _ = try LimeDB(path: bundledDB.path)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.coldDB(appGroupDir).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.imJSON(appGroupDir).path))
+
+        let bootstrap = try SyncDatabaseBootstrap.ensureKeyboardHotDatabase(
+            hotDatabaseURL: hotDB,
+            legacyDatabaseURL: legacyDB,
+            bundledDefaultURL: bundledDB)
+        XCTAssertEqual(bootstrap, .adoptedLegacy)
+
+        let context = try DBServer(_testDatabaseDirectory: hotDir).prepareKeyboardRuntimeDatabase()
+
+        XCTAssertEqual(context.initialIM, LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(context.activatedIMs.map(\.tableNick), [LIME.DB_TABLE_CUSTOM])
+        XCTAssertTrue(
+            context.searchServer
+                .getMappingByCode("aa", isSoftKeyboard: true, getAllRecords: true)
+                .contains { $0.code == "aa" && $0.word == "候選" },
+            "Keyboard runtime should query candidates from the adopted 6.1.27 legacy lime.db")
+    }
+
     func testDBServerGetInstanceWithoutContext() {
         // On iOS there is only one access path: DBServer.shared.
         let s1 = DBServer.shared

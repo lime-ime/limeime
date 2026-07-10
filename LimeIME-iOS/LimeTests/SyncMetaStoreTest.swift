@@ -127,6 +127,8 @@ final class SyncMetaStoreTest: XCTestCase {
         let legacyDB = root.appendingPathComponent("app-group/lime.db")
         let bundledDB = root.appendingPathComponent("bundle/lime.db")
         try makeDatabase(at: legacyDB, marker: "legacy")
+        try SyncMetaStore(databaseURL: legacyDB).setValue("7",
+                                                          forKey: SyncMetaStore.generationKey)
         try makeDatabase(at: bundledDB, marker: "bundle")
 
         let result = try SyncDatabaseBootstrap.ensureKeyboardHotDatabase(
@@ -136,7 +138,10 @@ final class SyncMetaStoreTest: XCTestCase {
 
         XCTAssertEqual(result, .adoptedLegacy)
         XCTAssertEqual(try marker(hotDB), "legacy")
-        XCTAssertNotNil(try SyncMetaStore(databaseURL: hotDB).epochUUID())
+        let meta = try SyncMetaStore(databaseURL: hotDB)
+        XCTAssertNotNil(try meta.epochUUID())
+        XCTAssertNil(try meta.appliedEpoch())
+        XCTAssertEqual(try meta.appliedGeneration(), 7)
         XCTAssertEqual(try userVersion(hotDB), 104)
     }
 
@@ -158,7 +163,10 @@ final class SyncMetaStoreTest: XCTestCase {
 
         XCTAssertEqual(result, .copiedBundledDefault)
         XCTAssertEqual(try marker(hotDB), "bundle")
-        XCTAssertNotNil(try SyncMetaStore(databaseURL: hotDB).epochUUID())
+        let meta = try SyncMetaStore(databaseURL: hotDB)
+        XCTAssertNotNil(try meta.epochUUID())
+        XCTAssertNil(try meta.appliedEpoch())
+        XCTAssertEqual(try meta.appliedGeneration(), 0)
         XCTAssertEqual(try userVersion(hotDB), 104)
     }
 }
