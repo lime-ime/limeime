@@ -32,93 +32,253 @@ The implementation will not add a maximum repeat duration or disable haptic feed
 
 ## Regression Tests
 
-Tests will exercise lifecycle behavior through observable repeat actions rather than attempting to inspect the physical Taptic Engine in the simulator.
+The automated coverage will use real XCTest methods and production objects. It will not use source-text assertions for lifecycle behavior and will not sleep on real timers.
 
-### Test seam and observations
+### Production seams required by the tests
 
-UIKit does not provide a reliable way to construct synthetic `UITouch` objects in a unit test, and real-time `Timer` assertions are prone to slow or flaky tests. The production code will therefore expose the smallest internal test seam needed to drive the existing state transitions without making test-only behavior part of the app API.
+Add these internal types to `KeyboardView.swift` rather than creating a general scheduling framework:
 
-The seam will allow tests to:
+```swift
+protocol KeyboardScheduledTask: AnyObject {
+    func cancel()
+}
 
-- begin a key interaction using a real `KeyDef`;
-- advance a controllable scheduler past the repeat-start delay and repeat interval;
-- finish or cancel the interaction;
-- request lifecycle cancellation directly;
-- observe committed key codes, release callbacks, preview dismissal, popup cancellation, shift-hold state, and requested haptic events through recording delegates/closures;
-- query only coarse interaction state needed for assertions: idle, repeat pending, or repeating.
+protocol KeyboardRepeatScheduling {
+    func schedule(after delay: TimeInterval,
+                  repeating interval: TimeInterval?,
+                  _ action: @escaping () -> Void) -> KeyboardScheduledTask
+}
+```
 
-The scheduler abstraction will cover only delayed and repeating keyboard-interaction work. Production will continue to use the main run loop and the durations in `LayoutMetrics.Gesture`; tests will use a deterministic fake clock. Tests must assert externally visible behavior first. Timer/state inspection is supplemental and must not become the only proof that work stopped.
+The production implementation wraps `Timer`. `KeyboardView.init` receives a scheduler with a default production value, so all existing call sites remain unchanged:
 
-### Repeat behavior baseline
+```swift
+init(layout: LimeKeyLayout,
+     repeatScheduler: KeyboardRepeatScheduling = MainRunLoopKeyboardScheduler())
+```
 
-1. **Repeat starts at the configured boundary.** Begin Backspace, advance to just before `repeatStartDelay`, and assert only the initial delete and initial haptic were requested. Advance through the boundary and one `repeatInterval`; assert repeated delete and haptic requests occur at the expected cadence.
-2. **A normal release stops an active repeat.** Start Backspace, advance until at least two repeat callbacks occur, release it, record counts, advance several more intervals, and assert the counts remain unchanged and state is idle.
-3. **A normal release stops a pending repeat.** Begin Backspace and release before `repeatStartDelay`; advance beyond both delay and interval and assert there is no repeated delete or haptic.
-4. **Touch cancellation stops active and pending repeat.** Run the same two timing arrangements using cancellation rather than release. Assert no post-cancellation actions and no lingering pressed/preview state.
-5. **Every repeatable key follows the policy.** Parameterize Backspace and the four arrow keys. Confirm each repeats while held and stops through the common cleanup path, preventing a fix that only special-cases Backspace.
+Replace `repeatTimer` with `repeatTask`. Both the initial delay and periodic repeat use the injected scheduler. A monotonically increasing `repeatGeneration` is captured by callbacks. `stopRepeating()` increments the generation before cancelling, so a callback already dequeued on the run loop becomes a no-op.
 
-### Controller lifecycle coverage
+Expose only these internal testable operations:
 
-6. **Disappearance stops an active repeat.** Start Backspace, enter repeating state, invoke `KeyboardViewController.viewWillDisappear`, advance the fake scheduler, and assert no further key or haptic requests.
-7. **Disappearance stops a pending repeat.** Begin Backspace, invoke disappearance before the delay, then advance beyond the delay. Assert repeat never starts.
-8. **Disappearance is safe with no active touch.** Invoke `viewWillDisappear` on an idle controller and assert existing popup/preview teardown still completes without extra key, release, or haptic callbacks.
-9. **Repeated disappearance is idempotent.** Invoke disappearance twice around an active interaction. Assert cleanup callbacks are not duplicated and no work is rescheduled.
-10. **Reappearance permits fresh input.** After disappearance cleanup, simulate appearance and begin a new Backspace interaction. Assert initial and repeated actions work normally, proving cancellation does not permanently disable feedback or scheduling.
+```swift
+func cancelActiveInteractions()
+var repeatStateForTesting: RepeatState { get }
+var hapticDidFireForTesting: (() -> Void)?
 
-### View/window lifecycle coverage
+func beginKeyInteractionForTesting(code: Int)
+func endKeyInteractionForTesting(code: Int)
+func cancelKeyInteractionForTesting(code: Int)
 
-11. **Window detachment stops an active repeat.** Place `KeyboardView` in a test `UIWindow`, begin repeat, remove it from the window, advance time, and assert no more key or haptic requests.
-12. **Window detachment stops a pending repeat.** Remove the view before `repeatStartDelay`, advance time, and assert repeat never starts.
-13. **Initial construction does not count as detachment.** Construct and lay out a keyboard whose `window` is initially `nil`; assert this does not emit cleanup callbacks or prevent its first interaction.
-14. **Window attachment does not cancel input state.** Attach an idle keyboard to a window, start a new interaction, and confirm normal repeat behavior. The lifecycle hook must act only on transition from a non-`nil` window to `nil`.
-15. **Controller disappearance followed by window detachment is idempotent.** Exercise the order expected during ordinary dismissal and assert a single effective cleanup.
-16. **Window detachment followed by controller disappearance is idempotent.** Exercise the defensive reverse order possible in a host transition and assert the same outcome.
-17. **Detach and reattach permits fresh input.** Detach after cleanup, reattach the same keyboard view, begin a new interaction, and assert keys and haptics work again.
+var activeTrackerCountForTesting: Int { get }
+var activeTargetCountForTesting: Int { get }
+var pendingOwnerLongPressCountForTesting: Int { get }
+```
 
-### Out-of-order event robustness
+`cancelActiveInteractions()` is production lifecycle API. The other members remain internal to the module and are used only by `LimeTests`. The three interaction drivers locate the real `KeyButton` by code and call the same existing begin/end/cancel functions used by `KeyTouchLayer`; they must not contain a second implementation of key behavior. If the code is absent from the installed test layout, they fail through a precondition so a malformed fixture cannot produce a false pass. The haptic observer runs only after a UIKit generator is actually asked to fire; it does not replace or suppress production feedback.
 
-18. **Late release after lifecycle cleanup is harmless.** Cancel lifecycle state first, then deliver the interaction's release path. Assert no crash, duplicate release action, repeat restart, or negative state transition.
-19. **Late touch cancellation after lifecycle cleanup is harmless.** Repeat the case with cancellation and the same assertions.
-20. **A stale repeat callback is harmless.** Capture a scheduled repeat callback, perform lifecycle cleanup, then deliberately execute the stale callback as a hostile scheduler would. It must verify the current interaction generation/state and produce neither a key action nor a haptic.
-21. **A stale long-press callback is harmless.** Capture a pending popup/menu/space long-press callback, clean up, then execute it. Assert no popup, menu, caret, key, or haptic callback occurs.
-22. **An old callback cannot affect a new interaction.** Clean up interaction A, start interaction B, then execute A's stale callback. Assert B remains active and A produces no action. This guards against a stale timer cancelling or repeating the wrong key after reappearance.
+Popup/Shift state tests additionally use one internal helper:
 
-### Other active interaction state
+```swift
+func configureInteractionStateForTesting(_ state: InteractionTestState)
+```
 
-23. **Pending long presses are cancelled by disappearance and detachment.** Parameterize popup, generic-long-press, Lime options, dual-row, and space-bar long-press behaviors. Begin each, clean up before its threshold, advance time, and assert its long-press delegate method never fires.
-24. **Pressed visuals and previews are cleared.** Begin a preview-producing letter key, perform lifecycle cleanup, and assert its background returns to the restored color and preview dismissal is requested exactly once.
-25. **Popup slide state is cleared.** Open a popup, select/highlight an alternate, clean up, and assert popup-slide cancellation and highlight clearing occur, with no alternate committed.
-26. **Shift-hold state is cleared.** Begin Shift as part of a multi-touch sequence, clean up, and assert the delegate observes inactive shift-hold state and a later letter is not treated as part of the stale hold.
-27. **Space caret mode is cleared.** Enter space-bar caret movement, clean up, then execute late movement/end events. Assert no further caret movement or space insertion occurs.
+`InteractionTestState` is a small enum with only `.openPopup(primaryCode:selectedCode:)` and `.shiftHeldWithLetter(shiftCode:letterCode:)`. The helper populates the same dictionaries used by production cleanup and is confined to `#if DEBUG`; it does not add runtime behavior to release builds.
 
-### Non-repeat and feedback safeguards
+The existing private `cancelAllActiveTouches()` becomes the implementation behind `cancelActiveInteractions()`. `viewWillDisappear` calls it through the live `keyboardView`. `KeyboardView.didMoveToWindow()` calls it only when the view previously had a non-`nil` window and now has `nil`.
 
-28. **Ordinary letters remain one-shot.** Parameterize lifecycle cleanup before and after release for a non-repeatable key. Assert exactly one committed character and no delayed action.
-29. **Lifecycle cleanup itself emits no haptic.** Record haptic requests while cleaning pending and active interactions. The count must freeze at cleanup rather than adding a cancellation pulse.
-30. **Haptics resume on the next valid press.** After every cleanup entry point, begin a fresh ordinary key press and assert exactly one new haptic request. This is the unit-level analogue of the reported “no more haptic feedback” symptom.
-31. **Vibration-disabled behavior remains disabled.** Repeat representative disappearance and detach cases with `feedbackVibration == false`; assert no haptic request before, during, or after cleanup while key behavior remains correct.
-32. **Full Access is irrelevant.** Controller-level tests run representative active and pending repeat cleanup with the controller's Full Access state both true and false and assert identical results.
+### New test file and Xcode membership
 
-### Timing and flake controls
+Create `LimeIME-iOS/LimeTests/KeyboardHapticLifecycleTests.swift`, saved as UTF-8 with BOM. Add its file reference and Sources build-phase entry to the `LimeTests` target in `LimeIME.xcodeproj/project.pbxproj`.
 
-- Deterministic scheduler tests will use exact virtual-time boundaries and never sleep.
-- Any UIKit integration test that must use the main run loop will wait only for a bounded expectation and will assert a stable count after cancellation; it will not depend on physical haptic delivery.
-- Tests will avoid asserting private timer object identity. They will assert callback counts, delegate output, and idle/pending/repeating state.
-- Parameterized cases will report the key or lifecycle path in assertion messages so a failure identifies the broken boundary.
-- Cleanup tests will advance by at least three repeat intervals after cancellation, enough to expose a surviving repeating callback without slowing the suite under a fake clock.
+The file contains three fixtures:
 
-### Suite-level and device verification
+```swift
+private final class ManualKeyboardScheduler: KeyboardRepeatScheduling
+private final class RecordingLifecycleDelegate: KeyboardViewDelegate
+private struct KeyboardLifecycleHarness
+```
 
-Existing `TouchLayerGestureTests`, `KeyboardViewControllerTest`, popup/gesture tests, and preference tests will run after the focused tests. A simulator smoke test will open a normal text field, hold Backspace, dismiss the keyboard during the hold, reopen it, and confirm later keys still respond. The simulator verifies event and lifecycle behavior but not physical vibration.
+`ManualKeyboardScheduler` stores tasks ordered by deadline and insertion order. `advance(by:)` executes all due callbacks, reschedules repeating tasks, and skips cancelled tasks. It also has `capturedActions` so a test can deliberately invoke a stale callback after cancellation. No test uses `RunLoop`, `asyncAfter`, or wall-clock waits.
 
-Final real-device verification on the iPhone 17 will use Reminders with Full Access both on and off:
+`RecordingLifecycleDelegate` records `pressedCodes`, `releasedCodes`, `previewDismissCount`, `popupCancelCount`, `popupHighlights`, `shiftHoldStates`, `longPressCodes`, and `caretMoves`.
 
-1. Type an ordinary key and confirm one haptic.
-2. Hold and release Backspace; confirm repeat and immediate stop.
-3. Hold Backspace while dismissing the keyboard or leaving the editing field; confirm vibration and deletion stop immediately.
-4. Reopen the keyboard and type at least ten ordinary keys; confirm one haptic per press with no continuous firing or lost feedback.
-5. Repeat dismissal/reopening ten times to exercise lifecycle ordering.
-6. Repeat with an arrow row enabled, if configured, to cover the other repeatable-key family.
+`KeyboardLifecycleHarness` constructs the real, final `KeyboardViewController`, forces `loadViewIfNeeded()`, and replaces its live keyboard through an internal `installKeyboardViewForTesting(_:)` method. It must not subclass or mock the controller and the test calls the real `viewWillDisappear` override.
+
+### Exact `KeyboardRepeatSessionTests`
+
+These tests exercise the real scheduler-backed repeat implementation through `KeyboardView` with a one-row layout containing Backspace and the four arrows.
+
+1. `testRepeatableKeyDoesNotRepeatBeforeStartDelay`
+   - Call an internal interaction driver that uses the same `beginPlainKeyTouch` path as the touch layer for Backspace.
+   - Assert `pressedCodes == [delete]`, haptic count is 1, and state is `.pending`.
+   - Advance by `repeatStartDelay - 0.001`.
+   - Assert counts and state are unchanged.
+
+2. `testRepeatableKeyRepeatsAtConfiguredCadence`
+   - Begin Backspace and advance by `repeatStartDelay + 3 * repeatInterval`.
+   - Assert one initial delete plus three repeated deletes, four haptic requests total, and state `.repeating`.
+   - Use exact counts; the manual scheduler removes timing tolerance.
+
+3. `testReleaseBeforeStartDelayCancelsPendingRepeat`
+   - Begin Backspace, invoke the real release path, and advance by `repeatStartDelay + 3 * repeatInterval`.
+   - Assert one delete only, one haptic only, one release callback, and state `.idle`.
+
+4. `testReleaseWhileRepeatingStopsFurtherKeyAndHapticEvents`
+   - Advance through two repeats, snapshot key/haptic counts, release, then advance five intervals.
+   - Assert counts remain equal to the snapshot and state is `.idle`.
+
+5. `testCancelBeforeStartDelayCancelsPendingRepeat`
+   - Same arrangement as test 3, using the real cancel path.
+   - Assert no release callback is emitted and no repeat occurs.
+
+6. `testCancelWhileRepeatingStopsFurtherKeyAndHapticEvents`
+   - Same arrangement as test 4, using cancellation.
+   - Assert counts freeze and state is `.idle`.
+
+7. `testAllRepeatableKeyCodesUseTheSameRepeatSession`
+   - Loop over delete, arrow-left, arrow-up, arrow-down, and arrow-right using `XCTContext.runActivity` with the code in the activity name.
+   - For each key, advance through two intervals and assert three matching presses total, then cancel and assert counts freeze.
+
+8. `testCancelledDequeuedRepeatCallbackDoesNothing`
+   - Begin Backspace and retain the initial-delay action from `capturedActions`.
+   - Cancel the interaction, invoke the retained action manually, and advance time.
+   - Assert no new key or haptic event and state remains `.idle`.
+
+9. `testCallbackFromOldInteractionCannotRepeatNewInteraction`
+   - Capture interaction A's delay callback, cancel A, begin arrow-left as interaction B, then invoke A's callback.
+   - Assert A produces no delete, B remains `.pending`, and B repeats arrow-left normally after its own delay.
+
+### Exact `KeyboardViewLifecycleTests`
+
+These tests verify the public cleanup boundary rather than calling `stopRepeating()` directly.
+
+10. `testCancelActiveInteractionsStopsPendingRepeat`
+    - Begin Backspace, call `cancelActiveInteractions()`, advance beyond the delay.
+    - Assert no repeat and state `.idle`.
+
+11. `testCancelActiveInteractionsStopsActiveRepeat`
+    - Enter repeating state, call cleanup, snapshot counts, advance five intervals.
+    - Assert key and haptic counts freeze.
+
+12. `testCancelActiveInteractionsIsIdempotent`
+    - Begin Backspace and call cleanup three times.
+    - Assert state is idle, scheduled tasks are cancelled, preview dismissal is not multiplied for the same tracked key, and no later callback fires.
+
+13. `testLateReleaseAfterLifecycleCleanupDoesNotRestartOrDuplicateRepeat`
+    - Begin Backspace, call lifecycle cleanup, then invoke the interaction release driver.
+    - Assert no crash, no new press/haptic, and state remains idle.
+
+14. `testLifecycleCleanupAllowsNextInteractionToRepeatNormally`
+    - Clean up interaction A, begin interaction B, and advance through two repeats.
+    - Assert B receives one initial and two repeated presses and three haptics.
+
+15. `testLifecycleCleanupDoesNotFireHapticByItself`
+    - Record haptic count before cleanup in pending and repeating subcases.
+    - Assert cleanup never increases the count.
+
+16. `testLifecycleCleanupWithVibrationDisabledKeepsKeyRepeatBehavior`
+    - Set `feedbackVibration = false`, begin Backspace, verify repeat presses occur with zero haptics, clean up, and verify presses stop.
+
+17. `testDidMoveToWindowInitialNilStateDoesNotCancelInteractionCapability`
+    - Construct the view without a window, explicitly trigger layout, then begin Backspace.
+    - Assert repeat works; this catches an unconditional `window == nil` cleanup implementation.
+
+18. `testWindowDetachmentStopsPendingRepeat`
+    - Add the keyboard to a retained `UIWindow`, begin Backspace, remove it before the delay, and advance time.
+    - Assert state is idle and no repeat occurs.
+
+19. `testWindowDetachmentStopsActiveRepeat`
+    - Attach to a window, enter repeating state, remove from the superview, snapshot counts, and advance five intervals.
+    - Assert counts freeze.
+
+20. `testDetachThenReattachAllowsFreshRepeatInteraction`
+    - Attach, begin/cancel through detachment, reattach the same instance, begin arrow-right, and advance two intervals.
+    - Assert arrow-right repeats normally.
+
+21. `testDuplicateDetachAndExplicitCleanupAreIdempotent`
+    - Detach the view, then call `cancelActiveInteractions()` twice.
+    - Invoke captured stale callbacks and assert no action or haptic.
+
+### Exact `KeyboardViewControllerLifecycleTests`
+
+22. `testViewWillDisappearStopsPendingKeyboardRepeat`
+    - Inject a keyboard with a pending Backspace repeat into a real controller instance.
+    - Call `viewWillDisappear(false)`, advance beyond the delay, and assert no repeat.
+
+23. `testViewWillDisappearStopsActiveKeyboardRepeat`
+    - Inject a keyboard already repeating, call the real disappearance override, snapshot counts, and advance five intervals.
+    - Assert counts freeze and repeat state is idle.
+
+24. `testRepeatedViewWillDisappearIsSafe`
+    - Call the real override twice for the same active interaction.
+    - Assert no duplicated key/haptic callbacks and no live scheduled task.
+
+25. `testViewWillDisappearThenWindowDetachIsSafe`
+    - Call controller disappearance, then remove its keyboard view from a window.
+    - Invoke captured stale callbacks and assert no activity.
+
+26. `testWindowDetachThenViewWillDisappearIsSafe`
+    - Perform the reverse order and make the same assertions.
+
+27. `testViewWillDisappearCleanupDoesNotDependOnFullAccess`
+    - Run pending and active subcases with the controller's test Full Access value false and true.
+    - Assert identical press/haptic counts and idle final state. This prevents accidental gating of cleanup on `hasFullAccess`.
+
+### Long-press and visual-state tests retained in `TouchLayerGestureTests.swift`
+
+The root-cause fix does not require replacing every long-press `Timer` with the repeat scheduler. The following tests use direct interaction-driver hooks and cleanup assertions; they do not wait for timers.
+
+28. `testLifecycleCleanupInvalidatesAllOwnerLongPressTimers`
+    - Begin popup, dual-row, space, generic-long-press, and Lime-options interactions one at a time.
+    - Assert the internal pending-owner-timer count is 1 before cleanup and 0 afterward.
+
+29. `testLifecycleCleanupClearsPressedPreviewAndTrackingState`
+    - Begin a preview-producing letter, call cleanup, and assert preview dismissal, restored button color, zero active trackers/targets, and idle repeat state.
+
+30. `testLifecycleCleanupCancelsOpenPopupSlideWithoutCommittingSelection`
+    - Seed an owner touch with `popupOpen` and a highlighted alternate, call cleanup, and assert one popup-cancel callback, final `nil` highlight, and no selected key press.
+
+31. `testLifecycleCleanupClearsShiftHoldState`
+    - Seed active Shift plus letter tracking, call cleanup, and assert tracking is empty and the next letter interaction is not marked as shift-held.
+
+These direct state hooks will be internal and narrowly named for interaction testing; they will call production begin/end/cancel functions rather than duplicate their logic.
+
+### Build and test commands
+
+First run only the new suite on an already booted simulator:
+
+```sh
+xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj \
+  -scheme LimeIME \
+  -destination 'platform=iOS Simulator,id=<BOOTED_UDID>' \
+  -only-testing:LimeTests/KeyboardHapticLifecycleTests \
+  test
+```
+
+Then run the related suites:
+
+```sh
+xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj \
+  -scheme LimeIME \
+  -destination 'platform=iOS Simulator,id=<BOOTED_UDID>' \
+  -only-testing:LimeTests/TouchLayerGestureTests \
+  -only-testing:LimeTests/KeyboardViewControllerTest \
+  test
+```
+
+Finally run all `LimeTests`, followed by the generic simulator build already used by the project. `git diff --check` and a BOM check will verify edited non-Java Swift files remain UTF-8 with BOM.
+
+### Real-device acceptance test
+
+Automated tests prove that no repeat or haptic request survives lifecycle cleanup. Physical Taptic Engine recovery still requires this iPhone 17 Reminders check with Full Access on and off:
+
+1. In a new reminder, type ten ordinary keys; expect ten distinct haptics.
+2. Hold Backspace for at least two seconds, release, and wait three seconds; deletion and vibration must stop immediately on release.
+3. Hold Backspace and dismiss the keyboard while it repeats; wait three seconds; deletion and vibration must stop immediately on dismissal.
+4. Reopen LimeIME and type ten keys; expect ten distinct haptics and no continuous vibration.
+5. Repeat steps 3–4 ten times.
+6. Enable the arrow row and repeat the dismissal case with each arrow key.
 
 ## Success Criteria
 
