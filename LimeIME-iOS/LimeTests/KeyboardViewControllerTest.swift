@@ -1799,6 +1799,24 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(accepts(59)) // ;
     }
 
+    func testArray30SymbolDigitsOnlyContinueWNumberComposition() {
+        for composing in ["w", "w1", "w123"] {
+            XCTAssertTrue(KeyboardViewController.isArraySymbolDigit(
+                activeIM: "array", composing: composing, code: 48))
+            XCTAssertTrue(KeyboardViewController.isArraySymbolDigit(
+                activeIM: "array", composing: composing, code: 57))
+        }
+
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array", composing: "", code: 49))
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array", composing: "wa", code: 49))
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array10", composing: "w", code: 49))
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array", composing: "w", code: 97))
+    }
+
     @MainActor
     func testAcceptsIntoComposingCharacterizesIPadCangjieAcceptance() {
         let controller = KeyboardViewController()

@@ -1739,6 +1739,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
+    static func isArraySymbolDigit(activeIM: String, composing: String, code: Int) -> Bool {
+        activeIM == "array"
+            && composing.first == "w"
+            && composing.dropFirst().allSatisfy { $0 >= "0" && $0 <= "9" }
+            && (48...57).contains(code)
+    }
+
     private func handleCharacter(_ code: Int) {
         guard code > 0, let scalar = Unicode.Scalar(code) else { return }
         let char      = Character(scalar)
@@ -1760,7 +1767,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             hasNumber: hasNumber,
             isPhonetic: isPhonetic)
 
-        if accepted {
+        if accepted || Self.isArraySymbolDigit(activeIM: activeIM, composing: mComposing, code: code) {
             let insertChar = (isShiftOn && !isSpace) ? charStr.uppercased() : charStr
 
             // Stroke5 (WB) 5-character limit: discard the 6th character (spec §5)
