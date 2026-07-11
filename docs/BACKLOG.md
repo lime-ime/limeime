@@ -6,7 +6,7 @@ Last reviewed: 2026-07-11
 
 ## Pending fixes
 
-- fix#153 iOS: Array30 `w#` symbol input fails to show the expected Array-style symbol candidates when `#` is a digit key. Compare iOS digit-key routing, composing-code normalization, and lookup/candidate generation with the working Android path; preserve ordinary numeric input and non-Array behavior. Track in `docs/#153_ISSUE.md`. Android is reported working and requires no behavior change.
+- fix#153 iOS: restore Array30 `w` + digit (`w0`–`w9`) symbol-code candidate lookup. The iOS composing path currently treats Array30's published `imkeys` as authoritative and rejects the digit before lookup, while Android has a dedicated guarded `w[0-9]*` exception. Add the equivalent narrow iOS dispatch rule and regression tests without making digits general Array30 roots. Android requires no source change unless parity testing finds a separate regression.
 
 ## Product work
 
