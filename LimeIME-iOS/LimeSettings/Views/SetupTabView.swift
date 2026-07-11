@@ -167,8 +167,17 @@ private struct SafariView: UIViewControllerRepresentable {
 struct SetupTabView: View {
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
     @EnvironmentObject private var manageImController: ManageImController
     @EnvironmentObject private var navManager: NavigationManager
+
+    // §4.4 — Rating prompt dismiss state (persisted to UserDefaults). 已完成 hides
+    // it permanently; 以後再說 snoozes it for `ratingSnoozeInterval` OR until the app
+    // version bumps, whichever comes first.
+    @State private var ratingDismissed = false
+    @State private var ratingSnoozedUntil: Date?
+    @State private var ratingSnoozeVersion: String?
+    @State private var showRatingDismissDialog = false
 
     // §4.3 — Installed-IM status. Mirrors the 輸入法 tab so a missing/disabled
     // IM surfaces on the first screen and the CTA routes straight to the fix.
@@ -195,6 +204,20 @@ struct SetupTabView: View {
     private let githubURL        = URL(string: "https://github.com/lime-ime/limeime")!
     private let manualURL        = URL(string: "https://lime-ime.github.io/limeime/pages/index.html")!
     private let licenseURL       = URL(string: "https://lime-ime.github.io/limeime/pages/license.html")!
+    // App Store write-review deep link (?action=write-review opens the rating sheet). §4.4.
+    private let appStoreReviewURL = URL(string: "https://apps.apple.com/app/id6784694460?action=write-review")!
+
+    // §4.4 — UserDefaults keys + snooze window (14 days; single tunable constant).
+    private static let ratingDismissedKey    = "ratingPromptDismissed"
+    private static let ratingSnoozeKey        = "ratingPromptSnoozeUntil"
+    private static let ratingSnoozeVersionKey = "ratingPromptSnoozeVersion"
+    private static let ratingSnoozeInterval: TimeInterval = 14 * 24 * 60 * 60
+
+    // App short version (CFBundleShortVersionString); a 以後再說 snooze lapses when
+    // this no longer matches the version recorded at snooze time (§4.4 version re-show).
+    private var currentAppVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    }
 
     var body: some View {
         NavigationStack {
@@ -272,6 +295,14 @@ struct SetupTabView: View {
                     imStatusSection
                         .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
 
+                    // ── Rating prompt (§4.4) ──────────────────────────────
+                    // Only once the keyboard works end-to-end (enabled + current +
+                    // an enabled IM) and the user hasn't dismissed/snoozed it.
+                    if showRatingPrompt {
+                        ratingPromptCard
+                            .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
+                    }
+
                     // ── About footer ──────────────────────────────────────
                     // Three equal-width link chips (使用手冊 / 版權說明 / 原始碼)
                     // above a one-line copyright banner. Replaces the old grouped
@@ -290,6 +321,11 @@ struct SetupTabView: View {
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.top, SettingsMetrics.aboutCopyrightTopPadding)
+                            // DEBUG-only: long-press the © banner to clear the
+                            // rating-prompt dismiss/snooze and re-test the card. §4.4.
+                            #if DEBUG
+                            .onLongPressGesture { resetRatingPromptForTesting() }
+                            #endif
                     }
                     .padding(.horizontal, SettingsMetrics.pageHorizontalPadding)
                     .padding(.top, SettingsMetrics.aboutFooterTopPadding)
@@ -305,6 +341,7 @@ struct SetupTabView: View {
             .navigationBarHidden(true)
             .onAppear {
                 ensureFAPingObserver()
+                loadRatingState()
                 refreshStatus()
                 refreshIMStatus()
                 startPolling()
@@ -427,6 +464,134 @@ struct SetupTabView: View {
             imAnyEnabled = configs.contains { $0.enabled }
         }
     }
+
+    // MARK: - Rating prompt (§4.4)
+
+    /// Shown only when the keyboard is enabled (Banner 1 orange/green — Full Access
+    /// optional), LIME is the current keyboard (Banner 2 green), an IM is installed
+    /// & enabled (Banner 3 green), and the user has not dismissed (已完成) or snoozed
+    /// (以後再說) it — i.e. only after the user is actually using LIME.
+    private var showRatingPrompt: Bool {
+        guard fullAccessBannerState != .notEnabled,
+              activeKeyboardBannerState == .active,
+              imStatusState == .ok,
+              !ratingDismissed
+        else { return false }
+        // 以後再說 suppresses only until the snooze expires OR the app version bumps:
+        // a new version no longer matches the recorded snooze version → re-show.
+        if let until = ratingSnoozedUntil, until > Date(),
+           ratingSnoozeVersion == currentAppVersion {
+            return false
+        }
+        return true
+    }
+
+    private var ratingPromptCard: some View {
+        ZStack(alignment: .topTrailing) {
+            // Card body — tapping anywhere opens the App Store review sheet.
+            Button {
+                openURL(appStoreReviewURL)
+            } label: {
+                HStack(spacing: SettingsMetrics.ratingCardSpacing) {
+                    VStack(alignment: .leading, spacing: SettingsMetrics.ratingCardInnerSpacing) {
+                        Text("喜歡萊姆輸入法嗎？")
+                            .font(.system(size: SettingsMetrics.ratingTitleFontSize, weight: .semibold))
+                            .foregroundColor(.primary)
+                        ratingStars
+                        Text("到 App Store 給個 5 星好評，支持作者持續開發。")
+                            .font(.system(size: SettingsMetrics.ratingSubtitleFontSize))
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: SettingsMetrics.ratingCardSpacing)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: SettingsMetrics.ratingChevronFontSize, weight: .semibold))
+                        .foregroundColor(Color(uiColor: .tertiaryLabel))
+                }
+                .padding(.vertical, SettingsMetrics.ratingCardVerticalPadding)
+                .padding(.horizontal, SettingsMetrics.ratingCardHorizontalPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.quaternarySystemFill),
+                            in: RoundedRectangle(cornerRadius: SettingsMetrics.ratingCardCornerRadius))
+                .contentShape(RoundedRectangle(cornerRadius: SettingsMetrics.ratingCardCornerRadius))
+            }
+            .buttonStyle(.plain)
+
+            // Dismiss × — its own tap target in the top-right corner; opens the
+            // confirm dialog and never falls through to the store link.
+            Button {
+                showRatingDismissDialog = true
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: SettingsMetrics.ratingDismissGlyphSize, weight: .bold))
+                    .foregroundColor(.secondary)
+                    .frame(width: SettingsMetrics.ratingDismissSize,
+                           height: SettingsMetrics.ratingDismissSize)
+                    .background(Color(.tertiarySystemFill), in: Circle())
+            }
+            .buttonStyle(.plain)
+            .padding(SettingsMetrics.ratingDismissInset)
+            .accessibilityLabel("隱藏")
+        }
+        .confirmationDialog("隱藏評分邀請？",
+                            isPresented: $showRatingDismissDialog,
+                            titleVisibility: .visible) {
+            Button("已完成") { dismissRatingDone() }
+            Button("以後再說") { snoozeRating() }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text("如果您已給評分，選「已完成」即可不再顯示；還沒決定的話，選「以後再說」，我們稍後再提醒您。")
+        }
+    }
+
+    private var ratingStars: some View {
+        HStack(spacing: SettingsMetrics.ratingStarSpacing) {
+            ForEach(0 ..< 5, id: \.self) { _ in
+                Image(systemName: "star.fill")
+                    .font(.system(size: SettingsMetrics.ratingStarSize))
+                    .foregroundColor(SettingsTheme.ratingStar)
+            }
+        }
+    }
+
+    private func loadRatingState() {
+        let defaults = UserDefaults.standard
+        ratingDismissed = defaults.bool(forKey: Self.ratingDismissedKey)
+        let ts = defaults.double(forKey: Self.ratingSnoozeKey)
+        ratingSnoozedUntil = ts > 0 ? Date(timeIntervalSince1970: ts) : nil
+        ratingSnoozeVersion = defaults.string(forKey: Self.ratingSnoozeVersionKey)
+    }
+
+    /// 已完成 — the user has rated (or would rather not). Hide permanently.
+    private func dismissRatingDone() {
+        UserDefaults.standard.set(true, forKey: Self.ratingDismissedKey)
+        ratingDismissed = true
+    }
+
+    /// 以後再說 — snooze for `ratingSnoozeInterval`, or until the app version bumps,
+    /// whichever comes first; then the card returns if the three banner conditions hold.
+    private func snoozeRating() {
+        let until = Date().addingTimeInterval(Self.ratingSnoozeInterval)
+        let version = currentAppVersion
+        UserDefaults.standard.set(until.timeIntervalSince1970, forKey: Self.ratingSnoozeKey)
+        UserDefaults.standard.set(version, forKey: Self.ratingSnoozeVersionKey)
+        ratingSnoozedUntil = until
+        ratingSnoozeVersion = version
+    }
+
+    #if DEBUG
+    /// Debug-only: clear the 已完成/以後再說 flags so the card can be re-tested on the
+    /// simulator without reinstalling. Wired to a long-press on the © banner. The
+    /// card reappears immediately if the three banner conditions still hold.
+    private func resetRatingPromptForTesting() {
+        UserDefaults.standard.removeObject(forKey: Self.ratingDismissedKey)
+        UserDefaults.standard.removeObject(forKey: Self.ratingSnoozeKey)
+        UserDefaults.standard.removeObject(forKey: Self.ratingSnoozeVersionKey)
+        ratingDismissed = false
+        ratingSnoozedUntil = nil
+        ratingSnoozeVersion = nil
+    }
+    #endif
 
     // MARK: - Logo
 

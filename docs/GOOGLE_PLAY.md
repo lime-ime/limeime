@@ -23,6 +23,11 @@ Current build facts (from [LimeStudio/app/build.gradle](../LimeStudio/app/build.
 > onboarding — edit [build.gradle](../LimeStudio/app/build.gradle#L34) and the
 > [test assertion](../LimeStudio/app/src/androidTest/java/net/toload/main/hd/ApplicationTest.java#L74) then.)*
 
+**Public store listing URL:** `https://play.google.com/store/apps/details?id=org.limeime`
+(`market://details?id=org.limeime` opens the Play app directly). The 設定 tab's in-app
+**rating prompt** (`RateCard`, [LIME_SETTINGS.md §4.4](LIME_SETTINGS.md)) deep-links here to
+invite a 5-star review — the iOS counterpart uses `https://apps.apple.com/app/id6784694460?action=write-review`.
+
 ---
 
 ## 1. Developer account & one-time setup

@@ -11,6 +11,9 @@
   const LICENSE_URL = "https://lime-ime.github.io/limeime/pages/license.html"; // R.string.url_license_limeime
   const MANUAL_URL = "https://lime-ime.github.io/limeime/pages/index.html";
   const GITHUB_URL = "https://github.com/lime-ime/limeime";                    // R.string.url_github_limeime
+  // Google Play listing for the rating prompt. The market:// scheme opens the
+  // Play app directly; the https form is the web fallback.
+  const PLAY_REVIEW_URL = "https://play.google.com/store/apps/details?id=org.limeime";
 
   const FG_GREEN = "#2e7d32"; // @color/setup_status_fg_green
   const STATUS_BG = "color-mix(in srgb, #808080 12%, transparent)"; // @color/setup_status_bg
@@ -99,6 +102,86 @@
     );
   }
 
+  // A row of five filled gold stars for the rating prompt.
+  function StarRow({ size = 18 }) {
+    const star = React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "#FFB400" },
+      React.createElement("path", { d: "M12 2l2.9 6.26 6.9.7-5.1 4.62 1.45 6.74L12 17.3 5.85 20.32 7.3 13.58 2.2 8.96l6.9-.7z" }));
+    return React.createElement("div", { style: { display: "flex", gap: 4 } },
+      Array.from({ length: 5 }, (_, i) => React.cloneElement(star, { key: i })));
+  }
+
+  // Material 3 dialog asking how to hide the rating card (已完成 / 以後再說 / 取消).
+  // position: fixed is contained by the scaled #device, so it dims the whole screen
+  // like a real MaterialAlertDialog.
+  function DismissDialog({ onDone, onLater, onCancel }) {
+    const action = (label, cb, emphasis) => React.createElement("button", {
+      type: "button", onClick: cb,
+      style: { height: 40, padding: "0 12px", border: "none", borderRadius: 20, background: "transparent",
+        color: "var(--md-primary)", cursor: "pointer",
+        font: (emphasis ? 600 : 500) + " 14px/1 'Roboto', var(--font-sans)" },
+    }, label);
+    return React.createElement("div", {
+      onClick: onCancel,
+      style: { position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center",
+        justifyContent: "center", padding: 24, background: "rgba(0,0,0,.32)" },
+    },
+      React.createElement("div", {
+        onClick: (e) => e.stopPropagation(),
+        style: { width: "100%", maxWidth: 312, borderRadius: 28, padding: "24px 24px 18px",
+          background: "var(--md-surface-container-high)", boxShadow: "0 10px 40px rgba(0,0,0,.35)" },
+      },
+        React.createElement("div", { style: { font: "500 24px/32px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" } }, "隱藏評分邀請？"),
+        React.createElement("div", { style: { font: "400 14px/20px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", marginTop: 16 } },
+          "如果您已給評分，選「已完成」即可不再顯示；還沒決定的話，選「以後再說」，我們稍後再提醒您。"),
+        React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 24 } },
+          action("取消", onCancel, false),
+          action("以後再說", onLater, false),
+          action("已完成", onDone, true))
+      )
+    );
+  }
+
+  // Rating prompt card — invites a 5-star Google Play review, placed in the
+  // Setup tab's app-info area (below the status sections, above About). The ×
+  // opens DismissDialog. In this mockup the dismiss is in-memory (resets on reload);
+  // production persists it to SharedPreferences — rating_prompt_dismissed (已完成,
+  // permanent) / rating_prompt_snooze_until (以後再說, +14 days). See LIME_SETTINGS §4.4.
+  function RateCard() {
+    const [dismissed, setDismissed] = React.useState(false);
+    const [confirm, setConfirm] = React.useState(false);
+    if (dismissed) return null;
+    return React.createElement(React.Fragment, null,
+      React.createElement("div", { style: { position: "relative" } },
+        React.createElement("a", { href: PLAY_REVIEW_URL, target: "_blank", rel: "noopener noreferrer",
+          style: { display: "flex", alignItems: "center", gap: 14, textDecoration: "none",
+            padding: "16px 18px", borderRadius: 16, background: "var(--md-surface-container-high)",
+            WebkitTapHighlightColor: "transparent" } },
+          React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 6, paddingRight: 18 } },
+            React.createElement("div", { style: { font: "600 17px/22px 'Roboto', var(--font-sans)", color: "var(--md-on-surface)" } }, "喜歡萊姆輸入法嗎？"),
+            React.createElement(StarRow, null),
+            React.createElement("div", { style: { font: "400 14px/19px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)" } }, "到 Google Play 給個 5 星好評，支持作者持續開發。")
+          ),
+          React.createElement(Icon, { name: "chevron_right", size: 22, color: "var(--md-on-surface-variant)", style: { flex: "0 0 auto" } })
+        ),
+        // Dismiss × — own tap target, top-right corner; stopPropagation so it never
+        // opens the store. Opens the confirm dialog.
+        React.createElement("button", {
+          type: "button", "aria-label": "隱藏",
+          onClick: (e) => { e.preventDefault(); e.stopPropagation(); setConfirm(true); },
+          style: { position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%",
+            border: "none", background: "transparent", color: "var(--md-on-surface-variant)",
+            display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 },
+        }, React.createElement(Icon, { name: "close", size: 18 }))
+      ),
+      confirm && React.createElement(DismissDialog, {
+        // 已完成 → permanent hide; 以後再說 → snooze. Both hide the card in this mockup.
+        onDone: () => { setConfirm(false); setDismissed(true); },
+        onLater: () => { setConfirm(false); setDismissed(true); },
+        onCancel: () => setConfirm(false),
+      })
+    );
+  }
+
   function AndroidSetupTab({ imStatus, imCount, voiceStatus, onManageIM, onAllowMic }) {
     return React.createElement("div", { style: { padding: "8px 24px 28px", display: "flex", flexDirection: "column", gap: 24 } },
       // Brand hero — plain logo + wordmark, horizontal (aligned to iOS)
@@ -115,7 +198,7 @@
         React.createElement(StepRow, { icon: React.createElement(GreenToggle), text: "開啟「允許完整取用」" })
       ),
       React.createElement("div", { style: { font: "400 15px/20px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", textAlign: "center" } },
-        "完整取用用於備份資料庫、按鍵震動回饋與編輯字根資料表。不開啟也能正常輸入、安裝或匯入輸入法，萊姆輸入法不會收集或傳送任何個人資料。"),
+        "萊姆輸入法僅需完整取用以啟用按鍵震動回饋。若不需要此功能，可不開啟。萊姆輸入法不會收集或傳送任何個人資料。"),
       React.createElement(Button, { variant: "filled", full: true }, "前往設定"),
       React.createElement("div", { style: { font: "400 13px/18px 'Roboto', var(--font-sans)", color: "var(--md-on-surface-variant)", textAlign: "center" } },
         "若設定未直接顯示萊姆輸入法，請到「設定」>「系統」>「語言與輸入」>「螢幕鍵盤」開啟。"),
@@ -123,6 +206,8 @@
       React.createElement(IMStatusSection, { imStatus, imCount, onManageIM }),
       // §4 — LIME inline-dictation microphone permission section.
       React.createElement(VoiceSection, { voiceStatus, onAllowMic }),
+      // Rating prompt — below the mic-permission card, above the About footer.
+      React.createElement(RateCard),
       // About footer — three equal-width chips + one-line copyright (aligned to iOS)
       React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingTop: 10 } },
         React.createElement("div", { style: { height: 1, background: "var(--md-outline-variant)", margin: "0 -24px" } }),

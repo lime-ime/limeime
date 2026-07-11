@@ -220,7 +220,9 @@ Inspired by Gboard's setup screen: a single scrollable screen with the LimeIME l
 
 **Active-keyboard probe**: Section 2 uses the root 1×1pt UIKit `RelayProbeField` hosted by `LimeSettingsView`, not a local SwiftUI `TextField` in `SetupTabView`. When `keyboardEnabled && !activeThisSession`, `SetupTabView` posts `.limeTriggerRelay`; the root field focuses and writes `RelayToken.request`. LIME proves it is the active keyboard by reading that token and inserting a relay payload back into the field. See [IOS_ACTIVE_KB_DETECT.md](IOS_ACTIVE_KB_DETECT.md).
 
-**Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders just above the About footer.
+**Installed-IM status (§4.3)**: the `imStatusSection` block (none / disabled / ok banner + optional CTA into the 輸入法 tab) renders below Section 2.
+
+**Rating prompt (§4.4)**: the `RateCard` tonal card (喜歡萊姆輸入法嗎？ + five-star row + App Store deep link) sits between the installed-IM status section and the About footer. Shown **only** when the keyboard is enabled (Banner 1 orange/green — Full Access optional), LIME is the current keyboard (Banner 2 green), **and** an IM is installed and enabled (Banner 3 green); see §4.4.
 
 **About footer**: a full-bleed `Divider`, then three equal-width `LinkChip`s — **使用手冊** (`manualURL`, in-app), **版權說明** (`licenseURL` = `https://lime-ime.github.io/limeime/pages/license.html`, in-app), **原始碼** (`githubURL`, external) — above a one-line copyright banner `© LIME 萊姆輸入法 \(copyrightLine())` (`CFBundleShortVersionString - <year>`). Detailed in the layout tree below.
 
@@ -303,6 +305,15 @@ NavigationStack (.navigationBarHidden(true))
         ├── // ── Section 3: Installed-IM status (§4.3) ─────────────────
         │   imStatusSection          // none/disabled/ok banner + optional CTA → 輸入法 tab
         │       .padding(.horizontal, 24)
+        │
+        ├── // ── Rating prompt (§4.4) — only when keyboard enabled (Banner 1
+        │   //    orange/green), LIME active (Banner 2 green), AND IM status ok
+        │   //    (Banner 3 green) ──────────────────────────────────────────
+        │   if setupStatusState != .notEnabled &&
+        │      activeKeyboardBannerState == .active && imStatusState == .ok {
+        │       RateCard()           // tonal card → App Store write-review deep link
+        │           .padding(.horizontal, 24)
+        │   }
         │
         └── // ── About footer ─────────────────────────────────────────
             //   Full-bleed separator, three equal-width tonal link chips, then a
@@ -399,6 +410,8 @@ to `RecognizerIntent`. This is **not** part of the iOS setup tab.
 | Not requested / denied but askable | Red | `萊姆內建語音輸入尚未啟用 ✕` | `若要在萊姆鍵盤內直接語音輸入，請允許麥克風權限；也可略過，改用 Google 語音輸入。` | `允許麥克風權限` requests `RECORD_AUDIO` |
 | Permanently denied | Orange | `需至系統設定開啟麥克風權限 ⚠` | `Android 已停止顯示授權視窗。若要使用萊姆內建語音輸入，請前往系統設定，點選「權限」→「麥克風」→「允許」。` | `前往系統設定` opens app info and shows a short toast guide |
 
+**Rating prompt (§4.4)**: the `RateCard` tonal card (喜歡萊姆輸入法嗎？ + five-star row) sits below the optional voice-permission section and above the About footer; tapping it opens the Google Play listing (`https://play.google.com/store/apps/details?id=org.limeime`, `market://` preferred with an `https` fallback). Shown **only** when the LIME keyboard is enabled (Android has no Full Access, so the status card's enabled state is enough) **and** an IM is installed and enabled (Banner 3 green); see §4.4.
+
 **About footer** (`fragment_setup.xml` + `SetupFragment.java`): a full-bleed separator, then three equal-width tonal link chips (使用手冊 / 版權說明 / 原始碼 — icon over label) above a one-line copyright banner `© LIME 萊姆輸入法 <version> - <year>`. Chip labels use `?attr/colorPrimary` (Material You). **使用手冊** (`https://lime-ime.github.io/limeime/pages/index.html`) and **版權說明** (`https://lime-ime.github.io/limeime/pages/license.html`) open **in-place** via Chrome Custom Tabs (`openInAppTab()` — `CustomTabsIntent.Builder().setShowTitle(true)`, with an `ACTION_VIEW` fallback). **原始碼** (`txtGithubUrl`) opens **externally** via `ACTION_VIEW`.
 
 ### 4.2 Status Sections
@@ -472,6 +485,107 @@ deep-links into the IM Manager (§5):
 > `IMStatusSection`. The empty-installed-list experience this CTA leads to — the
 > keyboard-glyph empty state, the bobbing "安裝輸入法" callout pill, and the FAB's
 > radar-pulse + breath nudge — is specified in §5.1.
+
+### 4.4 Rating Prompt
+
+A tonal review-invitation card (`RateCard`) placed in the Setup tab's app-info area,
+**between the installed-IM status section (§4.3) and the About footer (§4.1)**. It nudges
+satisfied users toward a store rating without interrupting the setup flow, and carries a
+dismiss **×** in its top-right corner (see **Dismiss** below).
+
+**Visibility** — the card is shown **only when all three** of the following hold, so the prompt
+reaches users who are actually using LIME, not someone still mid-setup:
+
+1. **LIME is activated** — the LIME keyboard is enabled, i.e. **Banner 1 (§4.2) is orange
+   or green** (`setupStatusState != .notEnabled`; states `enabledNoFullAccess` /
+   `activeNoFullAccess` / `fullyEnabled`). Full Access is **optional** — the orange
+   FA-off states still qualify. Hidden while Banner 1 is red (`notEnabled`).
+   *(Android has no Full Access, so this is simply the keyboard-enabled state of the setup
+   status card.)*
+2. **LIME is the current keyboard** — **Banner 2 (§4.2) is green**
+   (`activeKeyboardBannerState == .active`). Hidden while Banner 2 is checking or reports
+   that LIME is not active. This means the card appears only after the user has switched to
+   LIME as their live keyboard — including on iPad, once LIME is the active keyboard there.
+3. **An IM is installed and enabled** — **Banner 3 (§4.3) is green**
+   (installed-IM status `ok`: ≥1 IM installed **and** enabled). Hidden for `none` (red)
+   and `disabled` (orange).
+
+The card re-evaluates on the same refresh triggers as the status banners (`.onAppear`,
+`scenePhase → .active`, the 1-second poll, and IM-list changes), so it appears/disappears
+live as the user completes setup or toggles their last IM off.
+
+Beyond the three banner conditions, the card is also suppressed by the user's own **dismiss**
+choice (below): permanently once they pick 已完成, or until the snooze expires — or the app
+version bumps, whichever comes first — after 以後再說.
+
+**Content** (both platforms):
+
+| Element | Value |
+| --- | --- |
+| Title | `"喜歡萊姆輸入法嗎？"` (17pt / `600`, primary ink) |
+| Stars | a row of five filled gold stars (`#FFB400`, 18pt), decorative only — not a tappable rating input |
+| Subtitle | iOS `"到 App Store 給個 5 星好評，支持作者持續開發。"` / Android `"到 Google Play 給個 5 星好評，支持作者持續開發。"` (14pt, secondary ink) |
+| Tap target | the card body (title + stars + subtitle) opens the store; a chevron trails it |
+| Dismiss | a small **×** in the top-right corner — its **own** tap target (`stopPropagation`, does not open the store) → opens the confirm dialog |
+
+**Card style**: horizontal row, `gap 14`, padding `16×18`, corner radius 16, over the
+platform tonal fill (iOS `fill-quaternary` / Android `surfaceContainerHigh`). It retints
+with light/dark and, on Android, with the Material You seed.
+
+**Destination**:
+
+- **iOS** — opens the App Store *write-review* deep link
+  `https://apps.apple.com/app/id6784694460?action=write-review` (the `?action=write-review`
+  query lands directly on the rating sheet). Opens via `openURL`.
+  A native in-app `SKStoreReviewController.requestReview` prompt is the alternative Apple
+  path but is **not** used here, since the card is a persistent entry point rather than a
+  throttled system prompt.
+- **Android** — opens the Google Play listing
+  `https://play.google.com/store/apps/details?id=org.limeime` (the Play `applicationId` is
+  `org.limeime`, though the source namespace stays `net.toload.main.hd`); prefer the
+  `market://details?id=…` scheme to open the Play app directly, falling back to the `https`
+  form via `ACTION_VIEW` when Play is unavailable.
+
+**Dismiss** — tapping the **×** opens a confirmation dialog rather than hiding the card
+outright. Because neither store reports whether a user actually left a review (Apple's
+`SKStoreReviewController` and Google's In-App Review API both return no outcome, and a
+store deep link reports nothing back), the card cannot self-hide on a completed review —
+so the dialog lets the user tell us which case they are in:
+
+| Choice | Action | Persisted |
+| --- | --- | --- |
+| **已完成** | User has rated (or would rather not) → hide **permanently**, never shown again | `ratingPromptDismissed = true` |
+| **以後再說** | Snooze → hide until the snooze expires **or the app version changes, whichever comes first**, then re-appear if the three banner conditions still hold | `ratingPromptSnoozeUntil = now + 14 days` · `ratingPromptSnoozeVersion = <current version>` |
+| **取消** | Close the dialog, no change — the card stays | — |
+
+Dialog copy (both platforms): title `"隱藏評分邀請？"`, message
+`"如果您已給評分，選「已完成」即可不再顯示；還沒決定的話，選「以後再說」，我們稍後再提醒您。"`,
+buttons `已完成` / `以後再說` / `取消`.
+
+- **iOS** — `.confirmationDialog` (or `.alert`) with `已完成` (default), `以後再說`, and
+  `取消` (`.cancel` role). Flags live in `UserDefaults.standard`: `ratingPromptDismissed`
+  (`Bool`), `ratingPromptSnoozeUntil` (`Date`), and `ratingPromptSnoozeVersion` (`String`,
+  the `CFBundleShortVersionString` captured when 以後再說 was chosen).
+- **Android** — `MaterialAlertDialogBuilder` with positive `已完成` / neutral `以後再說` /
+  negative `取消` (back or outside tap = 取消). Flags live in `SharedPreferences`:
+  `rating_prompt_dismissed` (`boolean`), `rating_prompt_snooze_until` (`long`, epoch ms), and
+  `rating_prompt_snooze_version` (`String`, the `versionName` captured when 以後再說 was chosen).
+
+**Snooze expiry & version re-show.** The card counts as snoozed only while `now <
+ratingPromptSnoozeUntil` **and** the current app version still equals `ratingPromptSnoozeVersion`.
+So 以後再說 lapses on whichever comes first: the 14-day window (a single tunable constant), or a
+**version bump** — when the app updates to a new `CFBundleShortVersionString` / `versionName`
+the stored version no longer matches, the snooze is treated as expired, and the card re-shows
+(a new release is a natural moment to ask a "remind me later" user again). `已完成` is
+different: it sets the permanent `ratingPromptDismissed` flag and is **not** reset by a version
+bump — it is the user's "stop asking" answer.
+
+**Debug reset (testing only).** A `#if DEBUG` **long-press on the © copyright banner** clears
+the flags (`ratingPromptDismissed` / `ratingPromptSnoozeUntil` / `ratingPromptSnoozeVersion`)
+so the card can be re-tested on the simulator without reinstalling; it reappears immediately if
+the three banner conditions still hold. Compiled out of Release builds.
+
+> Implemented in `SetupTabView.swift` (iOS) / `AndroidSetupTab.jsx` (Android) as `RateCard`.
 
 ---
 
@@ -1363,6 +1477,7 @@ guard let db = openDB() else {
 - [ ] Optional `RECORD_AUDIO` setup step for LIME inline dictation — Android-only; not part of the iOS setup tab
 - [ ] Bundled IM seeding — *not ported*: the iOS app has no `seedDefaultIMs`; IMs are installed only via the download / import flow (§5.3)
 - [x] App version, licence, GitHub link
+- [ ] Rating prompt card (§4.4) — **iOS implemented** (`SetupTabView.swift`, App Store write-review deep link + ×/confirm dismiss); **Android pending** (Google Play listing)
 
 ### IM Manager — IM List (§5.1)
 - [x] List of installed IMs with enable/disable toggle

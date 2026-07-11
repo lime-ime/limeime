@@ -62,6 +62,9 @@ enum SettingsTheme {
     static let globalOverlayScrim = Color(uiColor: .black).opacity(0.35)
     static let overlayCardBackground = Color(uiColor: .systemBackground)
 
+    // Rating prompt (§4.4) — five gold stars (#FFB400), decorative only.
+    static let ratingStar = Color(red: 0xFF / 255, green: 0xB4 / 255, blue: 0x00 / 255)
+
     static let switchTrack = Color(uiColor: .systemGreen)
     static let switchThumb = Color(uiColor: .white)
     static let switchShadow = Color(uiColor: .black).opacity(0.18)

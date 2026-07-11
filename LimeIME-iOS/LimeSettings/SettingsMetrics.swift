@@ -63,6 +63,21 @@ enum SettingsMetrics {
     static let aboutChipHorizontalPadding: CGFloat = 8
     static let aboutCopyrightTopPadding: CGFloat = 6
 
+    // Rating prompt (§4.4) — tonal review-invitation card + dismiss ×.
+    static let ratingCardSpacing: CGFloat = 14
+    static let ratingCardInnerSpacing: CGFloat = 6
+    static let ratingCardVerticalPadding: CGFloat = 16
+    static let ratingCardHorizontalPadding: CGFloat = 18
+    static let ratingCardCornerRadius: CGFloat = 16
+    static let ratingTitleFontSize: CGFloat = 17
+    static let ratingSubtitleFontSize: CGFloat = 14
+    static let ratingStarSpacing: CGFloat = 4
+    static let ratingStarSize: CGFloat = 15
+    static let ratingChevronFontSize: CGFloat = 14
+    static let ratingDismissSize: CGFloat = 24
+    static let ratingDismissGlyphSize: CGFloat = 11
+    static let ratingDismissInset: CGFloat = 8
+
     static let switchTrackWidth: CGFloat = 30
     static let switchTrackHeight: CGFloat = 18
     static let switchThumbSize: CGFloat = 14
