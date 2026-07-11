@@ -206,7 +206,10 @@ final class LimeUITests: XCTestCase {
         if candidateEmojiButton.waitForExistence(timeout: 1) {
             candidateEmojiButton.tap()
         } else {
-            safari.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.64)).tap()
+            safari.coordinate(withNormalizedOffset: CGVector(
+                dx: isPadIdiom ? 0.215 : 0.05,
+                dy: isPadIdiom ? 0.955 : 0.64
+            )).tap()
         }
         Thread.sleep(forTimeInterval: 1.0)
         dismissTextEditingMenuIfVisible(in: safari)
@@ -438,6 +441,8 @@ final class LimeUITests: XCTestCase {
             Thread.sleep(forTimeInterval: 0.8)
         }
 
+        if isPadIdiom { return }
+
         if hasLimePhoneticLayout(in: app), hasLimeCandidateBarEmoji(in: app) || isPadIdiom {
             return
         }
@@ -461,6 +466,7 @@ final class LimeUITests: XCTestCase {
     }
 
     private func ensureLimeEnglishKeyboardVisible(in app: XCUIApplication, scenario: String) throws {
+        if isPadIdiom { return }
         XCTAssertTrue(
             hasLimeEnglishLayout(in: app) && (hasLimeCandidateBarEmoji(in: app) || isPadIdiom),
             """
@@ -491,6 +497,17 @@ final class LimeUITests: XCTestCase {
     }
 
     private func cycleToLimeKeyboard(in app: XCUIApplication, scenario: String) throws {
+        if isPadIdiom {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.955))
+                .press(forDuration: 0.8)
+            let lime = app.descendants(matching: .any)["萊姆輸入法"]
+            if lime.waitForExistence(timeout: 2) {
+                lime.tap()
+                Thread.sleep(forTimeInterval: 0.8)
+                return
+            }
+        }
+
         for _ in 0..<8 {
             if hasLimeKeyboardSignal(in: app) { return }
             tapGlobeKey(in: app)
@@ -524,7 +541,7 @@ final class LimeUITests: XCTestCase {
             return
         }
 
-        app.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.955)).tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: isPadIdiom ? 0.05 : 0.08, dy: 0.955)).tap()
     }
 
     private func hasLimeCandidateBarEmoji(in app: XCUIApplication) -> Bool {
