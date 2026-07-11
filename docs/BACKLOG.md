@@ -6,7 +6,7 @@ Last reviewed: 2026-07-11
 
 ## Pending fixes
 
-None.
+- fix#153 iOS: restore Array30 `w` + digit (`w0`–`w9`) symbol-code candidate lookup. The iOS composing path currently treats Array30's published `imkeys` as authoritative and rejects the digit before lookup, while Android has a dedicated guarded `w[0-9]*` exception. Add the equivalent narrow iOS dispatch rule and regression tests without making digits general Array30 roots. Android requires no source change unless parity testing finds a separate regression.
 
 ## Product work
 
