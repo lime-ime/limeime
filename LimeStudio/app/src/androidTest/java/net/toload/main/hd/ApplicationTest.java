@@ -71,10 +71,10 @@ public class ApplicationTest {
         // Verify that the package name is correct
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         String packageName = appContext.getPackageName();
-        // Must match applicationId in app/build.gradle (currently net.toload.main.hd2026).
+        // Must match applicationId in app/build.gradle (currently org.limeime).
         // BuildConfig isn't generated for this module (buildConfig feature is off), so the
         // value is asserted as a literal — update both together if applicationId changes.
-        assertEquals("net.toload.main.hd2026", packageName);
+        assertEquals("org.limeime", packageName);
     }
 
     @Test
