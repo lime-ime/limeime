@@ -2,11 +2,11 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-08
+Last reviewed: 2026-07-11
 
 ## Pending fixes
 
-- fix#139 iOS: private-email/TestFlight bottom-content coverage remains pending. The attempted iPhone portrait height cap was abandoned because it made the `keyboard_size` preference ineffective on real device; `applyHeight()` must report the height derived from `KeyboardView.preferredHeight` without rewriting `KeyboardView.keySizeScale`. Continue investigating LIME custom-keyboard height / safe-area behavior across Array10 and Dayi. Track in `docs/#139_ISSUE.md`. No Android APK retest applies.
+None.
 
 ## Product work
 
