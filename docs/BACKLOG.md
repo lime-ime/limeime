@@ -6,7 +6,7 @@ Last reviewed: 2026-07-11
 
 ## Pending fixes
 
-None.
+- fix#153 iOS: Array30 `w#` symbol input fails to show the expected Array-style symbol candidates when `#` is a digit key. Compare iOS digit-key routing, composing-code normalization, and lookup/candidate generation with the working Android path; preserve ordinary numeric input and non-Array behavior. Track in `docs/#153_ISSUE.md`. Android is reported working and requires no behavior change.
 
 ## Product work
 
