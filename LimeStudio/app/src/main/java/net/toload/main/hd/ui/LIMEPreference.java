@@ -26,21 +26,19 @@ package net.toload.main.hd.ui;
 
 import android.app.backup.BackupManager;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceGroup;
@@ -79,8 +77,10 @@ public class LIMEPreference extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// Enable edge-to-edge display for API 35+ (Android 15+)
-		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+		// Enable edge-to-edge across all API levels via the AndroidX helper. Replaces
+		// manual setDecorFitsSystemWindows + the deprecated setStatusBarColor/
+		// setNavigationBarColor calls (no-ops on API 35+; flagged by Play Console).
+		EdgeToEdge.enable(this);
 
 		this.SearchSrv = new SearchServer(this);
 
@@ -133,7 +133,6 @@ public class LIMEPreference extends AppCompatActivity {
 	 * Setup edge-to-edge display with proper window insets handling.
 	 * This ensures UI elements are not obscured by system bars on API 35+.
 	 */
-    @SuppressWarnings("deprecation")
 	private void setupEdgeToEdge() {
 		// Apply window insets to the content view (where PreferenceFragment is displayed)
 		View contentView = findViewById(android.R.id.content);
@@ -152,40 +151,8 @@ public class LIMEPreference extends AppCompatActivity {
 				return insets;
 			});
 		}
-
-		// Set status bar and navigation bar to transparent for edge-to-edge effect
-		// Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
-		// but we use them with suppression for backward compatibility
-        android.view.Window window = getWindow();
-        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-        window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-
-		
-		// Set status bar icon appearance to dark (black icons) for better visibility
-		// Since status bar is transparent and content behind may be light, use dark icons
-		View decorView = getWindow().getDecorView();
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-			// API 23+ (Marshmallow+): Use WindowInsetsControllerCompat
-			// Note: getWindowInsetsController() is deprecated in API 35+, but necessary for API 23-34
-			@SuppressWarnings("deprecation")
-			WindowInsetsControllerCompat windowInsetsController = ViewCompat.getWindowInsetsController(decorView);
-			if (windowInsetsController != null) {
-				int uiMode = getResources().getConfiguration().uiMode
-						& Configuration.UI_MODE_NIGHT_MASK;
-				boolean isLight = (uiMode != Configuration.UI_MODE_NIGHT_YES);
-				windowInsetsController.setAppearanceLightStatusBars(isLight);
-				windowInsetsController.setAppearanceLightNavigationBars(isLight);
-			}
-		} else {
-			// API 21-22: SYSTEM_UI_FLAG_LIGHT_STATUS_BAR is not available (introduced in API 23)
-			// On API 21-22, we cannot change icon color programmatically
-			// Set a dark status bar so white icons are visible (compromise for API 21-22)
-			//@SuppressWarnings("deprecation")
-			//android.view.Window window = getWindow();
-			// Use a dark color so white icons are visible
-			// This maintains some edge-to-edge while ensuring icons are visible
-			window.setStatusBarColor(0xFF000000); // Solid black
-		}
+		// Transparent system bars and light/dark bar-icon appearance are handled by
+		// EdgeToEdge.enable(this) in onCreate (auto-detects night mode across API levels).
 	}
 
 	public static class PrefsFragment extends PreferenceFragmentCompat implements OnSharedPreferenceChangeListener{

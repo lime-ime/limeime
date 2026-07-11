@@ -6947,7 +6947,7 @@ public class LIMEService extends InputMethodService
         Context dynamicColorContext = DynamicColors.wrapContextIfAvailable(
                 this,
                 SystemAccentColor.dynamicColorOptions(this));
-        int resolved = resolveThemeColor(dynamicColorContext, com.google.android.material.R.attr.colorPrimary, 0);
+        int resolved = resolveThemeColor(dynamicColorContext, androidx.appcompat.R.attr.colorPrimary, 0);
         if (!isUsableAccentColor(resolved)) {
             resolved = resolveThemeColor(dynamicColorContext, com.google.android.material.R.attr.colorSecondary, 0);
         }
@@ -6955,7 +6955,7 @@ public class LIMEService extends InputMethodService
             resolved = resolveThemeColor(dynamicColorContext, android.R.attr.colorAccent, 0);
         }
         if (!isUsableAccentColor(resolved)) {
-            resolved = resolveThemeColor(com.google.android.material.R.attr.colorPrimary, 0);
+            resolved = resolveThemeColor(androidx.appcompat.R.attr.colorPrimary, 0);
         }
         if (!isUsableAccentColor(resolved)) {
             resolved = resolveThemeColor(com.google.android.material.R.attr.colorSecondary, 0);
@@ -7023,8 +7023,6 @@ public class LIMEService extends InputMethodService
         if (isAppliedNavigationBarThemeCurrent(window, bgColor, lightBackground)) {
             return;
         }
-
-        window.setNavigationBarColor(bgColor);
 
         // The IME container applies bottomInset padding to clear the gesture bar
         // (see onCreateInputView). That padded strip is transparent by default, so
