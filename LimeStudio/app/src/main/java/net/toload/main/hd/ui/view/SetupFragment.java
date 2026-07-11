@@ -30,6 +30,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
@@ -52,6 +54,7 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import net.toload.main.hd.R;
 import net.toload.main.hd.data.ImConfig;
@@ -99,6 +102,20 @@ public class SetupFragment extends Fragment {
     private ImageView imStatusIcon;
     private TextView imStatusText;
     private MaterialButton imStatusButton;
+    /** true when ≥1 IM is installed AND enabled (Banner 3 green). Gate for §4.4. */
+    private boolean imStatusOk;
+
+    // §4.4 Rating prompt. Shown only after the keyboard is enabled + active + an IM is
+    // installed/enabled, and not dismissed (已完成) / snoozed (以後再說). 以後再說 snoozes
+    // for RATING_SNOOZE_MILLIS OR until the app version bumps, whichever comes first.
+    private View ratingCard;
+    private View ratingCardBody;
+    private View ratingDismiss;
+    private static final String RATING_PREFS = "lime_rating_prompt";
+    private static final String RATING_KEY_DISMISSED = "rating_prompt_dismissed";
+    private static final String RATING_KEY_SNOOZE_UNTIL = "rating_prompt_snooze_until";
+    private static final String RATING_KEY_SNOOZE_VERSION = "rating_prompt_snooze_version";
+    private static final long RATING_SNOOZE_MILLIS = 14L * 24 * 60 * 60 * 1000;
 
     public static SetupFragment newInstance() {
         return new SetupFragment();
@@ -147,6 +164,17 @@ public class SetupFragment extends Fragment {
             imStatusButton.setOnClickListener(v -> openImTab());
         }
 
+        // §4.4 Rating prompt card: body tap → Play, × → dismiss dialog.
+        ratingCard = rootView.findViewById(R.id.ratingCard);
+        ratingCardBody = rootView.findViewById(R.id.ratingCardBody);
+        ratingDismiss = rootView.findViewById(R.id.ratingDismiss);
+        if (ratingCardBody != null) {
+            ratingCardBody.setOnClickListener(v -> openPlayStore());
+        }
+        if (ratingDismiss != null) {
+            ratingDismiss.setOnClickListener(v -> showRatingDismissDialog());
+        }
+
         // One-line copyright banner in the About footer:
         // "© LIME 萊姆輸入法 <versionName> - <year>". Same view/code path as
         // before — only the displayed copy changed to match the design footer.
@@ -154,8 +182,17 @@ public class SetupFragment extends Fragment {
             PackageInfo pInfo = requireActivity().getPackageManager()
                     .getPackageInfo(requireActivity().getPackageName(), 0);
             int year = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
-            ((TextView) rootView.findViewById(R.id.txtVersion))
-                    .setText(getString(R.string.about_copyright_format, pInfo.versionName, year));
+            TextView txtVersion = rootView.findViewById(R.id.txtVersion);
+            txtVersion.setText(getString(R.string.about_copyright_format, pInfo.versionName, year));
+            if (isDebugBuild()) {
+                // Debug-only: long-press the © banner to clear the rating dismiss/snooze
+                // so the card can be re-tested. Present only in debuggable builds.
+                txtVersion.setOnLongClickListener(v -> {
+                    ratingPrefs().edit().clear().apply();
+                    refreshStatus();
+                    return true;
+                });
+            }
         } catch (Exception e) {
             Log.w(TAG, "Could not read version", e);
         }
@@ -255,6 +292,8 @@ public class SetupFragment extends Fragment {
             btnSystemSettings.setVisibility(View.VISIBLE);
             btnImePicker.setVisibility(View.GONE);
         }
+
+        refreshRatingCard(enabled, active);
     }
 
     /**
@@ -274,6 +313,7 @@ public class SetupFragment extends Fragment {
             ctrl = ((LIMESettings) activity).getManageImController();
         }
         if (ctrl == null) {
+            imStatusOk = false;
             imStatusCard.setVisibility(View.GONE);
             return;
         }
@@ -285,6 +325,7 @@ public class SetupFragment extends Fragment {
             installed++;
             if (!im.isDisable()) enabled++;
         }
+        imStatusOk = installed > 0 && enabled > 0;
 
         // The card is ALWAYS shown — it reports the IM state in all three cases
         // (none → red, disabled → orange, ok → green). Only none/disabled carry a CTA.
@@ -335,6 +376,101 @@ public class SetupFragment extends Fragment {
                 activity.findViewById(R.id.main_nav_rail);
         if (navRail != null) {
             navRail.setSelectedItemId(R.id.nav_im);
+        }
+    }
+
+    // ── §4.4 Rating prompt ─────────────────────────────────────────────────
+
+    /**
+     * Show the card only when the keyboard is enabled AND active (Banner 1/2 green)
+     * AND an IM is installed & enabled (Banner 3 green), and the user hasn't dismissed
+     * (已完成) or snoozed (以後再說) it.
+     */
+    private void refreshRatingCard(boolean enabled, boolean active) {
+        if (ratingCard == null) return;
+        boolean show = enabled && active && imStatusOk
+                && !isRatingDismissed() && !isRatingSnoozed();
+        ratingCard.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    private SharedPreferences ratingPrefs() {
+        return activity.getSharedPreferences(RATING_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private boolean isRatingDismissed() {
+        return activity != null && ratingPrefs().getBoolean(RATING_KEY_DISMISSED, false);
+    }
+
+    /**
+     * A 以後再說 snooze holds only while {@code now < snooze_until} AND the recorded
+     * version still matches the current one — a version bump lapses the snooze so the
+     * card re-shows on the next release.
+     */
+    private boolean isRatingSnoozed() {
+        if (activity == null) return false;
+        SharedPreferences p = ratingPrefs();
+        long until = p.getLong(RATING_KEY_SNOOZE_UNTIL, 0L);
+        if (until <= System.currentTimeMillis()) return false;
+        String snoozeVersion = p.getString(RATING_KEY_SNOOZE_VERSION, null);
+        return snoozeVersion != null && snoozeVersion.equals(currentVersionName());
+    }
+
+    private String currentVersionName() {
+        if (activity == null) return "";
+        try {
+            return activity.getPackageManager()
+                    .getPackageInfo(activity.getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** true in debuggable builds — the equivalent of iOS's {@code #if DEBUG} gate. */
+    private boolean isDebugBuild() {
+        return activity != null
+                && (activity.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
+    private void showRatingDismissDialog() {
+        if (activity == null) return;
+        new MaterialAlertDialogBuilder(activity)
+                .setTitle(R.string.setup_rating_dialog_title)
+                .setMessage(R.string.setup_rating_dialog_message)
+                .setPositiveButton(R.string.setup_rating_done, (d, w) -> dismissRatingDone())
+                .setNeutralButton(R.string.setup_rating_later, (d, w) -> snoozeRating())
+                .setNegativeButton(R.string.setup_rating_cancel, null)
+                .show();
+    }
+
+    /** 已完成 — the user has rated (or would rather not). Hide permanently. */
+    private void dismissRatingDone() {
+        ratingPrefs().edit().putBoolean(RATING_KEY_DISMISSED, true).apply();
+        if (ratingCard != null) ratingCard.setVisibility(View.GONE);
+    }
+
+    /** 以後再說 — snooze for RATING_SNOOZE_MILLIS or until the app version bumps. */
+    private void snoozeRating() {
+        ratingPrefs().edit()
+                .putLong(RATING_KEY_SNOOZE_UNTIL, System.currentTimeMillis() + RATING_SNOOZE_MILLIS)
+                .putString(RATING_KEY_SNOOZE_VERSION, currentVersionName())
+                .apply();
+        if (ratingCard != null) ratingCard.setVisibility(View.GONE);
+    }
+
+    /** Open the Play listing — market:// jumps into the Play app, https is the fallback. */
+    private void openPlayStore() {
+        if (activity == null) return;
+        String id = activity.getPackageName();
+        try {
+            Intent market = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + id));
+            market.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(market);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://play.google.com/store/apps/details?id=" + id)));
+            } catch (Exception ignored) {
+            }
         }
     }
 

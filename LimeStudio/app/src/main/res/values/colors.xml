@@ -118,6 +118,8 @@
     <color name="setup_status_fg_green">#2E7D32</color>
     <color name="setup_status_fg_yellow">#EF6C00</color>
     <color name="setup_status_fg_red">#C62828</color>
+    <!-- Rating prompt (§4.4) — five gold stars, decorative only -->
+    <color name="rating_star">#FFB400</color>
 
     <!-- Material blue for links and UI accent (tabs, FAB, buttons) -->
     <color name="material_blue">#FF2196F3</color>

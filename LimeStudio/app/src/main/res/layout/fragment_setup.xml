@@ -229,6 +229,101 @@
 
         </LinearLayout>
 
+        <!-- Rating prompt (§4.4): tonal card; body tap → Google Play, × → dismiss
+             dialog. Shown only when the keyboard is enabled + active + an IM is
+             installed & enabled, and the user hasn't dismissed/snoozed it. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/ratingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp"
+            app:cardBackgroundColor="@color/setup_status_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- Card body — tapping anywhere opens the Play listing. -->
+                <LinearLayout
+                    android:id="@+id/ratingCardBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="16dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingEnd="18dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_rating_title"
+                            android:textColor="?android:attr/textColorPrimary"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="★★★★★"
+                            android:textColor="@color/rating_star"
+                            android:textSize="16sp"
+                            android:letterSpacing="0.06"
+                            android:layout_marginTop="6dp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/setup_rating_subtitle"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="14sp"
+                            android:layout_marginTop="6dp" />
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="?android:attr/textColorSecondary"
+                        android:contentDescription="@null" />
+
+                </LinearLayout>
+
+                <!-- × dismiss — its own tap target in the top-right corner. -->
+                <ImageButton
+                    android:id="@+id/ratingDismiss"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:padding="7dp"
+                    android:src="@drawable/ic_close_18"
+                    app:tint="?android:attr/textColorSecondary"
+                    android:scaleType="fitCenter"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/setup_rating_dismiss" />
+
+            </FrameLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- About footer: full-bleed separator, three equal-width link chips
              (使用手冊 / 版權說明 / 原始碼) and a one-line copyright banner.
              Same IDs as before so SetupFragment's click handlers are unchanged;

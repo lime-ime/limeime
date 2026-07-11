@@ -585,7 +585,8 @@ the flags (`ratingPromptDismissed` / `ratingPromptSnoozeUntil` / `ratingPromptSn
 so the card can be re-tested on the simulator without reinstalling; it reappears immediately if
 the three banner conditions still hold. Compiled out of Release builds.
 
-> Implemented in `SetupTabView.swift` (iOS) / `AndroidSetupTab.jsx` (Android) as `RateCard`.
+> Implemented in `SetupTabView.swift` (iOS) and `SetupFragment.java` + `fragment_setup.xml`
+> (Android, `ratingCard`); the `AndroidSetupTab.jsx` design kit mirrors the same card.
 
 ---
 
@@ -1477,7 +1478,7 @@ guard let db = openDB() else {
 - [ ] Optional `RECORD_AUDIO` setup step for LIME inline dictation — Android-only; not part of the iOS setup tab
 - [ ] Bundled IM seeding — *not ported*: the iOS app has no `seedDefaultIMs`; IMs are installed only via the download / import flow (§5.3)
 - [x] App version, licence, GitHub link
-- [ ] Rating prompt card (§4.4) — **iOS implemented** (`SetupTabView.swift`, App Store write-review deep link + ×/confirm dismiss); **Android pending** (Google Play listing)
+- [x] Rating prompt card (§4.4) — **iOS** (`SetupTabView.swift`, App Store write-review deep link) and **Android** (`SetupFragment.java` + `fragment_setup.xml`, Google Play `market://` + https), both with the ×/confirm dismiss (已完成 / 以後再說 + version re-show)
 
 ### IM Manager — IM List (§5.1)
 - [x] List of installed IMs with enable/disable toggle
