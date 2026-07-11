@@ -40,6 +40,18 @@ final class ManageImControllerTest: XCTestCase {
         return (url, db)
     }
 
+    /// Poll until `condition` (evaluated on the main actor) holds or `timeout` elapses.
+    /// Load-tolerant replacement for a fixed `Task.sleep` before asserting on an async
+    /// result: returns the instant the async work lands, and only waits longer under CPU load.
+    @MainActor
+    private func waitUntil(_ timeout: TimeInterval = 5, _ condition: @MainActor () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     private func syncMeta(for url: URL) throws -> SyncMetaStore {
         try SyncMetaStore(databaseURL: url)
     }
@@ -66,7 +78,7 @@ final class ManageImControllerTest: XCTestCase {
             controller.loadRecords(table: testTable, query: nil, searchByCode: true,
                                    page: 0, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        try await Task.sleep(nanoseconds: 1_500_000_000)
 
         await MainActor.run {
             XCTAssertTrue(mock.displayedRecords.isEmpty)
@@ -86,7 +98,7 @@ final class ManageImControllerTest: XCTestCase {
             controller.addRecord(table: testTable, code: "abc", word: "æ¸¬è©¦",
                                  score: 5, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.refreshCount == 1 }
 
         await MainActor.run {
             XCTAssertEqual(mock.refreshCount, 1)
@@ -258,11 +270,7 @@ final class ManageImControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRecord(table: testTable, code: "xyz", word: "åæ",
-                                 score: 1, view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRecord(table: testTable, code: "xyz", word: "åæ", score: 1)
 
         let records = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
         guard let first = records.first else {
@@ -275,7 +283,7 @@ final class ManageImControllerTest: XCTestCase {
             controller.updateRecord(table: testTable, id: first.id,
                                     code: "xyz", word: "æ°æ", score: 2, view: updateMock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { updateMock.refreshCount == 1 }
 
         await MainActor.run {
             XCTAssertEqual(updateMock.refreshCount, 1)
@@ -306,11 +314,7 @@ final class ManageImControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRecord(table: testTable, code: "del", word: "åªé¤",
-                                 score: 0, view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRecord(table: testTable, code: "del", word: "åªé¤", score: 0)
 
         let records = db.getRecordList(testTable, nil, searchByCode: true, 10, 0)
         guard let toDelete = records.first(where: { $0.word == "åªé¤" }) else {
@@ -322,7 +326,7 @@ final class ManageImControllerTest: XCTestCase {
         await MainActor.run {
             controller.deleteRecord(table: testTable, id: toDelete.id, view: deleteMock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { deleteMock.refreshCount == 1 }
 
         await MainActor.run {
             XCTAssertEqual(deleteMock.refreshCount, 1)
@@ -366,19 +370,16 @@ final class ManageImControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRecord(table: testTable, code: "a", word: "ä¸", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "b", word: "äº", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "c", word: "ä¸", score: 0, view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRecord(table: testTable, code: "a", word: "ä¸", score: 0)
+        _ = await controller.addRecord(table: testTable, code: "b", word: "äº", score: 0)
+        _ = await controller.addRecord(table: testTable, code: "c", word: "ä¸", score: 0)
 
         let mock = await MockManageImView()
         await MainActor.run {
             controller.loadRecords(table: testTable, query: nil, searchByCode: true,
                                    page: 0, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.displayedRecords.count >= 3 }
 
         await MainActor.run {
             XCTAssertGreaterThanOrEqual(mock.displayedRecords.count, 3)
@@ -393,18 +394,15 @@ final class ManageImControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRecord(table: testTable, code: "search1", word: "æ¾å°", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "other",   word: "å¶ä»", score: 0, view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRecord(table: testTable, code: "search1", word: "æ¾å°", score: 0)
+        _ = await controller.addRecord(table: testTable, code: "other", word: "å¶ä»", score: 0)
 
         let mock = await MockManageImView()
         await MainActor.run {
             controller.loadRecords(table: testTable, query: "search", searchByCode: true,
                                    page: 0, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.displayedRecords.count >= 1 }
 
         await MainActor.run {
             XCTAssertTrue(mock.displayedRecords.allSatisfy { $0.code.hasPrefix("search") })
@@ -416,18 +414,15 @@ final class ManageImControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRecord(table: testTable, code: "w1", word: "æ¸¬è©¦è©", score: 0, view: nil)
-            controller.addRecord(table: testTable, code: "w2", word: "å¶ä»",   score: 0, view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRecord(table: testTable, code: "w1", word: "æ¸¬è©¦è©", score: 0)
+        _ = await controller.addRecord(table: testTable, code: "w2", word: "å¶ä»", score: 0)
 
         let mock = await MockManageImView()
         await MainActor.run {
             controller.loadRecords(table: testTable, query: "æ¸¬è©¦", searchByCode: false,
                                    page: 0, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.displayedRecords.count >= 1 }
 
         await MainActor.run {
             XCTAssertTrue(mock.displayedRecords.allSatisfy { $0.word.contains("æ¸¬è©¦") })
@@ -445,7 +440,7 @@ final class ManageImControllerTest: XCTestCase {
         await MainActor.run {
             controller.toggleIMEnabled(imName: "phonetic", enabled: true, view: mock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.refreshCount >= 1 }
         // No crash is sufficient; error for missing row is acceptable
     }
 
@@ -469,7 +464,7 @@ final class ManageImControllerTest: XCTestCase {
         await MainActor.run {
             controller.addRecord(table: "custom", code: "t", word: "T", score: 0, view: threadMock)
         }
-        try await Task.sleep(nanoseconds: 400_000_000)
+        await waitUntil { threadMock.capturedThread != nil }
 
         await MainActor.run {
             if let t = threadMock.capturedThread {
@@ -497,7 +492,7 @@ final class ManageImControllerTest: XCTestCase {
             controller.loadRecords(table: "custom", query: nil, searchByCode: true,
                                    page: 0, view: threadMock)
         }
-        try await Task.sleep(nanoseconds: 400_000_000)
+        await waitUntil { threadMock.capturedThread != nil }
 
         await MainActor.run {
             if let t = threadMock.capturedThread {

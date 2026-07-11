@@ -40,6 +40,18 @@ final class ManageRelatedControllerTest: XCTestCase {
         try SyncMetaStore(databaseURL: url)
     }
 
+    /// Poll until `condition` (evaluated on the main actor) holds or `timeout` elapses.
+    /// Load-tolerant replacement for a fixed `Task.sleep` before asserting on an async
+    /// result: returns the instant the async work lands, and only waits longer under CPU load.
+    @MainActor
+    private func waitUntil(_ timeout: TimeInterval = 5, _ condition: @MainActor () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     // MARK: - loadRelated
 
     func testLoadRelatedEmptyTable() async throws {
@@ -49,7 +61,9 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run { controller.loadRelated(query: nil, page: 0, view: mock) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        // No positive signal: an empty table yields displayRelatedPhrases([]), leaving
+        // displayedPhrases == [] whether or not the load has run. Widened fixed wait.
+        try await Task.sleep(nanoseconds: 1_500_000_000)
 
         await MainActor.run {
             XCTAssertTrue(mock.displayedPhrases.isEmpty)
@@ -66,7 +80,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run { controller.addRelated(parentWord: "你好", childWord: "世界", view: mock) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.refreshCount == 1 }
 
         await MainActor.run {
             XCTAssertEqual(mock.refreshCount, 1)
@@ -157,8 +171,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run { controller.addRelated(parentWord: "一", childWord: "二", view: nil) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRelated(parentWord: "一", childWord: "二")
 
         let phrases = db.getRelated(nil, 10, 0)
         guard let first = phrases.first else {
@@ -171,7 +184,7 @@ final class ManageRelatedControllerTest: XCTestCase {
             controller.updateRelated(id: first.id, parentWord: "一", childWord: "三",
                                      view: updateMock)
         }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { updateMock.refreshCount == 1 }
 
         await MainActor.run {
             XCTAssertEqual(updateMock.refreshCount, 1)
@@ -230,8 +243,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run { controller.addRelated(parentWord: "刪", childWord: "除", view: nil) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRelated(parentWord: "刪", childWord: "除")
 
         let phrases = db.getRelated(nil, 10, 0)
         guard let toDelete = phrases.first(where: { $0.parentWord == "刪" }) else {
@@ -241,7 +253,7 @@ final class ManageRelatedControllerTest: XCTestCase {
 
         let deleteMock = await MockManageRelatedView()
         await MainActor.run { controller.deleteRelated(id: toDelete.id, view: deleteMock) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { deleteMock.refreshCount == 1 }
 
         await MainActor.run { XCTAssertEqual(deleteMock.refreshCount, 1) }
 
@@ -260,15 +272,12 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRelated(parentWord: "A", childWord: "B", view: nil)
-            controller.addRelated(parentWord: "C", childWord: "D", view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRelated(parentWord: "A", childWord: "B")
+        _ = await controller.addRelated(parentWord: "C", childWord: "D")
 
         let mock = await MockManageRelatedView()
         await MainActor.run { controller.loadRelated(query: nil, page: 0, view: mock) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        await waitUntil { mock.displayedPhrases.count >= 2 }
 
         await MainActor.run {
             XCTAssertGreaterThanOrEqual(mock.displayedPhrases.count, 2)
@@ -280,15 +289,14 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run {
-            controller.addRelated(parentWord: "搜尋", childWord: "結果", view: nil)
-            controller.addRelated(parentWord: "其他", childWord: "詞彙", view: nil)
-        }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        _ = await controller.addRelated(parentWord: "搜尋", childWord: "結果")
+        _ = await controller.addRelated(parentWord: "其他", childWord: "詞彙")
 
         let mock = await MockManageRelatedView()
         await MainActor.run { controller.loadRelated(query: "搜", page: 0, view: mock) }
-        try await Task.sleep(nanoseconds: 300_000_000)
+        // Pure absence assertion: query "搜" matches pword exactly (not "搜尋"), so the load
+        // yields displayRelatedPhrases([]) — no positive signal to poll. Widened fixed wait.
+        try await Task.sleep(nanoseconds: 1_500_000_000)
 
         await MainActor.run {
             XCTAssertTrue(mock.errors.isEmpty)
@@ -313,7 +321,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run { controller.addRelated(parentWord: "主線", childWord: "回呼", view: threadMock) }
-        try await Task.sleep(nanoseconds: 400_000_000)
+        await waitUntil { threadMock.capturedThread != nil }
 
         await MainActor.run {
             if let t = threadMock.capturedThread {
@@ -338,7 +346,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run { controller.loadRelated(query: nil, page: 0, view: threadMock) }
-        try await Task.sleep(nanoseconds: 400_000_000)
+        await waitUntil { threadMock.capturedThread != nil }
 
         await MainActor.run {
             if let t = threadMock.capturedThread {

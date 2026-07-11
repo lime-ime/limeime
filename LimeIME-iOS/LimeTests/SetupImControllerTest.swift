@@ -58,6 +58,18 @@ final class SetupImControllerTest: XCTestCase {
         return LimeIME.LIMEPreferenceManager(defaults: ud)
     }
 
+    /// Poll until `condition` (evaluated on the main actor) holds or `timeout` elapses.
+    /// Load-tolerant replacement for a fixed `Task.sleep` before asserting on an async
+    /// result: returns the instant the async work lands, and only waits longer under CPU load.
+    @MainActor
+    private func waitUntil(_ timeout: TimeInterval = 5, _ condition: @MainActor () -> Bool) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return }
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
     private func makeZippedCustomLimedb() throws -> (dbURL: URL, zipURL: URL) {
         let dbURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + ".db")
@@ -238,7 +250,7 @@ final class SetupImControllerTest: XCTestCase {
         let badURL = URL(fileURLWithPath: "/tmp/nonexistent_\(UUID().uuidString).db")
 
         await MainActor.run { controller.importDBFile(url: badURL, tableName: "phonetic", view: mock) }
-        try await Task.sleep(nanoseconds: 500_000_000)
+        await waitUntil { !mock.errors.isEmpty }
 
         await MainActor.run {
             XCTAssertFalse(mock.errors.isEmpty, "Expected an error for invalid path")
@@ -568,7 +580,7 @@ final class SetupImControllerTest: XCTestCase {
         let badURL = URL(fileURLWithPath: "/tmp/nonexistent_\(UUID().uuidString).cin")
 
         await MainActor.run { controller.importTxtFile(url: badURL, tableName: "custom", view: mock) }
-        try await Task.sleep(nanoseconds: 500_000_000)
+        await waitUntil { !mock.errors.isEmpty }
 
         await MainActor.run {
             XCTAssertFalse(mock.errors.isEmpty, "Expected error for missing file")
@@ -645,7 +657,7 @@ final class SetupImControllerTest: XCTestCase {
         let badURL = URL(fileURLWithPath: "/tmp/nonexistent_\(UUID().uuidString).zip")
 
         await MainActor.run { controller.restoreDB(from: badURL, view: mock) }
-        try await Task.sleep(nanoseconds: 500_000_000)
+        await waitUntil { !mock.errors.isEmpty }
 
         await MainActor.run {
             XCTAssertFalse(mock.errors.isEmpty, "Expected restore failure to reach the view")

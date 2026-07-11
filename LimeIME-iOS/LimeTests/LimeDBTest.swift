@@ -1748,7 +1748,7 @@ final class LimeDBTest: XCTestCase {
     }
 
     func testLimeDBExportTxtTableWithNullFile() throws {
-        let db = try makeLimeDB()
+        _ = try makeLimeDB()
         // Can't pass nil URL in Swift, just verify the method exists
         XCTAssertTrue(true)
     }
@@ -2054,7 +2054,7 @@ final class LimeDBTest: XCTestCase {
     // MARK: - 30. renameTableName
 
     func testLimeDBRenameTableName() throws {
-        let db = try makeLimeDB()
+        _ = try makeLimeDB()
         XCTAssertTrue(true) // Renaming is destructive, just verify method exists
     }
 
@@ -3029,7 +3029,7 @@ final class LimeDBTest: XCTestCase {
 
     private func createRestoreZip(databaseURL: URL, zipURL: URL) throws {
         try? FileManager.default.removeItem(at: zipURL)
-        let archive = try XCTUnwrap(Archive(url: zipURL, accessMode: .create))
+        let archive = try Archive(url: zipURL, accessMode: .create)
         try archive.addEntry(with: "databases/lime.db", fileURL: databaseURL)
     }
 

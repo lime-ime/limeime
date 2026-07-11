@@ -210,6 +210,7 @@ enum RelayPrefSync {
     /// LIMEPreferenceManager.reverseLookupKey). Keep this in sync with that format.
     static func reverseLookupKey(for im: String) -> String { "\(im)_im_reverselookup" }
 
+    @discardableResult
     static func apply(han: Int?,
                       split: Int?,
                       reverseLookupIM: String? = nil,

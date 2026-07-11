@@ -1075,10 +1075,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         PrefInbox.clearBestEffort(base: base)   // FA-on cleanup; FA-off relies on the seq guard
         // Mirror the post-drain value into relay-prefs.json so the kb→app relay reports it.
         let firstReverse = rec.reverseLookup?.first
-        try? relayPrefStore.update(hanConvert: hanConvertOption,
-                                   splitKeyboard: splitKeyboardMode,
-                                   reverseLookupIM: firstReverse?.key,
-                                   reverseLookupValue: firstReverse?.value)
+        _ = try? relayPrefStore.update(hanConvert: hanConvertOption,
+                                       splitKeyboard: splitKeyboardMode,
+                                       reverseLookupIM: firstReverse?.key,
+                                       reverseLookupValue: firstReverse?.value)
         return true
     }
 
@@ -4293,8 +4293,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 guard let self else { return }
                 self.hotPrefs.setReverseLookup(option.value, for: self.activeIM)   // §1.8 hot store
                 // relay delivery back to the app's Preferences tab.
-                try? self.relayPrefStore.update(reverseLookupIM: self.activeIM,
-                                                reverseLookupValue: option.value)
+                _ = try? self.relayPrefStore.update(reverseLookupIM: self.activeIM,
+                                                    reverseLookupValue: option.value)
                 self.showLimeToast("字根反查：\(option.label)")
             }))
         }
@@ -4312,8 +4312,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 guard let self else { return }
                 self.hanConvertOption = opt
                 self.hotPrefs.hanConvertOption = opt   // §1.8 hot store, not cold
-                try? self.relayPrefStore.update(hanConvert: opt,
-                                                splitKeyboard: self.splitKeyboardMode)
+                _ = try? self.relayPrefStore.update(hanConvert: opt,
+                                                    splitKeyboard: self.splitKeyboardMode)
             }))
         }
         items.append(("取消", {}))

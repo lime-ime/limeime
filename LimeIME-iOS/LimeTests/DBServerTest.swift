@@ -582,7 +582,7 @@ final class DBServerTest: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: backupURL.path))
         XCTAssertGreaterThan(backupURL.fileSizeBytes, 0)
 
-        let archive = try XCTUnwrap(Archive(url: backupURL, accessMode: .read))
+        let archive = try Archive(url: backupURL, accessMode: .read)
         let entryNames = Set(archive.map(\.path))
         XCTAssertTrue(entryNames.contains(DBServer.databaseName),
                       "Backup must include the live lime.db")
@@ -718,10 +718,9 @@ final class DBServerTest: XCTestCase {
         let targetURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: targetURL) }
 
-        var callbackInvoked = false
         let _ = DBServer.shared.exportZippedDb(tableName: LIME.DB_TABLE_CUSTOM,
                                                targetDbFile: targetURL,
-                                               progressCallback: { callbackInvoked = true })
+                                               progressCallback: { })
         XCTAssertTrue(true, "exportZippedDb with callback should complete")
     }
 
@@ -867,10 +866,7 @@ final class DBServerTest: XCTestCase {
 
         let zipURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: zipURL) }
-        guard let archive = Archive(url: zipURL, accessMode: .create) else {
-            XCTFail("Cannot create test archive")
-            return
-        }
+        let archive = try Archive(url: zipURL, accessMode: .create)
         try archive.addEntry(with: dbURL.lastPathComponent, fileURL: dbURL)
 
         db.clearTable(tableName)
@@ -989,10 +985,7 @@ final class DBServerTest: XCTestCase {
 
         let zipURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: zipURL) }
-        guard let archive = Archive(url: zipURL, accessMode: .create) else {
-            XCTFail("Cannot create archive")
-            return
-        }
+        let archive = try Archive(url: zipURL, accessMode: .create)
         try archive.addEntry(with: backupDB.lastPathComponent, fileURL: backupDB)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: zipURL.path))
@@ -1024,10 +1017,7 @@ final class DBServerTest: XCTestCase {
 
         let zipURL = tempFile(".zip")
         defer { try? FileManager.default.removeItem(at: zipURL) }
-        guard let archive = Archive(url: zipURL, accessMode: .create) else {
-            XCTFail("Cannot create archive")
-            return
-        }
+        let archive = try Archive(url: zipURL, accessMode: .create)
         try archive.addEntry(with: backupDB.lastPathComponent, fileURL: backupDB)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: zipURL.path))
@@ -1285,7 +1275,7 @@ final class DBServerTest: XCTestCase {
     }
 
     private func readPreferenceManifest(from zipURL: URL) throws -> PreferenceManifest {
-        let archive = try XCTUnwrap(Archive(url: zipURL, accessMode: .read))
+        let archive = try Archive(url: zipURL, accessMode: .read)
         let entry = try XCTUnwrap(archive.first { $0.path == "preferences/lime_prefs.json" })
         let outURL = tempFile(".json")
         defer { try? FileManager.default.removeItem(at: outURL) }
@@ -1301,7 +1291,7 @@ final class DBServerTest: XCTestCase {
         preferences: [String: Any]
     ) throws {
         try? FileManager.default.removeItem(at: zipURL)
-        let archive = try XCTUnwrap(Archive(url: zipURL, accessMode: .create))
+        let archive = try Archive(url: zipURL, accessMode: .create)
         try archive.addEntry(with: "databases/lime.db", fileURL: databaseURL)
 
         let legacyURL = tempFile(".bak")

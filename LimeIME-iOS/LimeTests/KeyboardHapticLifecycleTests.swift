@@ -20,7 +20,7 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
         let controller = KeyboardViewController()
         controller.installKeyboardViewForTesting(harness.keyboard)
         harness.keyboard.beginKeyInteractionForTesting(code: LimeKeyCode.delete.rawValue)
-        waitForTimers(0.65)
+        waitUntil { harness.delegate.pressedCodes.count >= 3 }
         XCTAssertGreaterThanOrEqual(harness.delegate.pressedCodes.count, 3)
 
         controller.viewWillDisappear(false)
@@ -44,7 +44,7 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
         let harness = makeHarness()
         let window = attach(harness.keyboard)
         harness.keyboard.beginKeyInteractionForTesting(code: LimeKeyCode.delete.rawValue)
-        waitForTimers(0.65)
+        waitUntil { harness.delegate.pressedCodes.count >= 3 }
         XCTAssertGreaterThanOrEqual(harness.delegate.pressedCodes.count, 3)
 
         harness.keyboard.removeFromSuperview()
@@ -65,7 +65,10 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
 
         window.addSubview(harness.keyboard)
         harness.keyboard.beginKeyInteractionForTesting(code: LimeKeyCode.arrowRight.rawValue)
-        waitForTimers(0.65)
+        waitUntil {
+            harness.delegate.pressedCodes.filter { $0 == LimeKeyCode.arrowRight.rawValue }.count >= 3
+                && harness.hapticCount() >= 4
+        }
         XCTAssertGreaterThanOrEqual(
             harness.delegate.pressedCodes.filter { $0 == LimeKeyCode.arrowRight.rawValue }.count, 3)
         XCTAssertGreaterThanOrEqual(harness.hapticCount(), 4)
@@ -76,7 +79,7 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
     func testNormalReleaseStopsRepeatAndHaptics() {
         let harness = makeHarness()
         harness.keyboard.beginKeyInteractionForTesting(code: LimeKeyCode.delete.rawValue)
-        waitForTimers(0.65)
+        waitUntil { harness.delegate.pressedCodes.count >= 3 }
         XCTAssertGreaterThanOrEqual(harness.delegate.pressedCodes.count, 3)
 
         harness.keyboard.endKeyInteractionForTesting(code: LimeKeyCode.delete.rawValue)
@@ -93,10 +96,23 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
         XCTAssertEqual(harness.hapticCount(), haptics, file: file, line: line)
     }
 
+    /// Poll the main run loop until `condition` holds or `timeout` elapses. Load-tolerant
+    /// replacement for a fixed sleep before a "fired at least N times" assertion: returns
+    /// as soon as the repeat timers have fired enough, and only waits longer under load —
+    /// instead of asserting against a fixed wall-clock budget that starves under CPU load.
+    private func waitUntil(_ condition: @escaping () -> Bool, timeout: TimeInterval = 5) {
+        let deadline = Date().addingTimeInterval(timeout)
+        while !condition() && Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.02))
+        }
+    }
+
     private func waitForTimers(_ seconds: TimeInterval) {
         let expectation = expectation(description: "wait for keyboard repeat timers")
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { expectation.fulfill() }
-        wait(for: [expectation], timeout: seconds + 1)
+        // Generous margin over `seconds`: under CPU load the main queue is starved and the
+        // asyncAfter fulfillment can be delayed well past a tight `seconds + 1` timeout.
+        wait(for: [expectation], timeout: seconds + 5)
     }
 
     private func attach(_ keyboard: KeyboardView) -> UIWindow {
