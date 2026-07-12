@@ -5,8 +5,9 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
 - Source: maintainer-created issue from private email/TestFlight evidence. Do not expose reporter identity, private app details, or private videos in public comments.
-- Resolution: fixed on `master` by commit `f7088f2853a692dd930bba02c52bd6d99e3a2b8a` (`#139 fix real iOS keyboard height reporting`) and included in iOS version 6.1.28. The fix makes the root keyboard height constraint authoritative after layout-affecting transitions and adds regression coverage for four-row/five-row heights plus taller/shorter layout changes.
-- Closed as a maintainer-created fixed issue; no Android retest applies. Reopen only if new iOS evidence shows stale keyboard-height reporting after 6.1.28.
+- Current state: reopened after a private reporter retested LIME 6.1.28 on iPhone 17 Pro Max / iOS 26.6 beta 4 and confirmed the bottom content is still covered. The scrollbar cannot reach the bottom with LIME keyboard size set anywhere from minimum to extra large. The reporter supplied a new private `.mov` recording and said Okidokey and 元書輸入法 do not reproduce the behavior.
+- Attempted fix commit `f7088f2853a692dd930bba02c52bd6d99e3a2b8a` (`#139 fix real iOS keyboard height reporting`) is included in LIME 6.1.28, but the real-device negative retest shows the active defect remains unresolved. Do not treat the existing height-constraint regression tests as sufficient device verification.
+- No Android retest applies. Keep the issue open pending renewed iOS investigation and a later TestFlight/App Store retest.
 - Historical symptom: iOS TestFlight 6.1.27 could leave host-app bottom content behind the LIME keyboard. The reporter said native iOS and other third-party keyboards did not cover the same bottom content. Follow-up evidence showed this was not Array10-only: Dayi also showed it, and Dayi covered a larger range.
 - Numeric-field routing is no longer the active defect. Simulator investigation on 2026-06-29 could not reproduce the reported numeric-field switch for tested web fields; iOS often replaces third-party keyboards entirely for numeric/inputmode fields.
 - The attempted `effectiveScale` / fixed-height cap is abandoned. It is not native iOS behavior, not Android behavior, and it breaks the user's `keyboard_size` preference. Do not reintroduce it.
@@ -148,6 +149,9 @@ If the values differ, that mismatch is #139. If they match, then LIME is reporti
   - changing layout from taller to shorter updates the reported height downward
   - changing layout from shorter to taller updates the reported height upward
 - Manual device verification:
+  - reproduce or instrument the 6.1.28 failure on iPhone 17 Pro Max / iOS 26.6 beta 4 using the private video as reference.
+  - verify that host-app scrolling can reach the true bottom with LIME keyboard size settings across the full range from minimum through extra large.
+  - compare the same host view with Okidokey and 元書輸入法, which the reporter says do not reproduce the coverage.
   - Array10 and Dayi report different heights matching their real rows.
   - Switching between layouts does not leave stale hidden content or stale gaps.
   - changing `keyboard_size` changes the reported height and visual row height together.
