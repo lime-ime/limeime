@@ -6,7 +6,10 @@
 - Classification: bug, usability
 - State: open
 - Assignee: `jrywu`
-- Platforms: Android and iOS are both likely affected from source inspection; device verification remains required.
+- Fix commit: `81d8dcdc225a117b1664231e135c555f5abfd9ef`
+- Android delivery: source fix is on `master`, but the initially published v6.1.30 Release asset has the Google Play package/signing identity and is not accepted as the GitHub testing-track APK. Runtime delivery remains pending a corrected artifact.
+- iOS delivery: source fix is on `master`, but TestFlight/App Store delivery was not verified during the GitHub Release closeout.
+- Platforms: Android and iOS shared the same reachability gap and were changed by the fix commit.
 
 ## Problem statement
 
@@ -77,5 +80,5 @@ Prefer a shared helper/policy that is table-driven or clearly lists the verified
 
 ## Platform impact
 
-- **Android:** source inspection indicates the hard-coded `w[0-9]*` rule cannot reach `hg#`; runtime verification required.
-- **iOS:** source inspection indicates the same single-prefix limitation; runtime verification required.
+- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. Source is on `master`; runtime delivery remains pending because the initially published v6.1.30 asset does not match the GitHub testing-track package/signing policy.
+- **iOS:** the same fix commit extends the iOS guarded digit-symbol path. Source is on `master`; runtime verification and TestFlight/App Store delivery remain pending and are not established by the Android GitHub Release.
