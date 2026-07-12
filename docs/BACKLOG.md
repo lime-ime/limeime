@@ -8,7 +8,7 @@ Last reviewed: 2026-07-12
 
 - fix#139 iOS: continue investigating host-app bottom content coverage after the attempted keyboard-height reporting fix. A private reporter reproduced the issue on LIME 6.1.28, iPhone 17 Pro Max, and iOS 26.6 beta 4 across keyboard sizes from minimum to extra large, with the scrollbar unable to reach the bottom. Use the private recording for device instrumentation, compare LIME's published root/input-view frame with the rendered keyboard height, and verify against third-party keyboards that do not reproduce the behavior. Android is not in scope.
 
-- fix#155 iOS: the Android and iOS source fix for Array30 `hg#` digit symbol-list lookup landed in commit `81d8dcdc225a117b1664231e135c555f5abfd9ef`, and Android delivery is included in the corrected GitHub testing-track v6.1.30 APK. Verify the iOS path in a newer TestFlight/App Store build before removing this delivery-QA item. Track in `docs/#155_ISSUE.md`.
+- fix#155 Android+iOS: restore Array30 `hg#` digit symbol-list lookup for the populated `hg0`, `hg1`, `hg2`, `hg8`, and `hg9` groups in `Database/array.limedb`. Both platforms currently guard only the older `w[0-9]*` symbol family. Add a narrow verified-prefix policy and regression tests without making digits general Array30 roots. Track in `docs/#155_ISSUE.md`.
 
 - fix#153 iOS: restore Array30 `w` + digit (`w0`–`w9`) symbol-code candidate lookup. The iOS source fix and focused helper tests landed in commit `83c5d5af320469af262f98883280ede193c2d1b7`; verify the behavior in a newer TestFlight/App Store build before removing this delivery-QA item. Android already has the equivalent guarded `w[0-9]*` behavior.
 
