@@ -312,3 +312,17 @@ Perceived responsiveness is dominated by (a)+(b) — the stages we own.
    - gap in (a) → keep these fixes, next look at highlight/pressed-state path and frame pacing;
    - gap in (c) → measure the XPC floor first; if the whole gap is there, local polish can only *mask* it via (a)/(b) crispness — say so and stop;
    - gap in (d) → profile keyboard-spawn (`viewDidLoad`, DB open) and lazy-load.
+
+### 13.4 Keep press feedback out of the touch-critical path (2026-07-12)
+
+Plain-key input previously ran haptic and sound feedback synchronously before
+`didPress`, making feedback setup part of tap-to-commit latency. Haptic UIKit APIs
+must remain on the main thread, and both sound playback APIs already return after
+starting asynchronous playback, so moving either API to a background queue is not
+safe or useful.
+
+**Change:** commit the key synchronously, then enqueue haptic and sound feedback for
+the next main-queue turn. The feedback generators/player stay cached and prepared;
+the existing 40 Hz haptic throttle remains unchanged. A focused unit test asserts
+that commit occurs before the deferred haptic request. Device verification remains
+the final oracle for whether the one-turn feedback delay feels acceptable.

@@ -399,6 +399,14 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         hapticGenerator?.prepare()
     }
 
+    private func deferPressFeedback() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.fireHaptic()
+            if self.feedbackSound { self.playKeyClickSound() }
+        }
+    }
+
     // isPad: trait-collection-based (false in iPhone compat mode on iPad).
     // Controls layout JSON selection, fonts, gaps, corner radius, and 1/3-split logic.
     private var isPad: Bool { LayoutLoader.hostIsPad }
@@ -1923,8 +1931,6 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         button.wasLongPressed = false
         button.backgroundColor = pressedKeyColor
         updateShiftHoldTrackingFromTrackers(for: keyDef)
-        fireHaptic()
-        if feedbackSound { playKeyClickSound() }
         if keyDef.icon.isEmpty && !keyDef.isModifier
             && keyDef.code != LimeKeyCode.space.rawValue
             && !isPad {
@@ -1935,6 +1941,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             Prof.event("PlainCommit", "code=\(keyDef.code)")
             delegate?.keyboardView(self, didPress: keyDef)
         }
+        deferPressFeedback()
 
         if keyDef.isRepeatable {
             repeatKeyDef = keyDef

@@ -2,6 +2,20 @@
 import UIKit
 
 final class KeyboardHapticLifecycleTests: XCTestCase {
+    func testKeyCommitPrecedesDeferredHaptic() {
+        let harness = makeHarness()
+        var events: [String] = []
+        harness.delegate.onPress = { events.append("commit") }
+        harness.keyboard.hapticRequestedForTesting = { events.append("haptic") }
+
+        harness.keyboard.beginKeyInteractionForTesting(code: LimeKeyCode.delete.rawValue)
+
+        XCTAssertEqual(events, ["commit"])
+        waitUntil { events.count == 2 }
+        XCTAssertEqual(events, ["commit", "haptic"])
+        harness.keyboard.cancelActiveInteractions()
+    }
+
     func testViewWillDisappearStopsPendingRepeatAndHaptics() {
         let harness = makeHarness()
         let controller = KeyboardViewController()
@@ -159,9 +173,11 @@ private struct KeyboardLifecycleHarness {
 private final class RecordingLifecycleDelegate: KeyboardViewDelegate {
     var pressedCodes: [Int] = []
     var releasedCodes: [Int] = []
+    var onPress: (() -> Void)?
 
     func keyboardView(_ view: KeyboardView, didPress keyDef: KeyDef) {
         pressedCodes.append(keyDef.code)
+        onPress?()
     }
 
     func keyboardView(_ view: KeyboardView, didRelease keyDef: KeyDef) {
