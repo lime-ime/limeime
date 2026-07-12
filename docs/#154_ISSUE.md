@@ -2,10 +2,12 @@
 
 ## Status
 
-- Fix implemented and verified locally; reporter-testable release build is not published yet.
+- Closed by maintainer `jrywu` through fix commit `d4fe8b271dccc5d8d8aa9d53d0c016a53c40e54f` on 2026-07-12.
+- Source fix is implemented and verified locally; reporter-testable release build is not published yet.
 - Reported on 2026-07-11 by `01disney`.
 - Affected platform confirmed by the screenshot: Android.
 - Android debug build verified on the Pixel 9 Pro API 36 emulator.
+- Reporter confirmation should wait for the next Android release build containing the fix.
 
 ## Problem statement
 
