@@ -363,7 +363,13 @@ final class LIMEPreferenceManagerTest: XCTestCase {
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {
-        URL(fileURLWithPath: #filePath)
+        // Prefer the copy bundled into the test target — on Xcode Cloud the source
+        // checkout is absent at test runtime, so #filePath resolves to a missing path.
+        if let bundled = Bundle(for: type(of: self)).resourceURL?.appendingPathComponent(relativePath),
+           FileManager.default.fileExists(atPath: bundled.path) {
+            return bundled
+        }
+        return URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // LimeTests
             .deletingLastPathComponent() // LimeIME-iOS
             .appendingPathComponent(relativePath)

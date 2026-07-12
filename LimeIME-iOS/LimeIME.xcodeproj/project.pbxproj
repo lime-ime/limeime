@@ -911,6 +911,7 @@
 				8392487656C2CCC397104D24 /* Sources */,
 				AA9E082D674430588982BE13 /* Resources */,
 				BB5494095EDE108D8C7A0450 /* Frameworks */,
+				FACE00C0DE000000FA110001 /* Copy source fixtures to test bundle */,
 			);
 			buildRules = (
 			);
@@ -1196,6 +1197,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		FACE00C0DE000000FA110001 /* Copy source fixtures to test bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy source fixtures to test bundle";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "D=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nmkdir -p \"$D/LimeKeyboard/Layouts\" \"$D/LimeSettings/Views\" \"$D/Shared/Preferences\" \"$D/Shared/Database\"\nfor f in LimeKeyboard/KeyboardView.swift LimeKeyboard/KeyboardViewController.swift LimeKeyboard/CandidateBarView.swift LimeKeyboard/Info.plist LimeSettings/LimeSettingsView.swift LimeSettings/Views/IMDetailView.swift LimeSettings/Views/SetupTabView.swift LimeSettings/Views/RelatedListView.swift LimeSettings/Views/RecordListView.swift LimeSettings/Views/PreferencesTabView.swift LimeSettings/SettingsTheme.swift LimeSettings/SettingsMetrics.swift LimeSettings/Info.plist Shared/Preferences/LIMEPreferenceManager.swift Shared/Database/SyncContract.swift; do\n  [ -f \"${SRCROOT}/$f\" ] && cp -f \"${SRCROOT}/$f\" \"$D/$f\"\ndone\ncp -Rf \"${SRCROOT}/LimeKeyboard/Layouts/.\" \"$D/LimeKeyboard/Layouts/\"\n";
+		};
 		7773AA62913279E155050F6F /* Copy emoji.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
