@@ -484,6 +484,10 @@ public class CandidateView extends View implements View.OnClickListener {
             sendMessageDelayed(obtainMessage(MSG_HIDE_CANDIDATE_POPUP, 0, 0, null), delay);
         }
 
+        public void cancelCandidatePopupShow() {
+            removeMessages(MSG_SHOW_CANDIDATE_POPUP);
+        }
+
         public void showLimeToast(CharSequence text) {
             removeMessages(MSG_SHOW_LIME_TOAST);
             removeMessages(MSG_HIDE_LIME_TOAST);
@@ -600,6 +604,11 @@ public class CandidateView extends View implements View.OnClickListener {
     public void doUpdateCandidatePopup() {
         if (DEBUG)
             Log.i(TAG, "doUpdateCandidatePopup(), mHeight:" + mHeight);
+
+        if (!isAttachedToWindow() || getWindowToken() == null) {
+            candidateExpanded = false;
+            return;
+        }
 
         //Jeremy '11,8.27 do vibrate and sound on candidateview expand button pressed.
         if (!candidateExpanded)
@@ -2072,6 +2081,7 @@ public class CandidateView extends View implements View.OnClickListener {
     @Override
     public void onDetachedFromWindow() {
         if (DEBUG) Log.i(TAG, "onDetachedFromWindow() ");
+        mHandler.cancelCandidatePopupShow();
         super.onDetachedFromWindow();
         hideComposing();
         hideCandidatePopup();

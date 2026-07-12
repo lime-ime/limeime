@@ -168,4 +168,23 @@ public class CandidateViewTest {
         assertSame(first, candidateView.mSuggestions.get(0));
         assertSame(last, candidateView.mSuggestions.get(1));
     }
+
+    @Test
+    public void detachedCandidateViewDoesNotStartPopupExpansion() {
+        CandidateView candidateView = new CandidateView(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
+        net.toload.main.hd.LIMEService service =
+                org.mockito.Mockito.mock(net.toload.main.hd.LIMEService.class);
+        Mapping mapping = new Mapping();
+        mapping.setWord("candidate");
+        List<Mapping> suggestions = new ArrayList<>();
+        suggestions.add(mapping);
+        candidateView.setService(service);
+        candidateView.setSuggestions(suggestions, false);
+
+        candidateView.doUpdateCandidatePopup();
+
+        assertFalse(candidateView.isCandidateExpanded());
+        org.mockito.Mockito.verifyNoInteractions(service);
+    }
 }
