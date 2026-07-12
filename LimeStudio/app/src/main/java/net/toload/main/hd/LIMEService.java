@@ -5587,18 +5587,15 @@ public class LIMEService extends InputMethodService
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
                 updateCandidates();
                 //misMatched = mComposing.toString();
-            } else if (activeIM.equals(LIME.IM_ARRAY)
-                    && mComposing != null
-                    && mComposing.toString().matches("w[0-9]*")
-                    && Character.isDigit((char) primaryCode)
-                    && !mEnglishOnly) {
+            } else if (mComposing != null
+                    && isArraySymbolDigit(activeIM, mComposing.toString(), primaryCode)) {
                 // Array30 symbol-input exception (行列30 symbols1). Digits are NOT array roots (not
                 // in the table's imkeys / ARRAY_KEY), so acceptsIntoComposing above rejects a bare
-                // digit — but a digit IS allowed while composing a 'w'-prefixed number sequence
-                // ("w" + digits → symbols1 lookup). De-flagged (previously gated on the mapping
+                // digit — but a digit IS allowed while composing a 'w'- or 'hg'-prefixed number
+                // sequence. De-flagged (previously gated on the mapping
                 // flags, which never fired for array since array sets hasNumberMapping true) so it
-                // works under the imkeys-based acceptance. The `w[0-9]*` guard also stops it firing
-                // on regular 'w'+letter array codes.
+                // works under the imkeys-based acceptance. The prefix guard stops it firing on
+                // regular Array30 codes.
                 mComposing.append((char) primaryCode);
                 //InputConnection ic=getCurrentInputConnection();
                 if (ic != null && mPredictionOn) ic.setComposingText(mComposing, 1);
@@ -5674,6 +5671,12 @@ public class LIMEService extends InputMethodService
 
         if (!(!hasPhysicalKeyPressed && hasDistinctMultitouch))
             updateShiftKeyState(getCurrentInputEditorInfo());
+    }
+
+    static boolean isArraySymbolDigit(String activeIM, String composing, int code) {
+        return LIME.IM_ARRAY.equals(activeIM)
+                && composing.matches("(?:w|hg)[0-9]*")
+                && code >= '0' && code <= '9';
     }
 
     /**

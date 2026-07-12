@@ -1799,8 +1799,8 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(accepts(59)) // ;
     }
 
-    func testArray30SymbolDigitsOnlyContinueWNumberComposition() {
-        for composing in ["w", "w1", "w123"] {
+    func testArray30SymbolDigitsOnlyContinueWOrHgNumberComposition() {
+        for composing in ["w", "w1", "w123", "hg", "hg1"] {
             XCTAssertTrue(KeyboardViewController.isArraySymbolDigit(
                 activeIM: "array", composing: composing, code: 48))
             XCTAssertTrue(KeyboardViewController.isArraySymbolDigit(
@@ -1811,6 +1811,10 @@ final class KeyboardViewControllerTest: XCTestCase {
             activeIM: "array", composing: "", code: 49))
         XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
             activeIM: "array", composing: "wa", code: 49))
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array", composing: "h", code: 49))
+        XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
+            activeIM: "array", composing: "hga", code: 49))
         XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(
             activeIM: "array10", composing: "w", code: 49))
         XCTAssertFalse(KeyboardViewController.isArraySymbolDigit(

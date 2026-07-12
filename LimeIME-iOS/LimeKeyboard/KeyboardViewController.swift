@@ -1757,8 +1757,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     static func isArraySymbolDigit(activeIM: String, composing: String, code: Int) -> Bool {
         activeIM == "array"
-            && composing.first == "w"
-            && composing.dropFirst().allSatisfy { $0 >= "0" && $0 <= "9" }
+            && ((composing.first == "w"
+                    && composing.dropFirst().allSatisfy { $0 >= "0" && $0 <= "9" })
+                || (composing.hasPrefix("hg")
+                    && composing.dropFirst(2).allSatisfy { $0 >= "0" && $0 <= "9" }))
             && (48...57).contains(code)
     }
 

@@ -56,6 +56,17 @@ public class AcceptsIntoComposingTest {
         assertTrue(LIMEService.acceptsIntoComposing('w', arr, true, true, false));
         assertFalse(LIMEService.acceptsIntoComposing('0', arr, true, true, false));
     }
+    @Test public void arraySymbolDigits_continueWAndHgOnly() {
+        for (String composing : new String[]{"w", "w1", "hg", "hg1"}) {
+            assertTrue(LIMEService.isArraySymbolDigit("array", composing, '0'));
+            assertTrue(LIMEService.isArraySymbolDigit("array", composing, '9'));
+        }
+        assertFalse(LIMEService.isArraySymbolDigit("array", "", '1'));
+        assertFalse(LIMEService.isArraySymbolDigit("array", "h", '1'));
+        assertFalse(LIMEService.isArraySymbolDigit("array", "hga", '1'));
+        assertFalse(LIMEService.isArraySymbolDigit("array10", "hg", '1'));
+        assertFalse(LIMEService.isArraySymbolDigit("array", "hg", 'a'));
+    }
     // eten26 fix: phonetic roots must be the TYPE-SPECIFIC keymap (ETEN26_KEY = letters + ,.),
     // NOT the stored BPMF string. Guards against the BPMF leak where currentImKeys=BPMF made
     // eten26/hsu wrongly compose digits / ; / - . Flags are F/F for eten26 (standardPhonetic=false).
