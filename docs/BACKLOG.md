@@ -10,7 +10,7 @@ Last reviewed: 2026-07-12
 
 - fix#155 Android+iOS: restore Array30 `hg#` digit symbol-list lookup for the populated `hg0`, `hg1`, `hg2`, `hg8`, and `hg9` groups in `Database/array.limedb`. Both platforms currently guard only the older `w[0-9]*` symbol family. Add a narrow verified-prefix policy and regression tests without making digits general Array30 roots. Track in `docs/#155_ISSUE.md`.
 
-- fix#153 iOS: restore Array30 `w` + digit (`w0`–`w9`) symbol-code candidate lookup. The iOS composing path currently treats Array30's published `imkeys` as authoritative and rejects the digit before lookup, while Android has a dedicated guarded `w[0-9]*` exception. Add the equivalent narrow iOS dispatch rule and regression tests without making digits general Array30 roots. Android requires no source change unless parity testing finds a separate regression.
+- fix#153 iOS: restore Array30 `w` + digit (`w0`–`w9`) symbol-code candidate lookup. The iOS source fix and focused helper tests landed in commit `83c5d5af320469af262f98883280ede193c2d1b7`; verify the behavior in a newer TestFlight/App Store build before removing this delivery-QA item. Android already has the equivalent guarded `w[0-9]*` behavior.
 
 ## Product work
 
