@@ -1,4 +1,4 @@
-# Issue #145: Tablet bottom keyboard row can be covered
+﻿# Issue #145: Tablet bottom keyboard row can be covered
 
 ## Status
 
@@ -32,16 +32,16 @@ The reporter has now identified the platform as Android tablet, specifically iPl
 
 ### Android input view and bottom inset path
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `onCreateInputView()` inflates/returns the fixed candidate + keyboard container `mCandidateInInputView`.
   - For API 35+ (`VANILLA_ICE_CREAM`), it installs a `ViewCompat.setOnApplyWindowInsetsListener(...)` on `mCandidateInInputView` and applies `systemBars().bottom` as the container bottom padding.
   - `applyNavigationBarTheme()` previously called `WindowCompat.setDecorFitsSystemWindows(window, false)` on every API level, which forced Android 10 gesture navigation into an edge-to-edge IME window without the matching pre-35 bottom inset padding.
   - 2026-07-08 source fix: `shouldForceImeEdgeToEdge(...)` keeps both the forced edge-to-edge opt-in and the explicit bottom-inset listener on API 35+ only.
 - `LimeStudio/app/src/main/res/layout/inputcandidate.xml`
   - The IME view is a vertical `CandidateInInputViewContainer` with `wrap_content` height, `fitsSystemWindows="true"`, an embedded candidate strip, and a `LIMEKeyboardView` with `wrap_content` height and `layout_alignParentBottom="true"`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`
   - `onMeasure()` sets the keyboard view height to `mKeyboard.getHeight() + paddingTop + paddingBottom`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java`
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java`
   - Keyboard total height is computed from the XML row heights and vertical gaps.
   - Large/tablet resources use larger key heights, for example `values-large/dimens.xml` sets `key_height` to `60dip`, and `values-xlarge/dimens.xml` sets `key_height` to `84dip`.
 

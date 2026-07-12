@@ -1,4 +1,4 @@
-# Issue #79: Android dark-mode emoji search field was bright (closed/resolved)
+﻿# Issue #79: Android dark-mode emoji search field was bright (closed/resolved)
 
 ## Problem statement
 
@@ -35,7 +35,7 @@ Expected result: the emoji search field background, hint text, typed text, and s
 
 ## Android investigation
 
-The Android emoji panel is built programmatically in `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`.
+The Android emoji panel is built programmatically in `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`.
 
 Relevant code:
 

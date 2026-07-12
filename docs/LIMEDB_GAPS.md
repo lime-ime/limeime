@@ -1,6 +1,6 @@
-# LimeDB Gap Analysis — Java vs Swift
+﻿# LimeDB Gap Analysis — Java vs Swift
 
-**Source of truth:** `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` (~5,700 lines)  
+**Source of truth:** `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` (~5,700 lines)  
 **iOS port:** `LimeIME-iOS/Shared/Database/LimeDB.swift`  
 **Analysis date:** 2026-04-09  
 **Goal:** 100% functional parity with Java source
@@ -184,7 +184,7 @@ The `getBaseScore` use case (seeding `basescore` on import) has no direct iOS eq
 
 ## LimeDBTest Gap Analysis
 
-**Android test file:** `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`  
+**Android test file:** `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`  
 **iOS test file:** `LimeIME-iOS/LimeIMETests/LimeDBTest.swift`  
 **Android test count:** 181  
 **iOS test count:** 181  

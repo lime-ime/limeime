@@ -5,7 +5,7 @@ released, the two distinct distribution channels (Google Play vs. off-Play
 sideload), and the **signing keys** involved — because confusing them causes the
 "app is unusable, redirects user back to Google Play to redownload" failure.
 
-App identity: `applicationId = org.limeime`, namespace `net.toload.main.hd`.
+App identity: `applicationId = org.limeime`, namespace `org.limeime`.
 
 ---
 

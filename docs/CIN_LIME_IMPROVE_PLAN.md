@@ -46,7 +46,7 @@
 
 Source file:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 
 Methods / blocks:
 
@@ -90,7 +90,7 @@ It should preserve empty fields and treat `\|` as data when delimiter is `|`.
 
 Source file:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 
 Method / blocks:
 

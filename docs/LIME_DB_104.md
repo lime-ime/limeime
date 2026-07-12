@@ -147,8 +147,8 @@ If a future release needs a dedicated four-code Cangjie keyboard layout, it can 
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIME.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 
 - [x] Add constants:
 
@@ -165,7 +165,7 @@ public static final String IM_CJ4 = "cj4";
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 - Test: Android DB migration/instrumentation tests.
 
 - [x] Change `DATABASE_VERSION` from `103` to `104`.
@@ -434,7 +434,7 @@ The DB 104 change affects tests that hardcode DB 103, schema-only seed assumptio
 
 ### Android Tests
 
-Update or replace `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDB103IntegrationTest.java`:
+Update or replace `LimeStudio/app/src/androidTest/java/org/limeime/LimeDB103IntegrationTest.java`:
 
 - Rename to `LimeDB104IntegrationTest` or keep the class name only if renaming is too disruptive.
 - Change expected DB version from `103` to `104`.
@@ -452,7 +452,7 @@ Update or replace `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDB
 - Update restore and factory reset tests to expect version 104 and `cj4`/keyboard schema.
 - Review assertions that say the bundled seed must keep core IM rows. DB 103 documentation says the seed should be schema-only for user-facing IM data; DB 104 should preserve that discipline. If runtime emoji refresh adds `im code='emoji'`, assert emoji rows specifically, not installed IM rows.
 
-Update `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`:
+Update `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`:
 
 - Add `LIME.DB_TABLE_CJ4` to valid table-name assertions.
 - Add `cj4_user` to valid backup-table suffix assertions.

@@ -1,4 +1,4 @@
-# Edit IM Name And Version Implementation Plan
+﻿# Edit IM Name And Version Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,7 +14,7 @@
 
 Android findings:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` imports metadata using `setImConfig(table, "version", version)` and `setImConfig(table, "name", imname)`.
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` imports metadata using `setImConfig(table, "version", version)` and `setImConfig(table, "name", imname)`.
 - Android `LimeDB.setImConfig(imCode, field, value)` writes to the `im` table by deleting the existing `code + title` row and inserting the new value into `desc`.
 - Android `SearchServer.setImConfig(...)` exposes the write path, but currently returns `false` even after success, so callers should not depend on that boolean.
 - Android `ImDetailFragment` displays `name` and `version` with `TextView`; it does not provide user editing.

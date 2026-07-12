@@ -23,11 +23,11 @@
 
 # --- Custom Views inflated from layout XML (referenced by FQCN) ---
 # R8 cannot see XML references; keep the (Context, AttributeSet) constructors.
--keep public class net.toload.main.hd.candidate.** { public <init>(android.content.Context, android.util.AttributeSet); }
--keep public class net.toload.main.hd.keyboard.** { public <init>(android.content.Context, android.util.AttributeSet); }
+-keep public class org.limeime.candidate.** { public <init>(android.content.Context, android.util.AttributeSet); }
+-keep public class org.limeime.keyboard.** { public <init>(android.content.Context, android.util.AttributeSet); }
 
 # --- Custom Preference inflated from preferences XML ---
--keep public class net.toload.main.hd.ui.view.SegmentedHanPreference {
+-keep public class org.limeime.ui.view.SegmentedHanPreference {
     public <init>(android.content.Context, android.util.AttributeSet);
     public <init>(android.content.Context, android.util.AttributeSet, int);
 }

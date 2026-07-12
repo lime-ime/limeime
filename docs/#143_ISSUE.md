@@ -1,4 +1,4 @@
-# Issue #143: Replace Cangjie semicolon preference with selectable layouts
+﻿# Issue #143: Replace Cangjie semicolon preference with selectable layouts
 
 ## Status
 
@@ -90,7 +90,7 @@ The exact runtime layout IDs can be aliases to existing resources, but they must
 
 Both platforms already seed `computernum` from the current database check path:
 
-- Android: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Android: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - `ensureCurrentDatabase()`
   - `ensureComputerNumKeyboard(...)`
 - iOS: `LimeIME-iOS/Shared/Database/LimeDB.swift`
@@ -114,16 +114,16 @@ Current old preference path:
   - `cj4_semicolon_section_title`
   - `cj4_semicolon_switch_label`
   - `cj4_semicolon_summary`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java`
   - shows the switch only for `cj4`.
   - stores `cj4_semicolon_key`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEKeyboardSwitcher.java`
   - reads `cj4_semicolon_key`.
   - calls `LIMEKeyboard.addCj4SemicolonKey()` only for cj4 + Cangjie XML.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - reads `cj4_semicolon_key`.
   - forces `SearchSrv.setSymbolMapping(true)` for cj4 when enabled.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboard.java`
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboard.java`
   - `addCj4SemicolonKey()` contains the existing phone/Android row transform. Reuse or rename this behavior; do not duplicate geometry.
 
 ### iOS

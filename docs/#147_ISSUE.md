@@ -1,4 +1,4 @@
-# Issue #147: iOS Chinese input candidate 0 should preserve capital letters
+﻿# Issue #147: iOS Chinese input candidate 0 should preserve capital letters
 
 ## Status
 
@@ -30,13 +30,13 @@ Lowercasing for lookup, cache keys, and database matching is fine. The bug is on
 
 ### Android comparison
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+- `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`
   - Android creates the composing-code echo fresh in `getMappingByCode(...)`:
     - `self.setWord(code)`
     - `self.setCode(code)`
     - `self.setComposingCodeRecord()`
   - This uses the original typed `code`, so candidate 0 preserves casing.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - Android lowercases inside database lookup with `code = code.toLowerCase(Locale.US)`.
   - That means Android lowercases for query matching but keeps candidate 0 display based on the original input.
 - Android caches database result lists, then adds the `self` echo outside the cached DB results. iOS currently caches the assembled list that already contains candidate 0, so iOS needs to rebuild or replace candidate 0 on cache returns.

@@ -24,12 +24,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = 'net.toload.main.hd'
+    namespace = 'org.limeime'
     signingConfigs {
     }
     compileSdkVersion  34
     defaultConfig {
-        applicationId = "net.toload.main.hd"
+        applicationId = "org.limeime"
 
         minSdkVersion  21
         targetSdkVersion  34

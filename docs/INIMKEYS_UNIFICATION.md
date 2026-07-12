@@ -56,7 +56,7 @@ resolveSelkey(configured, hasNumber, hasSymbol, isPhonetic, isDayi, isStdPhoneti
 
 iOS acceptance already implements this ([KeyboardViewController.swift:1387](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L1387),
 `isKeyInImkeys` [:1369](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L1369)). Android's
-`isKeyInImkeys` ([LIMEService.java:2442](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2442))
+`isKeyInImkeys` ([LIMEService.java:2442](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2442))
 lacks the `,`/`.` rule and Android acceptance never calls it — those are the gaps.
 
 ---
@@ -76,20 +76,20 @@ lacks the `,`/`.` rule and Android acceptance never calls it — those are the g
 ### Android — only the endkey path converted
 | Site | Decision it gates | Severity |
 |---|---|---|
-| S-a1 `acceptsIntoComposing` [:2135](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2135) / call [:5544](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5544) | composing-acceptance — **array10 letter-leak** | **critical** |
-| S-a2 `isKeyInImkeys` [:2442](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2442) | missing `,`/`.`→true → punctuation regresses if routed here as-is | blocks S-a1 |
-| S-a3 array30 `w`+digit [:5550](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5550) | separate accept branch (`hasSymbolMapping && !hasNumberMapping && IM_ARRAY && prev=='w'`) | med |
-| S-a4 `getSelkey` [SearchServer.java:1948](../LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1948) | selkey validation via flag matrix | high |
-| S-a5 mixedMode selkey display [:4366](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L4366) / [:5461](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5461) | candidate-bar selkey prefix char (`hasSymbolMapping && !IM_DAYI`) | required¹ |
-| S-a6 `ImDetailFragment` [:223](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java#L223) | custom toggles shown for all custom IMs | UI |
+| S-a1 `acceptsIntoComposing` [:2135](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2135) / call [:5544](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5544) | composing-acceptance — **array10 letter-leak** | **critical** |
+| S-a2 `isKeyInImkeys` [:2442](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2442) | missing `,`/`.`→true → punctuation regresses if routed here as-is | blocks S-a1 |
+| S-a3 array30 `w`+digit [:5550](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5550) | separate accept branch (`hasSymbolMapping && !hasNumberMapping && IM_ARRAY && prev=='w'`) | med |
+| S-a4 `getSelkey` [SearchServer.java:1948](../LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1948) | selkey validation via flag matrix | high |
+| S-a5 mixedMode selkey display [:4366](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L4366) / [:5461](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5461) | candidate-bar selkey prefix char (`hasSymbolMapping && !IM_DAYI`) | required¹ |
+| S-a6 `ImDetailFragment` [:223](../LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java#L223) | custom toggles shown for all custom IMs | UI |
 
 ¹ S-a5 is **required, not cosmetic-optional**: its `hasSymbolMapping &&` decision-reads must go or
 the §8 retirement gate cannot pass.
 
-Correct already: Android endkey [:2340](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2340)
-(template); custom-fallback set-site [:5358-5359](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5358).
+Correct already: Android endkey [:2340](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2340)
+(template); custom-fallback set-site [:5358-5359](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5358).
 **Infra gap:** Android has no cached `currentImKeys` field (iOS caches at [:914](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L914));
-the one Android `isKeyInImkeys` call fetches ad-hoc via `getImConfig(activeIM,"imkeys")` [:2334](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2334).
+the one Android `isKeyInImkeys` call fetches ad-hoc via `getImConfig(activeIM,"imkeys")` [:2334](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2334).
 
 ---
 
@@ -123,7 +123,7 @@ the one Android `isKeyInImkeys` call fetches ad-hoc via `getImConfig(activeIM,"i
 - **W-A** `isKeyInImkeys` [:2442]: add `if (primaryCode==',' || primaryCode=='.') return true;` at the
   top. (Also affects the endkey path [:2340] — `,`/`.` become endkey-roots; covered by the endkey test.)
 - **W-B** Add a cached `String currentImKeys` field; refresh it in the `setTableName` path
-  ([:5358-5428](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5358)) via
+  ([:5358-5428](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5358)) via
   `getImConfig(activeIM,"imkeys")` — mirror iOS `refreshImKeys`.
 - **W-C** Change `acceptsIntoComposing` signature to `(code, imkeys, hasSymbol, hasNumber, isPhonetic)`;
   add leading branch `if (!imkeys.isEmpty()) return isKeyInImkeys(code, imkeys) || (isPhonetic && isSpace);`
@@ -137,21 +137,21 @@ the one Android `isKeyInImkeys` call fetches ad-hoc via `getImConfig(activeIM,"i
 
 **Group B — Android selkey**
 - **W-F** `getSelkey` ([SearchServer.java:1948]) → `selkeyValid = (digit|symbol) && !isKeyInImkeys(code, imkeys)`.
-  SearchServer reads imkeys via `dbadapter.getImConfig(tablename,"imkeys")` (already used [:1941](../LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1941)).
+  SearchServer reads imkeys via `dbadapter.getImConfig(tablename,"imkeys")` (already used [:1941](../LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1941)).
 - **W-G** mixedMode selkey display ([:4366]/[:5461]) per **D-3** → derive from the selkey model;
   remove the `hasSymbolMapping &&` + hardcoded-IM reads.
 
 **Group C — custom-IM detail (both platforms)**
 - **W-H** Gate the `accept_number_index`/`accept_symbol_index` section on **imkeys-missing**:
   iOS [IMDetailView.swift:198](../LimeIME-iOS/LimeSettings/Views/IMDetailView.swift#L198),
-  Android [ImDetailFragment.java:223](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java#L223).
+  Android [ImDetailFragment.java:223](../LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java#L223).
 - **W-I** Make the prefs drive the custom-no-imkeys fallback on both (per **D-1**): iOS wire the dead
   prefs into `applyPrefsToSearchEngine` ([:845]) reading
   [LIMEPreferenceManager.swift:183](../LimeIME-iOS/Shared/Preferences/LIMEPreferenceManager.swift#L183);
   Android already does ([:5358-5359]).
 
 Vestigial after the above (leave, they only feed the custom fallback): per-IM flag assignments
-[:5368-5419](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5368) + iOS
+[:5368-5419](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5368) + iOS
 `detectIMCapabilities`.
 
 ---
@@ -244,7 +244,7 @@ cd LimeStudio && ./gradlew :app:testDebugUnitTest --offline
 | W-H/W-I | `./gradlew … --tests '*CustomImkeysTest'` (new) + `ios-gate.sh unit LimeTests/KeyboardViewControllerTest` | create | with-imkeys → hidden; without → shown **and** effective |
 
 ### Review gates (self-review at each group boundary — binary)
-- **After A:** `grep -nE '\bhas(Symbol|Number)Mapping\b *(&&|\|\||\?)' LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` returns **only** the mixedMode lines (:4366/:5461, cleared in B) — i.e. **no acceptance** decision-read remains; `grep 'acceptsIntoComposing(' LIMEService.java` shows the `imkeys` param at every call.
+- **After A:** `grep -nE '\bhas(Symbol|Number)Mapping\b *(&&|\|\||\?)' LimeStudio/app/src/main/java/org/limeime/LIMEService.java` returns **only** the mixedMode lines (:4366/:5461, cleared in B) — i.e. **no acceptance** decision-read remains; `grep 'acceptsIntoComposing(' LIMEService.java` shows the `imkeys` param at every call.
 - **After B:** the grep above returns **empty** for LIMEService.java; `grep -nE '\bhas(Symbol|Number)Mapping\b' SearchServer.java` shows **no** boolean-decision use in `getSelkey` (only storage/set).
 - **After C:** both detail pages branch on imkeys-missing; iOS `applyPrefsToSearchEngine` reads `acceptNumberIndex`/`acceptSymbolIndex`; `CustomImkeysTest` + iOS gate green.
 
@@ -258,7 +258,7 @@ cd LimeStudio && ./gradlew :app:testDebugUnitTest --offline
    # feeding the custom fallback). W-E done (array30 de-flagged); → EMPTY once W-G (:4383/:5482)
    # and W-F (SearchServer getSelkey :1948/1956/1963) land.
    grep -rnE '\bhas(Symbol|Number)Mapping\b *(&&|\|\||\?)|\bif\s*\(\s*!?\s*has(Symbol|Number)Mapping\s*\)' \
-     LimeStudio/app/src/main/java/net/toload/main/hd
+     LimeStudio/app/src/main/java/org/limeime
    ```
    Allowed remaining `hasSymbolMapping`/`hasNumberMapping` (the grep does NOT match these): an
    assignment (`= …`), the `setTableName(tablename, hasNumberMapping, hasSymbolMapping)` arg, the
@@ -306,8 +306,8 @@ They answer different questions on (largely disjoint) key sets, so only one is i
 
 | decision | code path | derivable from imkeys? | mechanism (as built) |
 |---|---|---|---|
-| **Acceptance** | `acceptsIntoComposing` ([LIMEService.java:5572](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5572)) | **YES** — acceptance ≡ "is it a root" ≡ imkeys membership | imkeys-first; flags consumed **only** in the `imkeys.isEmpty()` custom-legacy fallback |
-| **Selkey** | `resolveSelkey` ([SearchServer.java:1954](../LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1954)) + `mixedModeSelkeyUsesSpace` (:4383/:5491) | **NO** — per-IM policy imkeys can't express | keeps hardcoded `hasNumber`/`hasSymbol` (meta-overridable, LIMEDB fallback) |
+| **Acceptance** | `acceptsIntoComposing` ([LIMEService.java:5572](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5572)) | **YES** — acceptance ≡ "is it a root" ≡ imkeys membership | imkeys-first; flags consumed **only** in the `imkeys.isEmpty()` custom-legacy fallback |
+| **Selkey** | `resolveSelkey` ([SearchServer.java:1954](../LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1954)) + `mixedModeSelkeyUsesSpace` (:4383/:5491) | **NO** — per-IM policy imkeys can't express | keeps hardcoded `hasNumber`/`hasSymbol` (meta-overridable, LIMEDB fallback) |
 
 Retirement grep is **EMPTY** — no `has(Symbol|Number)Mapping` boolean decision-read remains outside
 the allowed param-passes/assignments.
@@ -363,9 +363,9 @@ on `phoneticKeyboardType`).
 
 **Fix (Android, mirrors iOS `imKeysForTable`):**
 - `LimeDB.getPhoneticImKeys(type)` → `ETEN26_KEY / HSU_KEY / ETEN_KEY`, else `BPMF_KEY`
-  ([LimeDB.java](../LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java), before `getImConfig`).
+  ([LimeDB.java](../LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java), before `getImConfig`).
 - `SearchServer.getPhoneticImKeys` proxy.
-- `currentImKeys` for the phonetic IM now resolves by type ([LIMEService.java:5457](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L5457)).
+- `currentImKeys` for the phonetic IM now resolves by type ([LIMEService.java:5457](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L5457)).
 - Test: `AcceptsIntoComposingTest.imkeysPath_eten26_rejectsDigitsAndSymbols` — with `ETEN26_KEY`
   roots, `3`/`;`/`/` reject; letters + `,.` + phonetic-space compose. **(U)**
 
@@ -374,7 +374,7 @@ Physical-keyboard phonetic variants (MILESTONE/desireZ/chacha/xperiapro) fall th
 
 ### 11.6 Endkey path — BPMF is correct and REQUIRED (verified, not changed)
 
-`handleEndkeyCommit` ([:2346](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L2346))
+`handleEndkeyCommit` ([:2346](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L2346))
 reads the **type-agnostic BPMF** imkeys, then `isKeyInImkeys(primaryCode, imkeys)` to decide whether
 to append the endkey char before commit. Computed against the real phonetic meta:
 

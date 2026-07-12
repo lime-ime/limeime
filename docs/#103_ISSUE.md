@@ -1,4 +1,4 @@
-# Issue #103: English candidate disappearance and dictionary coverage around `salt`
+﻿# Issue #103: English candidate disappearance and dictionary coverage around `salt`
 
 ## Live issue state
 
@@ -87,13 +87,13 @@ The Android fix should align the visible behavior with iOS: English completion c
 
 ## Android code paths
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - Keep the exact-match filter in `getEnglishSuggestions(...)`.
   - Sort current dictionary suggestions by `rowid ASC` instead of `word ASC`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - In the English prediction path, when dictionary suggestions are empty, show the composing/self candidate instead of calling `clearSuggestions()`.
   - Use a no-highlight candidate display path for all English composing candidates.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
   - Add an explicit way to set suggestions while leaving `mSelectedIndex = -1`, scoped to English prediction.
   - Do not change normal Chinese/table IM default highlight behavior.
 

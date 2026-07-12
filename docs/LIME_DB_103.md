@@ -1,4 +1,4 @@
-# LIME DB 103 Implementation Plan
+﻿# LIME DB 103 Implementation Plan
 
 > **Historical record — shipped.** This plan was implemented and shipped (the #88
 > restore-crash fixes came out of it). It is kept for its DB-103 contract and the
@@ -182,9 +182,9 @@ sqlite3 LimeStudio/app/src/main/res/raw/lime.db "SELECT name FROM sqlite_master 
 ### Task 2: Strengthen Android Runtime Migration
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
-- Integrated test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/DBServerTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
+- Integrated test: `LimeStudio/app/src/androidTest/java/org/limeime/DBServerTest.java`
 
 - [ ] Add a public or package-visible repair method, for example `ensureCurrentDatabase()`.
 - [ ] Move the `oldVersion < 103` emoji schema creation into a method that also checks for missing emoji tables, not only `PRAGMA user_version`.
@@ -205,9 +205,9 @@ WHERE value NOT IN (SELECT value FROM emoji_data);
 ### Task 3: Run Android Repair After Restore
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
-- Possibly modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/DBServerTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
+- Possibly modify: `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/DBServerTest.java`
 
 - [ ] Find every path that replaces the main `lime.db`.
 - [ ] After restore completes and DB connection reopens, call `datasource.ensureCurrentDatabase()`.

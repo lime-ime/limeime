@@ -1,4 +1,4 @@
-# Issue #53 — Phone-Keyboard Multi-Tap Symbol Key (= + - * /) Unreliable
+﻿# Issue #53 — Phone-Keyboard Multi-Tap Symbol Key (= + - * /) Unreliable
 
 **Status:** Fixed (easy route: single-code key + long-press popup)
 **Date:** 2026-04-20
@@ -111,7 +111,7 @@ is using (not affected by this bug).
 
 ### 2b. Multi-tap state machine
 
-[`LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java`](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java)
+[`LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java`](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java)
 
 Relevant pieces:
 
@@ -154,7 +154,7 @@ None of these are confirmed yet — they are the specific things worth probing
 with device logs before picking a fix.
 
 ### H1. Minor-move bounce kills multi-tap mid-sequence
-[`PointerTracker.java:350, 357, 378`](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java#L350)
+[`PointerTracker.java:350, 357, 378`](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java#L350)
 
 `onMoveEvent` calls `resetMultiTap()` whenever `!isMinorMoveBounce(...)` reports
 the pointer left the key. On a small key with a quick double-tap, the user's
@@ -166,7 +166,7 @@ Worth checking: what is the bounce threshold, and is the symbol key at the
 screen edge (where finger position is noisier)?
 
 ### H2. `keyIndex == mLastSentIndex` fails after layout change
-[`PointerTracker.java:578`](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java#L578)
+[`PointerTracker.java:578`](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java#L578)
 
 Multi-tap continuation requires the same **array index** as the last sent key.
 If anything causes the keyboard array to be rebuilt between taps (theme reload,
@@ -182,7 +182,7 @@ tap on a cold IME, GC pause, heavy Chinese composition in the background)
 Result: cycle resets to `=`.
 
 ### H4. DELETE ordering race with the target app
-[`PointerTracker.java:524-531, 541-544`](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java#L524)
+[`PointerTracker.java:524-531, 541-544`](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java#L524)
 
 Continuation emits `onKey(KEYCODE_DELETE)` and then `onKey(newCode)` back-to-back
 on the UI thread. If the `InputConnection` for the target field is remote (most
@@ -237,10 +237,10 @@ hypothesis above calls for a different fix and they are not mutually exclusive.
 
 | Hypothesis | File | Line(s) |
 |---|---|---|
-| H1 — sliding resets | [PointerTracker.java](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java) | 350, 357, 378 + `isMinorMoveBounce` |
-| H2 — stale key index | [PointerTracker.java](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java) | 572–591 (compare key code instead of index) |
+| H1 — sliding resets | [PointerTracker.java](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java) | 350, 357, 378 + `isMinorMoveBounce` |
+| H2 — stale key index | [PointerTracker.java](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java) | 572–591 (compare key code instead of index) |
 | H3 — tight timeout | [config.xml](LimeStudio/app/src/main/res/values/config.xml) | 36 |
-| H4 — DELETE/insert race | [PointerTracker.java](LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java) | 524–544, plus the `OnKeyboardActionListener` impl in `LIMEService` that handles the `DELETE`/code pair |
+| H4 — DELETE/insert race | [PointerTracker.java](LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java) | 524–544, plus the `OnKeyboardActionListener` impl in `LIMEService` that handles the `DELETE`/code pair |
 
 ---
 

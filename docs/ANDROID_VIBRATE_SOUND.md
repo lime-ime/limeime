@@ -1,4 +1,4 @@
-# Android keypress vibration and sound history
+﻿# Android keypress vibration and sound history
 
 This file records the Android keypress vibration and sound combinations tried while debugging #128 and related Pixel/Samsung haptic behavior.
 
@@ -204,7 +204,7 @@ mInputView.performHapticFeedback(
 
 Resolved stale-state note:
 
-- The old API 31+ unconditional hiding in `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMEPreference.java` was stale after PR #132 removed the universal API 31+ `performHapticFeedback(...)` path.
+- The old API 31+ unconditional hiding in `LimeStudio/app/src/main/java/org/limeime/ui/LIMEPreference.java` was stale after PR #132 removed the universal API 31+ `performHapticFeedback(...)` path.
 - `vibrate_level` is now hidden only for the Google/Pixel system keyboard-tap path.
 - Raw-pulse paths keep `vibrate_level` visible because `doVibrateSound(...)` passes `mLIMEPref.getVibrateLevel()` into the one-shot duration.
 

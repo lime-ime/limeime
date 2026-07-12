@@ -31,7 +31,7 @@
        <!--  android:paddingLeft="16dip"
         android:paddingRight="16dip" -->
         
-    <net.toload.main.hd.keyboard.LIMEKeyboardBaseView
+    <org.limeime.keyboard.LIMEKeyboardBaseView
             xmlns:limehd="http://schemas.android.com/apk/res-auto"
             android:id="@+id/LIMEPopupKeyboard"
             android:layout_alignParentBottom="true"

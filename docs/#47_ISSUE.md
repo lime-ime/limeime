@@ -1,4 +1,4 @@
-# Issue #47 — Soft Keyboard Right-Side Clipping
+﻿# Issue #47 — Soft Keyboard Right-Side Clipping
 
 ## Context
 
@@ -8,7 +8,7 @@ The screenshot evidence (Android phone, Chrome address bar, Traditional Chinese 
 
 ## Root Cause
 
-In `app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java:769`:
+In `app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java:769`:
 
 ```java
 mDisplayWidth = dm.widthPixels;
@@ -43,7 +43,7 @@ Make the keyboard's reference width match the **actual IME container width**, no
 
 ### Change 1 — Use the real available width when constructing the keyboard
 
-**File:** `app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java` (around lines 767–779)
+**File:** `app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java` (around lines 767–779)
 
 Replace `dm.widthPixels` with a call that returns the actual usable width for the IME window. On Android 11+ this is `WindowManager.getCurrentWindowMetrics().getBounds().width()` minus the relevant insets (`systemBars() | displayCutout()`); on older versions, fall back to `dm.widthPixels`.
 
@@ -74,7 +74,7 @@ This eliminates the dominant overflow source — cutouts and gesture insets no l
 
 ### Change 2 — Rescale (or clamp) in `onMeasure` when the parent width is still smaller
 
-**File:** `app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java` (lines 869–884)
+**File:** `app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java` (lines 869–884)
 
 Even after Change 1, edge cases remain (rounding accumulation, multi-window resizing after construction, orientation change races). Detect the mismatch and rebuild the keyboard at the actual width, or apply a uniform horizontal scale to every key when drawing.
 
@@ -110,9 +110,9 @@ public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
 | File | Purpose |
 |---|---|
-| `app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java` | Source of `mDisplayWidth`; key width calculation. Modify constructor (line ~767–779) and verify `resize()`. |
-| `app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java` | `onMeasure()` (line 869–884) — clamp/rescale when parent width is smaller. |
-| `app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java` (line 264) | Where `LIMEKeyboard` is instantiated — confirm the context passed in is the IME service context (so `WindowManager` returns the IME window, not the underlying app's). |
+| `app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java` | Source of `mDisplayWidth`; key width calculation. Modify constructor (line ~767–779) and verify `resize()`. |
+| `app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java` | `onMeasure()` (line 869–884) — clamp/rescale when parent width is smaller. |
+| `app/src/main/java/org/limeime/LIMEKeyboardSwitcher.java` (line 264) | Where `LIMEKeyboard` is instantiated — confirm the context passed in is the IME service context (so `WindowManager` returns the IME window, not the underlying app's). |
 
 No XML changes are required — percentage layouts stay correct once the reference width is right.
 

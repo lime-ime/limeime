@@ -1,4 +1,4 @@
-# #54 - Extra white band above English URL keyboard in Chrome/Brave
+﻿# #54 - Extra white band above English URL keyboard in Chrome/Brave
 
 Issue: https://github.com/lime-ime/limeime/issues/54
 
@@ -14,7 +14,7 @@ This is not primarily the older “Chinese candidates covered by Brave toolbar a
 
 ## Code path
 Android:
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `onStartInputView()`
     - `EditorInfo.TYPE_TEXT_VARIATION_URI` sets:
       - `mPredictionOn = false`

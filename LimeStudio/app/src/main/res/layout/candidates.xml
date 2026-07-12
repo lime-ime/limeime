@@ -22,7 +22,7 @@
   ~  */
   -->
 
-<net.toload.main.hd.candidate.CandidateViewContainer
+<org.limeime.candidate.CandidateViewContainer
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:orientation="vertical"
         android:layout_width="fill_parent"
@@ -56,7 +56,7 @@
             />
 
     <view xmlns:android="http://schemas.android.com/apk/res/android"
-		    class="net.toload.main.hd.candidate.CandidateView"
+		    class="org.limeime.candidate.CandidateView"
 	        android:id="@+id/candidates"
 	        android:layout_width="0dp"
 	        android:layout_height="@dimen/candidate_stripe_height"
@@ -82,4 +82,4 @@
     </LinearLayout>
     </LinearLayout>
     
-</net.toload.main.hd.candidate.CandidateViewContainer>
+</org.limeime.candidate.CandidateViewContainer>

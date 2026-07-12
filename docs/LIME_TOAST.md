@@ -1,4 +1,4 @@
-# LIME Toast
+﻿# LIME Toast
 
 ## Goal
 
@@ -22,7 +22,7 @@ Voice input is excluded from this parity pass.
 
 Android defines the service entry point in:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 ```java
 public void showLimeToast(CharSequence text) {
@@ -45,7 +45,7 @@ public void showLimeToast(CharSequence text) {
 
 The visual implementation lives in:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
 
 `CandidateView.showLimeToast()` posts through its handler, shows a popup near the composing/candidate bar, replaces any previous lime toast, and hides it after the short toast duration. `showLimeToastUntilNextKey()` uses the same visual path but leaves the toast visible until the next key press clears it.
 

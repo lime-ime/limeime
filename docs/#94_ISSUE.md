@@ -1,4 +1,4 @@
-# Issue #94: Android backup file shown as 0 B — reporter-confirmed fixed in 6.1.16
+﻿# Issue #94: Android backup file shown as 0 B — reporter-confirmed fixed in 6.1.16
 
 ## Current status
 
@@ -90,7 +90,7 @@ Implemented and merged to `master` via PR #101 (`43aa6c887d9eebf162891549d0ef04f
 
 ### Backup implementation
 
-File: `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
+File: `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
 
 Code state before PR #101:
 
@@ -111,7 +111,7 @@ Implemented behavior:
 
 ### ZIP helper
 
-File: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEUtilities.java`
+File: `LimeStudio/app/src/main/java/org/limeime/global/LIMEUtilities.java`
 
 Code state before PR #101:
 
@@ -127,7 +127,7 @@ Implemented behavior:
 
 ### UI flow
 
-File: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/DbManagerFragment.java`
+File: `LimeStudio/app/src/main/java/org/limeime/ui/view/DbManagerFragment.java`
 
 Code state before PR #101:
 

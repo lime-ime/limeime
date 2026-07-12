@@ -1,4 +1,4 @@
----
+﻿---
 # Issue #51 — Key Label Font Shrinkage: Root Cause & Fix
 
 **Related:** #47 (landscape keyboard clipping fix, 6.0.1)  
@@ -163,7 +163,7 @@ Commit `ce40a61` made only two source-level edits:
 
 ## 9. Label and Sub-label Rendering Pipeline (unchanged code)
 
-File: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
+File: `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`
 
 ### 9a. Font-size formulas (all multiplied by `labelSizeScale`)
 
@@ -260,13 +260,13 @@ Option 1 is recommended: it ties the layout to measured glyph metrics rather tha
 
 ## 14. Critical Files / Line References
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`
   - `onBufferDraw()` label pipeline: lines 985–1135
   - Label font-size formulas: lines 1022, 1025, 1029, 1032
   - Sub-label font-size formula: line 1072
   - **Portrait split baselines (the geometry to change): lines 1095–1098**
   - Landscape split (label + sub-label on same baseline): lines 1114–1128
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java`
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java`
   - `Key.getLabelSizeScale()` and static cache: lines 413–434
   - `mDisplayWidth` / `mDefaultWidth` / `mDefaultHeight` init: lines 777–787
   - `mDefaultHeight` XML override: line 1353

@@ -1,4 +1,4 @@
-# Issue #76: extra next-code candidate still shown after #70 follow-up
+﻿# Issue #76: extra next-code candidate still shown after #70 follow-up
 
 ## Problem statement
 
@@ -36,9 +36,9 @@ Relevant Android preference and query paths on `master`:
 - `LimeStudio/app/src/main/res/values/strings_settings.xml`
   - `similiar_list` is titled `建議字顯示數量`.
   - `similiar_codes` includes `0`, `10`, `20`, `30`, `40`, `50`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEPreferenceManager.java`
+- `LimeStudio/app/src/main/java/org/limeime/global/LIMEPreferenceManager.java`
   - `getSimilarCodeCandidates()` reads `similiar_list`, defaulting to `20`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - `getMappingByCode(...)` builds `selectClause = expandBetweenSearchClause(codeCol, code) + extraSelectClause;` before reading the cursor.
   - `expandBetweenSearchClause(...)` deliberately includes shorter-prefix exact records and longer next-code records. For input `ha`, the query shape is equivalent to `code = 'h' OR (code >= 'ha' AND code < 'hb')`, so records such as `haa` / `皔` are fetched before result limiting.
   - `exactMatchCondition` marks only rows whose code equals the typed code (`ha`) as exact. Longer codes such as `haa` are therefore marked partial.
@@ -90,9 +90,9 @@ Commit `7e1d57b` supersedes the earlier investigation plan:
 Android:
 
 - Adjacent pre-existing tests, not expected to fail from the fix:
-  - `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+  - `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
     - Pre-existing smoke tests did not cover `similiar_list` exact-vs-partial count behavior.
-  - `LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java`
+  - `LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java`
     - Partial-match cache/update tests exist for #49 behavior, especially `test_3_3_5_19_updateScoreCache_partial_match`; commit `7e1d57b` adds focused disabled/cap-boundary coverage separately.
 - Commit `7e1d57b` adds/updates focused Android instrumentation tests:
   - Seed a test table with exact `ha -> 白` and extension `haa -> 皔`.

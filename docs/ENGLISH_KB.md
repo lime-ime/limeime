@@ -418,7 +418,7 @@ LimeIME:
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift` —
   `updateShiftForAutoCap` (~1395), `handleEnglishCharacter` (~1231),
   `handleEnterOrSpace` (~1091).
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` —
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` —
   `mAutoCap` (156), `loadSettings()` (~999), runtime gate (~1851),
   input-type detection (~895-945).
 - `LimeStudio/app/src/main/res/xml/preference.xml` — `auto_cap` toggle.

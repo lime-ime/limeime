@@ -1,4 +1,4 @@
-# Issue #49 — 常用的後選字順序(顯示優先序)，無法即時更新
+﻿# Issue #49 — 常用的後選字順序(顯示優先序)，無法即時更新
 
 **Device:** Samsung S25U · Android 16 · App v6.0.1  
 **Input Method:** LIME Array30 (行列30)
@@ -32,7 +32,7 @@ The in-memory cache reorder is attempted immediately, but is vulnerable to a rac
 
 ## Symptom 1 — Typing-Based Learning Not Immediate (The Bug)
 
-**File:** `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+**File:** `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`
 
 When a candidate is selected, `learnRelatedPhraseAndUpdateScore()` spawns a background `UpdatingThread` that runs `updateScoreCache()`. `updateScoreCache()` first writes the new score to the DB, then modifies the live `cachedList` (a `LinkedList`) in-place to reorder it.
 
@@ -57,7 +57,7 @@ This is a race condition. When the user types slowly, the race doesn't occur (`U
 
 ## Symptom 2 — App Priority Edit Not Taking Effect (The Bug)
 
-**File:** `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/ManageImController.java`
+**File:** `LimeStudio/app/src/main/java/org/limeime/ui/controller/ManageImController.java`
 
 `ManageImController.updateRecord()` and `addRecord()` write the new score to the DB correctly, but never invalidate `SearchServer.cache` — the `static ConcurrentHashMap` shared for the lifetime of the process:
 

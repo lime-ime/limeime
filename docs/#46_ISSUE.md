@@ -1,4 +1,4 @@
-# Issue #46 — Dark Keyboard Theme Doesn't Tint Navigation Bar
+﻿# Issue #46 — Dark Keyboard Theme Doesn't Tint Navigation Bar
 
 ## Context
 
@@ -21,7 +21,7 @@ There are actually **two independent causes** for the light strip under a dark k
 
 `LIMEService.setNavigationBarIconsDark()` is the only place that touches the IME window's nav bar, and it has two problems:
 
-**File:** `app/src/main/java/net/toload/main/hd/LIMEService.java:4392-4417`
+**File:** `app/src/main/java/org/limeime/LIMEService.java:4392-4417`
 
 ```java
 private void setNavigationBarIconsDark() {
@@ -53,7 +53,7 @@ Called from `LIMEService.onCreateInputView()` at line 430.
 
 ### Cause B — the edge-to-edge inset handler leaves the padded strip unpainted
 
-**File:** `app/src/main/java/net/toload/main/hd/LIMEService.java:409-426`
+**File:** `app/src/main/java/org/limeime/LIMEService.java:409-426`
 
 ```java
 if (inputView != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
@@ -182,7 +182,7 @@ No XML changes are needed — the existing `colors.xml` entries are reused.
 
 | File | Lines | Purpose |
 |---|---|---|
-| `app/src/main/java/net/toload/main/hd/LIMEService.java` | 90 (add `ContextCompat` import), 430 + 701 (call sites), 4393–4457 (replace `setNavigationBarIconsDark()` with `applyNavigationBarTheme()` + helpers) | Implement `applyNavigationBarTheme()` and call it. |
+| `app/src/main/java/org/limeime/LIMEService.java` | 90 (add `ContextCompat` import), 430 + 701 (call sites), 4393–4457 (replace `setNavigationBarIconsDark()` with `applyNavigationBarTheme()` + helpers) | Implement `applyNavigationBarTheme()` and call it. |
 | `app/src/main/res/values/colors.xml` | 38, 54, 68, 76, 86, 96 | Source of the 6 keyboard background colors — read-only. |
 | `docs/EDGE_TO_EDGE_REVIEW.md` | § 2 (LIMEService) | Cross-references this issue; notes that the inset-padded container needs its own background tint. |
 

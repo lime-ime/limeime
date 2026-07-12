@@ -1,4 +1,4 @@
-# Issue #68: Candidate-bar dismiss should fully cancel composition
+﻿# Issue #68: Candidate-bar dismiss should fully cancel composition
 
 ## Problem statement
 
@@ -34,9 +34,9 @@ The reported iOS behavior suggests the dismiss path is currently using a state-o
 
 Relevant Android files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 `CandidateInInputViewContainer.onClick()` calls `mCandidateView.dismissComposingFromCandidate()` when the dismiss button is tapped. `CandidateView.dismissComposingFromCandidate()` hides the candidate popup and delegates to `mService.dismissCandidateComposing()` when the service is available. The reported Android behavior suggests that this service path clears candidate UI state but does not fully finish/cancel the active `InputConnection` composing text/state.
 

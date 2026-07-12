@@ -125,7 +125,7 @@
 
         <!--
         <activity android:configChanges="keyboard|keyboardHidden|orientation"
-            android:label="@string/ime_setting" android:name="net.toload.main.hd.limesettings.LIMEPreference">
+            android:label="@string/ime_setting" android:name="org.limeime.limesettings.LIMEPreference">
         </activity>
         -->
         <activity

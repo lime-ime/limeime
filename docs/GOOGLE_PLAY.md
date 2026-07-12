@@ -1,4 +1,4 @@
-# Google Play Submission Checklist — LimeIME
+﻿# Google Play Submission Checklist — LimeIME
 
 Preparation checklist for publishing **LIME IME 6** (`org.limeime`) to the Google Play Store.
 
@@ -10,7 +10,7 @@ Current build facts (from [LimeStudio/app/build.gradle](../LimeStudio/app/build.
 | Field | Value |
 | --- | --- |
 | `applicationId` (Play) | **`org.limeime`** |
-| Java `namespace` | `net.toload.main.hd` (unchanged — internal package, not the app id) |
+| Java `namespace` | `org.limeime` (now unified with the `applicationId`) |
 | `versionName` | `6.1.18` |
 | `versionCode` | `2026` |
 | `minSdkVersion` | `21` (Android 5.0) |
@@ -21,7 +21,7 @@ Current build facts (from [LimeStudio/app/build.gradle](../LimeStudio/app/build.
 > The Play package id is **`org.limeime`**. *(Note: current beta builds still ship
 > as `net.toload.main.hd2026`; `applicationId` is switched to `org.limeime` at Play
 > onboarding — edit [build.gradle](../LimeStudio/app/build.gradle#L34) and the
-> [test assertion](../LimeStudio/app/src/androidTest/java/net/toload/main/hd/ApplicationTest.java#L74) then.)*
+> [test assertion](../LimeStudio/app/src/androidTest/java/org/limeime/ApplicationTest.java#L74) then.)*
 
 **Public store listing URL:** `https://play.google.com/store/apps/details?id=org.limeime`
 (`market://details?id=org.limeime` opens the Play app directly). The 設定 tab's in-app

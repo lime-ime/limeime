@@ -1,4 +1,4 @@
-# API 25 Compatibility Implementation Plan
+﻿# API 25 Compatibility Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -19,8 +19,8 @@
 ### Task 1: API 25 database attach/import compatibility
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDB103IntegrationTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDB103IntegrationTest.java`
 
 - [ ] Run `freshInstallCopies103SeedAndRefreshesEmojiData` alone on a clean API 25 sandbox and retain the exact failing stack/log.
 - [ ] Trace every `ATTACH DATABASE` caller and verify transaction state at the shared boundary.
@@ -32,7 +32,7 @@
 ### Task 2: API 25 instrumentation helper compatibility
 
 **Files:**
-- Modify: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 
 - [ ] Run one export metadata test on API 25 and confirm `File.toPath()` is the sole failure.
 - [ ] Replace the test helper with `FileInputStream` plus `InputStreamReader(StandardCharsets.UTF_8)`.
@@ -42,10 +42,10 @@
 ### Task 3: Edge-to-edge legacy layout compatibility
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMEPreference.java`
-- Modify: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEPreferenceTest.java`
-- Test: `LimeStudio/app/src/test/java/net/toload/main/hd/ActivityEdgeToEdgePolicyTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/LIMEPreference.java`
+- Modify: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEPreferenceTest.java`
+- Test: `LimeStudio/app/src/test/java/org/limeime/ActivityEdgeToEdgePolicyTest.java`
 
 - [ ] Keep `EdgeToEdge.enable()` gated to API 35+ and preserve each activity's prior pre-35 decor-fitting behavior.
 - [ ] Replace the deprecated color assertion with API-policy and unobscured-content checks.

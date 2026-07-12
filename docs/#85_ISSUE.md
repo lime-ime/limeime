@@ -1,4 +1,4 @@
-# Issue #85: DB restore can silently fail for cloud on-demand backup files
+﻿# Issue #85: DB restore can silently fail for cloud on-demand backup files
 
 ## Problem Statement
 
@@ -26,12 +26,12 @@ Maintainer-created Android and iOS bug tracking issue for database backup restor
 
 ### Android
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/DbManagerFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/DbManagerFragment.java`
   - `restoreLocalDrive()` checks for a restore-capable picker and shows a confirmation dialog; `launchRestoreFilePicker()` uses `Intent.ACTION_GET_CONTENT`, `CATEGORY_OPENABLE`, and MIME type `application/zip`.
   - `performRestore(Uri)` previously called `setupImController.performRestore(uri)` and then showed success if no exception reached the fragment.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
   - `performRestore(Uri)` previously handled lower-level restore failures without reliably surfacing them to the fragment.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
+- `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
   - `restoreDatabase(Uri)` copies the selected URI stream into a cache temp ZIP and calls the path-based restore.
   - Earlier code could convert restore failures into logs/notifications without an explicit failure result to the UI caller.
 

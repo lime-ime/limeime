@@ -1,4 +1,4 @@
-# Emoji button — candidate bar left-end zone
+﻿# Emoji button — candidate bar left-end zone
 
 ## Context
 
@@ -114,8 +114,8 @@ Opening the emoji panel and immediately tapping the dismiss key must leave the u
 | `LimeIME-iOS/LimeKeyboard/CandidateBarView.swift` | Add `emojiButton`, new delegate method, visibility toggle in `rebuildButtons()` |
 | `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift` | Implement `candidateBarViewDidRequestEmoji` |
 | `LimeStudio/app/src/main/res/layout/inputcandidate.xml` | Add emoji ImageButton to left zone |
-| `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java` | Visibility logic + width accounting |
-| `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` | Dispatch emoji panel |
+| `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java` | Visibility logic + width accounting |
+| `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` | Dispatch emoji panel |
 | `docs/EMOJI_KEYBOARD.md` | Update launcher placement section; remove keyboard-layout changes |
 | `docs/CANDI_LAYOUT.md` | §9 and TODO already written |
 

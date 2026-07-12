@@ -1,4 +1,4 @@
-# Preference Backup And Restore
+﻿# Preference Backup And Restore
 
 ## Purpose
 
@@ -305,7 +305,7 @@ Required iOS adapter tests:
 Rewrite/extend the existing Android integrated backup test in:
 
 ```text
-LimeStudio/app/src/androidTest/java/net/toload/main/hd/IntegrationTestBackupRestore.java
+LimeStudio/app/src/androidTest/java/org/limeime/IntegrationTestBackupRestore.java
 ```
 
 The Android same-platform E2E test should:

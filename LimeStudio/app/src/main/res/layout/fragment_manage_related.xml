@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="net.toload.main.hd.ui.view.ManageRelatedFragment">
+    tools:context="org.limeime.ui.view.ManageRelatedFragment">
 
     <!-- Original content will go here -->
     <LinearLayout

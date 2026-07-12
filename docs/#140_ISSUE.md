@@ -1,4 +1,4 @@
-# Issue #140: cj4 (四碼倉頡) semicolon key on the Cangjie keyboard
+﻿# Issue #140: cj4 (四碼倉頡) semicolon key on the Cangjie keyboard
 
 ## Status
 
@@ -139,7 +139,7 @@ All programmatic; gated on the cj4 toggle. No new layout files.
    `SearchServer.setSymbolMapping(boolean)` (Android; iOS equivalent) that just sets
    `hasSymbolMapping`. No full `setTableName` reload is needed: the `;` lookup works on a cache
    miss anyway, and the Android prefetch list already includes `;` (`",./;"`,
-   [SearchServer.java:272](../LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L272)).
+   [SearchServer.java:272](../LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L272)).
    The **keyboard's controller** (`LIMEService` / `KeyboardViewController`) calls it when it
    applies the cj4 layout, reading the current cj4 pref. The **settings / IM-details UI does
    not call it directly** — it is a different process/context from the live keyboard's

@@ -1,4 +1,4 @@
-# Issue #69: Candidate-bar tool icons flicker during continuous input
+﻿# Issue #69: Candidate-bar tool icons flicker during continuous input
 
 ## Problem statement
 
@@ -20,9 +20,9 @@ Expected behavior:
 
 Relevant Android files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 `CandidateInInputViewContainer.requestLayout()` treats `mCandidateView.isEmpty()` as the immediate switch between active-candidate controls and idle tools:
 

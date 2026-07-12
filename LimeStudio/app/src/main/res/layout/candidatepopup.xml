@@ -35,7 +35,7 @@
 	android:layout_height="100dp"
 	>
     <view xmlns:android="http://schemas.android.com/apk/res/android"
-		    class="net.toload.main.hd.candidate.CandidateExpandedView"
+		    class="org.limeime.candidate.CandidateExpandedView"
 	        android:id="@+id/candidatePopup"
 	        android:layout_width="wrap_content"
 	        android:layout_height="100dp"

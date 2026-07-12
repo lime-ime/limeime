@@ -1,4 +1,4 @@
-# Old UI Decommission Implementation Plan
+﻿# Old UI Decommission Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. Keep each batch small, verify after every batch, and do not touch protected new UI files unless a compile error proves a stale old-UI reference remains.
 
@@ -30,30 +30,30 @@
 
 Do not edit these files during teardown unless a compiler/resource error points to a stale old-UI reference. If any protected file changes, record the reason in this plan before proceeding.
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/NavigationManager.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/ProgressManager.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/ShareManager.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/IntentHandler.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMEPreference.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/BaseController.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/ManageImController.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImListFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/TwoPaneHostFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/DbManagerFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/LimePreferenceFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageRelatedFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ImportDialog.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ShareDialog.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageImAddSheet.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageImEditSheet.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageRelatedAddSheet.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageRelatedEditSheet.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/NavigationManager.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/ProgressManager.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/ShareManager.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/IntentHandler.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/LIMEPreference.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/controller/BaseController.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/controller/ManageImController.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImListFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/TwoPaneHostFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/DbManagerFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/LimePreferenceFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ManageRelatedFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ImportDialog.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ShareDialog.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageImAddSheet.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageImEditSheet.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageRelatedAddSheet.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageRelatedEditSheet.java`
 - `LimeStudio/app/src/main/res/layout/activity_main.xml`
 - `LimeStudio/app/src/main/res/layout-sw600dp/activity_main.xml`
 - `LimeStudio/app/src/main/res/menu/main_nav.xml`
@@ -76,17 +76,17 @@ Do not edit these files during teardown unless a compiler/resource error points 
 
 These are candidates, not automatic deletions. Each must pass the task-specific reference checks before removal.
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationDrawerView.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationMenuItem.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImView.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationDrawerView.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationMenuItem.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImView.java`
 - `LimeStudio/app/src/main/res/layout/fragment_setup_im.xml`
 - `LimeStudio/app/src/main/res/layout/fragment_main.xml`
 - `LimeStudio/app/src/main/res/layout/activity_setup_im_google.xml`
 - `LimeStudio/app/src/main/res/menu/main.xml`
 - `LimeStudio/app/src/main/res/values/strings.xml` entry `title_activity_setup_im_google`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/NavigationDrawerFragmentTest.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/NavigationManagerTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/NavigationDrawerFragmentTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/NavigationManagerTest.java`
 - old-name test classes that already validate new sheets and should be renamed or left for a later rename-only task:
   - `ManageImAddDialogTest.java`
   - `ManageImEditDialogTest.java`
@@ -136,10 +136,10 @@ Expected: only `docs/OLD_UI_DECOMMISSION_PLAN.md` appears before source cleanup 
 ## Task 2: Remove Dead Navigation Drawer View Contracts
 
 **Files:**
-- Delete if unreferenced: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationDrawerView.java`
-- Delete if unreferenced: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationMenuItem.java`
-- Modify only if required by compile errors: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/NavigationDrawerFragmentTest.java`
+- Delete if unreferenced: `LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationDrawerView.java`
+- Delete if unreferenced: `LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationMenuItem.java`
+- Modify only if required by compile errors: `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/NavigationDrawerFragmentTest.java`
 
 - [ ] **Step 1: Prove whether old drawer view contracts are still used**
 
@@ -174,8 +174,8 @@ Also remove the private helper and callback block that exist solely to build dra
 Delete only after Step 2 removes all references:
 
 ```text
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationDrawerView.java
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/NavigationMenuItem.java
+LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationDrawerView.java
+LimeStudio/app/src/main/java/org/limeime/ui/view/NavigationMenuItem.java
 ```
 
 - [ ] **Step 4: Verify compile/resource gate**
@@ -192,8 +192,8 @@ Expected: `BUILD SUCCESSFUL`.
 ## Task 3: Remove Legacy SetupIm Fragment And Layout
 
 **Files:**
-- Delete if unreferenced: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImFragment.java`
-- Delete if unreferenced: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImView.java`
+- Delete if unreferenced: `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImFragment.java`
+- Delete if unreferenced: `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImView.java`
 - Delete if unreferenced: `LimeStudio/app/src/main/res/layout/fragment_setup_im.xml`
 - Modify only if stale references exist: tests that still import or instantiate `SetupImFragment`
 - Protected replacement: `SetupFragment.java` and `fragment_setup.xml`
@@ -211,7 +211,7 @@ Expected: active activity/navigation code references `SetupFragment` and `fragme
 
 - [ ] **Step 2: Remove obsolete SetupIm tests or retarget them**
 
-For `LimeStudio/app/src/androidTest/java/net/toload/main/hd/SetupImFragmentTest.java`, choose one:
+For `LimeStudio/app/src/androidTest/java/org/limeime/SetupImFragmentTest.java`, choose one:
 
 ```text
 Delete when every assertion targets controls that moved to SetupFragment/ImInstallFragment/DbManagerFragment and equivalent coverage exists elsewhere.
@@ -230,8 +230,8 @@ Do not add broad new UI tests in this teardown task; keep it to removal or direc
 Delete only after Step 1 and Step 2 leave no active references:
 
 ```text
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImFragment.java
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupImView.java
+LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImFragment.java
+LimeStudio/app/src/main/java/org/limeime/ui/view/SetupImView.java
 LimeStudio/app/src/main/res/layout/fragment_setup_im.xml
 ```
 
@@ -297,11 +297,11 @@ Expected: `BUILD SUCCESSFUL`.
 ## Task 5: Remove Or Retarget Old UI Tests
 
 **Files:**
-- Delete or retarget: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/NavigationDrawerFragmentTest.java`
-- Delete or retarget: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/NavigationManagerTest.java`
-- Inspect only: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/MainActivityTest.java`
-- Inspect only: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEPreferenceTest.java`
-- Inspect only: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/ManageImFragmentTest.java`
+- Delete or retarget: `LimeStudio/app/src/androidTest/java/org/limeime/NavigationDrawerFragmentTest.java`
+- Delete or retarget: `LimeStudio/app/src/androidTest/java/org/limeime/NavigationManagerTest.java`
+- Inspect only: `LimeStudio/app/src/androidTest/java/org/limeime/MainActivityTest.java`
+- Inspect only: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEPreferenceTest.java`
+- Inspect only: `LimeStudio/app/src/androidTest/java/org/limeime/ManageImFragmentTest.java`
 
 - [ ] **Step 1: Classify old UI tests**
 
@@ -309,7 +309,7 @@ Run:
 
 ```bash
 cd LimeStudio
-rg -n "NavigationDrawer|SetupImFragment|fragment_setup_im|SetupImList|MainActivity|LIMESettings|BottomNavigation|NavigationRail" app/src/androidTest/java/net/toload/main/hd
+rg -n "NavigationDrawer|SetupImFragment|fragment_setup_im|SetupImList|MainActivity|LIMESettings|BottomNavigation|NavigationRail" app/src/androidTest/java/org/limeime
 ```
 
 Expected:
@@ -355,13 +355,13 @@ Expected: tests run. If the emulator reports an install/runtime infrastructure e
 ## Task 6: Confirm Import, Share, Backup, And Controller Paths Were Not Removed
 
 **Files:**
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/IntentHandler.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ImportDialog.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ShareDialog.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/ManageImController.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
-- Protected: `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/ui/IntentHandler.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ImportDialog.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/ui/dialog/ShareDialog.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/ui/controller/ManageImController.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
+- Protected: `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`
 
 - [ ] **Step 1: Run behavior-preservation tests**
 
@@ -379,7 +379,7 @@ Expected: no new failures compared with baseline. Any failure here blocks deleti
 Run:
 
 ```bash
-git diff --name-only -- LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java
+git diff --name-only -- LimeStudio/app/src/main/java/org/limeime/ui/controller LimeStudio/app/src/main/java/org/limeime/DBServer.java LimeStudio/app/src/main/java/org/limeime/SearchServer.java
 ```
 
 Expected: empty, unless Task 2 required removing dead drawer callback compatibility from `SetupImController.java`. If non-empty, inspect and document why.

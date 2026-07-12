@@ -1,4 +1,4 @@
-# Learning Path Audit
+﻿# Learning Path Audit
 
 This document maps every runtime path that writes learned data, which preference gates it, and whether the current Android and iOS implementations obey that gate.
 
@@ -91,4 +91,4 @@ Verified commands:
 - Android compile:
   `./gradlew :app:compileDebugJavaWithJavac :app:compileDebugAndroidTestJavaWithJavac`
 - Whitespace check:
-  `git diff --check -- docs/LEARING_PATH.md LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java LimeIME-iOS/Shared/Search/SearchServer.swift LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift LimeIME-iOS/LimeTests/SearchServerTest.swift`
+  `git diff --check -- docs/LEARING_PATH.md LimeStudio/app/src/main/java/org/limeime/SearchServer.java LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java LimeIME-iOS/Shared/Search/SearchServer.swift LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift LimeIME-iOS/LimeTests/SearchServerTest.swift`

@@ -1,4 +1,4 @@
-# Issue #104 — Android Enter key commits related candidate after 6.1.16
+﻿# Issue #104 — Android Enter key commits related candidate after 6.1.16
 
 ## Current status
 
@@ -28,7 +28,7 @@ The report specifically compares against `6.1.15` and earlier behavior.
 
 ## Current code observations
 
-Relevant Android code inspected in `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` and `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`:
+Relevant Android code inspected in `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` and `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`:
 
 - Soft-keyboard `onKey(...)` handles `MY_KEYCODE_ENTER` in the same candidate-selection branch as Space:
   - if `hasCandidatesShown` is true, it calls `pickHighlightedCandidate()`.

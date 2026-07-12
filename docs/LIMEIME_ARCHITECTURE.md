@@ -1,4 +1,4 @@
-# LimeIME Architecture
+﻿# LimeIME Architecture
 
 ## Overview
 
@@ -372,7 +372,7 @@ ChineseSymbol (Utility class providing symbol data)
 
 #### 1. Mapping
 
-**Location**: `net.toload.main.hd.data.Mapping`
+**Location**: `org.limeime.data.Mapping`
 
 **Purpose**: Unified data model serving multiple purposes throughout the application
 
@@ -453,7 +453,7 @@ searchServer.learnRelatedPhraseAndUpdateScore(selected);
 
 #### 2. Record
 
-**Location**: `net.toload.main.hd.data.Record`
+**Location**: `org.limeime.data.Record`
 
 **Purpose**: UI alias for `Mapping` used in Setup/Manage IM contexts
 
@@ -483,7 +483,7 @@ for (Record record : records) {
 
 #### 3. Related
 
-**Location**: `net.toload.main.hd.data.Related`
+**Location**: `org.limeime.data.Related`
 
 **Purpose**: UI alias for `Mapping` used in Related Phrases management
 
@@ -517,7 +517,7 @@ for (Related phrase : phrases) {
 
 #### 4. Im
 
-**Location**: `net.toload.main.hd.data.ImConfig`
+**Location**: `org.limeime.data.ImConfig`
 
 **Purpose**: Represents an Input Method (IM) configuration
 
@@ -582,7 +582,7 @@ CREATE TABLE imConfig (
 
 #### 5. Keyboard
 
-**Location**: `net.toload.main.hd.data.Keyboard`
+**Location**: `org.limeime.data.Keyboard`
 
 **Purpose**: Represents keyboard layout configuration with support for different types and shift variants
 
@@ -630,7 +630,7 @@ searchServer.setIMKeyboard(imCode, keyboard.getCode());
 
 #### 6. ImKeyboardConfig
 
-**Location**: `net.toload.main.hd.data.ImKeyboardConfig`
+**Location**: `org.limeime.data.ImKeyboardConfig`
 
 **Purpose**: Lightweight DTO containing only IM code and keyboard assignment
 
@@ -665,7 +665,7 @@ config.setKeyboard("bpmf");
 
 #### 7. NavigationMenuItem
 
-**Location**: `net.toload.main.hd.ui.view.NavigationMenuItem`
+**Location**: `org.limeime.ui.view.NavigationMenuItem`
 
 **Purpose**: Wraps an `Im` object with navigation menu context
 
@@ -724,7 +724,7 @@ This nested class is used internally by `NavigationManager` for rendering menu i
 
 #### 8. ChineseSymbol
 
-**Location**: `net.toload.main.hd.data.ChineseSymbol`
+**Location**: `org.limeime.data.ChineseSymbol`
 
 **Purpose**: Utility class for Chinese punctuation symbol conversion
 

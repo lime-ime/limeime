@@ -1,4 +1,4 @@
-# Issue #78: iOS optional suggestion candidates should not intercept functional keys (FIXED)
+﻿# Issue #78: iOS optional suggestion candidates should not intercept functional keys (FIXED)
 
 **Status**: Fixed. See "Resolution" section at the bottom for the actual
 implementation. The original problem statement / inspection / proposal below
@@ -128,7 +128,7 @@ discussion lives in [docs/CANDI_FUNCTION_KEYS.md](CANDI_FUNCTION_KEYS.md).
   visible list was browse-only and composing is empty, so the stale bar is
   cleared rather than left visible.
 
-### Android — `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+### Android — `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 - `handleBackspace()` related-phrase branch (`!mEnglishOnly &&
   hasCandidatesShown && !hasChineseSymbolCandidatesShown`) now pre-clears

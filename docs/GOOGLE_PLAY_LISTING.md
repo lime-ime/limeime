@@ -1,4 +1,4 @@
-# Google Play — Prepared Listing Content & Answers
+﻿# Google Play — Prepared Listing Content & Answers
 
 Ready-to-paste content for the [GOOGLE_PLAY.md](GOOGLE_PLAY.md) checklist.
 Decisions locked: **Personal developer account**, **Free app**, **privacy policy
@@ -267,13 +267,13 @@ Screenshot capture tips:
     it can never be changed afterward. *(Note: current beta builds still ship as
     `net.toload.main.hd2026`; `applicationId` is switched to `org.limeime` at Play
     onboarding — edit [build.gradle](../LimeStudio/app/build.gradle#L34) + the
-    [test assertion](../LimeStudio/app/src/androidTest/java/net/toload/main/hd/ApplicationTest.java#L74) then.)*
-  - **The Java code is NOT moved** in either phase. The `applicationId` (the
-    Play/app identity, whatever it is) and the Java `namespace`
-    (`net.toload.main.hd`, where classes live) are independent by design. Classes stay under `net.toload.main.hd`; the
-    manifest's relative names (`.LIMEService`, `.LIMEBackupAgent`, `.ui.LIMESettings`)
-    resolve against the unchanged namespace. Renaming the Java package would be a
-    large, risky refactor with **no user-visible benefit** — deliberately avoided.
+    [test assertion](../LimeStudio/app/src/androidTest/java/org/limeime/ApplicationTest.java#L74) then.)*
+  - **The Java package is now `org.limeime`**, unified with the `applicationId`
+    (the namespace was previously `net.toload.main.hd`, kept separate from the app
+    id). Classes live under `org.limeime`; the manifest's relative names
+    (`.LIMEService`, `.LIMEBackupAgent`, `.ui.LIMESettings`) resolve against it.
+    Because the IME service class moved, users updating from an older build must
+    re-enable and re-select the keyboard once after this change.
   - In the store description, frame LIME IME 6 as the **continuation/successor** of
     the original LIME IME (the draft already does this) so returning users recognise
     it, even though the listing itself is new.

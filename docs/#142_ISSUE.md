@@ -1,4 +1,4 @@
-# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
+﻿# Issue #142: Android phone English keyboard key labels are nearly invisible in light theme
 
 ## Problem statement
 
@@ -30,7 +30,7 @@ Those bitmap key faces appear to be drawn with light glyphs that do not adapt to
 
 Relevant Android routing:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEKeyboardSwitcher.java`
   - `getKeyboardXMLID("phone")` maps to `R.xml.phone`.
   - `getKeyboardXMLID("phone_shift")` maps to `R.xml.phone_shift`.
   - `getKeyboardXMLID("phone_simple")` maps to `R.xml.phone_simple`.
@@ -61,7 +61,7 @@ This is consistent with the reporter's note that typing and composing still work
 the **mini popup keyboard** instead of the current multi-tap cycle on `codes`.
 
 - **Labels:** `keyLabel="main\nsub"`. `LIMEKeyboardBaseView` already splits a
-  `keyLabel` on `\n` into a main label + sub-label ([LIMEKeyboardBaseView.java:1109](../LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java#L1109)),
+  `keyLabel` on `\n` into a main label + sub-label ([LIMEKeyboardBaseView.java:1109](../LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java#L1109)),
   both drawn as theme text colors (`keySubLabelTextColorNormal`). No bitmap glyph
   is left to be invisible, so #142 disappears by construction.
 - **Alternates:** `popupKeyboard="@xml/popup_template"` + `popupCharacters="…"`

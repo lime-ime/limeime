@@ -184,9 +184,9 @@ iOS still does **not** import `dictionary.db`, builds no scored table, and maint
 
 Files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
 
 Android uses the bundled `dictionary` table in `lime.db`:
 

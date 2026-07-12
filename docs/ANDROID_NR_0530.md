@@ -1,4 +1,4 @@
-# Android Next Release Implementation Plan
+﻿# Android Next Release Implementation Plan
 
 > **For Hermes:** Use `subagent-driven-development` to implement this plan task-by-task. Keep this as one Android next-release feature/fix train, but use small commits and review gates so regressions are isolated.
 
@@ -76,9 +76,9 @@ Any task that changes visible Android UI, keyboard layout, keyboard state indica
 **Objective:** Ensure Android backup excludes optional rollback journal files, propagates failure to UI, and never reports success with a 0 B output.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java:397-483`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEUtilities.java` if zip helper behavior must distinguish optional files from fatal files
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/DBServerTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/DBServer.java:397-483`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIMEUtilities.java` if zip helper behavior must distinguish optional files from fatal files
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/DBServerTest.java`
 - Reference: PR #97 (`fix/94-android-backup-zero-byte`) if still open
 
 **Implementation requirements:**
@@ -127,9 +127,9 @@ Expected: DBServer backup tests pass.
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEUtilities.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/DBServerTest.java
+git add LimeStudio/app/src/main/java/org/limeime/DBServer.java \
+        LimeStudio/app/src/main/java/org/limeime/global/LIMEUtilities.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/DBServerTest.java
 git commit -m "fix(android): make backup robust without rollback journal"
 ```
 
@@ -140,7 +140,7 @@ git commit -m "fix(android): make backup robust without rollback journal"
 **Objective:** Reproduce duplicate-code ordering drift before changing query logic.
 
 **Files:**
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 - Fixture: create temporary `.cin` file inside the test app cache directory
 
 **Failing test shape:**
@@ -188,8 +188,8 @@ Run only `LimeDBTest` first and confirm this test fails before Task 4.
 **Objective:** Make same-code exact matches fall back to `_id ASC` / source insertion order when sorting is disabled, while preserving learned sorting when enabled.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` around `getMappingByCode(...)` query ordering
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` around `getMappingByCode(...)` query ordering
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 
 **Implementation requirements:**
 
@@ -216,8 +216,8 @@ Run only `LimeDBTest` first and confirm this test fails before Task 4.
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java
+git add LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java
 git commit -m "fix(android): preserve cin duplicate-code source order"
 ```
 
@@ -228,8 +228,8 @@ git commit -m "fix(android): preserve cin duplicate-code source order"
 **Objective:** Lock Android parser behavior for Array10-style `.lime` files containing `#` comments and metadata rows.
 
 **Files:**
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
-- Modify later: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
+- Modify later: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 
 **Failing test shape:**
 
@@ -272,8 +272,8 @@ public void limeImportSkipsHashCommentsAndPersistsCnameVersion() throws Exceptio
 **Objective:** Make `.lime` metadata robust and documented enough to support official Array10 and user tables.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` in `.lime` / text import parser
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` in `.lime` / text import parser
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 - Docs: `docs/CIN_LIME_SPEC.md` if current spec does not mention `.lime #` comments or `@cname@` / `@version@`
 
 **Implementation requirements:**
@@ -295,8 +295,8 @@ public void limeImportSkipsHashCommentsAndPersistsCnameVersion() throws Exceptio
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java \
+git add LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java \
         docs/CIN_LIME_SPEC.md
 git commit -m "fix(android): parse lime metadata with comments"
 ```
@@ -308,14 +308,14 @@ git commit -m "fix(android): parse lime metadata with comments"
 **Objective:** Define Android runtime representation for Lime-specific `%limeendkey` / `@limeendkey@`, expose it as editable per-IM metadata in LIME Settings IM detail view, and document how it differs from conventional `%endkey` / `@endkey@` compatibility metadata before implementing key behavior.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java` if a constant for `limeendkey` is missing
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/ManageImController.java:411-444`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java:58-191,285-320,422-485`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIME.java` if a constant for `limeendkey` is missing
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/controller/ManageImController.java:411-444`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java:58-191,285-320,422-485`
 - Modify: `LimeStudio/app/src/main/res/layout/fragment_im_detail.xml:86-192`
 - Modify: `LimeStudio/app/src/main/res/values/strings_settings.xml:800-810`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/ui/controller/ManageImControllerTest.java` or existing controller test seam if present
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/ui/controller/ManageImControllerTest.java` or existing controller test seam if present
 - Docs: `docs/CIN_LIME_SPEC.md`
 - Docs: `docs/LIME_SETTINGS.md`
 
@@ -379,10 +379,10 @@ public void updateIMMetadataFieldAllowsLimeEndkey() {
 **Objective:** Implement `limeendkey` as a general per-table commit trigger. When the user presses **any key in the active table's end-key list** while composing, LIME should end composition immediately and commit the current candidate selection, resolving the current composing candidates first if the asynchronous candidate strip has not yet marked candidates as shown. This is not a comma/period-only feature.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` around key input / composing dispatch / Space/Enter candidate-confirm behavior / `commitTyped(...)`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java` only if the current highlighted-candidate flow cannot be reused without a small API seam
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEPreferenceManager.java` or related config cache if IM metadata is cached there
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java` or `SearchServerTest.java` depending on current test seams
+- Modify: `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` around key input / composing dispatch / Space/Enter candidate-confirm behavior / `commitTyped(...)`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/SearchServer.java` only if the current highlighted-candidate flow cannot be reused without a small API seam
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIMEPreferenceManager.java` or related config cache if IM metadata is cached there
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java` or `SearchServerTest.java` depending on current test seams
 
 **Implementation requirements:**
 
@@ -421,12 +421,12 @@ public void updateIMMetadataFieldAllowsLimeEndkey() {
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java \
+git add LimeStudio/app/src/main/java/org/limeime/LIMEService.java \
+        LimeStudio/app/src/main/java/org/limeime/SearchServer.java \
+        LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java \
         docs/CIN_LIME_SPEC.md
 git commit -m "feat(android): support table end-key commit trigger"
 ```
@@ -438,11 +438,11 @@ git commit -m "feat(android): support table end-key commit trigger"
 **Objective:** Do **not** add a new keyboard theme. Keep existing `6 = 系統設定` as the only follow-system choice, and make that mode respect the Android system accent color where available. The LIME Settings app should also use the system accent color instead of fixed LIME blue/green accents.
 
 **Files:**
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java:6063-6244`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/LIMEService.java:6063-6244`
 - Modify: `LimeStudio/app/src/main/res/values/themes.xml:30-59`
 - Modify: `LimeStudio/app/src/main/res/values/colors.xml:122-126` only if fallback/static accent colors need clearer naming
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java:145-181` only if runtime Material dynamic-color application is needed before `setContentView(...)`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java` or a new focused color-helper test
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java:145-181` only if runtime Material dynamic-color application is needed before `setContentView(...)`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java` or a new focused color-helper test
 - Test: existing settings activity/theme instrumentation tests if present; otherwise add a small theme-resolution test only if practical
 
 **Design:**
@@ -505,11 +505,11 @@ git commit -m "feat(android): support table end-key commit trigger"
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java \
+git add LimeStudio/app/src/main/java/org/limeime/LIMEService.java \
+        LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java \
         LimeStudio/app/src/main/res/values/themes.xml \
         LimeStudio/app/src/main/res/values/colors.xml \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java
+        LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java
 git commit -m "feat(android): respect system accent in follow-system theme"
 ```
 
@@ -526,7 +526,7 @@ git commit -m "feat(android): respect system accent in follow-system theme"
   - `lime_et_41_shift.xml` — remove Chinese/Bopomofo root sub-labels from shifted symbol/punctuation keys such as `&*()`, `:`, `"`, `,`, `.`, `/`, `-`, `=`, `<`, `>`, `?`; keep shifted capital-letter root sub-labels.
   - `lime_dayi_sym_shift.xml` — remove Chinese root sub-labels from shifted symbol keys such as `!@#$%^&*()`, `:`, `<`, `>`, `?`; keep shifted capital-letter root sub-labels.
 - Do not modify layouts that have only alphabet-key IM root sub-labels, such as `lime_cj_shift.xml`, `lime_cj_number_shift.xml`, `lime_et26_shift.xml`, `lime_hsu_shift.xml`, or `lime_wb_shift.xml`; capital-letter roots remain valid in shifted state.
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/KeyboardLayoutResourceTest.java` if practical for XML resource coverage
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/KeyboardLayoutResourceTest.java` if practical for XML resource coverage
 
 **Implementation rules:**
 
@@ -563,7 +563,7 @@ The helper should inspect each `<Key>` where `limehd:codes` emits a non-alphabet
 
 ```bash
 git add LimeStudio/app/src/main/res/xml/*shift*.xml \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/KeyboardLayoutResourceTest.java
+        LimeStudio/app/src/androidTest/java/org/limeime/KeyboardLayoutResourceTest.java
 git commit -m "feat(android): remove root labels from shifted symbol keys"
 ```
 
@@ -574,11 +574,11 @@ git commit -m "feat(android): remove root labels from shifted symbol keys"
 **Objective:** Change Android Shift handling so repeated single taps no longer cycle through Shift Lock. A single Shift tap toggles between shifted and unshifted. A double tap enters Shift Lock. While Shift Lock is active, a single Shift tap exits Shift Lock and returns to unshifted.
 
 **Files:**
-- Inspect/modify: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java` for multi-tap/double-tap dispatch behavior.
-- Inspect/modify: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java` for keyboard view Shift/touch state callbacks if the double-tap signal is handled there.
-- Inspect/modify: `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` for final `KEYCODE_SHIFT` state transitions.
-- Inspect/modify: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java` / `LimeKeyboard.java` only if the current Shift Lock visual state is tied directly to the old three-state single-tap cycle.
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java` or the closest existing Android keyboard/input test class.
+- Inspect/modify: `LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java` for multi-tap/double-tap dispatch behavior.
+- Inspect/modify: `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java` for keyboard view Shift/touch state callbacks if the double-tap signal is handled there.
+- Inspect/modify: `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` for final `KEYCODE_SHIFT` state transitions.
+- Inspect/modify: `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java` / `LimeKeyboard.java` only if the current Shift Lock visual state is tied directly to the old three-state single-tap cycle.
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java` or the closest existing Android keyboard/input test class.
 
 **Behavior requirements:**
 
@@ -634,10 +634,10 @@ If the current test surface cannot synthesize real double-tap timing, extract th
 **Commit:**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java \
-        LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java \
-        LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java
+git add LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java \
+        LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java \
+        LimeStudio/app/src/main/java/org/limeime/LIMEService.java \
+        LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java
 git commit -m "feat(android): use double tap for shift lock"
 ```
 

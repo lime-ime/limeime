@@ -1,4 +1,4 @@
-# #96 — Table IM Lime end-key behavior
+﻿# #96 — Table IM Lime end-key behavior
 
 ## Live issue state
 
@@ -54,7 +54,7 @@ Official table-data scope:
 
 Android candidate construction in the inspected path creates a composing-code `Mapping` and adds it before database results:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+- `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`
   - `getMappingByCode(...)` creates `self`, sets `word = code`, `code = code`, and marks it with `setComposingCodeRecord()`.
   - The method then normally `result.add(self)` before `result.addAll(resultlist)`.
   - This means exact direct mappings from the table can be present but still appear after the composing-code record.
@@ -68,7 +68,7 @@ Relevant code area on current `master`:
 
 Commit behavior confirms why the highlighted/selected candidate matters:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `commitTyped(...)` commits `selectedCandidate.getWord()`.
 
 Relevant code area on current `master`:

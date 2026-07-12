@@ -1,4 +1,4 @@
-# iOS LimeKeyboard — Touch-Layer Rewrite Plan (Flint / Glide + Feel Parity with Android)
+﻿# iOS LimeKeyboard — Touch-Layer Rewrite Plan (Flint / Glide + Feel Parity with Android)
 
 ## 0. Goal-mode execution contract (read first)
 
@@ -85,7 +85,7 @@ Neither is a bug in a specific handler. Both fall out of an architectural choice
 
 ## 3. Gap analysis (behavior-by-behavior)
 
-Reference: Android `PointerTracker.java` / `ProximityKeyDetector.java` / `LIMEKeyboardBaseView.java` under `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/`; iOS `KeyboardView.swift`.
+Reference: Android `PointerTracker.java` / `ProximityKeyDetector.java` / `LIMEKeyboardBaseView.java` under `LimeStudio/app/src/main/java/org/limeime/keyboard/`; iOS `KeyboardView.swift`.
 
 | Behavior | Android | iOS today | Gap |
 |---|---|---|---|
@@ -141,11 +141,11 @@ Rules the trackers must enforce:
 2. **`isMultipleTouchEnabled = true` moves to the single touch layer.** The five scattered per-view flags from IOS_MISS_KEY.md §2026-05-24 collapse to one flag on the `KeyTouchLayer` (multi-touch is per-view and must be set on the actual touch owner). The scattered flags are removed in P4.
 3. **Repeat is cancelled when 2+ non-modifier keys are down** (Android `cancelKeyRepeatTimer`), so a rollover next to a held backspace doesn't machine-gun.
 
-**Pointer-queue ordering (Android `PointerQueue`, [LIMEKeyboardBaseView.java:1741–1773](../LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java#L1741), release helpers 486–540):** the trackers form an ordered queue. On a **modifier down**, release all existing non-modifier pointers first (`releaseAllPointersExcept(null)`); on a **non-modifier up**, release only pointers *older* than it; a **modifier up** releases everything except the modifier. Port this ordering — it's what makes shift+letter, symbol-toggle mid-type, and 3-finger rollover resolve deterministically instead of racing.
+**Pointer-queue ordering (Android `PointerQueue`, [LIMEKeyboardBaseView.java:1741–1773](../LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java#L1741), release helpers 486–540):** the trackers form an ordered queue. On a **modifier down**, release all existing non-modifier pointers first (`releaseAllPointersExcept(null)`); on a **non-modifier up**, release only pointers *older* than it; a **modifier up** releases everything except the modifier. Port this ordering — it's what makes shift+letter, symbol-toggle mid-type, and 3-finger rollover resolve deterministically instead of racing.
 
 ## 4.2 Android source-of-truth parity map (read the cited code before implementing each)
 
-The Mac-side agent must treat the Android implementation as the executable spec: **open each cited block and match its behavior.** Base path shorthand `AND/` = `LimeStudio/app/src/main/java/net/toload/main/hd/`. Priority: **M** = must-have for parity, **P** = preserve existing iOS behavior through the rewrite, **V** = verify desirability on iOS before porting (command gestures that may clash with iOS conventions).
+The Mac-side agent must treat the Android implementation as the executable spec: **open each cited block and match its behavior.** Base path shorthand `AND/` = `LimeStudio/app/src/main/java/org/limeime/`. Priority: **M** = must-have for parity, **P** = preserve existing iOS behavior through the rewrite, **V** = verify desirability on iOS before porting (command gestures that may clash with iOS conventions).
 
 | # | Behavior | Android source (file:line) — what it does | iOS today | iOS target / phase | Pri |
 | --- | --- | --- | --- | --- | --- |

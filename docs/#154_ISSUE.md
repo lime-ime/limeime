@@ -1,4 +1,4 @@
-# Issue #154: Android inline voice input can remain stuck after a recognition error
+﻿# Issue #154: Android inline voice input can remain stuck after a recognition error
 
 ## Status
 
@@ -124,8 +124,8 @@ Gate order is strict, but iteration is automatic: a failure returns execution to
 
 **Files:**
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/LIMEDictationController.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEDictationControllerTest.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/LIMEDictationController.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEDictationControllerTest.java`
 
 Add one private terminal-session path in `LIMEDictationController` and route result, error, and cancel handling through it. That path must:
 
@@ -151,8 +151,8 @@ Keep `shouldFallback=true` only for failure to start inline recognition. Runtime
 
 **Files:**
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
 
 Add one service cleanup method used by final-result, error, cancellation, `onFinishInput()`, and `onFinishInputView()`. It must perform the common cleanup in this order:
 
@@ -180,9 +180,9 @@ Add focused service tests proving:
 
 **Files:**
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/candidate/CandidateViewTest.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/candidate/CandidateViewTest.java`
 
 Reuse the current candidate strip and microphone/dismiss assets. Do not add an activity, dialog, overlay, dependency, or second microphone entry point.
 

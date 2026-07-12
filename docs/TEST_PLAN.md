@@ -1,4 +1,4 @@
-# Test Plan: Architecture Refactoring Validation
+﻿# Test Plan: Architecture Refactoring Validation
 
 ## Executive Summary
 
@@ -1288,7 +1288,7 @@ UI Components → DBServer → LimeDB → SQLiteDatabase (main)
 The test architecture follows the same package structure as the main source code:
 
 ```
-app/src/androidTest/java/net/toload/main/hd/
+app/src/androidTest/java/org/limeime/
 ├── LimeDBTest.java                    ✅ EXISTS
 ├── DBServerTest.java                  ✅ EXISTS
 ├── LIMEServiceTest.java               ✅ EXISTS

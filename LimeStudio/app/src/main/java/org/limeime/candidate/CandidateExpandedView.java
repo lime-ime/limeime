@@ -1,0 +1,504 @@
+/*
+ *
+ *  *
+ *  **    Copyright 2026, The LimeIME Open Source Project
+ *  **
+ *  **    Project Url: http://github.com/lime-ime/limeime/
+ *  **
+ *  **    This program is free software: you can redistribute it and/or modify
+ *  **    it under the terms of the GNU General Public License as published by
+ *  **    the Free Software Foundation, either version 3 of the License, or
+ *  **    (at your option) any later version.
+ *  *
+ *  **    This program is distributed in the hope that it will be useful,
+ *  **    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  **    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  **    GNU General Public License for more details.
+ *  *
+ *  **    You should have received a copy of the GNU General Public License
+ *  **    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  *
+ *
+ */
+
+package org.limeime.candidate;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import androidx.annotation.NonNull;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
+import android.widget.ScrollView;
+
+import org.limeime.R;
+import org.limeime.data.Mapping;
+
+import java.util.List;
+
+
+public class CandidateExpandedView extends CandidateView {
+
+    private final static boolean DEBUG = false;
+    private final static String TAG = "CandidateExpandedView";
+
+    private static final int MAX_SUGGESTIONS = 200;
+
+    private CandidateView mCandidateView;
+    private List<Mapping> mSuggestions;
+    //private int mVerticalPadding;
+    private int mTouchX = OUT_OF_BOUNDS;
+    private int mTouchY = OUT_OF_BOUNDS;
+    private int mSelRow; //Jeremy '11,8,28
+    private int mSelCol; //Jeremy '11,8,28
+    //private int mScrollY;
+    private final int[][] mWordX = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
+    private final int[][] mWordWidth = new int[MAX_SUGGESTIONS][MAX_SUGGESTIONS];
+    private final int[] mRowSize = new int[MAX_SUGGESTIONS];
+    private final int[] mRowStartingIndex = new int[MAX_SUGGESTIONS];
+    private int mRows = 0;
+    private int mHeight; // Row height (configHeight + mVerticalPadding), updated in updateFontSize()
+    private int mTotalHeight;
+    private ScrollView mParentScrollView;
+
+
+    public CandidateExpandedView(Context context, AttributeSet attrs) {
+        this(context, attrs, R.attr.LIMECandidateView);
+    }
+
+    public CandidateExpandedView(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
+
+        // mHeight will be set in updateFontSize() to match parent's mHeight (configHeight + mVerticalPadding)
+        // Initialize with a default value
+        mHeight = (int) (context.getResources().
+                getDimensionPixelSize(R.dimen.candidate_stripe_height) * mLIMEPref.getFontSize());
+
+        setBackgroundColor(mColorBackground);
+
+
+    }
+
+    public void setParentScrollView(ScrollView v) {
+        mParentScrollView = v;
+    }
+
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int desireWidth = resolveSize(mCandidateView.getWidth(), widthMeasureSpec);
+        int desiredHeight = resolveSize(mTotalHeight, heightMeasureSpec);
+
+        // Maximum possible width and desired height
+        setMeasuredDimension(desireWidth, desiredHeight);
+
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        if (mSuggestions == null) return;
+        if (DEBUG)
+            Log.i(TAG, "OnDraw() mSuggestions.size:" + mSuggestions.size());
+
+
+        //mTotalWidth = 0;
+        if (mBgPadding == null) {
+            mBgPadding = new Rect(0, 0, 0, 0);
+            if (getBackground() != null) {
+                getBackground().getPadding(mBgPadding);
+
+            }
+        }
+
+
+        if (DEBUG)
+            Log.i(TAG, "OnDraw():mBgPadding.Top=" + mBgPadding.top
+                    + ", mBgPadding.Right=" + mBgPadding.right);
+
+        final int height = mHeight;
+        final int rowHeight = rowHeight(height, mVerticalPadding);
+        final Rect bgPadding = mBgPadding;
+        final Paint candidatePaint = mCandidatePaint;
+        final Paint candidateEmojiPaint = mCandidatePaint;
+        final Paint selKeyPaint = mSelKeyPaint;
+
+        // Update mSelectedIndex from touch x and y;
+        if (mTouchX != OUT_OF_BOUNDS && mTouchY != OUT_OF_BOUNDS) {
+            //Jeremy '11,8,23 mTouchY is already relative to view origin, no need to add mScrollY
+            mSelRow = mTouchY / rowHeight;
+
+            for (int i = 0; i < mRowSize[mSelRow]; i++) {
+                if (mTouchX >= mWordX[mSelRow][i] && mTouchX < mWordX[mSelRow][i] + mWordWidth[mSelRow][i]) {
+                    mSelectedIndex = mRowStartingIndex[mSelRow] + i;
+                    mSelCol = i;
+                    break;
+                }
+            }
+            if (DEBUG)
+                Log.i(TAG, "onDraw(): new mSelectedIndex =" + mSelectedIndex
+                        + ", mSelRow=" + mSelRow
+                        + ", mSelCol=" + mSelCol);
+        }
+
+        // Paint all the suggestions and lines.
+        if (canvas != null) {
+
+
+            if (DEBUG)
+                Log.i(TAG, "onDraw(): mSelectedIndex=" + mSelectedIndex + " at row:" + mSelRow + ", column:" + mSelCol);
+
+            // Draw highlight on SelectedIndex
+            // 29/Aug/2011, Art just ignore if there is an error.
+            try {
+                if (mSelectedIndex >= 0) {
+                    canvas.translate(mWordX[mSelRow][mSelCol], mSelRow * rowHeight);
+                    mDrawableSuggestHighlight.setBounds(0, bgPadding.top, mWordWidth[mSelRow][mSelCol], rowHeight);
+                    mDrawableSuggestHighlight.draw(canvas);
+                    canvas.translate(-mWordX[mSelRow][mSelCol], -mSelRow * rowHeight);
+                }
+            } catch (ArrayIndexOutOfBoundsException e) {
+                Log.e(TAG, "Error in candidate expanded view", e);
+            }
+
+            try {
+                int y = rowBaseline(rowHeight, mCandidatePaint.getTextSize(), mCandidatePaint.ascent());
+                int index = 0; //index in mSuggestions
+                for (int i = 0; i < mRows; i++) {
+                    if (i != 0) y += rowHeight;
+
+                    for (int j = 0; j < mRowSize[i]; j++) {
+
+                        if(mSuggestions == null || mSuggestions.isEmpty() || mSuggestions.get(index) == null){
+                            continue;
+                        }
+                        Mapping mapping = mSuggestions.get(index);
+                        String suggestion = displaySuggestion(index, mSuggestions);
+
+                        switch (mapping.getRecordType()) {
+                            case Mapping.RECORD_EXACT_MATCH_TO_CODE:
+                            case Mapping.RECORD_PARTIAL_MATCH_TO_CODE:
+                            case Mapping.RECORD_COMPOSING_CODE:
+                                selKeyPaint.setColor(mColorSpacer);
+                                if (i == 0 && j == 0) {
+                                    if (mSelectedIndex == 0) candidatePaint.setColor(mColorComposingCodeHighlight);
+                                    else candidatePaint.setColor(mColorComposingCode);
+                                } else {
+                                    if(index == mSelectedIndex)
+                                        candidatePaint.setColor(mColorNormalTextHighlight);
+                                    else
+                                        candidatePaint.setColor(mColorNormalText);
+                                }
+                                break;
+                            default:
+                                if(index == mSelectedIndex)
+                                    candidatePaint.setColor(mColorNormalTextHighlight);
+                                else
+                                    candidatePaint.setColor(mColorNormalText);
+                                break;
+                        }
+                        if (mapping.isEmojiRecord()) {
+                            canvas.drawText(suggestion, mWordX[i][j] + X_GAP, Math.round(y * 0.95f), candidateEmojiPaint);
+                        } else {
+                            canvas.drawText(suggestion, mWordX[i][j] + X_GAP, y, candidatePaint);
+                        }
+
+
+                        candidatePaint.setColor(mColorSpacer);
+                        float lineX = mWordX[i][j] + mWordWidth[i][j] + 0.5f;
+                        canvas.drawLine(lineX, bgPadding.top + rowLineTop(i, rowHeight, mVerticalPadding), lineX,
+                                rowLineBottom(i, rowHeight, mVerticalPadding), candidatePaint);
+                        candidatePaint.setFakeBoldText(false);
+                        index++;
+
+                    }
+                }
+            }catch(Exception e){
+                Log.e(TAG, "Error in candidate expanded view", e);
+                // ignore error
+            }
+
+
+        }
+
+
+    }
+
+
+    public void setParentCandidateView(CandidateView v) {
+        mCandidateView = v;
+    }
+
+    public void prepareLayout() {
+        if (DEBUG)
+            Log.i(TAG, "prepareLayout()");
+
+        if (mSuggestions == null || mSuggestions.isEmpty()) return;
+
+        if (DEBUG)
+            Log.i(TAG, "prepareLayout():mSuggestions.size()" + mSuggestions.size());
+
+        updateFontSize();
+        mCandidatePaint.setTextSize(CandidateView.liveCandidateTextSize(mCandidatePaint.getTextSize()));
+        
+        // Keep the same content height and padding math as the live candidate bar.
+        mHeight = configHeight;
+
+        final Paint paint = mCandidatePaint;
+        int dismissWidth = mCandidateView.popupDismissButtonWidth();
+        int expandWidth = mCandidateView.popupExpandButtonWidth();
+        int x = rowStartX(0, dismissWidth);
+        int row = 0;
+        int indexInRow = 0;
+        mRowStartingIndex[0] = 0;
+
+        final int count = mCount;
+        for (int i = 0; i < count; i++) {
+            //if(DEBUG)
+            //	Log.i(TAG, "prepareLayout():updating:" + i +", indexInRox=" + indexInRow );
+
+            String suggestion = displaySuggestion(i, mSuggestions);
+            final int wordWidth = wordWidth(paint, suggestion, X_GAP);
+
+            if (x + wordWidth > rowEndX(row, mScreenWidth, expandWidth)) {
+                mRowSize[row] = indexInRow;
+                row++;
+                mRowStartingIndex[row] = i;
+                indexInRow = 0;
+                x = rowStartX(row, dismissWidth);
+                if (DEBUG)
+                    Log.i(TAG, "prepareLayout():mRowSize[" + (row - 1) + "]=" + mRowSize[row - 1]);
+                if (DEBUG)
+                    Log.i(TAG, "prepareLayout():mRowStartingIndex[" + row + "]=" + mRowStartingIndex[row]);
+            }
+
+
+            mWordX[row][indexInRow] = x;
+            mWordWidth[row][indexInRow] = wordWidth;
+            x += wordWidth;
+
+            if (DEBUG)
+                Log.i(TAG, "prepareLayout():mWorx[" + row + "][" + indexInRow + "]=" + mWordX[row][indexInRow]);
+            if (DEBUG)
+                Log.i(TAG, "prepareLayout():mWordWidth[" + row + "][" + indexInRow + "]=" + mWordWidth[row][indexInRow]);
+
+            if (i == count - 1) {
+                mRowSize[row] = indexInRow + 1;
+                if (DEBUG)
+                    Log.i(TAG, "prepareLayout():mRowSize[" + (row) + "]=" + mRowSize[row]);
+            }
+
+            indexInRow++;
+
+
+        }
+        //mTotalWidth = x;
+        mRows = row + 1;
+        mTotalHeight = rowHeight(mHeight, mVerticalPadding) * mRows;
+        if (DEBUG)
+            Log.i(TAG, "prepareLayout(): mRows=" + mRows + ", mTotalHeight=" + mTotalHeight);
+    }
+
+    static int rowHeight(int contentHeight, int verticalPadding) {
+        return contentHeight + verticalPadding;
+    }
+
+    static int rowBaseline(int rowHeight, float textSize, float ascent) {
+        return (int) (((rowHeight - textSize) / 2) - ascent);
+    }
+
+    static float rowLineTop(int row, int rowHeight, int verticalPadding) {
+        return rowHeight * row + ((float) verticalPadding / 2);
+    }
+
+    static float rowLineBottom(int row, int rowHeight, int verticalPadding) {
+        return rowHeight * (row + 1) - ((float) verticalPadding / 2);
+    }
+
+    static String displaySuggestion(int index, List<Mapping> suggestions) {
+        String suggestion = suggestions.get(index).getWord();
+        if (index == 0
+                && suggestions.size() > 1
+                && suggestions.get(1).isRuntimeBuiltPhraseRecord()
+                && suggestion.length() > 8) {
+            return suggestion.substring(0, 2) + "..";
+        }
+        return suggestion;
+    }
+
+    static int wordWidth(Paint paint, String suggestion, int xGap) {
+        if (suggestion == null) return xGap * 2;
+        float base = paint.measureText("。");
+        float textWidth = paint.measureText(suggestion);
+        if (textWidth < base) {
+            textWidth = base;
+        }
+        return (int) textWidth + xGap * 2;
+    }
+
+    static int rowStartX(int row, int dismissWidth) {
+        return row == 0 ? dismissWidth : 0;
+    }
+
+    static int rowEndX(int row, int screenWidth, int expandWidth) {
+        return row == 0 ? screenWidth - expandWidth : screenWidth;
+    }
+
+
+    public void setSuggestions(List<Mapping> suggestions) {
+        if (DEBUG) Log.i(TAG, "setSuggestions(), suggestions.size()=" + suggestions.size());
+        if (mCandidateView != null && mCandidateView.mSuggestions != null) {
+            mSuggestions = mCandidateView.mSuggestions;
+            mCount = mCandidateView.mCount;
+            mSelectedIndex = mCandidateView.mSelectedIndex;
+            mTouchX = OUT_OF_BOUNDS;
+            mTouchY = OUT_OF_BOUNDS;
+            if (mSelectedIndex == -1) {
+                mSelCol = -1;
+                mSelRow = -1;
+            } else {
+                mSelCol = mSelectedIndex;
+                mSelRow = 0;
+            }
+
+        }
+        prepareLayout();
+        //requestLayout();
+        invalidate();
+
+    }
+
+    boolean mDownTouch = false;
+
+    @Override
+    public boolean onTouchEvent(@NonNull MotionEvent me) {
+        if (DEBUG)
+            Log.i(TAG, "onTouchEvent(): x =" + me.getX() + ", y=" + me.getY()
+                    + ", ScroolY=" + mParentScrollView.getScrollY());
+        int action = me.getActionMasked();
+        int x = (int) me.getX();
+        int y = (int) me.getY();
+        mTouchX = x;
+        mTouchY = y;
+        //mScrollY = mParentScrollView.getScrollY();
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                if (DEBUG) Log.i(TAG, "onTouchEvent(), Action_DONW");
+                mDownTouch = true;
+                invalidate();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (DEBUG) Log.i(TAG, "onTouchEvent(), Action_MOVE");
+                invalidate();
+                break;
+            case MotionEvent.ACTION_UP:
+                if (DEBUG) Log.i(TAG, "onTouchEvent(), Action_UP");
+                if (mDownTouch) {
+                    mDownTouch = false;
+                    performClick();
+                }
+                //invalidate();
+                mCandidateView.takeSelectedSuggestion(true);//takeSuggstionAtIndex(mSelectedIndex);
+
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean performClick() {
+        // Calls the super implementation, which generates an AccessibilityEvent
+        // and calls the onClick() listener on the view, if any
+        super.performClick();
+        return true;
+    }
+
+
+    private void scrollToRow(int row) {
+        int selY = row * (mHeight + mVerticalPadding);
+        int scrollY = mParentScrollView.getScrollY();
+        int scrollHeight = mParentScrollView.getHeight();
+        if (DEBUG) Log.i(TAG, "scrollToRow(), row=" + row
+                + ", selected row y=" + selY
+                + ", ScrollViewHeight" + scrollHeight
+                + ", ScollY=" + scrollY);
+
+        if (selY < scrollY || selY > (scrollY + scrollHeight))
+            mParentScrollView.scrollTo(0, row * ((mHeight + mVerticalPadding)));
+
+    }
+
+    @Override
+    public void selectNext() {
+        if (mSuggestions == null) return;
+        if (mSelectedIndex == -1) {
+            mSelectedIndex = 0;
+            mSelRow = 0;
+            mSelCol = 0;
+        } else if (mSelectedIndex < mCount - 1) {
+            mSelectedIndex++;
+            if (mSelectedIndex >= mRowStartingIndex[mSelRow] + mRowSize[mSelRow]) {
+                mSelRow++;
+                mSelCol = 0;
+                scrollToRow(mSelRow);
+            } else
+                mSelCol++;
+
+            invalidate();
+        }
+    }
+
+    @Override
+    public void selectPrev() {
+        if (mSuggestions == null) return;
+        if (mSelectedIndex > 0) {
+            mSelectedIndex--;
+            if (mSelectedIndex < mRowStartingIndex[mSelRow]) {
+                mSelRow--;
+                mSelCol = mRowSize[mSelRow] - 1;
+                scrollToRow(mSelRow);
+            } else
+                mSelCol--;
+            invalidate();
+        }
+    }
+
+    @Override
+    public void selectNextRow() {
+        if (mSuggestions == null) return;
+        if (mSelRow < mRows - 1) {
+            mSelRow++;
+
+            if (DEBUG)
+                Log.i(TAG, "selectNextRow(): newRow=" + mSelRow
+                        + ", mSelCol=" + mSelCol
+                        + ", mRowStartingIndex[mSelRow]=" + mRowStartingIndex[mSelRow]
+                        + ", + mRowSize[mSelRow]" + mRowSize[mSelRow]);
+            if (mSelCol > mRowSize[mSelRow] - 1)
+                mSelCol = mRowSize[mSelRow] - 1;
+            else if (mSelCol == -1)
+                mSelCol = 0;
+
+            mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
+            scrollToRow(mSelRow);
+            invalidate();
+        }
+
+    }
+
+    @Override
+    public void selectPrevRow() {
+        if (mSuggestions == null) return;
+        if (mSelRow > 0) {
+            mSelRow--;
+            if (mSelCol > mRowSize[mSelRow] - 1)
+                mSelCol = mRowSize[mSelRow] - 1;
+
+            mSelectedIndex = mRowStartingIndex[mSelRow] + mSelCol;
+            scrollToRow(mSelRow);
+            invalidate();
+        }
+
+    }
+}

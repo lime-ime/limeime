@@ -1,4 +1,4 @@
-# Issue #91: CIN import changes same-code candidate order
+﻿# Issue #91: CIN import changes same-code candidate order
 
 ## Current status
 
@@ -51,7 +51,7 @@ Resolved / reporter-confirmed fixed. Implemented and merged to `master` via PR #
 
 Android import path:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - `.cin` files are detected by file extension in `importTxtTable(...)`.
   - `%chardef begin/end` lines are parsed, `code` and `word` are inserted into the IM table, and rows are inserted with `db.insert(table, null, cv)`.
   - If no explicit score/base score is provided, `score` defaults to `0`, while `basescore` is populated from `getBaseScore(word)`.

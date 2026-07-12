@@ -295,7 +295,7 @@
         <!-- Inline segmented control (無 / 繁轉簡 / 簡轉繁). Persists the same
              han_convert_option String ("0"/"1"/"2") as the former ListPreference,
              so the keyboard picks up the change identically. -->
-        <net.toload.main.hd.ui.view.SegmentedHanPreference
+        <org.limeime.ui.view.SegmentedHanPreference
             android:defaultValue="0"
             android:key="han_convert_option"
             android:persistent="true"

@@ -1,4 +1,4 @@
-# Android Backport Gap - iOS Settings Spec to Android Implementation
+﻿# Android Backport Gap - iOS Settings Spec to Android Implementation
 
 > Source of truth: docs/LIME_SETTINGS.md (LIME Settings iOS App Specification).
 > This document enumerates every gap between that iOS spec and the current Android
@@ -64,7 +64,7 @@ About card below are at parity with iOS.
 inline title, two-step icon list, and privacy note, and to restore the prior Android
 heading + two description TextViews (see git diff for the exact change).
 
-Reference: LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupFragment.java,
+Reference: LimeStudio/app/src/main/java/org/limeime/ui/view/SetupFragment.java,
 LimeStudio/app/src/main/res/layout/fragment_setup.xml, prior implementation preserved at
 LimeStudio/app/src/main/res/layout/fragment_setup_im.xml (lines 55-128) for historical
 reference.
@@ -98,7 +98,7 @@ active IME (green banner).
 
 ### 2.1 IM List - section 5.1
 
-Reference: LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImListFragment.java,
+Reference: LimeStudio/app/src/main/java/org/limeime/ui/view/ImListFragment.java,
 fragment_im_list.xml, item_im_row.xml.
 
 | iOS Spec Item | Android Current | Gap | Severity |
@@ -113,7 +113,7 @@ fragment_im_list.xml, item_im_row.xml.
 
 ### 2.2 IM Detail - section 5.2
 
-Reference: LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java,
+Reference: LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java,
 fragment_im_detail.xml.
 
 | iOS Spec Item | Android Current | Gap | Severity |
@@ -131,7 +131,7 @@ fragment_im_detail.xml.
 
 ### 2.3 IM Install (Download + Import) - section 5.3
 
-Reference: LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java,
+Reference: LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java,
 fragment_im_install.xml, item_im_family_card.xml.
 
 | iOS Spec Item | Android Current | Gap | Severity |
@@ -158,7 +158,7 @@ search row + bottom pagination bar instead of the iOS single-column List + .sear
 .swipeActions + toolbar + button + paginator pattern. This entire screen pair should
 be re-built to share a single Material design layout.
 
-Reference: LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java,
+Reference: LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java,
 ManageRelatedFragment.java, layout/fragment_manage_im.xml, layout/fragment_manage_related.xml,
 ui/dialog/ManageImAddSheet.java, ManageImEditSheet.java, ManageRelatedAddSheet.java,
 ManageRelatedEditSheet.java.
@@ -596,7 +596,7 @@ Verify-only (no edits expected; re-run after each PR lands):
 
 ## 11. Test Modifications Required
 
-> Audit of `LimeStudio/app/src/androidTest/java/net/toload/main/hd/*Test.java` against the §10 backport plan. The Android instrumentation suite is overwhelmingly reflection-based (class existence + method-name presence) rather than view-level Espresso, so most UI-layer back-ports are invisible to it. Below lists every test that does touch a symbol the plan removes/renames.
+> Audit of `LimeStudio/app/src/androidTest/java/org/limeime/*Test.java` against the §10 backport plan. The Android instrumentation suite is overwhelmingly reflection-based (class existence + method-name presence) rather than view-level Espresso, so most UI-layer back-ports are invisible to it. Below lists every test that does touch a symbol the plan removes/renames.
 
 ### Tests already broken by completed work (Setup tab revert)
 

@@ -1,4 +1,4 @@
-# Android LIME Dictation Implementation Plan
+﻿# Android LIME Dictation Implementation Plan
 
 **Status:** Phase 1 implemented; Phase 2 human/device verification pending
 **Source design:** [ANDROID_LIME_DITACTION.md](ANDROID_LIME_DITACTION.md)
@@ -32,7 +32,7 @@ and automated verification passes.
 
 Existing voice entry and fallback:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `startVoiceInput()`
   - `getVoiceIntent()`
   - `resolveVoiceRecognitionLanguageTag(Locale)`
@@ -40,20 +40,20 @@ Existing voice entry and fallback:
   - `commitVoiceTextWithRetry(String, int)`
   - `prepareVoiceTextForCommit(String)`
   - voice result receiver and pending text handling
-- `LimeStudio/app/src/main/java/net/toload/main/hd/VoiceInputActivity.java`
+- `LimeStudio/app/src/main/java/org/limeime/VoiceInputActivity.java`
   - `RecognizerIntent` result trampoline and static pending text delivery
-- `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEUtilities.java`
+- `LimeStudio/app/src/main/java/org/limeime/global/LIMEUtilities.java`
   - `isVoiceSearchServiceExist(Context)`
   - `isVoiceInputMethodId(String)`
 
 Existing mic key and candidate UI:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
   - `startVoiceInput()`
   - candidate strip drawing and touch handling
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateViewContainer.java`
   - candidate strip container and embedded composing view wiring
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
   - in-input candidate container behavior
 - `LimeStudio/app/src/main/res/layout/candidates.xml`
   - `embeddedComposing`
@@ -62,7 +62,7 @@ Existing mic key and candidate UI:
 
 Existing Setup tab:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupFragment.java`
   - status refresh on resume
   - IME settings and picker buttons
 - `LimeStudio/app/src/main/res/layout/fragment_setup.xml`
@@ -75,11 +75,11 @@ Existing Setup tab:
 
 Existing tests:
 
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/VoiceInputActivityTest.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/candidate/CandidateViewTest.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/SetupImFragmentTest.java`
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceWithStubActivityTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/VoiceInputActivityTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/candidate/CandidateViewTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/SetupImFragmentTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceWithStubActivityTest.java`
 
 ## Automated Gate
 
@@ -141,22 +141,22 @@ Purpose: create a testable router before touching microphone recognition.
 
 Add:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/VoiceInputMode.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/VoiceInputMode.java`
   - `AUTO`
   - `LIME_INLINE`
   - `VOICE_IME`
   - `RECOGNIZER_INTENT`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/VoicePermissionState.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/VoicePermissionState.java`
   - `GRANTED`
   - `NOT_REQUESTED`
   - `DENIED_CAN_ASK`
   - `DENIED_DO_NOT_ASK_AGAIN`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/VoiceInputRoute.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/VoiceInputRoute.java`
   - `INLINE_DICTATION`
   - `VOICE_IME`
   - `RECOGNIZER_INTENT`
   - `UNAVAILABLE`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/LIMEVoiceInputRouter.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/LIMEVoiceInputRouter.java`
   - pure helper that decides route from:
     - feature enabled
     - selected mode
@@ -192,7 +192,7 @@ Modify:
 
 Add:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/VoicePermissionHelper.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/VoicePermissionHelper.java`
   - `getRecordAudioPermissionState(Context, Activity/Fragment)`
   - `hasRecordAudioPermission(Context)`
   - `openAppSettings(Context)`
@@ -306,7 +306,7 @@ Purpose: make `SpeechRecognizer` lifecycle testable before wiring UI.
 
 Add:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/DictationState.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/DictationState.java`
   - state enum or immutable state:
     - `IDLE`
     - `LISTENING`
@@ -314,14 +314,14 @@ Add:
     - `FINALIZING`
     - `ERROR`
     - `CANCELLED`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/DictationResultListener.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/DictationResultListener.java`
   - partial text callback
   - final text callback
   - error callback
   - cancelled callback
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/SpeechRecognizerAdapter.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/SpeechRecognizerAdapter.java`
   - test seam over Android `SpeechRecognizer`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/AndroidSpeechRecognizerAdapter.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/AndroidSpeechRecognizerAdapter.java`
   - concrete Android implementation
 
 Tests:
@@ -340,7 +340,7 @@ Purpose: implement inline dictation state management and callbacks.
 
 Add:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/voice/LIMEDictationController.java`
+- `LimeStudio/app/src/main/java/org/limeime/voice/LIMEDictationController.java`
   - owns recognizer lifecycle
   - exposes:
     - `start(String languageTag)`

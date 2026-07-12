@@ -1,4 +1,4 @@
-# Issue #72: Add user-provided Haha Cangjie as a downloadable IM
+﻿# Issue #72: Add user-provided Haha Cangjie as a downloadable IM
 
 ## Problem statement
 
@@ -248,8 +248,8 @@ Expected first lines:
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIME.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 - Test: Android table-name tests if present, otherwise add focused coverage near existing LimeDB tests.
 
 - [x] Add constants:
@@ -285,7 +285,7 @@ public static final String IM_CJ4 = "cj4";
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 - Modify: `LimeIME-iOS/Shared/Database/LimeDB.swift`
 - Modify: `LimeStudio/app/src/main/res/raw/lime.db`
 - Modify: `Database/lime.db`
@@ -432,8 +432,8 @@ spacestyle: 0
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/global/LIME.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java`
 - Modify related Android catalog/install controller files if the URL/category model is split.
 
 - [x] Add a GitHub raw URL constant for `Database/cj4.limedb`.

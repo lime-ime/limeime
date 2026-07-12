@@ -179,7 +179,7 @@ test plan and run only on a prepared simulator — see
 ## 8. Android parity
 
 Android's mini-keyboard is the AOSP-derived `LIMEKeyboardBaseView`
-(`LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/`). It selects between
+(`LimeStudio/app/src/main/java/org/limeime/keyboard/`). It selects between
 two models via three `isLargeScreen` checks; `isLargeScreen` is force-set true
 (`//Force turn off fling selection now`), giving:
 

@@ -1,4 +1,4 @@
-# Cache, Prefetch & Sort Implementation
+﻿# Cache, Prefetch & Sort Implementation
 
 ## TODO: Refactor Android to Match iOS Evict-and-Re-warm Pattern
 
@@ -89,7 +89,7 @@ has been incremented.
 Confirmed via code trace:
 
 - `addScore()` is called unconditionally for all match types at
-  [SearchServer.java:1149](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1149)
+  [SearchServer.java:1149](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1149)
   — the DB score **does** increment for partial-match picks.
 - The visible-order problem is caused by two independent issues in the partial-match
   code path, both of which must be fixed for the user's expectation to be satisfied.
@@ -97,20 +97,20 @@ Confirmed via code trace:
 ### Issue A — Prefix cache is never evicted on partial-match selection
 
 `updateScoreCache()` at
-[SearchServer.java:1156-1161](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1156-L1161)
+[SearchServer.java:1156-1161](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1156-L1161)
 only removes the cache entry for the **selected full code** (`gds`). The prefix cache
 entries (`g`, `gd`) that the candidate bar actually consults on the next keystroke are
 left intact, so the user continues to see the pre-bump list forever.
 
 The exact-match branch at
-[SearchServer.java:1173-1180](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1173-L1180)
+[SearchServer.java:1173-1180](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1173-L1180)
 already handles this correctly via `updateSimilarCodeCache(code)` (evicts all prefix
 entries) plus re-query. The partial-match branch needs the same treatment.
 
 ### Issue B — `length(code)` outranks `score` in the partial-match ORDER BY
 
 The ORDER BY built at
-[LimeDB.java:1856-1864](LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#L1856-L1864)
+[LimeDB.java:1856-1864](LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#L1856-L1864)
 places `(length(code) <= 5) * length(code) DESC` **above** `score DESC`. For typed
 prefix `g`, this sorts the list into length bands (5-char → 4-char → 3-char → 2-char
 → 1-char `g`) with `score` acting only as an intra-band tiebreaker. 也 (`gds`, 3 chars)
@@ -120,7 +120,7 @@ regardless of how high its score grows.
 ### Fix 1 — Apply evict-and-re-warm to partial-match branch
 
 In `updateScoreCache()` at
-[SearchServer.java:1156-1161](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1156-L1161):
+[SearchServer.java:1156-1161](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1156-L1161):
 
 ```java
 // Current:
@@ -148,7 +148,7 @@ refactor above; Fix 1 reuses that same hook.
 
 ### Fix 2 — Promote `score DESC` above `length(code)` in the partial-match ORDER BY
 
-In [LimeDB.java:1856-1864](LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#L1856-L1864),
+In [LimeDB.java:1856-1864](LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#L1856-L1864),
 reorder the ORDER BY keys **for the partial-match branch only** so `score DESC` is
 evaluated before the length bias:
 
@@ -238,7 +238,7 @@ repeated picks; instead it stayed at a single value.
 ### Root cause
 
 `updateScoreCache` at
-[SearchServer.java:1146](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1146)
+[SearchServer.java:1146](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1146)
 had a gate that quietly disabled all prefix-cache invalidation for the most
 common partial-match path:
 
@@ -259,7 +259,7 @@ their `cachedList != null` check, execution fell to the `else` that only
 cleans remapped-code mappings and never calls `updateSimilarCodeCache(code)`.
 
 Consequence: `addScore()` at
-[SearchServer.java:1149](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L1149)
+[SearchServer.java:1149](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L1149)
 fired exactly once and bumped the DB row from 0→1 on the first pick. Every
 subsequent pick read the stale `cache["arrayg"]` (still carrying Mapping
 with score=0), so the issued SQL
@@ -302,7 +302,7 @@ data is present.
 ### Test impact for the second follow-up
 
 - `test_3_3_5_5_updateScoreCache_code_not_in_cache` at
-  [SearchServerTest.java:2070](LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java#L2070):
+  [SearchServerTest.java:2070](LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java#L2070):
   previously asserted `assertNull(cache.get("customzz"))`. After this fix the
   re-warm call always runs, and the stub DB returns `new ArrayList<>()` which
   gets stored in cache. Assertion relaxed to `resultList == null || resultList.isEmpty()`
@@ -331,7 +331,7 @@ one emulator:
 | `test_3_3_5_12_updateScoreCache_physical_keyboard_sort_preference` | `FAILED` with no trace — process crashed mid-test |
 
 The crash log pointed at
-[SearchServer.java:322](LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java#L322):
+[SearchServer.java:322](LimeStudio/app/src/main/java/org/limeime/SearchServer.java#L322):
 
 ```text
 java.lang.NullPointerException: Attempt to invoke virtual method
@@ -423,20 +423,20 @@ after the unified evict-and-re-warm. The new invariant is "the stale mapping
 is gone" — satisfied by both `null` and `[]`.
 
 - `test_3_3_5_3`
-  ([SearchServerTest.java:1984](LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java#L1984)):
+  ([SearchServerTest.java:1984](LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java#L1984)):
   `assertNull(resultList)` → `assertTrue(resultList == null || resultList.isEmpty())`.
 - `test_3_3_5_9`
-  ([SearchServerTest.java:2412](LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java#L2412)):
+  ([SearchServerTest.java:2412](LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java#L2412)):
   same relaxation.
 - `test_3_3_5_17`
-  ([SearchServerTest.java:2990](LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java#L2990)):
+  ([SearchServerTest.java:2990](LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java#L2990)):
   the fake `ConcurrentHashMap` that returns `null` from `remove()` to force
   the fallback branch now also needs to drop subsequent `put()` calls from
   the re-warm step; otherwise the re-queried empty list would be written
   back and invalidate the `assertFalse(fakeCache.containsKey(key))`
   assertion. Stub `LimeDB` installed for deterministic empty re-warm.
 - `test_3_1_10_8`
-  ([SearchServerTest.java:983](LimeStudio/app/src/androidTest/java/net/toload/main/hd/SearchServerTest.java#L983)):
+  ([SearchServerTest.java:983](LimeStudio/app/src/androidTest/java/org/limeime/SearchServerTest.java#L983)):
   added `cache.clear()` at test start. The test assumed an empty main cache
   but only cleared `coderemapcache`; prior tests' entries short-circuited
   `getMappingByCodeFromCacheOrDB` before the coderemapcache-population block

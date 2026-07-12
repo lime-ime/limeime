@@ -1,4 +1,4 @@
-# Issue #88: Samsung Android settings and legacy restore / emoji FTS crashes
+﻿# Issue #88: Samsung Android settings and legacy restore / emoji FTS crashes
 
 ## Problem statement
 
@@ -51,7 +51,7 @@ android.database.sqlite.SQLiteException: table emoji_fts already exists ...
 while compiling: CREATE VIRTUAL TABLE emoji_fts USING fts4(name_en, name_tw, tags_en, tags_tw, tokenize=unicode61 "remove_diacritics=1", content=emoji_data)
 ```
 
-The same `emoji_fts already exists` error also appears when Android tries to create `net.toload.main.hd.LIMEService`. Log context shows `LimeDB OnUpgrade() db old version = 101, new version = 104`, an attempted FTS5 creation failing with `no such module: fts5`, and then the FTS4 fallback failing because `emoji_fts` already exists. Source inspection points to `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` `createEmojiFtsTable()`: it tries `CREATE VIRTUAL TABLE emoji_fts USING fts5(...)`, catches `SQLiteException`, and immediately tries `CREATE VIRTUAL TABLE emoji_fts USING fts4(...)` for the same name. Local Pixel 6 API 33 instrumentation reproduced the same behavior: the failed FTS5 virtual-table creation leaves an unloadable `emoji_fts` schema artifact, and even a normal `DROP TABLE IF EXISTS emoji_fts` can fail with `no such module: fts5`.
+The same `emoji_fts already exists` error also appears when Android tries to create `net.toload.main.hd.LIMEService`. Log context shows `LimeDB OnUpgrade() db old version = 101, new version = 104`, an attempted FTS5 creation failing with `no such module: fts5`, and then the FTS4 fallback failing because `emoji_fts` already exists. Source inspection points to `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` `createEmojiFtsTable()`: it tries `CREATE VIRTUAL TABLE emoji_fts USING fts5(...)`, catches `SQLiteException`, and immediately tries `CREATE VIRTUAL TABLE emoji_fts USING fts4(...)` for the same name. Local Pixel 6 API 33 instrumentation reproduced the same behavior: the failed FTS5 virtual-table creation leaves an unloadable `emoji_fts` schema artifact, and even a normal `DROP TABLE IF EXISTS emoji_fts` can fail with `no such module: fts5`.
 
 Implemented local fix: when FTS5 creation fails, `createEmojiFtsTable()` now removes the partial FTS5 `emoji_fts` schema before creating the FTS4 fallback. It first attempts a normal `DROP TABLE IF EXISTS`; if Android SQLite rejects the drop because the saved virtual table references unavailable FTS5, it uses a narrow `PRAGMA writable_schema` cleanup for `emoji_fts` and its shadow-table names, then creates the FTS4 table. The restore failure status strings were also fixed from malformed `%1\` placeholders to `%1$s`, preventing the UI from throwing `UnknownFormatConversionException` while reporting restore errors.
 
@@ -73,7 +73,7 @@ The implemented approach keeps the #64 behavior in `ScrollableTabHelper`: bottom
 
 Changed files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ScrollableTabHelper.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ScrollableTabHelper.java`
 - `LimeStudio/app/src/main/res/drawable/settings_scrollbar_thumb.xml`
 - `LimeStudio/app/src/main/res/drawable/settings_scrollbar_track.xml`
 
@@ -149,10 +149,10 @@ But `LimeStudio/app/src/main/AndroidManifest.xml` declares exported launcher act
 A production-source scan of `LimeStudio/app/src/main` excluding Android/unit tests found only three remaining `MainActivity` references:
 
 ```text
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java:190
+LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java:190
     setupImController.setMainActivityView(this);
 
-LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java:58
+LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java:58
     public void setMainActivityView(LIMESettingsView view) {
 
 LimeStudio/app/src/main/res/xml/method.xml:31

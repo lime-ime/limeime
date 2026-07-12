@@ -1,4 +1,4 @@
-# CANDI_FUNCTION_KEYS — Functional Keys vs Candidate Display State
+﻿# CANDI_FUNCTION_KEYS — Functional Keys vs Candidate Display State
 
 Reference for how functional keys (Backspace, Space, Enter, etc.) should behave
 when various candidate lists are visible. Covers iOS and Android, documents
@@ -58,7 +58,7 @@ Each cell describes what happens **right now** in master.
 
 ### Backspace
 
-| Visible state | iOS ([KeyboardViewController.swift:1177](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L1177)) | Android ([LIMEService.java:4120](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java#L4120)) |
+| Visible state | iOS ([KeyboardViewController.swift:1177](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L1177)) | Android ([LIMEService.java:4120](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java#L4120)) |
 |---|---|---|
 | Active composing (length > 1) | pop last code, `deleteBackward()`, refresh candidates ✓ | pop last code, `setComposingText`, refresh ✓ |
 | Active composing (length == 1) | `clearComposing(force: true)` ✓ | `clearComposing(true)` ✓ |
@@ -138,7 +138,7 @@ is browse-only. It calls `dismissBrowseOnlySuggestionBar()` (clears
 `hasCandidatesShown` / `mCandidateList` / `selectedCandidate` and resets the
 bar) then calls `textDocumentProxy.deleteBackward()` once.
 
-**Fix (Android)**: in [`LIMEService.java handleBackspace()`](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java),
+**Fix (Android)**: in [`LIMEService.java handleBackspace()`](../LimeStudio/app/src/main/java/org/limeime/LIMEService.java),
 the `!mEnglishOnly && hasCandidatesShown && !hasChineseSymbolCandidatesShown`
 branch now pre-clears `hasCandidatesShown = false` (so
 `clearSuggestions()` inside `clearComposing(false)` doesn't slide into

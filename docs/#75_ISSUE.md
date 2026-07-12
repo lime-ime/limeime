@@ -1,4 +1,4 @@
-# Issue #75: Cangjie keyboard shows number/symbol keyboard remnants behind keys
+﻿# Issue #75: Cangjie keyboard shows number/symbol keyboard remnants behind keys
 
 ## Problem statement
 
@@ -19,8 +19,8 @@ Additional reporter follow-up on the same issue: in English mode, long-pressing 
 
 For the Cangjie number/symbol remnants, likely area is Android keyboard switching and redraw state in:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEKeyboardSwitcher.java`
 - keyboard XML layouts for Cangjie and number/symbol modes under `LimeStudio/app/src/main/res/xml/`
 
 Relevant observations from source inspection:

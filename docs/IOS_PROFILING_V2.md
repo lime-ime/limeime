@@ -167,7 +167,7 @@ during typing.
 **Android parity:** output-equivalent. Android reads the same fields the same
 way, just uncached — `LIMEService.handleEndkeyCommit` calls `getImConfig(activeIM,
 IM_LIME_ENDKEY)` + `getImConfig(activeIM, IMKEYS_CONFIG)` per keystroke, and
-[`LimeDB.java getImConfig`](../LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#L4800)
+[`LimeDB.java getImConfig`](../LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#L4800)
 runs a raw `SELECT … FROM im …` every call. The BPMF *acceptance* split is intact
 on both (`getPhoneticImKeys` ↔ iOS `imKeysForTable`/`currentImKeys`, untouched).
 Android could take the same cache — follow-up on that side.

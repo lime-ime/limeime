@@ -22,7 +22,7 @@
   ~  *
   ~  */
   -->
-<net.toload.main.hd.candidate.CandidateInInputViewContainer 
+<org.limeime.candidate.CandidateInInputViewContainer 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -67,7 +67,7 @@
             android:scaleType="fitCenter"
             android:visibility="gone" />
 
-        <net.toload.main.hd.candidate.CandidateView
+        <org.limeime.candidate.CandidateView
             android:id="@+id/candidatesView"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -105,7 +105,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <net.toload.main.hd.keyboard.LIMEKeyboardView
+    <org.limeime.keyboard.LIMEKeyboardView
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/keyboard"
         android:layout_width="match_parent"
@@ -116,4 +116,4 @@
         android:popupLayout="@layout/keyboard_popup"
         style="?attr/LIMEKeyboardLayout"
         />
-</net.toload.main.hd.candidate.CandidateInInputViewContainer>
+</org.limeime.candidate.CandidateInInputViewContainer>

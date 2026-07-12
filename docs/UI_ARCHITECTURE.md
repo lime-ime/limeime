@@ -1,4 +1,4 @@
-# LimeIME UI Architecture - MVC Pattern
+﻿# LimeIME UI Architecture - MVC Pattern
 
 ## Overview
 
@@ -66,7 +66,7 @@ This layer mediates between View and Model, handling business logic and speciali
 #### Controllers
 
 **BaseController (Abstract Base Class)**
-- **Location**: `net.toload.main.hd.ui.controller.BaseController`
+- **Location**: `org.limeime.ui.controller.BaseController`
 - **Thread-Safe UI Operation Methods** (NEW):
   - `handleError(view, message, exception)` - Posts error handling to main thread
   - `showProgress(view, message)` - Posts progress overlay display to main thread
@@ -84,7 +84,7 @@ This layer mediates between View and Model, handling business logic and speciali
 - **Activity context management**
 
 **SetupImController**
-- **Location**: `net.toload.main.hd.ui.controller.SetupImController`
+- **Location**: `org.limeime.ui.controller.SetupImController`
 - **New Feature**: Implements `ImportDialog.OnImportIMSelectedListener`
   - Added method: `onImportDialogImSelected(String tableName, boolean restoreUserRecords)` - handles import dialog table selection
   - Added method: `setFileToImport(File file)` - stores file for import
@@ -116,7 +116,7 @@ This layer mediates between View and Model, handling business logic and speciali
 - **Threading**: Uses `ExecutorService` for download operations; all UI updates via BaseController thread-safe methods
 
 **ManageImController**
-- **Location**: `net.toload.main.hd.ui.controller.ManageImController`
+- **Location**: `org.limeime.ui.controller.ManageImController`
 - **Threading Fix** (NEW):
   - Background executor thread now posts UI updates to main thread via `mainHandler.post()`
   - Prevents UI thread violations when displaying records from background search operations
@@ -150,7 +150,7 @@ This layer mediates between View and Model, handling business logic and speciali
 #### Handlers
 
 **IntentHandler** (Moved to `ui/` level)
-- **Location**: `net.toload.main.hd.ui.IntentHandler`
+- **Location**: `org.limeime.ui.IntentHandler`
 - **External File Imports**:
   - Validates file types (txt, db, zip)
   - Determines target table
@@ -168,7 +168,7 @@ This layer mediates between View and Model, handling business logic and speciali
 #### Managers
 
 **ProgressManager** (Moved to `ui/` level)
-- **Location**: `net.toload.main.hd.ui.ProgressManager`
+- **Location**: `org.limeime.ui.ProgressManager`
 - **Dialog Lifecycle**:
   - Show progress overlay/dialog with message
   - Update progress message
@@ -184,7 +184,7 @@ This layer mediates between View and Model, handling business logic and speciali
 - **Threading**: All operations wrapped in `runOnUiThread()`
 
 **ShareManager** (Moved to `ui/` level)
-- **Location**: `net.toload.main.hd.ui.ShareManager`
+- **Location**: `org.limeime.ui.ShareManager`
 - **Export Operations**:
   - Export IM records as text file
   - Export IM records as database file
@@ -205,7 +205,7 @@ This layer mediates between View and Model, handling business logic and speciali
 - **Threading**: Safe for main thread; heavy operations delegated to controllers
 
 **NavigationManager** (Moved to `ui/` level, now implements NavigationDrawerCallbacks)
-- **Location**: `net.toload.main.hd.ui.NavigationManager`
+- **Location**: `org.limeime.ui.NavigationManager`
 - **New Feature**: Implements `NavigationDrawerFragment.NavigationDrawerCallbacks`
   - Added method: `onNavigationDrawerItemSelected(int position)` - handles drawer item selection
   - Centralizes all navigation logic away from MainActivity

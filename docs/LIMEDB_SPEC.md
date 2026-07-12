@@ -1,4 +1,4 @@
-# LIME `.limedb` Specification
+﻿# LIME `.limedb` Specification
 
 ## Purpose
 
@@ -195,7 +195,7 @@ Use `.lime` / `.cin` when a table should be human-readable or editable as text. 
 
 ## Current Implementation References
 
-- Android import/export: `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
-- Android table copy logic: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- Android import/export: `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
+- Android table copy logic: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
 - iOS import/export: `LimeIME-iOS/Shared/Database/DBServer.swift`
 - iOS table copy logic: `LimeIME-iOS/Shared/Database/LimeDB.swift`

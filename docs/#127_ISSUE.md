@@ -1,4 +1,4 @@
-# Issue #127: Quick Cangjie root installation fails on Android
+﻿# Issue #127: Quick Cangjie root installation fails on Android
 
 ## Problem statement
 
@@ -14,8 +14,8 @@ The report is for the Android IM install/download path. The initial failure was 
 - Historical reporter retest request: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761898280
 - Reporter confirmation: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761960147 says v6.1.23 can install `快倉`.
 - Closing acknowledgement: https://github.com/lime-ime/limeime/issues/127#issuecomment-4761961639 records the v6.1.23 confirmation and closes the issue.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java` defines `DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip"`.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java` uses `LIME.DATABASE_CLOUD_IM_SCJ` for the `快倉字根` install button.
+- `LimeStudio/app/src/main/java/org/limeime/global/LIME.java` defines `DATABASE_CLOUD_IM_SCJ = DATABASE_CLOUD_URL_BASED + "scj.zip"`.
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java` uses `LIME.DATABASE_CLOUD_IM_SCJ` for the `快倉字根` install button.
 - Initial GitHub Contents API check during triage:
   - `Database/scj.zip`: missing / 404.
   - `Database/scj.limedb`: present, blob SHA `5b5d864b54ecefe493d156b9ba0570fa46ad0278`, size `1178764` bytes.

@@ -1,4 +1,4 @@
-# Android And iPhone Keyboard Layout
+﻿# Android And iPhone Keyboard Layout
 
 This document describes the keyboard layout formats and special-key behavior for both LIME Android and LIME iPhone/iPad. Android layouts are XML resources. iPhone layouts are generated JSON resources that mirror the Android model while adding iOS-only behavior for globe, iPad secondary glyphs, and UIKit gestures.
 
@@ -9,12 +9,12 @@ Android keyboard XML files live under `LimeStudio/app/src/main/res/xml/`.
 Android parser and runtime handlers:
 
 - `LimeStudio/app/src/main/res/values/attrs.xml`: custom `limehd:` XML attributes.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEBaseKeyboard.java`: XML parser, key geometry, key code constants.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboard.java`: LIME-specific key drawing and hit-area adjustment.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardView.java`: Android keyboard view overrides, space slide, special long-press handling.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`: key preview, popup mini-keyboard, gesture detector.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/PointerTracker.java`: touch tracking, repeat, multi-tap, long-press timer.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`: final action dispatch for key codes.
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEBaseKeyboard.java`: XML parser, key geometry, key code constants.
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboard.java`: LIME-specific key drawing and hit-area adjustment.
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardView.java`: Android keyboard view overrides, space slide, special long-press handling.
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`: key preview, popup mini-keyboard, gesture detector.
+- `LimeStudio/app/src/main/java/org/limeime/keyboard/PointerTracker.java`: touch tracking, repeat, multi-tap, long-press timer.
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`: final action dispatch for key codes.
 
 iPhone/iPad keyboard JSON files live under `LimeIME-iOS/LimeKeyboard/Layouts/`.
 

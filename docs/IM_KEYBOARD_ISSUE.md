@@ -1,4 +1,4 @@
-# IM ↔ Keyboard Resolution — Cross-Platform Bug Report
+﻿# IM ↔ Keyboard Resolution — Cross-Platform Bug Report
 
 Status: Investigation complete. Plan only — no source edits yet.
 Scope: Android + iOS. No `.limedb` seed-file changes. No runtime `lime.db` schema changes.
@@ -75,12 +75,12 @@ falls back to **English QWERTY**, NOT to last-used.
 ### 3.2 Android — keyboard renders correctly; UI label is wrong
 The actual keyboard chain works:
 - `LIMEService` → `getAllImKeyboardConfigList()` → reads `im` rows where `title='keyboard'` → `imConfigMap` correctly contains `{ "pinyin" → "limenum", … }`.
-- `LIMEKeyboardSwitcher.setKeyboardMode("pinyin")` ([L455–462](../LimeStudio/app/src/main/java/net/toload/main/hd/LIMEKeyboardSwitcher.java#L455)): `localImCode = imConfigMap.get("pinyin") = "limenum"`; `kConfig = kbMap.get("limenum")` → real keyboard row → `lime_number` XML rendered. ✅
+- `LIMEKeyboardSwitcher.setKeyboardMode("pinyin")` ([L455–462](../LimeStudio/app/src/main/java/org/limeime/LIMEKeyboardSwitcher.java#L455)): `localImCode = imConfigMap.get("pinyin") = "limenum"`; `kConfig = kbMap.get("limenum")` → real keyboard row → `lime_number` XML rendered. ✅
 - Empty/null fallback path: `localImCode = "lime"` (English QWERTY), NOT last-used.
 
 The bug is **only in the Settings screen label**:
 
-[`ManageImFragment.java` L240–249](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java#L240):
+[`ManageImFragment.java` L240–249](../LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java#L240):
 ```java
 List<ImConfig> imConfigFullNamelist = manageImController.getImConfigFullNameList();
 for (ImConfig imConfig : imConfigFullNamelist) {
@@ -93,11 +93,11 @@ for (ImConfig imConfig : imConfigFullNamelist) {
 
 `getImConfigFullNameList()` filters `title='name'`, so `imConfig.getDesc()` is the IM full name (`拼音輸入法`, `大易輸入法`, …). The button **should** show the *keyboard*'s `desc` (e.g. `LIME+數字列鍵盤`), looked up via the `title='keyboard'` kv row → `keyboard` table row.
 
-This bug affects **every IM on first open**, not just Pinyin. Manually picking a keyboard from the dialog calls [`updateKeyboard()`](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java#L376) which sets the correct `k.getDesc()` text — that's why the second screenshot looks right.
+This bug affects **every IM on first open**, not just Pinyin. Manually picking a keyboard from the dialog calls [`updateKeyboard()`](../LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java#L376) which sets the correct `k.getDesc()` text — that's why the second screenshot looks right.
 
 ### 3.3 Android — keyboard-selection dialog has no current-selection indicator
 
-[`ManageImKeyboardDialog.java` L127–140](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageImKeyboardDialog.java#L127) builds the keyboard list with `android.R.layout.simple_list_item_1` and a plain `ArrayAdapter`. The current keyboard is not highlighted. Should use `simple_list_item_single_choice` + `CHOICE_MODE_SINGLE` + `setItemChecked(currentIndex, true)`.
+[`ManageImKeyboardDialog.java` L127–140](../LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageImKeyboardDialog.java#L127) builds the keyboard list with `android.R.layout.simple_list_item_1` and a plain `ArrayAdapter`. The current keyboard is not highlighted. Should use `simple_list_item_single_choice` + `CHOICE_MODE_SINGLE` + `setItemChecked(currentIndex, true)`.
 
 ### 3.4 Fallback policy — divergence
 
@@ -155,7 +155,7 @@ Notes:
 Result: iOS Pinyin install → `lime.db.im` contains the cloud `keyboard=limenum` row → `getAllImConfigs()` reads `keyboardId = "limenum"` → `resolvedLayoutId` looks up `getKeyboardConfig("limenum")?.imkb = "lime_number"` → loads `lime_number.json`. ✅
 
 ### 4.2 Android — fix `INSERT INTO im SELECT *` defensively
-Even though the live emulator pull showed the import working, the current statement at [`LimeDB.java` L3236](../LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#L3236):
+Even though the live emulator pull showed the import working, the current statement at [`LimeDB.java` L3236](../LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#L3236):
 ```java
 db.execSQL("insert into " + LIME.DB_TABLE_IM + " select * from sourceDB." + LIME.DB_TABLE_IM);
 ```
@@ -169,7 +169,7 @@ db.execSQL("insert into " + LIME.DB_TABLE_IM
 This matches the column list iOS will use after §4.1, so both platforms produce identical post-import `im` table state.
 
 ### 4.3 Android — fix Settings *current keyboard* button text
-[`ManageImFragment.java` L240–249](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java#L240): replace the IM-full-name lookup with a real keyboard lookup.
+[`ManageImFragment.java` L240–249](../LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java#L240): replace the IM-full-name lookup with a real keyboard lookup.
 
 ```java
 // Look up the current keyboard for this IM via the existing controller chain.
@@ -183,7 +183,7 @@ btnManageImKeyboard.setText(k != null ? k.getDesc()
 (Use existing helper if one already exists; otherwise this is a one-liner addition to `ManageImController` to mirror `setIMKeyboard`'s reverse direction.)
 
 ### 4.4 Android — keyboard-selection dialog: highlight current
-[`ManageImKeyboardDialog.java` L127–140](../LimeStudio/app/src/main/java/net/toload/main/hd/ui/dialog/ManageImKeyboardDialog.java#L127):
+[`ManageImKeyboardDialog.java` L127–140](../LimeStudio/app/src/main/java/org/limeime/ui/dialog/ManageImKeyboardDialog.java#L127):
 
 ```java
 ArrayAdapter<String> adapter = new ArrayAdapter<>(
@@ -237,7 +237,7 @@ If the iOS Settings has an equivalent surface (TBD — likely [IMDetailView.swif
 
 - Modifying the bundled `.limedb` seed files.
 - Adding a dedicated `lime_pinyin.json` / `R.xml.lime_pinyin` layout — Pinyin uses `lime_number` (LIME + number row) per the cloud DB's authoritative mapping.
-- Refactoring the unused `DATABASE_CLOUD_IM_*_KEYBOARD` constants in [LIME.java](../LimeStudio/app/src/main/java/net/toload/main/hd/global/LIME.java#L82) to be the single source of truth — orthogonal cleanup; defer.
+- Refactoring the unused `DATABASE_CLOUD_IM_*_KEYBOARD` constants in [LIME.java](../LimeStudio/app/src/main/java/org/limeime/global/LIME.java#L82) to be the single source of truth — orthogonal cleanup; defer.
 - Changing the fallback policy (currently English QWERTY on both platforms when resolution fails) — already aligned across platforms.
 
 ---

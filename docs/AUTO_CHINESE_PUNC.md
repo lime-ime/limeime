@@ -20,7 +20,7 @@ Primary source files:
 | Platform | Files |
 |---|---|
 | iOS | `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`, `LimeIME-iOS/Shared/Preferences/LIMEPreferenceManager.swift`, `LimeIME-iOS/LimeKeyboard/CandidateBarView.swift` |
-| Android | `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`, `…/global/LIMEPreferenceManager.java`, `…/data/ChineseSymbol.java`, `…/candidate/CandidateInInputViewContainer.java` |
+| Android | `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`, `…/global/LIMEPreferenceManager.java`, `…/data/ChineseSymbol.java`, `…/candidate/CandidateInInputViewContainer.java` |
 
 ---
 

@@ -197,7 +197,7 @@ This makes the architectural rule executable and prevents the same leak from qui
 
 ### Android SearchServer API Parity
 
-Before adding a new iOS `SearchServer` wrapper, check `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`. If Android already exposes the same operation, the iOS method name and contract should match Android as closely as Swift allows.
+Before adding a new iOS `SearchServer` wrapper, check `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`. If Android already exposes the same operation, the iOS method name and contract should match Android as closely as Swift allows.
 
 Existing Android APIs to mirror:
 

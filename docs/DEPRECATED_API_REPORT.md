@@ -1,4 +1,4 @@
-# Deprecated API and Unsafe Practices Report
+﻿# Deprecated API and Unsafe Practices Report
 
 **Generated**: 2025-01-XX
 **Last Updated**: 2025-01-XX
@@ -46,7 +46,7 @@ public void showProgress() {
 
 ### 2. **`Uri.fromFile()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/ui/SetupImFragment.java:795`
+**Location**: `app/src/main/java/org/limeime/ui/SetupImFragment.java:795`
 
 **Status**: ✅ **FIXED**
 
@@ -69,7 +69,7 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 ### 3. **`startActivityForResult()` / `onActivityResult()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/VoiceInputActivity.java`
+**Location**: `app/src/main/java/org/limeime/VoiceInputActivity.java`
 
 **Status**: ✅ **FIXED**
 
@@ -84,7 +84,7 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 ### 4. **`getActiveNetworkInfo()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/ui/SetupImLoadDialog.java:402`
+**Location**: `app/src/main/java/org/limeime/ui/SetupImLoadDialog.java:402`
 
 **Status**: ✅ **FIXED**
 
@@ -101,8 +101,8 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 **Locations**:
 
-- `app/src/main/java/net/toload/main/hd/NavigationDrawerFragment.java:233`
-- `app/src/main/java/net/toload/main/hd/MainActivity.java:125`
+- `app/src/main/java/org/limeime/NavigationDrawerFragment.java:233`
+- `app/src/main/java/org/limeime/MainActivity.java:125`
 
 **Status**: ✅ **FIXED**
 

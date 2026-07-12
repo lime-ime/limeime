@@ -1,4 +1,4 @@
-# Magic Number And Theme Literal Audit
+﻿# Magic Number And Theme Literal Audit
 
 ## Goal
 
@@ -193,10 +193,10 @@ Suggested roles:
 
 Top noisy files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateViewContainer.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 Risk:
 

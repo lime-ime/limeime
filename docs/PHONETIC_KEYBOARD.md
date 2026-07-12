@@ -1,4 +1,4 @@
-# Phonetic Keyboard — Android Parity Plan
+﻿# Phonetic Keyboard — Android Parity Plan
 
 ## Context
 
@@ -34,7 +34,7 @@ default:                   …   // falls through, no remap applied
 }
 ```
 
-Android uses `startsWith(IM_PHONETIC_KEYBOARD_TYPE_ETEN26)` and `startsWith(IM_PHONETIC_KEYBOARD_HSU)` at [LimeDB.java:1988-1996](../LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#L1988), so `eten26`, `eten26_symbol`, `hsu`, `hsu_symbol` all land in the same branch. iOS does not, so the `_symbol` variants silently skip remap and produce wrong codes.
+Android uses `startsWith(IM_PHONETIC_KEYBOARD_TYPE_ETEN26)` and `startsWith(IM_PHONETIC_KEYBOARD_HSU)` at [LimeDB.java:1988-1996](../LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#L1988), so `eten26`, `eten26_symbol`, `hsu`, `hsu_symbol` all land in the same branch. iOS does not, so the `_symbol` variants silently skip remap and produce wrong codes.
 
 ### T2 — Dual map misses `_symbol` variants (same pattern)
 

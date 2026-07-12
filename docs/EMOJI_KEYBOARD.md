@@ -257,11 +257,11 @@ Android implements the same user-facing panel and shared key codes with native A
 
 | Concern | File | Notes |
 |---|---|---|
-| Key constants | `LimeStudio/app/src/main/java/net/toload/main/hd/LIME.java` or existing key-code constants owner | Add/reserve `-201` emoji panel, `-202` ABC, `-203..-212` category jump buttons; reuse existing delete/backspace code. |
+| Key constants | `LimeStudio/app/src/main/java/org/limeime/LIME.java` or existing key-code constants owner | Add/reserve `-201` emoji panel, `-202` ABC, `-203..-212` category jump buttons; reuse existing delete/backspace code. |
 | Candidate bar launcher | `LimeStudio/app/src/main/res/layout/inputcandidate.xml`, `CandidateInInputViewContainer.java` | Add `😀` to the left-end zone. Empty bar shows emoji; candidates present show dismiss. |
-| Key dispatch | `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` | Dispatch `-201` to show the emoji panel; `-202` hides it and restores the captured source keyboard; category jump codes scroll the emoji grid to anchors; backspace delegates to existing delete handling. |
+| Key dispatch | `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` | Dispatch `-201` to show the emoji panel; `-202` hides it and restores the captured source keyboard; category jump codes scroll the emoji grid to anchors; backspace delegates to existing delete handling. |
 | Panel view | Existing Android keyboard view layer / new `EmojiPanelView` equivalent | Normal mode stack: search field (top) → horizontally scrollable/paged emoji grid → icon bookmark footer (`ABC + category icons + backspace`). Search-active mode stack: search field (top) → horizontal emoji result strip → English keyboard rows. |
-| Data/search APIs | `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`, `SearchServer.java` | Use the same Emoji DB V2 APIs and FTS5 behavior as candidate injection. |
+| Data/search APIs | `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`, `SearchServer.java` | Use the same Emoji DB V2 APIs and FTS5 behavior as candidate injection. |
 | Assets/icons | Android drawable/vector resources if needed | Prefer simple monochrome vector icons matching iOS category bookmark semantics. Text glyph fallback is acceptable when icons are not available. |
 
 ## Android implementation status

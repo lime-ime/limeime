@@ -1,4 +1,4 @@
-# Issue #124: Android root/reverse-lookup popups overlap bottom message input fields
+﻿# Issue #124: Android root/reverse-lookup popups overlap bottom message input fields
 
 ## Current status
 
@@ -31,24 +31,24 @@ Known public reproduction context:
 
 Android:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `commitTyped(...)` calls `SearchSrv.getCodeListStringFromWord(committedCandidate.getWord())` after a candidate commit when reverse lookup is enabled.
   - Before the first #124 fix, `showReverseLookup(CharSequence)` forwarded the result through `showPersistentLimeToast(...)`, which called `CandidateView.showLimeToastUntilNextKey(...)`. The popup stayed visible until the next LIME key event.
   - Commit `61cf87b65f03f69486e112bf1dc1383c9974a125` routes reverse lookup through `showLimeToast(...)` again, restoring the existing short `LIME_TOAST_TIMEOUT_MS` timeout while still allowing the next key event to hide the popup early if it is still visible.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
   - `doShowLimeToast(...)` creates a custom `PopupWindow` (`mLimeToastPopup`) with `setClippingEnabled(false)` and positions it with `showAtLocation(this, Gravity.NO_GRAVITY, x, y)`.
   - Before the first #124 fix, the reverse-lookup popup used `offsetInWindow[1] - toastHeight`, where `toastHeight` included lime-toast padding. The separate key-name / composing popup uses the composing text height. That made the reverse-lookup box sit higher than the key-name display.
   - `doSetComposing(...)` / `doUpdateComposing(...)` can also create `mComposingTextPopup` when no embedded composing view is available, using `mPopupComposingY = offsetInWindow[1] - popupHeight` and `showAtLocation(this, Gravity.NO_GRAVITY, mPopupComposingX, mPopupComposingY)`.
   - Commit `61cf87b65f03f69486e112bf1dc1383c9974a125` first narrowed the reverse-lookup timeout/alignment regression. Follow-up commit `9fc84f97eaddfea5f550268e950695dadbb3fea5` superseded the unmerged PR #126 path and adjusted the composing/key-name and reverse-lookup popup placement together, with additional test fixes.
   - Existing embedded-composing alignment still wins when that view is visible; the expanded candidate popup uses a separate path.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java`
   - The normal in-keyboard candidate row initializes `R.id.candidatesView` but does not wire an `embeddedComposing` view, so composing/root-key display can fall back to `mComposingTextPopup` in the active input-view path.
-- `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateViewContainer.java` and `LimeStudio/app/src/main/res/layout/candidates.xml`
+- `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateViewContainer.java` and `LimeStudio/app/src/main/res/layout/candidates.xml`
   - The expanded/floating candidate container has `R.id.embeddedComposing` and calls `setEmbeddedComposingView(...)`, so popup behavior can differ between the normal in-keyboard row and expanded/floating candidate container.
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
   - `reverseLookupUsesTimedLimeToast()` verifies reverse lookup uses the timed lime-toast path and does not reuse composing text or the persistent-until-next-key path.
   - `nextKeyClearsLimeToastIfStillVisible()` keeps the early-hide-on-next-key behavior for a toast that has not timed out yet.
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/candidate/CandidateViewTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/candidate/CandidateViewTest.java`
   - Adds coverage for the lime-toast Y helper aligning to composing/key-name popup height.
   - Older tests covered the short `1400` ms lime-toast timeout; v6.1.27 follow-up commit `431762fb2e530ee75600e50fc0ecbb417822d7db` updates the reverse-lookup readability path and tests to `3000` ms.
 

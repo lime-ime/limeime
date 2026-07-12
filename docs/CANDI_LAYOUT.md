@@ -1,4 +1,4 @@
-# Candidate Bar and Expanded Panel Layout
+﻿# Candidate Bar and Expanded Panel Layout
 
 This document explains the geometry of the candidate bar
 ([CandidateBarView.swift](../LimeIME-iOS/LimeKeyboard/CandidateBarView.swift))
@@ -745,7 +745,7 @@ Recognized text returns to the service through two paths:
 1. `VoiceInputActivity` stores the result in `sPendingVoiceText`; when LIME's
    input view starts again, `onStartInputView()` consumes and commits it.
 2. As a backup, `VoiceInputActivity` broadcasts
-   `net.toload.main.hd.VOICE_INPUT_RESULT` with `recognized_text`;
+   `org.limeime.VOICE_INPUT_RESULT` with `recognized_text`;
    `LIMEService` receives it and calls `commitVoiceTextWithRetry(...)`.
 
 Both paths commit the recognized text through `InputConnection.commitText`.
@@ -987,9 +987,9 @@ There is no preference gate. The emoji launcher is always visible when the candi
 | `LimeIME-iOS/LimeKeyboard/CandidateBarView.swift` | Add `emojiButton` and right-side `optionsButton`; delegate methods for emoji/options; visibility in `rebuildButtons()` |
 | `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift` | Implement `candidateBarViewDidRequestEmoji` and `candidateBarViewDidRequestOptions`; route options to `showGlobeMenu(from:)` |
 | `LimeStudio/app/src/main/res/layout/inputcandidate.xml` | Add `candidate_emoji` ImageButton (21 sp, GONE) before `candidatesView` |
-| `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateInInputViewContainer.java` | Emoji/dismiss visibility toggle; width accounting; existing empty-row microphone button unchanged |
-| `LimeStudio/app/src/main/java/net/toload/main/hd/candidate/CandidateView.java` | Programmatic dismiss glyph |
-| `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` | Dispatch `-201` on emoji click |
+| `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateInInputViewContainer.java` | Emoji/dismiss visibility toggle; width accounting; existing empty-row microphone button unchanged |
+| `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java` | Programmatic dismiss glyph |
+| `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` | Dispatch `-201` on emoji click |
 | `docs/EMOJI_KEYBOARD.md` | Update English keyboard launcher section; remove keyboard-layout changes; update shared contract and verification |
 
 English keyboard layout files (`lime_abc.json`, `lime_abc_shift.json`, `lime_abc_ipad.json`, `lime_abc_ipad_shift.json`, Android English layout XML) **require no changes**.

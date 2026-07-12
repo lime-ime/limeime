@@ -541,8 +541,8 @@ with light/dark and, on Android, with the Material You seed.
   path but is **not** used here, since the card is a persistent entry point rather than a
   throttled system prompt.
 - **Android** — opens the Google Play listing
-  `https://play.google.com/store/apps/details?id=org.limeime` (the Play `applicationId` is
-  `org.limeime`, though the source namespace stays `net.toload.main.hd`); prefer the
+  `https://play.google.com/store/apps/details?id=org.limeime` (the Play `applicationId`
+  and the source namespace are now unified as `org.limeime`); prefer the
   `market://details?id=…` scheme to open the Play app directly, falling back to the `https`
   form via `ACTION_VIEW` when Play is unavailable.
 

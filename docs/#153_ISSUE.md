@@ -1,4 +1,4 @@
-# Issue #153: iOS Array30 `w` + digit symbol codes show no candidates
+﻿# Issue #153: iOS Array30 `w` + digit symbol codes show no candidates
 
 ## Status
 
@@ -31,7 +31,7 @@ There is currently no iOS equivalent of Android's Array30-specific `w[0-9]*` han
 
 ### Android comparison
 
-`LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java` explicitly sets both `hasNumberMapping` and `hasSymbolMapping` for `LIME.IM_ARRAY`. More importantly, `handleCharacter(...)` contains a dedicated fallback after normal `acceptsIntoComposing(...)` rejects the digit:
+`LimeStudio/app/src/main/java/org/limeime/LIMEService.java` explicitly sets both `hasNumberMapping` and `hasSymbolMapping` for `LIME.IM_ARRAY`. More importantly, `handleCharacter(...)` contains a dedicated fallback after normal `acceptsIntoComposing(...)` rejects the digit:
 
 - active IM must be Array30
 - current composition must match `w[0-9]*`

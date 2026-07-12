@@ -35,7 +35,7 @@ if (keystorePropsFile.exists()) {
 }
 
 android {
-    namespace 'net.toload.main.hd'
+    namespace 'org.limeime'
     signingConfigs {
         if (hasReleaseSigning) {
             release {

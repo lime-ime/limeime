@@ -86,16 +86,16 @@ For exports:
 - `LimeIME-iOS/LimeTests/LimeDBTest.swift`
   - Add tests for `.lime` `@version@` import, `.cin` `%version` import, legacy `.cin` `%cname` fallback, and export preference for `version`.
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
   - Persist parsed `@version@` / `%version` values to `im.title = "version"`.
   - Treat `%cname` as legacy display-name metadata and as a version fallback only when `%version` is absent.
   - Keep legacy `name` population where needed for display compatibility.
   - Export `@version@` from `version` first, then `name` fallback.
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java`
   - Read `SearchServer`/`LimeDB` IM config `version` first, then legacy shared preference, then `name` fallback.
 
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
   - Add Android coverage for import/export metadata behavior.
 
 - `docs/PREFS_TABLE.md`
@@ -428,8 +428,8 @@ Do not add any co-author trailer.
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 
 - [ ] **Step 1: Add failing Android import test**
 
@@ -596,7 +596,7 @@ Expected: the new import metadata tests pass.
 - [ ] **Step 5: Commit Android import change**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java
+git add LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java
 git commit -m "feat: store imported IM version metadata on Android"
 ```
 
@@ -606,8 +606,8 @@ Do not add any co-author trailer.
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/IntegrationTestSearchServerDBServer.java` or `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/IntegrationTestSearchServerDBServer.java` or `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 
 - [ ] **Step 1: Add metadata lookup helper in `ImDetailFragment`**
 
@@ -658,7 +658,7 @@ Expected: build succeeds.
 - [ ] **Step 3: Commit Android detail change**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java
+git add LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java
 git commit -m "fix: read IM detail version from metadata on Android"
 ```
 
@@ -668,8 +668,8 @@ Do not add any co-author trailer.
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- Test: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- Test: `LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java`
 
 - [ ] **Step 1: Add failing export test**
 
@@ -763,7 +763,7 @@ Expected: pass.
 - [ ] **Step 5: Commit Android export change**
 
 ```bash
-git add LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java LimeStudio/app/src/androidTest/java/net/toload/main/hd/LimeDBTest.java
+git add LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java LimeStudio/app/src/androidTest/java/org/limeime/LimeDBTest.java
 git commit -m "fix: export dedicated IM version metadata on Android"
 ```
 

@@ -1,4 +1,4 @@
-# Issue #64: Main tab screens lack bottom scroll affordance/inset
+﻿# Issue #64: Main tab screens lack bottom scroll affordance/inset
 
 ## Problem statement
 
@@ -21,19 +21,19 @@ Relevant UI files:
 
 - `LimeStudio/app/src/main/res/layout/activity_main.xml`
 - `LimeStudio/app/src/main/res/menu/main_nav.xml`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/LIMESettings.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/LIMESettings.java`
 - `LimeStudio/app/src/main/res/layout/fragment_setup.xml`
 - `LimeStudio/app/src/main/res/layout/fragment_im_detail.xml`
 - `LimeStudio/app/src/main/res/layout/fragment_im_list.xml`
 - `LimeStudio/app/src/main/res/layout/fragment_lime_preference_host.xml`
 - `LimeStudio/app/src/main/res/layout/fragment_db_manager.xml`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/SetupFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/LimePreferenceFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/DbManagerFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImDetailFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/TwoPaneHostFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageImFragment.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ManageRelatedFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/SetupFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/LimePreferenceFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/DbManagerFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ImDetailFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/TwoPaneHostFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ManageImFragment.java`
+- `LimeStudio/app/src/main/java/org/limeime/ui/view/ManageRelatedFragment.java`
 
 `activity_main.xml` uses a `CoordinatorLayout` with `main_fragment_container` set to `match_parent` and a phone-only `BottomNavigationView` anchored at the bottom. This means top-level fragments can extend behind the bottom navigation unless their own scroll containers provide sufficient bottom inset/padding.
 

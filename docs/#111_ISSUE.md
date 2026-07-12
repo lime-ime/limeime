@@ -1,4 +1,4 @@
-# Issue #111: Fast Cangjie catalog feedback and `x`/`z` candidate data anomaly
+﻿# Issue #111: Fast Cangjie catalog feedback and `x`/`z` candidate data anomaly
 
 ## Problem statement
 
@@ -20,7 +20,7 @@ The `x`/`z` report is reproducible from the legacy `scj` table data: rows where 
 - Verification query run locally against the legacy `scj` table:
   - `SELECT code, word, score, basescore FROM scj WHERE code IN ('x','z') ...`
   - Result included `x -> 1991` and `z -> 1991` as the first displayed rows.
-- Android IM download/catalog code currently lists `四碼倉頡` (`cj4`, with variant label `哈哈倉頡`) before `快倉` in `LimeStudio/app/src/main/java/net/toload/main/hd/ui/view/ImInstallFragment.java`; the broader catalog-order / removal request is therefore a product/catalog decision, not proven to be the same as the data-quality bug.
+- Android IM download/catalog code currently lists `四碼倉頡` (`cj4`, with variant label `哈哈倉頡`) before `快倉` in `LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java`; the broader catalog-order / removal request is therefore a product/catalog decision, not proven to be the same as the data-quality bug.
 
 ## Likely root cause
 

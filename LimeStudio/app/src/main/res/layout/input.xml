@@ -22,7 +22,7 @@
   ~  *
   ~  */
   -->
-<net.toload.main.hd.keyboard.LIMEKeyboardView
+<org.limeime.keyboard.LIMEKeyboardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/keyboard"
     android:layout_width="fill_parent"

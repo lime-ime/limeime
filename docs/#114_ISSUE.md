@@ -1,4 +1,4 @@
-# Issue #114: Duolingo English candidate strip intermittently missing
+﻿# Issue #114: Duolingo English candidate strip intermittently missing
 
 ## Live issue state
 
@@ -47,8 +47,8 @@ Issue #103 covered general Android English prediction visibility and ranking. Th
 
 Primary source areas:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/SearchServer.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/SearchServer.java`
 
 Observed current behavior:
 

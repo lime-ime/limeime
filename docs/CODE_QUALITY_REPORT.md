@@ -1,4 +1,4 @@
-# Comprehensive Code Quality Report - LimeIME
+﻿# Comprehensive Code Quality Report - LimeIME
 
 **Generated**: 2025-12-18
 **Last Updated**: 2025-12-20
@@ -496,7 +496,7 @@ Starting with API 35, apps are required to display content edge-to-edge, meaning
 
 ### 1. **MainActivity** ✅
 
-- **Location**: `app/src/main/java/net/toload/main/hd/MainActivity.java`
+- **Location**: `app/src/main/java/org/limeime/MainActivity.java`
 - **Status**: ✅ Implemented
 - **Implementation**:
   - Enabled edge-to-edge using `WindowCompat.setDecorFitsSystemWindows(getWindow(), false)`
@@ -508,7 +508,7 @@ Starting with API 35, apps are required to display content edge-to-edge, meaning
 
 ### 2. **LIMEService (IME Keyboard)** ✅
 
-- **Location**: `app/src/main/java/net/toload/main/hd/LIMEService.java`
+- **Location**: `app/src/main/java/org/limeime/LIMEService.java`
 - **Status**: ✅ Already Implemented
 - **Implementation**:
   - Uses `ViewCompat.setOnApplyWindowInsetsListener()` in `onCreateInputView()`
@@ -518,7 +518,7 @@ Starting with API 35, apps are required to display content edge-to-edge, meaning
 
 ### 3. **LIMEPreferenceHC (Settings Activity)** ✅
 
-- **Location**: `app/src/main/java/net/toload/main/hd/limesettings/LIMEPreferenceHC.java`
+- **Location**: `app/src/main/java/org/limeime/limesettings/LIMEPreferenceHC.java`
 - **Status**: ✅ Fully Implemented
 - **Implementation**:
   - Enabled edge-to-edge using `WindowCompat.setDecorFitsSystemWindows(getWindow(), false)`
@@ -532,7 +532,7 @@ Starting with API 35, apps are required to display content edge-to-edge, meaning
 
 ### 4. **NavigationDrawerFragment** ✅
 
-- **Location**: `app/src/main/java/net/toload/main/hd/NavigationDrawerFragment.java`
+- **Location**: `app/src/main/java/org/limeime/NavigationDrawerFragment.java`
 - **Status**: ✅ Implemented
 - **Implementation**:
   - Added `setupDrawerInsets()` method to handle window insets for drawer ListView
@@ -641,7 +641,7 @@ public void showProgress() {
 
 #### 2. **`Uri.fromFile()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/ui/SetupImFragment.java:795`
+**Location**: `app/src/main/java/org/limeime/ui/SetupImFragment.java:795`
 
 **Status**: ✅ **FIXED**
 
@@ -662,7 +662,7 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 #### 3. **`startActivityForResult()` / `onActivityResult()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/VoiceInputActivity.java`
+**Location**: `app/src/main/java/org/limeime/VoiceInputActivity.java`
 
 **Status**: ✅ **FIXED**
 
@@ -675,7 +675,7 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 #### 4. **`getActiveNetworkInfo()` - Fixed ✅**
 
-**Location**: `app/src/main/java/net/toload/main/hd/ui/SetupImLoadDialog.java:402`
+**Location**: `app/src/main/java/org/limeime/ui/SetupImLoadDialog.java:402`
 
 **Status**: ✅ **FIXED**
 
@@ -690,8 +690,8 @@ backupUri = androidx.core.content.FileProvider.getUriForFile(
 
 **Locations**:
 
-- `app/src/main/java/net/toload/main/hd/NavigationDrawerFragment.java:233`
-- `app/src/main/java/net/toload/main/hd/MainActivity.java:125`
+- `app/src/main/java/org/limeime/NavigationDrawerFragment.java:233`
+- `app/src/main/java/org/limeime/MainActivity.java:125`
 
 **Status**: ✅ **FIXED**
 
@@ -863,9 +863,9 @@ public DBServer(Context context) {
 
 - **Severity**: 🔴 **HIGH** - Security Risk
 - **Initial Locations**:
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadRunnable.java:207, 218, 237, 248, 367` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/limedb/LimeHanConverter.java:110, 145` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/limedb/LimeDB.java:352` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadRunnable.java:207, 218, 237, 248, 367` ✅ FIXED
+  - `app/src/main/java/org/limeime/limedb/LimeHanConverter.java:110, 145` ✅ FIXED
+  - `app/src/main/java/org/limeime/limedb/LimeDB.java:352` ✅ FIXED
 - **Issue**: String concatenation in SQL queries without parameterization.
 - **Original Code**:
 
@@ -926,9 +926,9 @@ limeDB.deleteRecord(LIME.DB_TABLE_RELATED, whereClause, whereArgs); // Safe para
 
 - **Severity**: 🔴 **HIGH** - Memory/Resource Leak
 - **Locations**:
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadRunnable.java:423-476` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/DBServer.java:483-581` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadDialog.java:504-523` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadRunnable.java:423-476` ✅ FIXED
+  - `app/src/main/java/org/limeime/DBServer.java:483-581` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadDialog.java:504-523` ✅ FIXED
 - **Issue**: FileInputStream, FileOutputStream, and InputStream were not properly closed if exceptions occur.
 - **Original Code**:
 
@@ -970,11 +970,11 @@ try (FileOutputStream fos = new FileOutputStream(downloadedFile);
 
 - **Severity**: ⚠️ **MEDIUM** - Silent Failures
 - **Locations**:
-  - `app/src/main/java/net/toload/main/hd/ui/ManageRelatedEditDialog.java:222, 234` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/ManageRelatedAddDialog.java:188, 200` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/ManageImEditDialog.java:229, 241` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/ManageImAddDialog.java:199, 211` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadRunnable.java:351` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/ManageRelatedEditDialog.java:222, 234` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/ManageRelatedAddDialog.java:188, 200` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/ManageImEditDialog.java:229, 241` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/ManageImAddDialog.java:199, 211` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadRunnable.java:351` ✅ FIXED
 - **Issue**: Exceptions were caught but silently ignored.
 - **Original Code**:
 
@@ -1009,13 +1009,13 @@ try (FileOutputStream fos = new FileOutputStream(downloadedFile);
 
 - **Severity**: ⚠️ **MEDIUM** - Potential Crash
 - **Locations**:
-  - `app/src/main/java/net/toload/main/hd/limedb/LimeDB.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadRunnable.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/limedb/LimeHanConverter.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/data/Word.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/data/Related.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/data/Keyboard.java` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/limedb/EmojiConverter.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/limedb/LimeDB.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadRunnable.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/limedb/LimeHanConverter.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/data/Word.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/data/Related.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/data/Keyboard.java` ✅ FIXED
+  - `app/src/main/java/org/limeime/limedb/EmojiConverter.java` ✅ FIXED
 - **Issue**: Direct usage of `cursor.getInt(cursor.getColumnIndex("column"))` or `cursor.getString(cursor.getColumnIndex("column"))` without checking if `getColumnIndex` returned -1, leading to potential `IllegalArgumentException`.
 - **Original Code**:
 
@@ -1050,7 +1050,7 @@ record.setId(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID));
 #### 6. Missing Null Check Before Activity Usage ✅ FIXED
 
 - **Severity**: ⚠️ **MEDIUM** - Potential NPE
-- **Location**: `app/src/main/java/net/toload/main/hd/MainActivityHandler.java:50-66` ✅ FIXED
+- **Location**: `app/src/main/java/org/limeime/MainActivityHandler.java:50-66` ✅ FIXED
 - **Issue**: Activity reference from WeakReference was not null-checked before use.
 - **Original Code**:
 
@@ -1089,8 +1089,8 @@ public void handleMessage(Message msg) {
 
 - **Severity**: ⚠️ **LOW** - Code Quality
 - **Locations**:
-  - `app/src/main/java/net/toload/main/hd/ui/SetupImLoadRunnable.java:445` ✅ FIXED
-  - `app/src/main/java/net/toload/main/hd/DBServer.java:492` ✅ FIXED
+  - `app/src/main/java/org/limeime/ui/SetupImLoadRunnable.java:445` ✅ FIXED
+  - `app/src/main/java/org/limeime/DBServer.java:492` ✅ FIXED
 - **Issue**: Similar download logic existed in multiple places with code duplication (~130 lines total).
 - **Original Code**:
 
@@ -1150,7 +1150,7 @@ public File downloadRemoteFile(String url, String folder, String filename){
 #### 8. Incorrect Final Modifiers on State Variables ✅ FIXED
 
 - **Severity**: 🔴 **HIGH** - Logic Error
-- **Location**: `app/src/main/java/net/toload/main/hd/DBServer.java:78, 81` ✅ FIXED
+- **Location**: `app/src/main/java/org/limeime/DBServer.java:78, 81` ✅ FIXED
 - **Issue**: `abortDownload` and `remoteFileDownloading` were marked as `final`, preventing them from being modified.
 - **Original Code**:
 
@@ -1177,7 +1177,7 @@ private static boolean abortDownload = false;  // ✅ Can be modified
 #### 9. Incorrect Logic in Directory Creation ✅ FIXED
 
 - **Severity**: ⚠️ **LOW** - Logic Error
-- **Location**: `app/src/main/java/net/toload/main/hd/DBServer.java:498-500` ✅ FIXED
+- **Location**: `app/src/main/java/org/limeime/DBServer.java:498-500` ✅ FIXED
 - **Issue**: Logic was inverted - logged warning when creation succeeded.
 - **Original Code**:
 

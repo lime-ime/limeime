@@ -63,7 +63,7 @@ Android now mirrors the iOS sliding-space behavior for caret movement.
 There are still two horizontal gesture paths, but the space-specific path now
 owns sliding-space caret movement:
 
-1. `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
+1. `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`
    has general keyboard fling detection. `swipeLeft()` delegates to
    `LIMEService.swipeLeft()`, which calls `handleBackspace()`. `swipeRight()`
    delegates to `LIMEService.swipeRight()`, which currently calls
@@ -71,7 +71,7 @@ owns sliding-space caret movement:
    not provide continuous movement deltas, so they are intentionally left
    unchanged.
 
-2. `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardView.java`
+2. `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardView.java`
    has a space-specific `onTouchEvent(...)` override. On `ACTION_DOWN`, it tracks
    whether the active pointer began on the space key. On `ACTION_MOVE`, crossing
    `R.dimen.space_caret_dead_zone` cancels the normal key gesture once, keeps the
@@ -146,8 +146,8 @@ Expected: resource compilation succeeds.
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardBaseView.java`
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardBaseView.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 **Steps:**
 
@@ -192,8 +192,8 @@ Expected: compile succeeds with every `OnKeyboardActionListener` implementer upd
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- Modify: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- Modify: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
 
 **Steps:**
 
@@ -237,7 +237,7 @@ instrumentation process crash.
 
 **Files:**
 
-- Modify: `LimeStudio/app/src/main/java/net/toload/main/hd/keyboard/LIMEKeyboardView.java`
+- Modify: `LimeStudio/app/src/main/java/org/limeime/keyboard/LIMEKeyboardView.java`
 
 **Steps:**
 
@@ -334,9 +334,9 @@ Result: `./gradlew :app:assembleDebug` succeeds.
 
 **Files:**
 
-- Prefer modify: `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
+- Prefer modify: `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
 - If view-level construction is practical in existing tests, add:
-  `LimeStudio/app/src/androidTest/java/net/toload/main/hd/SlidingSpaceCaretTest.java`
+  `LimeStudio/app/src/androidTest/java/org/limeime/SlidingSpaceCaretTest.java`
 
 **Steps:**
 

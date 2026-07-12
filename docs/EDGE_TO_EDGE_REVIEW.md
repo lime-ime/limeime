@@ -1,4 +1,4 @@
-# Edge-to-Edge Compatibility Review (API 35+)
+﻿# Edge-to-Edge Compatibility Review (API 35+)
 
 ## Summary
 This document reviews the project's edge-to-edge display compatibility for Android API 35+ (Android 15+). Starting with API 35, apps are required to display content edge-to-edge, meaning the app's interface extends behind system bars (status bar and navigation bar).
@@ -11,7 +11,7 @@ This document reviews the project's edge-to-edge display compatibility for Andro
 ## ✅ Edge-to-Edge Implementation Status
 
 ### 1. **MainActivity** ✅
-- **Location**: `app/src/main/java/net/toload/main/hd/MainActivity.java`
+- **Location**: `app/src/main/java/org/limeime/MainActivity.java`
 - **Status**: ✅ Implemented
 - **Implementation**:
   - Enabled edge-to-edge using `WindowCompat.setDecorFitsSystemWindows(getWindow(), false)`
@@ -22,7 +22,7 @@ This document reviews the project's edge-to-edge display compatibility for Andro
 - **Compatibility**: Works on API 21-36 (backward compatible, required for API 35+)
 
 ### 2. **LIMEService (IME Keyboard)** ✅ (with caveat — see Issue #46)
-- **Location**: `app/src/main/java/net/toload/main/hd/LIMEService.java`
+- **Location**: `app/src/main/java/org/limeime/LIMEService.java`
 - **Status**: ✅ Implemented
 - **Implementation**:
   - Uses `ViewCompat.setOnApplyWindowInsetsListener()` in `onCreateInputView()`
@@ -42,7 +42,7 @@ This document reviews the project's edge-to-edge display compatibility for Andro
 - **Compatibility**: Works on API 21-36
 
 ### 3. **LIMEPreferenceHC (Settings Activity)** ✅
-- **Location**: `app/src/main/java/net/toload/main/hd/limesettings/LIMEPreferenceHC.java`
+- **Location**: `app/src/main/java/org/limeime/limesettings/LIMEPreferenceHC.java`
 - **Status**: ✅ Fully Implemented
 - **Implementation**:
   - Enabled edge-to-edge using `WindowCompat.setDecorFitsSystemWindows(getWindow(), false)`
@@ -55,7 +55,7 @@ This document reviews the project's edge-to-edge display compatibility for Andro
 - **Compatibility**: Works on API 21-36 (backward compatible, required for API 35+)
 
 ### 4. **NavigationDrawerFragment** ✅
-- **Location**: `app/src/main/java/net/toload/main/hd/NavigationDrawerFragment.java`
+- **Location**: `app/src/main/java/org/limeime/NavigationDrawerFragment.java`
 - **Status**: ✅ Implemented
 - **Implementation**:
   - Added `setupDrawerInsets()` method to handle window insets for drawer ListView

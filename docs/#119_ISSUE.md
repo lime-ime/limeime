@@ -1,4 +1,4 @@
-# Issue #119: Text import keyboard layout mapping gaps
+﻿# Issue #119: Text import keyboard layout mapping gaps
 
 ## Current status
 
@@ -23,9 +23,9 @@ Before the source fix, the issue affected Android and iOS differently:
 
 ### Android text import path
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/ui/controller/SetupImController.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/DBServer.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java#importTxtTable`
+- `LimeStudio/app/src/main/java/org/limeime/ui/controller/SetupImController.java`
+- `LimeStudio/app/src/main/java/org/limeime/DBServer.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java#importTxtTable`
 
 In `LimeDB.importTxtTable()`, after metadata rows are written, Android chooses a keyboard config and calls `setIMConfigKeyboard(table, kConfig.getDescription(), kConfig.getCode())`.
 

@@ -1,4 +1,4 @@
-# Issue #71: Switching to English keyboard leaves stale composing code as output
+﻿# Issue #71: Switching to English keyboard leaves stale composing code as output
 
 ## Problem statement
 
@@ -26,7 +26,7 @@ The relevant Android fix is included in bulk commit `3d5d9c5` (`refactor: keyboa
 
 Relevant Android file:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
 
 Android changed `switchKeyboard(int primaryCode)` so `KEYCODE_SWITCH_TO_ENGLISH_MODE` cancels active composition instead of committing stale raw code:
 

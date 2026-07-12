@@ -1,4 +1,4 @@
-# Test Coverage Report
+﻿# Test Coverage Report
 
 **Generated:** February 21, 2026
 **Test Status:** 33 Active Test Files | 0 Ignored Test Methods
@@ -9,7 +9,7 @@
 
 - **Instrumentation Run:** latest JaCoCo report (androidTest)
 - **Overall Coverage:** 48% instructions, 41% branches (all packages)
-- **Core Package Coverage:** 66% instructions, 57% branches (package net.toload.main.hd)
+- **Core Package Coverage:** 66% instructions, 57% branches (package org.limeime)
 - **Report Path:** app/build/reports/coverage/androidTest/debug/connected/index.html
 
 ---
@@ -28,16 +28,16 @@
 
 | Package | Instructions | Cov. | Branches | Cov. |
 |---------|-------------|------|----------|------|
-| net.toload.main.hd.limedb | 8,510 of 11,111 | **76%** 🟢 | 1,038 of 1,650 | **62%** 🟡 |
-| net.toload.main.hd.data | 475 of 678 | **70%** 🟢 | 31 of 81 | **38%** 🟠 |
-| net.toload.main.hd | 9,546 of 14,332 | **66%** 🟢 | 1,481 of 2,556 | **57%** 🟡 |
-| net.toload.main.hd.global | 1,263 of 2,475 | **51%** 🟡 | 59 of 218 | **27%** 🔴 |
-| net.toload.main.hd.ui | 1,191 of 2,422 | **49%** 🟠 | 105 of 303 | **34%** 🟠 |
-| net.toload.main.hd.ui.controller | 945 of 2,105 | **44%** 🟠 | 69 of 200 | **34%** 🟠 |
-| net.toload.main.hd.ui.view | 1,281 of 4,436 | **28%** 🟠 | 52 of 406 | **12%** 🔴 |
-| net.toload.main.hd.keyboard | 2,126 of 9,237 | **23%** 🔴 | 150 of 1,096 | **13%** 🔴 |
-| net.toload.main.hd.candidate | 744 of 4,279 | **17%** 🔴 | 57 of 558 | **10%** 🔴 |
-| net.toload.main.hd.ui.dialog | 652 of 4,172 | **15%** 🔴 | 19 of 287 | **6%** 🔴 |
+| org.limeime.limedb | 8,510 of 11,111 | **76%** 🟢 | 1,038 of 1,650 | **62%** 🟡 |
+| org.limeime.data | 475 of 678 | **70%** 🟢 | 31 of 81 | **38%** 🟠 |
+| org.limeime | 9,546 of 14,332 | **66%** 🟢 | 1,481 of 2,556 | **57%** 🟡 |
+| org.limeime.global | 1,263 of 2,475 | **51%** 🟡 | 59 of 218 | **27%** 🔴 |
+| org.limeime.ui | 1,191 of 2,422 | **49%** 🟠 | 105 of 303 | **34%** 🟠 |
+| org.limeime.ui.controller | 945 of 2,105 | **44%** 🟠 | 69 of 200 | **34%** 🟠 |
+| org.limeime.ui.view | 1,281 of 4,436 | **28%** 🟠 | 52 of 406 | **12%** 🔴 |
+| org.limeime.keyboard | 2,126 of 9,237 | **23%** 🔴 | 150 of 1,096 | **13%** 🔴 |
+| org.limeime.candidate | 744 of 4,279 | **17%** 🔴 | 57 of 558 | **10%** 🔴 |
+| org.limeime.ui.dialog | 652 of 4,172 | **15%** 🔴 | 19 of 287 | **6%** 🔴 |
 | **Total** | **26,733 of 55,247** | **48%** | **3,061 of 7,355** | **41%** |
 
 ---
@@ -296,8 +296,8 @@ Additional:                        6 test files              ✅
 | LIMEService Instr. Cov. | 38% | 56% | **+18%** |
 | LIMEService Branch Cov. | 25% | 51% | **+26%** |
 | LimeDB Instr. Cov. | 79% | 80% | +1% |
-| Core Package (net.toload.main.hd) Instr. | 58% | 66% | **+8%** |
-| Core Package (net.toload.main.hd) Branch | 44% | 57% | **+13%** |
+| Core Package (org.limeime) Instr. | 58% | 66% | **+8%** |
+| Core Package (org.limeime) Branch | 44% | 57% | **+13%** |
 
 ---
 

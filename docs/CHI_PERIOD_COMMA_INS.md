@@ -1,4 +1,4 @@
-# Chinese Comma / Period Candidate Insertion
+﻿# Chinese Comma / Period Candidate Insertion
 
 ## Goal
 
@@ -31,9 +31,9 @@ candidate[0], candidate[1], candidate[2], ..., `，`/`。`, emoji...
 
 Primary files:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/limedb/LimeDB.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
-- `LimeStudio/app/src/main/java/net/toload/main/hd/global/LIMEPreferenceManager.java`
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/global/LIMEPreferenceManager.java`
 - `LimeStudio/app/src/main/res/xml/preference.xml`
 - `LimeStudio/app/src/main/res/xml-v17/preference.xml`
 

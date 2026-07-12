@@ -1,4 +1,4 @@
-# Issue #148: Android Shift double-tap Caps Lock timing
+﻿# Issue #148: Android Shift double-tap Caps Lock timing
 
 ## Status
 
@@ -34,16 +34,16 @@ This matches the behavior documented in `docs/ANDROID_IPHONE_KEYBOARD.md` and `d
 
 Relevant Android code:
 
-- `LimeStudio/app/src/main/java/net/toload/main/hd/LIMEService.java`
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java`
   - `handleShift()` owns Shift key transitions.
   - `isShiftDoubleTap()` compares the current `SystemClock.uptimeMillis()` with `mLastShiftTime`.
   - The timeout source is `ViewConfiguration.getDoubleTapTimeout()`.
   - `shiftDoubleTapWindowAfterKey(...)` cancels the pending Shift double-tap window on any non-Shift key.
   - `nextShiftTapState(...)` implements the state table.
-- `LimeStudio/app/src/androidTest/java/net/toload/main/hd/LIMEServiceTest.java`
+- `LimeStudio/app/src/androidTest/java/org/limeime/LIMEServiceTest.java`
   - `singleShiftTapTogglesBetweenShiftedAndUnshiftedOnly()`
   - `doubleShiftTapEntersShiftLockAndSingleTapUnlocks()`
-- `LimeStudio/app/src/test/java/net/toload/main/hd/AcceptsIntoComposingTest.java`
+- `LimeStudio/app/src/test/java/org/limeime/AcceptsIntoComposingTest.java`
   - `shiftDoubleTapWindow_nonShiftCancelsPendingShiftTap()`
   - `shiftDoubleTapWindow_shiftKeepsPendingShiftTap()`
 
