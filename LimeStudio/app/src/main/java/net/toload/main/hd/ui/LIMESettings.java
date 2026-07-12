@@ -35,10 +35,9 @@ import net.toload.main.hd.ui.view.LIMESettingsView;
 /*
  *
  *  *
- *  **    Copyright 2025, The LimeIME Open Source Project
+ *  **    Copyright 2026, The LimeIME Open Source Project
  *  **
  *  **    Project Url: http://github.com/lime-ime/limeime/
- *  **                 http://android.toload.net/
  *  **
  *  **    This program is free software: you can redistribute it and/or modify
  *  **    it under the terms of the GNU General Public License as published by

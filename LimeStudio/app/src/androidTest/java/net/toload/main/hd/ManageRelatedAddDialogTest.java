@@ -1,5 +1,5 @@
 /*
- * Copyright 2025, The LimeIME Open Source Project
+ * Copyright 2026, The LimeIME Open Source Project
  */
 package net.toload.main.hd;
 
