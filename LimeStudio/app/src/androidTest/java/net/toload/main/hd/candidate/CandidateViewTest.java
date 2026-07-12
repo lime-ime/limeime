@@ -66,6 +66,42 @@ public class CandidateViewTest {
     }
 
     @Test
+    public void dictationTextIsCenteredInCandidateWidth() {
+        assertEquals(120.0f, CandidateView.dictationTextLeft(300, 60.0f), 0.001f);
+        assertEquals(0.0f, CandidateView.dictationTextLeft(40, 60.0f), 0.001f);
+    }
+
+    @Test
+    public void dictationErrorUsesTwoSecondCandidateStatusAndCanDismissEarly() {
+        CandidateView candidateView = new CandidateView(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
+
+        candidateView.showDictationErrorTemporarily();
+
+        assertEquals(2000, CandidateView.DICTATION_ERROR_TIMEOUT_MS);
+        assertTrue(candidateView.isShowingDictationStatus());
+        assertTrue(candidateView.clearDictationErrorIfShowing());
+        assertFalse(candidateView.isShowingDictationStatus());
+        assertFalse(candidateView.clearDictationErrorIfShowing());
+    }
+
+    @Test
+    public void dismissDuringDictationCancelsVoiceInsteadOfComposing() {
+        CandidateView candidateView = new CandidateView(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
+        net.toload.main.hd.LIMEService service =
+                org.mockito.Mockito.mock(net.toload.main.hd.LIMEService.class);
+        candidateView.setService(service);
+        candidateView.showDictationStatus(DictationState.LISTENING, null);
+
+        assertFalse(candidateView.isEmpty());
+        candidateView.dismissComposingFromCandidate();
+
+        org.mockito.Mockito.verify(service).cancelInlineDictation();
+        org.mockito.Mockito.verify(service, org.mockito.Mockito.never()).dismissCandidateComposing();
+    }
+
+    @Test
     public void clampPopupYKeepsToastFromRisingAboveCandidateRowIntoHostInput() {
         // Issue #124: the reverse-lookup toast / composing popup naturally anchor at
         // (candidateTop - popupHeight), i.e. above the candidate row. In bottom-composer apps

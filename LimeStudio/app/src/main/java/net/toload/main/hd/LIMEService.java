@@ -633,7 +633,7 @@ public class LIMEService extends InputMethodService
         if (!mIsVoiceInputActive) {
             stopMonitoringIMEChanges();
         }
-        cancelInlineDictationIfActive();
+        cancelInlineDictation();
         // Don't unregister voice input receiver if voice input is in progress,
         // otherwise the broadcast carrying recognized text will be lost.
         if (!mIsVoiceInputActive) {
@@ -2205,6 +2205,9 @@ public class LIMEService extends InputMethodService
                     + " hasShiftPress:" + hasShiftPress);
 
         hideLimeToast();
+        if (mCandidateView != null) {
+            mCandidateView.clearDictationErrorIfShowing();
+        }
 
         // Modified by Art
         // This is to fixed the CapsLock issue on Physical keyboard
@@ -6142,7 +6145,7 @@ public class LIMEService extends InputMethodService
         if (DEBUG)
             Log.i(TAG, "onFinishInputView()");
         super.onFinishInputView(finishingInput);
-        cancelInlineDictationIfActive();
+        cancelInlineDictation();
         resetEmojiKeyboardState();
         hideCandidateView(); //Jeremy '12,5,7 hideCandiate when inputview is closed but not yet leave the original field (onfinishinput() will not called).
     }
@@ -6632,19 +6635,21 @@ public class LIMEService extends InputMethodService
 
     @Override
     public void onDictationFinalText(String text) {
-        clearDictationStatus();
+        finishInlineDictation();
         if (text != null && !text.isEmpty()) {
             commitVoiceTextWithRetry(text, 0);
-        } else {
-            mIsVoiceInputActive = false;
         }
     }
 
     @Override
     public void onDictationError(int errorCode, boolean shouldFallback) {
         Log.w(TAG, "onDictationError(): errorCode=" + errorCode + ", shouldFallback=" + shouldFallback);
-        showDictationStatus(DictationState.ERROR, null);
-        mIsVoiceInputActive = false;
+        finishInlineDictation();
+        if (mCandidateView != null) {
+            mCandidateView.showDictationErrorTemporarily();
+            showCandidateView();
+            refreshCandidateInputContainer();
+        }
         if (!shouldFallback) {
             return;
         }
@@ -6655,11 +6660,15 @@ public class LIMEService extends InputMethodService
 
     @Override
     public void onDictationCancelled() {
-        clearDictationStatus();
-        mIsVoiceInputActive = false;
+        finishInlineDictation();
     }
 
-    private void cancelInlineDictationIfActive() {
+    private void finishInlineDictation() {
+        mIsVoiceInputActive = false;
+        clearDictationStatus();
+    }
+
+    public void cancelInlineDictation() {
         if (mDictationController != null && mDictationController.isActive()) {
             mDictationController.cancel();
         }

@@ -46,6 +46,19 @@ public class LIMEDictationControllerTest {
     }
 
     @Test
+    public void repeatedStartWhileActiveDoesNotStartSecondRecognizer() {
+        FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
+        RecordingListener listener = new RecordingListener();
+        LIMEDictationController controller = new LIMEDictationController(adapter, listener);
+
+        controller.start("zh-TW");
+        controller.start("zh-TW");
+
+        assertTrue(controller.isActive());
+        assertEquals(1, adapter.startCount);
+    }
+
+    @Test
     public void partialResultPublishesPartialText() {
         FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
         RecordingListener listener = new RecordingListener();
@@ -107,6 +120,64 @@ public class LIMEDictationControllerTest {
     }
 
     @Test
+    public void lateRecognizerErrorAfterErrorIsIgnored() {
+        FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
+        RecordingListener listener = new RecordingListener();
+        LIMEDictationController controller = new LIMEDictationController(adapter, listener);
+        controller.start("zh-TW");
+
+        adapter.listener.onError(SpeechRecognizer.ERROR_NETWORK);
+        adapter.listener.onError(SpeechRecognizer.ERROR_CLIENT);
+
+        assertEquals(1, listener.errorCount);
+        assertEquals(SpeechRecognizer.ERROR_NETWORK, listener.errorCode);
+    }
+
+    @Test
+    public void lateRecognizerErrorAfterCancelIsIgnored() {
+        FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
+        RecordingListener listener = new RecordingListener();
+        LIMEDictationController controller = new LIMEDictationController(adapter, listener);
+        controller.start("zh-TW");
+
+        controller.cancel();
+        adapter.listener.onError(SpeechRecognizer.ERROR_CLIENT);
+
+        assertTrue(listener.cancelled);
+        assertEquals(0, listener.errorCount);
+    }
+
+    @Test
+    public void repeatedCancelPublishesCancellationOnce() {
+        FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
+        RecordingListener listener = new RecordingListener();
+        LIMEDictationController controller = new LIMEDictationController(adapter, listener);
+        controller.start("zh-TW");
+
+        controller.cancel();
+        controller.cancel();
+
+        assertEquals(1, listener.cancelCount);
+    }
+
+    @Test
+    public void recognitionCanRestartAfterError() {
+        FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
+        RecordingListener listener = new RecordingListener();
+        LIMEDictationController controller = new LIMEDictationController(adapter, listener);
+        controller.start("zh-TW");
+        adapter.listener.onError(SpeechRecognizer.ERROR_NETWORK);
+
+        controller.start("zh-TW");
+        adapter.listener.onResults(bundleWithText("重新開始"));
+
+        assertFalse(controller.isActive());
+        assertEquals(2, adapter.startCount);
+        assertEquals(1, listener.finals.size());
+        assertEquals("重新開始", listener.finals.get(0));
+    }
+
+    @Test
     public void lateRecognizerErrorAfterFinalResultIsIgnored() {
         FakeRecognizerAdapter adapter = new FakeRecognizerAdapter();
         RecordingListener listener = new RecordingListener();
@@ -151,6 +222,7 @@ public class LIMEDictationControllerTest {
         private Intent lastIntent;
         private boolean available = true;
         private boolean started;
+        private int startCount;
         private boolean stopped;
         private boolean cancelled;
 
@@ -163,6 +235,7 @@ public class LIMEDictationControllerTest {
         public void startListening(Intent intent) {
             this.lastIntent = intent;
             this.started = true;
+            this.startCount++;
         }
 
         @Override
@@ -190,8 +263,10 @@ public class LIMEDictationControllerTest {
         private final List<String> partials = new ArrayList<>();
         private final List<String> finals = new ArrayList<>();
         private int errorCode = 0;
+        private int errorCount;
         private boolean shouldFallback;
         private boolean cancelled;
+        private int cancelCount;
 
         @Override
         public void onDictationStateChanged(DictationState state) {
@@ -212,11 +287,13 @@ public class LIMEDictationControllerTest {
         public void onDictationError(int errorCode, boolean shouldFallback) {
             this.errorCode = errorCode;
             this.shouldFallback = shouldFallback;
+            this.errorCount++;
         }
 
         @Override
         public void onDictationCancelled() {
             this.cancelled = true;
+            this.cancelCount++;
         }
     }
 }

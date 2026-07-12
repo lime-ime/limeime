@@ -9296,6 +9296,20 @@ public class LIMEServiceTest {
                 LIMEUtilities.isVoiceInputMethodId(null));
     }
 
+    @Test
+    public void runtimeDictationErrorRestoresKeyboardWithoutFallbackState() throws Exception {
+        LIMEService service = new LIMEService();
+        CandidateView candidateView = mock(CandidateView.class);
+        setPrivateField(service, "mCandidateView", candidateView);
+        setPrivateField(service, "mIsVoiceInputActive", true);
+
+        service.onDictationError(android.speech.SpeechRecognizer.ERROR_NETWORK, false);
+
+        assertFalse((Boolean) getPrivateField(service, "mIsVoiceInputActive"));
+        verify(candidateView).showDictationErrorTemporarily();
+        verify(candidateView, never()).showLimeToast("語音輸入錯誤");
+    }
+
     /**
      * Test IME change monitoring setup
      * Tests startMonitoringIMEChanges() registers ContentObserver

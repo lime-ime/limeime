@@ -79,6 +79,7 @@ public class CandidateView extends View implements View.OnClickListener {
     private static final boolean DEBUG = false;
     private static final String TAG = "CandidateView";
     static final int LIME_TOAST_TIMEOUT_MS = 3000;
+    static final int DICTATION_ERROR_TIMEOUT_MS = 2000;
 
     protected static final int OUT_OF_BOUNDS = -1;
 
@@ -401,6 +402,7 @@ public class CandidateView extends View implements View.OnClickListener {
         private static final int MSG_SET_COMPOSING = 6;
         private static final int MSG_SHOW_LIME_TOAST = 7;
         private static final int MSG_HIDE_LIME_TOAST = 8;
+        private static final int MSG_CLEAR_DICTATION_ERROR = 9;
 
         public UIHandler(CandidateView candiInstance) {
             super(Looper.getMainLooper());
@@ -449,6 +451,10 @@ public class CandidateView extends View implements View.OnClickListener {
                     mCandiInstance.doHideLimeToast();
                     break;
                 }
+                case MSG_CLEAR_DICTATION_ERROR: {
+                    mCandiInstance.clearDictationErrorIfShowing();
+                    break;
+                }
             }
         }
 
@@ -495,6 +501,15 @@ public class CandidateView extends View implements View.OnClickListener {
             removeMessages(MSG_SHOW_LIME_TOAST);
             removeMessages(MSG_HIDE_LIME_TOAST);
             sendMessage(obtainMessage(MSG_HIDE_LIME_TOAST, 0, 0, null));
+        }
+
+        public void scheduleDictationErrorTimeout() {
+            removeMessages(MSG_CLEAR_DICTATION_ERROR);
+            sendEmptyMessageDelayed(MSG_CLEAR_DICTATION_ERROR, DICTATION_ERROR_TIMEOUT_MS);
+        }
+
+        public void cancelDictationErrorTimeout() {
+            removeMessages(MSG_CLEAR_DICTATION_ERROR);
         }
 
         // Issue #124: synchronously drop composing (cancel its pending delayed show/hide and
@@ -944,7 +959,11 @@ public class CandidateView extends View implements View.OnClickListener {
     public void dismissComposingFromCandidate() {
         hideCandidatePopup();
         if (mService != null) {
-            mService.dismissCandidateComposing();
+            if (isShowingDictationStatus()) {
+                mService.cancelInlineDictation();
+            } else {
+                mService.dismissCandidateComposing();
+            }
         } else {
             clear();
         }
@@ -1006,6 +1025,10 @@ public class CandidateView extends View implements View.OnClickListener {
             default:
                 return "";
         }
+    }
+
+    static float dictationTextLeft(int availableWidth, float textWidth) {
+        return Math.max(0, (availableWidth - textWidth) / 2.0f);
     }
 
     private void doShowLimeToast(CharSequence text) {
@@ -1678,7 +1701,7 @@ public class CandidateView extends View implements View.OnClickListener {
 
     }
     public boolean isEmpty(){
-        return mCount ==0;
+        return mCount == 0 && !isShowingDictationStatus();
     }
 
     public void startVoiceInput(){
@@ -1920,6 +1943,7 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     public void showDictationStatus(DictationState state, String text) {
+        mHandler.cancelDictationErrorTimeout();
         mDictationState = state == null ? DictationState.IDLE : state;
         mDictationText = text == null ? "" : text;
         if (mDictationState == DictationState.IDLE || mDictationState == DictationState.CANCELLED) {
@@ -1936,9 +1960,23 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
     public void clearDictationStatus() {
+        mHandler.cancelDictationErrorTimeout();
         mDictationState = DictationState.IDLE;
         mDictationText = "";
         mHandler.updateUI(0);
+    }
+
+    public void showDictationErrorTemporarily() {
+        showDictationStatus(DictationState.ERROR, null);
+        mHandler.scheduleDictationErrorTimeout();
+    }
+
+    public boolean clearDictationErrorIfShowing() {
+        if (mDictationState != DictationState.ERROR) {
+            return false;
+        }
+        clearDictationStatus();
+        return true;
     }
 
     public boolean isShowingDictationStatus() {
@@ -1969,9 +2007,10 @@ public class CandidateView extends View implements View.OnClickListener {
             textWidth = base;
         }
         final int wordWidth = (int) textWidth + X_GAP * 2;
-        mWordX[0] = 0;
+        int availableWidth = getWidth() > 0 ? getWidth() : mScreenWidth;
+        mWordX[0] = Math.max(0, (int) dictationTextLeft(availableWidth, textWidth) - X_GAP);
         mWordWidth[0] = wordWidth;
-        mTotalWidth = wordWidth;
+        mTotalWidth = availableWidth;
         if (canvas == null) {
             return;
         }
@@ -1990,13 +2029,6 @@ public class CandidateView extends View implements View.OnClickListener {
         mCandidatePaint.setColor(mColorNormalText);
         int textBaseLine = (int) (((mHeight - mCandidatePaint.getTextSize()) / 2) - mCandidatePaint.ascent());
         canvas.drawText(displayText, mWordX[0] + X_GAP, textBaseLine, mCandidatePaint);
-
-        mCandidatePaint.setColor(mColorSpacer);
-        canvas.drawLine(mWordX[0] + mWordWidth[0] + 0.5f,
-                bgPadding.top + ((float) mVerticalPadding / 2),
-                mWordX[0] + mWordWidth[0] + 0.5f,
-                mHeight - ((float) mVerticalPadding / 2),
-                mCandidatePaint);
         mCandidatePaint.setFakeBoldText(false);
     }
 

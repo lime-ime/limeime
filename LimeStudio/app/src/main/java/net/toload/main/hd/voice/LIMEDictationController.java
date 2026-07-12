@@ -35,6 +35,9 @@ public class LIMEDictationController implements RecognitionListener {
     }
 
     public void start(String languageTag) {
+        if (active) {
+            return;
+        }
         if (!isRecognitionAvailable()) {
             emitError(SpeechRecognizer.ERROR_CLIENT, true);
             return;
@@ -55,6 +58,9 @@ public class LIMEDictationController implements RecognitionListener {
     }
 
     public void cancel() {
+        if (!active) {
+            return;
+        }
         if (recognizer != null) {
             recognizer.cancel();
         }
@@ -110,6 +116,9 @@ public class LIMEDictationController implements RecognitionListener {
 
     @Override
     public void onError(int error) {
+        if (!active) {
+            return;
+        }
         active = false;
         if (recognizer != null) {
             recognizer.cancel();
