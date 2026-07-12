@@ -1214,7 +1214,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "D=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\nmkdir -p \"$D/LimeKeyboard/Layouts\" \"$D/LimeSettings/Views\" \"$D/Shared/Preferences\" \"$D/Shared/Database\"\nfor f in LimeKeyboard/KeyboardView.swift LimeKeyboard/KeyboardViewController.swift LimeKeyboard/CandidateBarView.swift LimeKeyboard/Info.plist LimeSettings/LimeSettingsView.swift LimeSettings/Views/IMDetailView.swift LimeSettings/Views/SetupTabView.swift LimeSettings/Views/RelatedListView.swift LimeSettings/Views/RecordListView.swift LimeSettings/Views/PreferencesTabView.swift LimeSettings/SettingsTheme.swift LimeSettings/SettingsMetrics.swift LimeSettings/Info.plist Shared/Preferences/LIMEPreferenceManager.swift Shared/Database/SyncContract.swift; do\n  [ -f \"${SRCROOT}/$f\" ] && cp -f \"${SRCROOT}/$f\" \"$D/$f\"\ndone\ncp -Rf \"${SRCROOT}/LimeKeyboard/Layouts/.\" \"$D/LimeKeyboard/Layouts/\"\n";
+			shellScript = "D=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncd \"${SRCROOT}\" || exit 0\nfor ext in swift plist json; do\n  find LimeKeyboard LimeSettings Shared -name \"*.$ext\" | while read f; do\n    mkdir -p \"$D/$(dirname \"$f\")\"\n    cp -f \"$f\" \"$D/$f\"\n  done\ndone\n";
 		};
 		7773AA62913279E155050F6F /* Copy emoji.db to bundle */ = {
 			isa = PBXShellScriptBuildPhase;
