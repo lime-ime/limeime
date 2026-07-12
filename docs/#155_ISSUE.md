@@ -7,7 +7,7 @@
 - State: open
 - Assignee: `jrywu`
 - Fix commit: `81d8dcdc225a117b1664231e135c555f5abfd9ef`
-- Android delivery: included in GitHub Release v6.1.30 (`LIMEHD202661300-v6.1.30.apk`), pending runtime verification.
+- Android delivery: source fix is on `master`, but the initially published v6.1.30 Release asset has the Google Play package/signing identity and is not accepted as the GitHub testing-track APK. Runtime delivery remains pending a corrected artifact.
 - iOS delivery: source fix is on `master`, but TestFlight/App Store delivery was not verified during the GitHub Release closeout.
 - Platforms: Android and iOS shared the same reachability gap and were changed by the fix commit.
 
@@ -80,5 +80,5 @@ Prefer a shared helper/policy that is table-driven or clearly lists the verified
 
 ## Platform impact
 
-- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. The change is included in GitHub Release v6.1.30, but runtime verification on the released APK remains pending.
+- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. Source is on `master`; runtime delivery remains pending because the initially published v6.1.30 asset does not match the GitHub testing-track package/signing policy.
 - **iOS:** the same fix commit extends the iOS guarded digit-symbol path. Source is on `master`; runtime verification and TestFlight/App Store delivery remain pending and are not established by the Android GitHub Release.
