@@ -46,11 +46,17 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var isShiftKeyHeld: Bool = false
     private var shiftHoldModifiedCharacter: Bool = false
     private var lastShiftTapTime: TimeInterval = 0
-    private var activeIM:     String = "phonetic"
+    private var activeIM:     String = "phonetic" {
+        didSet { imConfigCache.removeAll() }   // per-IM im.json values; re-read once after any IM change
+    }
     /// Cached `imkeys` for the active IM (refreshed on every setTableName).
     /// When present, characters outside this string route to direct output; empty
     /// keeps the legacy hasSymbol/hasNumber fallback for unaudited IMs.
     var currentImKeys: String = ""
+    /// Per-IM `im.json` values (imkeys/imkeynames/limeendkey) cached for the compose
+    /// hot path. Reading them fresh per keystroke cost a `stat()` on im.json every
+    /// stroke (see docs/IOS_PROFILING_V2.md §4). Cleared on any activeIM change.
+    private var imConfigCache: [String: String] = [:]
     // Sentinel ID "__unset__" ensures initOnStartInput always loads the JSON layout on first call,
     // even when the JSON id matches the hardcoded fallback id ("lime_phonetic").
     private var currentLayout: LimeKeyLayout = LimeKeyLayout(id: "__unset__", rows: [])
@@ -1219,8 +1225,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func refreshImKeys() {
         currentImKeys = Self.composingImKeys(
             activeIM: activeIM,
-            publishedImKeys: DBServer.shared.getImConfig(activeIM, "imkeys"),
+            publishedImKeys: cachedImConfig("imkeys"),
             fallbackImKeys: searchServer?.imKeysForTable(activeIM) ?? "")
+    }
+
+    /// Read a per-IM `im.json` value (imkeys/imkeynames/limeendkey) through a per-IM
+    /// cache so the compose hot path doesn't `stat()` im.json + scan the im array
+    /// every keystroke (docs/IOS_PROFILING_V2.md §4). Cache is cleared on IM change.
+    private func cachedImConfig(_ field: String) -> String {
+        if let v = imConfigCache[field] { return v }
+        let v = DBServer.shared.getImConfig(activeIM, field)
+        imConfigCache[field] = v
+        return v
     }
 
     static func composingImKeys(activeIM: String,
@@ -1798,12 +1814,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - LIME Endkey Commit
 
     private func activeImkeysForEndkey() -> String {
-        let configured = DBServer.shared.getImConfig(activeIM, "imkeys")   // §1.5: im.json
+        let configured = cachedImConfig("imkeys")   // §1.5: im.json (cached per IM)
         return configured.isEmpty ? currentImKeys : configured
     }
 
     private func handleLimeEndkeyCommit(_ primaryCode: Int) -> Bool {
-        let limeendkey = DBServer.shared.getImConfig(activeIM, "limeendkey")   // §1.5: im.json
+        let limeendkey = cachedImConfig("limeendkey")   // §1.5: im.json (cached per IM)
         guard LimeEndkeyPolicy.isCommitKey(primaryCode: primaryCode,
                                            endkey: limeendkey,
                                            englishOnly: mEnglishOnly) else {
@@ -2728,8 +2744,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         if let published = Self.publishedKeyname(
             code,
             activeIM: activeIM,
-            imkeys: DBServer.shared.getImConfig(activeIM, "imkeys"),
-            imkeynames: DBServer.shared.getImConfig(activeIM, "imkeynames")) {
+            imkeys: cachedImConfig("imkeys"),
+            imkeynames: cachedImConfig("imkeynames")) {
             return published
         }
         return searchServer?.keyToKeyname(code) ?? code
