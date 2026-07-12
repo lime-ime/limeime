@@ -68,7 +68,7 @@ final class TouchLayerGestureTests: XCTestCase {
                        CGPoint(x: 60, y: 80))
     }
 
-    func testPopupBaseWidthUsesRenderedModalKeyWidth() {
+    func testPopupBaseSizeUsesRenderedModalKeySize() {
         let layout = LimeKeyLayout(id: "popup_width_test", rows: [
             KeyRow(keys: [
                 KeyDef(code: 97, label: "a", widthPercent: 10),
@@ -84,13 +84,14 @@ final class TouchLayerGestureTests: XCTestCase {
 
         let layer = keyTouchLayers(in: keyboard)[0]
         let keys = layer.accessibilityElements as? [UIButton]
-        XCTAssertEqual(keyboard.normalKeySize, keys?.first?.bounds.size ?? .zero)
-        XCTAssertNotEqual(keyboard.normalKeySize.width, keys?[2].bounds.width)
+        let normalKeySize = keyboard.normalKeySize
+        XCTAssertEqual(normalKeySize, keys?.first?.bounds.size ?? .zero)
+        XCTAssertNotEqual(normalKeySize.width, keys?[2].bounds.width)
 
         let popup = PopupKeyboardView(
             layout: LimeKeyLayout(id: "popup", rows: [KeyRow(keys: [KeyDef(code: 224, label: "à")])]),
-            baseKeySize: keyboard.normalKeySize)
-        XCTAssertEqual(popup.subviews.first?.bounds.size ?? .zero, keyboard.normalKeySize)
+            baseKeySize: normalKeySize)
+        XCTAssertEqual(popup.subviews.first?.bounds.size ?? .zero, normalKeySize)
     }
 
     func testRepeatCancelsWhenRepeatableKeyAndLetterAreDown() {

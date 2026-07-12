@@ -68,6 +68,7 @@ final class PopupKeyboardView: UIView {
 
     private func keyWidth(for kd: KeyDef) -> CGFloat {
         let text = cleanLabel(kd.label.isEmpty ? kd.sublabel : kd.label)
+        guard text.count > 1 else { return baseKeySize.width }
         let font = UIFont.systemFont(ofSize: LayoutMetrics.PopupKeyboard.keyFontSize)
         let w    = (text as NSString).size(withAttributes: [.font: font]).width
         return max(baseKeySize.width, ceil(w) + LayoutMetrics.PopupKeyboard.keyExtraWidth)

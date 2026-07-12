@@ -75,6 +75,7 @@ final class KeyboardHapticLifecycleTests: XCTestCase {
         controller.viewWillDisappear(false)
         harness.keyboard.removeFromSuperview()
         harness.keyboard.cancelActiveInteractions()
+        waitUntil { harness.hapticCount() == 1 }
         assertCountsFreeze(harness)
 
         window.addSubview(harness.keyboard)

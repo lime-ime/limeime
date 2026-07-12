@@ -1312,7 +1312,7 @@ final class KeyboardViewControllerTest: XCTestCase {
         )
 
         XCTAssertTrue(source.contains("if handleLimeEndkeyCommit(code)"))
-        XCTAssertTrue(source.contains("DBServer.shared.getImConfig(activeIM, \"limeendkey\")"))
+        XCTAssertTrue(source.contains("cachedImConfig(\"limeendkey\")"))
         XCTAssertTrue(source.contains("commitComposingWithAppendedEndkey(primaryCode)"))
         XCTAssertTrue(source.contains("commitFreshEndkeyOrRaw(primaryCode)"))
         XCTAssertTrue(source.contains("LimeEndkeyPolicy.commitCandidateIndex(candidates)"))
