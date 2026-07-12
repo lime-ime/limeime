@@ -25,8 +25,8 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 ### 最新正式版（GitHub Release）
 
-- 版本：v6.1.29
-- APK：[LIMEHD2026-6.1.29.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.29/LIMEHD2026-6.1.29.apk)
+- 版本：v6.1.30
+- APK：[LIMEHD2026-6.1.30.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.30/LIMEHD2026-6.1.30.apk)
 
 ## 版本與相容性
 
@@ -75,7 +75,7 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 - 裝置品牌與型號（例如：Samsung Galaxy S23 / iPhone 15）
 - 系統版本（例如：Android 14 / API 34，或 iOS 17）
-- App 版本（例如：v6.1.29）
+- App 版本（例如：v6.1.30）
 - 安裝來源（GitHub Release 或歷史版本 APK）
 - 問題發生步驟與預期結果
 - 實際結果與錯誤訊息（若有）
