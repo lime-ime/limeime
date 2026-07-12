@@ -6,7 +6,10 @@
 - Classification: bug, usability
 - State: open
 - Assignee: `jrywu`
-- Platforms: Android and iOS are both likely affected from source inspection; device verification remains required.
+- Fix commit: `81d8dcdc225a117b1664231e135c555f5abfd9ef`
+- Android delivery: included in GitHub Release v6.1.30 (`LIMEHD202661300-v6.1.30.apk`), pending runtime verification.
+- iOS delivery: source fix is on `master`, but TestFlight/App Store delivery was not verified during the GitHub Release closeout.
+- Platforms: Android and iOS shared the same reachability gap and were changed by the fix commit.
 
 ## Problem statement
 
@@ -77,5 +80,5 @@ Prefer a shared helper/policy that is table-driven or clearly lists the verified
 
 ## Platform impact
 
-- **Android:** source inspection indicates the hard-coded `w[0-9]*` rule cannot reach `hg#`; runtime verification required.
-- **iOS:** source inspection indicates the same single-prefix limitation; runtime verification required.
+- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. The change is included in GitHub Release v6.1.30, but runtime verification on the released APK remains pending.
+- **iOS:** the same fix commit extends the iOS guarded digit-symbol path. Source is on `master`; runtime verification and TestFlight/App Store delivery remain pending and are not established by the Android GitHub Release.
