@@ -595,18 +595,18 @@ final class SetupImControllerTest: XCTestCase {
     func testImportTxtFileNonExistentPathReportsError() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
-        let mock = await MockSetupImView()
         let controller = await LimeIME.SetupImController(
             dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
             progress: LimeIME.ProgressManager()
         )
         let badURL = URL(fileURLWithPath: "/tmp/nonexistent_\(UUID().uuidString).cin")
 
-        await MainActor.run { controller.importTxtFile(url: badURL, tableName: "custom", view: mock) }
-        await waitUntil { !mock.errors.isEmpty }
-
-        await MainActor.run {
-            XCTAssertFalse(mock.errors.isEmpty, "Expected error for missing file")
+        // Deterministic: the async import returns .failure for a missing file, so
+        // there is no fire-and-forget poll to flake under parallel-suite load.
+        let result = await controller.importTxtFile(url: badURL, tableName: "custom")
+        guard case .failure = result else {
+            XCTFail("Expected failure importing a non-existent file")
+            return
         }
     }
 
