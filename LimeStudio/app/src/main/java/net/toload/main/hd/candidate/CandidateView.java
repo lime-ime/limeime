@@ -1643,7 +1643,12 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         if (suggestions != null) {
-            mSuggestions = new LinkedList<>(suggestions);
+            mSuggestions = new LinkedList<>();
+            for (Mapping suggestion : suggestions) {
+                if (suggestion != null && suggestion.getWord() != null) {
+                    mSuggestions.add(suggestion);
+                }
+            }
 
             if (!mSuggestions.isEmpty()) {
                 // Add by Jeremy '10, 3, 29

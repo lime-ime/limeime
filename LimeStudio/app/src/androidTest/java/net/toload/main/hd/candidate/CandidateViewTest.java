@@ -2,6 +2,7 @@ package net.toload.main.hd.candidate;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Color;
@@ -144,5 +145,27 @@ public class CandidateViewTest {
         candidateView.setSuggestionsWithoutHighlight(suggestions, false, "1234567890");
 
         assertEquals(-1, candidateView.mSelectedIndex);
+    }
+
+    @Test
+    public void setSuggestionsDropsOnlyEntriesThatCannotBeDrawn() {
+        CandidateView candidateView = new CandidateView(
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), null);
+        Mapping first = new Mapping();
+        first.setWord("first");
+        Mapping missingWord = new Mapping();
+        Mapping last = new Mapping();
+        last.setWord("last");
+        List<Mapping> suggestions = new ArrayList<>();
+        suggestions.add(first);
+        suggestions.add(null);
+        suggestions.add(missingWord);
+        suggestions.add(last);
+
+        candidateView.setSuggestions(suggestions, false);
+
+        assertEquals(2, candidateView.mSuggestions.size());
+        assertSame(first, candidateView.mSuggestions.get(0));
+        assertSame(last, candidateView.mSuggestions.get(1));
     }
 }
