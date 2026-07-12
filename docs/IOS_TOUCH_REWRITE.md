@@ -283,3 +283,32 @@ The rewrite was executed as the gated loop above, on the Mac side, entirely agai
 **Final whole-branch review found + fixed 4 runtime bugs** (`11a80da6`): popup slide-select used layer-local coords where the delegate expected keyboard-local; per-touch state/timers leaked on a mid-touch layout rebuild; an open popup was orphaned on `touchesCancelled`; a horizontal flick on a repeatable/modifier key double-acted.
 
 **Follow-on work (see docs/IOS_OPT_TOUCH.md and docs/IOS_MISS_KEY.md 2026-07-02):** the residual high-speed missed-key issue was then closed (delivery hardening + diffable candidate rebuild + preview reuse); and **flint onto a popup key now opens its mini-keyboard** instead of stopping short (`69b9b132`).
+
+## 13. Residual feel gap — still less responsive than the built-in keyboard (2026-07-12)
+
+Missed keys stay fixed (§12), but the keyboard still *feels* less responsive than the iOS system keyboard. This is a **new, unmeasured symptom** — not a reopening of the missed-key thread (no drops; every tap lands).
+
+### 13.1 Decomposition — the fix path differs per stage
+
+| Stage | Owner |
+|---|---|
+| (a) tap → key highlight / preview visible | us, fully |
+| (b) tap → haptic / click sound | us, fully (already optimized: pre-warmed generator, `AudioServicesPlaySystemSound`) |
+| (c) tap → character appears in host text field | **partly irreducible** — `textDocumentProxy.insertText` is an XPC hop into the host-app process; the system keyboard has in-process paths. A third-party keyboard can never fully match (c). |
+| (d) focus a field → keyboard fully drawn | us (extension process launch + `viewDidLoad` cost) — classic third-party keyboard weakness |
+
+Perceived responsiveness is dominated by (a)+(b) — the stages we own.
+
+### 13.2 Two code suspects — experiments applied 2026-07-12
+
+1. **Key preview fades in over 80 ms.** `showPreviewFor` animated alpha 0→1 + scale 0.88→1 as a spring with `KeyPreview.appearDuration = 0.08` ([LayoutMetrics.swift](../LimeIME-iOS/LimeKeyboard/LayoutMetrics.swift), used at [KeyboardViewController.swift:3676](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L3676)). The system keyboard's preview **pops instantly, no fade** — an 80 ms ramp is ~5 frames of visible mush per keystroke. **Change: `appearDuration` 0.08 → 0** (instant pop). `disappearDuration` untouched — the system preview does animate out.
+2. **No ProMotion opt-in.** The keyboard extension's Info.plist had no `CADisableMinimumFrameDurationOnPhone`; on a ProMotion device (WJIP17) our Core Animation work may be capped at 60 Hz while the system keyboard runs the full 120 Hz touch-to-photon path. **Change: added the key = `true`** to [LimeKeyboard/Info.plist](../LimeIME-iOS/LimeKeyboard/Info.plist). Hypothesis only — Apple documents the key for apps; whether it is honored for a keyboard extension's process is exactly what the device test decides. Check with the FPS overlay (IOS_PROFILING.md §3.1).
+
+### 13.3 Verification (human + WJIP17)
+
+1. Deploy via the LimeIME scheme + force-refresh protocol (IOS_MISS_KEY.md §gotcha).
+2. Feel-test a typing burst side-by-side vs the system keyboard.
+3. **If still off, measure before more code** — film 240 fps slo-mo of a finger tapping LimeIME then the system keyboard in the same app; count frames from contact → highlight and contact → character (~4 ms/frame resolution, measures exactly what is perceived). Branch on where the gap lives:
+   - gap in (a) → keep these fixes, next look at highlight/pressed-state path and frame pacing;
+   - gap in (c) → measure the XPC floor first; if the whole gap is there, local polish can only *mask* it via (a)/(b) crispness — say so and stop;
+   - gap in (d) → profile keyboard-spawn (`viewDidLoad`, DB open) and lazy-load.

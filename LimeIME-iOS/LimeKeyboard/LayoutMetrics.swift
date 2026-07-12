@@ -534,7 +534,7 @@ enum LayoutMetrics {
 
         // Animation
         static let initialScale: CGFloat = 0.88
-        static let appearDuration: TimeInterval = 0.08
+        static let appearDuration: TimeInterval = 0   // instant pop like the system preview (was 0.08 fade — read as sluggish)
         static let disappearDuration: TimeInterval = 0.08
         static let springDamping: CGFloat = 0.7
         static let springInitialVelocity: CGFloat = 0.5

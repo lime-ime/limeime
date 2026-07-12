@@ -358,3 +358,7 @@ The actual dominant cause was **UIKit delaying/dropping `touchesBegan`** — the
 **Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on the single `KeyTouchLayer` (the actual touch owner), and the scattered per-view flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`.
 
 **Device outcome (WJIP17, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
+
+### 2026-07-12 — Residual "less responsive than built-in" is a NEW thread, not a miss regression
+
+The missed-key fix (2026-07-02) holds — no dropped taps. The remaining complaint (keyboard *feels* less responsive than the system keyboard) is a different symptom family — feedback latency / frame rate / `textDocumentProxy` XPC insert latency — and is tracked in [docs/IOS_TOUCH_REWRITE.md §13](IOS_TOUCH_REWRITE.md). Do not reopen this doc's hypotheses for it. First experiments applied there: key-preview fade-in 80 ms → 0, and `CADisableMinimumFrameDurationOnPhone` (ProMotion 120 Hz opt-in) added to the extension Info.plist.
