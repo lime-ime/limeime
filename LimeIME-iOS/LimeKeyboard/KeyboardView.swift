@@ -201,6 +201,17 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         layer.convert(point, to: self)
     }
 
+    var normalKeySize: CGSize {
+        layoutIfNeeded()
+        let widths = layout.rows.flatMap(\.keys).map(\.widthPercent)
+        guard let normalPercent = Dictionary(grouping: widths, by: { $0 })
+            .max(by: { $0.value.count < $1.value.count })?.key else { return .zero }
+        return rowViews.lazy
+            .flatMap { $0.allSubviews }
+            .compactMap { $0 as? KeyButton }
+            .first { $0.keyDef.widthPercent == normalPercent }?.bounds.size ?? .zero
+    }
+
     private var layout: LimeKeyLayout
     private var isShiftOn: Bool = false
     private var rowViews: [UIView] = []
@@ -2315,6 +2326,10 @@ fileprivate final class KeyTouchLayer: UIView {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         owner?.keyTouchLayer(self, touchesCancelled: touches, with: event)
     }
+}
+
+private extension UIView {
+    var allSubviews: [UIView] { subviews + subviews.flatMap(\.allSubviews) }
 }
 
 // MARK: - KeyButton: stores its KeyDef

@@ -68,6 +68,31 @@ final class TouchLayerGestureTests: XCTestCase {
                        CGPoint(x: 60, y: 80))
     }
 
+    func testPopupBaseWidthUsesRenderedModalKeyWidth() {
+        let layout = LimeKeyLayout(id: "popup_width_test", rows: [
+            KeyRow(keys: [
+                KeyDef(code: 97, label: "a", widthPercent: 10),
+                KeyDef(code: 98, label: "b", widthPercent: 10),
+                KeyDef(code: LimeKeyCode.space.rawValue, label: "space", widthPercent: 30),
+                KeyDef(code: LimeKeyCode.delete.rawValue, widthPercent: 15,
+                       icon: "delete.left", isRepeatable: true, isModifier: true),
+            ])
+        ])
+        let keyboard = KeyboardView(layout: layout)
+        keyboard.frame = CGRect(x: 0, y: 0, width: 320, height: 64)
+        keyboard.layoutIfNeeded()
+
+        let layer = keyTouchLayers(in: keyboard)[0]
+        let keys = layer.accessibilityElements as? [UIButton]
+        XCTAssertEqual(keyboard.normalKeySize, keys?.first?.bounds.size ?? .zero)
+        XCTAssertNotEqual(keyboard.normalKeySize.width, keys?[2].bounds.width)
+
+        let popup = PopupKeyboardView(
+            layout: LimeKeyLayout(id: "popup", rows: [KeyRow(keys: [KeyDef(code: 224, label: "à")])]),
+            baseKeySize: keyboard.normalKeySize)
+        XCTAssertEqual(popup.subviews.first?.bounds.size ?? .zero, keyboard.normalKeySize)
+    }
+
     func testRepeatCancelsWhenRepeatableKeyAndLetterAreDown() {
         let delete = makeKey(label: "delete", code: LimeKeyCode.delete.rawValue,
                              isRepeatable: true, isModifier: true)

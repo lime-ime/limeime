@@ -15,19 +15,19 @@ final class PopupKeyboardView: UIView {
 
     private let layout:   LimeKeyLayout
     private let palette:  KeyboardPalette
+    private let baseKeySize: CGSize
 
     // Layout constants — sourced from LayoutMetrics.PopupKeyboard
-    private let keyH:    CGFloat = LayoutMetrics.PopupKeyboard.keyHeight
-    private let keyMinW: CGFloat = LayoutMetrics.PopupKeyboard.keyMinWidth
     private let hPad:    CGFloat = LayoutMetrics.PopupKeyboard.hPad
     private let vPad:    CGFloat = LayoutMetrics.PopupKeyboard.vPad
     private let spacing: CGFloat = LayoutMetrics.PopupKeyboard.spacing
 
     // MARK: - Init
 
-    init(layout: LimeKeyLayout, theme: Int = 0) {
+    init(layout: LimeKeyLayout, theme: Int = 0, baseKeySize: CGSize) {
         self.layout  = layout
         self.palette = KeyboardPalette.palettes[max(0, min(theme, KeyboardPalette.palettes.count - 1))]
+        self.baseKeySize = baseKeySize
         super.init(frame: .zero)
         buildUI()
     }
@@ -51,18 +51,18 @@ final class PopupKeyboardView: UIView {
             for (ki, kd) in row.keys.enumerated() {
                 let kw  = keyWidth(for: kd)
                 let btn = makeKeyButton(kd, row: ri, col: ki)
-                btn.frame = CGRect(x: xOff, y: yOff, width: kw, height: keyH)
+                btn.frame = CGRect(x: xOff, y: yOff, width: kw, height: baseKeySize.height)
                 addSubview(btn)
                 xOff += kw + spacing
             }
             let isLast = ri == layout.rows.count - 1
-            yOff += keyH + (isLast ? 0 : spacing)
+            yOff += baseKeySize.height + (isLast ? 0 : spacing)
         }
 
         // Size the view to fit its content
         let totalW = layout.rows.map { contentWidth(of: $0) }.max() ?? 0
         let nRows  = CGFloat(layout.rows.count)
-        let totalH = vPad + nRows * keyH + max(0, nRows - 1) * spacing + vPad
+        let totalH = vPad + nRows * baseKeySize.height + max(0, nRows - 1) * spacing + vPad
         frame.size = CGSize(width: totalW, height: totalH)
     }
 
@@ -70,7 +70,7 @@ final class PopupKeyboardView: UIView {
         let text = cleanLabel(kd.label.isEmpty ? kd.sublabel : kd.label)
         let font = UIFont.systemFont(ofSize: LayoutMetrics.PopupKeyboard.keyFontSize)
         let w    = (text as NSString).size(withAttributes: [.font: font]).width
-        return max(keyMinW, ceil(w) + LayoutMetrics.PopupKeyboard.keyExtraWidth)
+        return max(baseKeySize.width, ceil(w) + LayoutMetrics.PopupKeyboard.keyExtraWidth)
     }
 
     private func contentWidth(of row: KeyRow) -> CGFloat {
@@ -128,6 +128,7 @@ final class PopupKeyboardView: UIView {
 
     /// True when the popup has a single alternate — callers suppress the key preview for these.
     var isSingleKey: Bool { layout.rows.reduce(0) { $0 + $1.keys.count } <= 1 }
+    var normalKeyHeight: CGFloat { baseKeySize.height }
 
     /// Frame of the button matching `keyDef`, in `target`'s coordinate space (for the key preview).
     func keyRect(for keyDef: KeyDef, in target: UIView) -> CGRect? {

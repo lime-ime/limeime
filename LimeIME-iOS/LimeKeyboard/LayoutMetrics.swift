@@ -494,8 +494,6 @@ enum LayoutMetrics {
     // MARK: - Long-press popup keyboard (mini keyboard above a key)
 
     enum PopupKeyboard {
-        static let keyHeight: CGFloat = 44
-        static let keyMinWidth: CGFloat = 40
         static let hPad: CGFloat = 8
         static let vPad: CGFloat = 8
         static let spacing: CGFloat = 4

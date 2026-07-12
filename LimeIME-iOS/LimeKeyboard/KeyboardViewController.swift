@@ -3716,7 +3716,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
         guard let popup = currentPopupView else { return nil }
         let pointInView = view.convert(point, to: self.view)
         let pointInPopup = popup.convert(pointInView, from: self.view)
-        return popup.key(at: pointInPopup, slideAllowance: LayoutMetrics.PopupKeyboard.keyHeight * 0.25)
+        return popup.key(at: pointInPopup, slideAllowance: popup.normalKeyHeight * 0.25)
     }
 
     func keyboardView(_ view: KeyboardView, highlightPopupKey keyDef: KeyDef?) {
@@ -3814,7 +3814,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
         overlay.tag = 9877
         view.addSubview(overlay)
 
-        let popup = PopupKeyboardView(layout: popupLayout, theme: resolvedKeyboardTheme)
+        let normalKeySize = keyboardView?.normalKeySize ?? .zero
+        let popup = PopupKeyboardView(layout: popupLayout, theme: resolvedKeyboardTheme,
+                                      baseKeySize: normalKeySize == .zero ? sourceRect.size : normalKeySize)
         popup.delegate = self
 
         // Centre the popup over the key, clamped to view edges with edgeMargin.
