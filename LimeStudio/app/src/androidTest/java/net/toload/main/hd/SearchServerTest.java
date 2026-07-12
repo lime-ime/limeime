@@ -1066,12 +1066,16 @@ public class SearchServerTest {
         StubLimeDBSuccess stub = new StubLimeDBSuccess(appContext, stubResult);
         setStatic("dbadapter", stub);
 
-        List<Mapping> result = callGetMappingByCodeFromCacheOrDB("query", false);
-        assertNotNull(result);
-        String key = cacheKey("remapped");
-        assertTrue(coderemapcache.containsKey(key));
-        assertTrue(coderemapcache.get(key).contains("query"));
-        setStatic("dbadapter", original);
+        String query = "remapExactMatch" + System.nanoTime();
+        try {
+            List<Mapping> result = callGetMappingByCodeFromCacheOrDB(query, false);
+            assertNotNull(result);
+            String key = cacheKey("remapped");
+            assertTrue(coderemapcache.containsKey(key));
+            assertTrue(coderemapcache.get(key).contains(query));
+        } finally {
+            setStatic("dbadapter", original);
+        }
     }
 
     /**
