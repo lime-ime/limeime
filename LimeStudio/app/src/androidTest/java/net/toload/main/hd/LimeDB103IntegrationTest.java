@@ -75,7 +75,8 @@ public class LimeDB103IntegrationTest {
         db.close();
 
         assertEquals(104, queryUserVersion());
-        assertTrue("bundled lime.db must keep core IM rows", queryInt("SELECT COUNT(*) FROM im WHERE title = ?", "name") > 0);
+        assertEquals("bundled lime.db is a schema-only IM seed", 0,
+                queryInt("SELECT COUNT(*) FROM im WHERE code NOT IN ('emoji', 'dictionary')"));
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -230,7 +231,8 @@ public class LimeDB103IntegrationTest {
         db.close();
 
         assertEquals(104, queryUserVersion());
-        assertTrue("factory reset must restore core IM rows", queryInt("SELECT COUNT(*) FROM im WHERE title = ?", "name") > 0);
+        assertEquals("factory reset restores the schema-only IM seed", 0,
+                queryInt("SELECT COUNT(*) FROM im WHERE code NOT IN ('emoji', 'dictionary')"));
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();

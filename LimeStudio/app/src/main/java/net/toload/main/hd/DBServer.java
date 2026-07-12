@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -566,6 +567,9 @@ public class  DBServer {
 		IOException restoreError = null;
 		try {
 			restoreFullBackupEntries(check, sharedPref, preferenceManifest);
+			if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1) {
+				LimeDB.sanitizeRestoredEmojiFts(ctx.getDatabasePath(LIME.DATABASE_NAME));
+			}
 			restoreSucceeded = true;
 		} catch (Exception e) {
 			Log.e(TAG, "Error extracting restore file", e);
