@@ -398,7 +398,7 @@ public class ImListFragment extends Fragment {
                 // Section headers use the accent colour (matches the demo's
                 // --md-primary header label). §5.1.
                 tv.setTextColor(resolveColorAttr(parent.getContext(),
-                        com.google.android.material.R.attr.colorPrimary, 0xFF2196F3));
+                        androidx.appcompat.R.attr.colorPrimary, 0xFF2196F3));
                 tv.setLayoutParams(new android.view.ViewGroup.LayoutParams(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.WRAP_CONTENT));

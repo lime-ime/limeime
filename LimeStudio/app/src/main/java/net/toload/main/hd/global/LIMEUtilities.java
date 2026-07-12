@@ -390,8 +390,26 @@ public class LIMEUtilities {
 	}
 
 	private static Bitmap getNotificationIconBitmap(Context context) {
+		BitmapFactory.Options bounds = new BitmapFactory.Options();
+		bounds.inJustDecodeBounds = true;
+		BitmapFactory.decodeResource(context.getResources(), R.drawable.logo, bounds);
 
-		return BitmapFactory.decodeResource(context.getResources(), R.drawable.logo);
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inSampleSize = calculateInSampleSize(
+				bounds.outWidth,
+				bounds.outHeight,
+				context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
+				context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
+		return BitmapFactory.decodeResource(context.getResources(), R.drawable.logo, options);
+	}
+
+	public static int calculateInSampleSize(int width, int height, int targetWidth, int targetHeight) {
+		int sampleSize = 1;
+		while (width / (sampleSize * 2) >= targetWidth
+				&& height / (sampleSize * 2) >= targetHeight) {
+			sampleSize *= 2;
+		}
+		return sampleSize;
 	}
 
 	

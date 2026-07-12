@@ -5388,23 +5388,26 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private void importEmojiData(File importFile) {
         String attachedPath = quoteSqlString(importFile.getAbsolutePath());
-        db.beginTransaction();
+        db.execSQL("ATTACH DATABASE " + attachedPath + " AS emoji_src");
         try {
-            db.execSQL("ATTACH DATABASE " + attachedPath + " AS emoji_src");
-            clearEmojiBaseData(db);
-            db.execSQL("INSERT INTO " + EMOJI_TABLE_DATA + " " +
-                    "(value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version) " +
-                    "SELECT value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version " +
-                    "FROM emoji_src." + EMOJI_TABLE_DATA);
-            rebuildEmojiFts(db);
-            db.execSQL("INSERT INTO " + LIME.DB_TABLE_IM + " " +
-                    "(code, title, desc, keyboard, disable, selkey, endkey, spacestyle) " +
-                    "SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle " +
-                    "FROM emoji_src." + LIME.DB_TABLE_IM + " WHERE code='emoji'");
-            db.execSQL("DELETE FROM " + EMOJI_TABLE_USER + " WHERE value NOT IN (SELECT value FROM " + EMOJI_TABLE_DATA + ")");
-            db.setTransactionSuccessful();
+            db.beginTransaction();
+            try {
+                clearEmojiBaseData(db);
+                db.execSQL("INSERT INTO " + EMOJI_TABLE_DATA + " " +
+                        "(value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version) " +
+                        "SELECT value, cp, group_name, subgroup, sort_order, name_en, name_tw, tags_en, tags_tw, version " +
+                        "FROM emoji_src." + EMOJI_TABLE_DATA);
+                rebuildEmojiFts(db);
+                db.execSQL("INSERT INTO " + LIME.DB_TABLE_IM + " " +
+                        "(code, title, desc, keyboard, disable, selkey, endkey, spacestyle) " +
+                        "SELECT code, title, desc, keyboard, disable, selkey, endkey, spacestyle " +
+                        "FROM emoji_src." + LIME.DB_TABLE_IM + " WHERE code='emoji'");
+                db.execSQL("DELETE FROM " + EMOJI_TABLE_USER + " WHERE value NOT IN (SELECT value FROM " + EMOJI_TABLE_DATA + ")");
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         } finally {
-            db.endTransaction();
             try {
                 db.execSQL("DETACH DATABASE emoji_src");
             } catch (Exception e) {
@@ -5599,19 +5602,26 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      */
     private void importDictionaryData(File importFile) {
         String attachedPath = quoteSqlString(importFile.getAbsolutePath());
-        db.beginTransaction();
+        db.execSQL("ATTACH DATABASE " + attachedPath + " AS dict_src");
         try {
-            db.execSQL("ATTACH DATABASE " + attachedPath + " AS dict_src");
-            // Upsert basescore; keep score. INSERT defaults score to 0 for new words.
-            db.execSQL("INSERT INTO " + DICTIONARY_TABLE + " (word, basescore, score) " +
-                    "SELECT word, basescore, 0 FROM dict_src." + DICTIONARY_PAYLOAD_TABLE + " " +
-                    "WHERE true " +
-                    "ON CONFLICT(word) DO UPDATE SET basescore = excluded.basescore");
-            db.execSQL("INSERT OR REPLACE INTO " + LIME.DB_TABLE_IM + " (code, title, desc) " +
-                    "VALUES ('dictionary', 'version', '" + DICTIONARY_DATA_VERSION + "')");
-            db.setTransactionSuccessful();
+            db.beginTransaction();
+            try {
+                // API 21-compatible upsert: insert new words, then refresh basescore while
+                // preserving each existing user score.
+                db.execSQL("INSERT OR IGNORE INTO " + DICTIONARY_TABLE + " (word, basescore, score) " +
+                        "SELECT word, basescore, 0 FROM dict_src." + DICTIONARY_PAYLOAD_TABLE + " " +
+                        "WHERE 1");
+                db.execSQL("UPDATE " + DICTIONARY_TABLE + " SET basescore = " +
+                        "(SELECT basescore FROM dict_src." + DICTIONARY_PAYLOAD_TABLE +
+                        " WHERE word = " + DICTIONARY_TABLE + ".word) " +
+                        "WHERE word IN (SELECT word FROM dict_src." + DICTIONARY_PAYLOAD_TABLE + ")");
+                db.execSQL("INSERT OR REPLACE INTO " + LIME.DB_TABLE_IM + " (code, title, desc) " +
+                        "VALUES ('dictionary', 'version', '" + DICTIONARY_DATA_VERSION + "')");
+                db.setTransactionSuccessful();
+            } finally {
+                db.endTransaction();
+            }
         } finally {
-            db.endTransaction();
             try {
                 db.execSQL("DETACH DATABASE dict_src");
             } catch (Exception e) {
@@ -5859,6 +5869,18 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             bumpSchemaVersion(targetDb);
         } finally {
             targetDb.execSQL("PRAGMA writable_schema=OFF");
+        }
+    }
+
+    public static void sanitizeRestoredEmojiFts(File databaseFile) {
+        try (SQLiteDatabase restoredDb = SQLiteDatabase.openDatabase(
+                databaseFile.getPath(), null, SQLiteDatabase.OPEN_READWRITE);
+             Cursor cursor = restoredDb.rawQuery(
+                     "SELECT sql FROM sqlite_master WHERE name = ?", new String[]{EMOJI_TABLE_FTS})) {
+            if (cursor.moveToFirst() && cursor.getString(0) != null
+                    && cursor.getString(0).toLowerCase(Locale.ROOT).contains("using fts5")) {
+                dropEmojiFtsSchemaRows(restoredDb);
+            }
         }
     }
 

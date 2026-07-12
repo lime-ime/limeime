@@ -122,8 +122,16 @@ public class LimeDBTest {
     }
 
     private String readUtf8(File file) throws java.io.IOException {
-        byte[] bytes = java.nio.file.Files.readAllBytes(file.toPath());
-        return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+        StringBuilder content = new StringBuilder();
+        char[] buffer = new char[4096];
+        try (java.io.Reader reader = new java.io.InputStreamReader(
+                new java.io.FileInputStream(file), java.nio.charset.StandardCharsets.UTF_8)) {
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+                content.append(buffer, 0, count);
+            }
+        }
+        return content.toString();
     }
 
     private void waitForImportThread(LimeDB limeDB) throws Exception {
@@ -1248,6 +1256,7 @@ public class LimeDBTest {
     public void englishSuggestionsUseDictionaryRankInsteadOfAlphabeticalOnly() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);
+        assertTrue("Database should initialize before dictionary lookup", initializeDatabase(limeDB));
 
         List<String> suggestions = limeDB.getEnglishSuggestions("sal");
 

@@ -3,16 +3,15 @@ package net.toload.main.hd.ui;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.content.pm.PackageInfoCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -149,6 +148,11 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
     protected void onCreate(Bundle savedInstanceState) {
         DynamicColors.applyToActivityIfAvailable(this, SystemAccentColor.dynamicColorOptions(this));
         super.onCreate(savedInstanceState);
+        // Enable edge-to-edge across all API levels via the AndroidX helper (replaces
+        // the deprecated setStatusBarColor/setNavigationBarColor calls flagged by Play).
+        if (shouldUseEdgeToEdgeHelper(Build.VERSION.SDK_INT)) {
+            EdgeToEdge.enable(this);
+        }
         // Register back gesture/press callback for AndroidX
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
@@ -478,7 +482,6 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
      * <p>The method ensures UI elements are not obscured by system bars while maintaining
      * visual consistency across API levels.
      */
-    @SuppressWarnings("deprecation")
     private void setupEdgeToEdge() {
         // Apply window insets to the main content container (FrameLayout)
         // ActionBar already handles its own space, so we only need to account for status bar
@@ -499,29 +502,12 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
             });
         }
 
-        // Set status bar and navigation bar to transparent for edge-to-edge effect
-        // This works on all API levels, but is required for API 35+
-        // Note: setStatusBarColor and setNavigationBarColor are deprecated in API 35+,
-        // but we use them with suppression for backward compatibility
+        // Transparent system bars and light/dark bar-icon appearance are handled by
+        // EdgeToEdge.enable(this) in onCreate (auto-detects night mode across API levels).
+    }
 
-        android.view.Window window = getWindow();
-        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
-        window.setNavigationBarColor(android.graphics.Color.TRANSPARENT);
-
-        int uiMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-        boolean isLight = (uiMode != Configuration.UI_MODE_NIGHT_YES);
-        View decorView = getWindow().getDecorView();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            WindowInsetsControllerCompat controller =
-                    new WindowInsetsControllerCompat(getWindow(), decorView);
-            controller.setAppearanceLightStatusBars(isLight);
-            controller.setAppearanceLightNavigationBars(isLight);
-        } else {
-            // API 21-22: cannot toggle icon brightness; use solid dark bars so the
-            // default white icons remain visible regardless of theme.
-            getWindow().setStatusBarColor(0xFF000000);
-            getWindow().setNavigationBarColor(0xFF000000);
-        }
+    public static boolean shouldUseEdgeToEdgeHelper(int sdkInt) {
+        return sdkInt >= Build.VERSION_CODES.VANILLA_ICE_CREAM;
     }
 
     /**
