@@ -52,6 +52,21 @@ The leading hypothesis is incomplete cleanup/recovery after an inline `SpeechRec
 
 This remains a hypothesis. The recognition error code and a logcat trace are required to distinguish a LIME lifecycle bug from a speech-provider/OEM failure.
 
+## Gboard reference and product direction
+
+Google's Gboard voice-typing flow is the design reference for #154. Google's user documentation describes an explicit microphone action, a visible `Speak now` listening state, and a clear return to ordinary keyboard input. Exact Gboard UI differs by Android version, device, and speech provider, so LIME should align with the stable interaction principles rather than copy Pixel-only visuals.
+
+Target behavior:
+
+- Voice input starts from an explicit microphone control.
+- Listening state is unmistakable, with a prominent microphone/status area and a clear stop/cancel action.
+- Normal typing must remain available or recover immediately when listening ends.
+- A recognition error must stop microphone animation/listening, release recognizer state, show a concise recoverable message, and allow immediate typing or retry without switching keyboards or rebooting.
+- Retry/fallback must not loop, duplicate text, or leave two recognizers active.
+- Where platform APIs allow, keep the visible voice-mode interaction as close to Gboard's simple microphone-centered flow as practical while preserving LIME's candidate and table-input behavior.
+
+Reference: https://support.google.com/gboard/answer/2781851
+
 ## Proposed investigation and fix direction
 
 1. Reproduce inline voice recognition errors, including network, no-match, busy, client, permission, and provider failures.
@@ -59,7 +74,7 @@ This remains a hypothesis. The recognition error code and a logcat trace are req
 3. Ensure every terminal error path clears or converts the visible error status after a short, deterministic lifecycle and leaves normal typing responsive.
 4. Decide which error classes should offer or automatically use the existing delegated voice/`RecognizerIntent` fallback without causing loops.
 5. Add focused controller/service tests for error cleanup, one-and-only-one fallback, repeated voice activation after error, and normal typing after failure.
-6. Keep any new user-facing voice-mode switch or centered listening UI as separate product work unless a maintainer confirms that direction.
+6. Align the voice-mode UI and recovery behavior with the Gboard reference above as far as Android's public APIs and the active recognition provider permit.
 
 ## Follow-up questions for the reporter
 
