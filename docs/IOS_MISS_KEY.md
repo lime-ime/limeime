@@ -337,7 +337,7 @@ So iOS holds the touch in the thin **screen-edge strip** to disambiguate its own
 
 ### 2026-07-02 — RESOLVED. Root cause was UIKit touch-delivery delay, NOT `rebuildButtons` starvation
 
-**Fixed and device-confirmed on branch `ios-touch-rewrite`.** After the touch rewrite (docs/IOS_TOUCH_REWRITE.md) gave the single-owner `KeyTouchLayer`, the residual high-speed misses were closed via the plan in **docs/IOS_OPT_TOUCH.md**. The result reframes this doc's central hypothesis.
+**Fixed and device-confirmed on branch `ios-touch-rewrite`.** After the touch rewrite (docs/IOS_TOUCH_REWRITE.md) moved ordinary keys to `KeyTouchLayer` ownership, the residual high-speed misses were closed via the plan in **docs/IOS_OPT_TOUCH.md**. At this point the implementation has one owner **per row/half**, not one full-keyboard owner; see the 2026-07-13 correction below. The result still reframes this doc's central missed-key hypothesis.
 
 **Correction to this document's main theory.** The dominant cause was **not** `CandidateBarView.rebuildButtons()` main-thread starvation. Two pieces of evidence:
 
@@ -355,10 +355,45 @@ The actual dominant cause was **UIKit delaying/dropping `touchesBegan`** — the
 - Commit plain keys on `touchesBegan` not release (`d97d52f3`) — a dropped `touchesEnded` can no longer silently swallow a key.
 - **P1 of this doc (diffable `rebuildButtons`) finally landed** (`4daae397`, docs/IOS_OPT_TOUCH.md Task 6): grow/shrink/configure-in-place instead of teardown-all. Still worthwhile for Chinese/candidate-active bursts and battery, just not the root of the misses. **P2 (defer one runloop) was NOT needed** and left unimplemented.
 
-**Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on the single `KeyTouchLayer` (the actual touch owner), and the scattered per-view flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`.
+**Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on each `KeyTouchLayer` that can own a touch, and the scattered container flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`. P5 in IOS_TOUCH_REWRITE.md will consolidate those row/half owners into one keyboard-wide layer.
 
 **Device outcome (WJIP17, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
 
 ### 2026-07-12 — Residual "less responsive than built-in" is a NEW thread, not a miss regression
 
 The missed-key fix (2026-07-02) holds — no dropped taps. The remaining complaint (keyboard *feels* less responsive than the system keyboard) is a different symptom family — feedback latency / frame rate / `textDocumentProxy` XPC insert latency — and is tracked in [docs/IOS_TOUCH_REWRITE.md §13](IOS_TOUCH_REWRITE.md). Do not reopen this doc's hypotheses for it. First experiments applied there: key-preview fade-in 80 ms → 0, and `CADisableMinimumFrameDurationOnPhone` (ProMotion 120 Hz opt-in) added to the extension Info.plist.
+
+### 2026-07-13 — Gap taps expose a touch-surface coverage bug, not a return of fast-typing misses
+
+**New reproducible symptom:** a tap on some visible space between keys produces no key
+event. The iOS built-in keyboard visually separates keys but extends their logical hit
+regions into the gaps, normally dividing the space at the nearest-key centerline.
+
+This does **not** invalidate the 2026-07-02 resolution. Fast taps that land on owned key
+surfaces are still delivered; the new failure occurs because the shipped touch rewrite
+does not yet own and map the complete two-dimensional key grid:
+
+- `makeRow` creates one `KeyTouchLayer` per row, constrained to that row's content width;
+- `makeSplitRow` creates one layer per split half;
+- `plainTouchContext(in:)` builds the existing `KeyDetector` from only that layer's
+  descendant keys; and
+- `KeyDetector.keyAt` can return `nil` after applying a center-distance threshold.
+
+The result is good horizontal correction inside many rows, but it cannot guarantee
+vertical/diagonal gaps, centered-row outer space, split-half boundaries, or cross-row
+flint. A touch also stays with the view in which it began, so a row-local detector
+cannot discover another row during `touchesMoved`.
+
+**Planned correction:** IOS_TOUCH_REWRITE.md P5/§14 replaces the row/half owners with
+one keyboard-wide `KeyTouchLayer` and reuses one instance of the existing `KeyDetector`
+containing every key frame in a common coordinate system. For points inside the owned
+key grid, nearest-key selection is unbounded and based on distance to the key rectangle;
+therefore horizontal, vertical, and diagonal gaps resolve exactly once instead of
+returning `nil`. The normal proximity threshold remains available outside that surface.
+
+**Diagnostic distinction:** `TouchBegan` absent means the point was outside the current
+row/half layer; `TouchBegan code=0` means the layer received it but its row-local detector
+returned `nil`; a real code with no output is a downstream commit issue. P5 must cover
+the first two signatures without changing the already-fixed delivery/commit path.
+
+**Status:** documented and open; no Swift implementation or device verification yet.
