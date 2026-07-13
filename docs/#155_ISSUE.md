@@ -4,11 +4,11 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/155
 - Classification: bug, usability
-- State: open
+- State: closed as completed on 2026-07-14
 - Assignee: `jrywu`
 - Fix commit: `81d8dcdc225a117b1664231e135c555f5abfd9ef`
-- Android delivery: source fix is on `master`, but the initially published v6.1.30 Release asset has the Google Play package/signing identity and is not accepted as the GitHub testing-track APK. Runtime delivery remains pending a corrected artifact.
-- iOS delivery: source fix is on `master`, but TestFlight/App Store delivery was not verified during the GitHub Release closeout.
+- Android delivery: verified in GitHub Release v6.1.30 after the corrected APK artifact was published. `LIMEHD2026-6.1.30.apk` uses package `net.toload.main.hd2026`, `versionName` `6.1.30`, and `versionCode` `2026`; downloaded SHA-256 `5352805231853b38924857c00c44d66fa351585d7b3e31d8b9a5ddb567e178ac`.
+- iOS delivery: source fix is included in the v6.1.30 release branch and App Store submission flow. No separate community reporter retest is required because this is a maintainer-created tracking issue.
 - Platforms: Android and iOS shared the same reachability gap and were changed by the fix commit.
 
 ## Problem statement
@@ -80,5 +80,5 @@ Prefer a shared helper/policy that is table-driven or clearly lists the verified
 
 ## Platform impact
 
-- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. Source is on `master`; runtime delivery remains pending because the initially published v6.1.30 asset does not match the GitHub testing-track package/signing policy.
-- **iOS:** the same fix commit extends the iOS guarded digit-symbol path. Source is on `master`; runtime verification and TestFlight/App Store delivery remain pending and are not established by the Android GitHub Release.
+- **Android:** the fix commit extends the guarded Array30 digit-symbol path to the verified `hg#` codes. The corrected GitHub Release v6.1.30 APK was verified with the GitHub testing-track package/signing identity, so Android delivery for this maintainer-created tracking issue is complete.
+- **iOS:** the same fix commit extends the iOS guarded digit-symbol path and is included in the v6.1.30 source/release flow. No public reporter confirmation is pending for this maintainer-created tracking issue.
