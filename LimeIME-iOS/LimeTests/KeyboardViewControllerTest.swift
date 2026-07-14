@@ -2052,6 +2052,20 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // hot still wins
     }
 
+    // #156: Phonetic et41 must resolve to the ETEN 41-key layout, not standard. The visible
+    // layout is driven by the phonetic_keyboard_type pref (Android parity), so et_41/eten map to
+    // lime_et_41 like eten26→lime_et26 and hsu→lime_hsu; standard has no special layout (nil →
+    // resolved via the keyboard-config path).
+    func testPhoneticSpecialLayoutIdMapsEt41AndSiblingsFromPref() {
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "et_41"), "lime_et_41")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten"), "lime_et_41")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26"), "lime_et26")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26_symbol"), "lime_et26")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu"), "lime_hsu")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu_symbol"), "lime_hsu")
+        XCTAssertNil(KeyboardViewController.phoneticSpecialLayoutId(for: "standard"))   // not et41
+    }
+
     private func projectFileURL(_ relativePath: String) -> URL {
         // Prefer the copy bundled into the test target — on Xcode Cloud the source
         // checkout is absent at test runtime, so #filePath resolves to a missing path.

@@ -998,17 +998,26 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
+    /// Maps the `phonetic_keyboard_type` pref to its dedicated visible layout id, or nil when the
+    /// type has no special layout (standard → resolved via the keyboard-config path below).
+    /// This is the single source of truth for the phonetic visible layout, mirroring Android's
+    /// `resolvePhoneticKeyboardCode()` (#156): the pref drives the layout directly, so et_41 no
+    /// longer depends on the persisted `im.keyboard` config round-trip that its siblings bypass.
+    static func phoneticSpecialLayoutId(for kbType: String) -> String? {
+        if kbType == "et_41" || kbType == "eten" { return "lime_et_41" }   // #156 ETEN 41-key
+        if kbType.hasPrefix("eten26") || kbType == "et26" { return "lime_et26" }
+        if kbType.hasPrefix("hsu") { return "lime_hsu" }
+        return nil
+    }
+
     private func resolvedLayoutId(for tableNick: String) -> String {
         // For phonetic IMs, keyboard type determines the visible layout.
-        // Mirrors Android: eten26/hsu use QWERTY-shaped Chinese layouts so the
+        // Mirrors Android: eten/eten26/hsu use QWERTY-shaped Chinese layouts so the
         // mode key changes to abc while composing stays in the active IM.
-        if tableNick == "phonetic" {
-            let kbType = phoneticKeyboardType
-            if kbType.hasPrefix("eten26") || kbType == "et26" {
-                if LayoutLoader.load("lime_et26") != nil { return "lime_et26" }
-            } else if kbType.hasPrefix("hsu") {
-                if LayoutLoader.load("lime_hsu") != nil { return "lime_hsu" }
-            }
+        if tableNick == "phonetic",
+           let special = KeyboardViewController.phoneticSpecialLayoutId(for: phoneticKeyboardType),
+           LayoutLoader.load(special) != nil {
+            return special
         }
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
             return "lime_\(tableNick)"
