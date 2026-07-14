@@ -2953,7 +2953,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             DispatchQueue.global(qos: .background).async { [weak self] in
                 guard let result = ss.getCodeListStringFromWord(word, usingTable: lookupTable),
                       !result.isEmpty else { return }
-                DispatchQueue.main.async { self?.showLimeToast(result) }
+                DispatchQueue.main.async {
+                    // Persist the reverse-lookup strip until the next key tap / new composing
+                    // (didPress → hideLimeToast) — mirrors Android's dedicated reverse-lookup
+                    // space, no auto-dismiss timer. Skip if a new stroke already started so a
+                    // late async result can't clobber live composing and stick.
+                    guard let self = self, self.mComposing.isEmpty else { return }
+                    self.showLimeToast(result, persistent: true)
+                }
             }
         }
     }
