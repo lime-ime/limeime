@@ -213,6 +213,34 @@ final class TouchLayerGestureTests: XCTestCase {
         XCTAssertTrue(source.contains("override func draw(_ rect: CGRect) {}"))
     }
 
+    func testIndentedRowTouchLayerSpansFullKeyboardWidthSoEdgeTapsResolve() throws {
+        // #gap: an indented (<100%) row's touch surface must still span the FULL keyboard width,
+        // so a near-miss on the outer edge/corner of its first/last key lands inside the layer and
+        // proximity resolves it to the edge key — instead of dropping in dead margin whitespace
+        // ("edge corner of key triggers nothing"). The keys themselves stay visually centered.
+        let layout = LimeKeyLayout(id: "indented_row_test", rows: [
+            KeyRow(keys: [KeyDef(code: 97, label: "a", widthPercent: 100)]),   // full-width row
+            KeyRow(keys: [KeyDef(code: 98, label: "b", widthPercent: 50)]),    // indented row (50%)
+        ])
+        let keyboard = KeyboardView(layout: layout)
+        keyboard.frame = CGRect(x: 0, y: 0, width: 320, height: 128)
+        keyboard.layoutIfNeeded()
+
+        let layers = keyTouchLayers(in: keyboard)
+        XCTAssertEqual(layers.count, 2)
+        for layer in layers {
+            XCTAssertEqual(layer.bounds.width, keyboard.bounds.width, accuracy: 0.5,
+                           "every row's touch layer must span the full keyboard width (no dead side margin)")
+        }
+
+        // The indented row's key still renders centered — narrower than the full-width layer and
+        // inset from the left edge — so only the touch surface grew, not the visual layout.
+        let indentedLayer = layers[1]
+        let key = try XCTUnwrap(indentedLayer.subviews.first { $0 is UIButton && $0.bounds.width > 0 })
+        XCTAssertLessThan(key.bounds.width, indentedLayer.bounds.width)
+        XCTAssertGreaterThan(key.frame.minX, 1.0, "indented key stays centered, not flush to the layer edge")
+    }
+
     func testKeyTouchLayerAccessibilityElementsExposeVisibleKeysAndActivateThroughOwner() throws {
         let layout = LimeKeyLayout(id: "accessibility_test", rows: [
             KeyRow(keys: [

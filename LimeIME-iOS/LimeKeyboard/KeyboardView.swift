@@ -802,7 +802,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             let halfFraction = (halfPercent / total) * (1 - splitGapFraction)
 
             let contentView = KeyTouchLayer(owner: self)
-            contentView.backgroundColor = .clear
+            contentView.backgroundColor = LayoutMetrics.TouchTrap.fill   // keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md §Resolution); .clear leaves gaps dead
             contentView.translatesAutoresizingMaskIntoConstraints = false
             rowView.addSubview(contentView)
             NSLayoutConstraint.activate([
@@ -851,15 +851,34 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let totalPercent = row.keys.reduce(0) { $0 + $1.widthPercent }
         let widthMultiplier = min(1.0, totalPercent / 100.0)
 
+        // The touch layer spans the FULL row width so its proximity detector owns the whole row,
+        // including the side margins of an indented (<100%) row. Without this, a near-miss on the
+        // outer edge/corner of the leftmost/rightmost key of an indented row (e.g. QWERTY's
+        // a…l row at 90%) lands in dead whitespace and is dropped — the exact "edge corner of key
+        // triggers nothing" gap the proximity rewrite was meant to close. Keys still render
+        // centered within `keyGuide`, so the visual layout is unchanged; only the touch/detector
+        // surface grows to full width, letting proximity resolve margin taps to the edge key.
         let contentView = KeyTouchLayer(owner: self)
-        contentView.backgroundColor = .clear
+        contentView.backgroundColor = LayoutMetrics.TouchTrap.fill   // keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md §Resolution); .clear leaves gaps dead
         contentView.translatesAutoresizingMaskIntoConstraints = false
         rowView.addSubview(contentView)
         NSLayoutConstraint.activate([
-            contentView.centerXAnchor.constraint(equalTo: rowView.centerXAnchor),
+            contentView.leadingAnchor.constraint(equalTo: rowView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: rowView.trailingAnchor),
             contentView.topAnchor.constraint(equalTo: rowView.topAnchor),
             contentView.bottomAnchor.constraint(equalTo: rowView.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: rowView.widthAnchor, multiplier: widthMultiplier),
+        ])
+
+        // Centered key span: full width when totalPercent >= 100, narrower and centered for an
+        // indented row. Keys anchor to this guide, so their rendered positions are identical to
+        // the pre-fix centered content view.
+        let keyGuide = UILayoutGuide()
+        contentView.addLayoutGuide(keyGuide)
+        NSLayoutConstraint.activate([
+            keyGuide.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            keyGuide.topAnchor.constraint(equalTo: contentView.topAnchor),
+            keyGuide.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            keyGuide.widthAnchor.constraint(equalTo: contentView.widthAnchor, multiplier: widthMultiplier),
         ])
 
         var prevButton: UIButton? = nil
@@ -870,11 +889,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
             btn.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                btn.topAnchor.constraint(equalTo: contentView.topAnchor, constant: keyVGap),
-                btn.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -keyVGap),
-                // Each key spans its proportional share of the content view width minus keyHGap,
+                btn.topAnchor.constraint(equalTo: keyGuide.topAnchor, constant: keyVGap),
+                btn.bottomAnchor.constraint(equalTo: keyGuide.bottomAnchor, constant: -keyVGap),
+                // Each key spans its proportional share of the (centered) key guide minus keyHGap,
                 // so adjacent keys are separated by keyHGap pt of background.
-                btn.widthAnchor.constraint(equalTo: contentView.widthAnchor,
+                btn.widthAnchor.constraint(equalTo: keyGuide.widthAnchor,
                                            multiplier: keyDef.widthPercent / totalPercent,
                                            constant: -keyHGap),
             ])
@@ -882,7 +901,7 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             if let prev = prevButton {
                 btn.leadingAnchor.constraint(equalTo: prev.trailingAnchor, constant: keyHGap).isActive = true
             } else {
-                btn.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: keyHGap / 2).isActive = true
+                btn.leadingAnchor.constraint(equalTo: keyGuide.leadingAnchor, constant: keyHGap / 2).isActive = true
             }
             prevButton = btn
         }

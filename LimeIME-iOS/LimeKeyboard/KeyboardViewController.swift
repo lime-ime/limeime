@@ -1368,6 +1368,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         panel.addSubview(scrollThumb)
 
         let contentView = UIView()
+        // Keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md
+        // §Resolution): a .clear content view leaves the gaps between candidate cells (and the
+        // ragged row-ends) dead to both tap and scroll. The near-invisible touch-trap fill lets
+        // the scroll view receive those touches.
+        contentView.backgroundColor = LayoutMetrics.TouchTrap.fill
         contentView.translatesAutoresizingMaskIntoConstraints = false
         sv.addSubview(contentView)
 
@@ -1415,9 +1420,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         collapseBtn.setValue(NSValue(uiEdgeInsets: UIEdgeInsets(top: chevronBias, left: 0,
                                                                 bottom: -chevronBias, right: 0)),
                              forKey: "contentEdgeInsets")
-        // 0.01-alpha touch-trap fill so taps in the chevron's padding land on
-        // a non-clear pixel — keyboard extensions drop touches on transparent
-        // pixels (see docs/IOS_CANDI_TOUCH.md §Resolution).
+        // 0.01-alpha touch-trap fill so taps in the chevron's padding land on a non-clear pixel —
+        // keyboard extensions drop touches on transparent pixels (docs/IOS_CANDI_TOUCH.md §Resolution).
         collapseBtn.backgroundColor = LayoutMetrics.TouchTrap.fill
         collapseBtn.translatesAutoresizingMaskIntoConstraints = false
         collapseBtn.addTarget(self, action: #selector(collapseExpandedCandidates), for: .touchUpInside)
@@ -2292,81 +2296,48 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let capturedEnableEmoji = enableEmoji
         let capturedEmojiPosition = enableEmojiPosition
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-            // Stage 1: quick fetch (INITIAL_RESULT_LIMIT). Shows candidates fast.
-            // PROFILING: BEGIN — T2 stage-1 DB query (background).
+            // Stage 1: quick fetch (INITIAL_RESULT_LIMIT).
             let q1ID = Prof.newID()
             Prof.begin("DBQueryStage1", id: q1ID)
-            // PROFILING: END
             var results = ss.getMappingByCode(code, isSoftKeyboard: true)
-            // PROFILING: BEGIN — T2 stage-1 query close.
             Prof.end("DBQueryStage1", id: q1ID)
-            // PROFILING: END
             if !results.isEmpty, capturedEnableEmoji {
                 results = ss.injectEmoji(into: results, insertAt: capturedEmojiPosition)
             }
             let wasTruncated = results.contains(where: { $0.isHasMoreMarkRecord })
             DispatchQueue.main.async { [weak self] in
                 guard let self = self, self.currentSearchID == sid else {
-                    // PROFILING: BEGIN — stale-stroke cancellation path.
                     Prof.event("StrokeCancelled")
                     Prof.end("Stroke", id: strokeID)
-                    // PROFILING: END
                     return
                 }
-                // P2 (see docs/IOS_MISS_KEY.md): defer the heavy candidate-bar reload
-                // one runloop tick so UIKit can dispatch any queued touchDown/touchUp
-                // events before the reload locks the main thread. Re-checks stale in
-                // case the user typed again during the hop.
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self, self.currentSearchID == sid else {
-                        // PROFILING: BEGIN — stale-stroke cancellation path (deferred).
                         Prof.event("StrokeCancelled")
                         Prof.end("Stroke", id: strokeID)
-                        // PROFILING: END
                         return
                     }
-                    // PROFILING: BEGIN — T2 candidate bar reload (main thread).
                     let reloadID = Prof.newID()
                     Prof.begin("CandidateReload", id: reloadID)
-                    // PROFILING: END
                     results.isEmpty ? self.clearSuggestions() : self.setSuggestions(results)
-                    // PROFILING: BEGIN — T2 reload close + Stroke close.
                     Prof.end("CandidateReload", id: reloadID)
                     Prof.end("Stroke", id: strokeID)
-                    // PROFILING: END
                 }
             }
-            // Stage 2: full fetch (FINAL_RESULT_LIMIT). Upgrades bar without scroll reset.
-            // Only runs when stage 1 was truncated (see docs/TWO_STAGE_CANDI.md).
+            // Stage 2: full fetch, auto-fired when stage 1 was truncated. Upgrades the bar to the
+            // full set without a scroll (see docs/TWO_STAGE_CANDI.md).
             guard wasTruncated else { return }
-            // PROFILING: BEGIN — T3 stage-2 full DB query.
             let q2ID = Prof.newID()
             Prof.begin("DBQueryStage2", id: q2ID)
-            // PROFILING: END
             var fullResults = ss.getMappingByCode(code, isSoftKeyboard: true, getAllRecords: true)
-            // PROFILING: BEGIN — T3 stage-2 query close.
             Prof.end("DBQueryStage2", id: q2ID)
-            // PROFILING: END
             if !fullResults.isEmpty, capturedEnableEmoji {
                 fullResults = ss.injectEmoji(into: fullResults, insertAt: capturedEmojiPosition)
             }
-            // Stage 2 must land AFTER the stage-1 bar reload. Stage 1 uses a
-            // nested DispatchQueue.main.async (P2 deferral, see IOS_MISS_KEY.md);
-            // if stage 2 uses a single async, M3 can fire before stage 1's inner
-            // M2 — applyFullCandidateResults then bails on hasCandidatesShown and
-            // the `…` sentinel is left in the bar (see docs/#77_ISSUE.md).
-            // Double-dispatch stage 2 so M3 is always enqueued after M2 (FIFO).
             DispatchQueue.main.async { [weak self] in
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
-                    // PROFILING: BEGIN — T3 candidate swap (main thread).
-                    let swapID = Prof.newID()
-                    Prof.begin("CandidateSwap", id: swapID)
-                    // PROFILING: END
                     self.applyFullCandidateResults(fullResults, sid: sid)
-                    // PROFILING: BEGIN — T3 swap close.
-                    Prof.end("CandidateSwap", id: swapID)
-                    // PROFILING: END
                 }
             }
         }
@@ -2551,6 +2522,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             // same contentEdgeInsets of 10pt). Using NSString.size drifts slightly
             // vs. UIButton's actual width and pushes the last row-1 item to row 2.
             let btn = UIButton(type: .system)
+            btn.backgroundColor = LayoutMetrics.TouchTrap.fill   // commit taps on a glyph's transparent padding (IOS_CANDI_TOUCH.md §Resolution), mirroring makeCandidateButton
             btn.setTitle(text, for: .normal)
             btn.titleLabel?.font = btnFont
             let cellHPad = LayoutMetrics.CandidateBar.candidateHPad(isPad: onPad)
