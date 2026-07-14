@@ -140,6 +140,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - Expanded Candidates Panel
     private var expandedCandidatesPanel: UIView?
     private var expandedScrollView: UIScrollView?
+    /// Scroll-view top offset (= first-row height) so the candidate grid scrolls BELOW the fixed
+    /// first row, which never moves — nothing slides under the composing strip / dismiss on scroll.
+    private var expandedScrollTopConstraint: NSLayoutConstraint?
+    /// Fixed first-row header: holds row-0 candidate buttons at the exact collapsed-bar geometry
+    /// (full height + strip bias) so expanding reads as the bar growing in place.
+    private var expandedFirstRowContainer: UIView?
+    private var expandedFirstRowHeightConstraint: NSLayoutConstraint?
     private var expandedContentView: UIView?
     private var expandedContentHeightConstraint: NSLayoutConstraint?
     private var isExpandedCandidatesVisible = false
@@ -1376,13 +1383,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         contentView.translatesAutoresizingMaskIntoConstraints = false
         sv.addSubview(contentView)
 
+        // Scroll top starts at the dismiss-button top (offset = active composing-strip height,
+        // set per-show in updateExpandedCandidateChromeMetrics) so the grid scrolls below the
+        // fixed composing strip instead of under it.
+        let svTop = sv.topAnchor.constraint(equalTo: panel.topAnchor)
+        expandedScrollTopConstraint = svTop
         NSLayoutConstraint.activate([
             panel.topAnchor.constraint(equalTo: candidateBar.topAnchor),
             panel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             panel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             panel.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            sv.topAnchor.constraint(equalTo: panel.topAnchor),
+            svTop,
             sv.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             sv.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             sv.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
@@ -1400,6 +1412,23 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         expandedContentView              = contentView
         expandedContentHeightConstraint  = hc
         expandedScrollThumb              = scrollThumb
+
+        // Fixed first-row header (row-0 candidates) pinned at the panel top, in front of the
+        // scroll view but behind the chrome. Height tracks the bar per-show. Rows 2+ scroll
+        // below it, so nothing slides under the composing strip / dismiss button on scroll.
+        let firstRowContainer = UIView()
+        firstRowContainer.backgroundColor = .clear
+        firstRowContainer.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(firstRowContainer)
+        let firstRowH = firstRowContainer.heightAnchor.constraint(equalToConstant: 0)
+        NSLayoutConstraint.activate([
+            firstRowContainer.topAnchor.constraint(equalTo: panel.topAnchor),
+            firstRowContainer.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            firstRowContainer.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            firstRowH,
+        ])
+        expandedFirstRowContainer = firstRowContainer
+        expandedFirstRowHeightConstraint = firstRowH
 
         // Collapse button (chevron.up) pinned to top-right, same width as candi bar chevron.
         // Mirror the collapsed bar's chevron point size so the two surfaces
@@ -2433,6 +2462,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         expandedMoreSepCenterYConstraint?.constant = bias
         expandedDismissCenterYConstraint?.constant = bias
         expandedDismissHeightConstraint?.constant = -stripH
+        // Grid scrolls below the fixed first row (which stays put, identical to the collapsed bar).
+        expandedScrollTopConstraint?.constant = activeCandidateBarHeight
+        expandedFirstRowHeightConstraint?.constant = activeCandidateBarHeight
         expandedCollapseButton?.tintColor = chromeText
         expandedMoreSep?.backgroundColor = chromeText.withAlphaComponent(LayoutMetrics.CandidateBar.separatorAlpha)
         expandedDismissButton?.tintColor = chromeText
@@ -2457,8 +2489,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func reloadExpandedCandidates() {
         guard let contentView = expandedContentView else { return }
 
-        // Remove all previous subviews
+        // Remove all previous subviews (scroll body + fixed first-row header)
         contentView.subviews.forEach { $0.removeFromSuperview() }
+        expandedFirstRowContainer?.subviews.forEach { $0.removeFromSuperview() }
 
         let pal = KeyboardPalette.palettes[max(0, min(resolvedKeyboardTheme, KeyboardPalette.palettes.count - 1))]
         let t = resolvedKeyboardTheme
@@ -2481,8 +2514,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let hPad:         CGFloat = 0
         let vPad:         CGFloat = 0
         let activeStripH = candidateBar.activeComposingStripHeight
+        // Row 0 is the fixed header — identical to the collapsed bar (full height + strip bias).
+        // Rows 2+ scroll below it at the shorter no-strip height.
         let firstRowH:    CGFloat = activeCandidateBarHeight
-        let restRowH:     CGFloat = max(0, candidateBarHeight - candidateBar.composingStripHeight)
+        let restRowH:     CGFloat = max(0, activeCandidateBarHeight - activeStripH)
         var rowH:         CGFloat = firstRowH
         var rowBias:      CGFloat = activeStripH / 2
         // Match CandidateBarView font sizing exactly: iPad = 26/22, iPhone = 22/16.
@@ -2500,11 +2535,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         let dismissZone = LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: isOnPad)
         let chevronZone = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad)
+        // Left edge of the chevron's centered glyph: row 0 items may fill up to here (the
+        // button's side padding is empty), so the last item doesn't wrap early against the
+        // full 40pt button.
+        let chevronGlyphLeft = panelWidth - chevronZone / 2
+            - LayoutMetrics.CandidateBar.Chevron.iconSize(isPad: isOnPad) / 2
+        // All rows start at the same left (dismiss-width) margin so columns align.
         func expandedRowStartX(row: Int) -> CGFloat {
-            return row == 0 ? dismissZone + hPad : hPad
+            return dismissZone + hPad
         }
         func expandedRowMaxX(row: Int) -> CGFloat {
-            return row == 0 ? panelWidth - chevronZone - expandedSepWidth : panelWidth
+            // Row 0 shares the chevron → stop at the chevron glyph. Rows 2+ scroll below the
+            // header (no chevron) → full screen width.
+            return row == 0 ? chevronGlyphLeft - expandedSepWidth : panelWidth
         }
 
         var row = 0
@@ -2534,10 +2577,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             btn.setValue(NSValue(uiEdgeInsets: UIEdgeInsets(top: 0, left: cellHPad,
                                                             bottom: 0, right: cellHPad)),
                          forKey: "contentEdgeInsets")
-            let btnW = btn.intrinsicContentSize.width
+            // Floor cell width at the bar's minimum (one em + side pads) so narrow glyphs
+            // (composing echo, single bopomofo) get the same Han-sized cell as the collapsed
+            // bar — otherwise row 0 packs tighter and every candidate shifts left vs the bar.
+            let intrinsicW = btn.intrinsicContentSize.width
+            let btnW = max(intrinsicW,
+                           CandidateBarView.minCandidateCellWidth(fontPointSize: btnFont.pointSize, hPad: cellHPad))
 
             if !isFirstInRow {
-                if x + btnW > expandedRowMaxX(row: row) {
+                // Wrap on the item's NATURAL width (glyph + side pads), not the floored btnW.
+                // Row 0 may overflow ~10% into the chevron glyph area (on-screen, empty-ish);
+                // rows 2+ end at the screen edge so they wrap cleanly — nothing clips off-screen.
+                let wrapExtent = row == 0 ? intrinsicW * 0.9 : intrinsicW
+                if x + wrapExtent > expandedRowMaxX(row: row) {
                     // Wrap to next row. Advance by the OLD row's height,
                     // then switch to the shorter rows-2+ height with no
                     // strip-bias.
@@ -2562,24 +2614,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     ? adaptedCandiText.withAlphaComponent(LayoutMetrics.CandidateBar.composingCodeDimAlpha)
                     : adaptedCandiText,
                 for: .normal)
-            btn.frame = CGRect(x: x, y: y, width: btnW, height: rowH)
+            // Row 0 → fixed header container (panel-top coords). Rows 2+ → scroll content,
+            // shifted up by the first-row height so the first scrolling row sits at content y=0.
+            let inHeader = row == 0
+            btn.frame = CGRect(x: x, y: inHeader ? y : y - firstRowH, width: btnW, height: rowH)
             btn.tag = i
             btn.addTarget(self, action: #selector(expandedCandidateTapped(_:)), for: .touchUpInside)
-            contentView.addSubview(btn)
+            (inHeader ? (expandedFirstRowContainer ?? contentView) : contentView).addSubview(btn)
 
-            // Match CandidateBarView's pill geometry exactly: pill hugs the title
-            // label (text width + padX*2), positioned at (cellHPad - padX) so it
-            // aligns to the glyph rather than the full button frame. Mirrors
-            // CandidateButton.layoutSubviews (cellHPad=10, padX=4, padY=2).
+            // Match CandidateButton.layoutSubviews exactly: pill = label.frame inset by
+            // (-padX, -padY). UIButton centers the title in the cell, so the pill hugs the
+            // ACTUAL glyph width centered in btnW — NOT (btnW - 2·cellHPad), which is wrong
+            // once the cell is floored wider than the glyph (narrow glyphs / composing echo).
             if isSelected {
                 let padX = LayoutMetrics.CandidateBar.pillPadX
                 let padY = LayoutMetrics.CandidateBar.pillPadY
-                let textW  = btnW - 2 * cellHPad
+                let textW  = intrinsicW - 2 * cellHPad
                 let pillW  = textW + 2 * padX
                 // Match CandidateButton.layoutSubviews exactly: pill hugs the
                 // title label which UIKit sizes to font.lineHeight (not ceiled).
                 let pillH  = min(rowH, btnFont.lineHeight + 2 * padY)
-                let pillX  = cellHPad - padX
+                let pillX  = (btnW - pillW) / 2
                 // The label's vertical center is shifted by the FULL bias
                 // (insets are top:+bias, bottom:-bias → content-rect center
                 // moves by bias). Use rowBias (which is `stripH/2` for row 1,
@@ -2598,9 +2653,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             isFirstInRow = false
         }
 
-        // Drive scroll view content height via constraint
+        // Scroll content holds only rows 2+ (row 0 is the fixed header), so subtract the first row.
         let totalH = expandedCandidates.isEmpty ? 0 : (y + rowH + vPad)
-        expandedContentHeightConstraint?.constant = totalH
+        expandedContentHeightConstraint?.constant = max(0, totalH - firstRowH)
         expandedScrollView?.layoutIfNeeded()
         updateExpandedScrollThumb()
     }
