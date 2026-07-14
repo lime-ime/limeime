@@ -1,123 +1,127 @@
 # Issue #157: iOS hamburger reverse lookup selection is not persistent or immediate
 
-## Summary
+## Status
 
-Maintainer-created iOS bug: changing the reverse-lookup source from the iOS keyboard hamburger menu can update the menu UI/hot preference path, but the committed-candidate reverse-lookup path still reads the App Group/cold preference, so the change may not take effect immediately in the current keyboard session and may appear unreliable after keyboard reopen/switch cycles.
-
-Live issue: https://github.com/lime-ime/limeime/issues/157
-
-## Current classification
-
-- Labels: `bug`, `Usability`
+- Issue: https://github.com/lime-ime/limeime/issues/157
+- Classification: bug, usability
+- State: open
 - Assignee: `jrywu`
-- Reporter/source: maintainer-created tracking issue from `limeimetw`
-- Public acknowledgement: not needed because this is an internal maintainer-created tracking issue.
+- Source: maintainer-created iOS tracking issue
+- Platform: iOS affected by the maintainer report. Android has a separate SharedPreferences-backed picker path and is not reported affected.
+- Current follow-up: implement and verify the iOS hamburger reverse-lookup preference path. No public acknowledgement or community retest request is needed because this is a maintainer-created tracking issue.
 
-## Reported behavior
+## Problem statement
 
-### Steps from the report
+On iOS, selecting the reverse lookup source from the keyboard hamburger/options menu can fail in two ways:
 
-1. Open the LIME iOS keyboard.
-2. Tap the hamburger/menu button.
-3. Select or change the reverse lookup option.
-4. Continue using the keyboard immediately.
-5. Close and reopen the keyboard, or switch away and back.
+1. The selected reverse-lookup table does not take effect immediately for the current keyboard session.
+2. The selected value is not reliably reflected after the keyboard is reopened or switched.
 
-### Actual behavior
+Expected behavior: changing the reverse-lookup source from the hamburger menu should immediately affect later candidate commits in the same keyboard session and should persist across later keyboard sessions.
 
-The reverse lookup selection does not take effect immediately, and the selected value is not persisted reliably after the keyboard is reopened or switched.
+## Source evidence
 
-### Expected behavior
+### iOS keyboard hot-store path
 
-The selected reverse lookup source should be effective immediately in the current keyboard session and should remain selected for future keyboard sessions.
+`LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift` intentionally treats hamburger-owned preferences as keyboard-owned hot preferences:
 
-## Source evidence inspected
+- `hotPrefs` is backed by extension-private `UserDefaults.standard` and is meant to avoid stale App Group values clobbering keyboard-side changes.
+- `hotReverseLookup(for:)` seeds `<im>_im_reverselookup` from the App Group only once, then reads from `hotPrefs`.
+- `showReverseLookupPicker()` reads the current value through `hotReverseLookup(for: activeIM)` and writes the selected value to `hotPrefs.setReverseLookup(...)`.
+- The picker also calls `relayPrefStore.update(reverseLookupIM:reverseLookupValue:)` so the Settings app can learn the keyboard-side change through the root relay.
 
-### iOS keyboard hamburger path
+This is the right persistence direction for a keyboard-owned hamburger preference, but two nearby call sites still bypass the hot value.
 
-- `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-  - Lines 201-208 define `hotPrefs` as the keyboard-owned extension-private hot store for hamburger two-writer preferences, including `<im>_im_reverselookup`.
-  - Lines 1065-1073 define `hotReverseLookup(for:)`, which seeds the hot reverse-lookup value once from shared/cold defaults and then reads the hot store.
-  - Lines 4336-4352 implement the hamburger reverse-lookup sub-picker. On selection, line 4344 writes `hotPrefs.setReverseLookup(option.value, for: self.activeIM)`, and lines 4346-4347 update the keyboard-to-app relay state.
-  - Lines 4280-4284 build the parent hamburger menu label using `LIMEPreferenceManager.shared.reverseLookup(for: activeIM)`, not `hotReverseLookup(for:)`, so the visible label can lag the hot picker selection.
+### iOS stale immediate-use path
 
-### iOS committed-candidate reverse lookup path
+`KeyboardViewController.commitCandidate(...)` shows reverse lookup after a candidate is committed. It builds the active key as `<activeIM>_im_reverselookup`, but then reads the lookup table from `sharedDefaults`:
 
-- `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-  - Lines 2960-2973 show reverse lookup after committing a candidate.
-  - Lines 2961-2965 build `<activeIM>_im_reverselookup` and read `sharedDefaults?.string(forKey: imKey)` before calling `searchServer.getCodeListStringFromWord(...)`.
-  - This contradicts the hot-store ownership comments at lines 203-207 and the `hotReverseLookup(for:)` helper. A hamburger change can be stored in the extension-private hot store but the actual lookup display can still read a stale App Group/cold value.
+```swift
+let imKey = "\(activeIM)_im_reverselookup"
+let notifyEnabled = sharedDefaults?.object(forKey: "reverse_lookup_notify") as? Bool ?? true
+if notifyEnabled,
+   let lookupTable = sharedDefaults?.string(forKey: imKey),
+   lookupTable != "none", !lookupTable.isEmpty,
+   let ss = searchServer {
+    ...
+}
+```
 
-### iOS Settings app reverse-lookup path
+That means a selection made inside the keyboard hamburger menu is written to the hot keyboard store, but the actual reverse-lookup display path can keep using the older App Group value until the app-side relay catches up or the keyboard restarts in a way that reseeds/updates state. This directly explains the "not immediate" symptom.
 
-- `LimeIME-iOS/LimeSettings/Views/ReverseLookupSettingsView.swift`
-  - Lines 79-95 bind the Settings-side reverse lookup picker.
-  - Lines 83-84 update the shared preference manager, and lines 87-91 write a `PrefInbox` record so the keyboard can consume the app-side change.
+`showGlobeMenu(...)` has a similar display-only mismatch: it builds the top-level `字根反查` row label using `LIMEPreferenceManager.shared.reverseLookup(for: activeIM)`, which reads the App Group value instead of the keyboard hot value. After a hamburger-menu change, reopening the top-level menu can therefore show the previous label even if `showReverseLookupPicker()` itself wrote the new hot value.
 
-### App-to-keyboard and keyboard-to-app sync paths
+### iOS persistence / app relay path
 
-- `LimeIME-iOS/Shared/Database/SyncContract.swift`
-  - Lines 165-181 define `PrefInboxRecord` / `PrefInbox` for app-to-keyboard delivery of two-writer hamburger preferences.
-  - Lines 187-206 merge app-side reverse-lookup changes into the inbox.
-  - Lines 236-262 define `RelayPrefSync.apply(...)`, which writes a keyboard-reported reverse-lookup value back into shared/cold defaults for the Settings app.
-- `LimeIME-iOS/LimeSettings/LimeSettingsView.swift`
-  - Lines 287-291 apply the keyboard relay payload to shared defaults when the Settings app receives it.
+The Settings side has relay support:
 
-### Existing test coverage
+- `KeyboardRelayPrefStore.update(...)` stores the last reverse-lookup `im/value` pair in `relay-prefs.json`.
+- `encodeRelayPayload(...)` includes `rlim` and `rlval` when present.
+- `LimeSettingsView.handleRootRelayTextChange()` calls `RelayPrefSync.apply(...)`, which writes the relay value into the App Group key `<im>_im_reverselookup`.
 
-- `LimeIME-iOS/LimeTests/RelayPrefSyncTest.swift`
-  - Lines 88-116 cover relay payload round-trip and stale timestamp rejection for reverse lookup.
-- `LimeIME-iOS/LimeTests/LIMEPreferenceManagerTest.swift`
-  - Lines 260-265 cover per-table reverse-lookup preference round trip.
-  - Lines 268-285 cover reverse-lookup option/target construction from enabled IM configs.
+This means persistence depends on the keyboard-to-app relay being received by the Settings app. The current code does not immediately mirror the hamburger selection into the App Group from the keyboard, and the runtime commit path is still reading the App Group instead of the hot store. The fix should preserve the intended hot-store ownership while ensuring runtime use and user-visible labels read the hot value.
 
-No inspected test directly gates that `KeyboardViewController` uses the hot reverse-lookup value for the committed-candidate lookup path immediately after a hamburger selection, or that the hamburger parent label reads the same hot source as the sub-picker.
+### App-side reverse-lookup settings path
+
+`LimeIME-iOS/LimeSettings/Views/ReverseLookupSettingsView.swift` writes app-side reverse-lookup selections to the App Group with `prefs.setReverseLookup(...)` and also writes a `PrefInbox` record so the keyboard can drain the change into the hot store on its next appearance. That app-to-keyboard path is separate from the hamburger keyboard-to-app relay path and should continue to work.
+
+### Android comparison
+
+Android uses one preference store for this path:
+
+- `LimeStudio/app/src/main/java/org/limeime/global/LIMEPreferenceManager.java` reads and writes reverse lookup through `SharedPreferences` in `getReverseLookupTable(...)` and `setReverseLookupTable(...)`.
+- `LimeStudio/app/src/main/java/org/limeime/LIMEService.java` uses `mLIMEPref.getReverseLookupTable(activeIM)` for both the hamburger row label and `showReverseLookupPicker()` current selection, and writes the selected value with `mLIMEPref.setReverseLookupTable(activeIM, values[which])`.
+
+No Android issue is indicated by the current report. Android is useful as a parity reference: the menu label, picker selected state, and runtime lookup should all read the same effective value.
+
+## Existing test coverage and gap
+
+Current iOS tests cover these lower-level pieces:
+
+- `LIMEPreferenceManagerTest.testRoundTripReverseLookupByTableNick()` verifies per-table reverse-lookup storage keys.
+- `RelayPrefSyncTest.testReverseLookupRoundTripsAndApplies()` verifies reverse-lookup values survive keyboard-to-app relay payload encoding/decoding and App Group application.
+- `SyncContractTest` covers the app-to-keyboard `PrefInbox` sequencing path.
+
+The missing coverage is the keyboard runtime integration:
+
+- after `showReverseLookupPicker()` or an equivalent helper writes a hot reverse-lookup value, `commitCandidate(...)` should read the same hot value immediately
+- the top-level hamburger row label should display the same effective hot value
+- app-side `ReverseLookupSettingsView` changes should still reach the keyboard through `PrefInbox` and update the same effective value
+- relay payloads should still let Settings persist the keyboard-side choice later
 
 ## Likely root cause
 
-The iOS keyboard has a split preference model for hamburger-owned settings:
+High confidence: the iOS keyboard has split reverse-lookup preference ownership between a keyboard hot store and an App Group cold store, but two keyboard-side consumers still read the cold App Group value. The hamburger picker writes the hot store, while `commitCandidate(...)` and the top-level menu label still read the cold store. That produces stale runtime behavior and stale menu labels until a relay or later lifecycle event catches up.
 
-- The hamburger reverse-lookup picker writes the extension-private hot store (`hotPrefs`) immediately.
-- The committed-candidate reverse-lookup code still reads the App Group/cold store (`sharedDefaults`) through `sharedDefaults?.string(forKey: imKey)`.
-- The hamburger parent label also reads `LIMEPreferenceManager.shared`, which is the shared/default manager rather than the extension-private hot source used by the picker.
+Persistence may also appear unreliable if the keyboard-to-app relay is not delivered before the keyboard process is killed, because the current hamburger path does not directly update the App Group cold value. The implementation should decide whether persistence should rely only on the relay or whether a safe App Group mirror is needed when full access is available, but immediate runtime behavior should not depend on that relay.
 
-Because of that mismatch, a new selection can be accepted by the picker but not used by the actual reverse-lookup display until a later relay/app-sync path updates the shared defaults. If relay application does not happen before the next keyboard use, the user sees the selection as non-immediate or unreliable.
+## Proposed fix
 
-## Proposed fix / investigation plan
-
-1. Make the iOS keyboard's committed-candidate reverse-lookup lookup table come from the hot store, likely via `hotReverseLookup(for: activeIM)`, instead of reading `sharedDefaults?.string(forKey: imKey)` directly.
-2. Make the hamburger parent menu label use the same hot lookup source as the sub-picker so UI feedback matches the actual keyboard behavior.
-3. Preserve the existing relay behavior so keyboard-owned changes are still reported back to the app-side Settings UI when the relay path is available.
-4. Add focused tests or source-level regression coverage around the two failure modes:
-   - selecting reverse lookup through the hamburger immediately changes the lookup table used after candidate commit,
-   - reopening/rebuilding the hamburger menu shows the hot selected value rather than a stale shared/default value.
-
-## Platform impact
-
-### iOS
-
-Affected. The inspected iOS keyboard code has a concrete hot-store versus shared-defaults mismatch in the hamburger reverse-lookup and committed-candidate reverse-lookup paths.
-
-### Android
-
-Not reported and likely not affected by this specific iOS two-writer/hot-store issue. Android reverse lookup uses different Java service/settings paths, for example `SearchServer.getCodeListStringFromWord(...)` and `LIMEService.showReverseLookup(...)`, and does not share the inspected iOS `PrefInbox` / `KeyboardRelayPrefStore` / extension-private `UserDefaults.standard` split.
+1. Add a single effective reverse-lookup reader for the keyboard, likely wrapping `hotReverseLookup(for:)`, and use it for:
+   - the top-level hamburger row label in `showGlobeMenu(...)`
+   - the runtime lookup table in `commitCandidate(...)`
+   - the picker selected state in `showReverseLookupPicker()`
+2. Keep `showReverseLookupPicker()` writing the hot store immediately.
+3. Keep the keyboard-to-app relay update so Settings can persist/display the selected value.
+4. If full-access/App Group writes are allowed and consistent with the §1.8 ownership model, optionally mirror the selected value to the App Group as a persistence backup. Do not let a stale App Group read override a newer hot value.
+5. Add focused tests or a small helper layer so this read/write policy can be verified without a full live keyboard UI.
 
 ## Verification plan
 
 ### iOS
 
-- In an iOS simulator or device with at least two enabled IM tables, open the keyboard and choose a reverse-lookup source from the hamburger menu for the active IM.
-- Without closing the keyboard, commit a candidate and verify the reverse-lookup toast/strip uses the newly selected source.
-- Reopen the hamburger menu and verify the selected reverse-lookup label/checkmark reflects the new value.
-- Switch away from and back to the keyboard, then verify the selected reverse-lookup source persists and is still used after candidate commit.
-- Verify Settings-side reverse-lookup changes still reach the keyboard through `PrefInbox`.
+1. Add unit coverage for the effective reverse-lookup policy: a hot-store value should win over an older App Group value for keyboard runtime reads and menu labels.
+2. Add or update relay tests to verify a hamburger-side reverse-lookup change still appears in the encoded relay payload and is applied by `RelayPrefSync` to the App Group.
+3. Add or keep `PrefInbox` coverage proving app-side Settings changes can still be delivered into the keyboard hot store.
+4. On an iOS simulator/device with at least two enabled IMs, change `字根反查` from the hamburger menu, commit a candidate immediately, and verify the reverse-lookup toast uses the newly selected table without closing/reopening the keyboard.
+5. Reopen the hamburger menu and verify the displayed selected label is current.
+6. Close/reopen or switch away/back to the keyboard and verify the selected reverse lookup remains effective.
+7. Verify changing the reverse-lookup setting from the Settings app still reaches the keyboard on the next activation.
 
 ### Android
 
-- No Android APK retest is needed for this iOS-only source path unless separate Android reverse-lookup preference evidence appears.
+No Android source change is indicated. If shared reverse-lookup metadata or documentation changes, run Android regression checks around the hamburger reverse-lookup picker, but this issue's active fix scope is iOS.
 
-## Follow-up / release state
+## Follow-up condition
 
-- Keep issue #157 open until the iOS source fix is implemented and verified in a TestFlight/App Store build.
-- No public retest request is needed now because the issue is maintainer-created.
-- `docs/BACKLOG.md` should track `fix#157 iOS` while implementation remains pending.
+Keep #157 open until the iOS source fix lands and a newer iOS/TestFlight/App Store build contains it. Because this is a maintainer-created tracking issue, do not post a routine public acknowledgement or Android APK retest request. Close after maintainer/iOS release verification confirms the hamburger reverse-lookup selection is immediate and persistent.
