@@ -60,7 +60,13 @@ final class SearchServer {
     func applyPrefsToDatabase() {
         cacheLock.lock()
         db.learnRelatedWords        = candidateSuggestion
-        db.similarCodeCandidatesCap = similiarEnable ? similiarList : 0
+        // Between-search (similar-code) cap is driven ONLY by similiar_list, UNGATED — mirrors
+        // Android LimeDB.getMappingByCode (getSimilarCodeCandidates()), whose `similiar_enable`
+        // toggle has zero call sites and never gates the query. Gating it here (similiarEnable ?
+        // similiarList : 0) made the phonetic candidate SET flip between the full between-search
+        // list and exact-match-only based on the "啟用關聯字庫" toggle, so two devices with
+        // different similiar_enable produced different results from the same DB (iPhone vs iPad).
+        db.similarCodeCandidatesCap = similiarList
         db.sortSuggestions          = sortSuggestions   // mirrors Android LimeDB.sort from getSortSuggestions()
         cacheLock.unlock()
     }
