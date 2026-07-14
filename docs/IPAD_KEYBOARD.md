@@ -558,6 +558,8 @@ Spacer keys (used to keep alpha keys at iPad cell width when an IM has fewer key
 
 `KeyboardView.makeKeyButton` needs a tiny addition: if `keyDef.code == 0 && keyDef.label.isEmpty && keyDef.icon.isEmpty`, render an empty placeholder view (no background, no shadow, no touch handler). This is the only code change needed to support spacers; everything else is JSON.
 
+**Touch behavior over spacers/gaps (post touch-rewrite).** The spacer *view* has no touch handler, but touches over it are not dead: the row's single `KeyTouchLayer` spans the **full row width** (keys centered via a layout guide), so a tap on a spacer or an inter-key gap resolves to the **nearest real key by proximity** (`KeyDetector`) — taps beyond the proximity threshold of any key are ignored. For that to work inside a keyboard extension the layer's hit surface must be non-transparent: it uses `LayoutMetrics.TouchTrap.fill` (`white 0.5, alpha 0.01`), because iOS drops touches on fully transparent pixels *before* hit-testing ([IOS_CANDI_TOUCH.md §Resolution](IOS_CANDI_TOUCH.md); commit `7188a4ae`). The expanded candidate panel (§5) applies the same `TouchTrap.fill` to its scroll content and cells so gaps/ragged row-ends stay tappable and scrollable. See [ANDROID_IPHONE_KEYBOARD.md §Touch Handling](ANDROID_IPHONE_KEYBOARD.md) for the shared iPhone/iPad rationale.
+
 ### 4.3 Key-height & font policy — dedicated iPad dimension set
 
 Do **not** keep the existing `idiomMultiplier` (currently `1.5` on iPad) approach. Multiplying phone dimensions:
