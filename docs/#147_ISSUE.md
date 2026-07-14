@@ -5,7 +5,9 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/147
 - Classification: `bug` + `Usability`
 - Source: maintainer-created iOS tracking issue by `limeimetw`
-- Current state: open and assigned to `jrywu`
+- Current state: closed as completed on 2026-07-14
+- Fix commit: `441ab48ed80e4d9c98f5f514afc60e86424a904d8`
+- Delivery: included in iOS v6.1.30. This is a maintainer-created tracking issue, so no separate community reporter retest is pending.
 - Public acknowledgement: not needed because this is a maintainer-created internal tracking issue with no community reporter to acknowledge
 
 ## Problem statement
@@ -81,4 +83,4 @@ iOS is lowercasing the composing-code echo in the phonetic `SearchServer.getMapp
 
 ## Follow-up / retest condition
 
-Keep the issue open until an iOS source fix lands and is verified in an iOS build/TestFlight. Do not post an Android APK retest request. No public acknowledgement is needed unless a maintainer wants to add a progress note after the fix is available.
+The iOS source fix landed in `441ab48ed80e4d9c98f5f514afc60e86424a904d8` and is included in iOS v6.1.30, so this maintainer-created tracking issue was closed as completed on 2026-07-14. No Android APK retest or community reporter confirmation is needed.
