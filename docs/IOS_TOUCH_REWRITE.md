@@ -326,3 +326,22 @@ the next main-queue turn. The feedback generators/player stay cached and prepare
 the existing 40 Hz haptic throttle remains unchanged. A focused unit test asserts
 that commit occurs before the deferred haptic request. Device verification remains
 the final oracle for whether the one-turn feedback delay feels acceptable.
+
+## 14. Follow-on — gap taps needed a non-transparent hit surface (2026-07-15)
+
+§12's `KeyTouchLayer` `hitTest` claims plain keys **and transparent gaps** — but
+claiming a region in `hitTest` is necessary, not sufficient. iOS's custom-keyboard
+touch gate drops a touch on a fully transparent pixel **before** `hitTest` runs
+([docs/IOS_CANDI_TOUCH.md §Resolution](IOS_CANDI_TOUCH.md)), and the layer's
+background was `.clear` — so taps in the gaps / edges / margins **between** keys were
+silently dead at any typing speed (on-key taps always worked; key frames have solid
+backgrounds).
+
+**Fix (`7188a4ae`):** give `KeyTouchLayer` `LayoutMetrics.TouchTrap.fill`
+(`white 0.5, alpha 0.01`, non-transparent so the gate passes the touch through) and
+widen the per-row touch layer to the **full row width** (keys still centered via a
+layout guide) so indented-row side margins resolve to the edge key by proximity. The
+expanded candidate panel got the same fill on its scroll content + cells. Regression
+test in `TouchLayerGestureTests`. Dead-tap-family framing: [docs/IOS_MISS_KEY.md
+§2026-07-15](IOS_MISS_KEY.md); layout-author framing: [ANDROID_IPHONE_KEYBOARD.md
+§Touch Handling](ANDROID_IPHONE_KEYBOARD.md) and [IPAD_KEYBOARD.md §4.2.7](IPAD_KEYBOARD.md).
