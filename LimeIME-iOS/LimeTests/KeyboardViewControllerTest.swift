@@ -2028,6 +2028,30 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(longerButtons[2].pillView.backgroundColor?.isEqual(UIColor.clear) ?? true)
     }
 
+    // #157: hamburger reverse-lookup selection must be immediate and persistent. Every keyboard
+    // consumer (runtime commit, menu label, picker) reads hotReverseLookup(for:), which must let a
+    // hot-store value win over a stale cold App Group value, and seed once from cold when hot absent.
+    func testHotReverseLookupWinsOverStaleColdAndSeedsOnceWhenAbsent() {
+        let controller = KeyboardViewController()
+        let im = "rl157test"                       // distinctive nick so no real IM key collides
+        let key = "\(im)_im_reverselookup"
+        let hot = UserDefaults.standard
+        let cold = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
+        defer { hot.removeObject(forKey: key); cold?.removeObject(forKey: key) }
+
+        // Hot value present → wins over an older cold value (the #157 "not immediate" case).
+        cold?.set("cangjie", forKey: key)
+        hot.set("dayi", forKey: key)
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "dayi")
+
+        // Hot absent → seed once from cold, then cold is never consulted again for this key.
+        hot.removeObject(forKey: key)
+        cold?.set("array30", forKey: key)
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // seeded from cold
+        cold?.set("phonetic", forKey: key)                               // later cold change
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // hot still wins
+    }
+
     private func projectFileURL(_ relativePath: String) -> URL {
         // Prefer the copy bundled into the test target — on Xcode Cloud the source
         // checkout is absent at test runtime, so #filePath resolves to a missing path.

@@ -1063,7 +1063,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     /// §1.8: reverse-lookup (per-IM) from the hot store, seeded once from cold on first read.
-    private func hotReverseLookup(for im: String) -> String {
+    /// This is the single effective reverse-lookup reader — hamburger picker, runtime commit,
+    /// and menu label all route through it so the hot value always wins over stale cold (#157).
+    /// `internal` (not `private`) so the read policy is unit-testable via `@testable import`.
+    func hotReverseLookup(for im: String) -> String {
         let key = "\(im)_im_reverselookup"
         if UserDefaults.standard.object(forKey: key) == nil,
            let seed = sharedDefaults?.string(forKey: key) {
@@ -2957,11 +2960,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Record committed candidate + its code for runtime phrase suggestion cross-check (spec §6)
         if smartChineseInput { searchServer?.addToSuggestionContext(candidate, code: candidate.code) }
 
-        // Reverse lookup: show committed word's codes in the configured IM strip (spec §8, §13)
-        let imKey = "\(activeIM)_im_reverselookup"
+        // Reverse lookup: show committed word's codes in the configured IM strip (spec §8, §13).
+        // §1.8: read the hot store so a hamburger-menu change takes effect immediately, without
+        // waiting for the keyboard→app relay or a keyboard restart (#157).
         let notifyEnabled = sharedDefaults?.object(forKey: "reverse_lookup_notify") as? Bool ?? true
+        let lookupTable = hotReverseLookup(for: activeIM)
         if notifyEnabled,
-           let lookupTable = sharedDefaults?.string(forKey: imKey),
            lookupTable != "none", !lookupTable.isEmpty,
            let ss = searchServer {
             let word = candidate.word
@@ -4277,8 +4281,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
     private func showGlobeMenu(from sourceView: UIView) {
         var entries: [InlineMenuEntry] = []
 
-        // 字根反查 — drill-down sub-picker.
-        let reverseLookupValue = LIMEPreferenceManager.shared.reverseLookup(for: activeIM)
+        // 字根反查 — drill-down sub-picker. §1.8: read the hot store so the row label reflects a
+        // prior hamburger-menu change instead of a stale App Group value (#157).
+        let reverseLookupValue = hotReverseLookup(for: activeIM)
         let reverseLookupOptions = LIMEPreferenceManager.reverseLookupOptions(from: activatedIMs)
         let reverseLookupLabel = LIMEPreferenceManager.reverseLookupLabel(for: reverseLookupValue,
                                                                           options: reverseLookupOptions)
