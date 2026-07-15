@@ -151,7 +151,7 @@ The `getBaseScore` use case (seeding `basescore` on import) has no direct iOS eq
   `SearchServer.sortSuggestions: Bool` (default `true`) applied in `getMappingByCode`; wired from `KeyboardViewController.loadSettings()`.
 
 - [x] **Add similar-code candidates cap**  
-  `LimeDB.similarCodeCandidatesCap: Int` (default 0 = no cap); applied after query in `getMappingByCode(softKeyboard:getAllRecords:)`.
+  `LimeDB.similarCodeCandidatesCap: Int`, sourced from the `similiar_list` pref (default `20`; NOT gated by `similiar_enable` — Android parity, #5 / `8a338e7b`). It gates the range query in `getMappingByCode`: `cap ≤ 0` → exact-match-only (no `expandBetweenSearchClause`); `cap > 0` → between-search capped at that many partial matches.
 
 - [x] **Add learn-related-words preference gate**  
   `LimeDB.learnRelatedWords: Bool` (default `true`) checked at top of `addOrUpdateRelatedPhraseRecord`.

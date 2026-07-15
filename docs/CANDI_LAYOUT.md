@@ -244,11 +244,15 @@ reused to show that candidate's codes in the configured lookup IM (e.g.
 `日=ㄇㄧˋ; ㄖˋ`). The strip stays visible until the next keystroke or
 a dismiss-button tap — there is no auto-dismiss timer.
 
-**Implementation guard** (`KeyboardViewController`): `isShowingReverseLookup: Bool`
-is set to `true` by `showReverseLookup(_:)` and cleared by `didPress` /
-`cancelComposing`. While the flag is `true`, `hideComposingPopup()` is a
-no-op, preventing post-commit cleanup (related-phrase fetch, `clearSuggestions`)
-from racing away the result before the user can read it.
+**Implementation** (`KeyboardViewController`): after a full commit, the codes are
+fetched on a background queue and shown via `showLimeToast(result, persistent: true)`
+— `persistent` means **no auto-dismiss timer** (the default 1.5 s timer is what used
+to cut it short; fixed in `7782379a`). The async completion is guarded by
+`mComposing.isEmpty`, so a lookup that lands *after* the user starts a new stroke
+can't clobber the live composing strip and stick. It is cleared by the next key —
+`keyboardView(_:didPress:)` calls `hideLimeToast()` first thing — matching Android's
+"stays until the next keystroke / dismiss." (Note: `showReverseLookupPicker()` is the
+unrelated hamburger source-picker, not this display path.)
 
 **Key naming**: the UserDefaults key is `"\(activeIM)_im_reverselookup"` where
 `activeIM` equals the IM's `tableNick` from the database (e.g. `"phonetic"`,

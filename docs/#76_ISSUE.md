@@ -168,3 +168,22 @@ Android APK `LIMEHD2026-6.1.9.apk` includes commit `7e1d57b` (`Fix #76: suppress
 The public retest request was posted in comment `4519807270` with direct APK link `https://raw.githubusercontent.com/lime-ime/limeime/master/LimeStudio/app/release/LIMEHD2026-6.1.9.apk`. Reporter `ejmoog` confirmed the Android APK issue was resolved in comment `4520021201` and closed #76. No further 6.1.9 retest prompt is needed unless the issue is reopened or new evidence appears.
 
 Verified scope remains intentionally narrow: Android APK `6.1.9` fixed the `建議字顯示數量 = 0` / `ha` exact-match-only case reported in #76. The adjacent learned-word / association / ranking-control concern is not claimed fixed by this APK and should be handled separately if it resurfaces.
+
+## iOS follow-up (2026-07-15): `similiar_enable` gating was an iOS-only divergence, now removed (`8a338e7b`)
+
+The iOS wiring described above — `applyPrefsToDatabase()` mapping
+`similiarEnable ? similiarList : 0` into `db.similarCodeCandidatesCap` — was later
+found to **diverge from Android**. Android's `getSimilarCodeCandidates()`
+(`LIMEPreferenceManager`) returns `similiar_list` alone and is **never** gated by
+`similiar_enable`; that toggle («啟用關聯字庫») only controls the post-commit
+related-phrase popup (`getRelatedByWord`). The iOS gate made the phonetic candidate
+SET flip between the full between-search list and exact-match-only depending on the
+toggle, so two devices with different `similiar_enable` returned different results
+for the same key.
+
+Fix (`8a338e7b`): `db.similarCodeCandidatesCap = similiarList` (ungated, Android
+parity). The `cap ≤ 0 → exact-only` resolution from this issue is unchanged — only
+the *source* of the cap changed (now `similiar_list` alone, not gated). The old test
+`test_prefs_similiarEnable_false_zeroes_cap` was accordingly replaced by
+`test_prefs_similiarEnable_false_does_not_zero_cap` (asserts the cap tracks
+`similiar_list` regardless of `similiar_enable`). See PREFS_TABLE.md `similiar_list`.
