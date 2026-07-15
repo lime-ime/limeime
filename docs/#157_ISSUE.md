@@ -4,11 +4,11 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/157
 - Classification: bug, usability
-- State: open
+- State: fixed in iOS v6.1.31; maintainer tracker closed
 - Assignee: `jrywu`
 - Source: maintainer-created iOS tracking issue
 - Platform: iOS affected by the maintainer report. Android has a separate SharedPreferences-backed picker path and is not reported affected.
-- Current follow-up: implement and verify the iOS hamburger reverse-lookup preference path. No public acknowledgement or community retest request is needed because this is a maintainer-created tracking issue.
+- Current follow-up: none. The fix is included in iOS v6.1.31, and no community retest request is needed because this is a maintainer-created tracking issue.
 
 ## Problem statement
 
@@ -95,16 +95,14 @@ High confidence: the iOS keyboard has split reverse-lookup preference ownership 
 
 Persistence may also appear unreliable if the keyboard-to-app relay is not delivered before the keyboard process is killed, because the current hamburger path does not directly update the App Group cold value. The implementation should decide whether persistence should rely only on the relay or whether a safe App Group mirror is needed when full access is available, but immediate runtime behavior should not depend on that relay.
 
-## Proposed fix
+## Fix (landed in v6.1.31)
 
-1. Add a single effective reverse-lookup reader for the keyboard, likely wrapping `hotReverseLookup(for:)`, and use it for:
-   - the top-level hamburger row label in `showGlobeMenu(...)`
-   - the runtime lookup table in `commitCandidate(...)`
-   - the picker selected state in `showReverseLookupPicker()`
-2. Keep `showReverseLookupPicker()` writing the hot store immediately.
-3. Keep the keyboard-to-app relay update so Settings can persist/display the selected value.
-4. If full-access/App Group writes are allowed and consistent with the §1.8 ownership model, optionally mirror the selected value to the App Group as a persistence backup. Do not let a stale App Group read override a newer hot value.
-5. Add focused tests or a small helper layer so this read/write policy can be verified without a full live keyboard UI.
+Commit `fd35e184` made `hotReverseLookup(for:)` the keyboard's single effective reverse-lookup reader:
+
+- `commitCandidate(...)` now reads the hot value, so a hamburger-menu selection takes effect immediately.
+- `showGlobeMenu(...)` now uses the same hot value, so the displayed row label no longer shows stale App Group state.
+- `showReverseLookupPicker()` continues to read and write the hot store and preserve the keyboard-to-app relay path.
+- `testHotReverseLookupWinsOverStaleColdAndSeedsOnceWhenAbsent()` verifies that a current hot value wins over stale cold state and that cold state is used only to seed an absent hot value.
 
 ## Verification plan
 
@@ -122,6 +120,9 @@ Persistence may also appear unreliable if the keyboard-to-app relay is not deliv
 
 No Android source change is indicated. If shared reverse-lookup metadata or documentation changes, run Android regression checks around the hamburger reverse-lookup picker, but this issue's active fix scope is iOS.
 
-## Follow-up condition
+## Resolution / release state
 
-Keep #157 open until the iOS source fix lands and a newer iOS/TestFlight/App Store build contains it. Because this is a maintainer-created tracking issue, do not post a routine public acknowledgement or Android APK retest request. Close after maintainer/iOS release verification confirms the hamburger reverse-lookup selection is immediate and persistent.
+- Fix commit: `fd35e184` (`#157 fix iOS hamburger reverse-lookup to read hot store`).
+- Included in the published iOS-only GitHub release v6.1.31 and App Store build 10.
+- Closed as a maintainer-created tracker after the maintainer accepted the v6.1.31 fix.
+- Removed `fix#157 iOS` from `docs/BACKLOG.md`.

@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/156
 - Classification: bug, usability
-- State: fixed in source, pending release verification
+- State: fixed in iOS v6.1.31; maintainer tracker closed
 - Assignee: `jrywu`
 - Platform: iOS only. Android is **not** affected (confirmed — see Root cause).
 - Public acknowledgement: not needed; this is an internal maintainer-created tracking issue.
@@ -68,7 +68,7 @@ Gate: `ios-gate.sh unit LimeTests/KeyboardViewControllerTest/testPhoneticSpecial
 ### iOS
 
 1. Unit: the added mapping test gates `et_41` → `lime_et_41` and that `eten26` / `hsu` / `standard` are unchanged. (Done — PASS.)
-2. Simulator/device: choose Phonetic `倚天 41 鍵`, open the keyboard, switch to Phonetic, and confirm the visible keys match the ETEN 41-key layout (not standard). (Pending release verification.)
+2. Simulator/device: choose Phonetic `倚天 41 鍵`, open the keyboard, switch to Phonetic, and confirm the visible keys match the ETEN 41-key layout (not standard). Maintainer accepted the fix for the v6.1.31 release.
 3. Switch away and back, or close/reopen the keyboard, and confirm the selected layout persists.
 4. Sanity-check the other phonetic types (`標準` / `倚天 26 鍵` / `許氏`) still resolve to their previous layouts.
 
@@ -76,8 +76,9 @@ Gate: `ios-gate.sh unit LimeTests/KeyboardViewControllerTest/testPhoneticSpecial
 
 No Android source change or APK retest is indicated. Android is confirmed unaffected and served as the parity reference for the fix.
 
-## Follow-up / release state
+## Resolution / release state
 
-- Rides the 6.1.31 iOS build (bumped with #157; not yet released) — no separate version bump needed.
-- Keep issue #156 open until a TestFlight/App Store build contains the fix and step 2 above is confirmed on device.
-- `docs/BACKLOG.md` `fix#156 iOS` can move to done once release verification passes.
+- Fix commit: `ccc99b30` (`#156 fix iOS Phonetic et41 visible layout to derive from pref`).
+- Included in the published iOS-only GitHub release v6.1.31 and App Store build 10.
+- Closed as a maintainer-created tracker after the maintainer accepted the v6.1.31 fix.
+- Removed `fix#156 iOS` from `docs/BACKLOG.md`.
