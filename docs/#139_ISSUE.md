@@ -1,197 +1,259 @@
-# Issue #139: iOS Keyboard Height Reporting
+# Issue #139: iOS Keyboard Frame Becomes Stale After Live Geometry Changes
 
 ## Status
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- Source: maintainer-created issue from private email/TestFlight evidence. Do not expose reporter identity, private app details, or private videos in public comments.
-- Current state: reopened after a private reporter retested LIME 6.1.28 on iPhone 17 Pro Max / iOS 26.6 beta 4 and confirmed the bottom content is still covered. The scrollbar cannot reach the bottom with LIME keyboard size set anywhere from minimum to extra large. The reporter supplied a new private `.mov` recording and said Okidokey and 元書輸入法 do not reproduce the behavior.
-- Attempted fix commit `f7088f2853a692dd930bba02c52bd6d99e3a2b8a` (`#139 fix real iOS keyboard height reporting`) is included in LIME 6.1.28, but the real-device negative retest shows the active defect remains unresolved. Do not treat the existing height-constraint regression tests as sufficient device verification.
-- No Android retest applies. Keep the issue open pending renewed iOS investigation and a later TestFlight/App Store retest.
-- Historical symptom: iOS TestFlight 6.1.27 could leave host-app bottom content behind the LIME keyboard. The reporter said native iOS and other third-party keyboards did not cover the same bottom content. Follow-up evidence showed this was not Array10-only: Dayi also showed it, and Dayi covered a larger range.
-- Numeric-field routing is no longer the active defect. Simulator investigation on 2026-06-29 could not reproduce the reported numeric-field switch for tested web fields; iOS often replaces third-party keyboards entirely for numeric/inputmode fields.
-- The attempted `effectiveScale` / fixed-height cap is abandoned. It is not native iOS behavior, not Android behavior, and it breaks the user's `keyboard_size` preference. Do not reintroduce it.
+- State: open, reproducible by the maintainer in LINE after rotating with LIME visible
+- Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
+- Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
+- Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
 
-## Hard Rules
+## Current conclusion
 
-- Do not change layout design for this issue.
-- Do not shrink, cap, normalize, or otherwise redesign tall layouts.
-- Do not mutate `KeyboardView.keySizeScale` inside height reporting.
-- `keyboard_size` remains authoritative for row scale.
-- The only valid #139 fix is to report the real current keyboard height to iOS.
+The earlier fix improved LIME's calculated keyboard height and asked UIKit to update constraints when that numeric height changed. It did not resolve every live geometry transition.
 
-## Problem
+Two independent host-app observations now share the same failure pattern:
 
-LIME layouts have legitimately different heights.
+1. A private scrollable form cannot reach its true bottom with LIME visible.
+2. LINE's message field becomes partly covered after device rotation while LIME remains visible.
 
-Examples at iPhone portrait normal size, excluding emoji/search/expanded modes:
+These observations belong in one issue for now because both indicate that the host's usable area can become stale relative to LIME's visible top edge. They do **not** yet prove one identical code-level root cause. Split the LINE rotation case into a separate issue only if instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while LINE receives a stale or incorrect frame from LIME/UIKit.
 
-| Layout shape | Keys height | Candidate bar | Total |
-| --- | ---: | ---: | ---: |
-| Four-row layout: `3 * 50 + 54` | `204 pt` | `58 pt` | `262 pt` |
-| Five-row layout: `4 * 50 + 54` | `254 pt` | `58 pt` | `312 pt` |
+## Evidence
 
-Both totals are valid. A five-row Dayi layout should report a taller keyboard than a four-row Array10/CJ-style layout. A shorter layout should report a shorter keyboard.
+### Private form negative retest
 
-Therefore stale reporting can fail in either direction:
+The private reporter retested after the first #139 fix shipped:
 
-- reported height < real rendered height: host content is hidden behind the keyboard
-- reported height > real rendered height: host content is pushed too high or leaves a gap
+- LIME: 6.1.28
+- Device/OS: a recent large-screen iPhone on an iOS 26 beta. Exact values remain in the private support thread.
+- Result: bottom content remained covered and the scrollbar could not reach the actual bottom.
+- Keyboard size: reproduced from minimum through extra large.
+- Comparison: the reporter said two other third-party keyboards did not reproduce the problem. Their names remain in the private support thread.
+- Evidence: a private follow-up screen recording. The recording shows a custom scrollable form and an accessory toolbar above the keyboard. Keep the recording, exact date, and app details private.
 
-#139's reported symptom is the first case.
+The video is consistent with a stale host viewport or bottom inset, but it cannot by itself prove whether the stale geometry originates in LIME/UIKit or in the private host app.
 
-## Current Height Flow
+### Maintainer LINE rotation reproduction
 
-Source points:
+The maintainer reported a separate, public-app reproduction:
 
-- `KeyboardViewController.loadSettings()` reads `keyboard_size` into `keyboardSize`.
-- `KeyboardViewController.applyFeedbackSettings()` assigns `keyboardView?.keySizeScale = keyboardSize`.
-- `KeyboardView.keySizeScale` rebuilds rows.
-- `KeyboardView.preferredHeight` sums current layout rows using scaled row heights:
-  - regular row: `LayoutMetrics.KeyboardRow.rowHeight(...) * keySizeScale`
-  - bottom row: `LayoutMetrics.KeyboardRow.bottomRowHeight(...) * keySizeScale`
-- `KeyboardViewController.applyHeight()` computes:
+1. Open a LINE conversation.
+2. Focus the message field with LIME visible.
+3. Rotate the device while keeping the keyboard open.
+4. LIME's top edge covers roughly half of LINE's message field.
+5. Rotate back to the original orientation.
+6. The overlap remains.
+7. Dismiss and reopen the keyboard.
+8. LINE positions the message field correctly again.
+
+The recovery behavior is important: reopening the keyboard forces a fresh keyboard presentation and clears the stale geometry. This makes a live rotation/frame-publication failure more likely than a permanently incorrect static keyboard height.
+
+Record the exact device, iOS version, LIME build, starting orientation, ending orientation, active LIME layout, and `keyboard_size` before claiming a complete reproduction matrix.
+
+## Historical scope no longer active
+
+The original email also discussed numeric-field routing and keyboard-size behavior for Array10. Those are not the active #139 defect:
+
+- A June 29 simulator investigation did not reproduce the reported numeric-field routing symptom: the tested fields either kept LIME active or were replaced by the iOS system keyboard before LIME could select an internal layout. This limited simulator result does not establish universal iOS behavior; reopen the numeric-routing scope if new real-device evidence appears.
+- `keyboard_size` must remain authoritative for visual row sizing.
+- Do not shrink or cap tall layouts to hide host-content coverage.
+
+The active issue is dynamic keyboard-frame publication and host adjustment after live geometry changes.
+
+## Previous fix and why the issue remains open
+
+Commit `f7088f2853a692dd930bba02c52bd6d99e3a2b8a` (`#139 fix real iOS keyboard height reporting`) shipped in iOS 6.1.28.
+
+It changed `KeyboardViewController.applyHeight()` so that:
+
+- `KeyboardView.preferredHeight` remains the source of the rendered rows' height.
+- The keyboard root height constraint is updated when `totalHeight` changes.
+- `publishKeyboardHeightToUIKit()` calls `setNeedsUpdateConstraints()` on `view` and `inputView` when the numeric height changes.
+- The abandoned `effectiveScale` cap is not used.
+
+That fix addressed stale numeric height constraints after layout changes. The private 6.1.28 negative retest and the LINE rotation reproduction show that the broader lifecycle problem is not resolved.
+
+## Current implementation path
+
+Relevant code is in `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`.
+
+### Rotation/layout path
+
+`viewWillLayoutSubviews()` currently:
+
+1. synchronizes the layout environment from traits
+2. reloads the active layout when needed
+3. derives orientation from `UIScreen.main.bounds`
+4. sets `keyboardView.isLandscape`
+5. updates split mode
+6. calls `applyHeight()`
+
+`traitCollectionDidChange(_:)` calls `applyHeight()` for selected trait/size-class changes.
+
+There is no explicit `viewWillTransition(to:with:)` path that records the transition target and republishes final geometry after the rotation coordinator completes.
+
+### Height publication path
+
+`applyHeight()` computes:
 
 ```text
-totalHeight =
-  emojiSearchHeaderHeight
-  + activeCandidateBarHeight
-  + keyboardView.preferredHeight
+keysHeight = keyboardView.preferredHeight
+barHeight = activeCandidateBarHeight
+keyboardHeight = emojiSearchHeaderHeight + barHeight + keysHeight
+totalHeight = max(keyboardHeight, emoji panel height when applicable)
 ```
 
-For normal keyboard mode, `applyHeight()` reports that height by setting the keyboard extension root view height constraint:
+It updates the root height constraint and calls `publishKeyboardHeightToUIKit()` only when the numeric constraint changes by more than 0.5 points or the constraint is first created.
+
+`publishKeyboardHeightToUIKit()` currently performs:
 
 ```swift
-view.heightAnchor.constraint(equalToConstant: totalHeight)
-```
-
-There is no separate iOS API for "report keyboard height". This root view height constraint is the report UIKit uses to derive the custom keyboard frame.
-
-## Real Root Cause
-
-The height math is not the core bug. The core bug is that the height reported to UIKit can become stale relative to the real current rendered keyboard.
-
-Current code can change the visible keyboard shape after an earlier height has already been reported:
-
-- `viewDidLoad()` starts from an English/preference layout, builds UI, and calls `applyHeight()`.
-- `viewWillAppear()` / `initOnStartInput()` can restore the active IM and switch to the real field/layout.
-- async database setup can later resolve activated IMs, active IM, layout ID, keyboard prefs, and call layout/height code again.
-- field type, orientation, arrow row, candidate bar font scale, emoji/search state, and layout switches can all change the real height.
-
-Calling `applyHeight()` after these transitions is necessary but not sufficient unless UIKit receives the final resolved root height. The missing invariant is:
-
-```text
-after any visible layout-affecting change:
-  computed totalHeight == root view bounds height published to UIKit
-```
-
-If this invariant fails, the host app adjusts to the wrong keyboard frame.
-
-## Fix Direction
-
-Keep `applyHeight()` as the single reporting path, but make it authoritative:
-
-1. Ensure current layout, `keySizeScale`, candidate bar height, emoji/search state, arrow row, split/orientation state, and row constraints are already updated.
-2. Compute `totalHeight` from the current real layout.
-3. Update the root height constraint to exactly `totalHeight`.
-4. If the root height changed, mark constraints dirty so UIKit consumes the new height on its own keyboard presentation/layout pass:
-
-```swift
-keyboardHeightConstraint?.constant = totalHeight
 view.setNeedsUpdateConstraints()
 inputView?.setNeedsUpdateConstraints()
 ```
 
-Do not call `setNeedsLayout()` or `layoutIfNeeded()` from this path. `applyHeight()` runs from `viewWillLayoutSubviews`, so forcing/requesting another layout every pass can block keyboard presentation.
+This means a width/orientation/frame transition that requires republishing geometry but produces the same numeric height can skip publication entirely. It also means publication can occur during an intermediate rotation layout pass rather than after the final orientation/layout state. These are investigation targets, not yet confirmed causes.
 
-5. In debug/instrumented builds, verify and log if the reported height and actual root bounds diverge after layout.
+## Root-cause hypotheses to test
 
-This is not a cap. It does not alter layout design. It only makes iOS receive the height LIME already renders.
+Do not implement a fix until instrumentation selects one hypothesis.
 
-## Required Instrumentation
+### H1: transitional orientation is used
 
-Before claiming a fix, capture this on real device/TestFlight for Array10 and Dayi:
+`viewWillLayoutSubviews()` reads `UIScreen.main.bounds`. During rotation, the keyboard extension may receive a layout pass before screen bounds represent the final target orientation. LIME may rebuild or report height for an intermediate state and never publish the final state.
+
+### H2: publication is incorrectly gated only by numeric height
+
+The keyboard width, row metrics, or host frame can change while `totalHeight` remains numerically equal. Because `publishKeyboardHeightToUIKit()` is gated by `didChangeHeight`, UIKit may not receive a fresh constraints update for the final frame.
+
+### H3: preferred height is sampled before the final row rebuild
+
+`keyboardView.isLandscape` triggers a rebuild. If `preferredHeight` or constraints are sampled before that rebuild reaches its final geometry, the root constraint can remain synchronized to the previous layout until the keyboard is recreated.
+
+### H4: host-specific inset handling is a second problem
+
+The private app may independently cache a keyboard inset or observe only show/hide notifications. The LINE reproduction reduces the likelihood that the entire issue is private-app-only, but instrumentation must still distinguish an extension-frame problem from a host scroll-inset problem.
+
+## Required diagnostic harness
+
+Add a DEBUG-only host screen to the containing LIME app. It should not ship in release UI.
+
+### LINE-style composer probe
+
+- Add a bottom message field with a visible border.
+- Anchor one copy to `view.keyboardLayoutGuide.topAnchor`.
+- Keep the field focused while rotating portrait → landscape → portrait.
+- Detect and display any overlap between the field's converted frame and the keyboard layout guide.
+
+### Scrollable-form probe
+
+- Add a long `UIScrollView` with fields extending below the initial viewport.
+- Put an editable field and a visible marker at the true bottom.
+- Keep LIME visible while rotating, changing LIME keyboard size, switching between four-row and five-row layouts, and switching input modes.
+- Verify the final marker remains reachable without dismissing the keyboard.
+
+### Notification and geometry logging
+
+Record, with timestamps and a transition reason:
 
 ```text
-reason
-layout id
-keyboard_size / keySizeScale
-regular row count
-bottom row count
-showArrowKey
-isLandscape
-isOnPad
-emoji/search/expanded state
+orientation and target orientation
+UIScreen.main.bounds
+keyboard extension view.bounds
+inputView.bounds
 keyboardView.preferredHeight
 activeCandidateBarHeight
-emojiSearchHeaderHeight
 computed totalHeight
-height constraint constant before/after
-view.bounds.height before layout
-view.bounds.height after UIKit layout pass
-inputView.bounds.height after UIKit layout pass
+keyboardHeightConstraint constant before/after
+view.bounds and inputView.bounds after the final layout pass
+host keyboardLayoutGuide frame
+keyboardWillChangeFrame begin/end frames in host coordinates
+keyboardDidChangeFrame end frame
+host scroll contentInset.bottom
+host scroll adjustedContentInset.bottom
+active layout id, row count, keyboard_size, split mode, emoji/search state
 ```
 
-Expected result:
+Do not log typed text, candidate contents, document context, reporter data, or other private input.
 
-```text
-computed totalHeight == view.bounds.height after layout
-```
+## Reproduction matrix
 
-If the values differ, that mismatch is #139. If they match, then LIME is reporting the real layout height and the remaining issue is host-app content adjustment outside LIME.
+Run each case without dismissing the keyboard between geometry changes:
 
-## Verification Plan
+| Host | Transition | Expected |
+| --- | --- | --- |
+| DEBUG LINE-style probe | portrait → landscape | message field remains completely above LIME |
+| DEBUG LINE-style probe | landscape → portrait | message field remains completely above LIME |
+| DEBUG scroll probe | portrait → landscape → portrait | true bottom remains reachable |
+| DEBUG probes | minimum → extra-large `keyboard_size` | host guide/inset follows every final keyboard height |
+| DEBUG probes | four-row ↔ five-row layout | no covered content and no stale gap |
+| DEBUG probes | candidate bar ↔ expanded candidates | host guide/inset follows the final panel height |
+| DEBUG probes | keyboard ↔ emoji/search modes | no covered content and no stale gap |
+| DEBUG probes | arrow row off ↔ on | host guide/inset follows the added or removed row |
+| DEBUG probes | active input mode and split-mode changes | final keyboard frame remains synchronized with visible rows |
+| LINE | portrait → landscape → portrait | message field is never covered |
+| LINE | rotate, then dismiss/reopen control | reopening causes no geometry correction because geometry was already correct |
+| Private app, if available | same transitions | reported final form content remains reachable and the scrollbar reaches its true bottom |
+| Apple keyboard / another third-party keyboard | same transitions | collect comparison frames and notifications |
 
-- Add/keep a regression guard that `applyHeight()` does not override `KeyboardView.keySizeScale`.
-- Add coverage for the height-reporting path:
-  - four-row layout reports `3 regular + 1 bottom + candidate bar`
-  - five-row layout reports `4 regular + 1 bottom + candidate bar`
-  - changing layout from taller to shorter updates the reported height downward
-  - changing layout from shorter to taller updates the reported height upward
-- Manual device verification:
-  - reproduce or instrument the 6.1.28 failure on iPhone 17 Pro Max / iOS 26.6 beta 4 using the private video as reference.
-  - verify that host-app scrolling can reach the true bottom with LIME keyboard size settings across the full range from minimum through extra large.
-  - compare the same host view with Okidokey and 元書輸入法, which the reporter says do not reproduce the coverage.
-  - Array10 and Dayi report different heights matching their real rows.
-  - Switching between layouts does not leave stale hidden content or stale gaps.
-  - changing `keyboard_size` changes the reported height and visual row height together.
-  - candidate bar, emoji/search, orientation, and arrow row changes do not leave stale root height.
+The most useful control is the difference between rotating while the keyboard remains visible and dismissing/reopening after rotation.
 
-## Non-Fix: Abandoned Effective Scale
+## Verification criteria
 
-The abandoned approach computed a cap like:
+A fix is acceptable only when all applicable conditions hold:
 
-```text
-effectiveScale = min(requestedScale, capScale)
-```
+1. After every live transition, LIME's visible top edge matches the host's keyboard layout guide/final keyboard frame.
+2. LINE's message field remains completely visible through portrait ↔ landscape rotations.
+3. Rotating back does not preserve stale overlap.
+4. Dismissing and reopening the keyboard does not alter host geometry because the live geometry was already correct.
+5. The DEBUG scroll probe can reach its true bottom at all supported keyboard sizes and representative four-row/five-row layouts.
+6. `keyboard_size` continues to change both visual row height and the published keyboard height together.
+7. No fixed cap, forced shrink, or layout redesign is introduced.
+8. Candidate, emoji/search, arrow-row, split/orientation, and input-mode changes do not leave covered content or stale gaps.
+9. Real-device verification covers the maintainer's LINE reproduction. Simulator/source-inspection tests alone are insufficient.
 
-and wrote it back into:
+## Test coverage gaps
 
-```swift
-keyboardView.keySizeScale
-```
+Existing tests verify static height math and source structure:
 
-That is wrong because it changes the visual keyboard size instead of reporting the real one. On real device it made the keyboard-size preference ineffective for tall layouts. Remove this path completely and do not use it as #139 evidence.
+- four-row and five-row `KeyboardView.preferredHeight`
+- `keyboard_size` scaling
+- arrow-row contribution
+- presence of `publishKeyboardHeightToUIKit()`
+- absence of the abandoned effective-size cap
 
-## Numeric-Field Findings
+They do not verify UIKit's final keyboard frame after rotation or the host app's keyboard layout guide/inset. Add a focused policy/unit test only after the publication rule is defined, and add a real UI/device rotation test or instrumented manual gate for the lifecycle behavior.
 
-The original numeric-keyboard report is separate from the active bottom-coverage symptom.
+XCUITest may automate orientation with `XCUIDevice.shared.orientation`, but selecting and retaining a third-party keyboard can be environment-dependent. Keep a documented real-device manual gate even if simulator automation is added.
 
-Simulator investigation on 2026-06-29 with Safari/WebView fields found:
+## Non-fixes
 
-| Field shape | Observed keyboard |
-| --- | --- |
-| `type=text` | LIME keyboard |
-| invalid `type="num"` | LIME keyboard |
-| bare `type="number"` | LIME keyboard |
-| `type="number" inputmode="numeric"` | iOS system numeric pad |
-| text field with `inputmode="numeric"` | iOS system numeric pad |
-| `pattern="[0-9]*"` | iOS system numeric pad |
+Do not:
 
-Conclusion: tested numeric/inputmode fields either keep LIME active or are system-replaced by iOS before LIME can route them. Do not treat numeric routing as the active #139 defect unless new private evidence appears.
+- shrink or cap LIME's keyboard to match another keyboard
+- mutate `KeyboardView.keySizeScale` inside height publication
+- hardcode a universal keyboard height
+- blame the private host app without comparing final keyboard frames
+- call `layoutIfNeeded()` recursively from `viewWillLayoutSubviews()`
+- force repeated layout passes without first identifying which final geometry signal is missing
+- treat dismissal/reopen as an acceptable workaround for release closure
 
-## Public / Private Communication
+## Platform impact
 
-- Public issue notes should say only that private follow-up evidence expanded the active iOS bottom-coverage symptom beyond Array10 to Dayi.
-- Do not expose reporter identity, private app details, or screenshots/videos.
-- If asking privately for more data, ask for iOS version, device, orientation, keyboard-size setting, active layout, candidate/emoji/search state, and a non-sensitive frame showing the covered bottom area.
+### iOS
+
+Confirmed scope. The issue concerns `UIInputViewController`, UIKit keyboard-frame publication, rotation, and host-app viewport adjustment.
+
+### Android
+
+Not affected by this iOS lifecycle path. Android uses its own IME window/insets model. No Android source change or retest is required unless a future fix touches shared layout metrics.
+
+## Public and private communication
+
+- Publicly describe the private report only as a bottom-content reachability problem reproduced after 6.1.28.
+- Do not publish the reporter identity, company app, email address, or private recordings.
+- The LINE reproduction may be documented publicly without private conversation content.
+- Ask the private reporter which app/framework hosts the affected form and whether a public reproduction exists. That request has been sent by email.
+- Do not claim resolution until the LINE rotation case and the bottom-reachability probe pass without dismissing/reopening LIME.

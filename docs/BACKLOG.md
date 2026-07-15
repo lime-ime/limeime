@@ -6,7 +6,7 @@ Last reviewed: 2026-07-15
 
 ## Pending fixes
 
-- fix#139 iOS: continue investigating host-app bottom content coverage after the attempted keyboard-height reporting fix. A private reporter reproduced the issue on LIME 6.1.28, iPhone 17 Pro Max, and iOS 26.6 beta 4 across keyboard sizes from minimum to extra large, with the scrollbar unable to reach the bottom. Use the private recording for device instrumentation, compare LIME's published root/input-view frame with the rendered keyboard height, and verify against third-party keyboards that do not reproduce the behavior. Android is not in scope.
+- fix#139 iOS: fix stale host geometry after live LIME keyboard changes. A private 6.1.28 retest could not scroll a form to its true bottom, and the maintainer can reproduce LINE's message field becoming partly covered after rotating with LIME visible; rotating back preserves the overlap until the keyboard is dismissed and reopened. Instrument LIME's final root/input-view frame, `keyboardLayoutGuide`, keyboard frame notifications, and host insets across rotation, keyboard-size changes, and four-row/five-row layout switches. Do not cap or shrink layouts. Android is not in scope.
 
 ## Product work
 
