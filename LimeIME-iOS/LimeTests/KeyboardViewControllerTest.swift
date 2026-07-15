@@ -918,7 +918,16 @@ final class KeyboardViewControllerTest: XCTestCase {
 
         XCTAssertTrue(source.contains("keyboardView?.keySizeScale      = keyboardSize"))
         XCTAssertTrue(source.contains("let keysHeight = keyboardView?.preferredHeight"))
-        XCTAssertTrue(source.contains("view.heightAnchor.constraint(equalToConstant: totalHeight)"))
+        // #139: height is content-driven — the explicit constraint lives on
+        // keyboardView; view height derives from the subview chain. An explicit
+        // view.heightAnchor constant made iOS latch stale rotation frames.
+        XCTAssertTrue(source.contains("kbView.heightAnchor.constraint(equalToConstant: kbTarget)"))
+        XCTAssertFalse(source.contains("view.heightAnchor.constraint(equalToConstant: totalHeight)"))
+        // #139: the height constant must never move inside a rotation
+        // transaction; it is applied once after the coordinator settles.
+        XCTAssertTrue(source.contains("rotationSettling = true"))
+        XCTAssertTrue(source.contains("if rotationSettling"))
+        XCTAssertTrue(source.contains("self.rotationSettling = false"))
         XCTAssertFalse(source.contains("applyEffectiveKeySizeScaleForHeight()"))
         XCTAssertFalse(source.contains("private func effectiveKeySizeScaleForHeight()"))
         XCTAssertTrue(source.contains("publishKeyboardHeightToUIKit()"))

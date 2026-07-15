@@ -136,6 +136,62 @@ The keyboard width, row metrics, or host frame can change while `totalHeight` re
 
 The private app may independently cache a keyboard inset or observe only show/hide notifications. The LINE reproduction reduces the likelihood that the entire issue is private-app-only, but instrumentation must still distinguish an extension-frame problem from a host scroll-inset problem.
 
+## Instrumentation results (2026-07-15) — hypothesis resolved
+
+Instrumented on a physical iPhone 17 Pro Max (WJIP17) with a DEBUG-only geometry probe:
+
+- **Extension side** (`GeoProbe` logging in `KeyboardViewController`): `viewWillLayoutSubviews`, `applyHeight`, `publishKeyboardHeightToUIKit`, a new `viewWillTransition(to:with:)`, plus LIME's rendered frames.
+- **Host side** (`GeometryProbeHostVC`, 資料庫 tab, DEBUG only): a LINE-style composer whose bottom inset is cached **only** from `keyboardWillChangeFrame` (not `keyboardLayoutGuide`), which reproduces the coverage objectively (`overlap > 0`) without needing LINE.
+
+### What the data shows
+
+Portrait ⇄ landscape, keyboard held visible, LIME active, `keyboard_size` default:
+
+| State | LIME declares | LIME renders (`barBot`/`kbBot`/`view`) | iOS reports to host (`keyboardLayoutGuide` **and** `keyboardWillChangeFrame`) |
+| --- | --- | --- | --- |
+| Clean portrait show | 312 | bar 58, keys→312, view 312 (exact) | keyboard top 552, height **404** (adds a ~92 pt bottom band) — correct, `overlap=-4` |
+| Portrait after rotate-back | 312 (unchanged) | 312 (unchanged, exact) | keyboard top ~632, height **~324–370** — **~80 pt short**, `overlap=+13…+30` covered |
+
+### Conclusions (each backed by the log)
+
+1. **LIME's geometry is correct and constant through rotation.** `view.bounds`, `preferredHeight`, and the height constraint all converge to the right values (312 portrait / 232 landscape); `didTransition` confirms the settled state. **H1, H2, H3 are all ruled out** — screen bounds are always the final orientation, every rotation changes numeric height so `publish` fires, and the final rows are correct.
+2. **LIME renders exactly what it declares.** `barBot=58`, `kbBot=312`, `view=312`: candidate bar + keys fill the declared height with **zero overflow and zero under-declaration**. The asymmetric candidate layout is **not** involved.
+3. **The 92 pt is iOS's own bottom safe-area band**, included in the keyboard frame iOS reports to hosts. After rotation iOS drops ~80 pt of it from the *reported* frame while still rendering the keyboard in the correct place — so a host positioning from the notification (or the layout guide, which is **also** stale — an earlier "guide-based hosts are immune" reading was an artifact of comparing the guide against itself) places its field ~80 pt too low and the real keyboard covers it.
+4. **Not fixable from the extension via geometry.** SEVEN post-rotation fixes were tried and **all produced the identical stale result** — the settled portrait host notification is `inset=370` every time (correct is 404), `overlap≈+30`, covered:
+   1. `setNeedsUpdateConstraints` immediately after settle;
+   2. a 1 pt height-constant jiggle timed to when `view.bounds` first equals the constraint;
+   3. the same, delayed 350 ms clear of the rotation transaction;
+   4. a render-forced (`layoutIfNeeded`) jiggle held ~50 ms;
+   5. a full constraint **reinstall** (deactivate old, activate a fresh `heightAnchor` constraint) plus `invalidateIntrinsicContentSize()` on `view` and `inputView`;
+   6. `inputView.allowsSelfSizing = true` (the Apple pattern for a self-sizing input view) — no effect on rotation, and it added a show-time height overshoot (keyboard momentarily reported 772 pt);
+   7. resizing the keyboard **inside** the rotation coordinator's `animate(alongsideTransition:)` block — the log shows the view still stays at the landscape height (232) through the whole transition and only reaches 312 *after* `didTransition`, because iOS drives the input-view size during rotation and LIME's constraint doesn't win until it completes.
+
+   The reported `inset` (370 / 387) never moves regardless of the constraint object, sizing mode, or timing. iOS computes the post-rotation keyboard frame **without consulting LIME's geometry** and only re-derives it on a **fresh presentation** (host restarts its input session → `keyboardWillShow` with the correct 404). The extension has no API to trigger that on the host (it doesn't own the first responder). The layout guide *does* recover to the correct value after rotation, so **guide-based hosts self-heal; only notification-based hosts (LINE) stay covered.** This is a **UIKit post-rotation keyboard-frame reporting defect**, not a LIME bug.
+
+### External research + the encapsulated-constraint measurement (closes the case)
+
+Web research (Apple DTS forum thread 799003, the archagon 3rd-party-keyboard writeup, iOS-9 height-constraint threads) converges on one named culprit: iOS installs its own **required (priority 1000)** height constraint, `UIView-Encapsulated-Layout-Height`, and the system reports the keyboard frame from **that**, not from a third-party 999-priority constraint. Community fixes (Bitmoji/Wispr "offset trick") read/reconcile against it. The research also independently **confirmed two dead ends**: Apple DTS states `allowsSelfSizing` is for input *accessory* views, not keyboards (attempt 6), and the whole community documents custom-height-constraint + rotation as a known landmine.
+
+This produced a concrete, falsifiable hypothesis — *the stale value lives in `UIView-Encapsulated-Layout-Height`, which none of the seven attempts touched* — so the probe was extended to log that constraint's constant (`enc=`). **Measurement disproves it:** after rotating back to portrait, `constraint=312 enc=312 view=440x312` — LIME's constraint, iOS's encapsulated constraint, and the view are **all correct at 312** — yet the host notification still reports `inset=387` (`overlap=+13`, covered). The stale value is in **none** of the accessible constraints; it lives solely in UIKit's keyboard-frame *notification* computation, which reads the constraints correctly but publishes an independent stale frame and never re-fires. There is no constraint to rewrite. The case is closed as a UIKit defect with every accessible lever measured.
+
+### RESOLVED — deferred post-rotation height application (attempt 11, probe-verified 2026-07-15)
+
+The "accept as UIKit limitation" disposition was **wrong** — the reporter's evidence that two other third-party keyboards and the built-in keyboard survive rotation meant the failure was LIME-specific and fixable. Three more attempts followed:
+
+8. Writing iOS's `UIView-Encapsulated-Layout-Height` (`enc`) constant inside `applyHeight()` — **crashed the extension** (mutating it during the layout pass → infinite relayout → watchdog kill). Never mutate `enc` from a layout pass.
+9. The same `enc` write, done once in the rotation-completion callback — landed before the notification fired (`enc=312` at `didTransition`), **iOS still published the stale frame**: the notification value is not read from `enc` at fire time.
+10. Content-driven height (explicit height constraint moved from `view` to `keyboardView`; view height derived from the subview chain) + required (1000) priority — still stale; during rotation AutoLayout resolves the required-vs-`enc` conflict in the system's favor and the view stays at the old height past the last notification.
+
+**Root cause (final):** every failing variant changed the keyboard height *during* the rotation transaction (from `viewWillLayoutSubviews` mid-rotation). iOS emits its keyboard-frame notifications inside that transaction using the view's current/interpolated size, then silently applies LIME's new height afterward with **no further notification**. Stationary (out-of-band) height changes — keyboard_size, emoji panel — notify hosts correctly; only transaction-internal changes are swallowed.
+
+**Fix (attempt 11):** `rotationSettling` flag — `viewWillTransition(to:with:)` sets it; `applyHeight()` holds the existing height constant while it is set; 0.3 s after the rotation coordinator completes, the flag clears and `applyHeight()` runs once, applying the new orientation's height as a plain stationary change. The probe log confirms the previously-missing notification now fires with the correct settled frame in both orientations (portrait `inset=404`, landscape `inset=253`, final `overlap=-4`).
+
+Cosmetic trade-off: the keyboard keeps the previous orientation's height for ~0.3 s after rotation, then snaps to the correct height — that snap *is* the host notification. A rapid double-rotation inside the 0.3 s window can momentarily apply mid-rotation, but the second rotation's own deferred apply self-heals it.
+
+**LINE rotation retest: PASSED** (maintainer, WJIP17, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard. Remaining before closing: the reproduction-matrix stationary cases (keyboard_size, four/five-row, candidate/emoji transitions — expected unaffected) and the private reporter's bottom-reachability retest on the next shipped build.
+
+- The DEBUG probe (`GeoProbe`, `geoDump`, `GeometryProbeHostVC` + 資料庫-tab viewer) was **stripped before commit** — it never entered git history. Restoration snippets: `.claude/txt/139-geometry-probe-restoration.md`. Re-add them if the private reporter's no-rotation case reproduces on the fixed build.
+
 ## Required diagnostic harness
 
 Add a DEBUG-only host screen to the containing LIME app. It should not ship in release UI.

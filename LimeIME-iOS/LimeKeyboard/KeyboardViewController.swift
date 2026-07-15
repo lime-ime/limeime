@@ -309,7 +309,17 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var emojiSearchCandidates: [Mapping] = []
     // keyRowHeight removed — height is now driven by KeyboardView.preferredHeight,
     // which sums actual per-row heights (54 pt regular, 56 pt bottom row).
+    // #139: this is the CONTENT height constraint (on keyboardView, not view) —
+    // the extension view's height is derived from the subview chain. An explicit
+    // view.heightAnchor constant made iOS latch a stale keyboard frame on rotation.
     private var keyboardHeightConstraint: NSLayoutConstraint?
+    /// #139: true from rotation start until ~0.3 s after the coordinator
+    /// completes. While set, applyHeight() must NOT move the height constraint:
+    /// any height change inside the rotation transaction gets baked into iOS's
+    /// stale keyboard-frame notification with no later correction. The deferred
+    /// applyHeight() after settling is a plain stationary height change, which
+    /// hosts track correctly (same path as keyboard_size / emoji-panel resizes).
+    private var rotationSettling = false
     private weak var inlineMenuPanel: UIView?
     private weak var inlineMenuDismissTapGesture: UITapGestureRecognizer?
     /// Fired once when the inline menu is dismissed (完成 / tap-outside). Used by the
@@ -538,6 +548,26 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         keyboardView?.splitMode = doSplit
         applyHeight()
         updateGlobeAndDismissBindings()
+    }
+
+    // #139: hold the current keyboard height through the entire rotation
+    // transaction, then apply the new orientation's height as a plain
+    // stationary change once iOS has settled. Height changes made DURING the
+    // transaction get baked into iOS's keyboard-frame notification at a stale/
+    // interpolated value with no later correction (probe-verified across ten
+    // variants); stationary changes go through the normal publish path that
+    // hosts track correctly. See docs/#139_ISSUE.md.
+    override func viewWillTransition(to size: CGSize,
+                                     with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        rotationSettling = true
+        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                guard let self else { return }
+                self.rotationSettling = false
+                self.applyHeight()
+            }
+        }
     }
 
     // MARK: - Trait / Theme Change (spec §2)
@@ -1566,16 +1596,35 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let totalHeight = isEmojiPanelVisible && !isEmojiSearchMode
             ? max(keyboardHeight, emojiPanelView?.preferredPanelHeight ?? keyboardHeight)
             : keyboardHeight
+        // #139: drive the extension view's height FROM CONTENT (keyboardView gets
+        // the explicit height; the bar-top/bar-height/kb-top/kb-bottom chain then
+        // defines view height) instead of an explicit view.heightAnchor constant.
+        // With the explicit view-height constant, iOS latched a stale keyboard
+        // frame during rotation and reported it to notification-based hosts
+        // (LINE) with no way to correct it — peers without that constraint don't
+        // reproduce. Content-driven height is the structural difference.
+        let kbTarget = totalHeight - emojiSearchHeaderHeight - barH
         let didChangeHeight: Bool
-        if let existing = keyboardHeightConstraint {
-            didChangeHeight = abs(existing.constant - totalHeight) > 0.5
-            if didChangeHeight { existing.constant = totalHeight }
-        } else {
-            let c = view.heightAnchor.constraint(equalToConstant: totalHeight)
-            c.priority = UILayoutPriority(rawValue: 999)
+        if rotationSettling, keyboardHeightConstraint != nil {
+            // #139: hold height until the rotation settles (see viewWillTransition).
+            didChangeHeight = false
+        } else if let existing = keyboardHeightConstraint {
+            didChangeHeight = abs(existing.constant - kbTarget) > 0.5
+            if didChangeHeight { existing.constant = kbTarget }
+        } else if let kbView = keyboardView {
+            let c = kbView.heightAnchor.constraint(equalToConstant: kbTarget)
+            // Required, not 999: during rotation iOS's own required
+            // UIView-Encapsulated-Layout-Height pins the view at the OLD height
+            // until after the last keyboard-frame notification fires, so a
+            // 999-priority height loses the race and hosts get a stale frame
+            // (#139). At required priority the view snaps to the final height
+            // the moment applyHeight runs mid-rotation, before the notification.
+            c.priority = .required
             c.isActive = true
             keyboardHeightConstraint = c
             didChangeHeight = true
+        } else {
+            didChangeHeight = false
         }
         if didChangeHeight {
             publishKeyboardHeightToUIKit()
