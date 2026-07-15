@@ -6,7 +6,7 @@ Last reviewed: 2026-07-15
 
 ## Pending fixes
 
-- fix#139 iOS: source fix `7c067c64` defers keyboard-height changes until after rotation settles, and the maintainer's LINE rotation retest passed. The private reporter's engineer confirmed that the affected host uses a cross-platform UI framework whose scroll/inset handling may be a second factor. Keep the exact framework private. Keep this pending through the next 6.1.31 TestFlight build and private bottom-reachability retest. If it still fails without rotation, compare fresh presentation versus in-place keyboard switching and collect privacy-safe host frame/inset diagnostics. Do not cap or shrink layouts. Android is not in scope.
+- fix#139 iOS: commit `7c067c64` fixes the LINE rotation path, but the maintainer's 6.1.31 build 11 retest still fails when switching in place from Apple's shorter keyboard to the taller LIME keyboard: LINE keeps the old composer position and LIME covers the whole field until dismiss/reopen. Investigate keyboard-frame publication during an active input-mode switch, then retest both rotation and Apple→LIME transitions plus the private bottom-reachability case. Keep the private host framework confidential. Do not cap or shrink layouts. Android is not in scope.
 
 ## Product work
 

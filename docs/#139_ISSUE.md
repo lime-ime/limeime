@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: open, reproducible by the maintainer in LINE after rotating with LIME visible
+- State: open. Commit `7c067c64` fixes the LINE rotation path, but 6.1.31 build 11 still reproduces stale host geometry when switching in place from Apple's shorter keyboard to the taller LIME keyboard.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
@@ -16,7 +16,8 @@ The earlier fix improved LIME's calculated keyboard height and asked UIKit to up
 Two independent host-app observations now share the same failure pattern:
 
 1. A private scrollable form cannot reach its true bottom with LIME visible.
-2. LINE's message field becomes partly covered after device rotation while LIME remains visible.
+2. LINE's message field became partly covered after device rotation while LIME remained visible. Commit `7c067c64` fixes this rotation subcase.
+3. On 6.1.31 build 11, switching directly from Apple's shorter keyboard to the taller LIME keyboard while LINE's field stays focused leaves the host at the old keyboard height, and LIME covers the entire message field. Dismissing and reopening LIME clears the overlap.
 
 These observations belong in one issue for now because both indicate that the host's usable area can become stale relative to LIME's visible top edge. They do **not** yet prove one identical code-level root cause. Split the LINE rotation case into a separate issue only if instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while LINE receives a stale or incorrect frame from LIME/UIKit.
 
@@ -52,6 +53,19 @@ The maintainer reported a separate, public-app reproduction:
 The recovery behavior is important: reopening the keyboard forces a fresh keyboard presentation and clears the stale geometry. This makes a live rotation/frame-publication failure more likely than a permanently incorrect static keyboard height.
 
 Record the exact device, iOS version, LIME build, starting orientation, ending orientation, active LIME layout, and `keyboard_size` before claiming a complete reproduction matrix.
+
+### Maintainer LINE in-place keyboard-switch negative retest
+
+The maintainer tested the #139-fixed 6.1.31 build 11 and found a second live-transition failure:
+
+1. Focus LINE's message field with Apple's built-in keyboard visible.
+2. Switch directly to LIME without dismissing the input session.
+3. LIME is substantially taller than the Apple keyboard.
+4. LINE's composer remains positioned for the shorter Apple keyboard, so the taller LIME keyboard covers the whole message field.
+5. Dismiss and reopen LIME.
+6. LINE then positions the composer correctly.
+
+This proves that attempt 11 resolved the rotation transaction but did not resolve every in-place keyboard-height transition. Track this under #139 rather than opening a separate LINE issue because the observable contract is the same: the host retains stale geometry until a fresh keyboard presentation.
 
 ## Historical scope no longer active
 
@@ -175,7 +189,7 @@ Web research (Apple DTS forum thread 799003, the archagon 3rd-party-keyboard wri
 
 This produced a concrete, falsifiable hypothesis — *the stale value lives in `UIView-Encapsulated-Layout-Height`, which none of the seven attempts touched* — so the probe was extended to log that constraint's constant (`enc=`). **Measurement disproves it:** after rotating back to portrait, `constraint=312 enc=312 view=440x312` — LIME's constraint, iOS's encapsulated constraint, and the view are **all correct at 312** — yet the host notification still reports `inset=387` (`overlap=+13`, covered). The stale value is in **none** of the accessible constraints; it lives solely in UIKit's keyboard-frame *notification* computation, which reads the constraints correctly but publishes an independent stale frame and never re-fires. There is no constraint to rewrite. The case is closed as a UIKit defect with every accessible lever measured.
 
-### RESOLVED — deferred post-rotation height application (attempt 11, probe-verified 2026-07-15)
+### Rotation subcase resolved — deferred post-rotation height application (attempt 11, probe-verified 2026-07-15)
 
 The "accept as UIKit limitation" disposition was **wrong** — the reporter's evidence that two other third-party keyboards and the built-in keyboard survive rotation meant the failure was LIME-specific and fixable. Three more attempts followed:
 
@@ -183,13 +197,15 @@ The "accept as UIKit limitation" disposition was **wrong** — the reporter's ev
 9. The same `enc` write, done once in the rotation-completion callback — landed before the notification fired (`enc=312` at `didTransition`), **iOS still published the stale frame**: the notification value is not read from `enc` at fire time.
 10. Content-driven height (explicit height constraint moved from `view` to `keyboardView`; view height derived from the subview chain) + required (1000) priority — still stale; during rotation AutoLayout resolves the required-vs-`enc` conflict in the system's favor and the view stays at the old height past the last notification.
 
-**Root cause (final):** every failing variant changed the keyboard height *during* the rotation transaction (from `viewWillLayoutSubviews` mid-rotation). iOS emits its keyboard-frame notifications inside that transaction using the view's current/interpolated size, then silently applies LIME's new height afterward with **no further notification**. Stationary (out-of-band) height changes — keyboard_size, emoji panel — notify hosts correctly; only transaction-internal changes are swallowed.
+**Root cause for the rotation subcase:** every failing rotation variant changed the keyboard height *during* the rotation transaction (from `viewWillLayoutSubviews` mid-rotation). iOS emits its keyboard-frame notifications inside that transaction using the view's current/interpolated size, then silently applies LIME's new height afterward with **no further notification**. The build 11 Apple-keyboard-to-LIME negative retest disproves the assumption that every non-rotation transition, specifically an in-place input-mode keyboard switch, is already safe. Within-LIME stationary changes such as `keyboard_size` and emoji-panel resizing remain separate matrix cases to verify.
 
 **Fix (attempt 11):** `rotationSettling` flag — `viewWillTransition(to:with:)` sets it; `applyHeight()` holds the existing height constant while it is set; 0.3 s after the rotation coordinator completes, the flag clears and `applyHeight()` runs once, applying the new orientation's height as a plain stationary change. The probe log confirms the previously-missing notification now fires with the correct settled frame in both orientations (portrait `inset=404`, landscape `inset=253`, final `overlap=-4`).
 
 Cosmetic trade-off: the keyboard keeps the previous orientation's height for ~0.3 s after rotation, then snaps to the correct height — that snap *is* the host notification. A rapid double-rotation inside the 0.3 s window can momentarily apply mid-rotation, but the second rotation's own deferred apply self-heals it.
 
-**LINE rotation retest: PASSED** (maintainer, WJIP17, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard. Remaining before closing: the reproduction-matrix stationary cases (keyboard_size, four/five-row, candidate/emoji transitions — expected unaffected) and the private reporter's bottom-reachability retest on the next shipped build.
+**LINE rotation retest: PASSED** (maintainer, WJIP17, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard.
+
+**LINE in-place keyboard-switch retest: FAILED on 6.1.31 build 11** — switching from Apple's shorter keyboard directly to the taller LIME keyboard leaves LINE's composer at the old height and LIME covers the entire field until dismiss/reopen. #139 therefore remains unresolved despite the rotation-path pass.
 
 The reporter was told that LIME still had a concrete adjustment path and that the deferred post-rotation fix is planned for the next 6.1.31 TestFlight build. If the private form still fails on that build without a rotation transition, compare fresh keyboard presentation against in-place keyboard switching and collect privacy-safe host frame/inset diagnostics before attributing the remaining behavior to LIME or the host framework alone.
 
@@ -254,6 +270,8 @@ Run each case without dismissing the keyboard between geometry changes:
 | DEBUG probes | active input mode and split-mode changes | final keyboard frame remains synchronized with visible rows |
 | LINE | portrait → landscape → portrait | message field is never covered |
 | LINE | rotate, then dismiss/reopen control | reopening causes no geometry correction because geometry was already correct |
+| LINE | Apple keyboard → taller LIME without dismissing | composer follows LIME's final top edge and remains fully visible |
+| LINE | switch, then dismiss/reopen control | reopening causes no geometry correction because the in-place switch was already correct |
 | Private app, if available | same transitions | reported final form content remains reachable and the scrollbar reaches its true bottom |
 | Apple keyboard / another third-party keyboard | same transitions | collect comparison frames and notifications |
 
