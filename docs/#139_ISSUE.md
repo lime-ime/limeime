@@ -32,6 +32,7 @@ The private reporter retested after the first #139 fix shipped:
 - Keyboard size: reproduced from minimum through extra large.
 - Comparison: the reporter said two other third-party keyboards did not reproduce the problem. Their names remain in the private support thread.
 - Evidence: a private follow-up screen recording. The recording shows a custom scrollable form and an accessory toolbar above the keyboard. Keep the recording, exact date, and app details private.
+- Host framework: the reporter's engineer confirmed that the private app uses a cross-platform UI framework and found a separate public report of iOS fields being hidden behind the keyboard with that framework. The engineer will continue investigating the host side. Keep the exact framework private. This makes host inset/scroll handling a concrete second factor to test without proving that it is the only cause.
 
 The video is consistent with a stale host viewport or bottom inset, but it cannot by itself prove whether the stale geometry originates in LIME/UIKit or in the private host app.
 
@@ -189,6 +190,8 @@ The "accept as UIKit limitation" disposition was **wrong** — the reporter's ev
 Cosmetic trade-off: the keyboard keeps the previous orientation's height for ~0.3 s after rotation, then snaps to the correct height — that snap *is* the host notification. A rapid double-rotation inside the 0.3 s window can momentarily apply mid-rotation, but the second rotation's own deferred apply self-heals it.
 
 **LINE rotation retest: PASSED** (maintainer, WJIP17, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard. Remaining before closing: the reproduction-matrix stationary cases (keyboard_size, four/five-row, candidate/emoji transitions — expected unaffected) and the private reporter's bottom-reachability retest on the next shipped build.
+
+The reporter was told that LIME still had a concrete adjustment path and that the deferred post-rotation fix is planned for the next 6.1.31 TestFlight build. If the private form still fails on that build without a rotation transition, compare fresh keyboard presentation against in-place keyboard switching and collect privacy-safe host frame/inset diagnostics before attributing the remaining behavior to LIME or the host framework alone.
 
 - The DEBUG probe (`GeoProbe`, `geoDump`, `GeometryProbeHostVC` + 資料庫-tab viewer) was **stripped before commit** — it never entered git history. Restoration snippets: `.claude/txt/139-geometry-probe-restoration.md`. Re-add them if the private reporter's no-rotation case reproduces on the fixed build.
 
