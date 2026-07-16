@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: open. Commit `7c067c64` fixes the LINE rotation path, but 6.1.31 build 11 still reproduces stale host geometry when switching in place from Apple's shorter keyboard to the taller LIME keyboard.
+- State: open. Commit `7c067c64` fixes the LINE rotation path, but 6.1.31 still reproduces the private form failure in locked portrait, and build 11 also reproduces stale host geometry when switching in place from Apple's shorter keyboard to the taller LIME keyboard.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
@@ -18,6 +18,7 @@ Two independent host-app observations now share the same failure pattern:
 1. A private scrollable form cannot reach its true bottom with LIME visible.
 2. LINE's message field became partly covered after device rotation while LIME remained visible. Commit `7c067c64` fixes this rotation subcase.
 3. On 6.1.31 build 11, switching directly from Apple's shorter keyboard to the taller LIME keyboard while LINE's field stays focused leaves the host at the old keyboard height, and LIME covers the entire message field. Dismissing and reopening LIME clears the overlap.
+4. The private reporter's 6.1.31 retest confirms a partial improvement: landscape can now scroll to the true bottom, but locked portrait still cannot.
 
 These observations belong in one issue for now because both indicate that the host's usable area can become stale relative to LIME's visible top edge. They do **not** yet prove one identical code-level root cause. Split the LINE rotation case into a separate issue only if instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while LINE receives a stale or incorrect frame from LIME/UIKit.
 
@@ -36,6 +37,16 @@ The private reporter retested after the first #139 fix shipped:
 - Host framework: the reporter's engineer confirmed that the private app uses a cross-platform UI framework and found a separate public report of iOS fields being hidden behind the keyboard with that framework. The engineer will continue investigating the host side. Keep the exact framework private. This makes host inset/scroll handling a concrete second factor to test without proving that it is the only cause.
 
 The video is consistent with a stale host viewport or bottom inset, but it cannot by itself prove whether the stale geometry originates in LIME/UIKit or in the private host app.
+
+### Private form 6.1.31 partial retest
+
+The private reporter updated to LIME 6.1.31 and reported:
+
+- Landscape now reaches the true bottom.
+- Locked portrait still cannot reach the true bottom.
+- This is a partial improvement, not resolution.
+
+The orientation-specific result supports keeping the rotation fix while continuing to investigate the remaining locked-portrait and in-place keyboard-switch paths. The next comparison should distinguish opening the field directly with LIME from switching to LIME while the field remains focused, then compare the host's final scroll range or bottom inset. Keep the host framework, app identity, reporter identity, and private evidence confidential.
 
 ### Maintainer LINE rotation reproduction
 
