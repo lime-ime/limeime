@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: open. Commit `7c067c64` fixes the LINE rotation path, but 6.1.31 still reproduces the private form failure in locked portrait, and build 11 also reproduces stale host geometry when switching in place from Apple's shorter keyboard to the taller LIME keyboard.
+- State: both LIME-side subcases fixed in source. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31); the in-place switch-in path is fixed by the attach-overshoot change (see RESOLVED section; pending release). Remaining: the private reporter's locked-portrait retest on the next build — switch-in was the prime suspect for it.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
@@ -77,6 +77,46 @@ The maintainer tested the #139-fixed 6.1.31 build 11 and found a second live-tra
 6. LINE then positions the composer correctly.
 
 This proves that attempt 11 resolved the rotation transaction but did not resolve every in-place keyboard-height transition. Track this under #139 rather than opening a separate LINE issue because the observable contract is the same: the host retains stale geometry until a fresh keyboard presentation.
+
+#### In-place switch instrumentation results (2026-07-16) — initial (superseded) conclusion
+
+The DEBUG geometry probe was restored and the switch path instrumented (`viewWillAppear`/`viewDidAppear` hooks added). Findings on the physical test iPhone:
+
+- **Control (direct open with LIME):** correct — fresh presentation posts `WillShow inset=404`, probe field CLEAR.
+- **LIME → Apple switch:** correct — host receives `WillChangeFrame inset=345/335`.
+- **Apple → LIME switch:** **total silence.** LIME loads and settles (view 312, `enc=312`) and the host receives *no* notification, *no* layout-guide update, nothing. The host's last knowledge is Apple's 335; LIME's true reported frame is 404 → 69 pt coverage — the full composer in LINE.
+- Three extension-side channels were then tested post-appearance and **all were ignored by iOS** (no `enc` re-derivation, no host notification, view pinned at 312):
+  1. a height-constraint dip (first attempt was reverted by `applyHeight` before rendering; repeated with the settle-gate held and iOS still ignored the changed constraint for the full 200 ms hold);
+  2. the private `enc` constraint (frozen);
+  3. `preferredContentSize` (the remote-view-controller sizing channel — silent).
+- External research confirms the mechanism is documented platform behavior: **iOS posts keyboard notifications only on first-responder/input-session changes, not on globe switches to custom keyboards** (community-documented; consistent with every probe run).
+
+~~Superseded~~ — the paragraph below originally concluded this was an unfixable iOS limitation. The maintainer's counter-evidence (the reporter's “other keyboards work”) prompted a Gboard control test: Gboard is TALLER than Apple's keyboard and its switch-in IS announced to hosts — falsifying the “iOS limitation” conclusion and reopening the investigation, which produced the fix in “RESOLVED: in-place switch-in” below.
+
+#### RESOLVED: in-place switch-in — attach-overshoot fix (probe- and LINE-verified 2026-07-16)
+
+System-log analysis (`sudo log collect --device`, comparing a failing Apple→LIME switch against a working Apple→Gboard switch) exposed iOS's host-side machinery in `_UIRemoteKeyboards` / `UIPeripheralHost` and three rules:
+
+1. At switch-commit the host computes a **provisional frame** for the incoming custom keyboard (318 on iPhone 17 Pro Max) and announces that; the host app's own process posts only `didShow`.
+2. The provisional is **corrected only by a post-attach RESIZE EDGE** of the keyboard's remote proxy view — Gboard's proxy grows 243→274 at +85 ms, which triggers a second `prepareToMoveKeyboard` and the full corrected `willShow`/`WillChangeFrame` cascade. LIME arrived at its final height with no post-attach resize → no edge → never corrected.
+3. iOS sizes the attaching view from **its own memory** of the keyboard's height (enc goes straight to the remembered 312 regardless of the declared constraint) and pins it once the attach transaction settles — so an edge can only be produced by targeting a height **above the remembered value** while the transaction is **still open**.
+
+**The fix** (`KeyboardViewController`): at `viewDidAppear` — mid-attach, transaction open — set the height to `kbTarget + 20` (`attachOvershoot`); the first layout pass where the view has rendered at the overshoot size restores `kbTarget`; a 0.5 s fallback guarantees the keyboard never sticks tall. Both changes are honored and announced: probe log shows `WillChangeFrame inset=424` (overshoot) then `inset=404` (true frame), ending `overlap=-4`; the notification-latching probe host ends CORRECT, and the **LINE reproduction passes** (Apple→LIME switch leaves the composer fully visible). Cosmetic cost: a brief ~20 pt grow-shrink bounce on every keyboard appearance.
+
+Failed variants for the record (all probe-falsified): below-stored short-attach, post-settle dip/grow at any delay, constraint reinstall, `preferredContentSize`, `allowsSelfSizing`, early height declaration at `viewDidLoad` (+80 ms is process-spawn-bound and iOS ignores the declaration anyway). The one working cell is above-stored × mid-transaction.
+
+#### Host-side escape hatch (probe-verified 2026-07-16) and the MAUI connection
+
+The reporter's engineer disclosed the private app uses **.NET MAUI**. MAUI's `KeyboardAutoManagerScroll` (dotnet/maui, `src/Core/src/Platform/iOS/`) observes **only `UIKeyboardWillShowNotification`** and caches the frame from it — so a switch-in, which posts *no* notification, leaves MAUI stale forever. This also explains the 6.1.31 partial retest: rotating emits our deferred post-rotation apply's notification burst (which includes `WillShow`) → MAUI re-adjusts → landscape heals; locked portrait never receives any late notification → stays stale.
+
+The probe then measured a working recovery path: iOS **does** fire `UITextInputMode.currentInputModeDidChangeNotification` on every globe switch, and although `keyboardLayoutGuide` is stale at that instant (still the previous keyboard's frame), **it reads the correct new frame ~0.5 s later after a forced layout pass** (measured: `guideTop=611` at fire → `guideTop=552` = LIME's true top at +0.5 s; verified in both switch directions). iOS holds the correct frame internally the whole time — it just never pushes it.
+
+Actionable host-side fixes to relay to the reporter (public-safe, no private details needed):
+
+1. **App-level workaround (5 lines):** observe `currentInputModeDidChangeNotification`; when it fires with a field focused, resign and re-acquire first responder on that field. The new input session posts a fresh, correct `WillShow`, which MAUI's existing code consumes. Minor caret flicker.
+2. **Proper fix (MAUI-level, worth an upstream issue):** on `currentInputModeDidChangeNotification`, after ~0.5 s, force a layout and re-derive the keyboard frame from `view.keyboardLayoutGuide.layoutFrame` instead of waiting for a `WillShow` that never comes.
+
+Ask the reporter to confirm the discriminator first: does locked portrait fail when the field is opened **directly with LIME already active** (should be fine — fresh presentations are correct), or only after **switching to LIME while the field is focused** (the measured gap)?
 
 ## Historical scope no longer active
 
@@ -164,7 +204,7 @@ The private app may independently cache a keyboard inset or observe only show/hi
 
 ## Instrumentation results (2026-07-15) — hypothesis resolved
 
-Instrumented on a physical iPhone 17 Pro Max (WJIP17) with a DEBUG-only geometry probe:
+Instrumented on a physical iPhone 17 Pro Max test device with a DEBUG-only geometry probe:
 
 - **Extension side** (`GeoProbe` logging in `KeyboardViewController`): `viewWillLayoutSubviews`, `applyHeight`, `publishKeyboardHeightToUIKit`, a new `viewWillTransition(to:with:)`, plus LIME's rendered frames.
 - **Host side** (`GeometryProbeHostVC`, 資料庫 tab, DEBUG only): a LINE-style composer whose bottom inset is cached **only** from `keyboardWillChangeFrame` (not `keyboardLayoutGuide`), which reproduces the coverage objectively (`overlap > 0`) without needing LINE.
@@ -214,7 +254,7 @@ The "accept as UIKit limitation" disposition was **wrong** — the reporter's ev
 
 Cosmetic trade-off: the keyboard keeps the previous orientation's height for ~0.3 s after rotation, then snaps to the correct height — that snap *is* the host notification. A rapid double-rotation inside the 0.3 s window can momentarily apply mid-rotation, but the second rotation's own deferred apply self-heals it.
 
-**LINE rotation retest: PASSED** (maintainer, WJIP17, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard.
+**LINE rotation retest: PASSED** (maintainer, physical test iPhone, 2026-07-15) — message field stays fully visible through portrait ↔ landscape ↔ portrait without dismissing the keyboard.
 
 **LINE in-place keyboard-switch retest: FAILED on 6.1.31 build 11** — switching from Apple's shorter keyboard directly to the taller LIME keyboard leaves LINE's composer at the old height and LIME covers the entire field until dismiss/reopen. #139 therefore remains unresolved despite the rotation-path pass.
 

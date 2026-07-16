@@ -313,6 +313,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // the extension view's height is derived from the subview chain. An explicit
     // view.heightAnchor constant made iOS latch a stale keyboard frame on rotation.
     private var keyboardHeightConstraint: NSLayoutConstraint?
+    /// #139 switch-in experiment (final cell of the matrix): overshoot the height
+    /// ABOVE iOS's memory-restored value while the attach transaction is still
+    /// open (viewDidAppear, mid-storm) — the only conditions matching Gboard's
+    /// honored post-attach resize (its edge fires above its provisional while its
+    /// attach animation fences are active). All below-stored and post-settle
+    /// variants are probe-falsified.
+    private var attachOvershoot = false
+    private static let attachOvershootDelta: CGFloat = 20
     /// #139: true from rotation start until ~0.3 s after the coordinator
     /// completes. While set, applyHeight() must NOT move the height constraint:
     /// any height change inside the rotation transaction gets baked into iOS's
@@ -466,8 +474,28 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        // #139: overshoot NOW, mid-storm, while the attach transaction is open —
+        // targeting kbTarget+Δ, a size above iOS's memory-restored height. See
+        // attachOvershoot doc. Restored by the settle-gate in
+        // viewWillLayoutSubviews or the fallback below.
+        attachOvershoot = true
+        applyHeight()
+        // Safety net: never leave the keyboard at the overshoot height.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.attachOvershoot else { return }
+            self.attachOvershoot = false
+            self.applyHeight()
+        }
         disableKeyboardWindowTouchDelay()
         scheduleRelayResponse()
+        // #139 (in-place keyboard switch): switching from a shorter keyboard to
+        // LIME emits NO keyboard notification to the host — documented iOS
+        // behavior (keyboardWillShow fires only on first-responder changes, not
+        // globe switches), and probe runs show iOS also ignores every height
+        // channel from the warm extension until a fresh input session
+        // (constraint dip, enc, preferredContentSize all silent). Not fixable
+        // extension-side; heals on field tap or dismiss/reopen. See
+        // docs/#139_ISSUE.md → in-place switch findings.
     }
 
     /// The app's invisible probe *loads* the keyboard (viewWillAppear fires — that's the
@@ -548,6 +576,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         keyboardView?.splitMode = doSplit
         applyHeight()
         updateGlobeAndDismissBindings()
+        // #139 switch-in: once the view has RENDERED at the overshoot size,
+        // restore the true height (second edge). See attachOvershoot doc.
+        if attachOvershoot, let c = keyboardHeightConstraint {
+            let overViewHeight = c.constant + activeCandidateBarHeight + emojiSearchHeaderHeight
+            if abs(view.bounds.height - overViewHeight) < 1 {
+                attachOvershoot = false
+                applyHeight()
+            }
+        }
     }
 
     // #139: hold the current keyboard height through the entire rotation
@@ -1603,7 +1640,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // frame during rotation and reported it to notification-based hosts
         // (LINE) with no way to correct it — peers without that constraint don't
         // reproduce. Content-driven height is the structural difference.
-        let kbTarget = totalHeight - emojiSearchHeaderHeight - barH
+        var kbTarget = totalHeight - emojiSearchHeaderHeight - barH
+        if attachOvershoot { kbTarget += Self.attachOvershootDelta }
         let didChangeHeight: Bool
         if rotationSettling, keyboardHeightConstraint != nil {
             // #139: hold height until the rotation settles (see viewWillTransition).
@@ -1635,6 +1673,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         view.setNeedsUpdateConstraints()
         inputView?.setNeedsUpdateConstraints()
     }
+
 
     // MARK: - Key Event Dispatch (spec §4 onKey)
 

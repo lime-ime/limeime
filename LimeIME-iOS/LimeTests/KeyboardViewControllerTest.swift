@@ -928,6 +928,13 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("rotationSettling = true"))
         XCTAssertTrue(source.contains("if rotationSettling"))
         XCTAssertTrue(source.contains("self.rotationSettling = false"))
+        // #139 switch-in: the attach overshoot must fire at viewDidAppear
+        // (mid-attach) targeting kbTarget + delta, and be restored by the
+        // rendered-settle gate. Removing it re-breaks in-place keyboard
+        // switches (host never told LIME's real frame).
+        XCTAssertTrue(source.contains("attachOvershoot = true"))
+        XCTAssertTrue(source.contains("if attachOvershoot { kbTarget += Self.attachOvershootDelta }"))
+        XCTAssertTrue(source.contains("attachOvershoot = false"))
         XCTAssertFalse(source.contains("applyEffectiveKeySizeScaleForHeight()"))
         XCTAssertFalse(source.contains("private func effectiveKeySizeScaleForHeight()"))
         XCTAssertTrue(source.contains("publishKeyboardHeightToUIKit()"))
