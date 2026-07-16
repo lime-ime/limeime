@@ -79,7 +79,7 @@ The iOS implementation is a useful reference, not evidence that Android can reus
 ## Acceptance criteria
 
 - `handleEndkeyCommit()` performs no SQLite/database access.
-- The cache is populated before the first ordinary character-key event.
+- The cache is populated before the first key reaches the end-key decision path.
 - End-key behavior remains unchanged for built-in, phonetic-variant, and custom IM tables.
 - Changing an active IM or its editable `limeendkey` metadata refreshes the cached values.
 - Import/restore paths cannot leave stale end-key metadata indefinitely.
