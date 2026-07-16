@@ -1222,7 +1222,7 @@ State transitions:
 
 Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupProgress = 0`, and writes the error to `statusMessage`.
 
-**Why the preparing-share phase exists.** Verified on WJIP17 (iPhone 17 Pro): with a real-sized backup, the dominant visible cost can be request/receipt wait plus `UIActivityViewController` initialization. The DB Manager keeps `isWorking = true` and pivots the overlay text to `準備備份中…` so the user always sees feedback before the share sheet appears.
+**Why the preparing-share phase exists.** Verified on the physical test iPhone (iPhone 17 Pro Max): with a real-sized backup, the dominant visible cost can be request/receipt wait plus `UIActivityViewController` initialization. The DB Manager keeps `isWorking = true` and pivots the overlay text to `準備備份中…` so the user always sees feedback before the share sheet appears.
 
 ---
 

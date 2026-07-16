@@ -149,7 +149,7 @@ Once P1 lands, the cell list grows/shrinks in place. The height constraint is th
 
 ### P5 — Capture a baseline trace before changing more code
 
-`docs/IOS_PROFILING.md` §3 has the workflow wired (`Stroke`, `CandidateReload`, `ComposingPopup`, `CandidateSwap` signposts). On the WJIP17 device, record one fast-typing burst trace and confirm:
+`docs/IOS_PROFILING.md` §3 has the workflow wired (`Stroke`, `CandidateReload`, `ComposingPopup`, `CandidateSwap` signposts). On the physical test iPhone, record one fast-typing burst trace and confirm:
 
 - `CandidateReload` p95 dominates the inter-stroke gap (expected on the current code).
 - After P2 ships, `CandidateReload` still dominates — but is now off the main runloop's "dispatch touches" hot path because the deferred-hop pattern gives touches priority. The dropped-key rate falls.
@@ -159,7 +159,7 @@ Per `docs/IOS_PROFILING.md` §5: don't apply optimisations beyond P2 until a tra
 
 ## Recommended sequencing
 
-1. **Ship P2** as a same-day experiment on the WJIP17 device. One-line change, fully reversible.
+1. **Ship P2** as a same-day experiment on the physical test iPhone. One-line change, fully reversible.
 2. **Test fast-typing burst** with the existing typing-pad / Notes app. Confirm whether dropped keys reduce.
 3. If P2 reduces drops:
    - Capture a baseline `Stroke` / `CandidateReload` trace per [docs/IOS_PROFILING.md](IOS_PROFILING.md) §3.
@@ -177,7 +177,7 @@ Per `docs/IOS_PROFILING.md` §5: don't apply optimisations beyond P2 until a tra
 
 ## Verification once both P1 and P2 are in
 
-- Type a long fast burst (e.g. `wo3jiao4li2ming2wo3jiao4li2ming2…`) at maximum speed on the WJIP17 device, with haptic on, and confirm every keystroke produces a haptic tick and a character/compose update — zero silent drops.
+- Type a long fast burst (e.g. `wo3jiao4li2ming2wo3jiao4li2ming2…`) at maximum speed on the physical test iPhone, with haptic on, and confirm every keystroke produces a haptic tick and a character/compose update — zero silent drops.
 - Compare side-by-side with the iOS system keyboard for any residual perceptual difference.
 - Capture an Instruments trace and confirm `CandidateReload` p95 is < 10 ms.
 
@@ -185,7 +185,7 @@ Per `docs/IOS_PROFILING.md` §5: don't apply optimisations beyond P2 until a tra
 
 ### 2026-05-21 / 2026-05-22 — P2 applied; diagnostic counter attempted but inconclusive
 
-**P2 applied** at [`KeyboardViewController.updateCandidates()`](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift) — extra `DispatchQueue.main.async` hop wrapping the stage-1 reload, with stale-stroke check re-done inside the inner block. Compiles clean (BUILD SUCCEEDED on iPhone 17 Pro iOS 26.5 simulator). Deployed to the WJIP17.
+**P2 applied** at [`KeyboardViewController.updateCandidates()`](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift) — extra `DispatchQueue.main.async` hop wrapping the stage-1 reload, with stale-stroke check re-done inside the inner block. Compiles clean (BUILD SUCCEEDED on iPhone 17 Pro iOS 26.5 simulator). Deployed to the physical test iPhone.
 
 **Result of P2 on device: drops still occur.** Per the doc's own "If P2 does not reduce drops" guidance, this means main-thread starvation from `CandidateReload` is **not the dominant cause** — the reload is heavy but is not what blocks the next touchDown. The bottleneck must be earlier on the compose path. Most likely candidate: the **synchronous chain inside `keyDown`** —
 
@@ -203,7 +203,7 @@ This entire chain blocks the touch dispatcher just like `rebuildButtons()` does 
 
 ### Diagnostic probe attempt — no logs observed
 
-Added three `os_log` calls (`keyDown`, `touchCancel`, `handleChar`) tagged `subsystem:tw.jeremy.limeime category:misskey`. After deploy to the WJIP17, Console.app showed no entries. Suspects:
+Added three `os_log` calls (`keyDown`, `touchCancel`, `handleChar`) tagged `subsystem:tw.jeremy.limeime category:misskey`. After deploy to the physical test iPhone, Console.app showed no entries. Suspects:
 
 1. **`type: .info` is filtered to disk by default** — fixed mid-session by switching to `.default`, but no retest before sign-off.
 2. **Extension binary cached** — installing the LimeIME app via Xcode does not always swap the keyboard extension's running binary. The Console-empty result is consistent with the keyboard still running the *pre-probe* build. **Reliable refresh on iOS:** remove the LimeIME app from the home screen, then reinstall via the LimeIME scheme. Also disable + re-enable the keyboard in Settings → General → Keyboards.
@@ -281,7 +281,7 @@ Multi-touch enable is **per-view, not inherited** — setting only the root is i
 - It does **not** invalidate P2. P2 still helps drain queued touches faster between strokes.
 - It assumes the underlying mechanism in hypothesis (2) is real — multi-touch rejection only matters when `touchUp` for the previous key is delayed. If the main thread were never blocked, multi-touch enable would be a no-op for normal one-finger typing.
 
-### Verification protocol (test on WJIP17)
+### Verification protocol (test on the physical test iPhone)
 
 1. Deploy via the **LimeIME scheme** (per gotcha above — never LimeKeyboard scheme on iOS 26.x).
 2. **Force-refresh the extension binary:** remove LimeIME from the home screen → reinstall via LimeIME scheme → disable + re-enable the keyboard in Settings → General → Keyboards. Required because iOS aggressively caches the extension binary.
@@ -292,7 +292,7 @@ Multi-touch enable is **per-view, not inherited** — setting only the root is i
 
 ## Next-session entry point
 
-1. **Test hypothesis (4) first** — multi-touch enable is already applied. Build the LimeIME scheme to WJIP17, force-refresh the extension binary, run the fast-burst test. Outcome decides next branch:
+1. **Test hypothesis (4) first** — multi-touch enable is already applied. Build the LimeIME scheme to the physical test iPhone, force-refresh the extension binary, run the fast-burst test. Outcome decides next branch:
    - **Drops gone or substantially reduced** → root cause was container-level multi-touch rejection. Update the doc with the verified result; defer probes and P1 unless profiling later shows reload p95 is still a problem.
    - **Drops persist** → revert the five `isMultipleTouchEnabled = true` lines in [KeyboardView.swift](../LimeIME-iOS/LimeKeyboard/KeyboardView.swift) (single-file, no other dependencies) and proceed with steps 2–7 below.
 2. **Confirm reinstall protocol works.** Remove LimeIME from home screen, reinstall via LimeIME scheme, verify keyboard re-enabled in Settings. Without this, no diagnostic build will actually run on the device.
@@ -325,7 +325,7 @@ So iOS holds the touch in the thin **screen-edge strip** to disambiguate its own
 
 - Added a `UILongPressGestureRecognizer(minimumPressDuration: 0)` to **every key button** (`pressFeedbackGesture`), with `cancelsTouchesInView = false` and a `UIGestureRecognizerDelegate` returning `shouldRecognizeSimultaneouslyWith = true` so it never fights the button's own tracking, the popup long-press, the dual-row pan, or the generic long-press.
 - **Moved haptic / sound / key-preview off `keyDown` onto that recognizer's `.began`**; dismiss the preview on `.ended/.cancelled`, and in `popupKeyLongPressed`'s `.began` (the edge eats the `keyCancel` that used to dismiss it). `keyDown` keeps only its non-feedback work (press color, `didPress` deferral, repeat timer).
-- Verified on the WJIP17: edge `=` / `;` now show preview + haptic on a held press, identical to inner keys. 102/0 keyboard unit tests still green.
+- Verified on the physical test iPhone: edge `=` / `;` now show preview + haptic on a held press, identical to inner keys. 102/0 keyboard unit tests still green.
 
 **Why this matters for the fast-typing drops.** The screen-edge case is a *different trigger* (system edge-gesture disambiguation, not `rebuildButtons()` main-thread block) but the **same failure shape** as hypotheses (1)/(4): the button never gets the press, `keyDown` < presses, no `touchCancel`. The takeaway for the fast-typing thread: **a gesture recognizer (or `hitTest`/`point(inside:)`) sees touches UIKit is delaying** — so if the drops are about events not reaching the button (rather than the *commit* being lost downstream), driving the keypress off a recognizer is a candidate fix there too, not just for the edge.
 
@@ -357,7 +357,7 @@ The actual dominant cause was **UIKit delaying/dropping `touchesBegan`** — the
 
 **Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on the single `KeyTouchLayer` (the actual touch owner), and the scattered per-view flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`.
 
-**Device outcome (WJIP17, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
+**Device outcome (the physical test iPhone, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
 
 ### 2026-07-12 — Residual "less responsive than built-in" is a NEW thread, not a miss regression
 

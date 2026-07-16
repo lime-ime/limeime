@@ -425,7 +425,7 @@ this pattern. This is the larger refactor; only do it if Fix 12 and
 - [x] **Verify on simulator** — dead-zone taps commit, horizontal
       drag scrolls, chevron expands, and bar blends seamlessly with
       the keyboard blur backdrop ("good now" — user, post-refinement).
-- [ ] **Verify on device** — repeat the matrix on the WJIP17 iPhone
+- [ ] **Verify on device** — repeat the matrix on the physical test iPhone
       using the documented `-allowProvisioningUpdates` deploy path.
 - [x] **Remove debug pink/red border around every candidate item** —
       done. The two `layer.border*` lines and DEBUG comment in
@@ -519,7 +519,7 @@ This works because:
 - [x] Simulator: chevron tap (including its padding) expands the panel.
 - [x] Simulator: bar and keyboard surface appear as one blur — no
       perceptible seam at bar top/bottom edge.
-- [ ] Device (WJIP17): repeat the above on real hardware.
+- [ ] Device (physical test iPhone): repeat the above on real hardware.
 - [x] Debug pink border removed.
 - [x] Redundant gesture recognizer + handler + `point(inside:)`
       override removed.

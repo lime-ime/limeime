@@ -1072,4 +1072,4 @@ English keyboard layout files (`lime_abc.json`, `lime_abc_shift.json`, `lime_abc
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update "English keyboard launcher placement" section — remove keyboard-layout changes; replace with candidate-bar approach (reference §9 of this document).
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update "Shared contract" table — remove bottom-row position rows for iPhone/iPad/Android; add candidate-bar emoji button row.
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update verification step 1 (keyboard layout check) to match new design; remove step 9 iPhone home-row `中` check.
-+ [ ] Verify all TODO items above with manual test on WJIP17 (iPhone), iPad, and Android emulator.
++ [ ] Verify all TODO items above with manual test on the physical test iPhone, iPad, and Android emulator.

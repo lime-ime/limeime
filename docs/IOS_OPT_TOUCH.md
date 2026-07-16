@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the current single-owner `KeyTouchLayer`; do not restart the touch rewrite. Harden touch delivery first, then remove synchronous compose/candidate work from the latency-critical touch stack. Only optimize candidate rendering after device evidence shows delivered taps are still blocked by main-thread UI work.
 
-**Tech Stack:** UIKit custom keyboard extension, `UIInputViewController`, `UIView` raw touch handling, `os_signpost` via `Prof`, XCTest/XCUITest, Instruments/xctrace on the WJIP17 device.
+**Tech Stack:** UIKit custom keyboard extension, `UIInputViewController`, `UIView` raw touch handling, `os_signpost` via `Prof`, XCTest/XCUITest, Instruments/xctrace on the physical test iPhone.
 
 ---
 
@@ -19,7 +19,7 @@ Success means:
 - Every physical key tap during a fast burst produces a `touchesBegan` on `KeyTouchLayer`.
 - Every valid plain-key `touchesBegan` produces one `didPress`.
 - Every `didPress` for a composing key appends/inserts exactly once.
-- A fast burst such as `wo3jiao4li2ming2wo3jiao4li2ming2` has zero silent misses on WJIP17.
+- A fast burst such as `wo3jiao4li2ming2wo3jiao4li2ming2` has zero silent misses on the physical test iPhone.
 
 ## 2. Current Evidence
 
@@ -108,9 +108,9 @@ Place them at:
 - `beginPlainKeyTouch`, immediately before `delegate?.keyboardView(self, didPress: keyDef)`.
 - `keyTouchLayer(_:touchesCancelled:with:)`.
 
-- [ ] **Step 2: Capture WJIP17 burst**
+- [ ] **Step 2: Capture physical-iPhone burst**
 
-Run the LimeIME scheme on the WJIP17 device, force-refresh the extension as in `docs/IOS_MISS_KEY.md`, then record a fixed burst:
+Run the LimeIME scheme on the physical test iPhone, force-refresh the extension as in `docs/IOS_MISS_KEY.md`, then record a fixed burst:
 
 ```text
 wo3jiao4li2ming2wo3jiao4li2ming2
@@ -242,7 +242,7 @@ func testKeyboardWindowTouchDelayIsDisabled() throws {
 }
 ```
 
-- [ ] **Step 3: Re-run the WJIP17 burst**
+- [ ] **Step 3: Re-run the physical-iPhone burst**
 
 Expected:
 
@@ -491,7 +491,7 @@ xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destinat
 Expected:
 
 - Candidate behavior tests pass.
-- `CandidateReload` p95 drops compared with the pre-change WJIP17 trace.
+- `CandidateReload` p95 drops compared with the pre-change the physical test iPhone trace.
 
 ### Task 7: Remove Synchronous `layoutIfNeeded()` From Fresh Candidate Reload
 
@@ -544,7 +544,7 @@ xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destinat
 
 Expected: all pass.
 
-- [ ] **Step 3: WJIP17 physical-device burst**
+- [ ] **Step 3: the physical test iPhone physical-device burst**
 
 Use the LimeIME scheme, force-refresh the extension binary, then type:
 
@@ -574,7 +574,7 @@ Expected: iOS Lime is no longer observably worse for missed taps. Haptic setting
 
 ## 10. Stop Conditions
 
-Stop early when the WJIP17 burst has zero silent misses.
+Stop early when the physical test iPhone burst has zero silent misses.
 
 Stop and re-research when the same bucket fails three times. The next research target is then Apple's current UIKit gesture-delivery behavior for keyboard extensions on iOS 26.x, plus a fresh comparison against azooKey's latest touch stack.
 
@@ -582,7 +582,7 @@ Stop and re-research when the same bucket fails three times. The next research t
 
 ## 11. Results — what shipped (2026-07-02, branch `ios-touch-rewrite`)
 
-**Outcome: high-speed misses resolved (device-confirmed on WJIP17 — "much better", then confirmed fixed).** Phase 1 delivery hardening did most of the work; Phase 3 removed the residual candidate-bar block. Phase 2 was **not needed** and left unimplemented. Full headless suite green (130/0).
+**Outcome: high-speed misses resolved (device-confirmed on the physical test iPhone — "much better", then confirmed fixed).** Phase 1 delivery hardening did most of the work; Phase 3 removed the residual candidate-bar block. Phase 2 was **not needed** and left unimplemented. Full headless suite green (130/0).
 
 ### Phase 0 — signposts (Task 1) — DONE, commit `49845bba`
 `Prof.event` probes added at the four sites: `TouchBegan` (after `KeyDetector.keyAt`), `PlainPress` + `PlainCommit` (in `beginPlainKeyTouch`), `TouchCancel`. Left in place for future device bucketing.
@@ -601,7 +601,7 @@ Stop and re-research when the same bucket fails three times. The next research t
 
 **Exception — Task 5 is a safe, optional micro-opt (unlike Task 4).** Caching `lastComposingPopupDisplay` to skip the duplicate `showComposingPopup()` when the display is unchanged is a *pure* optimization: no timing/behavior change, just skips redundant per-stroke work. Fine to land on its own as battery/smoothness polish, but not needed — do it only if residual jank is observed.
 
-**When to revisit Task 4:** only if a future WJIP17 signpost trace shows all counts match (`TouchBegan` = `PlainCommit` = physical taps) **yet the next begin still arrives late during compose** — i.e. the compose path is provably blocking even after today's fixes. The Task-1 signposts (`49845bba`) are in place to detect exactly that. Absent that evidence, leave Phase 2 out.
+**When to revisit Task 4:** only if a future the physical test iPhone signpost trace shows all counts match (`TouchBegan` = `PlainCommit` = physical taps) **yet the next begin still arrives late during compose** — i.e. the compose path is provably blocking even after today's fixes. The Task-1 signposts (`49845bba`) are in place to detect exactly that. Absent that evidence, leave Phase 2 out.
 
 ### Phase 3 — diffable candidate rebuild (Task 6 + 7) — DONE, commit `4daae397`
 - **Task 6:** `rebuildButtons()` no longer tears down + reallocates every cell. It grows (append only missing `CandidateButton`s), shrinks (remove only the tail), then `configureCandidateButton()` each visible cell in place (identical rendering); chrome logic moved verbatim to `updateChromeVisibility(hasCandidates:)`; `CandidateButton` keeps a reusable `minWidthConstraint`.

@@ -61,7 +61,7 @@ xcodebuild test -project "$PROJ" -scheme LimeUITests -destination "$DEST"
 
 ### Autonomy boundary — what goal mode may NOT self-certify
 
-Goal mode runs entirely in the **simulator**. It **cannot** verify the subjective "feels less clunky than Android" complaint, the **physical haptic**, or real-finger drop-rate — those need the **WJIP17 device** and a human (LimeIME scheme + force-refresh protocol, IOS_MISS_KEY.md §verification). When all gates are green, goal mode must report: *"simulator gates green; on-device feel/haptic verification is the remaining human step,"* and must **not** claim the feel complaint is resolved.
+Goal mode runs entirely in the **simulator**. It **cannot** verify the subjective "feels less clunky than Android" complaint, the **physical haptic**, or real-finger drop-rate — those need the **the physical test iPhone device** and a human (LimeIME scheme + force-refresh protocol, IOS_MISS_KEY.md §verification). When all gates are green, goal mode must report: *"simulator gates green; on-device feel/haptic verification is the remaining human step,"* and must **not** claim the feel complaint is resolved.
 
 ## 1. Why this exists
 
@@ -216,7 +216,7 @@ Ordered so each phase is shippable and reversible on its own.
 ## 7. Test / verification plan
 
 - Phase 1 & 2 land a runnable check: a headless `KeyDetector` test asserting frame/proximity/hysteresis resolution against a captured layout.
-- On the WJIP17 device (LimeIME scheme, force-refresh the extension binary per IOS_MISS_KEY.md §gotcha):
+- On the physical test iPhone (LimeIME scheme, force-refresh the extension binary per IOS_MISS_KEY.md §gotcha):
   - Fast-burst `wo3jiao4li2ming2…` → drop rate before/after Phase 1.
   - Flint sweep `q→w→e→r` commits the release key; boundary wobble is stable.
   - Regression sweep: shift, backspace repeat, long-press accents, iPad dual-row, space caret drag, emoji/candidate bar untouched.
@@ -251,7 +251,7 @@ The earlier "Phase 0→1 first, then measure" note was a *feel-tuning* suggestio
 **This authoring environment is Windows with no Swift/Xcode toolchain** (`swift`/`xcodebuild`/`xcrun` absent; UIKit and CoreGraphics do not exist on Windows). Therefore:
 
 - **On Windows (here):** author this plan and, if asked, author the Swift source as targeted edits. **No gate can run** — not the build, not the simulator, not even the pure `KeyDetector` test (it needs CoreGraphics geometry). Any code produced here is **unverified until built on Apple hardware** and must be labeled as such.
-- **On the Mac-side Claude/CI:** run the gated loop in §9. That environment has `xcodebuild` + the iOS simulator (per [docs/IOS_MISS_KEY.md](IOS_MISS_KEY.md): iPhone 17 Pro, iOS 26.5) and is the only place GATE 1–3 are meaningful. Deploy/observe on the WJIP17 device via the **LimeIME scheme** with the force-refresh protocol from IOS_MISS_KEY.md §verification.
+- **On the Mac-side Claude/CI:** run the gated loop in §9. That environment has `xcodebuild` + the iOS simulator (per [docs/IOS_MISS_KEY.md](IOS_MISS_KEY.md): iPhone 17 Pro, iOS 26.5) and is the only place GATE 1–3 are meaningful. Deploy/observe on the physical test iPhone via the **LimeIME scheme** with the force-refresh protocol from IOS_MISS_KEY.md §verification.
 
 **Consequence for "finish at once":** the *loop* finishes in one run — but that run must execute on the Mac-side Claude/CI, because the gates are the loop. If code is drafted on Windows first, it is a pre-seed for the Mac loop, not a finished result; the Mac loop still has to compile it, and the first-ever compile of a blind-drafted touch rewrite will surface errors that only the gate can catch. Cleanest path: **run the whole loop on the Mac side from Phase 0**, so every phase is authored against a live compiler.
 
@@ -302,9 +302,9 @@ Perceived responsiveness is dominated by (a)+(b) — the stages we own.
 ### 13.2 Two code suspects — experiments applied 2026-07-12
 
 1. **Key preview fades in over 80 ms.** `showPreviewFor` animated alpha 0→1 + scale 0.88→1 as a spring with `KeyPreview.appearDuration = 0.08` ([LayoutMetrics.swift](../LimeIME-iOS/LimeKeyboard/LayoutMetrics.swift), used at [KeyboardViewController.swift:3676](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L3676)). The system keyboard's preview **pops instantly, no fade** — an 80 ms ramp is ~5 frames of visible mush per keystroke. **Change: `appearDuration` 0.08 → 0** (instant pop). `disappearDuration` untouched — the system preview does animate out.
-2. **No ProMotion opt-in.** The keyboard extension's Info.plist had no `CADisableMinimumFrameDurationOnPhone`; on a ProMotion device (WJIP17) our Core Animation work may be capped at 60 Hz while the system keyboard runs the full 120 Hz touch-to-photon path. **Change: added the key = `true`** to [LimeKeyboard/Info.plist](../LimeIME-iOS/LimeKeyboard/Info.plist). Hypothesis only — Apple documents the key for apps; whether it is honored for a keyboard extension's process is exactly what the device test decides. Check with the FPS overlay (IOS_PROFILING.md §3.1).
+2. **No ProMotion opt-in.** The keyboard extension's Info.plist had no `CADisableMinimumFrameDurationOnPhone`; on a ProMotion device (physical test iPhone) our Core Animation work may be capped at 60 Hz while the system keyboard runs the full 120 Hz touch-to-photon path. **Change: added the key = `true`** to [LimeKeyboard/Info.plist](../LimeIME-iOS/LimeKeyboard/Info.plist). Hypothesis only — Apple documents the key for apps; whether it is honored for a keyboard extension's process is exactly what the device test decides. Check with the FPS overlay (IOS_PROFILING.md §3.1).
 
-### 13.3 Verification (human + WJIP17)
+### 13.3 Verification (human + physical test iPhone)
 
 1. Deploy via the LimeIME scheme + force-refresh protocol (IOS_MISS_KEY.md §gotcha).
 2. Feel-test a typing burst side-by-side vs the system keyboard.

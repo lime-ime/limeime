@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Simulator gate: `.claude/scripts/ios-gate.sh {build|unit LimeTests/<Class>}` — always green before commit. Device: WJIP17 `2A0518C1-2ECE-514D-A199-D9A7B1AFC8CD`, `-allowProvisioningUpdates`, `GIT_CONFIG_COUNT=0`.
+- Simulator gate: `.claude/scripts/ios-gate.sh {build|unit LimeTests/<Class>}` — always green before commit. Device: the physical test iPhone `2A0518C1-2ECE-514D-A199-D9A7B1AFC8CD`, `-allowProvisioningUpdates`, `GIT_CONFIG_COUNT=0`.
 - NEVER run xcodegen; `project.pbxproj` is edited by hand. New Swift files must be added to pbxproj (Shared files → both LimeIME + LimeKeyboard targets, matching existing Shared/Database entries).
 - Encoding: `.swift`/`.md` UTF-8 WITH BOM; `.json` without BOM. No new repo-root files; briefs/reports in `.claude/txt/`, scripts in `.claude/scripts/`.
 - App Group: `group.org.limeime` (`LIMEPreferenceManager.suiteName`). Bundle prefix `org.limeime`.
@@ -51,7 +51,7 @@ Task protocol (applies to every task; steps below name only the task-specific co
 **Probe logic (keyboard):** read `AppGroup/probe_marker.txt`; write `probe_result.txt` into own container `Application Support/`; attempt write `AppGroup/probe_kb_write.txt`; render one-line result in the existing status/banner area: `AGread:<ok|fail> ownWrite:<ok|fail> AGwrite:<ok|fail>` (AGwrite ok ⇒ FA is ON).
 **Steps:**
 - [ ] Implement probe (direct edit, no subagent — throwaway code)
-- [ ] `ios-gate.sh build` PASS, deploy to WJIP17: `GIT_CONFIG_COUNT=0 xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS,id=2A0518C1-2ECE-514D-A199-D9A7B1AFC8CD' -allowProvisioningUpdates build` + `xcrun devicectl device install app --device 2A0518C1 <path>.app`
+- [ ] `ios-gate.sh build` PASS, deploy to the physical test iPhone: `GIT_CONFIG_COUNT=0 xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS,id=2A0518C1-2ECE-514D-A199-D9A7B1AFC8CD' -allowProvisioningUpdates build` + `xcrun devicectl device install app --device 2A0518C1 <path>.app`
 - [ ] Read results: `xcrun devicectl device copy from --device 2A0518C1 --domain-type groupContainer --domain-identifier group.org.limeime ...` for App-Group-visible artifacts; keyboard banner via device UITest run if container copy insufficient
 - [ ] Record measured facts in IOS_FULL_ACCESS.md open items. **AGread fail on device ⇒ STOP ENTIRE PLAN.** If device FA currently ON and cannot be toggled without a human, record `FA-OFF probe = DEVICE RESIDUE` and continue.
 
@@ -245,4 +245,4 @@ Note: app-side record editor / IM counts re-point (sources-as-editable-masters p
 
 ## Final Target Gate
 
-Run exactly docs/IOS_FA_SETUP_REARCH.md §Final Target Gate items 1–7 (device rows on WJIP17 — attached at plan time). Loop on failure per that section. Device FA toggling requires a human; any human-gated row goes to the residue checklist in the final report.
+Run exactly docs/IOS_FA_SETUP_REARCH.md §Final Target Gate items 1–7 (device rows on the physical test iPhone — attached at plan time). Loop on failure per that section. Device FA toggling requires a human; any human-gated row goes to the residue checklist in the final report.
