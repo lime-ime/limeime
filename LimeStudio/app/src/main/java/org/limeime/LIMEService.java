@@ -3681,7 +3681,15 @@ public class LIMEService extends InputMethodService
         final boolean isLandScape = displayWidth > displayHeight;
 
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
-        final boolean hasSplitOption = !(isLandScape && mShowArrowKeys > 0);
+        // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
+        // ordinary layouts show 分離鍵盤 / 單手鍵盤. (spec: keyboard-menu rule)
+        final boolean isNumpadKb = mKeyboardSwitcher.isNumpadKeyboard();
+        final boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        final boolean hasSplitOption = !isNumpadKb && !(isLandScape && mShowArrowKeys > 0);
+        final boolean hasOneHandOption = !isTablet
+                && org.limeime.keyboard.ReachGeometry.oneHandAvailable(
+                        Math.min(displayWidth, displayHeight), dm.xdpi);
+        final boolean hasNumpadAnchorOption = isTablet && isNumpadKb;
 
         // Custom panel: every entry is a styled row and 簡繁轉換 hosts its segmented
         // control inline at the top level (no drill-down), matching the 喜好設定 page.
@@ -3754,13 +3762,64 @@ public class LIMEService extends InputMethodService
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(splitGroup);
         }
 
+        // 單手鍵盤 inline segmented control (0=關閉 1=靠左 2=靠右), shown only when
+        // the screen is wide enough for one-hand shrinking to be meaningful.
+        final int oneHandCurrent = clampIndex(mLIMEPref.getOneHandMode(), 3);
+        final int[] pendingOneHand = { oneHandCurrent };
+        if (hasOneHandOption) {
+            panel.findViewById(R.id.menu_onehand_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup oneHandGroup =
+                    panel.findViewById(R.id.onehand_toggle_group);
+            final int[] oneHandIds = { R.id.onehand_opt_off, R.id.onehand_opt_left, R.id.onehand_opt_right };
+            oneHandGroup.check(oneHandIds[oneHandCurrent]);
+            oneHandGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                for (int i = 0; i < oneHandIds.length; i++) {
+                    if (oneHandIds[i] == checkedId) { pendingOneHand[0] = i; break; }
+                }
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(oneHandGroup);
+        }
+
+        // 數字鍵盤位置 inline segmented control (0=滿版 1=靠左 2=靠右 3=置中), shown only
+        // for numpad-based layouts on tablets.
+        final int anchorCurrent = clampIndex(mLIMEPref.getNumpadAnchor(), 4);
+        final int[] pendingAnchor = { anchorCurrent };
+        if (hasNumpadAnchorOption) {
+            panel.findViewById(R.id.menu_numpad_anchor_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup anchorGroup =
+                    panel.findViewById(R.id.numpad_anchor_toggle_group);
+            final int[] anchorIds = { R.id.numpad_anchor_opt_fit, R.id.numpad_anchor_opt_left,
+                    R.id.numpad_anchor_opt_right, R.id.numpad_anchor_opt_center };
+            anchorGroup.check(anchorIds[anchorCurrent]);
+            anchorGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                for (int i = 0; i < anchorIds.length; i++) {
+                    if (anchorIds[i] == checkedId) { pendingAnchor[0] = i; break; }
+                }
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(anchorGroup);
+        }
+
         // Apply the inline choices once, on dismiss.
         mOptionsDialog.setOnDismissListener(d -> {
             if (pendingHan[0] != hanCurrent) {
                 handleHanConvertSelection(pendingHan[0]);
             }
+            boolean geometryChanged = false;
             if (pendingSplit[0] != splitCurrent) {
                 mLIMEPref.setSplitKeyboard(pendingSplit[0]);
+                geometryChanged = true;
+            }
+            if (pendingOneHand[0] != oneHandCurrent) {
+                mLIMEPref.setOneHandMode(pendingOneHand[0]);
+                geometryChanged = true;
+            }
+            if (pendingAnchor[0] != anchorCurrent) {
+                mLIMEPref.setNumpadAnchor(pendingAnchor[0]);
+                geometryChanged = true;
+            }
+            if (geometryChanged) {
                 invalidateStartupConfigSnapshot();
                 handleClose();
                 mKeyboardSwitcher.resetKeyboards(true);
