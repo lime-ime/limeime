@@ -213,6 +213,10 @@ public class LIMEBaseKeyboard {
     // SPLIT_ONE_HAND_KB: horizontal dots-per-inch, used to convert reach-geometry mm constants to px.
     private float mXdpi;
 
+    // SPLIT_ONE_HAND_KB: horizontal insets applied by applyHorizontalAnchor (0 when full width).
+    private int mAnchorLeftInset = 0;
+    private int mAnchorRightInset = 0;
+
     /**
      * Keyboard mode, or zero, if none.
      */
@@ -1182,6 +1186,8 @@ public class LIMEBaseKeyboard {
         final int free = mDisplayWidth - targetWidth;
         final int offset = (anchor == ANCHOR_RIGHT) ? free
                          : (anchor == ANCHOR_CENTER) ? free / 2 : 0;
+        mAnchorLeftInset = offset;
+        mAnchorRightInset = mDisplayWidth - targetWidth - offset;
         for (Key k : mKeys) {
             k.x = Math.round(k.x * s) + offset;
             k.width = Math.round(k.width * s);
@@ -1202,6 +1208,10 @@ public class LIMEBaseKeyboard {
             mKeys.add(chevron);
         }
     }
+
+    /** SPLIT_ONE_HAND_KB: horizontal insets applied by applyHorizontalAnchor (0 when full width). */
+    public int getAnchorLeftInset() { return mAnchorLeftInset; }
+    public int getAnchorRightInset() { return mAnchorRightInset; }
 
 
     private void loadKeyboard(Context context, XmlResourceParser parser) {
