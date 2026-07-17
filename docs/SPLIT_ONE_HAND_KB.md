@@ -75,7 +75,7 @@ expect tuning after on-device trials; do not scatter the numbers):
 | `SPLIT_KEY_MIN_MM` / `SPLIT_KEY_MAX_MM` | 9 / 13 | clamp for alphabetic split key width |
 | `SPLIT_ROW_MAX_MM` | 12 | split-mode row-height cap (vertical thumb sweep, 4 rows ≤ ~50 mm) |
 | `REACH_ONE_HAND_MM` | 60 | comfortable one-thumb zone radius from a bottom-corner grip |
-| `ONE_HAND_MAX_W_MM` | 63 | = `REACH_ONE_HAND_MM / 9.5 × 10` — farthest of 10 columns has its center ≈ 9.5 key-widths from the grip-side edge |
+| `ONE_HAND_MAX_W_MM` | 60 | = `REACH_ONE_HAND_MM` — the far column center of 10 columns sits at ≈ 9.5/10 × 60 = 57 mm, inside the 60 mm zone; the earlier 63 + the 4 mm gate margin would have excluded 6.1" phones (~65 mm) that the acceptance criteria include |
 | `NUMPAD_KEY_MM` | 14 | tap-target size for anchored numpad keys (finger tap, not thumb grip) |
 | `NUMPAD_ANCHOR_MAX_FRACTION` | 0.40 | anchored numpad never exceeds 40% of screen width |
 
@@ -123,7 +123,9 @@ New pref `one_hand_mode`: `0` off (default), `1` left, `2` right. Phone only.
 
 Behavior: the key area shrinks horizontally to `mm2units(ONE_HAND_MAX_W_MM)` and anchors to the
 chosen edge. Horizontal-only transform: keyboard height, candidate bar width, and emoji panel are
-untouched in v1 (avoids any #139-class frame churn on iOS).
+untouched in v1 (avoids any #139-class frame churn on iOS). One-hand mode applies in portrait
+only, replicating the iOS built-in one-handed keyboard; in landscape the keyboard renders full
+width and the setting persists.
 
 UI style — replicate the iOS built-in one-handed keyboard: the vacated strip shows a single
 chevron arrow (`❮` when anchored right, `❯` when anchored left), vertically centered, pointing
@@ -137,8 +139,8 @@ mode) only when `screenWidthMm ≥ ONE_HAND_MAX_W_MM + 4`. In practice that is �
 (iPhone Plus/Pro Max class, 6.1"+ standard iPhones, most 5.5"+ Androids) and naturally excludes
 iPhone mini/SE-width devices where shrinking would be pointless.
 
-Example: 6.7" phone, screen ~71 mm wide → key block ~63 mm (~89%), leaving a ~8 mm reach-relief
-strip; 10-column key width drops to ~6.3 mm so the far column center lands inside the 60 mm
+Example: 6.7" phone, screen ~71 mm wide → key block ~60 mm (~85%), leaving a ~11 mm reach-relief
+strip; 10-column key width drops to ~6 mm so the far column center lands inside the 60 mm
 one-thumb zone.
 
 Scope on phone: applies to **all** layouts, including numpad-based ones (they shrink and anchor
@@ -162,7 +164,8 @@ New pref `numpad_anchor`: `0` fit (default — current full-width behavior), `1`
 Applies to all numpad-based layouts:
 
 - Android: `phone_simple.xml`, `computer_simple.xml`, `phone_number.xml` (restricted fields),
-  and per-IM pure-number layers when shown standalone on a tablet.
+  Per-IM `*_number` layers are 10-column full-width layouts and stay ordinary (they split /
+  one-hand like any other layout); only the true numpad grids above anchor.
 - iOS: restricted-field numeric layouts selected via `KeyboardTypePolicy.swift`, and the
   feat#N02 computer-numpad keyboard-list entry.
 
