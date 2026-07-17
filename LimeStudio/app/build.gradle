@@ -52,8 +52,8 @@ android {
 
         minSdkVersion 25
         targetSdkVersion 36
-        versionCode 202661300
-        versionName 'v6.1.30'
+        versionCode 202661320
+        versionName 'v6.1.32'
 
         //multiDexEnabled = true
 

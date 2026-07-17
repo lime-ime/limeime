@@ -1,14 +1,20 @@
-# 萊姆中文輸入法 - LIME IME v6.1.30
+# 萊姆中文輸入法 - LIME IME v6.1.32
 
 **Google Play 套件名稱：** `org.limeime`
 
+**GitHub APK 套件名稱：** `net.toload.main.hd2026`
+
 **目標 SDK：** 36
 
-**最低 SDK：** 21
+**最低 SDK：** 25
 
-**前一正式版本：** [v6.1.29](https://github.com/lime-ime/limeime/releases/tag/v6.1.29)
+**前一正式版本：** [v6.1.31](https://github.com/lime-ime/limeime/releases/tag/v6.1.31)
 
-這版修正 Android 與 iOS 行列30 `hg` 加數字鍵的符號候選輸入，並改善 Android 候選列與 iOS 彈出鍵盤的穩定性。Android 也完成內部套件結構整理，iOS 則改善不同裝置與版面上的彈出鍵盤尺寸及按鍵回饋時機。
+這版改善 Android 按鍵輸入的穩定性與英文候選學習排序，並修正 iOS 在鍵盤保持顯示時切換到 LIME 後，App 輸入欄位可能被遮住的問題。
+
+> **Android 相容性注意：** v6.1.32 起最低支援 Android 7.1（API 25），支援範圍為 Android 7.1 至 Android 16（API 25 至 36）。
+
+> **Android 發行管道：** Google Play 版本使用套件名稱 `org.limeime` 與 Google Play 簽署流程。GitHub Release APK 使用套件名稱 `net.toload.main.hd2026`、versionCode `2026` 與舊 GitHub APK 相容簽署金鑰。Android 會把兩者視為不同 App，可以同時安裝，但不能互相直接更新。Google Play 使用者請從 Google Play 更新。
 
 Android 正式版可從 [Google Play](https://play.google.com/store/apps/details?id=org.limeime) 下載，GitHub Release 也會提供 Android APK。iPhone／iPad 正式版請從 [Apple App Store](https://apps.apple.com/app/id6784694460) 更新。
 
@@ -16,37 +22,25 @@ Android 正式版可從 [Google Play](https://play.google.com/store/apps/details
 
 ### Android
 
-- **修正行列30 `hg` 數字符號輸入**
-  - 修正輸入 `hg` 加數字鍵時，無法顯示碼表中對應符號候選的問題。
-  - 支援 `hg0`、`hg1`、`hg2`、`hg8` 與 `hg9` 等既有符號列表。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/155>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/81d8dcdc225a117b1664231e135c555f5abfd9ef>
+- **修正按鍵輸入時可能發生的卡頓或無回應**
+  - 將目前輸入法的結束鍵與按鍵名稱設定預先載入記憶體。
+  - 避免一般按鍵處理同步等待 SQLite 資料庫，降低輸入期間發生 ANR 的風險。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/158>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a2dc99d6853b5d834b79b7ac8a91cb600062f4c4>
 
-- **改善候選列穩定性**
-  - 避免候選列已離開畫面時仍嘗試開啟展開候選視窗。
-  - 過濾無效候選資料，避免影響候選顯示與操作。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/92c1790aa5adcb2b4755b4ad73fc7e9b83c201d6>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/35196f24a34af33af3f5b82a7fd404dbe2b0dfdd>
+- **改善英文自動完成候選排序**
+  - 英文候選會優先依使用者學習分數排序，再參考內建基礎分數，讓常用詞更容易出現在前方。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a2dc99d6853b5d834b79b7ac8a91cb600062f4c4>
 
-- **改善內部套件結構與測試穩定性**
-  - 將 Android 程式套件統一為 `org.limeime`，保持 Google Play App 身分不變。
-  - 隔離容易受測試執行順序影響的快取測試。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/6494cd0>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/28ab37485ac8b972629f7c8b99fbf92305035d6a>
+- **調整 Android 支援範圍**
+  - 最低支援版本調整為 Android 7.1（API 25）。
+  - 支援 Android 7.1 至 Android 16（API 25 至 36）。
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/a2dc99d6853b5d834b79b7ac8a91cb600062f4c4>
 
 ### iOS
 
-- **修正行列30 `hg` 數字符號輸入**
-  - 修正輸入 `hg` 加數字鍵時，無法顯示碼表中對應符號候選的問題。
-  - 相關 issue：<https://github.com/lime-ime/limeime/issues/155>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/81d8dcdc225a117b1664231e135c555f5abfd9ef>
-
-- **改善彈出鍵盤尺寸與穩定性**
-  - 彈出按鍵會依目前鍵盤版面調整，在 iPhone、iPad、橫向、窄版與分割版面上更一致。
-  - 改善彈出鍵盤與鍵盤生命週期切換時的穩定性。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/c45b2e298ceba8b4b4d24e1ecd839a4e44799474>
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/ef86dbf1687536b57cc2612f51b578d3ffd2ad8f>
-
-- **改善按鍵回饋時機**
-  - 在文字送出後安排按鍵回饋，改善快速輸入時的反應。
-  - 相關提交：<https://github.com/lime-ime/limeime/commit/21cfdfdd9ede1c9fa26d36363490f84a86c9f1c7>
+- **修正切換鍵盤後輸入欄位可能被遮住**
+  - 修正鍵盤保持顯示時，從較矮的系統鍵盤直接切換到 LIME 後，App 仍沿用舊鍵盤高度的問題。
+  - 改善 LIME 鍵盤高度更新，讓 App 能取得切換後的正確鍵盤範圍。
+  - 相關 issue：<https://github.com/lime-ime/limeime/issues/139>
+  - 相關提交：<https://github.com/lime-ime/limeime/commit/9dbe1a86a96fe676ac7a79e75f232673a59d3b8c>
