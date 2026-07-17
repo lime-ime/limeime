@@ -85,6 +85,24 @@
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_value_chevron"
             android:title="@string/split_keyboard" />
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/one_hand_mode"
+            android:entries="@array/one_hand_mode_options"
+            android:entryValues="@array/one_hand_mode_values"
+            android:key="one_hand_mode"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_value_chevron"
+            android:title="@string/one_hand_mode" />
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/numpad_anchor"
+            android:entries="@array/numpad_anchor_options"
+            android:entryValues="@array/numpad_anchor_values"
+            android:key="numpad_anchor"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_value_chevron"
+            android:title="@string/numpad_anchor" />
     </PreferenceCategory>
 
     <!-- 2. 鍵盤回饋 -->

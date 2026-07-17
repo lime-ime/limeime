@@ -655,7 +655,27 @@ public class LIMEPreferenceManager {
 	public void setSplitKeyboard(int mode){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		putStringAndBumpStartupConfigVersionIfChanged(sp, "split_keyboard_mode", Integer.toString(mode));
-		
+
+	}
+
+	public int getOneHandMode(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("one_hand_mode", "0"));
+	}
+
+	public void setOneHandMode(int mode){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		putStringAndBumpStartupConfigVersionIfChanged(sp, "one_hand_mode", Integer.toString(mode));
+	}
+
+	public int getNumpadAnchor(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return Integer.parseInt(sp.getString("numpad_anchor", "0"));
+	}
+
+	public void setNumpadAnchor(int mode){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		putStringAndBumpStartupConfigVersionIfChanged(sp, "numpad_anchor", Integer.toString(mode));
 	}
 
 	public long getStartupConfigVersion(){
@@ -687,6 +707,8 @@ public class LIMEPreferenceManager {
 			case "keyboard_list":
 			case "show_arrow_key":
 			case "split_keyboard_mode":
+			case "one_hand_mode":
+			case "numpad_anchor":
 			case "keyboard_theme":
 			case "language_mode":
 			case "persistent_language_mode":

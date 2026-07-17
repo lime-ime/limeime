@@ -45,6 +45,8 @@ public final class PreferenceBackupAdapter {
         add("number_row_in_english", Type.BOOLEAN);
         add("show_arrow_key", Type.INTEGER_AS_STRING);
         add("split_keyboard_mode", Type.INTEGER_AS_STRING);
+        add("one_hand_mode", Type.INTEGER_AS_STRING);
+        add("numpad_anchor", Type.INTEGER_AS_STRING);
         add("vibrate_on_keypress", Type.BOOLEAN);
         add("vibrate_level", Type.INTEGER_AS_STRING);
         add("sound_on_keypress", Type.BOOLEAN);
