@@ -1674,7 +1674,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         inputView?.setNeedsUpdateConstraints()
     }
 
-
     // MARK: - Key Event Dispatch (spec §4 onKey)
 
     private func onKey(primaryCode: Int) {
