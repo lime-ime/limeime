@@ -1736,13 +1736,21 @@ List<Mapping> scorelistSnapshot = null;
      * @return The display name for the key.
      */
     public String keyToKeyname(String code) {
+        return keyToKeyname(code, null, null);
+    }
+
+    /**
+     * Converts a code using IM metadata already loaded by the IME lifecycle.
+     * Null metadata preserves the legacy database lookup behavior.
+     */
+    public String keyToKeyname(String code, String imKeys, String imKeynames) {
         //Jeremy '11,6,21 Build cache according using cachekey
 
         String cacheKey = cacheKey(code);
         String result = keynamecache.get(cacheKey);
         if (result == null) {
             //loadDBAdapter(); openLimeDatabase();
-            result = dbadapter.keyToKeyName(code, tablename, true);
+            result = dbadapter.keyToKeyName(code, tablename, true, imKeys, imKeynames);
             keynamecache.put(cacheKey, result);
         }
         return result;

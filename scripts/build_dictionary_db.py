@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # build_dictionary_db.py
 #
 # Build the bundled English `dictionary.db` payload for LimeIME's Android scored
@@ -248,7 +248,8 @@ def patch_seed(seed_path, reference_seed):
             )
         """)
         con.execute("CREATE INDEX IF NOT EXISTS dictionary_word_idx ON dictionary(word)")
-        con.execute("CREATE INDEX IF NOT EXISTS dictionary_rank_idx ON dictionary(score + basescore)")
+        con.execute("CREATE INDEX IF NOT EXISTS dictionary_score_basescore_idx "
+                    "ON dictionary(score DESC, basescore DESC)")
         # Do NOT insert im(code='dictionary', title='version') — absence triggers import.
         # Leave user_version as-is (stays 104).
         con.execute(f"PRAGMA user_version = {before}")

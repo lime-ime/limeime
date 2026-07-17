@@ -551,6 +551,30 @@ public class LimeDB103IntegrationTest {
         }
     }
 
+    @Test
+    public void englishUserScoreTakesPriorityOverBaseScoreLikeChineseIm() throws Exception {
+        LimeDB db = new LimeDB(appContext);
+        db.close();
+
+        SQLiteDatabase writable = SQLiteDatabase.openDatabase(
+                appDb.getPath(), null, SQLiteDatabase.OPEN_READWRITE);
+        try {
+            writable.execSQL("INSERT OR REPLACE INTO dictionary(word, basescore, score) VALUES(?, ?, ?)",
+                    new Object[]{"zzalignlearned", 0, 1});
+            writable.execSQL("INSERT OR REPLACE INTO dictionary(word, basescore, score) VALUES(?, ?, ?)",
+                    new Object[]{"zzalignpopular", 10000, 0});
+        } finally {
+            writable.close();
+        }
+
+        LimeDB reopened = new LimeDB(appContext);
+        try {
+            assertEquals("zzalignlearned", reopened.getEnglishSuggestions("zzalign").get(0));
+        } finally {
+            reopened.close();
+        }
+    }
+
     private boolean dictionaryHasColumn(String column) {
         SQLiteDatabase db = SQLiteDatabase.openDatabase(appDb.getPath(), null, SQLiteDatabase.OPEN_READONLY);
         Cursor c = null;

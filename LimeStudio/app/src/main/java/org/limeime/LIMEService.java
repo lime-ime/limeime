@@ -128,6 +128,7 @@ public class LIMEService extends InputMethodService
     private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
     private static final String IMKEYS_CONFIG = "imkeys";
+    private static final String IMKEYNAMES_CONFIG = "imkeynames";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
 
@@ -295,6 +296,7 @@ public class LIMEService extends InputMethodService
     // Cached root set (imkeys) for the active IM — the authoritative acceptance/selkey test.
     // Refreshed in initialIMKeyboard(); empty only for a custom IM imported without imkeys.
     private String currentImKeys = "";
+    private final HashMap<String, String> imConfigCache = new HashMap<>();
     private boolean hasQuickSwitch = false;
 
     // Hard Keyboad Shift + Space Status
@@ -2340,17 +2342,12 @@ public class LIMEService extends InputMethodService
     }
 
     private boolean handleEndkeyCommit(int primaryCode) {
-        String endkey = "";
-        String imkeys = "";
-        if (SearchSrv != null && activeIM != null) {
-            endkey = SearchSrv.getImConfig(activeIM, LIME.IM_LIME_ENDKEY);
-            imkeys = SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
-        }
-        if (!isEndkeyCommitKey(primaryCode, endkey, mEnglishOnly, mComposing.length(), hasCandidatesShown)) {
+        if (!isEndkeyCommitKey(primaryCode, cachedImConfig(LIME.IM_LIME_ENDKEY), mEnglishOnly,
+                mComposing.length(), hasCandidatesShown)) {
             return false;
         }
 
-        if (isKeyInImkeys(primaryCode, imkeys)) {
+        if (isKeyInImkeys(primaryCode, cachedImConfig(IMKEYS_CONFIG))) {
             return commitComposingWithAppendedEndkey(primaryCode);
         }
 
@@ -2359,6 +2356,24 @@ public class LIMEService extends InputMethodService
         }
 
         return commitFreshEndkeyOrRaw(primaryCode);
+    }
+
+    private void refreshImConfigCache() {
+        imConfigCache.clear();
+        if (SearchSrv == null || activeIM == null) return;
+
+        cacheImConfig(LIME.IM_LIME_ENDKEY, SearchSrv.getImConfig(activeIM, LIME.IM_LIME_ENDKEY));
+        cacheImConfig(IMKEYS_CONFIG, SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG));
+        cacheImConfig(IMKEYNAMES_CONFIG, SearchSrv.getImConfig(activeIM, IMKEYNAMES_CONFIG));
+    }
+
+    private void cacheImConfig(String field, String value) {
+        imConfigCache.put(field, value == null ? "" : value);
+    }
+
+    private String cachedImConfig(String field) {
+        String value = imConfigCache.get(field);
+        return value == null ? "" : value;
     }
 
     private boolean commitCurrentEndkeyComposing() {
@@ -4477,7 +4492,8 @@ public class LIMEService extends InputMethodService
 
                     // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
                     if (SearchSrv != null && SearchSrv.getTablename() != null) {
-                        String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
+                        String keynameString = SearchSrv.keyToKeyname(finalKeyString,
+                                cachedImConfig(IMKEYS_CONFIG), cachedImConfig(IMKEYNAMES_CONFIG));
                         if (mCandidateView != null
                                 && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
                                 && !keynameString.trim().isEmpty()
@@ -5467,9 +5483,10 @@ public class LIMEService extends InputMethodService
         // stored "imkeys" meta is always BPMF — so resolve per type (mirror iOS imKeysForTable),
         // else et26/hsu acceptance wrongly composes BPMF's digits / ; / - . Other IMs read the
         // stored imkeys (matches the endkey path's getImConfig(activeIM, IMKEYS_CONFIG) at :2334).
+        refreshImConfigCache();
         String activeImKeys = activeIM.equals(LIME.IM_PHONETIC)
                 ? SearchSrv.getPhoneticImKeys(mLIMEPref.getPhoneticKeyboardType())
-                : SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
+                : cachedImConfig(IMKEYS_CONFIG);
         currentImKeys = (activeImKeys == null) ? "" : activeImKeys;
     }
 

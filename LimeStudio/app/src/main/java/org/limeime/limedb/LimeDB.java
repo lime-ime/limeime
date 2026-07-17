@@ -1624,6 +1624,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
      * @return The converted key name string, or original code if conversion fails
      */
     public String keyToKeyName(String code, String table, Boolean composingText) {
+        return keyToKeyName(code, table, composingText, null, null);
+    }
+
+    /**
+     * Converts input codes using optional preloaded per-IM metadata.
+     * Null metadata falls back to the legacy database lookup.
+     */
+    public String keyToKeyName(String code, String table, Boolean composingText,
+                               String configuredImKeys, String configuredImKeynames) {
         //Jeremy '11,8,30 
         if (composingText && code.length() > COMPOSING_CODE_LENGTH_LIMIT)
             return code;
@@ -1687,8 +1696,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
             String keyString, keynameString, finalKeynameString = null;
             //Jeremy 11,6,4 Load keys and keynames from im table.
-            keyString = getImConfig(table, "imkeys");
-            keynameString = getImConfig(table, "imkeynames");
+            keyString = configuredImKeys != null
+                    ? configuredImKeys : getImConfig(table, "imkeys");
+            keynameString = configuredImKeynames != null
+                    ? configuredImKeynames : getImConfig(table, "imkeynames");
 
             // Force the system to use the Default KeyString for Array Keyboard
             if (table.equals(LIME.DB_TABLE_ARRAY)) {
@@ -5091,12 +5102,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         try {
             int similarSize = mLIMEPref.getSimilarCodeCandidates();
 
-            // Indexed prefix range scan (no FTS). Ranking: (score + basescore) DESC, word ASC.
+            // Indexed prefix range scan (no FTS). Match Chinese IM ranking: learned score first.
             // Keeps the #103 exact-match filter (word <> prefix).
             String selectString =
                     "SELECT word FROM " + DICTIONARY_TABLE +
                     " WHERE word >= ? AND word < ? AND word <> ?" +
-                    " ORDER BY (score + basescore) DESC, word ASC LIMIT " + similarSize;
+                    " ORDER BY score DESC, basescore DESC, word ASC LIMIT " + similarSize;
 
             Cursor cursor = db.rawQuery(selectString, new String[]{prefix, upper, prefix});
             if (cursor != null) {
@@ -5475,7 +5486,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     "score INTEGER NOT NULL DEFAULT 0)");
         }
         targetDb.execSQL("CREATE INDEX IF NOT EXISTS dictionary_word_idx ON " + DICTIONARY_TABLE + "(word)");
-        targetDb.execSQL("CREATE INDEX IF NOT EXISTS dictionary_rank_idx ON " + DICTIONARY_TABLE + "(score + basescore)");
+        targetDb.execSQL("DROP INDEX IF EXISTS dictionary_rank_idx");
+        targetDb.execSQL("CREATE INDEX IF NOT EXISTS dictionary_score_basescore_idx ON "
+                + DICTIONARY_TABLE + "(score DESC, basescore DESC)");
     }
 
     /** True when a 'dictionary' object exists and is an FTS virtual table. */
@@ -5535,7 +5548,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         // Android's fts3 DROP TABLE does not always cascade-drop the shadow tables, so drop
         // every remaining 'dictionary_%' SHADOW TABLE discovered from sqlite_master. Restrict
         // to type='table' so we never touch the scored table's own indexes (dictionary_word_idx
-        // / dictionary_rank_idx also match 'dictionary_%').
+        // / dictionary_score_basescore_idx also match 'dictionary_%').
         for (String shadow : remainingDictionaryShadowTables(targetDb)) {
             try {
                 targetDb.execSQL("DROP TABLE IF EXISTS " + shadow);

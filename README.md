@@ -33,9 +33,15 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 - 套件名稱：net.toload.main.hd2026
 - 顯示名稱：萊姆輸入法A
 - 目標 SDK：36
-- 最低支援 SDK：21
+- 最低支援 SDK：25（Android 7.1；自 v6.1.32 起）
 - GitHub Release APK 與 Google Play 版本使用不同套件名稱與簽署金鑰，可以同時安裝並共存，但不能互相直接更新或升級
 - Google Play 封閉測試使用者請從 Google Play 更新。若要在 GitHub APK 與 Google Play 版本之間切換使用，請先備份輸入法資料
+
+### 為何自 v6.1.32 起最低支援 Android 7.1（API 25）
+
+LIME 的輸入法碼表由 GitHub 雲端下載；GitHub 會將下載導向使用 Let's Encrypt 憑證鏈的 `raw.githubusercontent.com`。Android 7.0（API 24）以前的系統 CA 信任庫不包含該憑證鏈所需的 ISRG Root X1，因此無法建立受信任的 TLS 連線，碼表下載與安裝會失敗。
+
+系統 CA 信任庫屬於 Android 作業系統，App 無法安全地替舊系統更新。LIME 不採用略過憑證驗證或內建自訂 CA 的繞過方式，因此從 v6.1.32 起，Android 版本的最低支援層級設定為 API 25。API 21–24 裝置無法從 Google Play 安裝 v6.1.32 之後的版本，也無法側載新版 APK；仍可繼續使用 v6.1.31 或更早的相容版本。
 
 ## 開發
 

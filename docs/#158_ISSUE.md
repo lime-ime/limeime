@@ -1,113 +1,178 @@
-# Issue #158: Android End-Key Hot Path Blocks Main Thread on SQLite
+# Issue #158: Cache Android End-Key IM Configuration Off the Key Path
 
 ## Status
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/158
 - Classification: `bug` + `Type-Defect` + `Priority-Medium`
-- State: open; source-level root cause identified from one Android Vitals sample
 - Platform: Android only
-- Fix state: not implemented
+- Root cause: confirmed from Android Vitals and source tracing
+- Fix: implemented locally with RED/GREEN instrumentation coverage
 
-## Summary
+## Failure
 
-Android Vitals reported an input-dispatch timeout/ANR in LIME v6.1.30 while the IME main thread was handling a key-up event. The main thread was parked waiting for a SQLite connection from `SQLiteConnectionPool`.
-
-## Environment
-
-- Device: OPPO Reno8 5G
-- Android: 14 (SDK 34)
-- LIME: v6.1.30 (`202661300`)
-- Vitals samples: 1
-
-## Relevant stack
+Android Vitals reported an input-dispatch timeout/ANR in LIME v6.1.30 on an OPPO Reno8 5G running Android 14. The IME main thread was handling key-up while waiting for a SQLite connection:
 
 ```text
-"main" tid=1 Timed Waiting
-at android.database.sqlite.SQLiteConnectionPool.waitForConnection
-at android.database.sqlite.SQLiteDatabase.rawQuery
-at org.limeime.limedb.LimeDB.openDBConnection
-at org.limeime.limedb.LimeDB.checkDBConnection
-at org.limeime.limedb.LimeDB.getImConfig
-at org.limeime.SearchServer.getImConfig
-at org.limeime.LIMEService.handleEndkeyCommit
-at org.limeime.LIMEService.onKey
-at org.limeime.keyboard.PointerTracker.onUpEvent
+PointerTracker.onUpEvent
+→ LIMEService.onKey
+→ LIMEService.handleEndkeyCommit
+→ SearchServer.getImConfig
+→ LimeDB.getImConfig
+→ LimeDB.checkDBConnection
+→ LimeDB.openDBConnection
+→ SQLiteDatabase.rawQuery
+→ SQLiteConnectionPool.waitForConnection
 ```
 
-## Source analysis
+Before the fix, every ordinary key entering `handleEndkeyCommit()` synchronously read both `limeendkey` and stored `imkeys`, even when the key was not an end key. Each read also ran the connection-health `SELECT 1`, so one key could acquire a SQLite connection four times.
 
-`LIMEService.handleEndkeyCommit()` runs before the ordinary character and Space/Enter branches and currently reads two IM metadata values synchronously for every key that reaches this branch, even when the key is not configured as a Lime end key:
+The touch path must not depend on database availability.
+
+## Fix: backport the iOS IM-config cache
+
+iOS `KeyboardViewController` caches `limeendkey`, `imkeys`, and `imkeynames` per active IM. Android now caches the same three fields in a field-keyed map:
 
 ```java
-endkey = SearchSrv.getImConfig(activeIM, LIME.IM_LIME_ENDKEY);
-imkeys = SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
+private final HashMap<String, String> imConfigCache = new HashMap<>();
 ```
 
-Each `LimeDB.getImConfig()` calls `checkDBConnection()`, which calls `openDBConnection(false)`. For an already-open database, that method executes `SELECT 1` before the requested metadata query. One key can therefore perform up to four SQLite connection acquisitions on the IME main thread.
+`refreshImConfigCache()` eagerly reads the active IM's exact stored `limeendkey`, `imkeys`, and `imkeynames`. `handleEndkeyCommit()` reads only the map and performs no `SearchServer`, `LimeDB`, or SQLite call.
 
-The Vitals sample was captured while a `SELECT 1` health check was waiting for a pooled connection. The available trace does not identify which other thread held the connection, but the touch handler must not depend on SQLite availability.
+The composing popup passes cached `imkeys` and `imkeynames` through `SearchServer.keyToKeyname()` to `LimeDB.keyToKeyName()`. On a key-map cache miss, `LimeDB` builds the map from those preloaded values instead of querying IM metadata. The legacy overload remains available and falls back to database reads when no preloaded values are supplied.
 
-`currentImKeys` is already cached when the active IM is initialized. The end-key path bypasses that cache and performs new database reads.
+Android deliberately keeps cached stored `imkeys` separate from `currentImKeys`:
 
-Concrete source anchors on current `master`:
+- `imConfigCache["imkeys"]` preserves the exact stored metadata used by the pre-fix end-key path and key-name mapping.
+- `currentImKeys` remains the composing-acceptance set.
+- Phonetic ET26/HSU variants continue resolving `currentImKeys` through `getPhoneticImKeys()`.
+- Android does not copy iOS's empty-config fallback to `currentImKeys`, because that would change existing Android phonetic/custom-table behavior.
 
-- `LIMEService.onKey()` calls `handleEndkeyCommit(primaryCode)` in the ordinary key path.
-- `SearchServer.getImConfig()` delegates directly to `LimeDB.getImConfig()` without a metadata cache.
-- `LimeDB.getImConfig()` checks/reopens the connection and then runs its metadata query.
-- `LimeDB.openDBConnection(false)` runs `SELECT 1` when an existing handle is open.
+For non-phonetic IMs, initialization reuses cached stored `imkeys` as `currentImKeys`, avoiding a duplicate metadata query.
 
-## Existing test coverage and gap
+## Android lifecycle
 
-- `LIMEServiceTest` covers Lime end-key opt-in detection and commit behavior, but its service tests mock `SearchServer.getImConfig()` during `handleEndkeyCommit()` and therefore preserve rather than reject the blocking architecture.
-- `AcceptsIntoComposingTest` covers root acceptance and phonetic-variant behavior, but not the end-key database-access boundary.
-- `LimeDBTest` covers imported end-key metadata, and `ManageImControllerTest` covers editing and clearing `limeendkey`.
-- Android instrumented `SearchServerTest` covers `getImConfig()` behavior with a stub database, but does not prove that key-up handling avoids `getImConfig()`.
+The iOS cache is lazy and clears on `activeIM.didSet`. Android needs a stronger lifecycle because a first-touch miss would still reach SQLite.
 
-These are regression anchors for the refactor, but no inspected test currently fails when `handleEndkeyCommit()` performs a database read. The new test should make the metadata source observable, preload or refresh the active-IM cache, invoke the end-key decision path, and assert both the expected commit decision and zero database/config reads during key handling. Cache refresh tests must also cover active-IM switches, same-IM metadata edits, import/reload, and restore/reset paths.
+Android refreshes eagerly at the shared `initialIMKeyboard()` boundary. Existing flows already route through that boundary:
 
-## Proposed fix
+| Event | Refresh behavior |
+|---|---|
+| Keyboard process/startup | `onStartInput()` initializes the active Chinese IM before key handling |
+| New input field / keyboard reopened | `onStartInput()` reinitializes the active IM |
+| Next/previous IM | `switchToNextActivatedIM()` calls `initialIMKeyboard()` |
+| Explicit IM selection | `handleIMSelection()` calls `initialIMKeyboard()` |
+| Same-IM `limeendkey` edit | Settings closes the keyboard; the next input start reloads metadata |
+| Mapping import/reload | The next input start reloads metadata from the imported IM rows |
+| Database restore/factory reset | The next input start reloads metadata from the reopened/replaced database |
 
-1. Cache the active IM's `limeendkey` and the exact stored `imkeys` value when the IM is initialized or changed.
-2. Make `handleEndkeyCommit()` use only the cached strings, with no database calls in the key touch path.
-3. Refresh/invalidate the cache after active-IM changes, mapping import/reload, metadata editing, and database restore/reset.
-4. Review the `SELECT 1` probe run on every already-open `openDBConnection(false)` call separately. Removing that probe alone is not sufficient because the following metadata query can still block.
+No new observer, broadcast, global cache, or invalidation framework is required. The values may be stale only while the keyboard is not accepting input; they are refreshed before the next Chinese key path becomes active.
 
-Use a separate cached end-key `imkeys` value rather than automatically substituting `currentImKeys`, because phonetic keyboard variants resolve `currentImKeys` differently and the ANR fix should preserve current end-key behavior.
+## Test-driven implementation
 
-The iOS implementation is a useful reference, not evidence that Android can reuse `currentImKeys` unchanged. `KeyboardViewController` uses a per-IM `imConfigCache`, clears it when `activeIM` changes, and reads `limeendkey` / configured `imkeys` through that cache in `handleLimeEndkeyCommit()`. Its `activeImkeysForEndkey()` deliberately falls back to `currentImKeys` when configured `imkeys` is empty; Android should preserve its current built-in, phonetic-variant, and custom-table behavior explicitly rather than copying that fallback without regression tests.
+### RED: deterministic ANR-boundary reproduction
+
+`LIMEServiceTest.endkeyHotPathDoesNotWaitForUnavailableImConfigSource()` replaces the IM-config source with a controlled blocking source, invokes the real private `handleEndkeyCommit()` path on a named IME key thread, captures the blocked stack, and releases the latch so the suite cannot hang permanently.
+
+Before the fix it failed with:
+
+```text
+CountDownLatch.await
+→ SearchServer.getImConfig
+→ LIMEService.handleEndkeyCommit
+
+AssertionError: Key handling reached the unavailable IM-config source
+```
+
+This is the deterministic regression boundary for the production `SQLiteConnectionPool.waitForConnection` failure: key handling must not enter the configuration source at all.
+
+### GREEN: cache backport
+
+The minimal production change:
+
+1. Adds an iOS-shaped cache for stored `limeendkey`, `imkeys`, and `imkeynames` to `LIMEService`.
+2. Eagerly refreshes all three fields in `initialIMKeyboard()`.
+3. Makes `handleEndkeyCommit()` use only cached strings.
+4. Reuses cached stored `imkeys` for non-phonetic composing acceptance.
+5. Passes cached `imkeys` and `imkeynames` through the composing key-name path.
+
+The reproduction test then passes while its configuration source remains unavailable.
+
+### Behavior regression coverage
+
+Existing end-key tests now preload through the same cache refresh and continue covering:
+
+- Lime end-key opt-in detection.
+- Appending an end key that belongs to stored `imkeys`.
+- Committing the current candidate before an end key outside stored `imkeys`.
+- Fresh trigger mapping and raw-trigger fallback.
+- Stale prefix candidate rejection.
+- Conventional `endkey` metadata remaining distinct from `limeendkey`.
+- Empty and null metadata normalization.
+
+The cache/source boundary test additionally proves zero `getImConfig()` calls during key handling after preload.
+
+## iOS parity
+
+| Behavior | iOS | Android |
+|---|---|---|
+| Cache owner | `KeyboardViewController` | `LIMEService` |
+| Cached IM-config fields | `limeendkey`, `imkeys`, `imkeynames` | `limeendkey`, `imkeys`, `imkeynames` |
+| Hot-path storage reads after preload | None | None |
+| Active-IM refresh | Clear on `activeIM.didSet`, lazy refill | Eager refill in `initialIMKeyboard()` |
+| First key after refresh | May perform first JSON lookup | Memory-only |
+| Composing key set | Separate `currentImKeys` | Separate `currentImKeys` |
+| Custom key-name map input | Cached `imkeys` + `imkeynames` | Cached `imkeys` + `imkeynames` passed to `LimeDB` |
+| Empty stored-`imkeys` fallback | Falls back to `currentImKeys` | Preserves existing Android empty-string behavior |
+
+The implementations are output-equivalent for populated stored metadata. Android intentionally strengthens preload timing and preserves its existing fallback semantics.
+
+## Verification evidence
+
+Focused reproduction, Nexus 6 AVD / Android 5.0.2 API 21:
+
+```bash
+./gradlew :app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=org.limeime.LIMEServiceTest#endkeyHotPathDoesNotWaitForUnavailableImConfigSource
+```
+
+Result: `BUILD SUCCESSFUL`, 1/1 test passed.
+
+Focused end-key behavior suite:
+
+```text
+Finished 8 tests on Nexus_6(AVD) - 5.0.2
+BUILD SUCCESSFUL
+```
+
+Focused startup/IM-switch lifecycle suite: 4/4 passed (`startupConfigSnapshotAvoidsRepeatedKeyboardConfigQueriesWhenVersionUnchanged`, email-first invalidation, switch-to-IM refresh, and explicit IM-selection refresh).
+
+The latest combined run executed 285 tests (`LIMEServiceTest` plus two focused `SearchServerTest` parity cases): 284 passed. The only failure was the pre-existing data-dependent `test_5_19_SwitchBetweenIM`, which directly expects a Dayi mapping for code `x`; the fresh Nexus 6 AVD did not have a Dayi table installed. The focused cache, end-key, and lifecycle suites were green.
+
+The final four-test parity boundary passed: three-field preload, cached `imkeynames` propagation, legacy key-name caching, and the #158 no-wait regression.
+
+Compilation:
+
+```bash
+./gradlew :app:compileDebugJavaWithJavac :app:compileDebugAndroidTestJavaWithJavac
+```
+
+Result: `BUILD SUCCESSFUL`; existing unchecked/deprecation warnings only.
 
 ## Acceptance criteria
 
-- `handleEndkeyCommit()` performs no SQLite/database access.
-- The cache is populated before the first key reaches the end-key decision path.
-- End-key behavior remains unchanged for built-in, phonetic-variant, and custom IM tables.
-- Changing an active IM or its editable `limeendkey` metadata refreshes the cached values.
-- Import/restore paths cannot leave stale end-key metadata indefinitely.
-- Unit/instrumented tests cover cache refresh and end-key handling without a database read on key-up.
-- Android regression tests pass.
+- [x] `handleEndkeyCommit()` performs no database/configuration access.
+- [x] Cache population occurs before the active Chinese key path.
+- [x] Stored end-key `imkeys` remains separate from phonetic composing acceptance.
+- [x] `imkeynames` is cached and consumed by the composing key-name path.
+- [x] Active-IM switches refresh through the shared initialization boundary.
+- [x] Same-IM edit/import/restore paths refresh on the next input start.
+- [x] Deterministic regression test reproduces the old blocking boundary.
+- [x] Existing focused end-key behavior tests pass.
+- [ ] Full Android instrumentation regression suite passes.
+- [ ] Device stress verification confirms no new main-thread SQLite sample while typing during database maintenance.
 
-## Follow-up questions
+## Out of scope
 
-- Does Android Vitals show additional samples, affected IM tables, or preceding long-running database work beyond this single trace?
-- Can local stress testing reproduce connection-pool contention while imports, restore, learning, or metadata updates overlap typing?
-- Which existing import, metadata-edit, restore, and active-IM-change callbacks can refresh the cache immediately, and which need a new invalidation hook?
+Removing the `SELECT 1` probe in `openDBConnection(false)` is separate work. It is no longer reachable from end-key key handling, and removing it alone would not have fixed the following metadata query.
 
-These questions can refine concurrency testing, but they do not block removing database access from the touch path.
-
-## Platform impact
-
-### Android
-
-Confirmed affected scope. The Vitals stack and inspected Java call chain place synchronous SQLite work on Android's IME main-thread key-up path. Android needs the cache/invalidation fix and regression coverage described above.
-
-### iOS
-
-This exact ANR path is not shared with iOS: the iOS keyboard uses its own `KeyboardViewController` path and an `imConfigCache` for `imkeys`, `imkeynames`, and `limeendkey`, rather than Android's `LIMEService` / `LimeDB` SQLite call chain. No iOS code change or TestFlight retest is indicated by the available Android trace. The iOS inspection is architectural parity context, not evidence that all iOS metadata-refresh cases are covered.
-
-## Verification plan
-
-1. Add a failing Android regression test proving the current end-key key-up path performs metadata reads.
-2. Populate and invalidate the cache through active-IM initialization/change and the identified import/edit/restore hooks.
-3. Re-run the focused test and verify end-key behavior for built-in, phonetic-variant, and custom tables.
-4. Run Android unit and instrumented regression checks.
-5. Exercise typing while database-heavy import/restore or learning activity is running, and monitor main-thread SQLite access/ANR behavior.
+iOS requires no code change for this Android Vitals incident.

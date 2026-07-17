@@ -316,6 +316,8 @@ public class SearchServerTest {
         int keyToKeyNameCalls = 0;
         String lastKeyToKeyNameCode;
         String lastKeyToKeyNameTable;
+        String lastKeyToKeyNameImKeys;
+        String lastKeyToKeyNameImKeynames;
         String keyNameResponse;
         
         // 3.6 backup/restore/converter fields
@@ -514,6 +516,14 @@ public class SearchServerTest {
                 return keyNameResponse;
             }
             return code + "_name";
+        }
+
+        @Override
+        public String keyToKeyName(String code, String tablename, Boolean preferUserDef,
+                                   String imKeys, String imKeynames) {
+            lastKeyToKeyNameImKeys = imKeys;
+            lastKeyToKeyNameImKeynames = imKeynames;
+            return keyToKeyName(code, tablename, preferUserDef);
         }
 
         @Override
@@ -4041,6 +4051,26 @@ public class SearchServerTest {
             assertEquals("first_name", second);
             assertEquals(1, stub.keyToKeyNameCalls);
             assertEquals("aa", stub.lastKeyToKeyNameCode);
+        } finally {
+            setStatic("dbadapter", original);
+        }
+    }
+
+    @Test(timeout = 5000)
+    public void keyToKeynameAcceptsPreloadedImConfig() {
+        Object original = getStatic("dbadapter", Object.class);
+        StubLimeDBRecords stub = new StubLimeDBRecords(appContext);
+        setStatic("dbadapter", stub);
+        try {
+            ConcurrentHashMap<String, String> keynamecache =
+                    getStatic("keynamecache", ConcurrentHashMap.class);
+            keynamecache.clear();
+
+            searchServer.keyToKeyname("cached-config-key", "abc", "A|B|C");
+
+            assertEquals("abc", stub.lastKeyToKeyNameImKeys);
+            assertEquals("A|B|C", stub.lastKeyToKeyNameImKeynames);
+            assertEquals(1, stub.keyToKeyNameCalls);
         } finally {
             setStatic("dbadapter", original);
         }

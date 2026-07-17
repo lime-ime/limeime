@@ -50,7 +50,7 @@ android {
     defaultConfig {
         applicationId "org.limeime"
 
-        minSdkVersion 21
+        minSdkVersion 25
         targetSdkVersion 36
         versionCode 202661300
         versionName 'v6.1.30'

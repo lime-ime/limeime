@@ -1263,7 +1263,7 @@ public class LimeDBTest {
         assertFalse("sal should return bundled dictionary suggestions", suggestions.isEmpty());
 
         // The bundled dictionary.db ranks by real Google Books Ngrams frequency
-        // (ORDER BY score + basescore DESC), NOT alphabetically. In that corpus
+        // (ORDER BY score DESC, basescore DESC), NOT alphabetically. In that corpus
         // "sales" (basescore 5357) outranks the alphabetically-earlier-or-later
         // "sale"/"salt", so the most frequent prefix match leads.
         assertEquals("most frequent 'sal' prefix should lead", "sales", suggestions.get(0));

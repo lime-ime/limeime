@@ -53,8 +53,11 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
@@ -520,6 +523,85 @@ public class LIMEServiceTest {
 
         assertFalse((Boolean) handleEndkeyCommit.invoke(service, (int) ';'));
         verify(candidateView, never()).takeSelectedSuggestion();
+    }
+
+    @Test
+    public void endkeyHotPathDoesNotWaitForUnavailableImConfigSource() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        CountDownLatch configReadStarted = new CountDownLatch(1);
+        CountDownLatch releaseConfigRead = new CountDownLatch(1);
+        CountDownLatch keyHandlingFinished = new CountDownLatch(1);
+        AtomicReference<Throwable> keyHandlingFailure = new AtomicReference<>();
+
+        SearchServer searchServer = mock(SearchServer.class);
+        LIMEService service = new LIMEService();
+        initializeEndkeyTestService(service, appContext, searchServer,
+                "custom", "custom", "", false);
+        reset(searchServer);
+        when(searchServer.getImConfig(anyString(), anyString())).thenAnswer(invocation -> {
+            configReadStarted.countDown();
+            releaseConfigRead.await(5, TimeUnit.SECONDS);
+            return "";
+        });
+        Method handleEndkeyCommit = LIMEService.class.getDeclaredMethod(
+                "handleEndkeyCommit", int.class);
+        handleEndkeyCommit.setAccessible(true);
+
+        Thread imeKeyThread = new Thread(() -> {
+            try {
+                handleEndkeyCommit.invoke(service, (int) 'a');
+            } catch (Throwable failure) {
+                keyHandlingFailure.set(failure);
+            } finally {
+                keyHandlingFinished.countDown();
+            }
+        }, "issue-158-ime-key-thread");
+
+        imeKeyThread.start();
+        boolean touchedConfigSource = configReadStarted.await(1, TimeUnit.SECONDS);
+        boolean finishedWhileSourceUnavailable = keyHandlingFinished.await(250, TimeUnit.MILLISECONDS);
+        StackTraceElement[] blockedStack = imeKeyThread.getStackTrace();
+        releaseConfigRead.countDown();
+        imeKeyThread.join(2_000);
+
+        if (keyHandlingFailure.get() != null) {
+            throw new AssertionError("End-key handling failed", keyHandlingFailure.get());
+        }
+        assertFalse("Key handling reached the unavailable IM-config source; blocked stack:\n"
+                + formatStackTrace(blockedStack), touchedConfigSource);
+        assertTrue("Key handling did not finish while the IM-config source was unavailable",
+                finishedWhileSourceUnavailable);
+    }
+
+    @Test
+    public void imConfigCachePreloadsIosParityFields() throws Exception {
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getImConfig("custom", LIME.IM_LIME_ENDKEY)).thenReturn(";,");
+        when(searchServer.getImConfig("custom", "imkeys")).thenReturn("abc");
+        when(searchServer.getImConfig("custom", "imkeynames")).thenReturn("A|B|C");
+        LIMEService service = new LIMEService();
+        setPrivateField(service, "SearchSrv", searchServer);
+        setPrivateField(service, "activeIM", "custom");
+
+        Method refreshImConfigCache = LIMEService.class.getDeclaredMethod("refreshImConfigCache");
+        refreshImConfigCache.setAccessible(true);
+        refreshImConfigCache.invoke(service);
+
+        Map<String, String> cache = getPrivateField(service, "imConfigCache");
+        assertEquals(";,", cache.get(LIME.IM_LIME_ENDKEY));
+        assertEquals("abc", cache.get("imkeys"));
+        assertEquals("A|B|C", cache.get("imkeynames"));
+        verify(searchServer).getImConfig("custom", LIME.IM_LIME_ENDKEY);
+        verify(searchServer).getImConfig("custom", "imkeys");
+        verify(searchServer).getImConfig("custom", "imkeynames");
+    }
+
+    private String formatStackTrace(StackTraceElement[] stackTrace) {
+        StringBuilder formatted = new StringBuilder();
+        for (StackTraceElement element : stackTrace) {
+            formatted.append("  at ").append(element).append('\n');
+        }
+        return formatted.toString();
     }
 
     @Test
@@ -1069,6 +1151,9 @@ public class LIMEServiceTest {
         setPrivateField(service, "hasPhysicalKeyPressed", false);
         setPrivateField(service, "hasNumberMapping", false);
         setPrivateField(service, "hasSymbolMapping", false);
+        Method refreshImConfigCache = LIMEService.class.getDeclaredMethod("refreshImConfigCache");
+        refreshImConfigCache.setAccessible(true);
+        refreshImConfigCache.invoke(service);
         return prefManager;
     }
 
