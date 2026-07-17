@@ -132,6 +132,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var candidateSwitch:         Bool = true    // mirrors Android candidate_switch; true=free scroll, false=paged
     private var showArrowKey:            Int  = 0       // 0=none, 1=above, 2=below
     private var splitKeyboardMode:       Int  = 0       // 0=off, 1=on, 2=landscape-only (iPad only)
+    private var oneHandMode:             Int  = 0       // 0=off, 1=left, 2=right (portrait only)
+    private var numpadAnchor:            Int  = 0       // 0=fit, 1=left, 2=right, 3=center
 
     // MARK: - Activated IM Cycling (spec §10)
     private var activatedIMs:  [ImConfig] = []
@@ -1176,6 +1178,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             UserDefaults.standard.set(split, forKey: "split_keyboard_mode")
             splitKeyboardMode = split
         }
+        if let oneHand = rec.oneHand {
+            UserDefaults.standard.set(oneHand, forKey: "one_hand_mode")
+            oneHandMode = oneHand
+        }
+        if let anchor = rec.numpadAnchor {
+            UserDefaults.standard.set(anchor, forKey: "numpad_anchor")
+            numpadAnchor = anchor
+        }
         if let reverse = rec.reverseLookup {
             for (im, value) in reverse { hotPrefs.setReverseLookup(value, for: im) }
         }
@@ -1192,6 +1202,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let firstReverse = rec.reverseLookup?.first
         _ = try? relayPrefStore.update(hanConvert: hanConvertOption,
                                        splitKeyboard: splitKeyboardMode,
+                                       oneHand: oneHandMode,
+                                       numpadAnchor: numpadAnchor,
                                        reverseLookupIM: firstReverse?.key,
                                        reverseLookupValue: firstReverse?.value)
         return true
@@ -1258,6 +1270,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         candidateSwitch = true
         showArrowKey      = d?.integer(forKey: "show_arrow_key")      ?? 0
         splitKeyboardMode = seededHotInt("split_keyboard_mode", cold: d)   // §1.8 hot store
+        oneHandMode  = seededHotInt("one_hand_mode",  cold: d)   // §1.8 hot store
+        numpadAnchor = seededHotInt("numpad_anchor",  cold: d)   // §1.8 hot store
         applyPrefsToSearchEngine()
     }
 
