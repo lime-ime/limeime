@@ -305,6 +305,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
     private var candidateBarTopConstraint: NSLayoutConstraint?
     private var candidateBarHeightConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: candidate bar follows the anchored key block (one-hand / numpad anchor).
+    private var candidateBarLeadingConstraint: NSLayoutConstraint?
+    private var candidateBarTrailingConstraint: NSLayoutConstraint?
     private var keyboardTopToCandidateConstraint: NSLayoutConstraint?
     private var keyboardTopToViewConstraint: NSLayoutConstraint?
     private var emojiPanelBottomConstraint: NSLayoutConstraint?
@@ -607,6 +610,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             chevron = free > 0
         }
         keyboardView?.setHorizontalAnchor(leading: leading, trailing: trailing, restoreChevron: chevron)
+        // SPLIT_ONE_HAND_KB: keep the candidate bar's usable area aligned with the key block.
+        if candidateBarLeadingConstraint?.constant != leading {
+            candidateBarLeadingConstraint?.constant = leading
+        }
+        if candidateBarTrailingConstraint?.constant != -trailing {
+            candidateBarTrailingConstraint?.constant = -trailing
+        }
         applyHeight()
         updateGlobeAndDismissBindings()
         // #139 switch-in: once the view has RENDERED at the overshoot size,
@@ -1439,8 +1449,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 candidateBarTopConstraint = c
                 return c
             }(),
-            candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            {
+                let c = candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+                candidateBarLeadingConstraint = c
+                return c
+            }(),
+            {
+                let c = candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+                candidateBarTrailingConstraint = c
+                return c
+            }(),
             {
                 let c = candidateBar.heightAnchor.constraint(equalToConstant: candidateBarHeight)
                 candidateBarHeightConstraint = c
