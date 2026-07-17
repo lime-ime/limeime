@@ -1268,8 +1268,16 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         drawableX = 0;
                         drawableY = NUMBER_HINT_VERTICAL_ADJUSTMENT_PIXEL;
                     } else {
-
-                        drawableHeight = key.height; // icon.getIntrinsicHeight();
+                        // SPLIT_ONE_HAND_KB: the one-hand restore key spans the whole vacated
+                        // strip (full keyboard height) as a touch target; draw its chevron
+                        // capped to the strip width so it stays a small centered glyph instead
+                        // of scaling to the key bounds like ordinary row-height icons.
+                        if (key.codes != null && key.codes.length > 0
+                                && key.codes[0] == LIMEBaseKeyboard.KEYCODE_ONE_HAND_RESTORE)
+                            drawableHeight = Math.min(key.height,
+                                    Math.max(1, key.width - padding.left - padding.right));
+                        else
+                            drawableHeight = key.height; // icon.getIntrinsicHeight();
                         drawableWidth = icon.getIntrinsicWidth() * drawableHeight / icon.getIntrinsicHeight();
                         drawableX = (key.width + padding.left - padding.right - drawableWidth) / 2;
                         drawableY = (key.height + padding.top - padding.bottom - drawableHeight) / 2;
