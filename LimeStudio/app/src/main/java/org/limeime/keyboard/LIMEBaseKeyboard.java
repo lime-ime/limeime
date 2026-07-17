@@ -204,6 +204,9 @@ public class LIMEBaseKeyboard {
      */
     private final int mDisplayHeight;
 
+    // SPLIT_ONE_HAND_KB: horizontal dots-per-inch, used to convert reach-geometry mm constants to px.
+    private float mXdpi;
+
     /**
      * Keyboard mode, or zero, if none.
      */
@@ -757,7 +760,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
     public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys, int splitKeyboard) {
-        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard);
+        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard, true);
     }
 
     /**
@@ -768,13 +771,14 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId         keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         // Issue #47: use the actual usable window width (excluding system bars and
         // display cutout insets) so percentage-based key widths don't overflow the
         // IME container on devices with notches, gesture nav, or split-screen.
         mDisplayWidth = getUsableDisplayWidth(context, dm.widthPixels);
         mDisplayHeight = dm.heightPixels;
+        mXdpi = dm.xdpi;
 
         if (DEBUG)
             Log.i(TAG, "LIMEBaseKeyboard() mDisplayWidth = " + mDisplayWidth + ". mDisplayHeight" + mDisplayHeight);
@@ -803,9 +807,10 @@ public class LIMEBaseKeyboard {
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
         //Jeremy '12,5,27 read splitkeyboard setting from preference. 
         //Jeremy '12,6,19  add orientation consideration on split keyboard
-        mSplitKeyboard = (mLandScape && mShowArrowKeys != 0)
+        mSplitKeyboard = splitEligible
+                && ((mLandScape && mShowArrowKeys != 0)
                 || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                || splitKeyboard == SPLIT_KEYBOARD_ALWAYS;
+                || splitKeyboard == SPLIT_KEYBOARD_ALWAYS);
 
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
@@ -1352,6 +1357,10 @@ public class LIMEBaseKeyboard {
             mDefaultHeight = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_keyHeight, //Jeremy '11,9,4
                     mDisplayHeight, DEFAULT_KEY_HEIGHT_PX, mKeySizeScale);
+            // SPLIT_ONE_HAND_KB: cap row height to the vertical thumb sweep in split mode.
+            if (mSplitKeyboard && mXdpi > 0)
+                mDefaultHeight = Math.min(mDefaultHeight,
+                        ReachGeometry.mmToPx(ReachGeometry.SPLIT_ROW_MAX_MM, mXdpi));
             mDefaultHorizontalGap = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_horizontalGap,
                     mDisplayWidth, 0);
@@ -1371,7 +1380,8 @@ public class LIMEBaseKeyboard {
         mReservedColumnsForSplitedKeyboard = res.getInteger(R.integer.reserved_columns_for_seperated_keyboard);
 
         mKeysInRow = Math.round((float) mDisplayWidth / mDefaultWidth);
-        mSplitKeyWidth = Math.round((float) mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
+        mSplitKeyWidth = ReachGeometry.splitKeyWidth(mDisplayWidth, mKeysInRow,
+                mReservedColumnsForSplitedKeyboard, mXdpi);
         mSplitedKeyWidthScale = (float) (mSplitKeyWidth) / (float) (mDefaultWidth);
         if (DEBUG)
             Log.i(TAG, "mKeysInRow = " + mKeysInRow

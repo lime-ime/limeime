@@ -31,6 +31,7 @@ import org.limeime.data.ImConfig;
 import org.limeime.data.Keyboard;
 import org.limeime.global.LIME;
 import org.limeime.global.LIMEPreferenceManager;
+import org.limeime.keyboard.LIMEBaseKeyboard;
 import org.limeime.keyboard.LIMEKeyboard;
 import org.limeime.keyboard.LIMEKeyboardView;
 
@@ -41,6 +42,11 @@ public class LIMEKeyboardSwitcher {
 
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboardSwitcher";
+
+	// SPLIT_ONE_HAND_KB: the numpad-based layouts never split (they anchor instead).
+	private boolean isNumpadXml(int xml) {
+		return xml == R.xml.phone_simple || xml == R.xml.computer_simple || xml == R.xml.phone_number;
+	}
     
 	public static final int MODE_TEXT = 1;
     public static final int MODE_SYMBOLS = 2;
@@ -298,10 +304,12 @@ public class LIMEKeyboardSwitcher {
 	        if (!mKeyboards.containsKey(id)) {
 				if(DEBUG)
 					Log.i(TAG,"getKeyboard() keyboard for id, " + id + ", is not exist. create one now.");
+	        	boolean numpadXml = isNumpadXml(id.mXml);
 	        	LIMEKeyboard keyboard = new LIMEKeyboard(
 						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
-	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
+	                numpadXml ? LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER : mLIMEPref.getSplitKeyboard(), //Jeremy '12,5,27 add the split keyboard option
+	                !numpadXml // SPLIT_ONE_HAND_KB: numpad-based layouts never split
                 );
                 keyboard.setKeyboardSwitcher(this);
                 if (id.mCjSemicolonKey) {
