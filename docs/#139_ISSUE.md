@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: both LIME-side subcases fixed in source. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31); the in-place switch-in path is fixed by the attach-overshoot change (see RESOLVED section; pending release). Remaining: the private reporter's locked-portrait retest on the next build — switch-in was the prime suspect for it.
+- State: both LIME-side subcases are fixed in source. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and the attach-overshoot change fixes the in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 is `VALID`, `APP_STORE_ELIGIBLE`, and submitted for App Store review. Keep the issue open until v6.1.32 is publicly available and the private reporter can retest locked portrait.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.

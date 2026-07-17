@@ -8,7 +8,7 @@
 - Root cause: confirmed from Android Vitals and source tracing
 - State: closed by `jrywu` on 2026-07-17 through GitHub-visible commit `a2dc99d6853b5d834b79b7ac8a91cb600062f4c4`
 - Fix: merged to `master` with RED/GREEN instrumentation coverage
-- Delivery: source-fixed; the latest Android GitHub Release remains v6.1.30, so verification in the next Android build remains release QA rather than an active issue watch
+- Delivery: shipped in Android v6.1.32 through both the legacy GitHub APK and Google Play production track
 
 ## Failure
 
@@ -170,7 +170,7 @@ Result: `BUILD SUCCESSFUL`; existing unchecked/deprecation warnings only.
 - [x] Same-IM edit/import/restore paths refresh on the next input start.
 - [x] Deterministic regression test reproduces the old blocking boundary.
 - [x] Existing focused end-key behavior tests pass.
-- [ ] Full Android instrumentation regression suite passes.
+- [x] Full Android instrumentation regression suite passes for v6.1.32: 1,196 tests finished, 8 skipped, and 0 failed.
 - [ ] Device stress verification confirms no new main-thread SQLite sample while typing during database maintenance.
 
 ## Out of scope
