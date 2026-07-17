@@ -179,6 +179,9 @@ protocol KeyboardViewDelegate: AnyObject {
     func keyboardViewDidCancelPopupSlide(_ view: KeyboardView)
     func keyboardViewDidSwipeLeft(_ view: KeyboardView)
     func keyboardViewDidSwipeRight(_ view: KeyboardView)
+    /// SPLIT_ONE_HAND_KB: user tapped the restore chevron shown in the strip vacated by
+    /// one-hand/numpad anchoring — host should reset to full width and persist the change.
+    func keyboardViewDidTapOneHandRestore()
 }
 
 extension KeyboardViewDelegate {
@@ -186,6 +189,9 @@ extension KeyboardViewDelegate {
     /// single-key. Layout-based single-key popups (e.g. the 123 symbol-mode switch) need the host
     /// (which owns `currentPopupView`) to return true.
     func keyboardViewCurrentPopupIsSingleKey(_ view: KeyboardView) -> Bool { false }
+    /// Default no-op so existing conformers (test mocks, etc.) compile unchanged; the real host
+    /// (KeyboardViewController) overrides this to restore full width (SPLIT_ONE_HAND_KB).
+    func keyboardViewDidTapOneHandRestore() {}
 }
 
 final class KeyboardView: UIView, UIInputViewAudioFeedback {
@@ -529,6 +535,29 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
+    // SPLIT_ONE_HAND_KB horizontal anchoring: insets shrink the key block; the
+    // vacated strip is keyboard background, optionally holding the restore chevron.
+    private(set) var anchorLeadingInset: CGFloat = 0
+    private(set) var anchorTrailingInset: CGFloat = 0
+    private(set) var showRestoreChevron = false
+    /// Weak ref to the restore chevron — rebuilt (and stale instances removed) from buildKeys().
+    private weak var restoreChevronButton: UIButton?
+
+    func setHorizontalAnchor(leading: CGFloat, trailing: CGFloat, restoreChevron: Bool) {
+        guard leading != anchorLeadingInset || trailing != anchorTrailingInset
+                || restoreChevron != showRestoreChevron else { return }
+        anchorLeadingInset = leading
+        anchorTrailingInset = trailing
+        showRestoreChevron = restoreChevron
+        rowViews.forEach { $0.removeFromSuperview() }
+        rowViews.removeAll()
+        globeButton = nil
+        keyboardDoneButton = nil
+        shiftKeyButtons.removeAll()
+        buildKeys()
+        updateShiftKeyIcon()
+    }
+
     private var rowHeight: CGFloat {
         LayoutMetrics.KeyboardRow.rowHeight(
             isPadHardware: isPadHardware,
@@ -720,6 +749,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func buildKeys() {
         cancelAllActiveTouches()
         invalidatePlainTouchContexts()
+        // SPLIT_ONE_HAND_KB: buildKeys() is the single choke point every rebuild path
+        // (layout switch, theme, size, split/anchor toggles) funnels through, so dropping
+        // any stale chevron here — before re-adding it below — keeps it from accumulating
+        // across rebuilds that don't originate from setHorizontalAnchor.
+        restoreChevronButton?.removeFromSuperview()
+        restoreChevronButton = nil
         var prevRow: UIView? = nil
 
         // Collect the rows to render, injecting the arrow row at position 0 (above) or at the end (below).
@@ -748,8 +783,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
             rowView.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                rowView.leadingAnchor.constraint(equalTo: leadingAnchor),
-                rowView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                rowView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: anchorLeadingInset),
+                rowView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -anchorTrailingInset),
                 rowView.heightAnchor.constraint(equalToConstant: rh),
             ])
 
@@ -764,6 +799,31 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         if let last = prevRow {
             last.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         }
+
+        // SPLIT_ONE_HAND_KB: the strip vacated by an anchored key block optionally holds
+        // a restore-to-full-width chevron over the keyboard background.
+        if showRestoreChevron, anchorLeadingInset > 0 || anchorTrailingInset > 0 {
+            let chevron = UIButton(type: .system)
+            let onLeftStrip = anchorLeadingInset > 0   // block anchored right → strip on the left
+            chevron.setImage(UIImage(systemName: onLeftStrip ? "chevron.left" : "chevron.right"),
+                             for: .normal)
+            chevron.tintColor = .secondaryLabel
+            chevron.translatesAutoresizingMaskIntoConstraints = false
+            chevron.addTarget(self, action: #selector(oneHandRestoreTapped), for: .touchUpInside)
+            addSubview(chevron)
+            NSLayoutConstraint.activate([
+                chevron.widthAnchor.constraint(equalToConstant: max(anchorLeadingInset, anchorTrailingInset)),
+                chevron.topAnchor.constraint(equalTo: topAnchor),
+                chevron.bottomAnchor.constraint(equalTo: bottomAnchor),
+                onLeftStrip ? chevron.leadingAnchor.constraint(equalTo: leadingAnchor)
+                            : chevron.trailingAnchor.constraint(equalTo: trailingAnchor),
+            ])
+            restoreChevronButton = chevron
+        }
+    }
+
+    @objc private func oneHandRestoreTapped() {
+        delegate?.keyboardViewDidTapOneHandRestore()
     }
 
     /// A row of four arrow keys used when showArrowKey != 0.

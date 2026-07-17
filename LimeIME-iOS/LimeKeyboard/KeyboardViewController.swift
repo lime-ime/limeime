@@ -249,6 +249,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// (`UIDevice.current.userInterfaceIdiom` is the wrong signal here.)
     private var isOnPad: Bool { traitCollection.userInterfaceIdiom == .pad }
 
+    /// SPLIT_ONE_HAND_KB: the true numpad-grid layouts (spec decision — per-IM
+    /// *_number layers are 10-column full-width layouts and stay ordinary).
+    var isNumpadLayout: Bool {
+        currentLayout.id.hasPrefix("phone_simple") || currentLayout.id.hasPrefix("computer_simple")
+    }
+
     @discardableResult
     private func syncLayoutEnvironmentFromTraits() -> Bool {
         let oldHostIsPad = LayoutLoader.hostIsPad
@@ -574,8 +580,33 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let landscape = screen.width > screen.height
         keyboardView?.isLandscape = landscape
         let isPad   = isOnPad
-        let doSplit = isPad && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
+        let numpad  = isNumpadLayout
+        let doSplit = isPad && !numpad
+                      && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
         keyboardView?.splitMode = doSplit
+
+        // SPLIT_ONE_HAND_KB horizontal anchoring.
+        var leading: CGFloat = 0, trailing: CGFloat = 0, chevron = false
+        let vw = view.bounds.width
+        if isPad {
+            if numpad, numpadAnchor != 0 {
+                let w = ReachGeometry.numpadAnchorWidth(viewWidth: vw, columns: 5,
+                                                        sizeClass: LayoutLoader.iPadSizeClass)
+                let free = max(0, vw - w)
+                switch numpadAnchor {
+                case 1: trailing = free            // 靠左
+                case 2: leading = free             // 靠右
+                case 3: leading = free / 2; trailing = free / 2   // 置中
+                default: break
+                }
+            }
+        } else if !landscape, oneHandMode != 0,
+                  ReachGeometry.oneHandAvailable(screenWidthPt: min(screen.width, screen.height)) {
+            let free = max(0, vw - ReachGeometry.oneHandWidth(viewWidth: vw))
+            if oneHandMode == 1 { trailing = free } else { leading = free }   // 靠左 / 靠右
+            chevron = free > 0
+        }
+        keyboardView?.setHorizontalAnchor(leading: leading, trailing: trailing, restoreChevron: chevron)
         applyHeight()
         updateGlobeAndDismissBindings()
         // #139 switch-in: once the view has RENDERED at the overshoot size,
@@ -3927,6 +3958,14 @@ extension KeyboardViewController: KeyboardViewDelegate {
 
     func keyboardViewDismissPreview(_ view: KeyboardView) {
         hideKeyPreview(animated: true)
+    }
+
+    func keyboardViewDidTapOneHandRestore() {
+        // SPLIT_ONE_HAND_KB: chevron restores full width, persisted (§1.8 hot store + relay).
+        oneHandMode = 0
+        hotPrefs.oneHandMode = 0
+        _ = try? relayPrefStore.update(oneHand: 0)
+        view.setNeedsLayout()
     }
 
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {
