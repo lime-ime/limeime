@@ -735,7 +735,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         for entry in renderRows {
-            let rh = (!entry.isArrow && entry.row.isBottomRow) ? bottomRowHeight : rowHeight
+            let uncappedRh = (!entry.isArrow && entry.row.isBottomRow) ? bottomRowHeight : rowHeight
+            // SPLIT_ONE_HAND_KB: vertical thumb-sweep cap in split mode.
+            let rh = splitMode
+                ? min(uncappedRh, ReachGeometry.splitRowHeightCap(sizeClass: LayoutLoader.iPadSizeClass))
+                : uncappedRh
             let rowView = splitMode
                 ? makeSplitRow(row: entry.row, rowHeight: rh)
                 : makeRow(row: entry.row, rowIndex: entry.index, rowHeight: rh)
@@ -795,11 +799,18 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let leftKeys  = Array(keys[..<splitIndex])
         let rightKeys = Array(keys[splitIndex...])
         let splitGapFraction = LayoutMetrics.KeyboardRow.splitGapFraction
+        // SPLIT_ONE_HAND_KB: cap each half at the two-hand thumb reach; the shrink ratio
+        // scales unequal halves proportionally, equal halves land exactly on the cap.
+        let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
+        let legacyHalf = (1 - splitGapFraction) / 2
+        let capHalf = ReachGeometry.splitHalfMaxFraction(viewWidth: viewWidth,
+                                                         sizeClass: LayoutLoader.iPadSizeClass)
+        let reachShrink = capHalf / legacyHalf   // ≤ 1; == 1 when the cap doesn't bind
 
         func addHalf(_ halfKeys: [KeyDef], leading: Bool) {
             guard !halfKeys.isEmpty else { return }
             let halfPercent = halfKeys.reduce(0) { $0 + $1.widthPercent }
-            let halfFraction = (halfPercent / total) * (1 - splitGapFraction)
+            let halfFraction = (halfPercent / total) * (1 - splitGapFraction) * reachShrink
 
             let contentView = KeyTouchLayer(owner: self)
             contentView.backgroundColor = LayoutMetrics.TouchTrap.fill   // keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md §Resolution); .clear leaves gaps dead
