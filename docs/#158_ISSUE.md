@@ -6,7 +6,9 @@
 - Classification: `bug` + `Type-Defect` + `Priority-Medium`
 - Platform: Android only
 - Root cause: confirmed from Android Vitals and source tracing
-- Fix: implemented locally with RED/GREEN instrumentation coverage
+- State: closed by `jrywu` on 2026-07-17 through GitHub-visible commit `a2dc99d6853b5d834b79b7ac8a91cb600062f4c4`
+- Fix: merged to `master` with RED/GREEN instrumentation coverage
+- Delivery: source-fixed; the latest Android GitHub Release remains v6.1.30, so verification in the next Android build remains release QA rather than an active issue watch
 
 ## Failure
 
