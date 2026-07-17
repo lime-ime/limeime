@@ -4482,13 +4482,30 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                   labels: ["無", "繁→簡", "簡→繁"], selected: pendingHan,
                                   onSelect: { pendingHan = $0 }))
 
-        // 分離鍵盤 — iPad only: inline segmented control (關閉 / 開啟 / 僅橫向).
+        // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
+        // ordinary layouts show 分離鍵盤 (iPad) / 單手鍵盤 (gated iPhone).
+        let numpadLayout = isNumpadLayout
         var pendingSplit = max(0, min(splitKeyboardMode, 2))
         let splitStart = pendingSplit
-        if isOnPad {
+        if isOnPad && !numpadLayout {
             entries.append(.segmented(title: "分離鍵盤", icon: "rectangle.split.2x1",
                                       labels: ["關閉", "開啟", "僅橫向"], selected: pendingSplit,
                                       onSelect: { pendingSplit = $0 }))
+        }
+        var pendingOneHand = max(0, min(oneHandMode, 2))
+        let oneHandStart = pendingOneHand
+        let screenShort = min(UIScreen.main.bounds.width, UIScreen.main.bounds.height)
+        if !isOnPad && ReachGeometry.oneHandAvailable(screenWidthPt: screenShort) {
+            entries.append(.segmented(title: "單手鍵盤", icon: "keyboard",
+                                      labels: ["關閉", "靠左", "靠右"], selected: pendingOneHand,
+                                      onSelect: { pendingOneHand = $0 }))
+        }
+        var pendingAnchor = max(0, min(numpadAnchor, 3))
+        let anchorStart = pendingAnchor
+        if isOnPad && numpadLayout {
+            entries.append(.segmented(title: "數字鍵盤位置", icon: "rectangle.righthalf.inset.filled",
+                                      labels: ["滿版", "靠左", "靠右", "置中"], selected: pendingAnchor,
+                                      onSelect: { pendingAnchor = $0 }))
         }
 
         // LIME 輸入法切換 — mirrors Android showIMPicker()
@@ -4513,10 +4530,23 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
                 changed = true
             }
+            if pendingOneHand != oneHandStart {
+                self.oneHandMode = pendingOneHand
+                self.hotPrefs.oneHandMode = pendingOneHand   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
+            if pendingAnchor != anchorStart {
+                self.numpadAnchor = pendingAnchor
+                self.hotPrefs.numpadAnchor = pendingAnchor   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
             if changed {
-                try? self.relayPrefStore.write(RelayPrefState(hanConvert: self.hanConvertOption,
-                                                              splitKeyboard: self.splitKeyboardMode,
-                                                              updatedAt: Date().timeIntervalSince1970))
+                _ = try? self.relayPrefStore.update(hanConvert: self.hanConvertOption,
+                                                    splitKeyboard: self.splitKeyboardMode,
+                                                    oneHand: self.oneHandMode,
+                                                    numpadAnchor: self.numpadAnchor)
             }
         })
     }
