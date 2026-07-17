@@ -239,7 +239,14 @@ option is never confused with the real phone one-handed mode:
 
 ## Non-goals (v1)
 
-- No candidate-bar or emoji-panel width changes — full width everywhere.
+- Candidate bar alignment: when the key block is horizontally anchored (one-hand mode, numpad
+  anchor), the candidate bar's usable area aligns with the shifted key block — same
+  leading/trailing insets, chrome buttons included — so candidates stay inside the same reach
+  zone as the keys. Android reads the insets off the rendered keyboard
+  (`applyHorizontalAnchor` records them); iOS drives the bar's stored leading/trailing
+  constraints from the same insets computed for `setHorizontalAnchor`.
+- Emoji panel, emoji search header, and the expanded candidates panel stay full width in v1
+  (the expanded panel is a browse-many interaction, not a reach-critical one).
 - No per-orientation memory (one setting, both orientations; split already handles
   landscape-only as a mode value).
 - No new iPad email/URL layouts and no change to the #74 URL-field policy — this work is
