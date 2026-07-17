@@ -114,6 +114,12 @@ public class LIMEBaseKeyboard {
     public static final int SPLIT_KEYBOARD_ALWAYS = 1;
     public static final int SPLIT_KEYBOARD_LANDSCAPD_ONLY = 2;
 
+    // SPLIT_ONE_HAND_KB
+    public static final int KEYCODE_ONE_HAND_RESTORE = -120;
+    public static final int ANCHOR_LEFT = 1;
+    public static final int ANCHOR_RIGHT = 2;
+    public static final int ANCHOR_CENTER = 3;
+
     /**
      * Drawable for arrow keys
      */
@@ -1157,6 +1163,44 @@ public class LIMEBaseKeyboard {
 
         return (row.defaultHeight + row.verticalGap);  //return the row total height
 
+    }
+
+    public int getDisplayWidth() {
+        return mDisplayWidth;
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: shrink every key horizontally to targetWidth and pin the
+     * block to an edge (or center). Pure post-pass over the loaded keys — vertical
+     * geometry and keyboard height are untouched. With withRestoreChevron, the
+     * vacated strip becomes a single restore key whose arrow points toward the
+     * empty side (iOS built-in one-handed style).
+     */
+    public void applyHorizontalAnchor(int targetWidth, int anchor, boolean withRestoreChevron) {
+        if (targetWidth <= 0 || targetWidth >= mDisplayWidth) return;
+        final float s = (float) targetWidth / (float) mDisplayWidth;
+        final int free = mDisplayWidth - targetWidth;
+        final int offset = (anchor == ANCHOR_RIGHT) ? free
+                         : (anchor == ANCHOR_CENTER) ? free / 2 : 0;
+        for (Key k : mKeys) {
+            k.x = Math.round(k.x * s) + offset;
+            k.width = Math.round(k.width * s);
+            k.gap = Math.round(k.gap * s);
+        }
+        mTotalWidth = mDisplayWidth;   // full-width canvas; the strip stays background
+        if (withRestoreChevron && anchor != ANCHOR_CENTER) {
+            Row row = new Row(this);
+            Key chevron = new Key(row);
+            chevron.x = (anchor == ANCHOR_RIGHT) ? 0 : targetWidth;
+            chevron.y = 0;
+            chevron.width = free;
+            chevron.height = mTotalHeight;
+            chevron.gap = 0;
+            chevron.modifier = true;
+            chevron.codes = new int[]{KEYCODE_ONE_HAND_RESTORE};
+            chevron.icon = (anchor == ANCHOR_RIGHT) ? mDrawableArrowLeft : mDrawableArrowRight;
+            mKeys.add(chevron);
+        }
     }
 
 

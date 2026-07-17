@@ -34,8 +34,10 @@ import org.limeime.global.LIMEPreferenceManager;
 import org.limeime.keyboard.LIMEBaseKeyboard;
 import org.limeime.keyboard.LIMEKeyboard;
 import org.limeime.keyboard.LIMEKeyboardView;
+import org.limeime.keyboard.ReachGeometry;
 
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 public class LIMEKeyboardSwitcher {
@@ -46,6 +48,11 @@ public class LIMEKeyboardSwitcher {
 	// SPLIT_ONE_HAND_KB: the numpad-based layouts never split (they anchor instead).
 	private boolean isNumpadXml(int xml) {
 		return xml == R.xml.phone_simple || xml == R.xml.computer_simple || xml == R.xml.phone_number;
+	}
+
+	// SPLIT_ONE_HAND_KB: used by Task 5 to gate one-hand UI against the numpad-anchored path.
+	public boolean isNumpadKeyboard() {
+		return isNumpadXml(mCurrentXmlId);
 	}
     
 	public static final int MODE_TEXT = 1;
@@ -103,6 +110,7 @@ public class LIMEKeyboardSwitcher {
 	Context mThemedContext;
 
     //private KeyboardId mCurrentId;
+    private int mCurrentXmlId; // SPLIT_ONE_HAND_KB: current-XML tracking for isNumpadKeyboard()
     private final Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
     private int mMode = KEYBOARD_MODE_NORMAL;
@@ -318,6 +326,28 @@ public class LIMEKeyboardSwitcher {
                 if (id.mEnableShiftLock) {
                     keyboard.enableShiftLock();
                 }
+	            // SPLIT_ONE_HAND_KB: horizontal anchoring. One-hand = gated phones, portrait
+	            // only (iOS built-in parity); numpad anchoring = tablets, numpad layouts only.
+	            DisplayMetrics dm = mThemedContext.getResources().getDisplayMetrics();
+	            boolean isTablet = mThemedContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+	            boolean portrait = dm.widthPixels < dm.heightPixels;
+	            if (isTablet && numpadXml) {
+	                int anchor = mLIMEPref.getNumpadAnchor();
+	                if (anchor != 0)
+	                    keyboard.applyHorizontalAnchor(
+	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dm.xdpi),
+	                            anchor, false);
+	            } else if (!isTablet && portrait
+	                    // spec precedence: an active split wins over one-hand. Portrait split
+	                    // only happens with SPLIT_KEYBOARD_ALWAYS (arrow-split is landscape-only).
+	                    && mLIMEPref.getSplitKeyboard() != LIMEBaseKeyboard.SPLIT_KEYBOARD_ALWAYS) {
+	                int mode = mLIMEPref.getOneHandMode();
+	                if (mode != 0 && ReachGeometry.oneHandAvailable(dm.widthPixels, dm.xdpi))
+	                    keyboard.applyHorizontalAnchor(
+	                            ReachGeometry.oneHandWidth(keyboard.getDisplayWidth(), dm.xdpi),
+	                            mode == 1 ? LIMEBaseKeyboard.ANCHOR_LEFT : LIMEBaseKeyboard.ANCHOR_RIGHT,
+	                            true);
+	            }
 	            mKeyboards.put(id, keyboard);
 	        }
 	        return mKeyboards.get(id);
@@ -569,8 +599,9 @@ public class LIMEKeyboardSwitcher {
 	        
 	        
 	        LIMEKeyboard keyboard = getKeyboard(kid);
-	
+
 	       // mCurrentId = kid;
+	        mCurrentXmlId = kid.mXml; // SPLIT_ONE_HAND_KB
 	        mInputView.setKeyboard(keyboard);
 
 			assert keyboard != null;
@@ -678,6 +709,7 @@ public class LIMEKeyboardSwitcher {
         KeyboardId kid = new KeyboardId(getKeyboardXMLID("phone_simple"));
         LIMEKeyboard keyboard = getKeyboard(kid);
         if (keyboard == null) return;
+        mCurrentXmlId = kid.mXml; // SPLIT_ONE_HAND_KB
         mInputView.setKeyboard(keyboard);
         keyboard.setShifted(false);
         mInputView.setKeyboard(mInputView.getKeyboard());

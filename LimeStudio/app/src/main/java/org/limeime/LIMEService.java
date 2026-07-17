@@ -2275,6 +2275,11 @@ public class LIMEService extends InputMethodService
             keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, hasCandidatesShown);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
             handleOptions();
+        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_ONE_HAND_RESTORE) {
+            // SPLIT_ONE_HAND_KB: chevron tap restores full width, persisted (spec).
+            mLIMEPref.setOneHandMode(0);
+            handleClose();
+            mKeyboardSwitcher.resetKeyboards(true);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
