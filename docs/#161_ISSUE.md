@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: closed after merged PR #167, but post-merge review found an Android related-candidate cache invalidation regression that must be corrected before the next reporter-testable build
+- State: open pending reporter confirmation on Android GitHub APK v6.1.33; iOS binary delivery and corrected-source validation remain separate
 
 ## Corrected scope
 
@@ -50,12 +50,13 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 ## Delivery boundary
 
 - PR #167 merged to `master` as `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262` and auto-closed the community issue.
-- The current GitHub Android APK remains v6.1.32, whose tag targets `0a7b8158536d6d55c6c3684952447ea9b915cb42`; that commit is an ancestor of the PR merge and therefore does not contain this fix.
+- GitHub Release v6.1.33 targets `b2fa71779d8423b92896fa1a0262706bb62ea4fa` and includes PR #167 plus the Android/iOS manual-mutation cache invalidation follow-ups. The verified GitHub testing-track APK is `LIMEHD2026-6.1.33.apk` (7,108,716 bytes, SHA-256 `69c6336e11903c141f3998580fe62a1e25a02a07bddfd4cfcf8938d871baae92`) at https://github.com/lime-ime/limeime/releases/download/v6.1.33/LIMEHD2026-6.1.33.apk.
 - The final synchronize commit added an Android `relatedcache`, keyed separately for initial/full runtime results. Automatic learning invalidates both keys, but manual `關聯字管理` add, update, and delete operations still call the generic `SearchServer` mutation wrappers without invalidating this cache. A relation already queried by the keyboard can therefore remain stale after management changes until a broader cache reset.
 - FIXED (follow-up): the generic `SearchServer.addRecord/updateRecord/deleteRecord` wrappers now flush the whole `relatedcache` whenever the mutated table is `related` (whole-cache clear on purpose — delete-by-id does not know the pword at that level; the cache repopulates on next lookup). Regression test `SearchServerTest.test_3_4_2_8_relatedCacheFlushedByRelatedTableMutations` pins caching, non-related-table no-flush, and flush on all three mutations.
 - iOS audit found the same gap in mirror form: `ManageRelatedController` mutations never set the `needsKeyboardCacheReset` App-Group flag that `ManageImController` uses, so a warm keyboard process whose table sync was applied by another process (settings probe / other host app) could keep serving its stale `relatedCache`. FIXED: all seven related mutation sites now call the shared (`nonisolated`) `ManageImController.markKeyboardCacheDirty()` after a successful write, matching the mapping-editor pattern; the keyboard clears all caches on next activation.
-- Do not request reporter retest from v6.1.32 or from a future build that contains PR #167 without this follow-up.
-- iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a newer TestFlight/App Store build.
+- Do not request reporter retest from v6.1.32 or from any build that contains PR #167 without the cache-invalidation follow-ups.
+- Issue #161 was reopened for Android reporter confirmation. The retained v6.1.33 retest request is https://github.com/lime-ime/limeime/issues/161#issuecomment-5011747138 and asks the reporter to verify `pword`-prefix search/deletion plus immediate candidate refresh after manual add/update/delete.
+- iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. The Android APK does not verify iOS behavior.
 
 ## Acceptance criteria
 
