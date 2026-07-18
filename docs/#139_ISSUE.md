@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: unresolved after a new private locked-portrait retest. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and the attach-overshoot change fixes the measured in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 was submitted for App Store review. However, the latest private retest can reach the true bottom only with `keyboard_size = large` and font size `extra large`; changing either setting makes the bottom unreachable again. Keep the issue open and restore implementation tracking for this preference-dependent path.
+- State: open pending recurrence/isolation after a clean reinstall changed the result. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and the attach-overshoot change fixes the measured in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 was submitted for App Store review. The reporter first found a preference-dependent locked-portrait failure on 6.1.32, then completely removed and reinstalled LIME 6.1.32 and could reach the true bottom with every tested keyboard-size/font-size combination. Installing older TestFlight builds also showed the working behavior. Keep the issue open because this does not isolate a 6.1.32 fix and instead points to persisted install/runtime state or a transient host-keyboard interaction.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
@@ -19,6 +19,7 @@ Two independent host-app observations now share the same failure pattern:
 2. LINE's message field became partly covered after device rotation while LIME remained visible. Commit `7c067c64` fixes this rotation subcase.
 3. On 6.1.31 build 11, switching directly from Apple's shorter keyboard to the taller LIME keyboard while LINE's field stays focused leaves the host at the old keyboard height, and LIME covers the entire message field. Dismissing and reopening LIME clears the overlap.
 4. The private reporter's 6.1.31 retest confirms a partial improvement: landscape can now scroll to the true bottom, but locked portrait still cannot.
+5. On 6.1.32, the reporter initially reproduced a preference-dependent locked-portrait failure, then completely removed and reinstalled LIME and could reach the bottom across five representative keyboard-size/font-size combinations. Older TestFlight builds also worked afterward.
 
 These observations belong in one issue for now because both indicate that the host's usable area can become stale relative to LIME's visible top edge. They do **not** yet prove one identical code-level root cause. Split the LINE rotation case into a separate issue only if instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while LINE receives a stale or incorrect frame from LIME/UIKit.
 
@@ -60,7 +61,9 @@ The private reporter found one narrow combination that reaches the true bottom i
 - Evidence: one private QuickTime recording (`0718測試.mov`, approximately 10.2 MB). Keep the file, attachment metadata, reporter identity, and private app details confidential.
 - Version limitation: the accessible Gmail body was empty and its snippet did not state the tested LIME version, so do not attribute this result to a specific build until confirmed from the thread or reporter.
 
-This is a conditional improvement, not resolution. It also weakens the previous prediction that the remaining private-form behavior would be app-specific after the attach-overshoot fix. The next instrumentation pass must vary `keyboard_size` and font size together and compare LIME's rendered top edge, UIKit's final keyboard frame/layout guide, and the host's final scroll inset for the passing and failing combinations.
+This initial result was superseded by a same-day clean-reinstall retest. The reporter confirmed that the initial test used 6.1.32, then completely removed LIME and reinstalled 6.1.32. After reinstall, the true bottom was reachable with all five tested combinations: extra-large keyboard/small text, large keyboard/extra-large text, normal/normal, small/extra-small, and extra-small/large. The reporter also installed older TestFlight builds and observed the working behavior there.
+
+The clean-reinstall result means the current evidence cannot attribute recovery to the 6.1.32 code change or to one preference combination. The next useful evidence is a recurrence with the exact sequence from fresh install to failure, including whether the host app was restarted, whether LIME settings or layouts changed, and whether the field was opened directly with LIME or reached through an in-place keyboard switch. If the failure recurs, compare persisted LIME preferences/runtime state and host inset state before and after reinstall rather than implementing a size-specific workaround.
 
 ### Maintainer LINE rotation reproduction
 
@@ -409,7 +412,7 @@ Not affected by this iOS lifecycle path. Android uses its own IME window/insets 
 - Do not publish the reporter identity, company app, email address, or private recordings.
 - The LINE reproduction may be documented publicly without private conversation content.
 - The framework question was answered (.NET MAUI); keep the framework private in public channels per the reporter's preference.
-- Maintainer-side verification remains useful: LINE rotation, LINE switch-in, and the minimal MAUI-form bottom-reachability repro pass without dismissing/reopening LIME. The private reporter's 2026-07-18 setting-dependent retest shows that these controls do not cover the remaining failure. Do not close until the preference matrix is reproduced or explained and the reporter confirms the normal supported settings work.
+- Maintainer-side verification remains useful: LINE rotation, LINE switch-in, and the minimal MAUI-form bottom-reachability repro pass without dismissing/reopening LIME. The private reporter's 2026-07-18 clean-reinstall result shows all tested size combinations working, including on older TestFlight builds, so do not claim 6.1.32 fixed the private path. Keep the issue open pending recurrence/isolation of the persisted or transient state that made the same setup fail before reinstall.
 
 ### Draft reply to the private reporter (send with the next release)
 
