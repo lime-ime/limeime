@@ -2,10 +2,10 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-18
+Last reviewed: 2026-07-19
 
 ## Pending fixes
-- fix#161 iOS/reporter follow-up: Android GitHub APK v6.1.33 includes the escaped `pword` prefix management search, runtime parity, and manual add/update/delete cache invalidation follow-ups, and issue #161 is open pending reporter confirmation. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
+- fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. The uploaded recording shows a separate Android defect where the filtered management list can retain deleted row text and open a different surviving record when that stale-looking row is tapped; clearing/re-entering the filter refreshes it. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
 - fix#160 iOS: the shared-catalog keyboard option `limenumsym` (`LIME+數字符號鍵盤`) renders the ordinary number-row QWERTY layout instead of its dedicated number/symbol layout. Android is reporter-confirmed working. PR #162 merged the missing phone/iPad resources as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`; follow-up PR #164 merged the source-independent semantic oracle and corrected full/narrow-iPad punctuation preservation as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Remaining work is phone/full-iPad/narrow-iPad device verification, a newer TestFlight/App Store build containing both merges, and reporter confirmation. Android is not in scope. See `docs/#160_ISSUE.md`.
 
 ## Product work
