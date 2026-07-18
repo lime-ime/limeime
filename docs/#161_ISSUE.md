@@ -52,7 +52,9 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - PR #167 merged to `master` as `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262` and auto-closed the community issue.
 - The current GitHub Android APK remains v6.1.32, whose tag targets `0a7b8158536d6d55c6c3684952447ea9b915cb42`; that commit is an ancestor of the PR merge and therefore does not contain this fix.
 - The final synchronize commit added an Android `relatedcache`, keyed separately for initial/full runtime results. Automatic learning invalidates both keys, but manual `關聯字管理` add, update, and delete operations still call the generic `SearchServer` mutation wrappers without invalidating this cache. A relation already queried by the keyboard can therefore remain stale after management changes until a broader cache reset.
-- Correct the Android mutation-path invalidation and add a focused regression test before publishing a new Android build for #161. Do not request reporter retest from v6.1.32 or from a future build that contains PR #167 without this follow-up.
+- FIXED (follow-up): the generic `SearchServer.addRecord/updateRecord/deleteRecord` wrappers now flush the whole `relatedcache` whenever the mutated table is `related` (whole-cache clear on purpose — delete-by-id does not know the pword at that level; the cache repopulates on next lookup). Regression test `SearchServerTest.test_3_4_2_8_relatedCacheFlushedByRelatedTableMutations` pins caching, non-related-table no-flush, and flush on all three mutations.
+- iOS audit found the same gap in mirror form: `ManageRelatedController` mutations never set the `needsKeyboardCacheReset` App-Group flag that `ManageImController` uses, so a warm keyboard process whose table sync was applied by another process (settings probe / other host app) could keep serving its stale `relatedCache`. FIXED: all seven related mutation sites now call the shared (`nonisolated`) `ManageImController.markKeyboardCacheDirty()` after a successful write, matching the mapping-editor pattern; the keyboard clears all caches on next activation.
+- Do not request reporter retest from v6.1.32 or from a future build that contains PR #167 without this follow-up.
 - iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a newer TestFlight/App Store build.
 
 ## Acceptance criteria
@@ -65,5 +67,6 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] Android regression tests pass on the final branch
 - [ ] iOS XCTest/Xcode Cloud passes on the corrected merged source
 - [x] Maintainer review/merge as PR #167 / `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262`
-- [ ] Android manual related add/update/delete invalidates both initial and full runtime related-cache entries
+- [x] Android manual related add/update/delete invalidates both initial and full runtime related-cache entries (whole-cache flush in the generic mutation wrappers + regression test)
+- [x] iOS manual related add/update/delete signals `needsKeyboardCacheReset` so the keyboard flushes `relatedCache` on next activation
 - [ ] Reporter verifies search/deletion in a released build
