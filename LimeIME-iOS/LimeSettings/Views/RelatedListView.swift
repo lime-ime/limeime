@@ -50,6 +50,8 @@ struct RelatedListView: View {
     @State private var didAttemptHotRefresh = false
     @State private var hotRefreshFailed = false
     @State private var didPublishEditorClose = false
+    @State private var probeText = ""
+    @FocusState private var probeFocused: Bool
 
     @State private var loadTask: Task<Void, Never>?
     @State private var showAdd = false
@@ -164,6 +166,14 @@ struct RelatedListView: View {
                 .padding(.vertical, 8)
                 .background(Color(.systemGroupedBackground))
 
+                TextField("", text: $probeText)
+                    .focused($probeFocused)
+                    .frame(width: SettingsMetrics.invisibleProbeSize,
+                           height: SettingsMetrics.invisibleProbeSize)
+                    .opacity(SettingsMetrics.invisibleProbeOpacity)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .accessibilityHidden(true)
             }
             .navigationTitle("關聯字管理")
             .toolbar {
@@ -251,16 +261,19 @@ struct RelatedListView: View {
         didAttemptHotRefresh = true
         isRefreshingHotSnapshot = true
         statusMessage = ""
+        probeFocused = true
         Task {
+            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
             let result = await setupController.refreshTableFromKeyboard(stem: "related")
             isRefreshingHotSnapshot = false
+            probeFocused = false
             switch result {
             case .success:
                 statusMessage = ""
                 loadPhrases()
-            case .failure:
+            case .failure(let error):
                 hotRefreshFailed = true
-                statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
+                statusMessage = "即時資料更新失敗：\(error.localizedDescription)"
             }
         }
     }
