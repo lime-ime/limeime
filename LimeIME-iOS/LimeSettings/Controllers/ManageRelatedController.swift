@@ -35,6 +35,27 @@ import Foundation
 final class ManageRelatedController: BaseController {
 
     nonisolated static let pageSize = 100
+    nonisolated static let invalidParentMessage = "首字只能輸入一個中文字"
+
+    nonisolated static func isValidParentWord(_ input: String) -> Bool {
+        let value = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.count == 1,
+              value.unicodeScalars.count == 1,
+              let scalar = value.unicodeScalars.first else { return false }
+        let codePoint = scalar.value
+        return codePoint == 0x3007
+            || (0x3400...0x4DBF).contains(codePoint)
+            || (0x4E00...0x9FFF).contains(codePoint)
+            || (0xF900...0xFAFF).contains(codePoint)
+            || (0x20000...0x2A6DF).contains(codePoint)
+            || (0x2A700...0x2B73F).contains(codePoint)
+            || (0x2B740...0x2B81F).contains(codePoint)
+            || (0x2B820...0x2CEAF).contains(codePoint)
+            || (0x2CEB0...0x2EBEF).contains(codePoint)
+            || (0x2EBF0...0x2EE5F).contains(codePoint)
+            || (0x2F800...0x2FA1F).contains(codePoint)
+            || (0x30000...0x323AF).contains(codePoint)
+    }
 
     /// Incrementing this causes RelatedListView to reload its data.
     /// Call after seeding or any external data change.
@@ -63,13 +84,17 @@ final class ManageRelatedController: BaseController {
 
     func addRelated(parentWord: String, childWord: String,
                     score: Int = 0) async -> Result<Void, Error> {
-        guard !parentWord.isEmpty, !childWord.isEmpty else {
+        let normalizedParent = parentWord.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Self.isValidParentWord(normalizedParent) else {
+            return .failure(ControllerError.validation(Self.invalidParentMessage))
+        }
+        guard !childWord.isEmpty else {
             return .failure(ControllerError.validation("詞彙和關聯字不能為空"))
         }
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             let rowID = server.addRecord("related",
-                                         ["pword": parentWord, "cword": childWord,
+                                         ["pword": normalizedParent, "cword": childWord,
                                           "basescore": 0, "score": score])
             guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
             do {
@@ -84,13 +109,17 @@ final class ManageRelatedController: BaseController {
 
     func updateRelated(id: Int64, parentWord: String,
                        childWord: String, score: Int = 0) async -> Result<Void, Error> {
-        guard !parentWord.isEmpty, !childWord.isEmpty else {
+        let normalizedParent = parentWord.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Self.isValidParentWord(normalizedParent) else {
+            return .failure(ControllerError.validation(Self.invalidParentMessage))
+        }
+        guard !childWord.isEmpty else {
             return .failure(ControllerError.validation("詞彙和關聯字不能為空"))
         }
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
             let affected = server.updateRecord("related",
-                                               ["pword": parentWord, "cword": childWord, "score": score],
+                                               ["pword": normalizedParent, "cword": childWord, "score": score],
                                                "_id = ?", ["\(id)"])
             guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
             do {
@@ -150,13 +179,17 @@ final class ManageRelatedController: BaseController {
 
     func addRelated(parentWord: String, childWord: String, score: Int = 0,
                     view: (any ManageRelatedView)?) {
-        guard !parentWord.isEmpty, !childWord.isEmpty else {
+        let normalizedParent = parentWord.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Self.isValidParentWord(normalizedParent) else {
+            view?.onError(Self.invalidParentMessage); return
+        }
+        guard !childWord.isEmpty else {
             view?.onError("詞彙和關聯字不能為空"); return
         }
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let rowID = server.addRecord("related",
-                                        ["pword": parentWord, "cword": childWord,
+                                        ["pword": normalizedParent, "cword": childWord,
                                          "basescore": 0, "score": score])
             if rowID > 0 {
                 try? server.markTableChangedAndPublish("related")
@@ -169,13 +202,17 @@ final class ManageRelatedController: BaseController {
 
     func updateRelated(id: Int64, parentWord: String, childWord: String,
                        score: Int = 0, view: (any ManageRelatedView)?) {
-        guard !parentWord.isEmpty, !childWord.isEmpty else {
+        let normalizedParent = parentWord.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Self.isValidParentWord(normalizedParent) else {
+            view?.onError(Self.invalidParentMessage); return
+        }
+        guard !childWord.isEmpty else {
             view?.onError("詞彙和關聯字不能為空"); return
         }
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
             let affected = server.updateRecord("related",
-                                               ["pword": parentWord, "cword": childWord, "score": score],
+                                               ["pword": normalizedParent, "cword": childWord, "score": score],
                                                "_id = ?", ["\(id)"])
             if affected > 0 {
                 try? server.markTableChangedAndPublish("related")

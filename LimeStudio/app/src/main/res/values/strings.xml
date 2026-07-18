@@ -210,6 +210,7 @@
     <string name="manage_related_loading">讀取中 ...</string>
     <string name="manage_related_reset">重置</string>
     <string name="manage_related_duplicated_error">關聯字重覆或建立錯誤，無法儲存</string>
+    <string name="manage_related_invalid_parent">首字只能輸入一個中文字</string>
     <string name="manage_related_word_hint">合併詞（第一字為索引詞）</string>
 
 
@@ -314,6 +315,6 @@
     <string name="dialog_update_message">儲存變更？</string>
 
     <!-- Batch 6: related sheet field hints -->
-    <string name="manage_related_hint_word">詞彙</string>
+    <string name="manage_related_hint_word">首字（一個中文字）</string>
     <string name="manage_related_hint_related">關聯字</string>
 </resources>

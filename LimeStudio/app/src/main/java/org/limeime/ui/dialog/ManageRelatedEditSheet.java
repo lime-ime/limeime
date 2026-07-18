@@ -37,6 +37,7 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import org.limeime.R;
 import org.limeime.data.Related;
+import org.limeime.global.RelatedParentValidator;
 import org.limeime.ui.view.ManageRelatedFragment;
 
 /**
@@ -111,7 +112,10 @@ public class ManageRelatedEditSheet extends BottomSheetDialogFragment {
             String pword = edtWord.getText() != null ? edtWord.getText().toString().trim() : "";
             String cword = edtRelated.getText() != null ? edtRelated.getText().toString().trim() : "";
             if (!validateInput(pword, cword)) {
-                Toast.makeText(requireContext(), R.string.update_error, Toast.LENGTH_SHORT).show();
+                int message = !RelatedParentValidator.isValid(pword)
+                        ? R.string.manage_related_invalid_parent
+                        : R.string.update_error;
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
                 return;
             }
             score = ManageSheetScoreInput.readScore(edtScore, score);
@@ -136,7 +140,7 @@ public class ManageRelatedEditSheet extends BottomSheetDialogFragment {
     }
 
     private boolean validateInput(String pword, String cword) {
-        return !pword.isEmpty() && !cword.isEmpty();
+        return RelatedParentValidator.isValid(pword) && !cword.isEmpty();
     }
 
     @Override

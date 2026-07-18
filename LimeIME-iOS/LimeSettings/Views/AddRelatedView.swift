@@ -44,7 +44,7 @@ struct AddRelatedView: View {
         NavigationView {
             Form {
                 Section(header: Text("新增資料列")) {
-                    TextField("詞彙 (word)", text: $parentWord)
+                    TextField("首字（一個中文字）", text: $parentWord)
                         .disableAutocorrection(true)
                     TextField("關聯字 (related)", text: $childWord)
                         .disableAutocorrection(true)

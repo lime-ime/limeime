@@ -6,6 +6,7 @@ Last reviewed: 2026-07-18
 
 ## Pending fixes
 - fix#160 iOS: the shared-catalog keyboard option `limenumsym` (`LIME+數字符號鍵盤`) renders the ordinary number-row QWERTY layout instead of its dedicated number/symbol layout. Android is reporter-confirmed working. PR #162 merged the missing phone/iPad resources as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`; follow-up PR #164 merged the source-independent semantic oracle and corrected full/narrow-iPad punctuation preservation as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Remaining work is phone/full-iPad/narrow-iPad device verification, a newer TestFlight/App Store build containing both merges, and reporter confirmation. Android is not in scope. See `docs/#160_ISSUE.md`.
+- fix#161 Android/iOS: enforce the existing related-table invariant at every add/update boundary. `pword` must be exactly one Unicode Han character; reject multi-character and non-Han input before database writes, preserve deletion of existing malformed rows, and leave runtime related-candidate lookup semantics unchanged. Android reporter retest waits for a newer APK; iOS XCTest/build verification remains pending. See `docs/#161_ISSUE.md`.
 
 ## Product work
 

@@ -96,13 +96,65 @@ final class ManageRelatedControllerTest: XCTestCase {
 
     // MARK: - addRelated
 
+    func testRelatedParentRequiresExactlyOneHanCharacter() {
+        XCTAssertTrue(LimeIME.ManageRelatedController.isValidParentWord("中"))
+        XCTAssertTrue(LimeIME.ManageRelatedController.isValidParentWord("〇"))
+        XCTAssertTrue(LimeIME.ManageRelatedController.isValidParentWord("𠀀"))
+        XCTAssertTrue(LimeIME.ManageRelatedController.isValidParentWord(" 中 "))
+        XCTAssertFalse(LimeIME.ManageRelatedController.isValidParentWord("台中"))
+        XCTAssertFalse(LimeIME.ManageRelatedController.isValidParentWord("add"))
+        XCTAssertFalse(LimeIME.ManageRelatedController.isValidParentWord("Ａ"))
+        XCTAssertFalse(LimeIME.ManageRelatedController.isValidParentWord("１"))
+        XCTAssertFalse(LimeIME.ManageRelatedController.isValidParentWord("，"))
+    }
+
+    func testAddRelatedRejectsMultiCharacterParent() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.ManageRelatedController(
+            dbServer: LimeIME.DBServer(_testDatasource: db))
+
+        let result = await controller.addRelated(parentWord: "台中", childWord: "市")
+
+        guard case .failure(let error) = result else {
+            XCTFail("Expected multi-character parent to be rejected")
+            return
+        }
+        XCTAssertEqual(error.localizedDescription,
+                       LimeIME.ManageRelatedController.invalidParentMessage)
+        XCTAssertTrue(db.getRelated(nil, 10, 0).isEmpty)
+    }
+
+    func testUpdateRelatedRejectsNonHanParent() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let controller = await LimeIME.ManageRelatedController(
+            dbServer: LimeIME.DBServer(_testDatasource: db))
+        _ = await controller.addRelated(parentWord: "台", childWord: "中市")
+        guard let existing = db.getRelated(nil, 10, 0).first else {
+            XCTFail("Expected seeded relation")
+            return
+        }
+
+        let result = await controller.updateRelated(
+            id: existing.id, parentWord: "add", childWord: "中市")
+
+        guard case .failure(let error) = result else {
+            XCTFail("Expected non-Han parent to be rejected")
+            return
+        }
+        XCTAssertEqual(error.localizedDescription,
+                       LimeIME.ManageRelatedController.invalidParentMessage)
+        XCTAssertEqual(db.getRelated(nil, 10, 0).first?.parentWord, "台")
+    }
+
     func testAddRelatedSuccess() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
         let mock = await MockManageRelatedView()
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run { controller.addRelated(parentWord: "你好", childWord: "世界", view: mock) }
+        await MainActor.run { controller.addRelated(parentWord: "你", childWord: "好世界", view: mock) }
         await waitUntil { mock.refreshCount == 1 }
 
         await MainActor.run {
@@ -116,7 +168,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        let result = await controller.addRelated(parentWord: "分數", childWord: "新增", score: 42)
+        let result = await controller.addRelated(parentWord: "分", childWord: "數新增", score: 42)
 
         guard case .success = result else {
             XCTFail("Expected addRelated to succeed")
@@ -124,7 +176,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         }
         let phrases = db.getRelated(nil, 10, 0)
         XCTAssertTrue(phrases.contains {
-            $0.parentWord == "分數" && $0.childWord == "新增" && $0.score == 42
+            $0.parentWord == "分" && $0.childWord == "數新增" && $0.score == 42
         })
     }
 
@@ -134,9 +186,9 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
         let meta = try syncMeta(for: url)
 
-        let add = await controller.addRelated(parentWord: "i3", childWord: "新增", score: 1)
+        let add = await controller.addRelated(parentWord: "同", childWord: "步新增", score: 1)
         guard case .success = add,
-              let first = db.getRelated(nil, 10, 0).first(where: { $0.parentWord == "i3" }) else {
+              let first = db.getRelated(nil, 10, 0).first(where: { $0.parentWord == "同" }) else {
             XCTFail("Expected addRelated to succeed")
             return
         }
@@ -144,7 +196,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         XCTAssertEqual(try meta.generation(), 1)
 
         let update = await controller.updateRelated(id: first.id,
-                                                    parentWord: "i3",
+                                                    parentWord: "同",
                                                     childWord: "更新",
                                                     score: 2)
         guard case .success = update else {
@@ -182,7 +234,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
         await MainActor.run {
-            controller.addRelated(parentWord: "hello", childWord: "", view: mock)
+            controller.addRelated(parentWord: "哈", childWord: "", view: mock)
             XCTAssertFalse(mock.errors.isEmpty)
         }
     }
@@ -223,18 +275,18 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        let addResult = await controller.addRelated(parentWord: "分數", childWord: "編輯", score: 7)
+        let addResult = await controller.addRelated(parentWord: "分", childWord: "數編輯", score: 7)
         guard case .success = addResult,
               let first = db.getRelated(nil, 10, 0).first(where: {
-                  $0.parentWord == "分數" && $0.childWord == "編輯"
+                  $0.parentWord == "分" && $0.childWord == "數編輯"
               }) else {
             XCTFail("Expected seeded related phrase")
             return
         }
 
         let updateResult = await controller.updateRelated(id: first.id,
-                                                          parentWord: "分數",
-                                                          childWord: "更新",
+                                                          parentWord: "分",
+                                                          childWord: "數更新",
                                                           score: 88)
 
         guard case .success = updateResult else {
@@ -243,7 +295,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         }
         let updated = db.getRelated(nil, 10, 0)
         XCTAssertTrue(updated.contains {
-            $0.parentWord == "分數" && $0.childWord == "更新" && $0.score == 88
+            $0.parentWord == "分" && $0.childWord == "數更新" && $0.score == 88
         })
     }
 
@@ -295,8 +347,8 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        _ = await controller.addRelated(parentWord: "A", childWord: "B")
-        _ = await controller.addRelated(parentWord: "C", childWord: "D")
+        _ = await controller.addRelated(parentWord: "甲", childWord: "乙")
+        _ = await controller.addRelated(parentWord: "丙", childWord: "丁")
 
         let mock = await MockManageRelatedView()
         await MainActor.run { controller.loadRelated(query: nil, page: 0, view: mock) }
@@ -312,14 +364,12 @@ final class ManageRelatedControllerTest: XCTestCase {
         defer { try? FileManager.default.removeItem(at: url) }
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        _ = await controller.addRelated(parentWord: "搜尋", childWord: "結果")
-        _ = await controller.addRelated(parentWord: "其他", childWord: "詞彙")
+        _ = await controller.addRelated(parentWord: "搜", childWord: "尋結果")
+        _ = await controller.addRelated(parentWord: "其", childWord: "他詞彙")
 
         let mock = await MockManageRelatedView()
         await MainActor.run { controller.loadRelated(query: "搜", page: 0, view: mock) }
-        // Pure absence assertion: query "搜" matches pword exactly (not "搜尋"), so the load
-        // yields displayRelatedPhrases([]) — no positive signal to poll. Widened fixed wait.
-        try await Task.sleep(nanoseconds: 1_500_000_000)
+        await waitUntil { !mock.displayedPhrases.isEmpty }
 
         await MainActor.run {
             XCTAssertTrue(mock.errors.isEmpty)
@@ -343,7 +393,7 @@ final class ManageRelatedControllerTest: XCTestCase {
         let threadMock = await ThreadCaptureMock()
         let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
 
-        await MainActor.run { controller.addRelated(parentWord: "主線", childWord: "回呼", view: threadMock) }
+        await MainActor.run { controller.addRelated(parentWord: "主", childWord: "線回呼", view: threadMock) }
         await waitUntil { threadMock.capturedThread != nil }
 
         await MainActor.run {

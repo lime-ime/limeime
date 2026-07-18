@@ -11,6 +11,7 @@ import org.limeime.SearchServer;
 import org.limeime.data.Record;
 import org.limeime.data.Related;
 import org.limeime.global.LIME;
+import org.limeime.global.RelatedParentValidator;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -238,13 +239,18 @@ public class ManageImController extends BaseController {
      * @param score The score
      */
     public void addRelatedPhrase(String pWord, String cWord, int score) {
+        String normalizedPWord = RelatedParentValidator.normalize(pWord);
+        if (!RelatedParentValidator.isValid(normalizedPWord)) {
+            handleError(manageRelatedView, RelatedParentValidator.ERROR_MESSAGE, null);
+            return;
+        }
         try {
             android.content.ContentValues cv = new android.content.ContentValues();
-            cv.put(LIME.DB_RELATED_COLUMN_PWORD, pWord);
+            cv.put(LIME.DB_RELATED_COLUMN_PWORD, normalizedPWord);
             cv.put(LIME.DB_RELATED_COLUMN_CWORD, cWord);
             cv.put(LIME.DB_RELATED_COLUMN_USERSCORE, score);
-            if (searchServer.hasRelated(pWord, cWord)) {
-                searchServer.updateRecord(LIME.DB_TABLE_RELATED, cv, LIME.DB_RELATED_COLUMN_PWORD + " = ? AND " + LIME.DB_RELATED_COLUMN_CWORD + " = ?", new String[]{pWord, cWord});
+            if (searchServer.hasRelated(normalizedPWord, cWord)) {
+                searchServer.updateRecord(LIME.DB_TABLE_RELATED, cv, LIME.DB_RELATED_COLUMN_PWORD + " = ? AND " + LIME.DB_RELATED_COLUMN_CWORD + " = ?", new String[]{normalizedPWord, cWord});
             } else {
                 searchServer.addRecord(LIME.DB_TABLE_RELATED, cv);
             }
@@ -266,9 +272,14 @@ public class ManageImController extends BaseController {
      * @param score The new score
      */
     public void updateRelatedPhrase(long id, String pWord, String cWord, int score) {
+        String normalizedPWord = RelatedParentValidator.normalize(pWord);
+        if (!RelatedParentValidator.isValid(normalizedPWord)) {
+            handleError(manageRelatedView, RelatedParentValidator.ERROR_MESSAGE, null);
+            return;
+        }
         try {
             android.content.ContentValues cv = new android.content.ContentValues();
-            cv.put(LIME.DB_RELATED_COLUMN_PWORD, pWord);
+            cv.put(LIME.DB_RELATED_COLUMN_PWORD, normalizedPWord);
             cv.put(LIME.DB_RELATED_COLUMN_CWORD, cWord);
             cv.put(LIME.DB_RELATED_COLUMN_BASESCORE, score);
             searchServer.updateRecord(LIME.DB_TABLE_RELATED, cv, LIME.DB_COLUMN_ID + " = ?", new String[]{String.valueOf(id)});

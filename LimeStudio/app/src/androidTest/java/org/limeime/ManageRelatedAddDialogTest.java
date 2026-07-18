@@ -51,6 +51,30 @@ public class ManageRelatedAddDialogTest {
     }
 
     @Test
+    public void testRelatedParentRequiresExactlyOneHanCharacter() throws Exception {
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedAddSheet", "中", true);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedAddSheet", "𠀀", true);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedAddSheet", "台中", false);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedAddSheet", "add", false);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedAddSheet", "Ａ", false);
+
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedEditSheet", "中", true);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedEditSheet", "台中", false);
+        assertRelatedInputValidity("org.limeime.ui.dialog.ManageRelatedEditSheet", "add", false);
+    }
+
+    private void assertRelatedInputValidity(String className, String parentWord,
+                                            boolean expected) throws Exception {
+        Class<?> dialog = Class.forName(className);
+        Object instance = dialog.getDeclaredConstructor().newInstance();
+        java.lang.reflect.Method validate = dialog.getDeclaredMethod(
+                "validateInput", String.class, String.class);
+        validate.setAccessible(true);
+        assertEquals(className + " parentWord=" + parentWord,
+                expected, validate.invoke(instance, parentWord, "關聯"));
+    }
+
+    @Test
     public void testSheetLayoutScrollsWhenImeIsVisible() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertEquals("ManageRelatedAddSheet root should scroll above the soft keyboard",

@@ -2,11 +2,14 @@ package org.limeime;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.limeime.SearchServer;
 import org.limeime.data.Record;
+import org.limeime.data.Related;
 import org.limeime.ui.controller.ManageImController;
 import org.limeime.ui.view.ManageImView;
+import org.limeime.ui.view.ManageRelatedView;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +59,36 @@ public class ManageImControllerTest {
         }
 
 
+    }
+
+    private static class StubManageRelatedView implements ManageRelatedView {
+        private final AtomicReference<String> errorRef;
+        private boolean refreshed;
+
+        StubManageRelatedView(AtomicReference<String> errorRef) {
+            this.errorRef = errorRef;
+        }
+
+        @Override
+        public void displayRelatedPhrases(List<Related> related) { /* no-op */ }
+
+        @Override
+        public void updatePhraseCount(int count) { /* no-op */ }
+
+        @Override
+        public void refreshPhraseList() { refreshed = true; }
+
+        @Override
+        public void showEditPhraseDialog(Related related) { /* no-op */ }
+
+        @Override
+        public void showAddPhraseDialog() { /* no-op */ }
+
+        @Override
+        public void showDeleteConfirmDialog(long id) { /* no-op */ }
+
+        @Override
+        public void onError(String message) { errorRef.set(message); }
     }
 
     @Test
@@ -122,5 +155,35 @@ public class ManageImControllerTest {
 
         assertTrue(controller.updateIMMetadataField("custom", "limeendkey", " "));
         assertEquals("", dbServer.getImConfig("custom", "limeendkey"));
+    }
+
+    @Test
+    public void addRelatedPhrase_rejectsInvalidParentBeforeDatabaseWrite() {
+        SearchServer searchServer = new SearchServer(ApplicationProvider.getApplicationContext());
+        ManageImController controller = new ManageImController(searchServer);
+        AtomicReference<String> errorRef = new AtomicReference<>();
+        StubManageRelatedView view = new StubManageRelatedView(errorRef);
+        controller.setManageRelatedView(view);
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                () -> controller.addRelatedPhrase("台中", "市", 0));
+
+        assertNotNull("Multi-character parent should report a validation error", errorRef.get());
+        assertFalse("Invalid parent must not refresh after a database write", view.refreshed);
+    }
+
+    @Test
+    public void updateRelatedPhrase_rejectsNonHanParentBeforeDatabaseWrite() {
+        SearchServer searchServer = new SearchServer(ApplicationProvider.getApplicationContext());
+        ManageImController controller = new ManageImController(searchServer);
+        AtomicReference<String> errorRef = new AtomicReference<>();
+        StubManageRelatedView view = new StubManageRelatedView(errorRef);
+        controller.setManageRelatedView(view);
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(
+                () -> controller.updateRelatedPhrase(1, "add", "市", 0));
+
+        assertNotNull("Non-Han parent should report a validation error", errorRef.get());
+        assertFalse("Invalid parent must not refresh after a database write", view.refreshed);
     }
 }
