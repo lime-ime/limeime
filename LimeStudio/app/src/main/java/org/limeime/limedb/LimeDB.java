@@ -6824,6 +6824,57 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         return result;
     }
 
+    /** Searches related records for the management UI without changing runtime lookup semantics. */
+    public List<Related> searchRelatedForManagement(String query, int maximum, int offset) {
+        List<Related> result = new ArrayList<>();
+        if (checkDBConnection()) return result;
+
+        String order = LIME.DB_RELATED_COLUMN_USERSCORE + " desc," +
+                LIME.DB_RELATED_COLUMN_BASESCORE + " desc";
+        if (maximum > 0) order += " LIMIT " + maximum + " OFFSET " + offset;
+
+        try (Cursor cursor = db.query(LIME.DB_TABLE_RELATED, null,
+                relatedManagementWhere(query), relatedManagementArgs(query),
+                null, null, order)) {
+            while (cursor.moveToNext()) {
+                Related record = new Related();
+                record.setId(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_ID));
+                record.setPword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_PWORD));
+                record.setCword(getCursorString(cursor, LIME.DB_RELATED_COLUMN_CWORD));
+                record.setUserscore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_USERSCORE));
+                record.setBasescore(getCursorInt(cursor, LIME.DB_RELATED_COLUMN_BASESCORE));
+                result.add(record);
+            }
+        }
+        return result;
+    }
+
+    public int countRelatedForManagement(String query) {
+        if (checkDBConnection()) return 0;
+        return countRecords(LIME.DB_TABLE_RELATED, relatedManagementWhere(query),
+                relatedManagementArgs(query));
+    }
+
+    private String relatedManagementWhere(String query) {
+        String base = "ifnull(" + LIME.DB_RELATED_COLUMN_CWORD + ", '') <> ''";
+        if (query == null || query.trim().isEmpty()) return base;
+        String escape = " ESCAPE '\\'";
+        return base + " AND (" +
+                LIME.DB_RELATED_COLUMN_PWORD + " LIKE ?" + escape + " OR " +
+                LIME.DB_RELATED_COLUMN_CWORD + " LIKE ?" + escape + " OR " +
+                "(ifnull(" + LIME.DB_RELATED_COLUMN_PWORD + ", '') || ifnull(" +
+                LIME.DB_RELATED_COLUMN_CWORD + ", '')) LIKE ?" + escape + ")";
+    }
+
+    private String[] relatedManagementArgs(String query) {
+        if (query == null || query.trim().isEmpty()) return null;
+        String escaped = query.trim().replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        String pattern = "%" + escaped + "%";
+        return new String[]{pattern, pattern, pattern};
+    }
+
 //    /**
 //     * Gets a single related phrase record by ID.
 //     *

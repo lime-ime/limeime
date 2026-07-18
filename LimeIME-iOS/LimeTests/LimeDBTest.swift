@@ -1354,6 +1354,24 @@ final class LimeDBTest: XCTestCase {
         XCTAssertNotNil(list)
     }
 
+    func testRelatedManagementSearchFindsMultiCharacterParentAndCombinedPhrase() throws {
+        let db = try makeLimeDB()
+        let suffix = UUID().uuidString
+        let parent = "台中\(suffix)"
+        let child = "市"
+        let id = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": parent, "cword": child, "score": 0, "basescore": 0
+        ])
+        XCTAssertGreaterThan(id, 0)
+
+        defer { _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"]) }
+
+        XCTAssertTrue(db.searchRelatedForManagement(parent, 100, 0).contains { $0.id == id })
+        XCTAssertTrue(db.searchRelatedForManagement(parent + child, 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement("不存在\(suffix)", 100, 0).contains { $0.id == id })
+        XCTAssertEqual(db.countRelatedForManagement(parent + child), 1)
+    }
+
     func testLimeDBLoadRelatedEdgeCases() throws {
         let db = try makeLimeDB()
         XCTAssertNotNil(db.getRelated(nil, 10, 0))

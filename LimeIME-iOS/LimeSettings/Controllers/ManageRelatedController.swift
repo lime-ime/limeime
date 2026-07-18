@@ -55,8 +55,8 @@ final class ManageRelatedController: BaseController {
         let server = self.dbServer
         let q: String? = (query?.isEmpty == false) ? query : nil
         return await Task.detached(priority: .userInitiated) {
-            let phrases = server.getRelated(q, ManageRelatedController.pageSize, offset)
-            let total = server.countRecords("related", nil, nil)
+            let phrases = server.searchRelatedForManagement(q, ManageRelatedController.pageSize, offset)
+            let total = server.countRelatedForManagement(q)
             return (phrases, total)
         }.value
     }
@@ -143,7 +143,7 @@ final class ManageRelatedController: BaseController {
         let server = self.dbServer
         let q: String? = (query?.isEmpty == false) ? query : nil
         Task.detached(priority: .userInitiated) {
-            let phrases = server.getRelated(q, ManageRelatedController.pageSize, offset)
+            let phrases = server.searchRelatedForManagement(q, ManageRelatedController.pageSize, offset)
             await MainActor.run { view?.displayRelatedPhrases(phrases) }
         }
     }

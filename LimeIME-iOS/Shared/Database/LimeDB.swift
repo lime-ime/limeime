@@ -1526,6 +1526,41 @@ final class LimeDB {
         }) ?? []
     }
 
+    func searchRelatedForManagement(_ query: String?, _ maximum: Int, _ offset: Int) -> [Related] {
+        guard !checkDBConnection() else { return [] }
+        let filter = relatedManagementFilter(query)
+        let limit = maximum > 0 ? " LIMIT \(maximum) OFFSET \(offset)" : ""
+        let sql = "SELECT _id, pword, cword, basescore, score FROM related WHERE \(filter.whereClause) ORDER BY score DESC, basescore DESC\(limit)"
+        return (try? dbQueue.read { db in
+            try Row.fetchAll(db, sql: sql, arguments: StatementArguments(filter.args)).map { row in
+                Related(id:         (row.optInt64("_id") ?? 0),
+                        parentWord: (row.optString("pword") ?? ""),
+                        childWord:  (row.optString("cword") ?? ""),
+                        score:      (row.optInt("score") ?? 0),
+                        baseScore:  (row.optInt("basescore") ?? 0))
+            }
+        }) ?? []
+    }
+
+    func countRelatedForManagement(_ query: String?) -> Int {
+        let filter = relatedManagementFilter(query)
+        return countRecords(LIME.DB_TABLE_RELATED, filter.whereClause,
+                            filter.args.isEmpty ? nil : filter.args)
+    }
+
+    private func relatedManagementFilter(_ query: String?) -> (whereClause: String, args: [String]) {
+        let base = "ifnull(cword, '') <> ''"
+        guard let trimmed = query?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else { return (base, []) }
+        let escaped = trimmed
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+        let pattern = "%\(escaped)%"
+        let whereClause = base + " AND (pword LIKE ? ESCAPE '\\' OR cword LIKE ? ESCAPE '\\' OR (ifnull(pword, '') || ifnull(cword, '')) LIKE ? ESCAPE '\\')"
+        return (whereClause, [pattern, pattern, pattern])
+    }
+
     // MARK: - Backup / Restore
 
     func backupUserRecords(_ table: String) {
