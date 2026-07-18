@@ -296,6 +296,15 @@ struct KeyDef: Equatable {
         self.popupCharacters = popupCharacters
     }
 
+    /// Copy of this key with a different width — used by the split keyboard to cut a
+    /// wide key (space) into a left piece and a right-half clone (Android parity).
+    func withWidth(_ widthPercent: CGFloat) -> KeyDef {
+        KeyDef(code: code, codes: codes, label: label, sublabel: sublabel,
+               widthPercent: widthPercent, icon: icon, isRepeatable: isRepeatable,
+               isModifier: isModifier, isSticky: isSticky, longPressCode: longPressCode,
+               popupKeyboard: popupKeyboard, popupCharacters: popupCharacters)
+    }
+
     /// Returns the string character to append to the composing code.
     /// Returns nil for special/modifier keys.
     var codeCharacter: String? {
@@ -314,6 +323,44 @@ struct KeyRow: Equatable {
     init(keys: [KeyDef], isBottomRow: Bool = false) {
         self.keys = keys
         self.isBottomRow = isBottomRow
+    }
+}
+
+// MARK: - Split partition
+/// SPLIT_ONE_HAND_KB: Android-parity split partition (LIMEBaseKeyboard.loadKeyboard).
+/// The border sits after floor(columns/2) standard columns — a key belongs to the
+/// right half when its LEFT edge reaches the border. A wide key (space) that crosses
+/// the border is cut at it and the remainder cloned onto the right half, so space
+/// appears on both sides like Android's split bottom row.
+enum SplitPartition {
+    static func partition(_ keys: [KeyDef]) -> (left: [KeyDef], right: [KeyDef]) {
+        guard !keys.isEmpty else { return ([], []) }
+        let total = keys.reduce(0) { $0 + $1.widthPercent }
+        let unit = keys.map(\.widthPercent).min() ?? total
+        let columns = max(1, Int((total / unit).rounded()))
+        let border = CGFloat(columns / 2) * unit
+        let eps = unit * 0.05
+
+        var left: [KeyDef] = []
+        var right: [KeyDef] = []
+        var leftEdge: CGFloat = 0
+        for k in keys {
+            let rightEdge = leftEdge + k.widthPercent
+            if rightEdge <= border + eps {
+                left.append(k)
+            } else if leftEdge >= border - eps {
+                right.append(k)
+            } else if rightEdge - border >= unit - eps {
+                left.append(k.withWidth(border - leftEdge))
+                right.append(k.withWidth(rightEdge - border))
+            } else {
+                // Crosses the border by less than a key width — not worth cloning,
+                // keep it whole on the left (Android leaves such keys unshifted).
+                left.append(k)
+            }
+            leftEdge = rightEdge
+        }
+        return (left, right)
     }
 }
 

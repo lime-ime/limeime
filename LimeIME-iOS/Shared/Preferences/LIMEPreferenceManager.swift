@@ -128,6 +128,19 @@ final class LIMEPreferenceManager {
         set { defaults.set(newValue, forKey: "split_keyboard_mode") }
     }
 
+    /// Single-hand keyboard mode. 0=off, 1=left-anchored, 2=right-anchored. Portrait only
+    /// (spec decision: landscape stays full width, the setting persists).
+    var oneHandMode: Int {
+        get { intValue("one_hand_mode", default: 0) }
+        set { defaults.set(newValue, forKey: "one_hand_mode") }
+    }
+
+    /// Numpad-based layout horizontal anchor. 0=fit, 1=left, 2=right, 3=center.
+    var numpadAnchor: Int {
+        get { intValue("numpad_anchor", default: 0) }
+        set { defaults.set(newValue, forKey: "numpad_anchor") }
+    }
+
     // MARK: - §8.2 Keyboard Feedback
 
     var vibrateOnKeypress: Bool {

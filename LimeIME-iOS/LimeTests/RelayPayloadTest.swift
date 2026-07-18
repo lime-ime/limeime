@@ -36,6 +36,27 @@ final class RelayPayloadTest: XCTestCase {
         XCTAssertEqual(decoded.ts, 1_234.5)
     }
 
+    func testEncodeDecodeRoundTripsOneHandAndNumpadAnchor() throws {
+        let prefs = LimeIME.RelayPrefState(hanConvert: 1, splitKeyboard: 2, updatedAt: 42.0,
+                                           oneHand: 2, numpadAnchor: 3)
+        let payload = LimeIME.encodeRelayPayload(faOn: true, ts: 1_234.5, prefs: prefs)
+        let decoded = try XCTUnwrap(LimeIME.decodeRelayPayload(LimeIME.RelayToken.request + payload))
+
+        XCTAssertEqual(decoded.han, 1)
+        XCTAssertEqual(decoded.split, 2)
+        XCTAssertEqual(decoded.oneHand, 2)
+        XCTAssertEqual(decoded.numpadAnchor, 3)
+    }
+
+    func testDecodeDefaultsOneHandAndNumpadAnchorToZeroWhenAbsent() throws {
+        // Backward compatibility: a payload from an older keyboard build has no oh=/na= fields.
+        let payload = LimeIME.encodeRelayPayload(faOn: true, ts: 1_234.5)
+        let decoded = try XCTUnwrap(LimeIME.decodeRelayPayload(LimeIME.RelayToken.request + payload))
+
+        XCTAssertNil(decoded.oneHand)
+        XCTAssertNil(decoded.numpadAnchor)
+    }
+
     func testDecodeRejectsTokenAndGarbage() {
         XCTAssertNil(LimeIME.decodeRelayPayload(LimeIME.RelayToken.request))
         XCTAssertNil(LimeIME.decodeRelayPayload("not a relay"))

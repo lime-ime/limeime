@@ -179,6 +179,9 @@ protocol KeyboardViewDelegate: AnyObject {
     func keyboardViewDidCancelPopupSlide(_ view: KeyboardView)
     func keyboardViewDidSwipeLeft(_ view: KeyboardView)
     func keyboardViewDidSwipeRight(_ view: KeyboardView)
+    /// SPLIT_ONE_HAND_KB: user tapped the restore chevron shown in the strip vacated by
+    /// one-hand/numpad anchoring — host should reset to full width and persist the change.
+    func keyboardViewDidTapOneHandRestore()
 }
 
 extension KeyboardViewDelegate {
@@ -186,6 +189,9 @@ extension KeyboardViewDelegate {
     /// single-key. Layout-based single-key popups (e.g. the 123 symbol-mode switch) need the host
     /// (which owns `currentPopupView`) to return true.
     func keyboardViewCurrentPopupIsSingleKey(_ view: KeyboardView) -> Bool { false }
+    /// Default no-op so existing conformers (test mocks, etc.) compile unchanged; the real host
+    /// (KeyboardViewController) overrides this to restore full width (SPLIT_ONE_HAND_KB).
+    func keyboardViewDidTapOneHandRestore() {}
 }
 
 final class KeyboardView: UIView, UIInputViewAudioFeedback {
@@ -529,6 +535,29 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
+    // SPLIT_ONE_HAND_KB horizontal anchoring: insets shrink the key block; the
+    // vacated strip is keyboard background, optionally holding the restore chevron.
+    private(set) var anchorLeadingInset: CGFloat = 0
+    private(set) var anchorTrailingInset: CGFloat = 0
+    private(set) var showRestoreChevron = false
+    /// Weak ref to the restore chevron — rebuilt (and stale instances removed) from buildKeys().
+    private weak var restoreChevronButton: UIButton?
+
+    func setHorizontalAnchor(leading: CGFloat, trailing: CGFloat, restoreChevron: Bool) {
+        guard leading != anchorLeadingInset || trailing != anchorTrailingInset
+                || restoreChevron != showRestoreChevron else { return }
+        anchorLeadingInset = leading
+        anchorTrailingInset = trailing
+        showRestoreChevron = restoreChevron
+        rowViews.forEach { $0.removeFromSuperview() }
+        rowViews.removeAll()
+        globeButton = nil
+        keyboardDoneButton = nil
+        shiftKeyButtons.removeAll()
+        buildKeys()
+        updateShiftKeyIcon()
+    }
+
     private var rowHeight: CGFloat {
         LayoutMetrics.KeyboardRow.rowHeight(
             isPadHardware: isPadHardware,
@@ -720,6 +749,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     private func buildKeys() {
         cancelAllActiveTouches()
         invalidatePlainTouchContexts()
+        // SPLIT_ONE_HAND_KB: buildKeys() is the single choke point every rebuild path
+        // (layout switch, theme, size, split/anchor toggles) funnels through, so dropping
+        // any stale chevron here — before re-adding it below — keeps it from accumulating
+        // across rebuilds that don't originate from setHorizontalAnchor.
+        restoreChevronButton?.removeFromSuperview()
+        restoreChevronButton = nil
         var prevRow: UIView? = nil
 
         // Collect the rows to render, injecting the arrow row at position 0 (above) or at the end (below).
@@ -735,7 +770,11 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
 
         for entry in renderRows {
-            let rh = (!entry.isArrow && entry.row.isBottomRow) ? bottomRowHeight : rowHeight
+            let uncappedRh = (!entry.isArrow && entry.row.isBottomRow) ? bottomRowHeight : rowHeight
+            // SPLIT_ONE_HAND_KB: vertical thumb-sweep cap in split mode.
+            let rh = splitMode
+                ? min(uncappedRh, ReachGeometry.splitRowHeightCap(sizeClass: LayoutLoader.iPadSizeClass))
+                : uncappedRh
             let rowView = splitMode
                 ? makeSplitRow(row: entry.row, rowHeight: rh)
                 : makeRow(row: entry.row, rowIndex: entry.index, rowHeight: rh)
@@ -744,8 +783,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
             rowView.translatesAutoresizingMaskIntoConstraints = false
             NSLayoutConstraint.activate([
-                rowView.leadingAnchor.constraint(equalTo: leadingAnchor),
-                rowView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                rowView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: anchorLeadingInset),
+                rowView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -anchorTrailingInset),
                 rowView.heightAnchor.constraint(equalToConstant: rh),
             ])
 
@@ -760,6 +799,31 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         if let last = prevRow {
             last.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         }
+
+        // SPLIT_ONE_HAND_KB: the strip vacated by an anchored key block optionally holds
+        // a restore-to-full-width chevron over the keyboard background.
+        if showRestoreChevron, anchorLeadingInset > 0 || anchorTrailingInset > 0 {
+            let chevron = UIButton(type: .system)
+            let onLeftStrip = anchorLeadingInset > 0   // block anchored right → strip on the left
+            chevron.setImage(UIImage(systemName: onLeftStrip ? "chevron.left" : "chevron.right"),
+                             for: .normal)
+            chevron.tintColor = .secondaryLabel
+            chevron.translatesAutoresizingMaskIntoConstraints = false
+            chevron.addTarget(self, action: #selector(oneHandRestoreTapped), for: .touchUpInside)
+            addSubview(chevron)
+            NSLayoutConstraint.activate([
+                chevron.widthAnchor.constraint(equalToConstant: max(anchorLeadingInset, anchorTrailingInset)),
+                chevron.topAnchor.constraint(equalTo: topAnchor),
+                chevron.bottomAnchor.constraint(equalTo: bottomAnchor),
+                onLeftStrip ? chevron.leadingAnchor.constraint(equalTo: leadingAnchor)
+                            : chevron.trailingAnchor.constraint(equalTo: trailingAnchor),
+            ])
+            restoreChevronButton = chevron
+        }
+    }
+
+    @objc private func oneHandRestoreTapped() {
+        delegate?.keyboardViewDidTapOneHandRestore()
     }
 
     /// A row of four arrow keys used when showArrowKey != 0.
@@ -780,26 +844,22 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let keys = row.keys
         guard !keys.isEmpty else { return rowView }
 
-        // Find split index: first key where cumulative widthPercent >= 50% of total
+        // SPLIT_ONE_HAND_KB: Android-parity partition — see SplitPartition (KeyLayout.swift).
         let total = keys.reduce(0) { $0 + $1.widthPercent }
-        var cumulative: CGFloat = 0
-        var splitIndex = keys.count / 2
-        for (i, k) in keys.enumerated() {
-            cumulative += k.widthPercent
-            if cumulative >= total / 2 {
-                splitIndex = i + 1
-                break
-            }
-        }
-
-        let leftKeys  = Array(keys[..<splitIndex])
-        let rightKeys = Array(keys[splitIndex...])
+        let (leftKeys, rightKeys) = SplitPartition.partition(keys)
         let splitGapFraction = LayoutMetrics.KeyboardRow.splitGapFraction
+        // SPLIT_ONE_HAND_KB: cap each half at the two-hand thumb reach; the shrink ratio
+        // scales unequal halves proportionally, equal halves land exactly on the cap.
+        let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
+        let legacyHalf = (1 - splitGapFraction) / 2
+        let capHalf = ReachGeometry.splitHalfMaxFraction(viewWidth: viewWidth,
+                                                         sizeClass: LayoutLoader.iPadSizeClass)
+        let reachShrink = capHalf / legacyHalf   // ≤ 1; == 1 when the cap doesn't bind
 
         func addHalf(_ halfKeys: [KeyDef], leading: Bool) {
             guard !halfKeys.isEmpty else { return }
             let halfPercent = halfKeys.reduce(0) { $0 + $1.widthPercent }
-            let halfFraction = (halfPercent / total) * (1 - splitGapFraction)
+            let halfFraction = (halfPercent / total) * (1 - splitGapFraction) * reachShrink
 
             let contentView = KeyTouchLayer(owner: self)
             contentView.backgroundColor = LayoutMetrics.TouchTrap.fill   // keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md §Resolution); .clear leaves gaps dead

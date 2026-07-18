@@ -95,6 +95,17 @@ final class LIMEPreferenceManagerTest: XCTestCase {
         XCTAssertEqual(prefs.splitKeyboardMode, 0)
     }
 
+    func testOneHandAndNumpadAnchorAccessors() {
+        prefs.oneHandMode = 2
+        XCTAssertEqual(prefs.oneHandMode, 2)
+        prefs.numpadAnchor = 3
+        XCTAssertEqual(prefs.numpadAnchor, 3)
+        let freshSuite = "test.lime.prefs.fresh.\(UUID().uuidString)"
+        let freshDefaults = UserDefaults(suiteName: freshSuite)!
+        XCTAssertEqual(LIMEPreferenceManager(defaults: freshDefaults).oneHandMode, 0)  // default off
+        freshDefaults.removePersistentDomain(forName: freshSuite)
+    }
+
     func testDefaultVibrateOnKeypress() {
         XCTAssertTrue(prefs.vibrateOnKeypress)
     }

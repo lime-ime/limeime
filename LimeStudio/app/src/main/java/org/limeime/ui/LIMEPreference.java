@@ -216,6 +216,17 @@ public class LIMEPreference extends AppCompatActivity {
 					vibrateLevelPref.setVisible(false);
 				}
 			}
+
+			// SPLIT_ONE_HAND_KB: 單手鍵盤 = gated phones only; 數字鍵盤位置 = tablets only.
+			android.util.DisplayMetrics rdm = getResources().getDisplayMetrics();
+			boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+			androidx.preference.Preference oneHandPref = findPreference("one_hand_mode");
+			if (oneHandPref != null)
+				oneHandPref.setVisible(!isTablet && org.limeime.keyboard.ReachGeometry.oneHandAvailable(
+						Math.min(rdm.widthPixels, rdm.heightPixels), rdm.xdpi));
+			androidx.preference.Preference numpadAnchorPref = findPreference("numpad_anchor");
+			if (numpadAnchorPref != null)
+				numpadAnchorPref.setVisible(isTablet);
 		}
 
 		@Override

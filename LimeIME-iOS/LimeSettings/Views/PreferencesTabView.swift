@@ -40,6 +40,8 @@ struct PreferencesTabView: View {
     @AppStorage("number_row_in_english",   store: sharedDefaults) private var numberRowInEnglish: Bool = true
     @AppStorage("show_arrow_key",          store: sharedDefaults) private var showArrowKey: Int = 0
     @AppStorage("split_keyboard_mode",     store: sharedDefaults) private var splitKeyboardMode: Int = 0
+    @AppStorage("one_hand_mode",  store: sharedDefaults) private var oneHandMode: Int = 0
+    @AppStorage("numpad_anchor",  store: sharedDefaults) private var numpadAnchor: Int = 0
 
     // MARK: §8.2 Keyboard Feedback
     @AppStorage("vibrate_on_keypress",     store: sharedDefaults) private var vibrateOnKeypress: Bool = true
@@ -82,6 +84,10 @@ struct PreferencesTabView: View {
     private let arrowLabels     = ["無", "軟鍵盤上方", "軟鍵盤下方"]
     private let splitOptions    = [0, 1, 2]
     private let splitLabels     = ["關閉", "開啟", "僅橫向開啟"]
+    private let oneHandOptions      = [0, 1, 2]
+    private let oneHandLabels       = ["關閉", "靠左", "靠右"]
+    private let numpadAnchorOptions = [0, 1, 2, 3]
+    private let numpadAnchorLabels  = ["滿版", "靠左", "靠右", "置中"]
     private let vibLevelOptions = [10, 20, 40, 60, 80]
     private let vibLevelLabels  = ["特弱", "弱", "中", "強", "特強"]
     private let soundVolumeOptions = ["-1", "0.10", "0.25", "0.50", "0.75", "1.00"]
@@ -173,6 +179,24 @@ struct PreferencesTabView: View {
                         Picker("分離鍵盤", selection: $splitKeyboardMode) {
                             ForEach(0..<splitOptions.count, id: \.self) { i in
                                 Text(splitLabels[i]).tag(splitOptions[i])
+                            }
+                        }
+                    }
+                    // SPLIT_ONE_HAND_KB: 單手鍵盤 = gated iPhones; 數字鍵盤位置 = iPad only.
+                    // 384 pt = ReachGeometry gate (64 mm × 6.0 pt/mm) — ReachGeometry lives in the
+                    // keyboard target, so the settings app inlines the constant.
+                    if UIDevice.current.userInterfaceIdiom != .pad,
+                       min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) > 384 {
+                        Picker("單手鍵盤", selection: $oneHandMode) {
+                            ForEach(0..<oneHandOptions.count, id: \.self) { i in
+                                Text(oneHandLabels[i]).tag(oneHandOptions[i])
+                            }
+                        }
+                    }
+                    if UIDevice.current.userInterfaceIdiom == .pad {
+                        Picker("數字鍵盤位置", selection: $numpadAnchor) {
+                            ForEach(0..<numpadAnchorOptions.count, id: \.self) { i in
+                                Text(numpadAnchorLabels[i]).tag(numpadAnchorOptions[i])
                             }
                         }
                     }
@@ -282,13 +306,17 @@ struct PreferencesTabView: View {
             // writes cold for this view's own display + the keyboard's first-run seed.
             .onChange(of: hanConvertOption) { newValue in writeHamburgerPrefInbox(han: newValue) }
             .onChange(of: splitKeyboardMode) { newValue in writeHamburgerPrefInbox(split: newValue) }
+            .onChange(of: oneHandMode)  { newValue in writeHamburgerPrefInbox(oneHand: newValue) }
+            .onChange(of: numpadAnchor) { newValue in writeHamburgerPrefInbox(numpadAnchor: newValue) }
         }
     }
 
-    private func writeHamburgerPrefInbox(han: Int? = nil, split: Int? = nil) {
+    private func writeHamburgerPrefInbox(han: Int? = nil, split: Int? = nil,
+                                         oneHand: Int? = nil, numpadAnchor: Int? = nil) {
         guard let base = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) else { return }
-        try? PrefInbox.write(base: base, defaults: sharedDefaults, hanConvert: han, splitKeyboard: split)
+        try? PrefInbox.write(base: base, defaults: sharedDefaults, hanConvert: han,
+                             splitKeyboard: split, oneHand: oneHand, numpadAnchor: numpadAnchor)
     }
 
     private func migrateRemovedPreferences() {

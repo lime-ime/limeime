@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   Custom content view for the long-press keyboard-key options menu. Replaces the
   plain AlertDialog item list so every entry is a styled row (keyboard_menu_row)
@@ -227,6 +227,227 @@
                     android:paddingEnd="2dp"
                     android:maxLines="1"
                     android:text="@string/split_keyboard_landscape"
+                    android:textAllCaps="false" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        </LinearLayout>
+
+        <!-- 單手鍵盤 — inline segmented control (關閉 / 靠左 / 靠右). Hidden unless the
+             screen is wide enough for one-hand shrinking to be meaningful (phones
+             only; ReachGeometry.oneHandAvailable gates it). -->
+        <!-- ponytail: reuse split icon; swap for dedicated icons if ever drawn -->
+        <LinearLayout
+            android:id="@+id/menu_onehand_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="20dp"
+                    android:tint="?attr/colorPrimary"
+                    android:src="@drawable/ic_split_24"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/one_hand_mode"
+                    android:textAppearance="@style/LIME.Body" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/onehand_toggle_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="44dp"
+                android:layout_marginTop="10dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                xmlns:app="http://schemas.android.com/apk/res-auto">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/onehand_opt_off"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/one_hand_off"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/onehand_opt_left"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/one_hand_left"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/onehand_opt_right"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/one_hand_right"
+                    android:textAllCaps="false" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        </LinearLayout>
+
+        <!-- 數字鍵盤位置 — inline segmented control (滿版 / 靠左 / 靠右 / 置中). Shown
+             only for numpad-based layouts on tablets, mutually exclusive with
+             分離鍵盤 / 單手鍵盤 (spec: keyboard-menu rule). -->
+        <!-- ponytail: reuse split icon; swap for dedicated icons if ever drawn -->
+        <LinearLayout
+            android:id="@+id/menu_numpad_anchor_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="20dp"
+                    android:tint="?attr/colorPrimary"
+                    android:src="@drawable/ic_split_24"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/numpad_anchor"
+                    android:textAppearance="@style/LIME.Body" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/numpad_anchor_toggle_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="44dp"
+                android:layout_marginTop="10dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                xmlns:app="http://schemas.android.com/apk/res-auto">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/numpad_anchor_opt_fit"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/numpad_anchor_fit"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/numpad_anchor_opt_left"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/numpad_anchor_left"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/numpad_anchor_opt_right"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/numpad_anchor_right"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/numpad_anchor_opt_center"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/numpad_anchor_center"
                     android:textAllCaps="false" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>

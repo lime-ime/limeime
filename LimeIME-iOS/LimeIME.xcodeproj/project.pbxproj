@@ -87,6 +87,7 @@
 		6D18764A2E8F43F692058B36 /* lime_hsu_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 32FDE2B19CAD40468BAFFD6A /* lime_hsu_ipad_shift.json */; };
 		6DDCA062AC27D53BE405CECB /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91652FC0787DE834F53E57B3 /* Record.swift */; };
 		6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */; };
+		AB12CD34EF56AB12CD34EF02 /* ReachGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF56AB12CD34EF01 /* ReachGeometryTests.swift */; };
 		6E1A5C0D9B234F0187A6D424 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		6E1A5C0D9B234F0187A6D425 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
 		6E1A5C0D9B234F0187A6D426 /* SyncContract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */; };
@@ -390,6 +391,7 @@
 		6CFFF424F22642E59C3180C1 /* lime_array_number_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad.json; sourceTree = "<group>"; };
 		6D385999861624C778BD7C83 /* lime_phonetic_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_phonetic_shift.json; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContractTest.swift; sourceTree = "<group>"; };
+		AB12CD34EF56AB12CD34EF01 /* ReachGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReachGeometryTests.swift; sourceTree = "<group>"; };
 		6E1A5C0D9B234F0187A6D423 /* SyncContract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncContract.swift; sourceTree = "<group>"; };
 		70669219C0D562C4F98D828D /* SearchServerTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchServerTest.swift; sourceTree = "<group>"; };
 		70F693B4FC074BD89C6D8E76 /* lime_array_number_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_array_number_ipad_shift.json; sourceTree = "<group>"; };
@@ -607,6 +609,7 @@
 				A4E1D7C90B1246F0A9020101 /* RecordEditingCapabilityTest.swift */,
 				F00D14A00000000000000001 /* RelayPrefSyncTest.swift */,
 				6E1A5C0D9B234F0187A6D421 /* SyncContractTest.swift */,
+				AB12CD34EF56AB12CD34EF01 /* ReachGeometryTests.swift */,
 				D1B100000000000000000001 /* SyncMetaStoreTest.swift */,
 				C01D2A000000000000000001 /* ColdPublisherTest.swift */,
 				C01D2A000000000000000003 /* TableSyncEngineTest.swift */,
@@ -1319,6 +1322,7 @@
 				A4E1D7C90B1246F0A9020102 /* RecordEditingCapabilityTest.swift in Sources */,
 				F00D14A00000000000000002 /* RelayPrefSyncTest.swift in Sources */,
 				6E1A5C0D9B234F0187A6D422 /* SyncContractTest.swift in Sources */,
+				AB12CD34EF56AB12CD34EF02 /* ReachGeometryTests.swift in Sources */,
 				D1B100000000000000000002 /* SyncMetaStoreTest.swift in Sources */,
 				C01D2A000000000000000002 /* ColdPublisherTest.swift in Sources */,
 				C01D2A000000000000000004 /* TableSyncEngineTest.swift in Sources */,

@@ -123,6 +123,10 @@ struct RelayPrefState: Codable, Equatable {
     // Last reverse-lookup change (per-IM). Optional so older stored JSON still decodes.
     var reverseLookupIM: String? = nil
     var reverseLookupValue: String? = nil
+    // One-hand / numpad-anchor mirrors. Optional (unlike hanConvert/splitKeyboard) so "never
+    // set" stays distinguishable from "explicitly set to 0" — older stored JSON still decodes.
+    var oneHand: Int? = nil
+    var numpadAnchor: Int? = nil
 }
 
 final class KeyboardRelayPrefStore {
@@ -148,6 +152,8 @@ final class KeyboardRelayPrefStore {
     @discardableResult
     func update(hanConvert: Int? = nil,
                 splitKeyboard: Int? = nil,
+                oneHand: Int? = nil,
+                numpadAnchor: Int? = nil,
                 reverseLookupIM: String? = nil,
                 reverseLookupValue: String? = nil,
                 updatedAt: TimeInterval = Date().timeIntervalSince1970) throws -> RelayPrefState {
@@ -156,7 +162,9 @@ final class KeyboardRelayPrefStore {
                                    splitKeyboard: splitKeyboard ?? current?.splitKeyboard ?? 0,
                                    updatedAt: updatedAt,
                                    reverseLookupIM: reverseLookupIM ?? current?.reverseLookupIM,
-                                   reverseLookupValue: reverseLookupValue ?? current?.reverseLookupValue)
+                                   reverseLookupValue: reverseLookupValue ?? current?.reverseLookupValue,
+                                   oneHand: oneHand ?? current?.oneHand,
+                                   numpadAnchor: numpadAnchor ?? current?.numpadAnchor)
         try write(state)
         return state
     }
@@ -171,6 +179,8 @@ struct PrefInboxRecord: Codable, Equatable {
     var seq: Int
     var hanConvert: Int?
     var splitKeyboard: Int?
+    var oneHand: Int?
+    var numpadAnchor: Int?
     var reverseLookup: [String: String]?
     /// Active IM — only ever set by a wholesale restore (the restored backup's active IM).
     var activeIM: String?
@@ -188,6 +198,8 @@ enum PrefInbox {
                       defaults: UserDefaults,
                       hanConvert: Int? = nil,
                       splitKeyboard: Int? = nil,
+                      oneHand: Int? = nil,
+                      numpadAnchor: Int? = nil,
                       reverseLookup: (im: String, value: String)? = nil,
                       activeIM: String? = nil) throws {
         let url = SyncPaths.prefInbox(base)
@@ -202,6 +214,8 @@ enum PrefInbox {
             seq: seq,
             hanConvert: hanConvert ?? current?.hanConvert,
             splitKeyboard: splitKeyboard ?? current?.splitKeyboard,
+            oneHand: oneHand ?? current?.oneHand,
+            numpadAnchor: numpadAnchor ?? current?.numpadAnchor,
             reverseLookup: mergedReverse.isEmpty ? nil : mergedReverse,
             activeIM: activeIM ?? current?.activeIM)
         try FileManager.default.createDirectory(at: SyncPaths.inboxDir(base),
@@ -284,7 +298,7 @@ enum RelayPrefSync {
 func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
     var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
     if let prefs {
-        payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);pts=\(prefs.updatedAt)"
+        payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);oh=\(prefs.oneHand ?? 0);na=\(prefs.numpadAnchor ?? 0);pts=\(prefs.updatedAt)"
         if let im = prefs.reverseLookupIM, let val = prefs.reverseLookupValue,
            !im.isEmpty, !val.isEmpty {
             payload += ";rlim=\(im);rlval=\(val)"
@@ -293,7 +307,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -313,6 +327,8 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
 
     var han: Int?
     var split: Int?
+    var oneHand: Int?
+    var numpadAnchor: Int?
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
@@ -334,6 +350,12 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
         case "split":
             let digits = value.prefix { $0.isNumber || $0 == "-" }
             split = Int(digits)
+        case "oh":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            oneHand = Int(digits)
+        case "na":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            numpadAnchor = Int(digits)
         case "pts":
             let digits = value.prefix { $0.isNumber || $0 == "." || $0 == "-" }
             if let parsed = Double(digits), parsed.isFinite {
@@ -347,7 +369,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, pts: pts, rlim: rlim, rlval: rlval)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, pts: pts, rlim: rlim, rlval: rlval)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {

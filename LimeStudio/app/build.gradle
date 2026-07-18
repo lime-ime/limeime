@@ -46,12 +46,12 @@ android {
             }
         }
     }
-    compileSdkVersion 36
+    compileSdkVersion 37
     defaultConfig {
         applicationId "org.limeime"
 
         minSdkVersion 25
-        targetSdkVersion 36
+        targetSdkVersion 37
         versionCode 202661320
         versionName 'v6.1.32'
 
@@ -185,8 +185,8 @@ dependencies {
 
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.browser:browser:1.8.0'
-    implementation 'androidx.core:core:1.17.0'
+    implementation 'androidx.browser:browser:1.10.0'
+    implementation 'androidx.core:core:1.19.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.1'
@@ -194,9 +194,9 @@ dependencies {
 
     implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
 
-    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.11.0'
 
     // AndroidX Test dependencies
     testImplementation "junit:junit:4.13.2"

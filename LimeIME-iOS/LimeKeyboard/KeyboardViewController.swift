@@ -132,6 +132,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var candidateSwitch:         Bool = true    // mirrors Android candidate_switch; true=free scroll, false=paged
     private var showArrowKey:            Int  = 0       // 0=none, 1=above, 2=below
     private var splitKeyboardMode:       Int  = 0       // 0=off, 1=on, 2=landscape-only (iPad only)
+    private var oneHandMode:             Int  = 0       // 0=off, 1=left, 2=right (portrait only)
+    private var numpadAnchor:            Int  = 0       // 0=fit, 1=left, 2=right, 3=center
 
     // MARK: - Activated IM Cycling (spec §10)
     private var activatedIMs:  [ImConfig] = []
@@ -247,6 +249,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// (`UIDevice.current.userInterfaceIdiom` is the wrong signal here.)
     private var isOnPad: Bool { traitCollection.userInterfaceIdiom == .pad }
 
+    /// SPLIT_ONE_HAND_KB: the true numpad-grid layouts (spec decision — per-IM
+    /// *_number layers are 10-column full-width layouts and stay ordinary).
+    /// "phone" covers phone / phone_shift / phone_number / phone_simple — all
+    /// 5-column keypad grids (Android isNumpadXml parity). lime_phonetic* is safe:
+    /// it starts with "lime_", not "phone".
+    var isNumpadLayout: Bool {
+        currentLayout.id.hasPrefix("phone") || currentLayout.id.hasPrefix("computer_simple")
+    }
+
     @discardableResult
     private func syncLayoutEnvironmentFromTraits() -> Bool {
         let oldHostIsPad = LayoutLoader.hostIsPad
@@ -297,6 +308,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
     private var candidateBarTopConstraint: NSLayoutConstraint?
     private var candidateBarHeightConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: candidate bar follows the anchored key block (one-hand / numpad anchor).
+    private var candidateBarLeadingConstraint: NSLayoutConstraint?
+    private var candidateBarTrailingConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: expanded-candidates panel follows the same anchor insets.
+    private var expandedPanelLeadingConstraint: NSLayoutConstraint?
+    private var expandedPanelTrailingConstraint: NSLayoutConstraint?
     private var keyboardTopToCandidateConstraint: NSLayoutConstraint?
     private var keyboardTopToViewConstraint: NSLayoutConstraint?
     private var emojiPanelBottomConstraint: NSLayoutConstraint?
@@ -572,8 +589,47 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let landscape = screen.width > screen.height
         keyboardView?.isLandscape = landscape
         let isPad   = isOnPad
-        let doSplit = isPad && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
+        let numpad  = isNumpadLayout
+        let doSplit = isPad && !numpad
+                      && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
         keyboardView?.splitMode = doSplit
+
+        // SPLIT_ONE_HAND_KB horizontal anchoring.
+        var leading: CGFloat = 0, trailing: CGFloat = 0, chevron = false
+        let vw = view.bounds.width
+        if isPad {
+            if numpad, numpadAnchor != 0 {
+                let w = ReachGeometry.numpadAnchorWidth(viewWidth: vw, columns: 5,
+                                                        sizeClass: LayoutLoader.iPadSizeClass)
+                let free = max(0, vw - w)
+                switch numpadAnchor {
+                case 1: trailing = free            // 靠左
+                case 2: leading = free             // 靠右
+                case 3: leading = free / 2; trailing = free / 2   // 置中
+                default: break
+                }
+            }
+        } else if !landscape, oneHandMode != 0,
+                  ReachGeometry.oneHandAvailable(screenWidthPt: min(screen.width, screen.height)) {
+            let free = max(0, vw - ReachGeometry.oneHandWidth(viewWidth: vw))
+            if oneHandMode == 1 { trailing = free } else { leading = free }   // 靠左 / 靠右
+            chevron = free > 0
+        }
+        keyboardView?.setHorizontalAnchor(leading: leading, trailing: trailing, restoreChevron: chevron)
+        // SPLIT_ONE_HAND_KB: keep the candidate bar's usable area aligned with the key block.
+        if candidateBarLeadingConstraint?.constant != leading {
+            candidateBarLeadingConstraint?.constant = leading
+        }
+        if candidateBarTrailingConstraint?.constant != -trailing {
+            candidateBarTrailingConstraint?.constant = -trailing
+        }
+        // The expanded-candidates panel mirrors the same insets.
+        if expandedPanelLeadingConstraint?.constant != leading {
+            expandedPanelLeadingConstraint?.constant = leading
+        }
+        if expandedPanelTrailingConstraint?.constant != -trailing {
+            expandedPanelTrailingConstraint?.constant = -trailing
+        }
         applyHeight()
         updateGlobeAndDismissBindings()
         // #139 switch-in: once the view has RENDERED at the overshoot size,
@@ -1176,6 +1232,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             UserDefaults.standard.set(split, forKey: "split_keyboard_mode")
             splitKeyboardMode = split
         }
+        if let oneHand = rec.oneHand {
+            UserDefaults.standard.set(oneHand, forKey: "one_hand_mode")
+            oneHandMode = oneHand
+        }
+        if let anchor = rec.numpadAnchor {
+            UserDefaults.standard.set(anchor, forKey: "numpad_anchor")
+            numpadAnchor = anchor
+        }
         if let reverse = rec.reverseLookup {
             for (im, value) in reverse { hotPrefs.setReverseLookup(value, for: im) }
         }
@@ -1192,6 +1256,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let firstReverse = rec.reverseLookup?.first
         _ = try? relayPrefStore.update(hanConvert: hanConvertOption,
                                        splitKeyboard: splitKeyboardMode,
+                                       oneHand: oneHandMode,
+                                       numpadAnchor: numpadAnchor,
                                        reverseLookupIM: firstReverse?.key,
                                        reverseLookupValue: firstReverse?.value)
         return true
@@ -1258,6 +1324,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         candidateSwitch = true
         showArrowKey      = d?.integer(forKey: "show_arrow_key")      ?? 0
         splitKeyboardMode = seededHotInt("split_keyboard_mode", cold: d)   // §1.8 hot store
+        oneHandMode  = seededHotInt("one_hand_mode",  cold: d)   // §1.8 hot store
+        numpadAnchor = seededHotInt("numpad_anchor",  cold: d)   // §1.8 hot store
         applyPrefsToSearchEngine()
     }
 
@@ -1394,8 +1462,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 candidateBarTopConstraint = c
                 return c
             }(),
-            candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            {
+                let c = candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+                candidateBarLeadingConstraint = c
+                return c
+            }(),
+            {
+                let c = candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+                candidateBarTrailingConstraint = c
+                return c
+            }(),
             {
                 let c = candidateBar.heightAnchor.constraint(equalToConstant: candidateBarHeight)
                 candidateBarHeightConstraint = c
@@ -1455,10 +1531,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // fixed composing strip instead of under it.
         let svTop = sv.topAnchor.constraint(equalTo: panel.topAnchor)
         expandedScrollTopConstraint = svTop
+        // SPLIT_ONE_HAND_KB: leading/trailing carry the anchor insets (constants set
+        // alongside the candidate bar's) so the panel matches the anchored key block.
+        let panelLeading = panel.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        let panelTrailing = panel.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        expandedPanelLeadingConstraint = panelLeading
+        expandedPanelTrailingConstraint = panelTrailing
         NSLayoutConstraint.activate([
             panel.topAnchor.constraint(equalTo: candidateBar.topAnchor),
-            panel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            panel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            panelLeading,
+            panelTrailing,
             panel.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             svTop,
@@ -2593,7 +2675,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         } else {
             highlightColor = pal.candiHighlight
         }
-        let panelWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        // SPLIT_ONE_HAND_KB: the panel is inset to the anchored key block; wrap cells
+        // to the inset width, not the full view width.
+        let fullWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        let anchorLeading = expandedPanelLeadingConstraint?.constant ?? 0
+        let anchorTrailing = -(expandedPanelTrailingConstraint?.constant ?? 0)
+        let panelWidth = max(1, fullWidth - anchorLeading - anchorTrailing)
         // Row 1 mirrors the collapsed bar exactly. Chinese composing keeps
         // the top keyname strip; emoji search disables it, so the expanded
         // row must read the active strip metrics from CandidateBarView instead
@@ -3915,6 +4002,14 @@ extension KeyboardViewController: KeyboardViewDelegate {
         hideKeyPreview(animated: true)
     }
 
+    func keyboardViewDidTapOneHandRestore() {
+        // SPLIT_ONE_HAND_KB: chevron restores full width, persisted (§1.8 hot store + relay).
+        oneHandMode = 0
+        hotPrefs.oneHandMode = 0
+        _ = try? relayPrefStore.update(oneHand: 0)
+        view.setNeedsLayout()
+    }
+
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {
         // Keyboard key (code -3): show the LIME options menu (spec §10).
         // Globe long-press is routed through UIInputViewController.handleInputModeList.
@@ -4429,13 +4524,30 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                   labels: ["無", "繁→簡", "簡→繁"], selected: pendingHan,
                                   onSelect: { pendingHan = $0 }))
 
-        // 分離鍵盤 — iPad only: inline segmented control (關閉 / 開啟 / 僅橫向).
+        // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
+        // ordinary layouts show 分離鍵盤 (iPad) / 單手鍵盤 (gated iPhone).
+        let numpadLayout = isNumpadLayout
         var pendingSplit = max(0, min(splitKeyboardMode, 2))
         let splitStart = pendingSplit
-        if isOnPad {
+        if isOnPad && !numpadLayout {
             entries.append(.segmented(title: "分離鍵盤", icon: "rectangle.split.2x1",
                                       labels: ["關閉", "開啟", "僅橫向"], selected: pendingSplit,
                                       onSelect: { pendingSplit = $0 }))
+        }
+        var pendingOneHand = max(0, min(oneHandMode, 2))
+        let oneHandStart = pendingOneHand
+        let screenShort = min(UIScreen.main.bounds.width, UIScreen.main.bounds.height)
+        if !isOnPad && ReachGeometry.oneHandAvailable(screenWidthPt: screenShort) {
+            entries.append(.segmented(title: "單手鍵盤", icon: "keyboard",
+                                      labels: ["關閉", "靠左", "靠右"], selected: pendingOneHand,
+                                      onSelect: { pendingOneHand = $0 }))
+        }
+        var pendingAnchor = max(0, min(numpadAnchor, 3))
+        let anchorStart = pendingAnchor
+        if isOnPad && numpadLayout {
+            entries.append(.segmented(title: "數字鍵盤位置", icon: "rectangle.righthalf.inset.filled",
+                                      labels: ["滿版", "靠左", "靠右", "置中"], selected: pendingAnchor,
+                                      onSelect: { pendingAnchor = $0 }))
         }
 
         // LIME 輸入法切換 — mirrors Android showIMPicker()
@@ -4460,10 +4572,23 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
                 changed = true
             }
+            if pendingOneHand != oneHandStart {
+                self.oneHandMode = pendingOneHand
+                self.hotPrefs.oneHandMode = pendingOneHand   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
+            if pendingAnchor != anchorStart {
+                self.numpadAnchor = pendingAnchor
+                self.hotPrefs.numpadAnchor = pendingAnchor   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
             if changed {
-                try? self.relayPrefStore.write(RelayPrefState(hanConvert: self.hanConvertOption,
-                                                              splitKeyboard: self.splitKeyboardMode,
-                                                              updatedAt: Date().timeIntervalSince1970))
+                _ = try? self.relayPrefStore.update(hanConvert: self.hanConvertOption,
+                                                    splitKeyboard: self.splitKeyboardMode,
+                                                    oneHand: self.oneHandMode,
+                                                    numpadAnchor: self.numpadAnchor)
             }
         })
     }

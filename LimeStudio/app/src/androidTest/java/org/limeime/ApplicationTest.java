@@ -217,8 +217,8 @@ public class ApplicationTest {
     public void testAPILevelCompatibility() {
         // Verify the app supports the required API levels
         int currentApiLevel = Build.VERSION.SDK_INT;
-        int minSdkVersion = 21;
-        int targetSdkVersion = 36;
+        int minSdkVersion = 25;
+        int targetSdkVersion = 37;
         
         assertTrue("Current API level should be >= minSdkVersion", 
                 currentApiLevel >= minSdkVersion);

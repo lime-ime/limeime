@@ -277,7 +277,9 @@ final class TouchLayerGestureTests: XCTestCase {
         splitKeyboard.splitMode = true
         splitKeyboard.frame = CGRect(x: 0, y: 0, width: 640, height: 64)
         splitKeyboard.layoutIfNeeded()
-        XCTAssertEqual(accessibilityLabels(in: splitKeyboard), ["a", "space", "delete", "shift"])
+        // SPLIT_ONE_HAND_KB: the 40% space bar crosses the split border, so it is cut
+        // and cloned onto the right half (Android parity) — one space per half.
+        XCTAssertEqual(accessibilityLabels(in: splitKeyboard), ["a", "space", "space", "delete", "shift"])
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {

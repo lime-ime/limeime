@@ -311,7 +311,25 @@ public class CandidateInInputViewContainer extends LinearLayout  implements View
      */
     public void updateCandidateViewWidthConstraint() {
         post(() -> {
-            int containerWidth = getWidth();
+            // SPLIT_ONE_HAND_KB: align the candidate strip's usable area with the
+            // horizontally-anchored key block (one-hand / numpad anchor). Insets come from
+            // the rendered keyboard itself, so the strip always matches what is on screen.
+            int anchorLeft = 0, anchorRight = 0;
+            View kbView = findViewById(R.id.keyboard);
+            if (kbView instanceof org.limeime.keyboard.LIMEKeyboardBaseView) {
+                org.limeime.keyboard.LIMEBaseKeyboard kb =
+                        ((org.limeime.keyboard.LIMEKeyboardBaseView) kbView).getKeyboard();
+                if (kb != null) {
+                    anchorLeft = kb.getAnchorLeftInset();
+                    anchorRight = kb.getAnchorRightInset();
+                }
+            }
+            View strip = findViewById(R.id.input_candidate_strip);
+            if (strip != null
+                    && (strip.getPaddingLeft() != anchorLeft || strip.getPaddingRight() != anchorRight)) {
+                strip.setPadding(anchorLeft, strip.getPaddingTop(), anchorRight, strip.getPaddingBottom());
+            }
+            int containerWidth = getWidth() - anchorLeft - anchorRight;
             if (containerWidth > 0 && mCandidateView != null) {
                 boolean isEmpty = mCandidateView.isEmpty();
                 boolean showIdleTools = shouldShowIdleTools(

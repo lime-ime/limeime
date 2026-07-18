@@ -77,6 +77,22 @@ final class SyncContractTest: XCTestCase {
         XCTAssertTrue(next.seq > lastConsumed)
     }
 
+    func testPrefInboxCarriesOneHandAndNumpadAnchor() throws {
+        let base = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("prefinbox-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let suite = "prefinbox-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        try PrefInbox.write(base: base, defaults: defaults, oneHand: 2)          // seq 1
+        try PrefInbox.write(base: base, defaults: defaults, numpadAnchor: 3)     // seq 2, oneHand carries
+        let rec = try XCTUnwrap(PrefInbox.read(base: base))
+        XCTAssertEqual(rec.oneHand, 2)
+        XCTAssertEqual(rec.numpadAnchor, 3)
+        XCTAssertEqual(rec.seq, 2)
+    }
+
     func testEditorRefreshPayloadsRoundTrip() throws {
         let request = EditorRefreshRequest(requestUUID: "req-1",
                                            table: "custom",
