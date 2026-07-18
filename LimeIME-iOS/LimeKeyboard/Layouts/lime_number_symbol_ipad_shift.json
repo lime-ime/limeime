@@ -149,8 +149,8 @@
           "longPressCode": 0
         },
         {
-          "code": 8230,
-          "label": "…",
+          "code": 95,
+          "label": "_",
           "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",

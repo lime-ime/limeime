@@ -137,7 +137,7 @@
         },
         {
           "code": 45,
-          "label": "_\\n-",
+          "label": "=\\n-",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
@@ -146,7 +146,7 @@
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": "",
-          "longPressCode": 95
+          "longPressCode": 61
         },
         {
           "code": -5,

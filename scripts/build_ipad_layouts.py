@@ -292,7 +292,8 @@ def make_plus_equals_key(width=7.0):
 # returns the row unchanged when the detection does not match.
 # -------------------------------------------------------------------------
 
-def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
+def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None,
+                         preserve_source_underscore=False):
     """Augment the IM digit row for iPad.
 
     Result layout: "~\n`" | 1 2 3 4 5 6 7 8 9 0 | [dash] | "+\n=" | â«
@@ -338,7 +339,7 @@ def augment_im_digit_row(row, digit_dash, layout_dash_key=None, eq_key=None):
             ins = next(i for i, k in enumerate(keys) if k.get("code") == 41) + 1
         except StopIteration:
             ins = len(keys)
-        if digit_dash is not None:
+        if preserve_source_underscore or digit_dash is not None:
             keys.insert(ins, {
                 "code": 95, "label": "_", "sublabel": "", "widthPercent": W, "icon": "",
                 "isModifier": False, "isRepeatable": False, "isSticky": False,
@@ -1007,7 +1008,13 @@ def make_ipad_layout(phone, source_id):
                     break
         row["keys"] = [normalise_key(k) for k in row["keys"]]
 
-        row = augment_im_digit_row(row, digit_dash, layout_dash_key=dash_key, eq_key=eq_key)
+        row = augment_im_digit_row(
+            row,
+            digit_dash,
+            layout_dash_key=dash_key,
+            eq_key=eq_key,
+            preserve_source_underscore=(source_id == "lime_number_symbol_shift"),
+        )
         row = transform_qwerty_row(row, lbracket=lbracket, backslash=backslash, rbracket=rbracket, has_digit_row=has_digit_row)
         row = prepend_abc_modifier(row)
         row = append_semicolon_key(row, semicolon_popup=semicolon_popup)
