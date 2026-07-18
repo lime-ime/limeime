@@ -23,7 +23,26 @@ panel, iOS globe/hamburger menu), so on iOS they must be cold/hot prefs (§1.8 p
 
 ## Status
 
-Proposed. Not implemented. No GitHub issue yet.
+Implemented on branch `feat/split-one-hand-kb` (both platforms). Implementation decisions are
+recorded in `docs/SPLIT_ONE_HAND_KB_PLAN.md`. Deviations from / additions to the original
+proposal, all shipped:
+
+- **Geometry changes apply in place** — the chevron tap and the keyboard-menu apply rebuild the
+  current keyboard without dismissing the IME (`LIMEService.applyGeometryChangeInPlace()` +
+  `LIMEKeyboardSwitcher.rebuildCurrentKeyboard()`; originally `handleClose()` was called, which
+  `requestHideSelf`'d the whole keyboard).
+- **Phone split is landscape-only** (render gate in `LIMEBaseKeyboard`), and the keyboard menu is
+  orientation-gated on phones: portrait shows 單手鍵盤 only, landscape shows 分離鍵盤 only as a
+  binary 關閉/開啟. See the eligibility matrix below.
+- **iOS split partition matches Android** — `SplitPartition.partition` (`KeyLayout.swift`) splits
+  at floor(columns/2) standard columns and clones a border-crossing wide key (space) onto both
+  halves, replacing the old 50%-cumulative rule that put the whole space bar in the left half.
+  Unit-tested in `ReachGeometryTests`.
+- **Numpad exclusion set grew** to include the T9-style phone-IM keypads (`phone` /
+  `phone_shift`) on both platforms, and iOS gained the missing `phone_number` exclusion.
+- **Candidate strip AND expanded-candidates panel follow the anchor insets** (the expanded panel
+  was originally a v1 non-goal; it now wraps and positions to the anchored block width on both
+  platforms).
 
 ## What already exists (do not rebuild)
 
@@ -50,7 +69,9 @@ Proposed. Not implemented. No GitHub issue yet.
   segmented rows in the same two places.
 - **Numpad layouts** — Android `phone_simple.xml` (phone-style 1-2-3) and `computer_simple.xml`
   (computer-style 7-8-9), both 4 rows × 5 columns (`keyWidth="20%p"`), plus `phone_number.xml`
-  for restricted fields (#74). iOS: restricted-field mapping in `KeyboardTypePolicy.swift:29`
+  for restricted fields (#74) and the T9-style phone-IM keypads `phone.xml` / `phone_shift.xml`
+  (same 5-column grid class). iOS mirrors the same set: layout ids `phone*` and
+  `computer_simple*`. Restricted-field mapping in `KeyboardTypePolicy.swift:29`
   (`.numberPad/.decimalPad/.asciiCapableNumberPad/.phonePad`) and the feat#N02 computer-numpad
   keyboard-list entry.
 
@@ -164,9 +185,11 @@ New pref `numpad_anchor`: `0` fit (default — current full-width behavior), `1`
 Applies to all numpad-based layouts:
 
 - Android: `phone_simple.xml`, `computer_simple.xml`, `phone_number.xml` (restricted fields),
+  `phone.xml` / `phone_shift.xml` (T9-style phone-IM keypads) — `LIMEKeyboardSwitcher.isNumpadXml`.
   Per-IM `*_number` layers are 10-column full-width layouts and stay ordinary (they split /
   one-hand like any other layout); only the true numpad grids above anchor.
-- iOS: restricted-field numeric layouts selected via `KeyboardTypePolicy.swift`, and the
+- iOS: layout ids `phone*` and `computer_simple*` (`KeyboardViewController.isNumpadLayout`) —
+  covering the restricted-field numeric layouts selected via `KeyboardTypePolicy.swift` and the
   feat#N02 computer-numpad keyboard-list entry.
 
 Geometry (one hand tapping, device resting or held by the other hand — finger-tap targets, not
@@ -191,8 +214,12 @@ for these layouts). `numpad_anchor` is the only geometry pref that applies to th
 | Device / layout | Alphabetic & per-IM layouts | Numpad-based layouts |
 |---|---|---|
 | Phone < gate width | (unchanged) | (unchanged) |
-| Phone ≥ gate width | `one_hand_mode` | `one_hand_mode` |
+| Phone ≥ gate width | portrait `one_hand_mode`; landscape split | portrait `one_hand_mode`; landscape split |
 | Tablet / iPad | `split_keyboard_mode` (reach-capped, Feature A) | `numpad_anchor` (Feature C); split ignored |
+
+Phone split renders in **landscape only**, whatever `split_keyboard_mode` holds — a stored
+開啟 (always) behaves like 僅橫向. Portrait phone split keys would fall below `SPLIT_KEY_MIN_MM`;
+phone portrait geometry belongs to one-hand mode. Stored values are honored, not migrated.
 
 ## Preferences and surfaces
 
@@ -211,8 +238,10 @@ iOS LimeSettings row) and same segmented-row style in the keyboard-side popup me
 Keyboard-side menu exclusivity — split and anchor are never shown together; the menu keys off
 the **currently active layout**, not just the device:
 
-- Ordinary (alphabetic / per-IM) layout active → show 分離鍵盤 (tablet) / 單手鍵盤 (gated
-  phone); hide 數字鍵盤位置.
+- Ordinary (alphabetic / per-IM) layout active → tablet: 分離鍵盤 (tri-state); phone
+  portrait: 單手鍵盤 only (gated); phone landscape: 分離鍵盤 only, as a **binary**
+  關閉/開啟 control (split renders landscape-only on phones, so 開啟 ≡ 僅橫向; a stored
+  僅橫向 lights 開啟). Hide 數字鍵盤位置.
 - Numpad-based layout active → show 數字鍵盤位置 only; hide 分離鍵盤. On phones there is no
   `numpad_anchor` — the numpad follows `one_hand_mode`, so the phone 單手鍵盤 row stays.
 
@@ -221,8 +250,9 @@ the exclusivity rule is a keyboard-menu rule only.
 
 - **Android**: entries in `res/xml/preference.xml` next to `split_keyboard_mode` (`:81-87`);
   accessors in `LIMEPreferenceManager`; segmented rows in `handleOptions()` following the
-  存在的 分離鍵盤 block pattern (`LIMEService.java:3733-3750`), gated per the table above; apply on
-  dismiss via `resetKeyboards` like split does (`:3757-3762`).
+  存在的 分離鍵盤 block pattern (`LIMEService.java:3733-3750`), gated per the table above; applied
+  on dialog dismiss via `applyGeometryChangeInPlace()` — an in-place rebuild
+  (`rebuildCurrentKeyboard()`), NOT `handleClose()`, which would dismiss the IME.
 - **iOS**: both are **cold/hot prefs** — clone the `split_keyboard_mode` wiring end to end:
   cold in App Group defaults + LimeSettings UI; hot via `seededHotInt` next to `:1260`; add
   `oneHandMode` / `numpadAnchor` fields to `PrefInbox` and `drainPrefInbox()`
@@ -237,18 +267,28 @@ option is never confused with the real phone one-handed mode:
 - `numpad_anchor` → **數字鍵盤位置** (滿版/靠左/置中/靠右), tablets only; 滿版 is the
   fit/current-style default.
 
+## Chrome alignment with the anchored block
+
+When the key block is horizontally anchored (one-hand mode, numpad anchor):
+
+- **Candidate bar**: its usable area aligns with the shifted key block — same leading/trailing
+  insets, chrome buttons included — so candidates stay inside the same reach zone as the keys.
+  Android reads the insets off the rendered keyboard (`applyHorizontalAnchor` records them,
+  `CandidateInInputViewContainer.updateCandidateViewWidthConstraint` applies them); iOS drives
+  the bar's stored leading/trailing constraints from the same insets computed for
+  `setHorizontalAnchor`.
+- **Expanded candidates panel**: same insets. Android sizes/positions the popup window to the
+  anchored width and passes it to `CandidateExpandedView.setContentWidth` for row wrapping (the
+  expanded view lives inside the popup hierarchy and cannot read the insets itself); iOS mirrors
+  the bar's anchor constants onto the panel's leading/trailing constraints and wraps cells to
+  the inset width in `reloadExpandedCandidates`.
+
 ## Non-goals (v1)
 
-- Candidate bar alignment: when the key block is horizontally anchored (one-hand mode, numpad
-  anchor), the candidate bar's usable area aligns with the shifted key block — same
-  leading/trailing insets, chrome buttons included — so candidates stay inside the same reach
-  zone as the keys. Android reads the insets off the rendered keyboard
-  (`applyHorizontalAnchor` records them); iOS drives the bar's stored leading/trailing
-  constraints from the same insets computed for `setHorizontalAnchor`.
-- Emoji panel, emoji search header, and the expanded candidates panel stay full width in v1
-  (the expanded panel is a browse-many interaction, not a reach-critical one).
+- Emoji panel and emoji search header stay full width in v1.
 - No per-orientation memory (one setting, both orientations; split already handles
-  landscape-only as a mode value).
+  landscape-only as a mode value; the phone menu's orientation gating changes which control is
+  shown, not what is stored).
 - No new iPad email/URL layouts and no change to the #74 URL-field policy — this work is
   geometry only.
 
@@ -277,28 +317,37 @@ option is never confused with the real phone one-handed mode:
 ## Task checklist
 
 Phase 1 — shared geometry
-- [ ] Android: mm→px helper + named constants (single home, e.g. alongside `LIMEBaseKeyboard` sizing)
-- [ ] iOS: mm→pt table + constants in `LayoutMetrics.swift` (keyed on `IPadSizeClass` / iPhone)
+- [x] Android: mm→px helper + named constants (`ReachGeometry.java`, unit-tested)
+- [x] iOS: mm→pt table + constants (`ReachGeometry` in `LayoutMetrics.swift`, keyed on `IPadSizeClass` / iPhone; `ReachGeometryTests`)
 
 Phase 2 — Feature A (tablet split fine-tune)
-- [ ] Android: reach-capped `mSplitKeyWidth`; keep reserved-columns as center-gap floor
-- [ ] iOS: computed `halfFraction` in `makeSplitRow()`; split row-height cap; height via `applyHeight()`
-- [ ] Verify table above on iPad mini / 11" / 13" simulators and an Android xlarge AVD
+- [x] Android: reach-capped `mSplitKeyWidth` (`ReachGeometry.splitKeyWidth`); reserved-columns kept as center-gap floor
+- [x] iOS: computed `halfFraction` in `makeSplitRow()`; split row-height cap; height via `applyHeight()`
+- [x] iOS partition parity with Android (`SplitPartition`): floor(columns/2) border, space cloned to both halves
+- [ ] Verify reach-cap table on iPad mini / 11" / 13" simulators and an Android xlarge AVD
 
 Phase 3 — Feature C (numpad anchoring, tablets)
-- [ ] `numpad_anchor` pref both platforms (Android pref.xml + manager; iOS cold/hot clone of split wiring)
-- [ ] Anchor/inset rendering + split exclusion for numpad layouts, both platforms
-- [ ] Menu entries: Android options panel row; iOS globe menu segmented (iPad-gated), shown
+- [x] `numpad_anchor` pref both platforms (Android pref.xml + manager; iOS cold/hot clone of split wiring)
+- [x] Anchor/inset rendering + split exclusion for numpad layouts, both platforms (exclusion set:
+      `phone_simple`, `computer_simple`, `phone_number`, `phone`, `phone_shift`)
+- [x] Menu entries: Android options panel row; iOS globe menu segmented (iPad-gated), shown
       only when the active layout is numpad-based (split row hidden in that case)
 
 Phase 4 — Feature B (phone one-hand)
-- [ ] `one_hand_mode` pref both platforms (iOS cold/hot clone), geometry-gated visibility,
+- [x] `one_hand_mode` pref both platforms (iOS cold/hot clone), geometry-gated visibility,
       settings-app UI replicating the `split_keyboard_mode` row
-- [ ] Width scale + anchor at keyboard build (Android) / container inset (iOS); split precedence rule
-- [ ] Restore chevron in the empty strip (both platforms): tap → `one_hand_mode = 0`, persist + relay
-- [ ] Menu entries (phone-gated), segmented style matching the split row; hidden when a
-      numpad-based layout is active on a tablet
+- [x] Width scale + anchor at keyboard build (Android) / container inset (iOS); phone split is
+      landscape-only so portrait always belongs to one-hand
+- [x] Restore chevron in the empty strip (both platforms): tap → `one_hand_mode = 0`, persist +
+      relay, rebuild in place (keyboard stays up)
+- [x] Menu entries (phone-gated), segmented style matching the split row; orientation-gated on
+      phones (portrait: one-hand only; landscape: binary split only)
+- [x] Candidate strip + expanded candidates panel follow the anchor insets (both platforms)
 
 Phase 5 — verification
-- [ ] Android: `android-visual-verify` pass on phone + tablet AVDs (split, one-hand L/R, numpad anchors)
-- [ ] iOS: unit gate + `ios-visual-verify` on iPhone and iPad simulators, Full-Access-off pref transport check
+- [x] Android phone AVD (Pixel 9 Pro XL, API 37): menu gating both orientations, one-hand R +
+      chevron restore in place, landscape split with dual space, anchored expanded popup —
+      screenshot-verified 2026-07-18
+- [ ] Android tablet AVD: split reach-cap + numpad anchors
+- [x] iOS: build gate + unit gate (`ReachGeometryTests` incl. split-partition tests) PASS
+- [ ] iOS: `ios-visual-verify` on iPhone and iPad simulators, Full-Access-off pref transport check
