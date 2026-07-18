@@ -58,8 +58,8 @@ The private reporter found one narrow combination that reaches the true bottom i
 - Result with that exact combination: the page can scroll to the true bottom.
 - Result after changing either setting: the true bottom becomes unreachable again.
 - Comparison: Okidokey and 元書輸入法 remain scrollable at different keyboard sizes according to the reporter.
-- Evidence: one private QuickTime recording (`0718測試.mov`, approximately 10.2 MB). Keep the file, attachment metadata, reporter identity, and private app details confidential.
-- Version limitation: the accessible Gmail body was empty and its snippet did not state the tested LIME version, so do not attribute this result to a specific build until confirmed from the thread or reporter.
+- Evidence: a private recording retained only for internal diagnosis. Keep its attachment metadata, reporter identity, and private app details confidential.
+- Version: the reporter later confirmed this test used LIME 6.1.32.
 
 This initial result was superseded by a same-day clean-reinstall retest. The reporter confirmed that the initial test used 6.1.32, then completely removed LIME and reinstalled 6.1.32. After reinstall, the true bottom was reachable with five specific combinations among a broader tested set: extra-large keyboard/small text, large keyboard/extra-large text, normal/normal, small/extra-small, and extra-small/large. The reporter also installed older TestFlight builds and observed the working behavior there.
 
@@ -134,27 +134,27 @@ System-log analysis (`sudo log collect --device`, comparing a failing Apple→LI
 
 Failed variants for the record (all probe-falsified): below-stored short-attach, post-settle dip/grow at any delay, constraint reinstall, `preferredContentSize`, `allowsSelfSizing`, early height declaration at `viewDidLoad` (+80 ms is process-spawn-bound and iOS ignores the declaration anyway). The one working cell is above-stored × mid-transaction.
 
-#### MAUI repro verification (2026-07-17) — reporter's form scenario passes on the fixed build
+#### Cross-platform form repro verification (2026-07-17) — representative scenario passes on the fixed build
 
-A minimal .NET MAUI iOS app was built to reproduce the reporter's environment first-hand: stock MAUI (`KeyboardAutoManagerScroll` untouched), one `ContentPage` with a `ScrollView` of 20 labeled `Entry` fields and a marked bottom entry, portrait. On the physical test iPhone running the switch-in-fixed LIME build, the true bottom is reachable and the bottom entry editable in **both** flows:
+A minimal iOS app using the same class of cross-platform UI framework was built to reproduce the reporter's environment first-hand: one scrollable form with multiple labeled fields and a marked bottom entry in portrait. On the physical test iPhone running the switch-in-fixed LIME build, the true bottom is reachable and the bottom entry editable in **both** flows:
 
 - Apple keyboard focused → in-place switch to LIME (the previously-failing path), and
 - fresh open with LIME active.
 
-This predicts the reporter's locked-portrait case resolves with the next LIME release. If their retest still fails, the remaining factor is app-specific on their side (e.g. their custom accessory toolbar or a modified keyboard-scroll handler) — the host-side guidance below still applies.
+This representative repro passed on the fixed build, but the private reporter's 2026-07-18 size-pair retest supersedes the earlier resolution prediction: most tested keyboard-size/font-size pairs still fail in the private host app. The host-side guidance below remains relevant, but the next step is to compare a passing pair with a nearby failing pair before attributing the remaining behavior to either LIME or the host app.
 
-Repro recipe (the project itself is a throwaway; rebuildable in minutes): `dotnet workload install maui-ios`, `dotnet new maui` (retarget csproj to `net10.0-ios` only and add `<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />`), replace `MainPage` with the ScrollView form (20 entries + bottom marker entry), build the csproj with `-p:RuntimeIdentifier=ios-arm64 -p:CodesignKey="Apple Development: …" -p:CodesignProvision="iOS Team Provisioning Profile: *"`, install with `devicectl`.
+Keep the exact framework, private app details, and internal reproduction project details out of public documentation.
 
-#### Host-side escape hatch (probe-verified 2026-07-16) and the MAUI connection
+#### Host-side escape hatch (probe-verified 2026-07-16) and the cross-platform framework connection
 
-The reporter's engineer disclosed the private app uses **.NET MAUI**. MAUI's `KeyboardAutoManagerScroll` (dotnet/maui, `src/Core/src/Platform/iOS/`) observes **only `UIKeyboardWillShowNotification`** and caches the frame from it — so a switch-in, which posts *no* notification, leaves MAUI stale forever. This also explains the 6.1.31 partial retest: rotating emits our deferred post-rotation apply's notification burst (which includes `WillShow`) → MAUI re-adjusts → landscape heals; locked portrait never receives any late notification → stays stale.
+The private app's cross-platform UI framework uses a notification-based keyboard-scroll manager that can cache the frame from `UIKeyboardWillShowNotification`. A switch-in that posts no notification can therefore leave the framework's inset stale. This also explains the 6.1.31 partial retest: rotation emits a deferred notification burst, allowing the framework to adjust in landscape, while locked portrait may not receive a later update. Keep the exact framework private.
 
 The probe then measured a working recovery path: iOS **does** fire `UITextInputMode.currentInputModeDidChangeNotification` on every globe switch, and although `keyboardLayoutGuide` is stale at that instant (still the previous keyboard's frame), **it reads the correct new frame ~0.5 s later after a forced layout pass** (measured: `guideTop=611` at fire → `guideTop=552` = LIME's true top at +0.5 s; verified in both switch directions). iOS holds the correct frame internally the whole time — it just never pushes it.
 
 Actionable host-side fixes to relay to the reporter (public-safe, no private details needed):
 
-1. **App-level workaround (5 lines):** observe `currentInputModeDidChangeNotification`; when it fires with a field focused, resign and re-acquire first responder on that field. The new input session posts a fresh, correct `WillShow`, which MAUI's existing code consumes. Minor caret flicker.
-2. **Proper fix (MAUI-level, worth an upstream issue):** on `currentInputModeDidChangeNotification`, after ~0.5 s, force a layout and re-derive the keyboard frame from `view.keyboardLayoutGuide.layoutFrame` instead of waiting for a `WillShow` that never comes.
+1. **App-level workaround (5 lines):** observe `currentInputModeDidChangeNotification`; when it fires with a field focused, resign and re-acquire first responder on that field. The new input session posts a fresh, correct `WillShow`, which the framework's existing keyboard-scroll handling consumes. Minor caret flicker.
+2. **Proper host/framework fix:** on `currentInputModeDidChangeNotification`, after ~0.5 s, force a layout and re-derive the keyboard frame from `view.keyboardLayoutGuide.layoutFrame` instead of waiting for a `WillShow` that never comes.
 
 Ask the reporter to confirm the discriminator first: does locked portrait fail when the field is opened **directly with LIME already active** (should be fine — fresh presentations are correct), or only after **switching to LIME while the field is focused** (the measured gap)?
 
@@ -423,8 +423,8 @@ Not affected by this iOS lifecycle path. Android uses its own IME window/insets 
 - Publicly describe the private report only as a bottom-content reachability problem reproduced after 6.1.28.
 - Do not publish the reporter identity, company app, email address, or private recordings.
 - The LINE reproduction may be documented publicly without private conversation content.
-- The framework question was answered (.NET MAUI); keep the framework private in public channels per the reporter's preference.
-- Maintainer-side verification passed for LINE rotation, LINE switch-in, and the minimal MAUI-form bottom-reachability repro without dismissing/reopening LIME. The private reporter's 2026-07-18 clarification says only five specific size pairs work after reinstall and all other tested combinations still fail. Do not claim 6.1.32 fixed the private path. Keep the issue open while comparing passing and failing preference pairs.
+- The framework question was answered privately; keep the exact framework private in public channels per the reporter's preference.
+- Maintainer-side verification passed for LINE rotation, LINE switch-in, and a minimal cross-platform-form bottom-reachability repro without dismissing/reopening LIME. The private reporter's 2026-07-18 clarification says only five specific size pairs work after reinstall and all other tested combinations still fail. Do not claim 6.1.32 fixed the private path. Keep the issue open while comparing passing and failing preference pairs.
 
 ### Historical draft reply to the private reporter
 
@@ -432,9 +432,9 @@ Do not send this release-oriented draft while the private locked-portrait path r
 
 > Thank you again for the detailed retest — the landscape-vs-locked-portrait result was the clue that cracked the remaining case.
 >
-> We found and fixed a second LIME-side issue. When switching to LIME in place (globe key) from a shorter keyboard, iOS never announced LIME's real frame to the host app, so apps that track the keyboard via the `keyboardWillShow` notification — which is exactly how .NET MAUI's built-in `KeyboardAutoManagerScroll` works — kept the previous keyboard's inset. In portrait that leaves part of the form hidden behind LIME with no way to scroll to it; rotating generates a fresh notification, which is why landscape recovered after our earlier fix while locked portrait did not.
+> We found and fixed a second LIME-side issue. When switching to LIME in place (globe key) from a shorter keyboard, iOS never announced LIME's real frame to the host app, so notification-based keyboard-scroll handling kept the previous keyboard's inset. In portrait that leaves part of the form hidden behind LIME with no way to scroll to it; rotating generates a fresh notification, which is why landscape recovered after our earlier fix while locked portrait did not.
 >
-> To make sure this matches your app's behavior, we rebuilt the scenario in a minimal stock .NET MAUI form (a scrollable page of entries with a marked bottom field). On the fixed build the true bottom is reachable and editable in both flows — opening a field with LIME already active, and switching to LIME while a field is focused.
+> To make sure this matches your app's behavior, we rebuilt the scenario in a minimal cross-platform scrollable form with a marked bottom field. On the fixed build the true bottom is reachable and editable in both flows — opening a field with LIME already active, and switching to LIME while a field is focused.
 >
 > Please retest with LIME <VERSION> in locked portrait, using both flows above. If anything still cannot be reached, the remaining factor is likely app-specific (for example a custom keyboard accessory/toolbar or modified keyboard-scroll handling); in that case, two host-side options we verified: (1) on `UITextInputMode.currentInputModeDidChangeNotification`, re-read `view.keyboardLayoutGuide` after a short delay and a forced layout — it holds the correct frame even when no notification fires; or (2) resign and re-acquire first responder on the focused field, which produces a fresh, correct `keyboardWillShow`.
 >
