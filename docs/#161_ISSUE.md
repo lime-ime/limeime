@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: implementation in PR #165; keep open until review, merge, release, and reporter retest
+- State: closed after merged PR #167, but post-merge review found an Android related-candidate cache invalidation regression that must be corrected before the next reporter-testable build
 
 ## Corrected scope
 
@@ -35,7 +35,7 @@ The iOS path previously diverged in two ways:
 - `pickCandidateManually` cleared suggestions after an item-0 composing-code commit instead of calling `updateRelatedPhrase()`.
 - `getRelatedMappings` queried only the complete word and omitted Android's final-character fallback.
 
-PR #165 aligns these iOS paths with Android while leaving automatic-learning filters unchanged.
+Merged PR #167 aligns these iOS paths with Android while leaving automatic-learning filters unchanged.
 
 ## Management search contract
 
@@ -44,8 +44,16 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 ## TDD evidence
 
 - Existing code reproduced RED for iOS item-0 parity: the selection path contained `wasComposingCodeCommit` and bypassed `updateRelatedPhrase`; the lookup guard rejected composing-code records.
-- Added iOS tests for item-0 routing and full-word/final-character query behavior.
-- Existing Android/iOS management-search tests cover multi-character parent and combined-phrase lookup.
+- PR #167 adds iOS tests for item-0 routing, full-word/final-Unicode-scalar fallback, and decomposed-text behavior.
+- PR #167 adds Android/iOS management tests for parent-prefix-only matching, literal wildcard escaping, filtered counts, and pagination alignment.
+
+## Delivery boundary
+
+- PR #167 merged to `master` as `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262` and auto-closed the community issue.
+- The current GitHub Android APK remains v6.1.32, whose tag targets `0a7b8158536d6d55c6c3684952447ea9b915cb42`; that commit is an ancestor of the PR merge and therefore does not contain this fix.
+- The final synchronize commit added an Android `relatedcache`, keyed separately for initial/full runtime results. Automatic learning invalidates both keys, but manual `關聯字管理` add, update, and delete operations still call the generic `SearchServer` mutation wrappers without invalidating this cache. A relation already queried by the keyboard can therefore remain stale after management changes until a broader cache reset.
+- Correct the Android mutation-path invalidation and add a focused regression test before publishing a new Android build for #161. Do not request reporter retest from v6.1.32 or from a future build that contains PR #167 without this follow-up.
+- iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a newer TestFlight/App Store build.
 
 ## Acceptance criteria
 
@@ -55,6 +63,7 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] iOS item-0 raw-code commit requests related candidates like Android
 - [x] iOS multi-character runtime lookup uses full word plus final Unicode-scalar fallback, matching Android code-point semantics
 - [x] Android regression tests pass on the final branch
-- [ ] iOS XCTest/Xcode Cloud passes on the final branch
-- [ ] Maintainer review/merge
+- [ ] iOS XCTest/Xcode Cloud passes on the corrected merged source
+- [x] Maintainer review/merge as PR #167 / `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262`
+- [ ] Android manual related add/update/delete invalidates both initial and full runtime related-cache entries
 - [ ] Reporter verifies search/deletion in a released build
