@@ -36,11 +36,14 @@ final class ManageImController: BaseController {
 
     // MARK: - App Group
 
-    private static let appGroupID = LIMEPreferenceManager.suiteName
-    private static let cacheResetKey = "needsKeyboardCacheReset"
+    private nonisolated static let appGroupID = LIMEPreferenceManager.suiteName
+    private nonisolated static let cacheResetKey = "needsKeyboardCacheReset"
 
     /// Signal the keyboard extension to clear its in-memory search cache on next activation.
-    private static func markKeyboardCacheDirty() {
+    /// Shared with ManageRelatedController — #161 follow-up: related edits must flush the
+    /// keyboard's relatedCache too, exactly like mapping-record edits. nonisolated:
+    /// UserDefaults is thread-safe and the related mutations run in detached tasks.
+    nonisolated static func markKeyboardCacheDirty() {
         UserDefaults(suiteName: appGroupID)?.set(true, forKey: cacheResetKey)
     }
 

@@ -74,6 +74,7 @@ final class ManageRelatedController: BaseController {
             guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
             do {
                 try server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
                 return .failure(error)
@@ -95,6 +96,7 @@ final class ManageRelatedController: BaseController {
             guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
             do {
                 try server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
                 return .failure(error)
@@ -110,6 +112,7 @@ final class ManageRelatedController: BaseController {
             ss?.clearTable("related")
             do {
                 try server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
                 return .failure(error)
@@ -128,6 +131,7 @@ final class ManageRelatedController: BaseController {
             guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
             do {
                 try server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
                 return .failure(error)
@@ -160,6 +164,7 @@ final class ManageRelatedController: BaseController {
                                          "basescore": 0, "score": score])
             if rowID > 0 {
                 try? server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
             }
             await MainActor.run {
                 rowID > 0 ? view?.refreshPhraseList() : view?.onError("新增失敗")
@@ -179,6 +184,7 @@ final class ManageRelatedController: BaseController {
                                                "_id = ?", ["\(id)"])
             if affected > 0 {
                 try? server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
             }
             await MainActor.run {
                 affected > 0 ? view?.refreshPhraseList() : view?.onError("更新失敗")
@@ -192,6 +198,7 @@ final class ManageRelatedController: BaseController {
             let affected = server.deleteRecord("related", "_id = ?", ["\(id)"])
             if affected > 0 {
                 try? server.markTableChangedAndPublish("related")
+                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
             }
             await MainActor.run {
                 affected > 0 ? view?.refreshPhraseList() : view?.onError("刪除失敗")
