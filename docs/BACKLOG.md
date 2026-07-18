@@ -2,11 +2,11 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-17
+Last reviewed: 2026-07-18
 
 ## Pending fixes
 
-None currently tracked.
+- fix#139 iOS: resolve the remaining locked-portrait host-content reachability path after the private reporter found that only `keyboard_size = large` plus font size `extra large` reaches the true bottom, while changing either preference makes it unreachable again. Reproduce the passing and failing preference combinations, compare rendered keyboard geometry with UIKit's published frame/layout guide and the host scroll inset, and preserve reporter/app/video privacy. Android is not affected by this iOS keyboard-extension lifecycle path. See `docs/#139_ISSUE.md`.
 
 ## Product work
 

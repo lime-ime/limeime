@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: both LIME-side subcases are fixed in source. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and the attach-overshoot change fixes the in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 is `VALID`, `APP_STORE_ELIGIBLE`, and submitted for App Store review. Keep the issue open until v6.1.32 is publicly available and the private reporter can retest locked portrait.
+- State: unresolved after a new private locked-portrait retest. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and the attach-overshoot change fixes the measured in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 was submitted for App Store review. However, the latest private retest can reach the true bottom only with `keyboard_size = large` and font size `extra large`; changing either setting makes the bottom unreachable again. Keep the issue open and restore implementation tracking for this preference-dependent path.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
 - Active scope: host content or an input field can remain partly covered when LIME's keyboard geometry changes while the keyboard stays visible. Dismissing and reopening the keyboard restores the correct host layout.
@@ -47,6 +47,20 @@ The private reporter updated to LIME 6.1.31 and reported:
 - This is a partial improvement, not resolution.
 
 The orientation-specific result supports keeping the rotation fix while continuing to investigate the remaining locked-portrait and in-place keyboard-switch paths. The next comparison should distinguish opening the field directly with LIME from switching to LIME while the field remains focused, then compare the host's final scroll range or bottom inset. Keep the host framework, app identity, reporter identity, and private evidence confidential.
+
+### Locked-portrait preference-dependent retest (2026-07-18)
+
+The private reporter found one narrow combination that reaches the true bottom in locked portrait:
+
+- Keyboard size: large.
+- Font size: extra large.
+- Result with that exact combination: the page can scroll to the true bottom.
+- Result after changing either setting: the true bottom becomes unreachable again.
+- Comparison: Okidokey and 元書輸入法 remain scrollable at different keyboard sizes according to the reporter.
+- Evidence: one private QuickTime recording (`0718測試.mov`, approximately 10.2 MB). Keep the file, attachment metadata, reporter identity, and private app details confidential.
+- Version limitation: the accessible Gmail body was empty and its snippet did not state the tested LIME version, so do not attribute this result to a specific build until confirmed from the thread or reporter.
+
+This is a conditional improvement, not resolution. It also weakens the previous prediction that the remaining private-form behavior would be app-specific after the attach-overshoot fix. The next instrumentation pass must vary `keyboard_size` and font size together and compare LIME's rendered top edge, UIKit's final keyboard frame/layout guide, and the host's final scroll inset for the passing and failing combinations.
 
 ### Maintainer LINE rotation reproduction
 
@@ -395,7 +409,7 @@ Not affected by this iOS lifecycle path. Android uses its own IME window/insets 
 - Do not publish the reporter identity, company app, email address, or private recordings.
 - The LINE reproduction may be documented publicly without private conversation content.
 - The framework question was answered (.NET MAUI); keep the framework private in public channels per the reporter's preference.
-- Resolution criteria met on the maintainer side (2026-07-17): LINE rotation, LINE switch-in, and the MAUI-form bottom-reachability repro all pass without dismissing/reopening LIME. Final closure still requires the reporter's retest on the released build.
+- Maintainer-side verification remains useful: LINE rotation, LINE switch-in, and the minimal MAUI-form bottom-reachability repro pass without dismissing/reopening LIME. The private reporter's 2026-07-18 setting-dependent retest shows that these controls do not cover the remaining failure. Do not close until the preference matrix is reproduced or explained and the reporter confirms the normal supported settings work.
 
 ### Draft reply to the private reporter (send with the next release)
 
