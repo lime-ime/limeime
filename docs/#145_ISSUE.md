@@ -5,14 +5,16 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/145
 - Classification: `bug` + `Usability`
 - Reporter: `james631025`
-- Live state after the v6.1.28 retest request: open, labeled `bug` + `Usability`, assigned to `jrywu`, pending reporter confirmation.
+- Live state: closed as completed on 2026-07-18 after the reporter said the bottom-row clipping had not recurred during several days of testing. Labels remain `bug` + `Usability`, and `jrywu` remains assigned.
 - Public acknowledgement / clarification request: https://github.com/lime-ime/limeime/issues/145#issuecomment-4874848760 asked for platform, version/device details, active layout, app scope, whether other actions besides switching IMEs restore the row, and screenshot evidence.
 - Reporter follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4880870984 confirms Android tablet, LIME 6.1.27, Android 10, iPlay 30, 嘸蝦米, all apps, rotation also restores the row, and includes a screenshot.
 - Maintainer/project-account follow-up: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884643621 asked which Boshiamy keyboard layout is active, such as standard keyboard, phone keyboard, or another custom/special layout.
 - Latest reporter reply: https://github.com/lime-ime/limeime/issues/145#issuecomment-4884708378 says the active Boshiamy layout is the standard keyboard and the reporter has not changed special settings. The attached settings screenshots show keyboard style set to system setting, keyboard size `一般`, font size `一般`, direction keys `無`, split keyboard `關閉`, and physical-keyboard auto-hide enabled.
 - Local confirmation: API 29 Android Studio emulator looked fine with 3-button navigation, while the bottom-row coverage reproduced with gesture navigation.
 - Release / retest request: v6.1.28 includes the Android tablet / gesture-navigation bottom-row clipping fix. Earlier retest comment URLs recorded during overlapping release closeout are no longer live; the retained reporter retest request is https://github.com/lime-ime/limeime/issues/145#issuecomment-4917044757.
-- Current state: shipped in GitHub APK v6.1.28 for Android 10 / API 29 gesture navigation; Google Play delivery was not verified in this release webhook run. The 2026-07-08 source fix gates LIME's forced IME edge-to-edge opt-in to API 35+ only, so pre-35 gesture navigation keeps the system-managed nav-bar fit behavior. Keep the issue open pending reporter confirmation.
+- Reporter confirmation: https://github.com/lime-ime/limeime/issues/145#issuecomment-5011056009 says the problem did not recur during several days of testing after the v6.1.28 retest request. The comment does not restate the installed version or distribution channel, so verification is scoped to the reporter's Android tablet path rather than broad release coverage.
+- Closing acknowledgement: https://github.com/lime-ime/limeime/issues/145#issuecomment-5011058938. The issue was closed as completed on 2026-07-18.
+- Current state: the Android 10 / API 29 gesture-navigation fix shipped in GitHub APK v6.1.28, and the reporter subsequently observed no recurrence on the reported tablet path. The 2026-07-08 source fix gates LIME's forced IME edge-to-edge opt-in to API 35+ only, so pre-35 gesture navigation keeps the system-managed nav-bar fit behavior.
 
 ## Problem statement
 
@@ -80,6 +82,7 @@ The reporter is on Android 10, so the iOS custom-keyboard height/safe-area path 
 
 ## Follow-up / retest condition
 
-- The initial clarification acknowledgement has been posted, and the reporter supplied Android tablet details, screenshot evidence, and the active Boshiamy standard-keyboard layout/settings. v6.1.28 is the first reporter-testable build containing this targeted gesture-navigation fix, and the public retest request has been posted.
+- The reporter supplied Android tablet details, screenshot evidence, and the active Boshiamy standard-keyboard layout/settings. v6.1.28 was the first reporter-testable build containing this targeted gesture-navigation fix.
+- After the v6.1.28 retest request, the reporter said the problem had not recurred during several days of testing. This closes the active reporter watch for the reported iPlay 30 / Android 10 / Boshiamy standard-keyboard path. The exact installed version and distribution channel were not restated in the confirmation comment.
 
-`docs/BACKLOG.md` no longer needs to track `fix#145 Android` as a pending fix because the fix shipped in v6.1.28. Keep #145 open until the reporter confirms whether the iPlay 30 / Android 10 / Boshiamy standard-keyboard path is fixed.
+`docs/BACKLOG.md` already stopped tracking `fix#145 Android` after the fix shipped in v6.1.28, so no backlog edit is needed for this closure. Reopen or start a new focused investigation only if the reporter or another user supplies recurrence evidence.
