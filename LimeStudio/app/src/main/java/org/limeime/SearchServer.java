@@ -2412,7 +2412,21 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "deleteRecord(): dbadapter is null");
             return 0;
         }
-        return dbadapter.deleteRecord(table, whereClause, whereArgs);
+        int deleted = dbadapter.deleteRecord(table, whereClause, whereArgs);
+        invalidateRelatedCacheForTable(table);
+        return deleted;
+    }
+
+    /**
+     * #161 follow-up: manual 關聯字管理 mutations go through the generic wrappers, so
+     * any related-table write must flush the runtime related cache — otherwise a
+     * keyboard that already queried the parent word keeps serving the stale list.
+     * Whole-cache clear on purpose: delete-by-id does not know the pword here, and
+     * the cache repopulates on the next lookup.
+     */
+    private static void invalidateRelatedCacheForTable(String table) {
+        if (LIME.DB_TABLE_RELATED.equals(table) && relatedcache != null)
+            relatedcache.clear();
     }
 
     /**
@@ -2449,7 +2463,9 @@ List<Mapping> scorelistSnapshot = null;
             Log.e(TAG, "addRecord(): dbadapter is null");
             return -1;
         }
-        return dbadapter.addRecord(table, values);
+        long id = dbadapter.addRecord(table, values);
+        invalidateRelatedCacheForTable(table);
+        return id;
     }
 
     /**
@@ -2788,6 +2804,7 @@ List<Mapping> scorelistSnapshot = null;
             return -1;
         }
         int updated = dbadapter.updateRecord(table, values, whereClause, whereArgs);
+        invalidateRelatedCacheForTable(table);
         if (updated > 0
                 && LIME.DB_TABLE_IM.equals(table)
                 && values != null

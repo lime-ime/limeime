@@ -3683,6 +3683,57 @@ public class SearchServerTest {
         }
     }
 
+    // #161 follow-up: manual 關聯字管理 add/update/delete go through the generic
+    // mutation wrappers and must flush the runtime relatedcache; mutations on
+    // other tables must NOT flush it.
+    @Test(timeout = 5000)
+    public void test_3_4_2_8_relatedCacheFlushedByRelatedTableMutations() throws Exception {
+        Object original = getStatic("dbadapter", Object.class);
+        StubLimeDBRecords stub = new StubLimeDBRecords(appContext);
+        setStatic("dbadapter", stub);
+        setStatic("relatedcache", null);
+        try {
+            Mapping stale = new Mapping();
+            stale.setWord("舊");
+            Mapping fresh = new Mapping();
+            fresh.setWord("新");
+
+            List<Mapping> staleList = new ArrayList<>();
+            staleList.add(stale);
+            List<Mapping> freshList = new ArrayList<>();
+            freshList.add(fresh);
+
+            stub.relatedPhraseResponse = staleList;
+            assertEquals("舊", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+
+            // DB now returns the fresh list, but the cache must still serve the
+            // stale one — proves the result was actually cached.
+            stub.relatedPhraseResponse = freshList;
+            assertEquals("舊", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+
+            // A mutation on a non-related table must not flush the cache.
+            searchServer.updateRecord("custom", new ContentValues(), "_id = ?", new String[]{"1"});
+            assertEquals("舊", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+
+            // deleteRecord on the related table flushes → fresh DB read.
+            searchServer.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", new String[]{"1"});
+            assertEquals("新", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+
+            // addRecord flushes.
+            stub.relatedPhraseResponse = staleList;
+            searchServer.addRecord(LIME.DB_TABLE_RELATED, new ContentValues());
+            assertEquals("舊", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+
+            // updateRecord on the related table flushes.
+            stub.relatedPhraseResponse = freshList;
+            searchServer.updateRecord(LIME.DB_TABLE_RELATED, new ContentValues(), "_id = ?", new String[]{"1"});
+            assertEquals("新", searchServer.getRelatedByWord("萊", false).get(0).getWord());
+        } finally {
+            setStatic("dbadapter", original);
+            setStatic("relatedcache", null);
+        }
+    }
+
     @Test(timeout = 5000)
     public void test_3_4_2_8_hasRelated_null_dbadapter_returns_false() throws Exception {
         Object original = getStatic("dbadapter", Object.class);
