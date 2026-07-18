@@ -53,7 +53,7 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] Android management search uses `pword` prefix matching only
 - [x] iOS management search uses the same `pword` prefix semantics and filtered count
 - [x] iOS item-0 raw-code commit requests related candidates like Android
-- [x] iOS multi-character runtime lookup uses full word plus final-character fallback
+- [x] iOS multi-character runtime lookup uses full word plus final Unicode-scalar fallback, matching Android code-point semantics
 - [x] Android regression tests pass on the final branch
 - [ ] iOS XCTest/Xcode Cloud passes on the final branch
 - [ ] Maintainer review/merge
