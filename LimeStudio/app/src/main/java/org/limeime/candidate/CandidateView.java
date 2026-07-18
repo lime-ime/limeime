@@ -1717,7 +1717,12 @@ public class CandidateView extends View implements View.OnClickListener {
     }
 
 
-    public void clear() {
+    // synchronized: clearSuggestions() calls this from the English-prediction query thread;
+    // an unlocked mSuggestions.clear() corrupts the LinkedList node walk in doDraw's
+    // mSuggestions.get(i) on the UI thread (Vitals NPE in LinkedList.node). Same instance
+    // monitor as onDraw/setSuggestions; everything UI-facing below is an async mHandler post,
+    // so holding the monitor here cannot deadlock against the main thread.
+    public synchronized void clear() {
         if (DEBUG) Log.i(TAG, "clear()");
         mDictationState = DictationState.IDLE;
         mDictationText = "";

@@ -399,7 +399,10 @@ public class SearchServer {
      *
      * @param abandonSuggestion true if the suggestion process should be abandoned.
      */
-    protected void clearRunTimeSuggestion(boolean abandonSuggestion)
+    // synchronized: mutates suggestionLoL/bestSuggestionStack, which makeRunTimeSuggestion
+    // iterates under the same instance monitor from an overlapping query thread — an
+    // unlocked clear here raced it into ConcurrentModificationException (Vitals, v6.1.30).
+    protected synchronized void clearRunTimeSuggestion(boolean abandonSuggestion)
     {
         for (List<Pair<Mapping, String>> suggestList : suggestionLoL) {
             suggestList.clear();
@@ -1239,7 +1242,9 @@ public class SearchServer {
      * @param currentCode     The current input buffer.
      * @return The length of the code corresponding to the selection.
      */
-    protected int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
+    // synchronized: the iterator-removal over suggestionLoL/bestSuggestionStack below runs on
+    // the main thread at candidate pick and must not interleave with makeRunTimeSuggestion.
+    protected synchronized int getRealCodeLength(final Mapping selectedMapping, String currentCode) {
         if (DEBUG)
             Log.i(TAG, "getRealCodeLength()");
 

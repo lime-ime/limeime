@@ -5943,7 +5943,8 @@ public class LIMEService extends InputMethodService
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             commitTyped(ic);
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
-                && !tempEnglishList.isEmpty()) {  // user picked English prediction suggestions
+                && !tempEnglishList.isEmpty()
+                && index < tempEnglishList.size()) {  // user picked English prediction suggestions
 
 
             //Log.i("EMOJI-commit-index:", index + "");
@@ -5958,8 +5959,13 @@ public class LIMEService extends InputMethodService
                 }
             } else {
                 String pickedWord = this.tempEnglishList.get(index).getWord();
+                // tempEnglishList is built async (queryThread) and can lag tempEnglishWord
+                // by a keystroke — a stale candidate may be shorter than the current prefix
+                // (Vitals: StringIndexOutOfBounds length=9 index=10). Clamp: worst case
+                // commits just the trailing space, next keystroke refreshes the list.
+                int typedPrefixLen = Math.min(tempEnglishWord.length(), pickedWord.length());
                 if (ic != null) ic.commitText(
-                        pickedWord.substring(tempEnglishWord.length()) + " ", 1);
+                        pickedWord.substring(typedPrefixLen) + " ", 1);
                 // ENG_AUTO_COMPLETION.md "Learning": increment the picked word's score so
                 // frequently chosen words rank higher (mirrors the emoji recordEmojiUsage hook).
                 if (SearchSrv != null) SearchSrv.recordEnglishUsage(pickedWord);

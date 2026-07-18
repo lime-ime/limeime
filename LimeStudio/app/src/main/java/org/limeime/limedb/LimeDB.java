@@ -1000,11 +1000,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             // In test environments or background threads, don't block indefinitely
             Looper mainLooper = Looper.getMainLooper();
             if (mainLooper != null && Looper.myLooper() == mainLooper) {
-                // We're on the main thread, safe to show Toast and loop
-                //Toast.makeText(mContext, mContext.getText(R.string.l3_database_loading), Toast.LENGTH_SHORT).show();
-                //Looper.loop();
-                // After loop returns, check connection again
-                return !openDBConnection(false);
+                // Never touch the DB from the main thread while a maintenance
+                // operation holds the connection: openDBConnection()'s SELECT 1
+                // probe parks in SQLiteConnectionPool until the bulk transaction
+                // finishes → ANR (Android Vitals, onStartInput). Fail fast;
+                // callers return empty defaults and retry on the next query.
+                return true;
             } else {
                 // We're on a background thread or in test environment
                 // Don't block indefinitely - wait with timeout instead
