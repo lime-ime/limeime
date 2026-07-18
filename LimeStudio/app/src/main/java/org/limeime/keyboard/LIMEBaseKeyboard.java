@@ -815,12 +815,16 @@ public class LIMEBaseKeyboard {
         }
 
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
-        //Jeremy '12,5,27 read splitkeyboard setting from preference. 
+        //Jeremy '12,5,27 read splitkeyboard setting from preference.
         //Jeremy '12,6,19  add orientation consideration on split keyboard
+        // SPLIT_ONE_HAND_KB: on phones split renders in landscape only, whatever the
+        // stored value — portrait phone split keys fall below SPLIT_KEY_MIN_MM and
+        // portrait geometry belongs to one-hand mode (spec eligibility matrix).
+        boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
         mSplitKeyboard = splitEligible
                 && ((mLandScape && mShowArrowKeys != 0)
                 || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                || splitKeyboard == SPLIT_KEYBOARD_ALWAYS);
+                || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
 
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }

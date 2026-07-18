@@ -698,6 +698,9 @@ public class CandidateView extends View implements View.OnClickListener {
 
         int myHeight = getHeight();
         mPopupCandidateView.setSuggestions(mSuggestions);
+        // SPLIT_ONE_HAND_KB: the expanded view wraps rows to the popup width (it
+        // cannot read the anchor insets itself from inside the popup hierarchy).
+        mPopupCandidateView.setContentWidth(mScreenWidth - anchorInsetLeft() - anchorInsetRight());
         mPopupCandidateView.prepareLayout();
 
         mPopupCandidateView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
@@ -734,17 +737,23 @@ public class CandidateView extends View implements View.OnClickListener {
 
 
         
+        // SPLIT_ONE_HAND_KB: match the anchored key block (one-hand / numpad anchor) —
+        // insets come from the rendered keyboard, like the candidate strip's padding.
+        final int anchorLeft = anchorInsetLeft();
+        final int anchorRight = anchorInsetRight();
+        final int popWidth = mScreenWidth - anchorLeft - anchorRight;
+
         if (mCandidatePopupWindow.isShowing()) {
             if (DEBUG)
                 Log.i(TAG, "doUpdateCandidatePopup(),mCandidatePopup.isShowing ");
-            mCandidatePopupWindow.update(mScreenWidth, popHeight);
+            mCandidatePopupWindow.update(anchorLeft, 0, popWidth, popHeight);
         } else {
-            mCandidatePopupWindow.setWidth(mScreenWidth);
+            mCandidatePopupWindow.setWidth(popWidth);
             mCandidatePopupWindow.setHeight(popHeight);
             // Bottom-positioned popup covers the live candidate bar and soft keyboard. When the
             // soft keyboard is hidden, the opaque bottom area covers the original candidate strip
             // so expanded candidates do not duplicate it.
-            mCandidatePopupWindow.showAtLocation(getRootView(), Gravity.BOTTOM | Gravity.START, 0, 0);
+            mCandidatePopupWindow.showAtLocation(getRootView(), Gravity.BOTTOM | Gravity.START, anchorLeft, 0);
             mPopupScrollView.scrollTo(0, 0);
         }
 
@@ -758,6 +767,26 @@ public class CandidateView extends View implements View.OnClickListener {
                 popupFrameContentLayoutParams(scrollContentHeight));
 
 
+    }
+
+    // SPLIT_ONE_HAND_KB: horizontal insets of the anchored key block, read from the
+    // rendered keyboard (0 when full width) — keeps the expanded popup aligned with
+    // the strip and key block in one-hand / numpad-anchored modes.
+    protected int anchorInsetLeft() {
+        org.limeime.keyboard.LIMEBaseKeyboard kb = renderedKeyboard();
+        return kb == null ? 0 : kb.getAnchorLeftInset();
+    }
+
+    protected int anchorInsetRight() {
+        org.limeime.keyboard.LIMEBaseKeyboard kb = renderedKeyboard();
+        return kb == null ? 0 : kb.getAnchorRightInset();
+    }
+
+    private org.limeime.keyboard.LIMEBaseKeyboard renderedKeyboard() {
+        View kbView = getRootView().findViewById(R.id.keyboard);
+        if (kbView instanceof org.limeime.keyboard.LIMEKeyboardBaseView)
+            return ((org.limeime.keyboard.LIMEKeyboardBaseView) kbView).getKeyboard();
+        return null;
     }
 
     public void setComposingText(String composingText) {

@@ -62,6 +62,15 @@ public class CandidateExpandedView extends CandidateView {
     private int mHeight; // Row height (configHeight + mVerticalPadding), updated in updateFontSize()
     private int mTotalHeight;
     private ScrollView mParentScrollView;
+    // SPLIT_ONE_HAND_KB: popup content width set by CandidateView.doUpdateCandidatePopup
+    // (the popup can be narrower than the screen when the key block is anchored).
+    // 0 = full screen width. Cannot be derived here: this view lives inside the popup
+    // hierarchy, which has no R.id.keyboard to read the anchor insets from.
+    private int mContentWidth = 0;
+
+    public void setContentWidth(int width) {
+        mContentWidth = width;
+    }
 
 
     public CandidateExpandedView(Context context, AttributeSet attrs) {
@@ -261,7 +270,8 @@ public class CandidateExpandedView extends CandidateView {
             String suggestion = displaySuggestion(i, mSuggestions);
             final int wordWidth = wordWidth(paint, suggestion, X_GAP);
 
-            if (x + wordWidth > rowEndX(row, mScreenWidth, expandWidth)) {
+            // SPLIT_ONE_HAND_KB: wrap rows to the anchored popup width, not the screen.
+            if (x + wordWidth > rowEndX(row, mContentWidth > 0 ? mContentWidth : mScreenWidth, expandWidth)) {
                 mRowSize[row] = indexInRow;
                 row++;
                 mRowStartingIndex[row] = i;

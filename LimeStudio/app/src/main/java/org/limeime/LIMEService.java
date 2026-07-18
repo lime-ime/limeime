@@ -2277,9 +2277,9 @@ public class LIMEService extends InputMethodService
             handleOptions();
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_ONE_HAND_RESTORE) {
             // SPLIT_ONE_HAND_KB: chevron tap restores full width, persisted (spec).
+            // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
             mLIMEPref.setOneHandMode(0);
-            handleClose();
-            mKeyboardSwitcher.resetKeyboards(true);
+            applyGeometryChangeInPlace();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
@@ -3685,8 +3685,12 @@ public class LIMEService extends InputMethodService
         // ordinary layouts show 分離鍵盤 / 單手鍵盤. (spec: keyboard-menu rule)
         final boolean isNumpadKb = mKeyboardSwitcher.isNumpadKeyboard();
         final boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        final boolean hasSplitOption = !isNumpadKb && !(isLandScape && mShowArrowKeys > 0);
-        final boolean hasOneHandOption = !isTablet
+        // Phones show only the control that affects the current orientation: portrait
+        // is one-hand territory, landscape is split territory (split renders
+        // landscape-only on phones). Tablets keep the split control in both.
+        final boolean hasSplitOption = !isNumpadKb && !(isLandScape && mShowArrowKeys > 0)
+                && (isTablet || isLandScape);
+        final boolean hasOneHandOption = !isTablet && !isLandScape
                 && org.limeime.keyboard.ReachGeometry.oneHandAvailable(
                         Math.min(displayWidth, displayHeight), dm.xdpi);
         final boolean hasNumpadAnchorOption = isTablet && isNumpadKb;
@@ -3752,7 +3756,14 @@ public class LIMEService extends InputMethodService
             com.google.android.material.button.MaterialButtonToggleGroup splitGroup =
                     panel.findViewById(R.id.split_toggle_group);
             final int[] splitIds = { R.id.split_opt_off, R.id.split_opt_on, R.id.split_opt_landscape };
-            splitGroup.check(splitIds[splitCurrent]);
+            if (!isTablet) {
+                // Phones: split renders landscape-only, so 開啟 and 僅橫向 are the same
+                // thing — binary control. Stored 僅橫向 lights 開啟.
+                panel.findViewById(R.id.split_opt_landscape).setVisibility(android.view.View.GONE);
+                splitGroup.check(splitIds[splitCurrent == 0 ? 0 : 1]);
+            } else {
+                splitGroup.check(splitIds[splitCurrent]);
+            }
             splitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
                 for (int i = 0; i < splitIds.length; i++) {
@@ -3821,8 +3832,8 @@ public class LIMEService extends InputMethodService
             }
             if (geometryChanged) {
                 invalidateStartupConfigSnapshot();
-                handleClose();
-                mKeyboardSwitcher.resetKeyboards(true);
+                // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
+                applyGeometryChangeInPlace();
             }
         });
 
@@ -5805,6 +5816,21 @@ public class LIMEService extends InputMethodService
             ic.endBatchEdit();
         }
         return true;
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: apply a keyboard geometry change (one-hand / split / numpad
+     * anchor) by rebuilding the current keyboard in place, keeping the IME shown.
+     */
+    private void applyGeometryChangeInPlace() {
+        finishComposing();
+        if (mInputView != null) {
+            mInputView.closing(); // dismiss key previews / mini keyboards, not the IME
+        }
+        if (mKeyboardSwitcher != null) {
+            mKeyboardSwitcher.rebuildCurrentKeyboard();
+        }
+        updateCandidateViewWidthConstraint(); // re-align strip with new anchored key block
     }
 
     private void handleClose() {

@@ -46,8 +46,10 @@ public class LIMEKeyboardSwitcher {
 	static final String TAG = "LIMEKeyboardSwitcher";
 
 	// SPLIT_ONE_HAND_KB: the numpad-based layouts never split (they anchor instead).
+	// phone/phone_shift are the 5-column T9-style phone-IM keypads — same grid class.
 	private boolean isNumpadXml(int xml) {
-		return xml == R.xml.phone_simple || xml == R.xml.computer_simple || xml == R.xml.phone_number;
+		return xml == R.xml.phone_simple || xml == R.xml.computer_simple || xml == R.xml.phone_number
+				|| xml == R.xml.phone || xml == R.xml.phone_shift;
 	}
 
 	// SPLIT_ONE_HAND_KB: used by Task 5 to gate one-hand UI against the numpad-anchored path.
@@ -337,10 +339,9 @@ public class LIMEKeyboardSwitcher {
 	                    keyboard.applyHorizontalAnchor(
 	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dm.xdpi),
 	                            anchor, false);
-	            } else if (!isTablet && portrait
-	                    // spec precedence: an active split wins over one-hand. Portrait split
-	                    // only happens with SPLIT_KEYBOARD_ALWAYS (arrow-split is landscape-only).
-	                    && mLIMEPref.getSplitKeyboard() != LIMEBaseKeyboard.SPLIT_KEYBOARD_ALWAYS) {
+	            } else if (!isTablet && portrait) {
+	                // Phone split renders landscape-only (LIMEBaseKeyboard gate), so
+	                // portrait always belongs to one-hand mode regardless of split pref.
 	                int mode = mLIMEPref.getOneHandMode();
 	                if (mode != 0 && ReachGeometry.oneHandAvailable(dm.widthPixels, dm.xdpi))
 	                    keyboard.applyHorizontalAnchor(
@@ -634,6 +635,21 @@ public class LIMEKeyboardSwitcher {
 
     public boolean isAlphabetMode() {
         return false;
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: rebuild the current keyboard in place after a geometry change
+     * (one-hand / split / numpad anchor), keeping the IME shown. Clears the keyboard
+     * cache then re-attaches the same keyboard state so it is reconstructed with the
+     * new geometry prefs.
+     */
+    public void rebuildCurrentKeyboard() {
+        if (ImCode == null) return; // never shown yet; nothing to rebuild
+        resetKeyboards(true);
+        if (mIsChinese)
+            this.setKeyboardMode(ImCode, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+        else
+            this.setKeyboardMode(ImCode, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
     }
 
     public void toggleShift() {
