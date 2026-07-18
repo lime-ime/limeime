@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: implementation in PR #165; keep open until review, merge, release, and reporter retest
+- State: closed/source-fixed by merged PR #167; current Android APK v6.1.32 predates the merge, and reporter retest waits for a newer build
 
 ## Corrected scope
 
@@ -35,7 +35,7 @@ The iOS path previously diverged in two ways:
 - `pickCandidateManually` cleared suggestions after an item-0 composing-code commit instead of calling `updateRelatedPhrase()`.
 - `getRelatedMappings` queried only the complete word and omitted Android's final-character fallback.
 
-PR #165 aligns these iOS paths with Android while leaving automatic-learning filters unchanged.
+Merged PR #167 aligns these iOS paths with Android while leaving automatic-learning filters unchanged.
 
 ## Management search contract
 
@@ -44,8 +44,15 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 ## TDD evidence
 
 - Existing code reproduced RED for iOS item-0 parity: the selection path contained `wasComposingCodeCommit` and bypassed `updateRelatedPhrase`; the lookup guard rejected composing-code records.
-- Added iOS tests for item-0 routing and full-word/final-character query behavior.
-- Existing Android/iOS management-search tests cover multi-character parent and combined-phrase lookup.
+- PR #167 adds iOS tests for item-0 routing, full-word/final-Unicode-scalar fallback, and decomposed-text behavior.
+- PR #167 adds Android/iOS management tests for parent-prefix-only matching, literal wildcard escaping, filtered counts, and pagination alignment.
+
+## Delivery boundary
+
+- PR #167 merged to `master` as `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262` and auto-closed the community issue.
+- The current GitHub Android APK remains v6.1.32, whose tag targets `0a7b8158536d6d55c6c3684952447ea9b915cb42`; that commit is an ancestor of the PR merge and therefore does not contain this fix.
+- Do not request reporter retest from v6.1.32. Wait for a newer Android build containing the merge. iOS delivery similarly requires a newer TestFlight/App Store build.
+- The issue may remain closed while source-fixed. Reopen it for reporter confirmation when a relevant reporter-testable build is available, unless the reporter has already verified the fix elsewhere.
 
 ## Acceptance criteria
 
@@ -55,6 +62,6 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] iOS item-0 raw-code commit requests related candidates like Android
 - [x] iOS multi-character runtime lookup uses full word plus final Unicode-scalar fallback, matching Android code-point semantics
 - [x] Android regression tests pass on the final branch
-- [ ] iOS XCTest/Xcode Cloud passes on the final branch
-- [ ] Maintainer review/merge
+- [ ] iOS XCTest/Xcode Cloud passes on the corrected merged source
+- [x] Maintainer review/merge as PR #167 / `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262`
 - [ ] Reporter verifies search/deletion in a released build
