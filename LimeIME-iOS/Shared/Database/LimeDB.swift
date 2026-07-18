@@ -126,8 +126,8 @@ final class LimeDB {
     }
 
     // MARK: - Constants (mirrors Android's LimeDB constants)
-    private static let INITIAL_RESULT_LIMIT = 15
-    private static let FINAL_RESULT_LIMIT = 210
+    static let INITIAL_RESULT_LIMIT = 15   // shared with SearchServer related two-stage
+    static let FINAL_RESULT_LIMIT = 210
     private static let COMPOSING_CODE_LENGTH_LIMIT = 16
     private static let DUALCODE_COMPOSING_LIMIT = 16
     private static let DUALCODE_NO_CHECK_LIMIT = 2
@@ -852,11 +852,14 @@ final class LimeDB {
         try dbQueue.read { db in
             let hasMultipleCharacters = parentWord.unicodeScalars.count > 1
             let predicate = hasMultipleCharacters ? "(pword = ? OR pword = ?)" : "pword = ?"
+            // Android-parity ordering (LimeDB.java getRelatedPhrase): full-word matches
+            // first, then user score, then base score as SEPARATE sort keys — not their
+            // sum. Score fields are returned separately like Android's Mapping.
             let sql = """
-                SELECT pword, cword, (COALESCE(basescore,0) + COALESCE(score,0)) AS total,
+                SELECT pword, cword, COALESCE(score,0) AS score, COALESCE(basescore,0) AS basescore,
                        length(pword) AS parent_length
                 FROM related WHERE \(predicate) AND cword IS NOT NULL
-                ORDER BY parent_length DESC, total DESC LIMIT ?
+                ORDER BY parent_length DESC, score DESC, basescore DESC LIMIT ?
             """
             let rows: [Row]
             if hasMultipleCharacters {
@@ -868,7 +871,8 @@ final class LimeDB {
             }
             return rows.map { row in
                 Mapping(id: 0, code: "", word: (row.optString("cword") ?? ""),
-                        score: (row.optInt("total") ?? 0), baseScore: 0,
+                        score: (row.optInt("score") ?? 0),
+                        baseScore: (row.optInt("basescore") ?? 0),
                         recordType: Mapping.RecordType.relatedPhrase,
                         pword: (row.optString("pword") ?? parentWord))
             }
@@ -1555,7 +1559,7 @@ final class LimeDB {
 
     func countRelatedForManagement(_ query: String?) -> Int {
         let filter = relatedManagementFilter(query)
-        return countRecords(LIME.DB_TABLE_RELATED, filter.whereClause,
+        return countRecords("related", filter.whereClause,
                             filter.args.isEmpty ? nil : filter.args)
     }
 

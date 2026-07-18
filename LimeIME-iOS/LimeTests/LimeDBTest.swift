@@ -1399,6 +1399,31 @@ final class LimeDBTest: XCTestCase {
                           "full-word relation must sort before fallback regardless of score")
     }
 
+    // Android-parity tie-break: user score and base score are SEPARATE sort keys
+    // (score DESC, basescore DESC), not summed — (user 5, base 2) beats (user 1, base 10).
+    func testRuntimeRelatedRankingUsesAndroidTwoKeySort() throws {
+        let db = try makeLimeDB()
+        let winnerID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "排", "cword": "序", "score": 5, "basescore": 2
+        ])
+        let loserID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "排", "cword": "隊", "score": 1, "basescore": 10
+        ])
+        defer {
+            for id in [winnerID, loserID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let results = try db.getRelatedMappings(parentWord: "排", limit: 10)
+        let words = results.map(\.word)
+        XCTAssertLessThan(words.firstIndex(of: "序")!, words.firstIndex(of: "隊")!,
+                          "higher user score must win even when summed score is lower")
+        let winner = results.first { $0.word == "序" }
+        XCTAssertEqual(winner?.score, 5, "user score must be returned unfolded")
+        XCTAssertEqual(winner?.baseScore, 2, "base score must be returned separately like Android")
+    }
+
     func testRuntimeRelatedLookupUsesUnicodeScalarFallbackLikeAndroid() throws {
         let db = try makeLimeDB()
         let parent = "e\u{301}"

@@ -3209,13 +3209,17 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
 
         let word = committed.word
+        // Android-parity two-stage related fetch (docs/TWO_STAGE_CANDI.md): stage 1 is
+        // the quick INITIAL_RESULT_LIMIT page (with `…` sentinel when truncated); stage 2
+        // auto-fires and upgrades the bar to the full list, so the sentinel can no longer
+        // stick (the #77 fix 7 always-full fetch is superseded by this upgrade path).
+        currentSearchID &+= 1
+        let sid = currentSearchID
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-            // Always fetch the full related list — there is no stage-2 upgrade
-            // for related phrases, so a truncated fetch would leave the `…`
-            // sentinel stuck in the bar (see docs/#77_ISSUE.md fix 7).
-            let related = ss.getRelatedByWord(word, getAllRecords: true)
+            let related = ss.getRelatedByWord(word, getAllRecords: false)
+            let wasTruncated = related.contains(where: { $0.isHasMoreMarkRecord })
             DispatchQueue.main.async { [weak self] in
-                guard let self = self, self.mComposing.isEmpty else { return }
+                guard let self = self, self.currentSearchID == sid, self.mComposing.isEmpty else { return }
                 if related.isEmpty {
                     // spec §8 step 6: no related results → nil committedCandidate, clear bar
                     self.committedCandidate = nil
@@ -3233,6 +3237,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     self.selectedCandidate      = related.first
                     self.showCandidates(related)
                 }
+            }
+            // Stage 2: full fetch, auto-fired when stage 1 was truncated. Upgrades the
+            // bar in place; both stages share one sid so a newer stroke cancels this.
+            guard wasTruncated else { return }
+            let full = ss.getRelatedByWord(word, getAllRecords: true)
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self, self.currentSearchID == sid,
+                      self.mComposing.isEmpty, self.isShowingRelatedPhrases,
+                      !full.isEmpty else { return }
+                self.mCandidateList    = full
+                self.selectedCandidate = full.first
+                self.candidateBar.appendCandidates(full, selectedIndex: 0)
             }
         }
     }

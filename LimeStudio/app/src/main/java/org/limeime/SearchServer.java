@@ -141,6 +141,9 @@ public class SearchServer {
     private static ConcurrentHashMap<String, List<Mapping>> cache = null;
     private static ConcurrentHashMap<String, List<Mapping>> engcache = null;
     private static ConcurrentHashMap<String, List<Mapping>> emojicache = null;
+    // Related-phrase cache (closes the 2015 TODO), keyed "I|word" / "F|word" per
+    // two-stage fetch; invalidated on related learning — mirrors iOS relatedCache.
+    private static ConcurrentHashMap<String, List<Mapping>> relatedcache = null;
     private static List<List<String>> emojiCategoryPagesCache = null;
     private static ConcurrentHashMap<String, String> keynamecache = null;
     /**
@@ -298,21 +301,32 @@ public class SearchServer {
     }
 
 
-    //TODO: Should cache related phrase 15,6,8 Jeremy
     /**
      * Gets related phrase suggestions for a parent word.
-     * 
+     *
      * <p>This method delegates to LimeDB.getRelatedPhrase() to retrieve related phrase
-     * candidates that can follow the given parent word.
-     * 
+     * candidates that can follow the given parent word. Results are cached per stage
+     * ("I|word" initial page / "F|word" full page — the '15,6,8 TODO) and invalidated
+     * when related learning updates the word's records.
+     *
      * @param word The parent word to get related phrases for
      * @param getAllRecords If true, returns up to FINAL_RESULT_LIMIT; if false, returns up to INITIAL_RESULT_LIMIT
      * @return List of Mapping objects containing related phrase suggestions
      * @throws RemoteException if database error occurs
      */
     public List<Mapping> getRelatedByWord(String word, boolean getAllRecords) throws RemoteException {
+        if (relatedcache == null)
+            relatedcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+        String cachedKey = (getAllRecords ? "F|" : "I|") + word;
+        List<Mapping> cached = relatedcache.get(cachedKey);
+        if (cached != null) return cached;
 
-        return dbadapter.getRelatedPhrase(word, getAllRecords);
+        List<Mapping> result = dbadapter.getRelatedPhrase(word, getAllRecords);
+        if (result != null) {
+            if (relatedcache.size() >= LIME.SEARCHSRV_RESET_CACHE_SIZE) relatedcache.clear();
+            relatedcache.put(cachedKey, result);
+        }
+        return result;
     }
 
     //Add by jeremy '10, 4,1
@@ -1328,6 +1342,7 @@ public class SearchServer {
         cache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         engcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         emojicache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
+        relatedcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         emojiCategoryPagesCache = null;
         keynamecache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
         coderemapcache = new ConcurrentHashMap<>(LIME.SEARCHSRV_RESET_CACHE_SIZE);
@@ -1480,6 +1495,11 @@ List<Mapping> scorelistSnapshot = null;
 
                             //if (unit.getId() != null && unit2.getId() != null) //Jeremy '12,7,2 eliminate learning english words.
                             score = dbadapter.addOrUpdateRelatedPhraseRecord(unit.getWord(), unit2.getWord());
+                            // Invalidate related cache (both stage keys) — mirrors iOS.
+                            if (relatedcache != null) {
+                                relatedcache.remove("I|" + unit.getWord());
+                                relatedcache.remove("F|" + unit.getWord());
+                            }
                             if (DEBUG)
                                 Log.i(TAG, "learnRelatedPhrase(), the return score = " + score);
                             //Jeremy '12,6,7 learn LD phrase if the score of userdic is > 20
