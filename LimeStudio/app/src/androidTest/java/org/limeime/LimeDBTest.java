@@ -1378,6 +1378,40 @@ public class LimeDBTest {
         assertTrue("getAllRelated operation should complete", true);
     }
 
+    @Test(timeout = 5000)
+    public void testRelatedManagementSearchUsesParentPrefixOnly() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        if (!initializeDatabase(limeDB)) {
+            fail("ERROR: Cannot initialize database connection.");
+        }
+
+        String parent = "台中𠀀𠀁𠀂";
+        String child = "市";
+        android.content.ContentValues values = new android.content.ContentValues();
+        values.put(LIME.DB_RELATED_COLUMN_PWORD, parent);
+        values.put(LIME.DB_RELATED_COLUMN_CWORD, child);
+        values.put(LIME.DB_RELATED_COLUMN_USERSCORE, 0);
+        long id = limeDB.addRecord(LIME.DB_TABLE_RELATED, values);
+        assertTrue("fixture insert should succeed", id > 0);
+
+        try {
+            List<Related> byParent = limeDB.searchRelatedForManagement("台中𠀀", 100, 0);
+            List<Related> byChild = limeDB.searchRelatedForManagement(child, 100, 0);
+            List<Related> byCombined = limeDB.searchRelatedForManagement(parent + child, 100, 0);
+            List<Related> unrelated = limeDB.searchRelatedForManagement("不存在𠀃", 100, 0);
+
+            String idString = String.valueOf(id);
+            assertTrue(byParent.stream().anyMatch(r -> idString.equals(r.getId())));
+            assertFalse(byChild.stream().anyMatch(r -> idString.equals(r.getId())));
+            assertFalse(byCombined.stream().anyMatch(r -> idString.equals(r.getId())));
+            assertFalse(unrelated.stream().anyMatch(r -> idString.equals(r.getId())));
+            assertEquals(1, limeDB.countRelatedForManagement("台中𠀀"));
+        } finally {
+            limeDB.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", new String[]{String.valueOf(id)});
+        }
+    }
+
     @Test(timeout = 5000) // 5 second timeout to prevent infinite hang
     public void testLimeDBInsertOperation() {
         // Test addRecord operation with ContentValues

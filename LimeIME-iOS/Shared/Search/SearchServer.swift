@@ -576,16 +576,24 @@ final class SearchServer {
     /// Returns related-phrase candidates following parentWord as Mapping objects.
     func getRelatedByWord(_ word: String, getAllRecords: Bool = false) -> [Mapping] {
         guard similiarEnable else { return [] }
+        // Android-parity two-stage: 15 + has_more_records sentinel, then 210 full.
+        // Cache is keyed per stage so a truncated stage-1 list never serves stage 2.
+        let cacheKey = (getAllRecords ? "F|" : "I|") + word
         cacheLock.lock()
-        if let cached = relatedCache[word] { cacheLock.unlock(); return cached }
+        if let cached = relatedCache[cacheKey] { cacheLock.unlock(); return cached }
         cacheLock.unlock()
 
-        let limit = getAllRecords ? 50 : 10
-        let results = (try? db.getRelatedMappings(parentWord: word, limit: limit)) ?? []
+        let limit = getAllRecords ? LimeDB.FINAL_RESULT_LIMIT : LimeDB.INITIAL_RESULT_LIMIT
+        var results = (try? db.getRelatedMappings(parentWord: word, limit: limit)) ?? []
+        if !getAllRecords && results.count == LimeDB.INITIAL_RESULT_LIMIT {
+            var more = Mapping(id: 0, code: "has_more_records", word: "...", score: 0, baseScore: 0)
+            more.recordType = Mapping.RecordType.hasMoreMark
+            results.append(more)
+        }
 
         cacheLock.lock()
         evictIfNeeded()
-        relatedCache[word] = results
+        relatedCache[cacheKey] = results
         cacheLock.unlock()
 
         return results
@@ -649,9 +657,10 @@ final class SearchServer {
                 || unit2.isEmojiRecord
             guard unitOK && unit2OK else { continue }
             let score = db.addOrUpdateRelatedPhraseRecord(unit.word, unit2.word)
-            // Invalidate related cache
+            // Invalidate related cache (both stage keys)
             cacheLock.lock()
-            relatedCache.removeValue(forKey: unit.word)
+            relatedCache.removeValue(forKey: "I|" + unit.word)
+            relatedCache.removeValue(forKey: "F|" + unit.word)
             cacheLock.unlock()
             if score > 20 && learnPhrasePref {
                 addLDPhrase(unit, ending: false)

@@ -1354,6 +1354,101 @@ final class LimeDBTest: XCTestCase {
         XCTAssertNotNil(list)
     }
 
+    func testRelatedManagementSearchUsesParentPrefixOnly() throws {
+        let db = try makeLimeDB()
+        let parent = "台中𠀀𠀁𠀂"
+        let child = "市"
+        let id = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": parent, "cword": child, "score": 0, "basescore": 0
+        ])
+        XCTAssertGreaterThan(id, 0)
+
+        defer { _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"]) }
+
+        XCTAssertTrue(db.searchRelatedForManagement("台中𠀀", 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement(child, 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement(parent + child, 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement("不存在𠀃", 100, 0).contains { $0.id == id })
+        XCTAssertEqual(db.countRelatedForManagement("台中𠀀"), 1)
+    }
+
+    func testRuntimeRelatedLookupMatchesFullCommittedWordThenLastCharacter() throws {
+        let db = try makeLimeDB()
+        let fullID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "台中", "cword": "市", "score": 1, "basescore": 0
+        ])
+        let fallbackID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "中", "cword": "心", "score": 99, "basescore": 0
+        ])
+        let unrelatedID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "台", "cword": "灣", "score": 99, "basescore": 0
+        ])
+        defer {
+            for id in [fullID, fallbackID, unrelatedID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let results = try db.getRelatedMappings(parentWord: "台中", limit: 10)
+        let words = results.map(\.word)
+
+        XCTAssertTrue(words.contains("市"), "full committed-word relation must be returned")
+        XCTAssertTrue(words.contains("心"), "last-character fallback must match Android")
+        XCTAssertFalse(words.contains("灣"), "first-character records must not be queried")
+        XCTAssertLessThan(words.firstIndex(of: "市")!, words.firstIndex(of: "心")!,
+                          "full-word relation must sort before fallback regardless of score")
+    }
+
+    // Android-parity tie-break: user score and base score are SEPARATE sort keys
+    // (score DESC, basescore DESC), not summed — (user 5, base 2) beats (user 1, base 10).
+    func testRuntimeRelatedRankingUsesAndroidTwoKeySort() throws {
+        let db = try makeLimeDB()
+        let winnerID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "排", "cword": "序", "score": 5, "basescore": 2
+        ])
+        let loserID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "排", "cword": "隊", "score": 1, "basescore": 10
+        ])
+        defer {
+            for id in [winnerID, loserID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let results = try db.getRelatedMappings(parentWord: "排", limit: 10)
+        let words = results.map(\.word)
+        XCTAssertLessThan(words.firstIndex(of: "序")!, words.firstIndex(of: "隊")!,
+                          "higher user score must win even when summed score is lower")
+        let winner = results.first { $0.word == "序" }
+        XCTAssertEqual(winner?.score, 5, "user score must be returned unfolded")
+        XCTAssertEqual(winner?.baseScore, 2, "base score must be returned separately like Android")
+    }
+
+    func testRuntimeRelatedLookupUsesUnicodeScalarFallbackLikeAndroid() throws {
+        let db = try makeLimeDB()
+        let parent = "e\u{301}"
+        let fallback = "\u{301}"
+        let fullID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": parent, "cword": "full", "score": 1, "basescore": 0
+        ])
+        let fallbackID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": fallback, "cword": "fallback", "score": 99, "basescore": 0
+        ])
+        defer {
+            for id in [fullID, fallbackID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let words = try db.getRelatedMappings(parentWord: parent, limit: 10).map(\.word)
+
+        XCTAssertTrue(words.contains("full"))
+        XCTAssertTrue(words.contains("fallback"),
+                      "final Unicode-scalar fallback must match Android code-point behavior")
+        XCTAssertLessThan(words.firstIndex(of: "full")!, words.firstIndex(of: "fallback")!,
+                          "full-word relation must remain ahead of scalar fallback")
+    }
+
     func testLimeDBLoadRelatedEdgeCases() throws {
         let db = try makeLimeDB()
         XCTAssertNotNil(db.getRelated(nil, 10, 0))
