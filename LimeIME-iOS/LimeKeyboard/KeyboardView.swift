@@ -844,20 +844,9 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         let keys = row.keys
         guard !keys.isEmpty else { return rowView }
 
-        // Find split index: first key where cumulative widthPercent >= 50% of total
+        // SPLIT_ONE_HAND_KB: Android-parity partition — see SplitPartition (KeyLayout.swift).
         let total = keys.reduce(0) { $0 + $1.widthPercent }
-        var cumulative: CGFloat = 0
-        var splitIndex = keys.count / 2
-        for (i, k) in keys.enumerated() {
-            cumulative += k.widthPercent
-            if cumulative >= total / 2 {
-                splitIndex = i + 1
-                break
-            }
-        }
-
-        let leftKeys  = Array(keys[..<splitIndex])
-        let rightKeys = Array(keys[splitIndex...])
+        let (leftKeys, rightKeys) = SplitPartition.partition(keys)
         let splitGapFraction = LayoutMetrics.KeyboardRow.splitGapFraction
         // SPLIT_ONE_HAND_KB: cap each half at the two-hand thumb reach; the shrink ratio
         // scales unequal halves proportionally, equal halves land exactly on the cap.

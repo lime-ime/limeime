@@ -251,8 +251,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     /// SPLIT_ONE_HAND_KB: the true numpad-grid layouts (spec decision — per-IM
     /// *_number layers are 10-column full-width layouts and stay ordinary).
+    /// "phone" covers phone / phone_shift / phone_number / phone_simple — all
+    /// 5-column keypad grids (Android isNumpadXml parity). lime_phonetic* is safe:
+    /// it starts with "lime_", not "phone".
     var isNumpadLayout: Bool {
-        currentLayout.id.hasPrefix("phone_simple") || currentLayout.id.hasPrefix("computer_simple")
+        currentLayout.id.hasPrefix("phone") || currentLayout.id.hasPrefix("computer_simple")
     }
 
     @discardableResult
@@ -308,6 +311,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // SPLIT_ONE_HAND_KB: candidate bar follows the anchored key block (one-hand / numpad anchor).
     private var candidateBarLeadingConstraint: NSLayoutConstraint?
     private var candidateBarTrailingConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: expanded-candidates panel follows the same anchor insets.
+    private var expandedPanelLeadingConstraint: NSLayoutConstraint?
+    private var expandedPanelTrailingConstraint: NSLayoutConstraint?
     private var keyboardTopToCandidateConstraint: NSLayoutConstraint?
     private var keyboardTopToViewConstraint: NSLayoutConstraint?
     private var emojiPanelBottomConstraint: NSLayoutConstraint?
@@ -616,6 +622,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
         if candidateBarTrailingConstraint?.constant != -trailing {
             candidateBarTrailingConstraint?.constant = -trailing
+        }
+        // The expanded-candidates panel mirrors the same insets.
+        if expandedPanelLeadingConstraint?.constant != leading {
+            expandedPanelLeadingConstraint?.constant = leading
+        }
+        if expandedPanelTrailingConstraint?.constant != -trailing {
+            expandedPanelTrailingConstraint?.constant = -trailing
         }
         applyHeight()
         updateGlobeAndDismissBindings()
@@ -1518,10 +1531,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // fixed composing strip instead of under it.
         let svTop = sv.topAnchor.constraint(equalTo: panel.topAnchor)
         expandedScrollTopConstraint = svTop
+        // SPLIT_ONE_HAND_KB: leading/trailing carry the anchor insets (constants set
+        // alongside the candidate bar's) so the panel matches the anchored key block.
+        let panelLeading = panel.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        let panelTrailing = panel.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        expandedPanelLeadingConstraint = panelLeading
+        expandedPanelTrailingConstraint = panelTrailing
         NSLayoutConstraint.activate([
             panel.topAnchor.constraint(equalTo: candidateBar.topAnchor),
-            panel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            panel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            panelLeading,
+            panelTrailing,
             panel.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
             svTop,
@@ -2656,7 +2675,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         } else {
             highlightColor = pal.candiHighlight
         }
-        let panelWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        // SPLIT_ONE_HAND_KB: the panel is inset to the anchored key block; wrap cells
+        // to the inset width, not the full view width.
+        let fullWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        let anchorLeading = expandedPanelLeadingConstraint?.constant ?? 0
+        let anchorTrailing = -(expandedPanelTrailingConstraint?.constant ?? 0)
+        let panelWidth = max(1, fullWidth - anchorLeading - anchorTrailing)
         // Row 1 mirrors the collapsed bar exactly. Chinese composing keeps
         // the top keyname strip; emoji search disables it, so the expanded
         // row must read the active strip metrics from CandidateBarView instead

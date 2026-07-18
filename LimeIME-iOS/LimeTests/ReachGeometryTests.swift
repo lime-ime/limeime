@@ -61,4 +61,34 @@ final class ReachGeometryTests: XCTestCase {
         XCTAssertEqual(ReachGeometry.numpadAnchorWidth(viewWidth: 744, columns: 5, sizeClass: .small),
                        744 * 0.40, accuracy: 0.001)
     }
+
+    // Android-parity split partition: iPad dayi bottom row — globe 8, .?123 10,
+    // emoji 7, space 57, .?123 10, chevron 8 (unit 7 → 14 columns, border 49%).
+    // The space bar crosses the border and must be cut and cloned to both halves.
+    func testSplitPartitionClonesSpaceToBothHalves() {
+        let row = [
+            KeyDef(code: -7, widthPercent: 8, icon: "globe"),
+            KeyDef(code: -2, label: ".?123", widthPercent: 10),
+            KeyDef(code: -14, widthPercent: 7, icon: "face.smiling"),
+            KeyDef(code: 32, widthPercent: 57, icon: "space.bar"),
+            KeyDef(code: -2, label: ".?123", widthPercent: 10),
+            KeyDef(code: -8, widthPercent: 8, icon: "keyboard.chevron.compact.down"),
+        ]
+        let (left, right) = SplitPartition.partition(row)
+        XCTAssertEqual(left.map { $0.code }, [-7, -2, -14, 32])
+        XCTAssertEqual(right.map { $0.code }, [32, -2, -8])
+        XCTAssertEqual(left.last!.widthPercent, 24, accuracy: 0.001)   // 49 − 25
+        XCTAssertEqual(right.first!.widthPercent, 33, accuracy: 0.001) // 82 − 49
+    }
+
+    // Uniform 14-key row (7% each, total 98): border after 7 columns — halves 7/7,
+    // nothing cloned.
+    func testSplitPartitionBalancedUniformRow() {
+        let row = (0..<14).map { KeyDef(code: 97 + $0, widthPercent: 7) }
+        let (left, right) = SplitPartition.partition(row)
+        XCTAssertEqual(left.count, 7)
+        XCTAssertEqual(right.count, 7)
+        XCTAssertEqual(left.reduce(0) { $0 + $1.widthPercent },
+                       right.reduce(0) { $0 + $1.widthPercent }, accuracy: 0.001)
+    }
 }
