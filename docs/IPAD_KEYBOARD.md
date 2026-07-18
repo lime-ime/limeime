@@ -326,6 +326,7 @@ Alpha / IM layouts — exposed on iPad:
 - `lime_et_41_ipad.json`, `lime_et_41_shift_ipad.json`
 - `lime_hsu_ipad.json`, `lime_hsu_shift_ipad.json`
 - `lime_wb_ipad.json`, `lime_wb_shift_ipad.json`
+- `lime_number_symbol_ipad.json`, `lime_number_symbol_ipad_shift.json`
 - `lime_number_ipad.json`, `lime_number_shift_ipad.json`
 - `lime_shift_ipad.json`
 - `symbols1_ipad.json`, `symbols2_ipad.json`, `symbols3_ipad.json`
@@ -957,3 +958,17 @@ Excluded from generator output and intentionally absent here: `lime_ez_ipad*.jso
 - Row 2 (row, 13 keys): `abc` | `A/日` | `S/尸` | `D/木` | `F/火` | `G/土` | `H/竹` | `J/十` | `K/大` | `L/中` | `；` | `。` | `enter`
 - Row 3 (row, 12 keys): `shift` | `Z/重` | `X/難` | `C/金` | `V/女` | `B/月` | `N/弓` | `M/一` | `<` | `>` | `?` | `shift`
 - Row 4 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
+
+### lime_number_symbol_ipad.json
+- Row 1 (row, 14 keys): `` ~\n` `` | `!\n1` | `@\n2` | `#\n3` | `$\n4` | `%\n5` | `^\n6` | `&\n7` | `*\n8` | `(\n9` | `)\n0` | `_\n-` | `+\n=` | `backspace`
+- Row 2 (row, 14 keys): `tab` | `q` | `w` | `e` | `r` | `t` | `y` | `u` | `i` | `o` | `p` | `『\n「` | `』\n」` | `？\n、`
+- Row 3 (row, 13 keys): `abc` | `a` | `s` | `d` | `f` | `g` | `h` | `j` | `k` | `l` | `；\n：` | `。\n，` | `enter`
+- Row 4 (row, 12 keys): `shift` | `z` | `x` | `c` | `v` | `b` | `n` | `m` | `<\n,` | `>\n.` | `?\n/` | `shift`
+- Row 5 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
+
+### lime_number_symbol_ipad_shift.json
+- Row 1 (row, 14 keys): `~` | `!` | `@` | `#` | `$` | `%` | `^` | `&` | `*` | `(` | `)` | `_` | `+` | `backspace`
+- Row 2 (row, 14 keys): `tab` | `Q` | `W` | `E` | `R` | `T` | `Y` | `U` | `I` | `O` | `P` | `『` | `』` | `？`
+- Row 3 (row, 13 keys): `abc` | `A` | `S` | `D` | `F` | `G` | `H` | `J` | `K` | `L` | `；` | `。` | `enter`
+- Row 4 (row, 12 keys): `shift` | `Z` | `X` | `C` | `V` | `B` | `N` | `M` | `<` | `>` | `?` | `shift`
+- Row 5 (bottom, 6 keys): `globe` | `.?123` | `emoji` | `space` | `.?123` | `dismiss`
