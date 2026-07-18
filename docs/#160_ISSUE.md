@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/160
 - Classification: bug, usability, cross-platform parity
-- State: PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and Xcode Cloud run 16 succeeded for the PR head. `jrywu` closed the community issue as completed, but release readiness remains blocked by the iPad punctuation semantic regression described below. A focused corrective branch is green locally and remains pending review/merge, device verification, and release.
+- State: PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and Xcode Cloud run 16 succeeded for that PR head. Follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. `jrywu` closed the community issue as source-fixed. Reporter validation still requires a newer TestFlight/App Store build containing both merges and phone/full-iPad/narrow-iPad device verification.
 - Platform: iOS only. Android is **reporter-confirmed working** and is **not** changed by this fix.
 - Public acknowledgement: reporter is a community iPhone user (see privacy-safe summary below). No private account details are recorded in this repo.
 
@@ -63,14 +63,16 @@ No production Swift change is needed. The existing `resolvedLayoutId → LayoutL
 - `test_ios_layout_json_matches_android_xml` — parity: each committed JSON equals a fresh conversion of its Android XML source (via `convert_keyboard_layouts.py`), so drift is caught.
 - `test_ipad_layout_variants_match_generators` — full-size and narrow iPad normal/Shift layouts exist and exactly match fresh output from the iPad generators.
 - `test_layouts_registered_in_xcodeproj` — all six phone/iPad JSONs have a `PBXFileReference` and membership in the LimeKeyboard target's Resources build phase, i.e. they will actually be bundled.
+- `test_xml_contract_declares_required_punctuation` — derives the required punctuation code/label pairs from the Android XML source.
+- `test_required_punctuation_survives_in_all_variants` — verifies those source-derived pairs remain reachable and labeled across phone, full-iPad, and narrow-iPad normal/Shift layouts.
 
-RED (before the phone fix): all three original tests failed because the base JSONs were absent and unregistered. A follow-up iPad contract test then failed in two places because the four `ipad` / `ipad_narrow` variants were absent and unregistered. GREEN: all four contract tests pass for all six resources.
+RED (before the phone fix): all three original tests failed because the base JSONs were absent and unregistered. A follow-up iPad contract test then failed in two places because the four `ipad` / `ipad_narrow` variants were absent and unregistered. The independent semantic oracle subsequently reproduced the four punctuation losses described below. GREEN after PR #164: all six contract tests pass for all six resources.
 
 ## Verification
 
 ### Linux (done)
 
-- `python3 scripts/test_number_symbol_layout_ios.py -v` → 4 passed. The original phone RED was 3 failed, and the follow-up iPad RED was 2 failed.
+- `python3 scripts/test_number_symbol_layout_ios.py -v` → 6 passed on merged PR #164. The original phone RED was 3 failed, the follow-up missing-iPad-resource RED was 2 failed, and the later semantic RED reproduced the four punctuation losses.
 - Full JSON/XML parity sweep over all converter-produced layouts: 43 checked, 0 mismatches, 0 missing.
 - The iPad builder generated 22 full-size layouts including both number-symbol variants. The trimmer generated 40 narrow layouts including both number-symbol variants without changing existing committed layouts.
 - All six new JSONs validate as JSON. Each file is referenced four times in the Xcode project (build file, file reference, group child, and LimeKeyboard resources).
@@ -87,7 +89,7 @@ An independent post-generation semantic audit found that the generator-relative 
 - Narrow iPad Shift retains `…` and loses both `_` and `+`.
 - Normal narrow iPad drops `=` (code `61`).
 
-The corrective branch now adds source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. The focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. The correction still requires review/merge and Xcode/device verification before release.
+Follow-up PR #164 added source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. PR #164 merged as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`; the focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. Xcode/device verification and reporter-testable release delivery remain pending.
 
 1. Build the keyboard extension and confirm all six phone/iPad JSONs are copied into the bundle.
 2. On iPhone, select `limenumsym` and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm Shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
@@ -112,6 +114,6 @@ A community iPhone user reported that selecting the `LIME+數字符號鍵盤` (`
 - [x] GREEN: focused test + parity/inclusion validations pass on Linux.
 - [x] Xcode Cloud build/test/archive for PR head `f7730083ae355eb3f5aedb78c5b307d06486ba58`.
 - [x] Reproduce and correct the merged iPad punctuation semantic regression with source-independent RED assertions on a focused follow-up branch.
-- [ ] Review and merge the corrective follow-up PR.
+- [x] Review and merge corrective follow-up PR #164 as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`.
 - [ ] Simulator/device verification of phone, full iPad, and narrow iPad normal/Shift layouts.
-- [ ] Release + maintainer close-out. Remove `fix#160 iOS` from `docs/BACKLOG.md` once shipped.
+- [ ] TestFlight/App Store release containing PR #162 and PR #164, followed by reporter confirmation. Remove `fix#160 iOS` from `docs/BACKLOG.md` once shipped and confirmed.
