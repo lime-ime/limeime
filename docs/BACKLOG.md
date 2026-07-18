@@ -5,6 +5,7 @@ Public backlog for confirmed unresolved fixes and product work. Issue-specific i
 Last reviewed: 2026-07-18
 
 ## Pending fixes
+- fix#161 Android/iOS: make `關聯字管理` use an escaped `pword` prefix query (`萊` → `pword LIKE '萊%'`) with filtered count/pagination parity; do not search `cword` or combined display text. Align iOS runtime lookup to Android so item-0 raw-code commits request related candidates and multi-character committed words query both the full word and final-character fallback. Do not add Han-only validation; automatic-learning record-type filters remain unchanged. See `docs/#161_ISSUE.md`.
 - fix#160 iOS: the shared-catalog keyboard option `limenumsym` (`LIME+數字符號鍵盤`) renders the ordinary number-row QWERTY layout instead of its dedicated number/symbol layout. Android is reporter-confirmed working. PR #162 merged the missing phone/iPad resources as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`; follow-up PR #164 merged the source-independent semantic oracle and corrected full/narrow-iPad punctuation preservation as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Remaining work is phone/full-iPad/narrow-iPad device verification, a newer TestFlight/App Store build containing both merges, and reporter confirmation. Android is not in scope. See `docs/#160_ISSUE.md`.
 
 ## Product work

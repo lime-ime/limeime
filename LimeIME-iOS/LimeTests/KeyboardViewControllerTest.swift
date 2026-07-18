@@ -1081,6 +1081,27 @@ final class KeyboardViewControllerTest: XCTestCase {
                           "case (b): hasCandidatesShown must be restored before clearSuggestions()")
     }
 
+    func testRawCodeCommitRequestsRelatedPhrasesLikeAndroid() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        let selectionPattern = #"func pickCandidateManually[\s\S]*?\n    \}"#
+        let selectionRegex = try NSRegularExpression(pattern: selectionPattern)
+        let sourceRange = NSRange(source.startIndex..<source.endIndex, in: source)
+        let selectionMatch = try XCTUnwrap(selectionRegex.firstMatch(in: source, range: sourceRange))
+        let selection = String(source[Range(selectionMatch.range, in: source)!])
+        XCTAssertFalse(selection.contains("wasComposingCodeCommit"))
+        XCTAssertTrue(selection.contains("commitTyped()"))
+        XCTAssertTrue(selection.contains("updateRelatedPhrase()"))
+
+        let relatedPattern = #"func updateRelatedPhrase[\s\S]*?\n    \}"#
+        let relatedRegex = try NSRegularExpression(pattern: relatedPattern)
+        let relatedMatch = try XCTUnwrap(relatedRegex.firstMatch(in: source, range: sourceRange))
+        let related = String(source[Range(relatedMatch.range, in: source)!])
+        XCTAssertFalse(related.contains("!committed.isComposingCodeRecord"))
+        XCTAssertTrue(related.contains("ss.getRelatedByWord(word, getAllRecords: true)"))
+    }
+
     // docs/AUTO_CHINESE_PUNC.md §10.3 (T-iOS-3): clearSuggestions() is the single
     // strip builder. It must carry the full gate
     // (autoChineseSymbol && !mEnglishOnly && hasCandidatesShown && !hasChineseSymbolCandidatesShown)

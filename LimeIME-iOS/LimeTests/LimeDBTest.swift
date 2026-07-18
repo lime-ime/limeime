@@ -1354,6 +1354,51 @@ final class LimeDBTest: XCTestCase {
         XCTAssertNotNil(list)
     }
 
+    func testRelatedManagementSearchUsesParentPrefixOnly() throws {
+        let db = try makeLimeDB()
+        let parent = "台中𠀀𠀁𠀂"
+        let child = "市"
+        let id = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": parent, "cword": child, "score": 0, "basescore": 0
+        ])
+        XCTAssertGreaterThan(id, 0)
+
+        defer { _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"]) }
+
+        XCTAssertTrue(db.searchRelatedForManagement("台中𠀀", 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement(child, 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement(parent + child, 100, 0).contains { $0.id == id })
+        XCTAssertFalse(db.searchRelatedForManagement("不存在𠀃", 100, 0).contains { $0.id == id })
+        XCTAssertEqual(db.countRelatedForManagement("台中𠀀"), 1)
+    }
+
+    func testRuntimeRelatedLookupMatchesFullCommittedWordThenLastCharacter() throws {
+        let db = try makeLimeDB()
+        let fullID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "台中", "cword": "市", "score": 1, "basescore": 0
+        ])
+        let fallbackID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "中", "cword": "心", "score": 99, "basescore": 0
+        ])
+        let unrelatedID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": "台", "cword": "灣", "score": 99, "basescore": 0
+        ])
+        defer {
+            for id in [fullID, fallbackID, unrelatedID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let results = try db.getRelatedMappings(parentWord: "台中", limit: 10)
+        let words = results.map(\.word)
+
+        XCTAssertTrue(words.contains("市"), "full committed-word relation must be returned")
+        XCTAssertTrue(words.contains("心"), "last-character fallback must match Android")
+        XCTAssertFalse(words.contains("灣"), "first-character records must not be queried")
+        XCTAssertLessThan(words.firstIndex(of: "市")!, words.firstIndex(of: "心")!,
+                          "full-word relation must sort before fallback regardless of score")
+    }
+
     func testLimeDBLoadRelatedEdgeCases() throws {
         let db = try makeLimeDB()
         XCTAssertNotNil(db.getRelated(nil, 10, 0))

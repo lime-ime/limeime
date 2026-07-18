@@ -1330,6 +1330,14 @@ final class DBServer {
         datasource?.getRelated(pword, maximum, offset) ?? []
     }
 
+    func searchRelatedForManagement(_ query: String?, _ maximum: Int, _ offset: Int) -> [Related] {
+        datasource?.searchRelatedForManagement(query, maximum, offset) ?? []
+    }
+
+    func countRelatedForManagement(_ query: String?) -> Int {
+        datasource?.countRelatedForManagement(query) ?? 0
+    }
+
     // MARK: - Validation Proxy
 
     func isValidTableName(_ name: String?) -> Bool {

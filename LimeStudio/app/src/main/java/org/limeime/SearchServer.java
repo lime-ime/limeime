@@ -2798,6 +2798,16 @@ List<Mapping> scorelistSnapshot = null;
         return dbadapter.getRelated(pword, maximum, offset);
     }
 
+    public List<Related> searchRelatedForManagement(String query, int maximum, int offset) {
+        if (dbadapter == null) return new ArrayList<>();
+        return dbadapter.searchRelatedForManagement(query, maximum, offset);
+    }
+
+    public int countRelatedForManagement(String query) {
+        if (dbadapter == null) return 0;
+        return dbadapter.countRelatedForManagement(query);
+    }
+
     /**
      * Gets a list of IM information records for a specific IM code.
      * 

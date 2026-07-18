@@ -3068,16 +3068,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             }
             return
         }
-        let wasComposingCodeCommit = candidate.isComposingCodeRecord
         selectedCandidate = candidate
         commitTyped()
-        if wasComposingCodeCommit {
-            // Mixed-mode raw-English commit: no related phrases; clear the bar
-            // (updateRelatedPhrase bails for composing-code records without clearing).
-            clearSuggestions()
-        } else {
-            updateRelatedPhrase()
-        }
+        updateRelatedPhrase()
     }
 
     private func appendPickedCandidateToEmojiSearch(_ candidate: Mapping) -> Bool {
@@ -3201,7 +3194,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
               !committed.word.isEmpty,
               !committed.isEmojiRecord,
               !committed.isChinesePunctuationRecord,
-              !committed.isComposingCodeRecord,   // mixed-mode raw-code commit has no related phrases
               let ss = searchServer else { return }
 
         // Clear stale composing candidates immediately so the bar doesn't linger.

@@ -850,16 +850,26 @@ final class LimeDB {
     /// Returns related Mapping objects (for SearchServer). Throws version.
     func getRelatedMappings(parentWord: String, limit: Int = 10) throws -> [Mapping] {
         try dbQueue.read { db in
+            let hasMultipleCharacters = parentWord.count > 1
+            let predicate = hasMultipleCharacters ? "(pword = ? OR pword = ?)" : "pword = ?"
             let sql = """
-                SELECT cword, (COALESCE(basescore,0) + COALESCE(score,0)) AS total
-                FROM related WHERE pword = ?
-                ORDER BY total DESC LIMIT ?
+                SELECT pword, cword, (COALESCE(basescore,0) + COALESCE(score,0)) AS total,
+                       length(pword) AS parent_length
+                FROM related WHERE \(predicate) AND cword IS NOT NULL
+                ORDER BY parent_length DESC, total DESC LIMIT ?
             """
-            return try Row.fetchAll(db, sql: sql, arguments: [parentWord, limit]).map { row in
+            let rows: [Row]
+            if hasMultipleCharacters {
+                rows = try Row.fetchAll(db, sql: sql,
+                                        arguments: [parentWord, String(parentWord.suffix(1)), limit])
+            } else {
+                rows = try Row.fetchAll(db, sql: sql, arguments: [parentWord, limit])
+            }
+            return rows.map { row in
                 Mapping(id: 0, code: "", word: (row.optString("cword") ?? ""),
                         score: (row.optInt("total") ?? 0), baseScore: 0,
                         recordType: Mapping.RecordType.relatedPhrase,
-                        pword: parentWord)   // spec §14: populate pword
+                        pword: (row.optString("pword") ?? parentWord))
             }
         }
     }
@@ -1524,6 +1534,40 @@ final class LimeDB {
                         baseScore:  (row.optInt("basescore") ?? 0))
             }
         }) ?? []
+    }
+
+    func searchRelatedForManagement(_ query: String?, _ maximum: Int, _ offset: Int) -> [Related] {
+        guard !checkDBConnection() else { return [] }
+        let filter = relatedManagementFilter(query)
+        let limit = maximum > 0 ? " LIMIT \(maximum) OFFSET \(offset)" : ""
+        let sql = "SELECT _id, pword, cword, basescore, score FROM related WHERE \(filter.whereClause) ORDER BY score DESC, basescore DESC\(limit)"
+        return (try? dbQueue.read { db in
+            try Row.fetchAll(db, sql: sql, arguments: StatementArguments(filter.args)).map { row in
+                Related(id:         (row.optInt64("_id") ?? 0),
+                        parentWord: (row.optString("pword") ?? ""),
+                        childWord:  (row.optString("cword") ?? ""),
+                        score:      (row.optInt("score") ?? 0),
+                        baseScore:  (row.optInt("basescore") ?? 0))
+            }
+        }) ?? []
+    }
+
+    func countRelatedForManagement(_ query: String?) -> Int {
+        let filter = relatedManagementFilter(query)
+        return countRecords(LIME.DB_TABLE_RELATED, filter.whereClause,
+                            filter.args.isEmpty ? nil : filter.args)
+    }
+
+    private func relatedManagementFilter(_ query: String?) -> (whereClause: String, args: [String]) {
+        let base = "ifnull(cword, '') <> ''"
+        guard let trimmed = query?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else { return (base, []) }
+        let escaped = trimmed
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
+        let whereClause = base + " AND pword LIKE ? ESCAPE '\\'"
+        return (whereClause, [escaped + "%"])
     }
 
     // MARK: - Backup / Restore
