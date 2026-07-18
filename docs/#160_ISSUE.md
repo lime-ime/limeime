@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/160
 - Classification: bug, usability, cross-platform parity
-- State: PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and Xcode Cloud run 16 succeeded for the PR head. The community issue was auto-closed by the merge, but release readiness remains blocked by the iPad punctuation semantic regression described below. Pending a corrective PR, device verification, and release.
+- State: PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and Xcode Cloud run 16 succeeded for the PR head. `jrywu` closed the community issue as completed, but release readiness remains blocked by the iPad punctuation semantic regression described below. A focused corrective branch is green locally and remains pending review/merge, device verification, and release.
 - Platform: iOS only. Android is **reporter-confirmed working** and is **not** changed by this fix.
 - Public acknowledgement: reporter is a community iPhone user (see privacy-safe summary below). No private account details are recorded in this repo.
 
@@ -87,7 +87,7 @@ An independent post-generation semantic audit found that the generator-relative 
 - Narrow iPad Shift retains `…` and loses both `_` and `+`.
 - Normal narrow iPad drops `=` (code `61`).
 
-Before release, add source-independent semantic assertions for these required punctuation keys, correct the iPad generator/trimmer behavior, regenerate the affected layouts, and rerun the focused checks plus Xcode/device verification.
+The corrective branch now adds source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. The focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. The correction still requires review/merge and Xcode/device verification before release.
 
 1. Build the keyboard extension and confirm all six phone/iPad JSONs are copied into the bundle.
 2. On iPhone, select `limenumsym` and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm Shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
@@ -111,6 +111,7 @@ A community iPhone user reported that selecting the `LIME+數字符號鍵盤` (`
 - [x] Converter fixed, phone/iPad/iPad-narrow JSONs generated, and Xcode project updated.
 - [x] GREEN: focused test + parity/inclusion validations pass on Linux.
 - [x] Xcode Cloud build/test/archive for PR head `f7730083ae355eb3f5aedb78c5b307d06486ba58`.
-- [ ] Correct the merged iPad punctuation semantic regression with source-independent RED assertions and a focused follow-up PR.
+- [x] Reproduce and correct the merged iPad punctuation semantic regression with source-independent RED assertions on a focused follow-up branch.
+- [ ] Review and merge the corrective follow-up PR.
 - [ ] Simulator/device verification of phone, full iPad, and narrow iPad normal/Shift layouts.
 - [ ] Release + maintainer close-out. Remove `fix#160 iOS` from `docs/BACKLOG.md` once shipped.

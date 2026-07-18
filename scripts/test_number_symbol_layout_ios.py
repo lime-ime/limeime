@@ -50,6 +50,61 @@ def load_module(name, path):
     return module
 
 
+# --- Semantic layout contract (independent of the generators) -------------
+#
+# The generator-parity tests above only prove the committed JSON equals what
+# the current scripts emit; they cannot notice when the scripts themselves
+# drop a key. These assertions instead compare each layout against the STABLE
+# Android XML contract for `limenumsym`, so a lossy generator fails here.
+#
+# Punctuation the phone contract guarantees, taken straight from the bottom
+# rows of res/xml/lime_number_symbol{,_shift}.xml:
+#     normal (lime_number_symbol.xml):        codes 45 ('-') and 61 ('=')
+#     shift  (lime_number_symbol_shift.xml):  codes 95 ('_') and 43 ('+')
+# Every iOS-derived variant (phone JSON, full iPad, narrow iPad) must keep
+# these characters typeable — as a primary key code or as a dual-slide
+# long-press output — for both the normal and Shift layers. Losing any of
+# them is the #160 follow-up regression.
+REQUIRED_PUNCT = {
+    "normal": {45: "-", 61: "="},
+    "shift": {95: "_", 43: "+"},
+}
+
+# layer -> (phone id, full iPad id, narrow iPad id)
+LAYER_VARIANTS = {
+    "normal": (
+        "lime_number_symbol",
+        "lime_number_symbol_ipad",
+        "lime_number_symbol_ipad_narrow",
+    ),
+    "shift": (
+        "lime_number_symbol_shift",
+        "lime_number_symbol_ipad_shift",
+        "lime_number_symbol_ipad_narrow_shift",
+    ),
+}
+
+
+def reachable_codes(layout):
+    """Codes a user can actually type in a layout: every primary key `code`
+    plus every non-zero `longPressCode` (the slide/long-press output of a
+    dual-label key such as '_\\n-')."""
+    codes = set()
+    for row in layout.get("rows", []):
+        for key in row.get("keys", []):
+            codes.add(key.get("code"))
+            lp = key.get("longPressCode", 0)
+            if lp:
+                codes.add(lp)
+    return codes
+
+
+def xml_primary_codes(xml_path):
+    """All limehd:codes values declared in an Android keyboard XML."""
+    text = xml_path.read_text(encoding="utf-8")
+    return {int(m) for m in re.findall(r'limehd:codes="(-?\d+)"', text)}
+
+
 class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
     def test_ios_layout_json_files_exist(self):
         for layout_id in PHONE_LAYOUT_IDS:
@@ -106,6 +161,51 @@ class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
             )
             actual_narrow = json.loads(narrow_path.read_text(encoding="utf-8-sig"))
             self.assertEqual(actual_narrow, expected_narrow, f"{narrow_id}.json is stale")
+
+    def test_xml_contract_declares_required_punctuation(self):
+        # Guard the contract itself: prove the required codes really are in
+        # the stable phone XML, so the assertions below rest on the Android
+        # source and not on a hand-picked constant.
+        for layer, required in REQUIRED_PUNCT.items():
+            xml_path = ANDROID_XML_DIR / f"{LAYER_VARIANTS[layer][0]}.xml"
+            declared = xml_primary_codes(xml_path)
+            for code, label in required.items():
+                self.assertIn(
+                    code,
+                    declared,
+                    f"{xml_path.name} no longer declares '{label}' (code {code}); "
+                    f"the #160 punctuation contract has drifted.",
+                )
+
+    def test_required_punctuation_survives_in_all_variants(self):
+        # The heart of the #160 follow-up regression test: for the normal and
+        # Shift layers, every required punctuation code must stay typeable in
+        # the phone layout AND in both iPad variants derived from it.
+        for layer, required in REQUIRED_PUNCT.items():
+            for layout_id in LAYER_VARIANTS[layer]:
+                json_path = IOS_LAYOUTS_DIR / f"{layout_id}.json"
+                self.assertTrue(json_path.exists(), f"missing layout JSON: {json_path}")
+                layout = json.loads(json_path.read_text(encoding="utf-8-sig"))
+                reachable = reachable_codes(layout)
+                for code, label in required.items():
+                    with self.subTest(layout=layout_id, char=label, code=code):
+                        self.assertIn(
+                            code,
+                            reachable,
+                            f"{layout_id}.json ({layer}) dropped '{label}' (code {code}) "
+                            f"— it is neither a primary key nor a long-press output. "
+                            f"The phone/XML contract guarantees it (#160 follow-up).",
+                        )
+                        matching_keys = [
+                            key
+                            for row in layout.get("rows", [])
+                            for key in row.get("keys", [])
+                            if code in (key.get("code"), key.get("longPressCode"))
+                        ]
+                        self.assertTrue(
+                            any(label in key.get("label", "") for key in matching_keys),
+                            f"{layout_id}.json exposes code {code} but does not label it as '{label}'.",
+                        )
 
     def test_layouts_registered_in_xcodeproj(self):
         content = PBXPROJ.read_text(encoding="utf-8")
