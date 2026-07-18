@@ -4,10 +4,10 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/139
 - Classification: `bug` + `Usability`
-- State: reopened on 2026-07-18 after the private reporter clarified that a complete removal and reinstall did not make every size combination work. Only five specific keyboard-size/font-size pairs reached the true bottom, while all other tested combinations still failed. The earlier closure comment is https://github.com/lime-ime/limeime/issues/139#issuecomment-5010731741 and is superseded by the reopening note at https://github.com/lime-ime/limeime/issues/139#issuecomment-5010911459. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and commit `9dbe1a86a96fe676ac7a79e75f232673a59d3b8c` fixes the measured in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 was submitted for App Store review. The remaining preference-dependent private path is unresolved.
+- State: closed by maintainer `jrywu` on 2026-07-18 without an additional public comment. The last retained project-account note is the reopening clarification at https://github.com/lime-ime/limeime/issues/139#issuecomment-5010911459, which records that only five specific keyboard-size/font-size pairs reached the true bottom after reinstall while other tested combinations still failed. Commit `7c067c64` fixes the LINE rotation path (shipped in 6.1.31), and commit `9dbe1a86a96fe676ac7a79e75f232673a59d3b8c` fixes the measured in-place switch-in path. Xcode Cloud run 13 passed its required tests and archive, and iOS 6.1.32 build 13 was submitted for App Store review. The preference-dependent private observation was not demonstrated resolved before maintainer closure; preserve it as historical diagnostic evidence rather than an active public backlog/watch item.
 - Platform: iOS only. Android does not use the iOS custom-keyboard extension frame lifecycle.
 - Source: the issue began with private email/TestFlight evidence and now also has a maintainer reproduction in LINE. Do not expose the private reporter's identity, company app details, or private videos.
-- Tracked scope: host content or an input field can remain partly covered or unreachable for some keyboard-size/font-size combinations. Live keyboard geometry transitions are one verified subcase, but the clean-reinstall clarification shows that a separate preference-dependent locked-portrait path remains active.
+- Recorded scope: host content or an input field was reported partly covered or unreachable for some keyboard-size/font-size combinations. Live keyboard geometry transitions were verified and fixed subcases. The preference-dependent locked-portrait observation remains documented for recurrence analysis, but maintainer closure ends active #139 tracking unless new evidence causes a reopen.
 
 ## Current conclusion
 
@@ -21,7 +21,7 @@ Two independent host-app observations now share the same failure pattern:
 4. The private reporter's 6.1.31 retest confirms a partial improvement: landscape can now scroll to the true bottom, but locked portrait still cannot.
 5. On 6.1.32, the reporter completely removed and reinstalled LIME. Five specific keyboard-size/font-size combinations reached the bottom, and older TestFlight builds also worked for those combinations. The reporter then clarified that all other tested combinations still failed.
 
-These observations belong in one issue for now because both indicate that the host's usable area can become stale relative to LIME's visible top edge. They do **not** yet prove one identical code-level root cause. Split the LINE rotation case into a separate issue only if instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while LINE receives a stale or incorrect frame from LIME/UIKit.
+These observations were kept in one issue because both indicated that the host's usable area could become stale relative to LIME's visible top edge. They did **not** prove one identical code-level root cause. If equivalent evidence recurs, create a separate focused issue only when instrumentation shows that the private form receives a correct keyboard frame but mishandles its scroll inset while a public host receives a stale or incorrect frame from LIME/UIKit.
 
 ## Evidence
 
@@ -47,7 +47,7 @@ The private reporter updated to LIME 6.1.31 and reported:
 - Locked portrait still cannot reach the true bottom.
 - This is a partial improvement, not resolution.
 
-The orientation-specific result supports keeping the rotation fix while continuing to investigate the remaining locked-portrait and in-place keyboard-switch paths. The next comparison should distinguish opening the field directly with LIME from switching to LIME while the field remains focused, then compare the host's final scroll range or bottom inset. Keep the host framework, app identity, reporter identity, and private evidence confidential.
+The orientation-specific result supported keeping the rotation fix while the locked-portrait and in-place keyboard-switch paths were investigated. If equivalent evidence recurs and #139 is reopened, distinguish opening the field directly with LIME from switching to LIME while the field remains focused, then compare the host's final scroll range or bottom inset. Keep the host framework, app identity, reporter identity, and private evidence confidential.
 
 ### Locked-portrait preference-dependent retest (2026-07-18)
 
@@ -63,7 +63,7 @@ The private reporter found one narrow combination that reaches the true bottom i
 
 This initial result was superseded by a same-day clean-reinstall retest. The reporter confirmed that the initial test used 6.1.32, then completely removed LIME and reinstalled 6.1.32. After reinstall, the true bottom was reachable with five specific combinations among a broader tested set: extra-large keyboard/small text, large keyboard/extra-large text, normal/normal, small/extra-small, and extra-small/large. The reporter also installed older TestFlight builds and observed the working behavior there.
 
-The clean-reinstall result cannot be attributed to the 6.1.32 code change because older TestFlight builds also worked for the five listed combinations. A later same-day clarification corrected the interpretation: those five combinations were the only ones that reached the true bottom, while all other tested combinations remained broken. The issue therefore remains unresolved and preference-dependent. The next investigation should compare a passing pair against the nearest failing pair while recording LIME's rendered height, UIKit's final keyboard frame, and the host scroll inset. Do not implement a hardcoded size-pair workaround.
+The clean-reinstall result cannot be attributed to the 6.1.32 code change because older TestFlight builds also worked for the five listed combinations. A later same-day clarification corrected the interpretation: those five combinations were the only ones that reached the true bottom, while all other tested combinations remained broken. This preference-dependent observation was not demonstrated resolved before maintainer closure. If equivalent evidence recurs and the issue is reopened, compare a passing pair against the nearest failing pair while recording LIME's rendered height, UIKit's final keyboard frame, and the host scroll inset. Do not implement a hardcoded size-pair workaround.
 
 ### Clean-reinstall clarification and negative retest (2026-07-18)
 
@@ -75,7 +75,7 @@ After reinstall, the following pairs reached the true bottom:
 - small keyboard with extra-small text
 - extra-small keyboard with large text
 
-The reporter explicitly clarified that other combinations did not reach the true bottom. This supersedes the earlier interpretation that all tested combinations worked after reinstall. The reporter was comfortable with closing because they were the only known reporter and will continue testing, but the preference-dependent failure observed so far remains a plausible bug. The project account reopened the issue for isolation in https://github.com/lime-ime/limeime/issues/139#issuecomment-5010911459.
+The reporter explicitly clarified that other combinations did not reach the true bottom. This supersedes the earlier interpretation that all tested combinations worked after reinstall. The reporter was comfortable with closing because they were the only known reporter and will continue testing, but the preference-dependent failure remained plausible. The project account reopened the issue for isolation in https://github.com/lime-ime/limeime/issues/139#issuecomment-5010911459, after which maintainer `jrywu` closed it without an additional public comment at 2026-07-18T10:46:18Z.
 
 ### Maintainer LINE rotation reproduction
 
@@ -141,7 +141,7 @@ A minimal iOS app using the same class of cross-platform UI framework was built 
 - Apple keyboard focused → in-place switch to LIME (the previously-failing path), and
 - fresh open with LIME active.
 
-This representative repro passed on the fixed build, but the private reporter's 2026-07-18 size-pair retest supersedes the earlier resolution prediction: most tested keyboard-size/font-size pairs still fail in the private host app. The host-side guidance below remains relevant, but the next step is to compare a passing pair with a nearby failing pair before attributing the remaining behavior to either LIME or the host app.
+This representative repro passed on the fixed build, but the private reporter's 2026-07-18 size-pair retest supersedes the earlier resolution prediction: most tested keyboard-size/font-size pairs still failed in the private host app. The host-side guidance below remains relevant. If equivalent evidence recurs and #139 is reopened, compare a passing pair with a nearby failing pair before attributing the behavior to either LIME or the host app.
 
 Keep the exact framework, private app details, and internal reproduction project details out of public documentation.
 
@@ -156,19 +156,19 @@ Actionable host-side fixes to relay to the reporter (public-safe, no private det
 1. **App-level workaround (5 lines):** observe `currentInputModeDidChangeNotification`; when it fires with a field focused, resign and re-acquire first responder on that field. The new input session posts a fresh, correct `WillShow`, which the framework's existing keyboard-scroll handling consumes. Minor caret flicker.
 2. **Proper host/framework fix:** on `currentInputModeDidChangeNotification`, after ~0.5 s, force a layout and re-derive the keyboard frame from `view.keyboardLayoutGuide.layoutFrame` instead of waiting for a `WillShow` that never comes.
 
-Ask the reporter to confirm the discriminator first: does locked portrait fail when the field is opened **directly with LIME already active** (should be fine — fresh presentations are correct), or only after **switching to LIME while the field is focused** (the measured gap)?
+If the reporter supplies equivalent evidence after closure, first confirm the discriminator: does locked portrait fail when the field is opened **directly with LIME already active** (fresh presentations were correct in the measured path), or only after **switching to LIME while the field is focused** (the measured gap)?
 
 ## Historical scope no longer active
 
-The original email also discussed numeric-field routing and keyboard-size behavior for Array10. Those are not the active #139 defect:
+The original email also discussed numeric-field routing and keyboard-size behavior for Array10. Those were not part of the final tracked #139 defect:
 
 - A June 29 simulator investigation did not reproduce the reported numeric-field routing symptom: the tested fields either kept LIME active or were replaced by the iOS system keyboard before LIME could select an internal layout. This limited simulator result does not establish universal iOS behavior; reopen the numeric-routing scope if new real-device evidence appears.
 - `keyboard_size` must remain authoritative for visual row sizing.
 - Do not shrink or cap tall layouts to hide host-content coverage.
 
-The tracked defect includes dynamic keyboard-frame publication and host adjustment after live geometry changes. The LINE rotation and switch-in subcases are fixed, but the private locked-portrait preference-dependent path remains open after the clean-reinstall clarification.
+The tracked defect included dynamic keyboard-frame publication and host adjustment after live geometry changes. The LINE rotation and switch-in subcases are fixed. The private locked-portrait preference-dependent observation remains documented but is no longer an active #139 issue/backlog item after maintainer closure.
 
-## Previous fix and why the issue remained unresolved
+## Previous fix and why investigation continued
 
 Commit `f7088f2853a692dd930bba02c52bd6d99e3a2b8a` (`#139 fix real iOS keyboard height reporting`) shipped in iOS 6.1.28.
 
@@ -298,7 +298,7 @@ Cosmetic trade-off: the keyboard keeps the previous orientation's height for ~0.
 
 **Historical LINE in-place keyboard-switch retest: FAILED on 6.1.31 build 11** — switching from Apple's shorter keyboard directly to the taller LIME keyboard left LINE's composer at the old height and LIME covered the entire field until dismiss/reopen. This kept #139 unresolved after the rotation-path pass until the later attach-overshoot fix and verification recorded above.
 
-At that stage, the reporter was told that LIME still had a concrete adjustment path and that the deferred post-rotation fix was planned for the next 6.1.31 TestFlight build. Later investigation produced the attach-overshoot fix for the switch-in path. Separately, the clean-reinstall retest still reproduced the private locked-portrait failure for every tested size pair except the five listed above. Older TestFlight builds also worked for those five pairs, so this does not establish that the fix resolved the private path. Compare a passing pair against a nearby failing pair now, including fresh keyboard presentation versus in-place keyboard switching, and collect privacy-safe host frame/inset diagnostics before attributing the behavior to LIME or the host framework alone.
+At that stage, the reporter was told that LIME still had a concrete adjustment path and that the deferred post-rotation fix was planned for the next 6.1.31 TestFlight build. Later investigation produced the attach-overshoot fix for the switch-in path. Separately, the clean-reinstall retest still reproduced the private locked-portrait failure for every tested size pair except the five listed above. Older TestFlight builds also worked for those five pairs, so this does not establish that the fix resolved the private path. If equivalent evidence recurs and #139 is reopened, compare a passing pair against a nearby failing pair, including fresh keyboard presentation versus in-place keyboard switching, and collect privacy-safe host frame/inset diagnostics before attributing the behavior to LIME or the host framework alone.
 
 - The DEBUG probe (`GeoProbe`, `geoDump`, `GeometryProbeHostVC` + 資料庫-tab viewer) was **stripped before commit** — it never entered git history. Restoration snippets: `.claude/txt/139-geometry-probe-restoration.md`. Re-add them if the private reporter's no-rotation case reproduces on the fixed build.
 
@@ -424,11 +424,11 @@ Not affected by this iOS lifecycle path. Android uses its own IME window/insets 
 - Do not publish the reporter identity, company app, email address, or private recordings.
 - The LINE reproduction may be documented publicly without private conversation content.
 - The framework question was answered privately; keep the exact framework private in public channels per the reporter's preference.
-- Maintainer-side verification passed for LINE rotation, LINE switch-in, and a minimal cross-platform-form bottom-reachability repro without dismissing/reopening LIME. The private reporter's 2026-07-18 clarification says only five specific size pairs work after reinstall and all other tested combinations still fail. Do not claim 6.1.32 fixed the private path. Keep the issue open while comparing passing and failing preference pairs.
+- Maintainer-side verification passed for LINE rotation, LINE switch-in, and a minimal cross-platform-form bottom-reachability repro without dismissing/reopening LIME. The private reporter's 2026-07-18 clarification says only five specific size pairs worked after reinstall and all other tested combinations still failed. Do not claim 6.1.32 fixed the private path. After maintainer closure, compare passing and failing preference pairs only if equivalent evidence recurs and #139 is reopened or a new focused issue is created.
 
 ### Historical draft reply to the private reporter
 
-Do not send this release-oriented draft while the private locked-portrait path remains unresolved. Reuse only relevant technical details when replying to the private reporter. The text is public-safe, contains no reporter/app identity, and may be translated as needed.
+Do not send this release-oriented draft after maintainer closure unless new private evidence requires a reply. Reuse only relevant technical details if the reporter follows up. The text is public-safe, contains no reporter/app identity, and may be translated as needed.
 
 > Thank you again for the detailed retest — the landscape-vs-locked-portrait result was the clue that cracked the remaining case.
 >

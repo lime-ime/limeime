@@ -5,7 +5,6 @@ Public backlog for confirmed unresolved fixes and product work. Issue-specific i
 Last reviewed: 2026-07-18
 
 ## Pending fixes
-- fix#139 iOS: locked-portrait host content remains unreachable for some keyboard-size/font-size combinations even after a complete removal and reinstall. The reporter clarified that only five specific pairs reach the true bottom and all other tested combinations still fail. The LINE rotation and in-place switch-in subcases are fixed, but the remaining preference-dependent path needs passing-versus-failing frame/inset instrumentation. See `docs/#139_ISSUE.md`.
 - fix#160 iOS: the shared-catalog keyboard option `limenumsym` (`LIME+數字符號鍵盤`) renders the ordinary number-row QWERTY layout instead of its dedicated number/symbol layout. Android is reporter-confirmed working. PR #162 merged the missing phone/iPad resources as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`; follow-up PR #164 merged the source-independent semantic oracle and corrected full/narrow-iPad punctuation preservation as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Remaining work is phone/full-iPad/narrow-iPad device verification, a newer TestFlight/App Store build containing both merges, and reporter confirmation. Android is not in scope. See `docs/#160_ISSUE.md`.
 
 ## Product work
