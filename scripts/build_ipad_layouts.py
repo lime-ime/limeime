@@ -1063,6 +1063,9 @@ JOBS = [
     # lime_hsu
     ("lime_hsu",              "lime_hsu_ipad"),
     ("lime_hsu_shift",        "lime_hsu_ipad_shift"),
+    # lime_number_symbol
+    ("lime_number_symbol",       "lime_number_symbol_ipad"),
+    ("lime_number_symbol_shift", "lime_number_symbol_ipad_shift"),
     # lime_wb
     ("lime_wb",               "lime_wb_ipad"),
     ("lime_wb_shift",         "lime_wb_ipad_shift"),

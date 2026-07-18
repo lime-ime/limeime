@@ -7,6 +7,7 @@ Last reviewed: 2026-07-18
 ## Pending fixes
 
 - fix#139 iOS: resolve the remaining locked-portrait host-content reachability path after the private reporter found that only `keyboard_size = large` plus font size `extra large` reaches the true bottom, while changing either preference makes it unreachable again. Reproduce the passing and failing preference combinations, compare rendered keyboard geometry with UIKit's published frame/layout guide and the host scroll inset, and preserve reporter/app/video privacy. Android is not affected by this iOS keyboard-extension lifecycle path. See `docs/#139_ISSUE.md`.
+- fix#160 iOS: the shared-catalog keyboard option `limenumsym` (`LIME+數字符號鍵盤`) renders the ordinary number-row QWERTY layout instead of its dedicated number/symbol layout. Android is reporter-confirmed working. The shared `lime.db` correctly maps `limenumsym` → `imkb=lime_number_symbol`, `imshiftkb=lime_number_symbol_shift`. Root cause: `scripts/convert_keyboard_layouts.py` skipped both Android XML sources after misidentifying them as Dayi IM layouts, so iOS shipped no `lime_number_symbol{,_shift}.json` and `LayoutLoader.load` fell back to QWERTY. The converter, generated JSONs, `project.pbxproj` registration, and Linux regression test are updated and green. Remaining work is the iOS/Xcode build, simulator/device verification, and release. Android is not in scope. See `docs/#160_ISSUE.md`.
 
 ## Product work
 

@@ -72,8 +72,12 @@ SKIP_FILES = {
     "file_paths.xml", "method.xml", "preference.xml",
     "symbols1.xml", "symbols2.xml", "symbols3.xml",
     # These are hand-authored from symbols1/2/3.xml (3-page symbol keyboard).
-    # The lime_number_symbol*.xml files are Dayi IM layouts — NOT the symbol keyboard.
-    "lime_number_symbol.xml", "lime_number_symbol_shift.xml",
+    # NOTE (#160): lime_number_symbol{,_shift}.xml are the QWERTY + number-row /
+    # symbol layouts backing the shared-catalog `limenumsym` keyboard
+    # (keyboard.imkb=lime_number_symbol, imshiftkb=lime_number_symbol_shift).
+    # They were previously (mis)skipped here as "Dayi IM layouts" — they are not —
+    # which left iOS with no JSON and forced a QWERTY fallback. They now convert
+    # like every other layout.
     # phone_number.json is hand-authored to match Android phone_number.xml exactly.
     "phone_number.xml",
 }
