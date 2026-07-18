@@ -274,6 +274,10 @@
 		FEA702000000000000000002 /* computer_simple.json in Resources */ = {isa = PBXBuildFile; fileRef = FEA702000000000000000001 /* computer_simple.json */; };
 		48D3E149812514FF5779A8CE /* lime_number_symbol.json in Resources */ = {isa = PBXBuildFile; fileRef = DF2BB3FFBD0AB51380624C1F /* lime_number_symbol.json */; };
 		3F14FA705E56138F0ACF6655 /* lime_number_symbol_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 4FF72AFFE45E95E9B003569A /* lime_number_symbol_shift.json */; };
+		9F10902638EF926539A390F1 /* lime_number_symbol_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 4580869129A9DA4CC278CB5F /* lime_number_symbol_ipad.json */; };
+		3A78C716F58EC5B16C2E43AA /* lime_number_symbol_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */; };
+		9D8121A845097DE9402F40EC /* lime_number_symbol_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */; };
+		678CB7B769F1DF9773A8257B /* lime_number_symbol_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -537,6 +541,10 @@
 		FFCF53A584004601BA9FBE7F /* lime_wb_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_wb_ipad.json; sourceTree = "<group>"; };
 		DF2BB3FFBD0AB51380624C1F /* lime_number_symbol.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol.json; sourceTree = "<group>"; };
 		4FF72AFFE45E95E9B003569A /* lime_number_symbol_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_shift.json; sourceTree = "<group>"; };
+		4580869129A9DA4CC278CB5F /* lime_number_symbol_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad.json; sourceTree = "<group>"; };
+		AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_shift.json; sourceTree = "<group>"; };
+		13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_narrow.json; sourceTree = "<group>"; };
+		B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_narrow_shift.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -789,6 +797,10 @@
 				C0A5FC3D6D44CBBA94E88C16 /* lime_number.json */,
 				DF2BB3FFBD0AB51380624C1F /* lime_number_symbol.json */,
 				4FF72AFFE45E95E9B003569A /* lime_number_symbol_shift.json */,
+				4580869129A9DA4CC278CB5F /* lime_number_symbol_ipad.json */,
+				AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */,
+				13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */,
+				B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */,
 				D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */,
 				6A321BAF09034686AC3E2A29 /* lime_number_ipad_shift.json */,
 				BC7C55BF2A2E802706106E50 /* lime_number_shift.json */,
@@ -1108,6 +1120,10 @@
 				D3739EC294D3485404012D3B /* lime_number.json in Resources */,
 				48D3E149812514FF5779A8CE /* lime_number_symbol.json in Resources */,
 				3F14FA705E56138F0ACF6655 /* lime_number_symbol_shift.json in Resources */,
+				9F10902638EF926539A390F1 /* lime_number_symbol_ipad.json in Resources */,
+				3A78C716F58EC5B16C2E43AA /* lime_number_symbol_ipad_shift.json in Resources */,
+				9D8121A845097DE9402F40EC /* lime_number_symbol_ipad_narrow.json in Resources */,
+				678CB7B769F1DF9773A8257B /* lime_number_symbol_ipad_narrow_shift.json in Resources */,
 				52A2BC2194D460DE8925686B /* lime_number_shift.json in Resources */,
 				3627870C41CBCF6BBC97C35C /* symbols1.json in Resources */,
 				F4B771FCE2D64699B5EF2728 /* symbols3.json in Resources */,

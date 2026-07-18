@@ -27,7 +27,7 @@ NARROW_WIDTH_BY_BASE = {
     "lime_hs": 7.5,
 }
 ROOT_HEAVY_BASES = {"lime_ez", "lime_hs"}
-ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_shift"}
+ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_number_symbol", "lime_shift"}
 
 IM_ROOTS = {
     "lime_phonetic": "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-",

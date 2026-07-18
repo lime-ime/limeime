@@ -50,7 +50,8 @@ A second, compounding gap: even a freshly converted JSON would not ship, because
 
 1. `scripts/convert_keyboard_layouts.py` — removed `lime_number_symbol.xml` and `lime_number_symbol_shift.xml` from `SKIP_FILES` and corrected the misidentifying comment. They now convert like every other layout, so future full regenerations keep them in sync with the Android XML.
 2. `LimeIME-iOS/LimeKeyboard/Layouts/lime_number_symbol.json` and `lime_number_symbol_shift.json` — generated from the Android XML via the converter, matching the repo's UTF-8-BOM + trailing-newline convention. Each layout has five rows and is structurally faithful to the source XML.
-3. `LimeIME-iOS/LimeIME.xcodeproj/project.pbxproj` — registered both JSONs in all four required sections (`PBXBuildFile`, `PBXFileReference`, the `Layouts` `PBXGroup` children, and the keyboard-extension `PBXResourcesBuildPhase`) so they are copied into the extension bundle, following the established `add_ipad_layouts_to_xcodeproj.py` pattern.
+3. `scripts/build_ipad_layouts.py` and `scripts/trim_ipad_layout.py` — added the number-symbol family to the full-size and narrow iPad generators. This produces normal and Shift variants for large iPads and the small/medium `ipad_narrow` size tier instead of relying on LayoutLoader's phone-layout fallback.
+4. `LimeIME-iOS/LimeIME.xcodeproj/project.pbxproj` — registered all six JSONs in all four required sections (`PBXBuildFile`, `PBXFileReference`, the `Layouts` `PBXGroup` children, and the keyboard-extension `PBXResourcesBuildPhase`) so they are copied into the extension bundle, following the established `add_ipad_layouts_to_xcodeproj.py` pattern.
 
 No production Swift change is needed. The existing `resolvedLayoutId → LayoutLoader.load` path already requests `lime_number_symbol`, but it lacked the resource. No Android files changed.
 
@@ -60,25 +61,29 @@ No production Swift change is needed. The existing `resolvedLayoutId → LayoutL
 
 - `test_ios_layout_json_files_exist` — both JSONs exist, parse, and carry the right `id` and non-empty rows.
 - `test_ios_layout_json_matches_android_xml` — parity: each committed JSON equals a fresh conversion of its Android XML source (via `convert_keyboard_layouts.py`), so drift is caught.
-- `test_layouts_registered_in_xcodeproj` — both files have a `PBXFileReference` and a Resources build-phase entry, i.e. they will actually be bundled.
+- `test_ipad_layout_variants_match_generators` — full-size and narrow iPad normal/Shift layouts exist and exactly match fresh output from the iPad generators.
+- `test_layouts_registered_in_xcodeproj` — all six phone/iPad JSONs have a `PBXFileReference` and membership in the LimeKeyboard target's Resources build phase, i.e. they will actually be bundled.
 
-RED (before fix): all three failed — JSONs absent and unregistered. GREEN (after fix): all three pass.
+RED (before the phone fix): all three original tests failed because the base JSONs were absent and unregistered. A follow-up iPad contract test then failed in two places because the four `ipad` / `ipad_narrow` variants were absent and unregistered. GREEN: all four contract tests pass for all six resources.
 
 ## Verification
 
 ### Linux (done)
 
-- `python3 scripts/test_number_symbol_layout_ios.py -v` → 3 passed (was 3 failed at RED).
+- `python3 scripts/test_number_symbol_layout_ios.py -v` → 4 passed. The original phone RED was 3 failed, and the follow-up iPad RED was 2 failed.
 - Full JSON/XML parity sweep over all converter-produced layouts: 43 checked, 0 mismatches, 0 missing.
-- Both new JSONs validate as JSON. The pbxproj brace/parenthesis balance is preserved, and each file is referenced four times (build file, file reference, group child, and resources).
+- The iPad builder generated 22 full-size layouts including both number-symbol variants. The trimmer generated 40 narrow layouts including both number-symbol variants without changing existing committed layouts.
+- All six new JSONs validate as JSON. Each file is referenced four times in the Xcode project (build file, file reference, group child, and LimeKeyboard resources).
 - Existing suite `scripts/test_build_emoji_db.py` → 6 passed (no regression). Android tree untouched.
 
 ### iOS / Xcode (residual — cannot run on Linux)
 
-1. Build the keyboard extension and confirm both JSONs are copied into the bundle.
-2. On simulator/device, select `limenumsym`, open the keyboard, and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
-3. Confirm the period and greater-than keys open their expected punctuation popups.
-4. Regression: confirm other keyboards (e.g. `limenum` → `lime_number`) still render correctly.
+1. Build the keyboard extension and confirm all six phone/iPad JSONs are copied into the bundle.
+2. On iPhone, select `limenumsym` and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm Shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
+3. On a large iPad, confirm resolution uses `lime_number_symbol_ipad` and `lime_number_symbol_ipad_shift`.
+4. On a small/medium iPad size tier, confirm resolution uses `lime_number_symbol_ipad_narrow` and `lime_number_symbol_ipad_narrow_shift`.
+5. Confirm the period and greater-than keys open their expected punctuation popups.
+6. Regression: confirm other keyboards (e.g. `limenum` → `lime_number`) still render correctly.
 
 ### Android
 
@@ -92,7 +97,7 @@ A community iPhone user reported that selecting the `LIME+數字符號鍵盤` (`
 
 - [x] Root cause independently verified (DB query + XML inspection + iOS loader trace).
 - [x] RED regression test written and observed failing.
-- [x] Converter fixed, JSONs generated, and Xcode project updated.
+- [x] Converter fixed, phone/iPad/iPad-narrow JSONs generated, and Xcode project updated.
 - [x] GREEN: focused test + parity/inclusion validations pass on Linux.
 - [ ] iOS build + simulator/device verification (requires macOS/Xcode).
 - [ ] Release + maintainer close-out. Remove `fix#160 iOS` from `docs/BACKLOG.md` once shipped.

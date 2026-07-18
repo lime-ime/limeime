@@ -26,16 +26,25 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONVERTER = REPO_ROOT / "scripts" / "convert_keyboard_layouts.py"
+IPAD_BUILDER = REPO_ROOT / "scripts" / "build_ipad_layouts.py"
+IPAD_TRIMMER = REPO_ROOT / "scripts" / "trim_ipad_layout.py"
 ANDROID_XML_DIR = REPO_ROOT / "LimeStudio" / "app" / "src" / "main" / "res" / "xml"
 IOS_LAYOUTS_DIR = REPO_ROOT / "LimeIME-iOS" / "LimeKeyboard" / "Layouts"
 PBXPROJ = REPO_ROOT / "LimeIME-iOS" / "LimeIME.xcodeproj" / "project.pbxproj"
 
 # The two layout ids the `limenumsym` catalog row points at (imkb / imshiftkb).
-LAYOUT_IDS = ("lime_number_symbol", "lime_number_symbol_shift")
+PHONE_LAYOUT_IDS = ("lime_number_symbol", "lime_number_symbol_shift")
+IPAD_LAYOUT_IDS = (
+    "lime_number_symbol_ipad",
+    "lime_number_symbol_ipad_shift",
+    "lime_number_symbol_ipad_narrow",
+    "lime_number_symbol_ipad_narrow_shift",
+)
+ALL_LAYOUT_IDS = PHONE_LAYOUT_IDS + IPAD_LAYOUT_IDS
 
 
-def load_converter():
-    spec = importlib.util.spec_from_file_location("convert_keyboard_layouts", CONVERTER)
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -43,7 +52,7 @@ def load_converter():
 
 class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
     def test_ios_layout_json_files_exist(self):
-        for layout_id in LAYOUT_IDS:
+        for layout_id in PHONE_LAYOUT_IDS:
             json_path = IOS_LAYOUTS_DIR / f"{layout_id}.json"
             self.assertTrue(
                 json_path.exists(),
@@ -58,8 +67,8 @@ class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
             self.assertTrue(data.get("rows"), f"{layout_id}.json has no rows")
 
     def test_ios_layout_json_matches_android_xml(self):
-        converter = load_converter()
-        for layout_id in LAYOUT_IDS:
+        converter = load_module("convert_keyboard_layouts", CONVERTER)
+        for layout_id in PHONE_LAYOUT_IDS:
             xml_path = ANDROID_XML_DIR / f"{layout_id}.xml"
             json_path = IOS_LAYOUTS_DIR / f"{layout_id}.json"
             self.assertTrue(xml_path.exists(), f"Android source XML missing: {xml_path}")
@@ -73,6 +82,30 @@ class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
                 f"{layout_id}.json is not a faithful conversion of {layout_id}.xml — "
                 f"regenerate with scripts/convert_keyboard_layouts.py.",
             )
+
+    def test_ipad_layout_variants_match_generators(self):
+        builder = load_module("build_ipad_layouts", IPAD_BUILDER)
+        trimmer = load_module("trim_ipad_layout", IPAD_TRIMMER)
+        for source_id in PHONE_LAYOUT_IDS:
+            source = json.loads(
+                (IOS_LAYOUTS_DIR / f"{source_id}.json").read_text(encoding="utf-8-sig")
+            )
+            expected_full = builder.make_ipad_layout(source, source_id)
+            full_id = expected_full["id"]
+            full_path = IOS_LAYOUTS_DIR / f"{full_id}.json"
+            self.assertTrue(full_path.exists(), f"iPad layout missing for #160: {full_path}")
+            actual_full = json.loads(full_path.read_text(encoding="utf-8-sig"))
+            self.assertEqual(actual_full, expected_full, f"{full_id}.json is stale")
+
+            expected_narrow, _ = trimmer.trim_layout(expected_full)
+            narrow_id = expected_narrow["id"]
+            narrow_path = IOS_LAYOUTS_DIR / f"{narrow_id}.json"
+            self.assertTrue(
+                narrow_path.exists(),
+                f"Narrow iPad layout missing for #160: {narrow_path}",
+            )
+            actual_narrow = json.loads(narrow_path.read_text(encoding="utf-8-sig"))
+            self.assertEqual(actual_narrow, expected_narrow, f"{narrow_id}.json is stale")
 
     def test_layouts_registered_in_xcodeproj(self):
         content = PBXPROJ.read_text(encoding="utf-8")
@@ -94,7 +127,7 @@ class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
         if phase is None:
             self.fail("LimeKeyboard Resources build phase cannot be resolved")
 
-        for layout_id in LAYOUT_IDS:
+        for layout_id in ALL_LAYOUT_IDS:
             fname = f"{layout_id}.json"
             self.assertIn(
                 f"/* {fname} */ = {{isa = PBXFileReference",
