@@ -1399,6 +1399,31 @@ final class LimeDBTest: XCTestCase {
                           "full-word relation must sort before fallback regardless of score")
     }
 
+    func testRuntimeRelatedLookupUsesUnicodeScalarFallbackLikeAndroid() throws {
+        let db = try makeLimeDB()
+        let parent = "e\u{301}"
+        let fallback = "\u{301}"
+        let fullID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": parent, "cword": "full", "score": 1, "basescore": 0
+        ])
+        let fallbackID = db.addRecord(LIME.DB_TABLE_RELATED, [
+            "pword": fallback, "cword": "fallback", "score": 99, "basescore": 0
+        ])
+        defer {
+            for id in [fullID, fallbackID] where id > 0 {
+                _ = db.deleteRecord(LIME.DB_TABLE_RELATED, "_id = ?", ["\(id)"])
+            }
+        }
+
+        let words = try db.getRelatedMappings(parentWord: parent, limit: 10).map(\.word)
+
+        XCTAssertTrue(words.contains("full"))
+        XCTAssertTrue(words.contains("fallback"),
+                      "final Unicode-scalar fallback must match Android code-point behavior")
+        XCTAssertLessThan(words.firstIndex(of: "full")!, words.firstIndex(of: "fallback")!,
+                          "full-word relation must remain ahead of scalar fallback")
+    }
+
     func testLimeDBLoadRelatedEdgeCases() throws {
         let db = try makeLimeDB()
         XCTAssertNotNil(db.getRelated(nil, 10, 0))

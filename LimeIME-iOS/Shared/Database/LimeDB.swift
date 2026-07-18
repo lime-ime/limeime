@@ -850,7 +850,7 @@ final class LimeDB {
     /// Returns related Mapping objects (for SearchServer). Throws version.
     func getRelatedMappings(parentWord: String, limit: Int = 10) throws -> [Mapping] {
         try dbQueue.read { db in
-            let hasMultipleCharacters = parentWord.count > 1
+            let hasMultipleCharacters = parentWord.unicodeScalars.count > 1
             let predicate = hasMultipleCharacters ? "(pword = ? OR pword = ?)" : "pword = ?"
             let sql = """
                 SELECT pword, cword, (COALESCE(basescore,0) + COALESCE(score,0)) AS total,
@@ -860,8 +860,9 @@ final class LimeDB {
             """
             let rows: [Row]
             if hasMultipleCharacters {
+                let fallbackParent = String(parentWord.unicodeScalars.last!)
                 rows = try Row.fetchAll(db, sql: sql,
-                                        arguments: [parentWord, String(parentWord.suffix(1)), limit])
+                                        arguments: [parentWord, fallbackParent, limit])
             } else {
                 rows = try Row.fetchAll(db, sql: sql, arguments: [parentWord, limit])
             }
