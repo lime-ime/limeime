@@ -22,6 +22,7 @@ import importlib.util
 import json
 import re
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -65,9 +66,9 @@ def load_module(name, path):
 # these characters typeable — as a primary key code or as a dual-slide
 # long-press output — for both the normal and Shift layers. Losing any of
 # them is the #160 follow-up regression.
-REQUIRED_PUNCT = {
-    "normal": {45: "-", 61: "="},
-    "shift": {95: "_", 43: "+"},
+REQUIRED_PUNCT_CODES = {
+    "normal": {45, 61},
+    "shift": {95, 43},
 }
 
 # layer -> (phone id, full iPad id, narrow iPad id)
@@ -99,10 +100,27 @@ def reachable_codes(layout):
     return codes
 
 
-def xml_primary_codes(xml_path):
-    """All limehd:codes values declared in an Android keyboard XML."""
-    text = xml_path.read_text(encoding="utf-8")
-    return {int(m) for m in re.findall(r'limehd:codes="(-?\d+)"', text)}
+def xml_code_label_contract(xml_path, required_codes):
+    """Derive required (code, label) pairs directly from Android XML."""
+    namespace = "{http://schemas.android.com/apk/res-auto}"
+    pairs = {}
+    for key in ET.parse(xml_path).getroot().iter("Key"):
+        code_text = key.get(f"{namespace}codes")
+        if code_text is None:
+            continue
+        code = int(code_text)
+        if code in required_codes:
+            label = key.get(f"{namespace}keyLabel")
+            if label is None:
+                raise AssertionError(
+                    f"{xml_path.name} code {code} has no source keyLabel"
+                )
+            if code in pairs:
+                raise AssertionError(
+                    f"{xml_path.name} declares code {code} more than once"
+                )
+            pairs[code] = label
+    return pairs
 
 
 class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
@@ -166,22 +184,26 @@ class NumberSymbolLayoutIOSContractTests(unittest.TestCase):
         # Guard the contract itself: prove the required codes really are in
         # the stable phone XML, so the assertions below rest on the Android
         # source and not on a hand-picked constant.
-        for layer, required in REQUIRED_PUNCT.items():
+        for layer, required_codes in REQUIRED_PUNCT_CODES.items():
             xml_path = ANDROID_XML_DIR / f"{LAYER_VARIANTS[layer][0]}.xml"
-            declared = xml_primary_codes(xml_path)
-            for code, label in required.items():
-                self.assertIn(
-                    code,
-                    declared,
-                    f"{xml_path.name} no longer declares '{label}' (code {code}); "
-                    f"the #160 punctuation contract has drifted.",
-                )
+            declared = xml_code_label_contract(xml_path, required_codes)
+            self.assertEqual(
+                set(declared),
+                required_codes,
+                f"{xml_path.name} no longer declares every required #160 punctuation code",
+            )
+            self.assertTrue(
+                all(declared.values()),
+                f"{xml_path.name} has an empty required punctuation keyLabel",
+            )
 
     def test_required_punctuation_survives_in_all_variants(self):
         # The heart of the #160 follow-up regression test: for the normal and
         # Shift layers, every required punctuation code must stay typeable in
         # the phone layout AND in both iPad variants derived from it.
-        for layer, required in REQUIRED_PUNCT.items():
+        for layer, required_codes in REQUIRED_PUNCT_CODES.items():
+            xml_path = ANDROID_XML_DIR / f"{LAYER_VARIANTS[layer][0]}.xml"
+            required = xml_code_label_contract(xml_path, required_codes)
             for layout_id in LAYER_VARIANTS[layer]:
                 json_path = IOS_LAYOUTS_DIR / f"{layout_id}.json"
                 self.assertTrue(json_path.exists(), f"missing layout JSON: {json_path}")
