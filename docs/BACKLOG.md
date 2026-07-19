@@ -5,23 +5,17 @@ Public backlog for confirmed unresolved fixes and product work. Issue-specific i
 Last reviewed: 2026-07-19
 
 ## Pending fixes
-- fix#169 Android+iOS integrated phone portrait keyboard model: implemented on branch
-  `fix/169-integrated-phone-portrait-mode`. Replaces the v6.1.33 contradictory
-  `split_keyboard_mode` + `one_hand_mode` phone pair with one integrated
-  `phone_portrait_keyboard_mode` (0 標準 / 1 分離 / 2 靠左 / 3 靠右) plus a separate
-  `phone_landscape_split` boolean shared between Android and iOS. All phone-width/physical-size
-  gating is removed: the phone controls apply to every Android phone
-  (`smallestScreenWidthDp < 600`) and every iPhone. Android tablets
-  (`smallestScreenWidthDp >= 600`) and every iPad keep the independent tablet split / numpad
-  profile. Covers migration, settings UI, in-keyboard menus, rendering, chevron restore,
-  backup/restore, and iOS cold/hot PrefInbox + relay transport. The full Android unit/lint/device
-  gate and focused iPhone simulator tests pass; device layout was manually verified. See
-  `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
+- fix#169 Android+iOS release/retest follow-up: PR #171 merged the integrated phone portrait
+  keyboard model as `9667c82db800a899b12e13b9211c77dbda7c26fb`. GitHub Release v6.1.33
+  predates the merge, so Android needs a newer APK/Google Play build and reporter verification.
+  The iOS implementation passed focused simulator tests but still needs delivery in a newer
+  TestFlight/App Store build. See `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
 - fix#172 Android+iOS release QA: PR #174 merged the CIN-only `[ \t]+` separator fix as `f5110419456235acdc075825757b7ceaf6ada133`. The current v6.1.33 release predates the merge. The merged test tree still needs explicit aligned `%keyname` assertions and the iOS legacy unescaped `.lime` empty-field compatibility regression. A newer Android build is needed, while iOS also needs XCTest/Xcode validation, private-fixture verification, and delivery in a newer TestFlight/App Store build before the private reporter is asked to retest. See `docs/#172_ISSUE.md`.
 - fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. PR #168 merged the separate Android filtered-management-list deletion refresh fix as `285b9fde57384203c074f9b16094f2bdc757a3c6`, but v6.1.33 predates that merge, so Android remains pending a newer APK/Google Play build and reporter verification of the deletion flow. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
 
 ## Product work
 
+- feat#176 Android+iOS: refresh LIME's aging built-in related-phrase database using a better, maintainable Traditional Chinese phrase source. Research candidate sources and verify licensing, provenance, Taiwan usage and current terminology, useful coverage versus noise, conversion to LIME's related-phrase format, Android/iOS parity, update cadence, and backup/import behavior. Preserve the designed lookup model: related lookup uses the text committed in one action, whether that commit is one composed character or two or more characters committed through LD（連打詞輸入）. Separate single-character commits are not accumulated into a phrase context. Source: GitHub issue #176.
 - feat#159 Android+iOS: add 三碼輸入法 to LIME's built-in/downloadable input-method catalog for the next coordinated release, targeting v6.1.34. Start from the contributor-provided table version `v.20260715.1`, identify the table author as `無書自通`, use `https://3code-type.github.io/` as the official source/update location, and preserve the stated free/non-commercial distribution condition. Configure the table for `LIME+數字符號鍵盤`, verify Android and iOS conversion/import, catalog metadata, attribution, default keyboard selection, and basic lookup/input behavior, then publish a reporter-testable build through the normal release gates. Source: GitHub issue #159.
 - feat#175 Android+iOS: evaluate and implement an optional faster Space-key gesture for switching LIME internal input methods without regressing the current LIME 6 Space-key caret-movement gesture, Space tap behavior, or long-press Space internal-IM menu. Clarify whether the option is Android-only or cross-platform, whether it should affect only LIME internal input-method switching or also system keyboard switching, and update the user manual/FAQ if the gesture model changes. Source: Google Play review tracked in GitHub issue #175.
 - feat#N04 Web/store support: create one canonical LIME support area for Google Play (`org.limeime`) and Apple App Store (`6784694460`) users. Make email to `limeimetw@gmail.com` the primary private-support path, retain the manual/FAQ and public GitHub options, add Android/iOS reporting guidance and scam/privacy warnings, and link back to the exact official store listings. After deployment, update both stores' support metadata to the same verified URL instead of maintaining separate support systems. Until then, use direct email support for reports requiring `.cin` files, screenshots, recordings, or private details. See `docs/FEAT_#N04.md`.

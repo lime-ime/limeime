@@ -1,6 +1,10 @@
 # Issue #169 — Integrated phone portrait keyboard model (no width gate)
 
-Branch: `fix/169-integrated-phone-portrait-mode`
+Status: Source-fixed on `master` by PR #171 (`9667c82db800a899b12e13b9211c77dbda7c26fb`).
+The community issue was closed by maintainer action after the merge. GitHub Release v6.1.33
+targets `b2fa71779d8423b92896fa1a0262706bb62ea4fa` and predates the fix, so Android reporter
+retesting waits for a newer build that contains the merge. The iOS changes are also source-fixed
+and simulator-validated, but still await delivery in a newer TestFlight/App Store build.
 Last updated: 2026-07-19
 
 ## Problem
