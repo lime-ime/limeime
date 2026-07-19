@@ -4146,6 +4146,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
                             int source_score = 0, source_basescore = 0;
                             String code = null, word = null;
+                            String metadataSourceLine = line;
                             if (isCinFormat) {
                                 line = line.trim().replaceAll("[ \\t]+", "\t");
                                 List<String> parts = splitEscapedFields(line, "\t", false);
@@ -4194,8 +4195,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             String codeLower = code.toLowerCase(Locale.US);
                             boolean escapedMetadataCode = escapedFormat && line.trim().startsWith("\\%");
                             String metadataWord = word.trim();
-                            if (!escapedMetadataCode && codeLower.startsWith("%") && line.length() > code.length()) {
-                                metadataWord = line.substring(code.length()).trim();
+                            if (!escapedMetadataCode && codeLower.startsWith("%") && metadataSourceLine.length() > code.length()) {
+                                metadataWord = metadataSourceLine.substring(code.length()).trim();
                             }
 
                             if (!escapedMetadataCode && codeLower.equals("%version")) {
