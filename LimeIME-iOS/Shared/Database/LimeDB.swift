@@ -3525,7 +3525,12 @@ final class LimeDB {
                 delimiterDetected = true
             }
 
-            let parts = splitEscapedFields(trimmed, delimiter: detectedDelimiter, escapedFormat: escapedFormat)
+            let parseLine = isCinFormat
+                ? trimmed.replacingOccurrences(of: "[ \t]+", with: "\t", options: .regularExpression)
+                : trimmed
+            let parts = splitEscapedFields(parseLine,
+                                           delimiter: isCinFormat ? "\t" : detectedDelimiter,
+                                           escapedFormat: escapedFormat)
             if isRelatedTable {
                 if parts.count >= 4 {
                     let pword = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
