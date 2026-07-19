@@ -4,8 +4,9 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/172
 - Classification: `bug`, `Priority-Medium`, `Type-Defect`
-- State: open
+- State: closed by maintainer after source fix merge
 - Assignee: `jrywu`
+- Fix: PR #174, merged as `f5110419456235acdc075825757b7ceaf6ada133` on 2026-07-19
 - Source: private support-email report summarized by the project account. The original table and screenshots remain private test evidence.
 - Confirmed environment: iPhone 12, iOS 17.6, imported `liu7.cin`; the exact LIME version is not yet known.
 
@@ -56,20 +57,23 @@ The source-backed root cause for the supplied fixture is repeated-space handling
 
 Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname`, issue #160, or a registration-only failure unless post-parser testing finds separate evidence.
 
-## Implementation and remaining verification
+## Merged implementation and remaining release QA
 
-Completed in the fix branch:
+Completed on `master` through PR #174:
 
 1. Added sanitized Android and iOS fixtures covering spaces, tabs, and mixed horizontal-whitespace runs between CIN fields.
 2. Changed both CIN importers to treat any non-empty `[ \t]+` run as one separator without changing `.lime` delimiter handling.
-3. Verified the focused iOS regression in Simulator and compiled the Android production and instrumentation-test sources successfully. Android device instrumentation remains pending.
+3. Added a legacy unescaped `.lime` regression so the CIN-only normalization does not alter that compatibility path.
+4. Verified the focused iOS regression in Simulator and compiled the Android production and instrumentation-test sources successfully. Android device instrumentation remains pending.
+5. Maintainer `jrywu` merged PR #174 as `f5110419456235acdc075825757b7ceaf6ada133` and closed the internal tracking issue. There was no public issue comment.
 
-Still required:
+Remaining release QA and follow-up:
 
-4. Run the broader iOS `LimeDBTest` suite and the focused Android instrumentation test in CI/device environments.
-5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
-6. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
-7. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+1. Run the broader iOS `LimeDBTest` suite and the focused Android instrumentation test in CI/device environments.
+2. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
+3. Include the fix in newer Android and iOS builds before requesting user verification. This is release QA, not an active public issue watch.
+4. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
+5. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
 
 ## Follow-up questions
 
@@ -85,17 +89,17 @@ Request or confirm through the private support-email thread:
 
 ### iOS
 
-- RED/GREEN test with a sanitized fixture matching the supplied CIN structure.
-- Verify import count and direct database lookup for the reporter-confirmed code.
+- The sanitized parser fixture passed RED/GREEN on the fix branch.
+- Verify import count and direct database lookup for the reporter-confirmed code using the private fixture.
 - Verify registration, enabled state, active-IM selection, cold-to-hot publication, and keyboard-extension candidate lookup.
 - Verify a fresh install and an existing user database.
 - Device-test on iPhone/iOS 17 and a currently supported iOS version.
-- Confirm through the private email thread using a newer TestFlight/App Store build after a targeted fix exists.
+- Confirm through the private email thread using a newer TestFlight/App Store build that contains merge commit `f5110419456235acdc075825757b7ceaf6ada133`.
 
 ### Android
 
-Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs; production and instrumentation-test sources compile successfully. Run that test and the broader Android regression gates on a connected device before merge. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
+Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs; production and instrumentation-test sources compile successfully. Run that test and the broader Android regression gates on a connected device before release. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
 
 ## Retest condition
 
-Do not ask the user to retest the currently installed build. Retest only after a newer iOS build contains the repeated-space parser fix and passes the private-fixture import checks. Route the request through the private support-email thread unless the reporter chooses to participate on GitHub.
+Do not ask the user to retest the currently installed build. Retest only after a newer iOS build contains merge commit `f5110419456235acdc075825757b7ceaf6ada133` and passes the private-fixture import checks. Route the request through the private support-email thread unless the reporter chooses to participate on GitHub. Reopen this issue or create a focused follow-up only if the fixed build still fails.
