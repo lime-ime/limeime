@@ -312,17 +312,10 @@ public class ManageRelatedFragment extends Fragment implements ManageRelatedView
     }
 
     public void removeRelated(int id){
-        if (this.relatedlist != null) {
-            for (int i = 0; i < this.relatedlist.size(); i++) {
-                if (id == this.relatedlist.get(i).getIdAsInt()) {
-                    this.relatedlist.remove(i);
-                    break;
-                }
-            }
-        }
         if (manageImController != null) {
+            // Keep the currently submitted page immutable. The controller deletes
+            // the row and refreshes the view with a new database snapshot.
             manageImController.deleteRelatedPhrase(id);
-            searchRelated();
         }
     }
 

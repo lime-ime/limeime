@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: open pending reporter confirmation on Android GitHub APK v6.1.33; iOS binary delivery and corrected-source validation remain separate
+- State: open after the reporter confirmed the Android v6.1.33 search and immediate candidate-refresh fixes; the uploaded recording shows a separate Android management-list refresh defect after deletion, while iOS binary delivery and corrected-source validation remain separate
 
 ## Corrected scope
 
@@ -56,6 +56,10 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - iOS audit found the same gap in mirror form: `ManageRelatedController` mutations never set the `needsKeyboardCacheReset` App-Group flag that `ManageImController` uses, so a warm keyboard process whose table sync was applied by another process (settings probe / other host app) could keep serving its stale `relatedCache`. FIXED: all seven related mutation sites now call the shared (`nonisolated`) `ManageImController.markKeyboardCacheDirty()` after a successful write, matching the mapping-editor pattern; the keyboard clears all caches on next activation.
 - Do not request reporter retest from v6.1.32 or from any build that contains PR #167 without the cache-invalidation follow-ups.
 - Issue #161 was reopened for Android reporter confirmation. The retained v6.1.33 retest request is https://github.com/lime-ime/limeime/issues/161#issuecomment-5011747138 and asks the reporter to verify `pword`-prefix search/deletion plus immediate candidate refresh after manual add/update/delete.
+- Reporter `coral0819` confirmed both requested Android checks in https://github.com/lime-ime/limeime/issues/161#issuecomment-5012137623: previously unfindable related records can now be found and deleted, and keyboard related candidates update immediately after add/update/delete. The comment was then edited to add a public Google Drive recording. The downloaded 21.376-second MP4 is 15,818,451 bytes with SHA-256 `0bce29c2e256c53dd7251053b77b2a98cf6955fa3ad175d38111506c95e83497`.
+- The recording establishes a separate Android management-list synchronization defect. With search text `/`, the list initially shows three records with the same parent `/084V9P2` and children `/084V9P2`, `台中`, and `/`. After a delete is confirmed, the filtered list count changes but a visible row can retain the deleted record's text; tapping that stale-looking row opens a different surviving record. Clearing/re-entering the search refreshes the visible row contents. This does not invalidate the confirmed prefix-search or keyboard-candidate cache fixes, but it keeps #161 open for a focused list-refresh fix.
+- Root cause: `ManageRelatedFragment.removeRelated()` removed the row directly from the same mutable list previously submitted to `ListAdapter`, violating DiffUtil's immutable-list contract. The adapter's internal item count changed without a matching RecyclerView diff/rebind, so visible holder text and the refreshed database position could diverge. The fragment also requested a second redundant refresh after `ManageImController.deleteRelatedPhrase()` had already refreshed the view.
+- Focused Android fix branch `fix/161-android-related-delete-list` keeps the submitted page unchanged until the controller returns a fresh database result, removes the redundant delete refresh, and makes `ManageRelatedAdapter` snapshot each submitted list defensively. Instrumentation regression coverage first reproduced RED when caller mutation changed the adapter count from 2 to 1 without a new submission, then passed GREEN after the fix; a second RED/GREEN test verifies `removeRelated()` does not mutate the current page before controller refresh.
 - iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. The Android APK does not verify iOS behavior.
 
 ## Acceptance criteria
@@ -70,4 +74,5 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] Maintainer review/merge as PR #167 / `7f799370b0e3e6cdfc7114ea7af8ffb5b71a8262`
 - [x] Android manual related add/update/delete invalidates both initial and full runtime related-cache entries (whole-cache flush in the generic mutation wrappers + regression test)
 - [x] iOS manual related add/update/delete signals `needsKeyboardCacheReset` so the keyboard flushes `relatedCache` on next activation
-- [ ] Reporter verifies search/deletion in a released build
+- [x] Reporter verifies Android search/deletion and immediate candidate refresh in v6.1.33
+- [ ] Android filtered management list refreshes row contents after deletion so the visible row and the record opened by tapping it remain identical

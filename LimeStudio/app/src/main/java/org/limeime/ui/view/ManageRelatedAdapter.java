@@ -37,6 +37,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.limeime.R;
 import org.limeime.data.Related;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -65,6 +67,15 @@ public class ManageRelatedAdapter extends ListAdapter<Related, ManageRelatedAdap
     public ManageRelatedAdapter(Activity activity) {
         super(DIFF_CALLBACK);
         this.activity = activity;
+    }
+
+    @Override
+    public void submitList(List<Related> list) {
+        // ListAdapter requires submitted lists to remain immutable while DiffUtil
+        // compares them. The fragment also keeps its own mutable page list, so
+        // submit a snapshot to prevent a delete from silently changing adapter
+        // item positions before the refreshed database result arrives.
+        super.submitList(list == null ? null : new ArrayList<>(list));
     }
 
     private static final DiffUtil.ItemCallback<Related> DIFF_CALLBACK = new DiffUtil.ItemCallback<Related>() {
