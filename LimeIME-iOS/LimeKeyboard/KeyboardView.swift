@@ -847,19 +847,23 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         // SPLIT_ONE_HAND_KB: Android-parity partition — see SplitPartition (KeyLayout.swift).
         let total = keys.reduce(0) { $0 + $1.widthPercent }
         let (leftKeys, rightKeys) = SplitPartition.partition(keys)
-        let splitGapFraction = LayoutMetrics.KeyboardRow.splitGapFraction
-        // SPLIT_ONE_HAND_KB: cap each half at the two-hand thumb reach; the shrink ratio
-        // scales unequal halves proportionally, equal halves land exactly on the cap.
-        let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
-        let legacyHalf = (1 - splitGapFraction) / 2
-        let capHalf = ReachGeometry.splitHalfMaxFraction(viewWidth: viewWidth,
-                                                         sizeClass: LayoutLoader.iPadSizeClass)
-        let reachShrink = capHalf / legacyHalf   // ≤ 1; == 1 when the cap doesn't bind
+        let contentFraction: CGFloat
+        if isPad {
+            let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
+            contentFraction = 2 * ReachGeometry.splitHalfMaxFraction(
+                viewWidth: viewWidth, sizeClass: LayoutLoader.iPadSizeClass)
+        } else {
+            let referenceRow = layout.rows.first { !$0.keys.isEmpty }?.keys ?? keys
+            let unit = referenceRow.map(\.widthPercent).min() ?? 1
+            let keysInRow = max(1, Int((referenceRow.reduce(0) { $0 + $1.widthPercent } / unit).rounded()))
+            contentFraction = ReachGeometry.phoneSplitContentFraction(
+                keysInRow: keysInRow, isLandscape: isLandscape)
+        }
 
         func addHalf(_ halfKeys: [KeyDef], leading: Bool) {
             guard !halfKeys.isEmpty else { return }
             let halfPercent = halfKeys.reduce(0) { $0 + $1.widthPercent }
-            let halfFraction = (halfPercent / total) * (1 - splitGapFraction) * reachShrink
+            let halfFraction = (halfPercent / total) * contentFraction
 
             let contentView = KeyTouchLayer(owner: self)
             contentView.backgroundColor = LayoutMetrics.TouchTrap.fill   // keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md §Resolution); .clear leaves gaps dead
@@ -878,7 +882,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
             var prevBtn: UIButton? = nil
             for keyDef in halfKeys {
-                let btn = makeKeyButton(keyDef: keyDef, rowHeight: rowHeight, totalPercent: halfPercent)
+                let btn = makeKeyButton(keyDef: keyDef, rowHeight: rowHeight,
+                                        totalPercent: halfPercent, rowWidthFraction: halfFraction)
                 contentView.addSubview(btn)
                 btn.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
@@ -944,7 +949,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         var prevButton: UIButton? = nil
 
         for (_, keyDef) in row.keys.enumerated() {
-            let btn = makeKeyButton(keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
+            let btn = makeKeyButton(keyDef: keyDef, rowHeight: rowHeight,
+                                    totalPercent: totalPercent, rowWidthFraction: widthMultiplier)
             contentView.addSubview(btn)
 
             btn.translatesAutoresizingMaskIntoConstraints = false
@@ -969,7 +975,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         return rowView
     }
 
-    private func makeKeyButton(keyDef: KeyDef, rowHeight: CGFloat, totalPercent: CGFloat) -> UIButton {
+    private func makeKeyButton(keyDef: KeyDef, rowHeight: CGFloat, totalPercent: CGFloat,
+                               rowWidthFraction: CGFloat) -> UIButton {
         // Transparent spacer key: no background, no shadow, no touch.
         if keyDef.code == 0 && keyDef.label.isEmpty && keyDef.icon.isEmpty {
             let spacer = UIButton()
@@ -1047,7 +1054,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
             btn.addGestureRecognizer(pressFeedback)
         }
 
-        applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
+        applyButtonStyle(btn, keyDef: keyDef, rowHeight: rowHeight,
+                         totalPercent: totalPercent, rowWidthFraction: rowWidthFraction)
 
         btn.isUserInteractionEnabled = !routeBasicTapThroughOwner
         if !routeBasicTapThroughOwner {
@@ -1106,7 +1114,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
 
     /// Apply background color, corner radius and shadow to any key button.
     private func applyButtonStyle(_ btn: UIButton, keyDef: KeyDef,
-                                  rowHeight: CGFloat, totalPercent: CGFloat) {
+                                  rowHeight: CGFloat, totalPercent: CGFloat,
+                                  rowWidthFraction: CGFloat = 1) {
         btn.backgroundColor = restoredKeyBackgroundColor(for: keyDef)
         btn.layer.cornerRadius = keyCornerRadius
         btn.layer.masksToBounds = false
@@ -1114,7 +1123,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         btn.layer.shadowOffset = CGSize(width: 0, height: LayoutMetrics.Key.shadowOffsetY)
         btn.layer.shadowOpacity = keyShadowOpacity
         btn.layer.shadowRadius = 0
-        styleKeyContent(btn: btn, keyDef: keyDef, rowHeight: rowHeight, totalPercent: totalPercent)
+        styleKeyContent(btn: btn, keyDef: keyDef, rowHeight: rowHeight,
+                        totalPercent: totalPercent, rowWidthFraction: rowWidthFraction)
     }
 
     private func restoredKeyBackgroundColor(for keyDef: KeyDef) -> UIColor {
@@ -1155,7 +1165,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
     ///   • Tall key  (height ≥ width): label small top,  sublabel large bottom — vertical stack
     ///   • Wide key  (width  > height): label small left, sublabel large right  — horizontal stack
     private func styleKeyContent(btn: UIButton, keyDef: KeyDef,
-                                 rowHeight: CGFloat, totalPercent: CGFloat) {
+                                 rowHeight: CGFloat, totalPercent: CGFloat,
+                                 rowWidthFraction: CGFloat) {
         clearStyledKeyContent(from: btn)
         let override    = enterKeyOverride(for: keyDef)
         // Accent (blue) Enter keys use white foreground so the icon/label
@@ -1213,13 +1224,16 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                     // triggering horizontal layout — so skip the dimension check entirely.
                     isTall = true
                 } else {
-                    let estimatedWidth = UIScreen.main.bounds.width
-                        * (keyDef.widthPercent / totalPercent) - keyHGap
                     let usableHeight = rowHeight - 2 * keyVGap
                     // Mirror Android (LIMEKeyboardBaseView: key.height>key.width || subLabel.length()>2):
                     // also stack vertically when the letter hint is >2 chars, so the wide phone-pad
                     // keys (abc / pqrs / ()'" / +-*/ …) render up/down instead of the side-by-side split.
-                    isTall = usableHeight > estimatedWidth || displayLabel.count > 2
+                    let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
+                    isTall = Self.dualLabelUsesVerticalLayout(
+                        viewWidth: viewWidth, rowWidthFraction: rowWidthFraction,
+                        keyPercent: keyDef.widthPercent, totalPercent: totalPercent,
+                        keyHGap: keyHGap, usableHeight: usableHeight,
+                        labelLength: displayLabel.count)
                 }
                 container = makeDualLabelView(primary: displayLabel, sub: keyDef.sublabel,
                                               isTall: isTall, labelColor: keyLabel)
@@ -1270,6 +1284,15 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                                             constant: LayoutMetrics.Key.popupIndicatorBottomInset),
             ])
         }
+    }
+
+    static func dualLabelUsesVerticalLayout(viewWidth: CGFloat, rowWidthFraction: CGFloat,
+                                            keyPercent: CGFloat, totalPercent: CGFloat,
+                                            keyHGap: CGFloat, usableHeight: CGFloat,
+                                            labelLength: Int) -> Bool {
+        guard totalPercent > 0 else { return true }
+        let keyWidth = viewWidth * rowWidthFraction * keyPercent / totalPercent - keyHGap
+        return usableHeight > keyWidth || labelLength > 2
     }
 
     private func accessibilityLabel(for keyDef: KeyDef,

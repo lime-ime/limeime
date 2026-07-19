@@ -4450,6 +4450,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
         scroll.addSubview(stack)
 
         let iconPointSize = LayoutMetrics.InlineMenu.buttonFontSize
+        let segmentedAxis = LayoutMetrics.InlineMenu.segmentedAxis(
+            isPad: isOnPad,
+            isLandscape: layoutIsLandscape ?? (root.bounds.width > root.bounds.height))
         func addSeparator() {
             let sep = UIView()
             sep.backgroundColor = UIColor.separator
@@ -4513,7 +4516,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
                     seg.selectedSegmentIndex = max(0, min(selected, labels.count - 1))
                     seg.addAction(UIAction { _ in onSelect(seg.selectedSegmentIndex) }, for: .valueChanged)
                     let col = UIStackView(arrangedSubviews: [hRow, seg])
-                    col.axis = .vertical
+                    col.axis = segmentedAxis
                     col.spacing = 8
                     col.isLayoutMarginsRelativeArrangement = true
                     col.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
@@ -4523,7 +4526,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
                     seg.selectedSegmentIndex = max(0, min(selected, labels.count - 1))
                     seg.addAction(UIAction { _ in onSelect(seg.selectedSegmentIndex) }, for: .valueChanged)
                     let col = UIStackView(arrangedSubviews: [header, seg])
-                    col.axis = .vertical
+                    col.axis = segmentedAxis
                     col.spacing = 8
                     col.isLayoutMarginsRelativeArrangement = true
                     col.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)

@@ -41,6 +41,13 @@ final class ReachGeometryTests: XCTestCase {
         XCTAssertEqual(f, (1 - LayoutMetrics.KeyboardRow.splitGapFraction) / 2, accuracy: 0.001)
     }
 
+    func testPhoneSplitContentFractionMatchesAndroidReservedColumns() {
+        XCTAssertEqual(ReachGeometry.phoneSplitContentFraction(keysInRow: 10, isLandscape: false),
+                       10.0 / 12.0, accuracy: 0.001)
+        XCTAssertEqual(ReachGeometry.phoneSplitContentFraction(keysInRow: 10, isLandscape: true),
+                       10.0 / 13.0, accuracy: 0.001)
+    }
+
     func testOneHandWidth() {
         XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 430), 360, accuracy: 0.01)
         XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 375), 360, accuracy: 0.01)

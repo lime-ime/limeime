@@ -77,9 +77,14 @@ preserves one-hand but never invents a legacy iPhone split).
   two prefs in `loadSettings()`.
 - Rendering (`KeyboardViewController` layout): iPhone split from `PhoneKeyboardModePolicy.splitActive`;
   one-hand anchor from `oneHandAnchor`. **`oneHandAvailable` gate removed** — `oneHandWidth` still
-  clamps. Chevron restore resets the portrait mode to standard.
+  clamps. Chevron restore resets the portrait mode to standard. Phone split key width follows
+  Android's reserved-column model (2 portrait / 3 landscape); the existing iPad 66 mm reach cap
+  is unchanged.
 - Globe menu: 直向鍵盤模式 (portrait) / 橫向分離鍵盤 (landscape) on every iPhone; iPad split / numpad
-  anchor unchanged.
+  anchor unchanged. Segmented rows render horizontally on iPhone landscape so the short keyboard
+  can show the complete menu; portrait and iPad retain stacked rows.
+- Dual-label split keys choose top/bottom versus left/right from their actual rendered half width,
+  so tall narrow phone keys keep the Latin hint above the Chinese label.
 - Transport: `PrefInbox` + `RelayPrefState` carry `phonePortraitMode` / `phoneLandscapeSplit`; the
   FA-off text relay carries `pp=` / `pls=` and `RelayPrefSync.apply` writes them cold so a globe-menu
   change reaches the settings app with Full Access off.
@@ -100,10 +105,11 @@ preserves one-hand but never invents a legacy iPhone split).
   Android/iOS migration, startup-cache invalidation, and tablet profile isolation.
 - Phone and simulated `smallestScreenWidthDp >= 600` settings visibility were verified from live
   emulator UI dumps.
-- iOS source and Xcode project-reference contracts pass. **Swift/Xcode compilation was not
-  available on this Linux host**; iPhone/iPad XCTest and visual verification remain CI/device gates.
+- iOS focused XCTest passed on the LimeTest-iPhone16 simulator: 12 `ReachGeometryTests` plus the
+  landscape-menu and split dual-label regression tests (14 total, 0 failed). Device layout was
+  manually verified by the user; automated visual verification was intentionally skipped.
 
 ## Non-goals
 
-Geometry only. No emoji-panel width change, no per-orientation memory, no new iPad email/URL
-layouts. Tablet split reach-cap and numpad anchoring (Features A/C) are unchanged by this issue.
+No emoji-panel width change, no per-orientation memory, no new iPad email/URL layouts. Tablet split
+reach-cap and numpad anchoring (Features A/C) are unchanged by this issue.
