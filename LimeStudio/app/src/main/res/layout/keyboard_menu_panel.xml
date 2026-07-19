@@ -64,7 +64,6 @@
                 android:id="@+id/han_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
@@ -172,7 +171,6 @@
                 android:id="@+id/split_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
@@ -241,7 +239,7 @@
             android:id="@+id/menu_portrait_mode_block"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:visibility="gone"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
@@ -249,7 +247,7 @@
             android:paddingBottom="10dp">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
@@ -272,10 +270,10 @@
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/portrait_mode_toggle_group"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
                 app:singleSelection="true"
                 app:selectionRequired="true"
                 xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -391,7 +389,6 @@
                 android:id="@+id/landscape_split_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
@@ -476,7 +473,6 @@
                 android:id="@+id/numpad_anchor_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"

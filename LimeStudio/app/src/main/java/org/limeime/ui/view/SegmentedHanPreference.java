@@ -96,33 +96,46 @@ public class SegmentedHanPreference extends Preference {
      * threshold. Shared by the 喜好設定 page and the keyboard long-press menu.
      */
     public static void stackIfClipped(@NonNull MaterialButtonToggleGroup group) {
-        group.post(() -> {
-            boolean clipped = false;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                View child = group.getChildAt(i);
-                if (child instanceof Button) {
-                    android.text.Layout layout = ((Button) child).getLayout();
-                    if (layout != null) {
-                        int lines = layout.getLineCount();
-                        if (lines > 0 && layout.getEllipsisCount(lines - 1) > 0) {
-                            clipped = true;
-                            break;
-                        }
-                    }
-                }
+        group.post(() -> stackIfClippedNow(group));
+    }
+
+    public static void stackIfClippedNow(@NonNull MaterialButtonToggleGroup group) {
+        int requiredWidth = 0;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof Button && child.getVisibility() == View.VISIBLE) {
+                Button button = (Button) child;
+                requiredWidth += Math.ceil(button.getPaint().measureText(button.getText().toString()))
+                        + button.getCompoundPaddingLeft() + button.getCompoundPaddingRight();
             }
-            if (!clipped || group.getOrientation() == LinearLayout.VERTICAL) return;
-            group.setOrientation(LinearLayout.VERTICAL);
-            for (int i = 0; i < group.getChildCount(); i++) {
-                View child = group.getChildAt(i);
-                LinearLayout.LayoutParams lp =
-                        (LinearLayout.LayoutParams) child.getLayoutParams();
-                lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
-                lp.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                lp.weight = 0;
-                child.setLayoutParams(lp);
+        }
+        if (requiredWidth <= group.getWidth() || group.getOrientation() == LinearLayout.VERTICAL) return;
+        if (group.getParent() instanceof LinearLayout) {
+            LinearLayout row = (LinearLayout) group.getParent();
+            if (row.getOrientation() == LinearLayout.HORIZONTAL) {
+                row.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout.LayoutParams groupParams =
+                        (LinearLayout.LayoutParams) group.getLayoutParams();
+                float density = group.getResources().getDisplayMetrics().density;
+                groupParams.width = LinearLayout.LayoutParams.MATCH_PARENT;
+                groupParams.weight = 0;
+                groupParams.setMarginStart(0);
+                groupParams.topMargin = Math.round(10 * density);
+                group.setLayoutParams(groupParams);
+                group.post(() -> stackIfClippedNow(group));
+                return;
             }
-        });
+        }
+        group.setOrientation(LinearLayout.VERTICAL);
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            LinearLayout.LayoutParams lp =
+                    (LinearLayout.LayoutParams) child.getLayoutParams();
+            lp.width = LinearLayout.LayoutParams.MATCH_PARENT;
+            lp.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+            lp.weight = 0;
+            child.setLayoutParams(lp);
+        }
     }
 
     private int buttonIdFor(String value) {
