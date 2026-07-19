@@ -43,7 +43,7 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
 - `LimeIME-iOS/LimeTests/LimeDBTest.swift` covers basic CIN parsing, `%version`/`%cname`/`%selkey` metadata, comment skipping, mapping lookup, default keyboard selection, and some `getAllImConfigs()` behavior.
 - The inspected tests use small synthetic tables and do not cover the full Settings-to-keyboard-extension flow for a realistic imported CIN file: import, registration/activation, cold-to-hot publication, active-IM selection, key acceptance, and candidate lookup.
 - Before this fix, no CIN test used repeated spaces between code and output. Existing one-space fixtures therefore did not exercise the empty-field behavior in `splitEscapedFields(...)`.
-- The new sanitized tests cover the repeated-space parser boundary, but no automated test imports the private fixture or drives the full Settings-to-keyboard-extension path end to end.
+- The new sanitized tests cover arbitrary runs of ASCII spaces and tabs at the parser boundary, but no automated test imports the private fixture or drives the full Settings-to-keyboard-extension path end to end.
 
 ### Android comparison
 
@@ -60,13 +60,13 @@ Registration/activation and runtime publication remain secondary device-level ch
 
 Completed in the fix branch:
 
-1. Added sanitized Android and iOS fixtures with aligned CIN rows. The iOS fixture covers repeated-space `%keyname` and `%chardef` rows; both tests assert inserted mappings and non-zero `amount`.
-2. Changed the Android and iOS CIN whitespace paths to treat an unescaped whitespace run as one separator without changing tab, pipe, comma, or escaped `.lime` handling.
-3. Verified Android TDD evidence: the focused instrumentation test failed RED with an empty mapping list before the fix and passed GREEN afterward. The complete Android `LimeDBTest` class then passed 216/216, and Android unit plus instrumentation-test compilation passed.
+1. Added sanitized Android and iOS fixtures covering spaces, tabs, and mixed horizontal-whitespace runs between CIN fields.
+2. Changed both CIN importers to treat any non-empty `[ \t]+` run as one separator without changing `.lime` delimiter handling.
+3. Verified the focused iOS regression in Simulator and compiled the Android production and instrumentation-test sources successfully. Android device instrumentation remains pending.
 
 Still required:
 
-4. Run the iOS `LimeDBTest` suite in Xcode/Xcode Cloud because Swift/Xcode are unavailable on this Linux host.
+4. Run the broader iOS `LimeDBTest` suite and the focused Android instrumentation test in CI/device environments.
 5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
 6. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
 7. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
@@ -94,7 +94,7 @@ Request or confirm through the private support-email thread:
 
 ### Android
 
-Android has a separate Java importer but shared this parser defect. The new focused instrumentation test failed before the fix and passed after consecutive spaces were collapsed. Run the broader Android regression gates before merge. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
+Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs; production and instrumentation-test sources compile successfully. Run that test and the broader Android regression gates on a connected device before merge. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
 
 ## Retest condition
 

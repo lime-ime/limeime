@@ -392,37 +392,6 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(Array(exactWords.prefix(3)), ["狀", "绒", "戕"])
     }
 
-    func testCinImportTreatsRepeatedSpacesAsOneFieldSeparator() throws {
-        let db = try makeLimeDB()
-        db.setTableName(LIME.DB_TABLE_CUSTOM)
-        let importURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".cin")
-        defer { try? FileManager.default.removeItem(at: importURL) }
-
-        let content = """
-        %cname Repeated Space Test
-        %keyname begin
-        a       Ａ
-        b       Ｂ
-        %keyname end
-        %chardef begin
-        a       對
-        ab      測
-        %chardef end
-        """
-        try content.write(to: importURL, atomically: true, encoding: .utf8)
-
-        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
-
-        let aResults = try XCTUnwrap(db.getMappingByCode("a", softKeyboard: true, getAllRecords: true))
-        let abResults = try XCTUnwrap(db.getMappingByCode("ab", softKeyboard: true, getAllRecords: true))
-        XCTAssertTrue(aResults.contains { $0.code == "a" && $0.word == "對" })
-        XCTAssertTrue(abResults.contains { $0.code == "ab" && $0.word == "測" })
-        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"), "2")
-        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeys"), "ab")
-        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"), "Ａ|Ｂ")
-    }
-
     func testLimeDBGetMappingByCodeWithAllRecords() throws {
         let db = try makeLimeDB()
         db.setTableName(LIME.DB_TABLE_CUSTOM)
@@ -781,6 +750,31 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "大易測試表")
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "selkey"), "123456789")
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"), "2")
+    }
+
+    func testImportTxtFileAcceptsHorizontalWhitespaceBetweenCinFields() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef begin
+        a       測
+        aa\t  試
+        aaa  \t甲
+        aaaa\t\t  乙
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"), "4")
+        XCTAssertEqual(db.getMappingByCode("a", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "測")
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "試")
+        XCTAssertEqual(db.getMappingByCode("aaa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "甲")
+        XCTAssertEqual(db.getMappingByCode("aaaa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "乙")
     }
 
     func testImportTxtFileSkipsCinCommentLinesInsideChardef() throws {
