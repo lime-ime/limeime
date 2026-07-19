@@ -2,9 +2,10 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-18
+Last reviewed: 2026-07-19
 
 ## Pending fixes
+- fix#169 Android: restore the pre-v6.1.33 phone behavior where `分離鍵盤 = 開啟` renders a split keyboard in portrait and landscape, while `僅橫向` remains landscape-only. Preserve numpad split exclusion and prevent one-hand anchoring from overriding an active portrait split. Retest only after a newer targeted Android build is available. See `docs/#169_ISSUE.md`.
 - fix#161 iOS/reporter follow-up: Android GitHub APK v6.1.33 includes the escaped `pword` prefix management search, runtime parity, and manual add/update/delete cache invalidation follow-ups, and issue #161 is open pending reporter confirmation. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
 
 

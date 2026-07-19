@@ -817,16 +817,45 @@ public class LIMEBaseKeyboard {
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
         //Jeremy '12,5,27 read splitkeyboard setting from preference.
         //Jeremy '12,6,19  add orientation consideration on split keyboard
-        // SPLIT_ONE_HAND_KB: on phones split renders in landscape only, whatever the
-        // stored value — portrait phone split keys fall below SPLIT_KEY_MIN_MM and
-        // portrait geometry belongs to one-hand mode (spec eligibility matrix).
         boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        mSplitKeyboard = splitEligible
-                && ((mLandScape && mShowArrowKeys != 0)
-                || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
+        mSplitKeyboard = splitKeyboardEligible(
+                splitEligible, mLandScape, tablet, mShowArrowKeys, splitKeyboard);
 
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: split-keyboard eligibility contract, extracted as a pure
+     * function so the legacy split_keyboard_mode matrix is unit-testable.
+     *
+     * @param splitEligible false for numpad / T9 layouts, which never split
+     * @param landscape     current orientation is landscape
+     * @param tablet        smallestScreenWidthDp >= 600
+     * @param showArrowKeys landscape arrow-key split trigger (0 = off)
+     * @param splitMode     stored split_keyboard_mode (NEVER / ALWAYS / LANDSCAPE_ONLY)
+     */
+    public static boolean splitKeyboardEligible(boolean splitEligible, boolean landscape,
+                                         boolean tablet, int showArrowKeys, int splitMode) {
+        // Legacy contract (through v6.1.32, issue #169): ALWAYS renders split in
+        // BOTH orientations on phones and tablets. LANDSCAPE_ONLY and the arrow-key
+        // trigger stay landscape-only. `tablet` is retained for callers/tests but no
+        // longer gates ALWAYS.
+        return splitEligible
+                && ((landscape && showArrowKeys != 0)
+                || (landscape && splitMode == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
+                || splitMode == SPLIT_KEYBOARD_ALWAYS);
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB (issue #169): whether a split keyboard renders in portrait,
+     * which only happens for a split-eligible layout under SPLIT_KEYBOARD_ALWAYS.
+     * An active portrait split takes precedence over one-hand anchoring, so the
+     * switcher uses this to suppress the one-hand anchor. Delegates to
+     * {@link #splitKeyboardEligible} (portrait: not landscape, no arrow trigger) so
+     * the precedence gate can never drift from the rendering gate.
+     */
+    public static boolean portraitSplitActive(boolean splitEligible, int splitMode) {
+        return splitKeyboardEligible(splitEligible, false, false, 0, splitMode);
     }
 
     /**

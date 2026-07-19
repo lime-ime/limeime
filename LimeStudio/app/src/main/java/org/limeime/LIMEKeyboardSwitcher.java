@@ -339,9 +339,11 @@ public class LIMEKeyboardSwitcher {
 	                    keyboard.applyHorizontalAnchor(
 	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dm.xdpi),
 	                            anchor, false);
-	            } else if (!isTablet && portrait) {
-	                // Phone split renders landscape-only (LIMEBaseKeyboard gate), so
-	                // portrait always belongs to one-hand mode regardless of split pref.
+	            } else if (!isTablet && portrait
+	                    // Issue #169 precedence: an active portrait split (eligible layout
+	                    // under SPLIT_KEYBOARD_ALWAYS) wins over one-hand anchoring, so it
+	                    // must not be overridden here.
+	                    && !LIMEBaseKeyboard.portraitSplitActive(!numpadXml, mLIMEPref.getSplitKeyboard())) {
 	                int mode = mLIMEPref.getOneHandMode();
 	                if (mode != 0 && ReachGeometry.oneHandAvailable(dm.widthPixels, dm.xdpi))
 	                    keyboard.applyHorizontalAnchor(
