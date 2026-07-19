@@ -5,7 +5,7 @@
 - Issue: https://github.com/lime-ime/limeime/issues/160
 - Classification: bug, usability, cross-platform parity
 - State: iOS v6.1.33 build 17 is `READY_FOR_SALE` and public rollout has started. Apple's 2026-07-19 lookup reports v6.1.33 in the US and Hong Kong stores, while the Taiwan storefront still reports v6.1.32, so Taiwan propagation is not yet complete. PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Both merges are included in build 17. Reporter validation still requires v6.1.33 availability on their storefront plus phone/full-iPad/narrow-iPad device verification.
-- Platform: iOS only. Android is **reporter-confirmed working** and is **not** changed by this fix.
+- Platform: the confirmed root cause and shipped fix are iOS-only. The original report said Android worked, but the reporter later added an unresolved Pixel 7 datapoint. Android already contains the corresponding XML resources and was not changed by this fix; if the problem persists on Android v6.1.33, investigate its loading path separately after collecting the active IM, selected keyboard configuration, and screenshot.
 - Public acknowledgement: reporter is a community iPhone user (see privacy-safe summary below). No private account details are recorded in this repo.
 
 ## Problem statement
@@ -43,7 +43,7 @@ A second, compounding gap: even a freshly converted JSON would not ship, because
 ## Cross-platform impact
 
 - **iOS:** affected. Any user selecting `limenumsym` gets the wrong keyboard. Independent of the active input method / imported `.cin` (the imkb resolution is catalog-driven, not table-driven).
-- **Android:** not affected and not changed. It served as the parity reference.
+- **Android:** not affected by the confirmed missing-iOS-resource root cause and not changed by this fix. Android source served as the parity reference, but the later Pixel 7 report remains unresolved and requires separate reproduction details before concluding whether Android has a different loading defect.
 - **Shared DB:** correct on both platforms. No DB change required or made.
 
 ## Fix
