@@ -42,28 +42,34 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
 
 - `LimeIME-iOS/LimeTests/LimeDBTest.swift` covers basic CIN parsing, `%version`/`%cname`/`%selkey` metadata, comment skipping, mapping lookup, default keyboard selection, and some `getAllImConfigs()` behavior.
 - The inspected tests use small synthetic tables and do not cover the full Settings-to-keyboard-extension flow for a realistic imported CIN file: import, registration/activation, cold-to-hot publication, active-IM selection, key acceptance, and candidate lookup.
-- No existing test was found that imports the private `liu7.cin` fixture or reproduces the reported no-output behavior end to end.
-- No inspected CIN test uses repeated spaces between code and output. Existing one-space fixtures therefore do not exercise the empty-field behavior in `splitEscapedFields(...)`.
+- Before this fix, no CIN test used repeated spaces between code and output. Existing one-space fixtures therefore did not exercise the empty-field behavior in `splitEscapedFields(...)`.
+- The new sanitized tests cover the repeated-space parser boundary, but no automated test imports the private fixture or drives the full Settings-to-keyboard-extension path end to end.
 
 ### Android comparison
 
-- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` normalizes repeated spaces before parsing space-delimited CIN rows.
-- Android does not share the exact adjacent-space failure path demonstrated by this fixture, although a focused parity test should preserve that existing behavior.
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` had the same adjacent-space behavior in its CIN-specific space branch: `splitEscapedFields(...)` preserved empty fields and the importer read `parts[1]` as the output.
+- A focused Android instrumentation test using sanitized aligned rows failed RED with an empty mapping list, confirming that Android shared the parser defect even though the support report covers iOS only.
 
 ## Likely failure areas
 
-The source-backed root cause for the supplied fixture is inconsistent repeated-space handling between the platform importers. Android collapses repeated spaces before reading CIN fields. iOS treats every space as an independent delimiter and assumes the output is always at index 1, so the private fixture's aligned mapping rows all produce an empty output and are skipped.
+The source-backed root cause for the supplied fixture is repeated-space handling in both platform importers. Each treated every space as an independent delimiter and assumed the output was always at index 1, so aligned mapping rows produced an empty output and were skipped.
 
 Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname`, issue #160, or a registration-only failure unless post-parser testing finds separate evidence.
 
-## Proposed investigation and fix plan
+## Implementation and remaining verification
 
-1. Add a sanitized RED CIN fixture with `%chardef` rows separated by two, five, and seven spaces. Assert the expected mappings are inserted and `amount` is non-zero.
-2. Add repeated-space `%keyname` coverage and keep one-space, tab-delimited, metadata, comment, score/base-score, and `.lime` escaped-delimiter tests passing.
-3. Add a dedicated CIN whitespace parser that treats an ASCII-whitespace run as one separator for `%keyname` and `%chardef` data rows. Do not globally alter pipe/tab/comma escaped-field behavior.
-4. Decide whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
-5. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
-6. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+Completed in the fix branch:
+
+1. Added sanitized Android and iOS fixtures with aligned CIN rows. The iOS fixture covers repeated-space `%keyname` and `%chardef` rows; both tests assert inserted mappings and non-zero `amount`.
+2. Changed the Android and iOS CIN whitespace paths to treat an unescaped whitespace run as one separator without changing tab, pipe, comma, or escaped `.lime` handling.
+3. Verified Android TDD evidence: the focused instrumentation test failed RED with an empty mapping list before the fix and passed GREEN afterward. The complete Android `LimeDBTest` class then passed 216/216, and Android unit plus instrumentation-test compilation passed.
+
+Still required:
+
+4. Run the iOS `LimeDBTest` suite in Xcode/Xcode Cloud because Swift/Xcode are unavailable on this Linux host.
+5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
+6. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
+7. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
 
 ## Follow-up questions
 
@@ -88,7 +94,7 @@ Request or confirm through the private support-email thread:
 
 ### Android
 
-Android has a separate Java importer that already normalizes repeated spaces, so it is not expected to share this exact parser defect. Use the same sanitized fixture to verify import count, metadata/default keyboard assignment, and candidate lookup and preserve that behavior. No Android release change or APK retest is currently warranted for #172 unless the parity check finds a separate failure.
+Android has a separate Java importer but shared this parser defect. The new focused instrumentation test failed before the fix and passed after consecutive spaces were collapsed. Run the broader Android regression gates before merge. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
 
 ## Retest condition
 

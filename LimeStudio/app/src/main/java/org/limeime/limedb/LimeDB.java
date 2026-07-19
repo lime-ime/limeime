@@ -4164,7 +4164,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                         if (DEBUG) Log.e(TAG, "Error parsing score values from line: " + line, e);
                                     }
                                 } else if (line.contains(" ")) {
-                                    List<String> parts = splitEscapedFields(line, " ", false);
+                                    // CIN files commonly align columns with runs of spaces.
+                                    // Treat the run as one separator instead of producing empty fields.
+                                    List<String> parts = java.util.Arrays.asList(line.trim().split(" +"));
                                     try {
                                         code = parts.get(0);
                                         word = parts.get(1);

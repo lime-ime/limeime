@@ -195,6 +195,38 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 15000)
+    public void cinImportAcceptsAlignedWhitespaceBetweenCodeAndWord() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue(initializeDatabase(limeDB));
+
+        File fixture = new File(appContext.getCacheDir(), "issue172_aligned_whitespace.cin");
+        try {
+            writeUtf8(fixture,
+                    "%ename issue172\n" +
+                    "%cname Issue172\n" +
+                    "%chardef begin\n" +
+                    "a       \u5C0D\n" +
+                    "aa      \u5BF8\n" +
+                    "%chardef end\n");
+
+            limeDB.setTableName(LIME.DB_TABLE_CUSTOM);
+            limeDB.clearTable(LIME.DB_TABLE_CUSTOM);
+            limeDB.setFilename(fixture);
+            limeDB.importTxtTable(LIME.DB_TABLE_CUSTOM, null);
+            waitForImportThread(limeDB);
+
+            assertEquals("\u5C0D", limeDB.getMappingByCode("a", false, true).get(0).getWord());
+            assertEquals("\u5BF8", limeDB.getMappingByCode("aa", false, true).get(0).getWord());
+            assertEquals("2", limeDB.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"));
+        } finally {
+            if (fixture.exists() && !fixture.delete()) {
+                Log.w(TAG, "Failed to delete issue172 cin fixture");
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
     public void limeImportSkipsHashCommentsAndPersistsCnameVersion() throws Exception {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);

@@ -3738,6 +3738,13 @@ final class LimeDB {
     }
 
     private func splitEscapedFields(_ line: String, delimiter: Character, escapedFormat: Bool) -> [String] {
+        // CIN files commonly align columns with runs of spaces. Treat unescaped
+        // whitespace-delimited rows as fields rather than preserving empty columns.
+        // Keep literal delimiter handling for tabs, commas, pipes, and escaped LIME v2.
+        if delimiter == " " && !escapedFormat {
+            return line.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+        }
+
         var fields: [String] = []
         var current = ""
         var escaping = false
