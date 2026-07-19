@@ -12,7 +12,7 @@
 
 ## Problem statement
 
-The user reports that importing `liu7.cin` completes, but selecting the imported input method does not produce characters. Inspection of the private UTF-8 fixture now identifies a concrete parser failure before candidate lookup: all 31,556 `%chardef` mapping rows align the code and output columns with repeated ASCII spaces, and the current iOS parser reads the first empty field after the code as the output. A static replay of the current parser therefore accepts zero mappings from those rows while still completing the metadata/import lifecycle.
+The user reports that importing `liu7.cin` completes, but selecting the imported input method does not produce characters. Inspection of the private UTF-8 fixture now identifies a concrete parser failure before candidate lookup: its `%chardef` mapping rows align the code and output columns with repeated ASCII spaces, and the pre-fix iOS parser read the first empty field after the code as the output. A static replay of that parser therefore accepted zero mappings from the aligned rows while still completing the metadata/import lifecycle.
 
 The reporter's selected destination input method, visible imported-count message, runtime registration/activation state, and one exact user-entered code still need device confirmation. Those checks may reveal a secondary issue, but they are no longer prerequisites for establishing the fixture's repeated-space parser defect.
 
@@ -44,7 +44,7 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
 - `LimeIME-iOS/LimeTests/LimeDBTest.swift` covers basic CIN parsing, `%version`/`%cname`/`%selkey` metadata, comment skipping, mapping lookup, default keyboard selection, and some `getAllImConfigs()` behavior.
 - The inspected tests use small synthetic tables and do not cover the full Settings-to-keyboard-extension flow for a realistic imported CIN file: import, registration/activation, cold-to-hot publication, active-IM selection, key acceptance, and candidate lookup.
 - Before this fix, no CIN test used repeated spaces between code and output. Existing one-space fixtures therefore did not exercise the empty-field behavior in `splitEscapedFields(...)`.
-- The new sanitized tests cover arbitrary runs of ASCII spaces and tabs at the parser boundary, but no automated test imports the private fixture or drives the full Settings-to-keyboard-extension path end to end.
+- The merged sanitized tests cover mapping rows with arbitrary runs of ASCII spaces and tabs at the parser boundary, but no automated test imports the private fixture or drives the full Settings-to-keyboard-extension path end to end.
 
 ### Android comparison
 
@@ -61,19 +61,20 @@ Registration/activation and runtime publication remain secondary device-level ch
 
 Completed on `master` through PR #174:
 
-1. Added sanitized Android and iOS fixtures covering spaces, tabs, and mixed horizontal-whitespace runs between CIN fields.
+1. Added sanitized Android and iOS mapping fixtures covering spaces, tabs, and mixed horizontal-whitespace runs between CIN fields.
 2. Changed both CIN importers to treat any non-empty `[ \t]+` run as one separator without changing `.lime` delimiter handling.
-3. Added a legacy unescaped `.lime` regression so the CIN-only normalization does not alter that compatibility path.
-4. Verified the focused iOS regression in Simulator and compiled the Android production and instrumentation-test sources successfully. Android device instrumentation remains pending.
+3. Scoped iOS normalization to CIN imports so the shared unescaped `.lime` delimiter path remains unchanged.
+4. Android verification reported the focused instrumentation test and all 216 `LimeDBTest` tests passing, plus unit tests, instrumentation-test compilation, lint, and `git diff --check`. Swift/Xcode was unavailable, so the new iOS test was not run before merge.
 5. Maintainer `jrywu` merged PR #174 as `f5110419456235acdc075825757b7ceaf6ada133` and closed the internal tracking issue. There was no public issue comment.
 
 Remaining release QA and follow-up:
 
-1. Run the broader iOS `LimeDBTest` suite and the focused Android instrumentation test in CI/device environments.
+1. Run the new iOS whitespace test and broader iOS `LimeDBTest` suite in Xcode/Xcode Cloud.
 2. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
 3. Include the fix in newer Android and iOS builds before requesting user verification. This is release QA, not an active public issue watch.
-4. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
-5. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+4. Restore focused `%keyname` coverage and an iOS legacy unescaped `.lime` empty-field compatibility regression before relying on those safeguards as automated release gates. They were described in the PR but are not present in the merged tree.
+5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
+6. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
 
 ## Follow-up questions
 
@@ -89,7 +90,7 @@ Request or confirm through the private support-email thread:
 
 ### iOS
 
-- The sanitized parser fixture passed RED/GREEN on the fix branch.
+- Run the merged sanitized parser fixture in Xcode/Xcode Cloud. It was added but not executed before merge.
 - Verify import count and direct database lookup for the reporter-confirmed code using the private fixture.
 - Verify registration, enabled state, active-IM selection, cold-to-hot publication, and keyboard-extension candidate lookup.
 - Verify a fresh install and an existing user database.
@@ -98,7 +99,7 @@ Request or confirm through the private support-email thread:
 
 ### Android
 
-Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs; production and instrumentation-test sources compile successfully. Run that test and the broader Android regression gates on a connected device before release. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
+Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs, and the PR reports that the focused test and all 216 `LimeDBTest` tests passed. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
 
 ## Retest condition
 
