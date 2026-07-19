@@ -134,6 +134,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var splitKeyboardMode:       Int  = 0       // 0=off, 1=on, 2=landscape-only (iPad only)
     private var oneHandMode:             Int  = 0       // 0=off, 1=left, 2=right (portrait only)
     private var numpadAnchor:            Int  = 0       // 0=fit, 1=left, 2=right, 3=center
+    // Issue #169: integrated iPhone portrait mode + separate landscape split.
+    private var phonePortraitKeyboardMode: Int  = 0     // 0=standard, 1=split, 2=left, 3=right (iPhone only)
+    private var phoneLandscapeSplit:       Bool = false  // iPhone landscape split, independent of portrait mode
 
     // MARK: - Activated IM Cycling (spec §10)
     private var activatedIMs:  [ImConfig] = []
@@ -345,6 +348,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// applyHeight() after settling is a plain stationary height change, which
     /// hosts track correctly (same path as keyboard_size / emoji-panel resizes).
     private var rotationSettling = false
+    /// Authoritative destination orientation supplied by UIKit during rotation.
+    /// UIScreen bounds can temporarily report the old orientation while relayout runs.
+    private var layoutIsLandscape: Bool?
     private weak var inlineMenuPanel: UIView?
     private weak var inlineMenuDismissTapGesture: UITapGestureRecognizer?
     /// Fired once when the inline menu is dismissed (完成 / tap-outside). Used by the
@@ -586,15 +592,28 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // so view.bounds.width > view.bounds.height is always true and would
         // permanently force landscape row heights and horizontal label layout.
         let screen = UIScreen.main.bounds
-        let landscape = screen.width > screen.height
+        let landscape = layoutIsLandscape ?? (screen.width > screen.height)
         keyboardView?.isLandscape = landscape
         let isPad   = isOnPad
         let numpad  = isNumpadLayout
-        let doSplit = isPad && !numpad
+        let splitEligible = !numpad
+        let portraitMode = PhoneKeyboardPortraitMode(rawValue: phonePortraitKeyboardMode) ?? .standard
+        let doSplit: Bool
+        if isPad {
+            doSplit = splitEligible
                       && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
+        } else {
+            // Issue #169: iPhone split — portrait reads the integrated mode, landscape
+            // reads phone_landscape_split. Applies to every iPhone (no width gate);
+            // numpad layouts never split.
+            doSplit = PhoneKeyboardModePolicy.splitActive(isLandscape: landscape,
+                                                          splitEligible: splitEligible,
+                                                          portraitMode: portraitMode,
+                                                          landscapeSplit: phoneLandscapeSplit)
+        }
         keyboardView?.splitMode = doSplit
 
-        // SPLIT_ONE_HAND_KB horizontal anchoring.
+        // SPLIT_ONE_HAND_KB / issue #169 horizontal anchoring.
         var leading: CGFloat = 0, trailing: CGFloat = 0, chevron = false
         let vw = view.bounds.width
         if isPad {
@@ -609,11 +628,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 default: break
                 }
             }
-        } else if !landscape, oneHandMode != 0,
-                  ReachGeometry.oneHandAvailable(screenWidthPt: min(screen.width, screen.height)) {
-            let free = max(0, vw - ReachGeometry.oneHandWidth(viewWidth: vw))
-            if oneHandMode == 1 { trailing = free } else { leading = free }   // 靠左 / 靠右
-            chevron = free > 0
+        } else {
+            // iPhone portrait one-hand applies to EVERY iPhone regardless of screen
+            // width — no gate. oneHandWidth still clamps to the available width, so a
+            // narrow phone gets a full-width block (free == 0, no strip/chevron) while
+            // the mode is always honored. Applies to all portrait layouts incl. numpad.
+            let anchor = PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: landscape,
+                                                               portraitMode: portraitMode)
+            if anchor != 0 {
+                let free = max(0, vw - ReachGeometry.oneHandWidth(viewWidth: vw))
+                if anchor == 1 { trailing = free } else { leading = free }   // 靠左 / 靠右
+                chevron = free > 0
+            }
         }
         keyboardView?.setHorizontalAnchor(leading: leading, trailing: trailing, restoreChevron: chevron)
         // SPLIT_ONE_HAND_KB: keep the candidate bar's usable area aligned with the key block.
@@ -654,10 +680,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                                      with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         rotationSettling = true
+        layoutIsLandscape = size.width > size.height
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 guard let self else { return }
                 self.rotationSettling = false
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded()
                 self.applyHeight()
             }
         }
@@ -1201,6 +1230,34 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         return hot.integer(forKey: key)
     }
 
+    /// §1.8 hot-store seed for an Int pref that also needs a one-time migration when
+    /// neither hot nor cold holds it yet (issue #169 phone_portrait_keyboard_mode).
+    private func seededHotInt(_ key: String, cold: UserDefaults?, migrate: () -> Int) -> Int {
+        let hot = UserDefaults.standard
+        if hot.object(forKey: key) == nil {
+            if let seed = cold?.object(forKey: key) as? Int {
+                hot.set(seed, forKey: key)
+            } else {
+                hot.set(migrate(), forKey: key)
+            }
+        }
+        return hot.integer(forKey: key)
+    }
+
+    /// §1.8 hot-store seed for a Bool pref, with one-time migration when neither hot
+    /// nor cold holds it yet (issue #169 phone_landscape_split).
+    private func seededHotBool(_ key: String, cold: UserDefaults?, migrate: () -> Bool) -> Bool {
+        let hot = UserDefaults.standard
+        if hot.object(forKey: key) == nil {
+            if let seed = cold?.object(forKey: key) as? Bool {
+                hot.set(seed, forKey: key)
+            } else {
+                hot.set(migrate(), forKey: key)
+            }
+        }
+        return hot.bool(forKey: key)
+    }
+
     /// §1.8: reverse-lookup (per-IM) from the hot store, seeded once from cold on first read.
     /// This is the single effective reverse-lookup reader — hamburger picker, runtime commit,
     /// and menu label all route through it so the hot value always wins over stale cold (#157).
@@ -1240,6 +1297,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             UserDefaults.standard.set(anchor, forKey: "numpad_anchor")
             numpadAnchor = anchor
         }
+        if let pp = rec.phonePortraitMode {
+            UserDefaults.standard.set(pp, forKey: "phone_portrait_keyboard_mode")
+            phonePortraitKeyboardMode = pp
+        }
+        if let pls = rec.phoneLandscapeSplit {
+            UserDefaults.standard.set(pls, forKey: "phone_landscape_split")
+            phoneLandscapeSplit = pls
+        }
         if let reverse = rec.reverseLookup {
             for (im, value) in reverse { hotPrefs.setReverseLookup(value, for: im) }
         }
@@ -1259,7 +1324,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                                        oneHand: oneHandMode,
                                        numpadAnchor: numpadAnchor,
                                        reverseLookupIM: firstReverse?.key,
-                                       reverseLookupValue: firstReverse?.value)
+                                       reverseLookupValue: firstReverse?.value,
+                                       phonePortraitMode: phonePortraitKeyboardMode,
+                                       phoneLandscapeSplit: phoneLandscapeSplit,
+                                       geometryProfile: isOnPad ? "tablet" : "phone")
         return true
     }
 
@@ -1326,6 +1394,22 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         splitKeyboardMode = seededHotInt("split_keyboard_mode", cold: d)   // §1.8 hot store
         oneHandMode  = seededHotInt("one_hand_mode",  cold: d)   // §1.8 hot store
         numpadAnchor = seededHotInt("numpad_anchor",  cold: d)   // §1.8 hot store
+        // Issue #169: integrated iPhone portrait mode + landscape split. Seeded from
+        // cold; if absent, migrated once from the legacy one_hand_mode / split pair
+        // (legacyPhoneSplitSupported: false — iPhone split was never shipped, so we
+        // preserve one-hand but do not invent a legacy iPhone split).
+        phonePortraitKeyboardMode = seededHotInt("phone_portrait_keyboard_mode", cold: d, migrate: {
+            PhoneKeyboardModePolicy.migratePortraitMode(
+                legacyOneHand: d?.integer(forKey: "one_hand_mode") ?? 0,
+                legacySplit: d?.integer(forKey: "split_keyboard_mode") ?? 0,
+                legacyPhoneSplitSupported: false).rawValue
+        })
+        phoneLandscapeSplit = seededHotBool("phone_landscape_split", cold: d, migrate: {
+            PhoneKeyboardModePolicy.migrateLandscapeSplit(
+                legacySplit: d?.integer(forKey: "split_keyboard_mode") ?? 0,
+                legacyPhoneSplitSupported: false)
+        })
+        UserDefaults.standard.set(isOnPad ? "tablet" : "phone", forKey: "keyboard_geometry_profile")
         applyPrefsToSearchEngine()
     }
 
@@ -4011,10 +4095,12 @@ extension KeyboardViewController: KeyboardViewDelegate {
     }
 
     func keyboardViewDidTapOneHandRestore() {
-        // SPLIT_ONE_HAND_KB: chevron restores full width, persisted (§1.8 hot store + relay).
-        oneHandMode = 0
-        hotPrefs.oneHandMode = 0
-        _ = try? relayPrefStore.update(oneHand: 0)
+        // Issue #169: chevron restores full width by resetting the integrated portrait
+        // mode to standard, persisted (§1.8 hot store + relay back to the settings app).
+        phonePortraitKeyboardMode = PhoneKeyboardPortraitMode.standard.rawValue
+        hotPrefs.phonePortraitKeyboardMode = PhoneKeyboardPortraitMode.standard.rawValue
+        _ = try? relayPrefStore.update(phonePortraitMode: PhoneKeyboardPortraitMode.standard.rawValue,
+                                       geometryProfile: "phone")
         view.setNeedsLayout()
     }
 
@@ -4532,9 +4618,13 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                   labels: ["無", "繁→簡", "簡→繁"], selected: pendingHan,
                                   onSelect: { pendingHan = $0 }))
 
-        // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
-        // ordinary layouts show 分離鍵盤 (iPad) / 單手鍵盤 (gated iPhone).
+        // Menu exclusivity keyed off the active layout + orientation (issue #169):
+        //  · iPad ordinary  → 分離鍵盤 (tri-state); iPad numpad → 數字鍵盤位置.
+        //  · iPhone portrait → 直向鍵盤模式 (標準/分離/靠左/靠右; 分離 hidden for numpad).
+        //  · iPhone landscape → 橫向分離鍵盤 (binary; hidden for numpad).
+        // iPhone controls are shown on EVERY iPhone regardless of screen width — no gate.
         let numpadLayout = isNumpadLayout
+        let landscape = layoutIsLandscape ?? (UIScreen.main.bounds.width > UIScreen.main.bounds.height)
         var pendingSplit = max(0, min(splitKeyboardMode, 2))
         let splitStart = pendingSplit
         if isOnPad && !numpadLayout {
@@ -4542,13 +4632,27 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                       labels: ["關閉", "開啟", "僅橫向"], selected: pendingSplit,
                                       onSelect: { pendingSplit = $0 }))
         }
-        var pendingOneHand = max(0, min(oneHandMode, 2))
-        let oneHandStart = pendingOneHand
-        let screenShort = min(UIScreen.main.bounds.width, UIScreen.main.bounds.height)
-        if !isOnPad && ReachGeometry.oneHandAvailable(screenWidthPt: screenShort) {
-            entries.append(.segmented(title: "單手鍵盤", icon: "keyboard",
-                                      labels: ["關閉", "靠左", "靠右"], selected: pendingOneHand,
-                                      onSelect: { pendingOneHand = $0 }))
+        // 直向鍵盤模式 (iPhone portrait): 分離 hidden for numpad layouts. pendingPortrait
+        // keeps its raw value until the user taps, so an impossible stored 分離 on a
+        // numpad layout is shown as 標準 without being rewritten on dismiss.
+        var pendingPortrait = max(0, min(phonePortraitKeyboardMode, 3))
+        let portraitStart = pendingPortrait
+        if !isOnPad && !landscape {
+            let modeValues: [Int]    = numpadLayout ? [0, 2, 3] : [0, 1, 2, 3]
+            let modeLabels: [String] = numpadLayout ? ["標準", "靠左", "靠右"]
+                                                    : ["標準", "分離", "靠左", "靠右"]
+            let selectedIdx = modeValues.firstIndex(of: pendingPortrait) ?? 0
+            entries.append(.segmented(title: "直向鍵盤模式", icon: "keyboard",
+                                      labels: modeLabels, selected: selectedIdx,
+                                      onSelect: { pendingPortrait = modeValues[$0] }))
+        }
+        // 橫向分離鍵盤 (iPhone landscape, ordinary layouts only).
+        var pendingLandscapeSplit = phoneLandscapeSplit
+        let landscapeSplitStart = pendingLandscapeSplit
+        if !isOnPad && landscape && !numpadLayout {
+            entries.append(.segmented(title: "橫向分離鍵盤", icon: "rectangle.split.2x1",
+                                      labels: ["關閉", "開啟"], selected: pendingLandscapeSplit ? 1 : 0,
+                                      onSelect: { pendingLandscapeSplit = ($0 == 1) }))
         }
         var pendingAnchor = max(0, min(numpadAnchor, 3))
         let anchorStart = pendingAnchor
@@ -4580,9 +4684,15 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
                 changed = true
             }
-            if pendingOneHand != oneHandStart {
-                self.oneHandMode = pendingOneHand
-                self.hotPrefs.oneHandMode = pendingOneHand   // §1.8 hot store, not cold
+            if pendingPortrait != portraitStart {
+                self.phonePortraitKeyboardMode = pendingPortrait
+                self.hotPrefs.phonePortraitKeyboardMode = pendingPortrait   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
+            if pendingLandscapeSplit != landscapeSplitStart {
+                self.phoneLandscapeSplit = pendingLandscapeSplit
+                self.hotPrefs.phoneLandscapeSplit = pendingLandscapeSplit   // §1.8 hot store, not cold
                 self.view.setNeedsLayout()
                 changed = true
             }
@@ -4596,7 +4706,10 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 _ = try? self.relayPrefStore.update(hanConvert: self.hanConvertOption,
                                                     splitKeyboard: self.splitKeyboardMode,
                                                     oneHand: self.oneHandMode,
-                                                    numpadAnchor: self.numpadAnchor)
+                                                    numpadAnchor: self.numpadAnchor,
+                                                    phonePortraitMode: self.phonePortraitKeyboardMode,
+                                                    phoneLandscapeSplit: self.phoneLandscapeSplit,
+                                                    geometryProfile: self.isOnPad ? "tablet" : "phone")
             }
         })
     }

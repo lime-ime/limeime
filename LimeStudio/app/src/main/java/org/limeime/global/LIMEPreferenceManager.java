@@ -30,6 +30,7 @@ import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
 
 import org.limeime.data.ImConfig;
+import org.limeime.keyboard.PhoneKeyboardModePolicy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -668,6 +669,61 @@ public class LIMEPreferenceManager {
 		putStringAndBumpStartupConfigVersionIfChanged(sp, "one_hand_mode", Integer.toString(mode));
 	}
 
+	public synchronized void ensurePhoneKeyboardPreferencesMigrated(){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean migratePortrait = !sp.contains("phone_portrait_keyboard_mode");
+		boolean migrateLandscape = !sp.contains("phone_landscape_split");
+		if(!migratePortrait && !migrateLandscape) return;
+
+		int legacyOneHand = Integer.parseInt(sp.getString("one_hand_mode", "0"));
+		int legacySplit = Integer.parseInt(sp.getString("split_keyboard_mode", "0"));
+		SharedPreferences.Editor editor = sp.edit();
+		if(migratePortrait){
+			editor.putString("phone_portrait_keyboard_mode", Integer.toString(
+					PhoneKeyboardModePolicy.migratePortraitMode(legacyOneHand, legacySplit, true)));
+		}
+		if(migrateLandscape){
+			editor.putBoolean("phone_landscape_split",
+					PhoneKeyboardModePolicy.migrateLandscapeSplit(legacySplit, true));
+		}
+		putNextStartupConfigVersion(sp, editor);
+		editor.commit();
+	}
+
+	public int getPhonePortraitKeyboardMode(){
+		ensurePhoneKeyboardPreferencesMigrated();
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		int mode = Integer.parseInt(sp.getString("phone_portrait_keyboard_mode", "0"));
+		return mode >= PhoneKeyboardModePolicy.PORTRAIT_STANDARD
+				&& mode <= PhoneKeyboardModePolicy.PORTRAIT_ONE_HAND_RIGHT
+				? mode : PhoneKeyboardModePolicy.PORTRAIT_STANDARD;
+	}
+
+	public void setPhonePortraitKeyboardMode(int mode){
+		if(mode < PhoneKeyboardModePolicy.PORTRAIT_STANDARD
+				|| mode > PhoneKeyboardModePolicy.PORTRAIT_ONE_HAND_RIGHT){
+			mode = PhoneKeyboardModePolicy.PORTRAIT_STANDARD;
+		}
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		putStringAndBumpStartupConfigVersionIfChanged(
+				sp, "phone_portrait_keyboard_mode", Integer.toString(mode));
+	}
+
+	public boolean getPhoneLandscapeSplit(){
+		ensurePhoneKeyboardPreferencesMigrated();
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getBoolean("phone_landscape_split", false);
+	}
+
+	public void setPhoneLandscapeSplit(boolean enabled){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		boolean changed = !sp.contains("phone_landscape_split")
+				|| sp.getBoolean("phone_landscape_split", false) != enabled;
+		SharedPreferences.Editor editor = sp.edit().putBoolean("phone_landscape_split", enabled);
+		if(changed) putNextStartupConfigVersion(sp, editor);
+		editor.apply();
+	}
+
 	public int getNumpadAnchor(){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		return Integer.parseInt(sp.getString("numpad_anchor", "0"));
@@ -708,6 +764,8 @@ public class LIMEPreferenceManager {
 			case "show_arrow_key":
 			case "split_keyboard_mode":
 			case "one_hand_mode":
+			case "phone_portrait_keyboard_mode":
+			case "phone_landscape_split":
 			case "numpad_anchor":
 			case "keyboard_theme":
 			case "language_mode":
@@ -737,7 +795,7 @@ public class LIMEPreferenceManager {
 		return next;
 	}
 
-	private long putNextStartupConfigVersion(SharedPreferences sp, SharedPreferences.Editor editor){
+	static long putNextStartupConfigVersion(SharedPreferences sp, SharedPreferences.Editor editor){
 		long current = sp.getLong(STARTUP_CONFIG_VERSION, 0L);
 		long next = Math.max(System.currentTimeMillis(), current + 1L);
 		editor.putLong(STARTUP_CONFIG_VERSION, next);

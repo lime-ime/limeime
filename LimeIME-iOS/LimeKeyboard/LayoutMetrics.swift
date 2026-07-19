@@ -644,7 +644,6 @@ enum ReachGeometry {
     static let splitHalfMaxMM: CGFloat = 66
     static let splitRowMaxMM: CGFloat = 12
     static let oneHandMaxWidthMM: CGFloat = 60
-    static let oneHandGateMarginMM: CGFloat = 4
     static let numpadKeyMM: CGFloat = 14
     static let numpadAnchorMaxFraction: CGFloat = 0.40
 
@@ -666,11 +665,6 @@ enum ReachGeometry {
     /// Vertical thumb-sweep cap on split-mode row height.
     static func splitRowHeightCap(sizeClass: IPadSizeClass) -> CGFloat {
         splitRowMaxMM * ptPerMM(isPad: true, sizeClass: sizeClass)
-    }
-
-    /// Gate: one-hand mode only where shrinking is meaningful (≈5.5"+ phones).
-    static func oneHandAvailable(screenWidthPt: CGFloat) -> Bool {
-        screenWidthPt > (oneHandMaxWidthMM + oneHandGateMarginMM) * ptPerMM(isPad: false, sizeClass: .small)
     }
 
     static func oneHandWidth(viewWidth: CGFloat) -> CGFloat {

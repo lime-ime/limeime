@@ -176,6 +176,16 @@ public class LIMEPreference extends AppCompatActivity {
 
 		@Override
 		public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+			// Issue #169: migrate the two phone geometry keys before XML inflation can persist
+			// their defaults and mask legacy split/one-hand values.
+			if (ctx == null) {
+				ctx = requireActivity().getApplicationContext();
+			}
+			mLIMEPref = new LIMEPreferenceManager(ctx);
+			boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+			if (!isTablet) {
+				mLIMEPref.ensurePhoneKeyboardPreferencesMigrated();
+			}
 			// Load the preferences from an XML resource (scoped to rootKey for nested PreferenceScreen drill-down)
 			setPreferencesFromResource(R.xml.preference, rootKey);
 
@@ -201,10 +211,6 @@ public class LIMEPreference extends AppCompatActivity {
 				}
 			}
 
-			if (ctx == null) {
-				ctx = requireActivity().getApplicationContext();
-			}
-			mLIMEPref = new LIMEPreferenceManager(ctx);
 			SearchSrv = new SearchServer(ctx);
 			configureReverseLookupPreferenceEntries();
 
@@ -217,13 +223,20 @@ public class LIMEPreference extends AppCompatActivity {
 				}
 			}
 
-			// SPLIT_ONE_HAND_KB: 單手鍵盤 = gated phones only; 數字鍵盤位置 = tablets only.
-			android.util.DisplayMetrics rdm = getResources().getDisplayMetrics();
-			boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
-			androidx.preference.Preference oneHandPref = findPreference("one_hand_mode");
-			if (oneHandPref != null)
-				oneHandPref.setVisible(!isTablet && org.limeime.keyboard.ReachGeometry.oneHandAvailable(
-						Math.min(rdm.widthPixels, rdm.heightPixels), rdm.xdpi));
+			// Issue #169: phone portrait mode + phone landscape split apply to EVERY
+			// phone regardless of screen width (no width gate). Tablets
+			// (smallestScreenWidthDp >= 600) use split_keyboard_mode + numpad_anchor only.
+			boolean phoneControls =
+					org.limeime.keyboard.PhoneKeyboardModePolicy.phoneControlsApply(isTablet);
+			androidx.preference.Preference portraitModePref = findPreference("phone_portrait_keyboard_mode");
+			if (portraitModePref != null)
+				portraitModePref.setVisible(phoneControls);
+			androidx.preference.Preference landscapeSplitPref = findPreference("phone_landscape_split");
+			if (landscapeSplitPref != null)
+				landscapeSplitPref.setVisible(phoneControls);
+			androidx.preference.Preference splitPref = findPreference("split_keyboard_mode");
+			if (splitPref != null)
+				splitPref.setVisible(isTablet);
 			androidx.preference.Preference numpadAnchorPref = findPreference("numpad_anchor");
 			if (numpadAnchorPref != null)
 				numpadAnchorPref.setVisible(isTablet);

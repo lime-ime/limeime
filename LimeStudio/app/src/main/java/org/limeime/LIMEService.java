@@ -2276,9 +2276,12 @@ public class LIMEService extends InputMethodService
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
             handleOptions();
         } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_ONE_HAND_RESTORE) {
-            // SPLIT_ONE_HAND_KB: chevron tap restores full width, persisted (spec).
+            // Issue #169: chevron tap restores full width by setting the integrated
+            // portrait mode back to standard, persisted (spec).
             // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
-            mLIMEPref.setOneHandMode(0);
+            mLIMEPref.setPhonePortraitKeyboardMode(
+                    org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_STANDARD);
+            invalidateStartupConfigSnapshot();
             applyGeometryChangeInPlace();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
@@ -3685,14 +3688,20 @@ public class LIMEService extends InputMethodService
         // ordinary layouts show 分離鍵盤 / 單手鍵盤. (spec: keyboard-menu rule)
         final boolean isNumpadKb = mKeyboardSwitcher.isNumpadKeyboard();
         final boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        // Phones show only the control that affects the current orientation: portrait
-        // is one-hand territory, landscape is split territory (split renders
-        // landscape-only on phones). Tablets keep the split control in both.
-        final boolean hasSplitOption = !isNumpadKb && !(isLandScape && mShowArrowKeys > 0)
-                && (isTablet || isLandScape);
-        final boolean hasOneHandOption = !isTablet && !isLandScape
-                && org.limeime.keyboard.ReachGeometry.oneHandAvailable(
-                        Math.min(displayWidth, displayHeight), dm.xdpi);
+        // Issue #169: tablets keep the tri-state 分離鍵盤 control (ordinary layouts) and
+        // 數字鍵盤位置 (numpad layouts). Phones use the integrated 直向鍵盤模式 in portrait
+        // and the binary 橫向分離鍵盤 in landscape — shown on EVERY phone regardless of
+        // screen width (no gate). Numpad layouts never split, so on a phone the portrait
+        // control hides its 分離 segment and the landscape control is not shown.
+        final boolean phoneControls =
+                org.limeime.keyboard.PhoneKeyboardModePolicy.phoneControlsApply(isTablet);
+        final boolean hasTabletSplitOption = isTablet && !isNumpadKb
+                && !(isLandScape && mShowArrowKeys > 0);
+        final boolean hasPhonePortraitMode = phoneControls && !isLandScape;
+        // Android's legacy landscape arrow-key layout requires the centre split. Hide the
+        // binary preference while arrows force it on, because 關閉 could not take effect.
+        final boolean hasPhoneLandscapeSplit = phoneControls && isLandScape && !isNumpadKb
+                && mShowArrowKeys == 0;
         final boolean hasNumpadAnchorOption = isTablet && isNumpadKb;
 
         // Custom panel: every entry is a styled row and 簡繁轉換 hosts its segmented
@@ -3747,23 +3756,16 @@ public class LIMEService extends InputMethodService
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(hanGroup);
         }
 
-        // 分離鍵盤 inline segmented control (0=關閉 1=開啟 2=僅橫向), shown only when
-        // the split option is available in the current orientation.
+        // 分離鍵盤 inline segmented control (0=關閉 1=開啟 2=僅橫向), tablets only —
+        // ordinary (non-numpad) layouts. Phones use 直向鍵盤模式 / 橫向分離鍵盤 below.
         final int splitCurrent = clampIndex(mSplitKeyboard, 3);
         final int[] pendingSplit = { splitCurrent };
-        if (hasSplitOption) {
+        if (hasTabletSplitOption) {
             panel.findViewById(R.id.menu_split_block).setVisibility(android.view.View.VISIBLE);
             com.google.android.material.button.MaterialButtonToggleGroup splitGroup =
                     panel.findViewById(R.id.split_toggle_group);
             final int[] splitIds = { R.id.split_opt_off, R.id.split_opt_on, R.id.split_opt_landscape };
-            if (!isTablet) {
-                // Phones: split renders landscape-only, so 開啟 and 僅橫向 are the same
-                // thing — binary control. Stored 僅橫向 lights 開啟.
-                panel.findViewById(R.id.split_opt_landscape).setVisibility(android.view.View.GONE);
-                splitGroup.check(splitIds[splitCurrent == 0 ? 0 : 1]);
-            } else {
-                splitGroup.check(splitIds[splitCurrent]);
-            }
+            splitGroup.check(splitIds[splitCurrent]);
             splitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
                 for (int i = 0; i < splitIds.length; i++) {
@@ -3773,23 +3775,52 @@ public class LIMEService extends InputMethodService
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(splitGroup);
         }
 
-        // 單手鍵盤 inline segmented control (0=關閉 1=靠左 2=靠右), shown only when
-        // the screen is wide enough for one-hand shrinking to be meaningful.
-        final int oneHandCurrent = clampIndex(mLIMEPref.getOneHandMode(), 3);
-        final int[] pendingOneHand = { oneHandCurrent };
-        if (hasOneHandOption) {
-            panel.findViewById(R.id.menu_onehand_block).setVisibility(android.view.View.VISIBLE);
-            com.google.android.material.button.MaterialButtonToggleGroup oneHandGroup =
-                    panel.findViewById(R.id.onehand_toggle_group);
-            final int[] oneHandIds = { R.id.onehand_opt_off, R.id.onehand_opt_left, R.id.onehand_opt_right };
-            oneHandGroup.check(oneHandIds[oneHandCurrent]);
-            oneHandGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+        // 直向鍵盤模式 integrated phone-portrait control (0=標準 1=分離 2=靠左 3=靠右).
+        // Issue #169: shown on every phone in portrait, no width gate. 分離 is hidden
+        // for numpad layouts (numpads never split); if a stored 分離 meets a numpad
+        // layout it is shown as 標準 without rewriting the stored value.
+        final int portraitCurrent = clampIndex(mLIMEPref.getPhonePortraitKeyboardMode(), 4);
+        final int[] pendingPortrait = { portraitCurrent };
+        if (hasPhonePortraitMode) {
+            panel.findViewById(R.id.menu_portrait_mode_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup portraitGroup =
+                    panel.findViewById(R.id.portrait_mode_toggle_group);
+            final int[] portraitIds = { R.id.portrait_opt_standard, R.id.portrait_opt_split,
+                    R.id.portrait_opt_left, R.id.portrait_opt_right };
+            if (isNumpadKb) {
+                panel.findViewById(R.id.portrait_opt_split).setVisibility(android.view.View.GONE);
+                portraitGroup.check(portraitIds[portraitCurrent
+                        == org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_SPLIT
+                        ? org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_STANDARD
+                        : portraitCurrent]);
+            } else {
+                portraitGroup.check(portraitIds[portraitCurrent]);
+            }
+            portraitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
-                for (int i = 0; i < oneHandIds.length; i++) {
-                    if (oneHandIds[i] == checkedId) { pendingOneHand[0] = i; break; }
+                for (int i = 0; i < portraitIds.length; i++) {
+                    if (portraitIds[i] == checkedId) { pendingPortrait[0] = i; break; }
                 }
             });
-            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(oneHandGroup);
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(portraitGroup);
+        }
+
+        // 橫向分離鍵盤 binary phone-landscape control (關閉 / 開啟), independent of the
+        // portrait mode. Issue #169: shown on every phone in landscape (ordinary
+        // layouts only; numpads never split), no width gate.
+        final boolean landscapeSplitCurrent = mLIMEPref.getPhoneLandscapeSplit();
+        final boolean[] pendingLandscapeSplit = { landscapeSplitCurrent };
+        if (hasPhoneLandscapeSplit) {
+            panel.findViewById(R.id.menu_landscape_split_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup landscapeSplitGroup =
+                    panel.findViewById(R.id.landscape_split_toggle_group);
+            final int[] landscapeSplitIds = { R.id.landscape_split_opt_off, R.id.landscape_split_opt_on };
+            landscapeSplitGroup.check(landscapeSplitIds[landscapeSplitCurrent ? 1 : 0]);
+            landscapeSplitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                pendingLandscapeSplit[0] = checkedId == R.id.landscape_split_opt_on;
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(landscapeSplitGroup);
         }
 
         // 數字鍵盤位置 inline segmented control (0=滿版 1=靠左 2=靠右 3=置中), shown only
@@ -3822,8 +3853,12 @@ public class LIMEService extends InputMethodService
                 mLIMEPref.setSplitKeyboard(pendingSplit[0]);
                 geometryChanged = true;
             }
-            if (pendingOneHand[0] != oneHandCurrent) {
-                mLIMEPref.setOneHandMode(pendingOneHand[0]);
+            if (pendingPortrait[0] != portraitCurrent) {
+                mLIMEPref.setPhonePortraitKeyboardMode(pendingPortrait[0]);
+                geometryChanged = true;
+            }
+            if (pendingLandscapeSplit[0] != landscapeSplitCurrent) {
+                mLIMEPref.setPhoneLandscapeSplit(pendingLandscapeSplit[0]);
                 geometryChanged = true;
             }
             if (pendingAnchor[0] != anchorCurrent) {

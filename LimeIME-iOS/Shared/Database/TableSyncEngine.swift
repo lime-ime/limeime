@@ -140,7 +140,7 @@ final class TableSyncEngine {
         }
         try Self.renameReplacing(tempURL, with: snapshotURL)
 
-        // §1.8: the four keyboard-owned hamburger prefs live in the extension's own
+        // §1.8: keyboard-owned hamburger prefs live in the extension's own
         // container, not this hot DB. Backup is the one FA-on moment the keyboard may write
         // the App Group, so flush them to cold now — the app's preference sidecar then
         // captures the CURRENT values, not cold's stale copy.
@@ -154,14 +154,26 @@ final class TableSyncEngine {
                         to: SyncPaths.receipt(appGroupBaseURL))
     }
 
-    /// §1.8: copy the four keyboard-owned prefs from the extension's own container
+    /// §1.8: copy the active device profile's keyboard-owned prefs from the extension's own container
     /// (`UserDefaults.standard`) to the App Group (cold) so a backup's preference sidecar
     /// captures current values. Runs only inside the FA-on backup handshake — the one time
     /// the keyboard may write the App Group.
     private func flushHotPrefsToColdForBackup() {
         let hot = UserDefaults.standard
         guard let cold = UserDefaults(suiteName: LIMEPreferenceManager.suiteName) else { return }
-        for key in ["han_convert_option", "split_keyboard_mode"] {
+        // Issue #169: flush only the active device-class geometry profile. The cold
+        // store keeps the other profile dormant; a phone must never rewrite iPad
+        // split/numpad values, and an iPad must never rewrite phone values.
+        var keys = ["han_convert_option"]
+        switch hot.string(forKey: "keyboard_geometry_profile") {
+        case "phone":
+            keys += ["phone_portrait_keyboard_mode", "phone_landscape_split"]
+        case "tablet":
+            keys += ["split_keyboard_mode", "numpad_anchor"]
+        default:
+            break
+        }
+        for key in keys {
             if let value = hot.object(forKey: key) { cold.set(value, forKey: key) }
         }
         if let activeIM = hot.string(forKey: "active_im"), !activeIM.isEmpty {

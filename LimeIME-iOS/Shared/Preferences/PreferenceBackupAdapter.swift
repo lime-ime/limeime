@@ -47,6 +47,13 @@ enum PreferenceBackupAdapter {
         Spec(key: "number_row_in_english", type: .bool, iosSupported: true),
         Spec(key: "show_arrow_key", type: .int, iosSupported: true),
         Spec(key: "split_keyboard_mode", type: .int, iosSupported: true),
+        Spec(key: "one_hand_mode", type: .int, iosSupported: true),
+        // Issue #169: integrated iPhone portrait mode + landscape split. Backed up
+        // alongside the tablet/iPad split key so a backup restored across form factors
+        // preserves both the phone and tablet profiles without cross-writing.
+        Spec(key: "phone_portrait_keyboard_mode", type: .int, iosSupported: true),
+        Spec(key: "phone_landscape_split", type: .bool, iosSupported: true),
+        Spec(key: "numpad_anchor", type: .int, iosSupported: true),
         Spec(key: "vibrate_on_keypress", type: .bool, iosSupported: true),
         Spec(key: "vibrate_level", type: .int, iosSupported: true),
         Spec(key: "sound_on_keypress", type: .bool, iosSupported: true),
@@ -160,6 +167,29 @@ enum PreferenceBackupAdapter {
         for (key, value) in preferences where isSupportedDynamicKey(key) {
             if let boolValue = value as? Bool {
                 standardDefaults.set(boolValue, forKey: key)
+            }
+        }
+        // Issue #169: old manifests contain only the separate split/one-hand keys. Derive
+        // canonical phone keys during restore even when new-key defaults already exist locally.
+        // Legacy iOS split was iPad-only; only an Android source may infer phone split from it.
+        let hasLegacyGeometry = preferences["split_keyboard_mode"] != nil
+            || preferences["one_hand_mode"] != nil
+        if hasLegacyGeometry {
+            let legacySplit = preferences["split_keyboard_mode"] as? Int ?? 0
+            let legacyOneHand = preferences["one_hand_mode"] as? Int ?? 0
+            let legacyPhoneSplitSupported = (root["sourcePlatform"] as? String)?.lowercased() != "ios"
+            if preferences["phone_portrait_keyboard_mode"] == nil {
+                let migrated = PhoneKeyboardModePolicy.migratePortraitMode(
+                    legacyOneHand: legacyOneHand,
+                    legacySplit: legacySplit,
+                    legacyPhoneSplitSupported: legacyPhoneSplitSupported)
+                defaults.set(migrated.rawValue, forKey: "phone_portrait_keyboard_mode")
+            }
+            if preferences["phone_landscape_split"] == nil {
+                let migrated = PhoneKeyboardModePolicy.migrateLandscapeSplit(
+                    legacySplit: legacySplit,
+                    legacyPhoneSplitSupported: legacyPhoneSplitSupported)
+                defaults.set(migrated, forKey: "phone_landscape_split")
             }
         }
         defaults.synchronize()

@@ -782,6 +782,14 @@ public class LIMEBaseKeyboard {
      * @param modeId         keyboard mode identifier
      */
     public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible) {
+        this(context, xmlLayoutResId, modeId, keySizeScale, showArrowKeys, splitKeyboard, splitEligible, false);
+    }
+
+    // SPLIT_ONE_HAND_KB / issue #169: phoneSplitForced carries the phone split
+    // decision already resolved by PhoneKeyboardModePolicy in LIMEKeyboardSwitcher
+    // (integrated portrait mode + separate landscape split). Tablets ignore it and
+    // keep the legacy value-based, orientation-gated decision below.
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible, boolean phoneSplitForced) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         // Issue #47: use the actual usable window width (excluding system bars and
         // display cutout insets) so percentage-based key widths don't overflow the
@@ -817,14 +825,21 @@ public class LIMEBaseKeyboard {
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
         //Jeremy '12,5,27 read splitkeyboard setting from preference.
         //Jeremy '12,6,19  add orientation consideration on split keyboard
-        // SPLIT_ONE_HAND_KB: on phones split renders in landscape only, whatever the
-        // stored value — portrait phone split keys fall below SPLIT_KEY_MIN_MM and
-        // portrait geometry belongs to one-hand mode (spec eligibility matrix).
+        // SPLIT_ONE_HAND_KB / issue #169: tablets keep the legacy value-based,
+        // orientation-gated split decision. Phones use the integrated portrait mode
+        // + separate landscape split, resolved into phoneSplitForced by
+        // PhoneKeyboardModePolicy in LIMEKeyboardSwitcher (portrait split is honored;
+        // landscape split uses phone_landscape_split unless Android arrow keys force the
+        // centre split required by the legacy arrow-key layout).
         boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        mSplitKeyboard = splitEligible
-                && ((mLandScape && mShowArrowKeys != 0)
-                || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
+        if (tablet) {
+            mSplitKeyboard = splitEligible
+                    && ((mLandScape && mShowArrowKeys != 0)
+                    || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
+                    || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
+        } else {
+            mSplitKeyboard = splitEligible && phoneSplitForced;
+        }
 
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }

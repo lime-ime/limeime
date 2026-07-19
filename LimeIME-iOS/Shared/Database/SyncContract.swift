@@ -127,6 +127,13 @@ struct RelayPrefState: Codable, Equatable {
     // set" stays distinguishable from "explicitly set to 0" — older stored JSON still decodes.
     var oneHand: Int? = nil
     var numpadAnchor: Int? = nil
+    // Issue #169: integrated iPhone portrait mode + landscape split mirrors. Optional so
+    // older stored JSON still decodes and "never set" stays distinguishable from 0/false.
+    var phonePortraitMode: Int? = nil
+    var phoneLandscapeSplit: Bool? = nil
+    // Device-class scope for geometry fields. Older relay files omit this and retain
+    // their legacy payload shape; new writes use "phone" or "tablet".
+    var geometryProfile: String? = nil
 }
 
 final class KeyboardRelayPrefStore {
@@ -156,6 +163,9 @@ final class KeyboardRelayPrefStore {
                 numpadAnchor: Int? = nil,
                 reverseLookupIM: String? = nil,
                 reverseLookupValue: String? = nil,
+                phonePortraitMode: Int? = nil,
+                phoneLandscapeSplit: Bool? = nil,
+                geometryProfile: String? = nil,
                 updatedAt: TimeInterval = Date().timeIntervalSince1970) throws -> RelayPrefState {
         let current = try read()
         let state = RelayPrefState(hanConvert: hanConvert ?? current?.hanConvert ?? 0,
@@ -164,7 +174,10 @@ final class KeyboardRelayPrefStore {
                                    reverseLookupIM: reverseLookupIM ?? current?.reverseLookupIM,
                                    reverseLookupValue: reverseLookupValue ?? current?.reverseLookupValue,
                                    oneHand: oneHand ?? current?.oneHand,
-                                   numpadAnchor: numpadAnchor ?? current?.numpadAnchor)
+                                   numpadAnchor: numpadAnchor ?? current?.numpadAnchor,
+                                   phonePortraitMode: phonePortraitMode ?? current?.phonePortraitMode,
+                                   phoneLandscapeSplit: phoneLandscapeSplit ?? current?.phoneLandscapeSplit,
+                                   geometryProfile: geometryProfile ?? current?.geometryProfile)
         try write(state)
         return state
     }
@@ -181,6 +194,9 @@ struct PrefInboxRecord: Codable, Equatable {
     var splitKeyboard: Int?
     var oneHand: Int?
     var numpadAnchor: Int?
+    // Issue #169: integrated iPhone portrait mode + landscape split.
+    var phonePortraitMode: Int?
+    var phoneLandscapeSplit: Bool?
     var reverseLookup: [String: String]?
     /// Active IM — only ever set by a wholesale restore (the restored backup's active IM).
     var activeIM: String?
@@ -200,6 +216,8 @@ enum PrefInbox {
                       splitKeyboard: Int? = nil,
                       oneHand: Int? = nil,
                       numpadAnchor: Int? = nil,
+                      phonePortraitMode: Int? = nil,
+                      phoneLandscapeSplit: Bool? = nil,
                       reverseLookup: (im: String, value: String)? = nil,
                       activeIM: String? = nil) throws {
         let url = SyncPaths.prefInbox(base)
@@ -216,6 +234,8 @@ enum PrefInbox {
             splitKeyboard: splitKeyboard ?? current?.splitKeyboard,
             oneHand: oneHand ?? current?.oneHand,
             numpadAnchor: numpadAnchor ?? current?.numpadAnchor,
+            phonePortraitMode: phonePortraitMode ?? current?.phonePortraitMode,
+            phoneLandscapeSplit: phoneLandscapeSplit ?? current?.phoneLandscapeSplit,
             reverseLookup: mergedReverse.isEmpty ? nil : mergedReverse,
             activeIM: activeIM ?? current?.activeIM)
         try FileManager.default.createDirectory(at: SyncPaths.inboxDir(base),
@@ -241,6 +261,8 @@ enum PrefInbox {
 enum RelayPrefSync {
     static let hanConvertKey = "han_convert_option"
     static let splitKeyboardKey = "split_keyboard_mode"
+    static let phonePortraitModeKey = "phone_portrait_keyboard_mode"
+    static let phoneLandscapeSplitKey = "phone_landscape_split"
     static let appliedAtKey = "relay_pref_applied_at"
 
     /// Reverse-lookup is stored per-IM under `<IM>_im_reverselookup` (see
@@ -252,21 +274,33 @@ enum RelayPrefSync {
                       split: Int?,
                       reverseLookupIM: String? = nil,
                       reverseLookupValue: String? = nil,
+                      phonePortraitMode: Int? = nil,
+                      phoneLandscapeSplit: Bool? = nil,
                       pts: TimeInterval?,
                       to defaults: UserDefaults) -> Bool {
         guard let pts, pts > defaults.double(forKey: appliedAtKey) else { return false }
         let validHan = han.flatMap { (0...2).contains($0) ? $0 : nil }
         let validSplit = split.flatMap { (0...2).contains($0) ? $0 : nil }
+        // Issue #169: relay the integrated iPhone portrait mode back so a globe-menu
+        // change updates the settings app (FA-off path), exactly like split does.
+        let validPortrait = phonePortraitMode.flatMap { (0...3).contains($0) ? $0 : nil }
         let rlIM = reverseLookupIM.flatMap { $0.isEmpty ? nil : $0 }
         let rlVal = reverseLookupValue.flatMap { $0.isEmpty ? nil : $0 }
         let hasReverseLookup = rlIM != nil && rlVal != nil
-        guard validHan != nil || validSplit != nil || hasReverseLookup else { return false }
+        guard validHan != nil || validSplit != nil || hasReverseLookup
+              || validPortrait != nil || phoneLandscapeSplit != nil else { return false }
 
         if let validHan {
             defaults.set(validHan, forKey: hanConvertKey)
         }
         if let validSplit {
             defaults.set(validSplit, forKey: splitKeyboardKey)
+        }
+        if let validPortrait {
+            defaults.set(validPortrait, forKey: phonePortraitModeKey)
+        }
+        if let phoneLandscapeSplit {
+            defaults.set(phoneLandscapeSplit, forKey: phoneLandscapeSplitKey)
         }
         if let rlIM, let rlVal {
             defaults.set(rlVal, forKey: reverseLookupKey(for: rlIM))
@@ -298,7 +332,15 @@ enum RelayPrefSync {
 func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
     var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
     if let prefs {
-        payload += ";han=\(prefs.hanConvert);split=\(prefs.splitKeyboard);oh=\(prefs.oneHand ?? 0);na=\(prefs.numpadAnchor ?? 0);pts=\(prefs.updatedAt)"
+        payload += ";han=\(prefs.hanConvert)"
+        if prefs.geometryProfile != "phone" {
+            payload += ";split=\(prefs.splitKeyboard);oh=\(prefs.oneHand ?? 0);na=\(prefs.numpadAnchor ?? 0)"
+        }
+        if prefs.geometryProfile != "tablet" {
+            if let portrait = prefs.phonePortraitMode { payload += ";pp=\(portrait)" }
+            if let landscape = prefs.phoneLandscapeSplit { payload += ";pls=\(landscape ? 1 : 0)" }
+        }
+        payload += ";pts=\(prefs.updatedAt)"
         if let im = prefs.reverseLookupIM, let val = prefs.reverseLookupValue,
            !im.isEmpty, !val.isEmpty {
             payload += ";rlim=\(im);rlval=\(val)"
@@ -307,7 +349,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, phonePortraitMode: Int?, phoneLandscapeSplit: Bool?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -329,6 +371,8 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var split: Int?
     var oneHand: Int?
     var numpadAnchor: Int?
+    var phonePortraitMode: Int?
+    var phoneLandscapeSplit: Bool?
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
@@ -356,6 +400,12 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
         case "na":
             let digits = value.prefix { $0.isNumber || $0 == "-" }
             numpadAnchor = Int(digits)
+        case "pp":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            phonePortraitMode = Int(digits)
+        case "pls":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            if let v = Int(digits) { phoneLandscapeSplit = (v != 0) }
         case "pts":
             let digits = value.prefix { $0.isNumber || $0 == "." || $0 == "-" }
             if let parsed = Double(digits), parsed.isFinite {
@@ -369,7 +419,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, pts: pts, rlim: rlim, rlval: rlval)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, phonePortraitMode: phonePortraitMode, phoneLandscapeSplit: phoneLandscapeSplit, pts: pts, rlim: rlim, rlval: rlval)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {

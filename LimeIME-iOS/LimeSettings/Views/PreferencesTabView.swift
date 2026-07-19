@@ -40,8 +40,11 @@ struct PreferencesTabView: View {
     @AppStorage("number_row_in_english",   store: sharedDefaults) private var numberRowInEnglish: Bool = true
     @AppStorage("show_arrow_key",          store: sharedDefaults) private var showArrowKey: Int = 0
     @AppStorage("split_keyboard_mode",     store: sharedDefaults) private var splitKeyboardMode: Int = 0
-    @AppStorage("one_hand_mode",  store: sharedDefaults) private var oneHandMode: Int = 0
     @AppStorage("numpad_anchor",  store: sharedDefaults) private var numpadAnchor: Int = 0
+    // Issue #169: integrated iPhone portrait mode + landscape split. iPhone only,
+    // every iPhone (no width gate). Shared keys/values with Android.
+    @AppStorage("phone_portrait_keyboard_mode", store: sharedDefaults) private var phonePortraitMode: Int = 0
+    @AppStorage("phone_landscape_split",        store: sharedDefaults) private var phoneLandscapeSplit: Bool = false
 
     // MARK: §8.2 Keyboard Feedback
     @AppStorage("vibrate_on_keypress",     store: sharedDefaults) private var vibrateOnKeypress: Bool = true
@@ -84,8 +87,8 @@ struct PreferencesTabView: View {
     private let arrowLabels     = ["無", "軟鍵盤上方", "軟鍵盤下方"]
     private let splitOptions    = [0, 1, 2]
     private let splitLabels     = ["關閉", "開啟", "僅橫向開啟"]
-    private let oneHandOptions      = [0, 1, 2]
-    private let oneHandLabels       = ["關閉", "靠左", "靠右"]
+    private let phonePortraitOptions = [0, 1, 2, 3]
+    private let phonePortraitLabels  = ["標準", "分離", "靠左", "靠右"]
     private let numpadAnchorOptions = [0, 1, 2, 3]
     private let numpadAnchorLabels  = ["滿版", "靠左", "靠右", "置中"]
     private let vibLevelOptions = [10, 20, 40, 60, 80]
@@ -182,16 +185,16 @@ struct PreferencesTabView: View {
                             }
                         }
                     }
-                    // SPLIT_ONE_HAND_KB: 單手鍵盤 = gated iPhones; 數字鍵盤位置 = iPad only.
-                    // 384 pt = ReachGeometry gate (64 mm × 6.0 pt/mm) — ReachGeometry lives in the
-                    // keyboard target, so the settings app inlines the constant.
-                    if UIDevice.current.userInterfaceIdiom != .pad,
-                       min(UIScreen.main.bounds.width, UIScreen.main.bounds.height) > 384 {
-                        Picker("單手鍵盤", selection: $oneHandMode) {
-                            ForEach(0..<oneHandOptions.count, id: \.self) { i in
-                                Text(oneHandLabels[i]).tag(oneHandOptions[i])
+                    // Issue #169: integrated iPhone portrait mode + landscape split.
+                    // Shown on EVERY iPhone regardless of screen width (no gate);
+                    // 數字鍵盤位置 stays iPad-only below.
+                    if UIDevice.current.userInterfaceIdiom != .pad {
+                        Picker("直向鍵盤模式", selection: $phonePortraitMode) {
+                            ForEach(0..<phonePortraitOptions.count, id: \.self) { i in
+                                Text(phonePortraitLabels[i]).tag(phonePortraitOptions[i])
                             }
                         }
+                        Toggle(isOn: $phoneLandscapeSplit) { prefRow("橫向分離鍵盤", "橫向時將鍵盤左右分離") }
                     }
                     if UIDevice.current.userInterfaceIdiom == .pad {
                         Picker("數字鍵盤位置", selection: $numpadAnchor) {
@@ -306,20 +309,43 @@ struct PreferencesTabView: View {
             // writes cold for this view's own display + the keyboard's first-run seed.
             .onChange(of: hanConvertOption) { newValue in writeHamburgerPrefInbox(han: newValue) }
             .onChange(of: splitKeyboardMode) { newValue in writeHamburgerPrefInbox(split: newValue) }
-            .onChange(of: oneHandMode)  { newValue in writeHamburgerPrefInbox(oneHand: newValue) }
             .onChange(of: numpadAnchor) { newValue in writeHamburgerPrefInbox(numpadAnchor: newValue) }
+            // Issue #169: integrated iPhone portrait mode + landscape split.
+            .onChange(of: phonePortraitMode) { newValue in writeHamburgerPrefInbox(phonePortraitMode: newValue) }
+            .onChange(of: phoneLandscapeSplit) { newValue in writeHamburgerPrefInbox(phoneLandscapeSplit: newValue) }
         }
     }
 
     private func writeHamburgerPrefInbox(han: Int? = nil, split: Int? = nil,
-                                         oneHand: Int? = nil, numpadAnchor: Int? = nil) {
+                                         oneHand: Int? = nil, numpadAnchor: Int? = nil,
+                                         phonePortraitMode: Int? = nil,
+                                         phoneLandscapeSplit: Bool? = nil) {
         guard let base = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: LIMEPreferenceManager.suiteName) else { return }
         try? PrefInbox.write(base: base, defaults: sharedDefaults, hanConvert: han,
-                             splitKeyboard: split, oneHand: oneHand, numpadAnchor: numpadAnchor)
+                             splitKeyboard: split, oneHand: oneHand, numpadAnchor: numpadAnchor,
+                             phonePortraitMode: phonePortraitMode,
+                             phoneLandscapeSplit: phoneLandscapeSplit)
     }
 
     private func migrateRemovedPreferences() {
+        // Issue #169: one-time cold migration of the integrated iPhone portrait mode +
+        // landscape split from the legacy one_hand_mode / split pair. Key presence is the
+        // migration marker. legacyPhoneSplitSupported: false — iPhone split was never
+        // shipped, so preserve one-hand but never invent a legacy iPhone split.
+        if sharedDefaults.object(forKey: "phone_portrait_keyboard_mode") == nil {
+            let migrated = PhoneKeyboardModePolicy.migratePortraitMode(
+                legacyOneHand: sharedDefaults.integer(forKey: "one_hand_mode"),
+                legacySplit: sharedDefaults.integer(forKey: "split_keyboard_mode"),
+                legacyPhoneSplitSupported: false)
+            phonePortraitMode = migrated.rawValue
+        }
+        if sharedDefaults.object(forKey: "phone_landscape_split") == nil {
+            phoneLandscapeSplit = PhoneKeyboardModePolicy.migrateLandscapeSplit(
+                legacySplit: sharedDefaults.integer(forKey: "split_keyboard_mode"),
+                legacyPhoneSplitSupported: false)
+        }
+
         guard sharedDefaults.object(forKey: "enable_emoji") != nil else { return }
         if sharedDefaults.bool(forKey: "enable_emoji") == false {
             emojiPosition = 0

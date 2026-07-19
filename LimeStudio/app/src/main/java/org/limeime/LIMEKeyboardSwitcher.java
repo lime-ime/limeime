@@ -34,6 +34,7 @@ import org.limeime.global.LIMEPreferenceManager;
 import org.limeime.keyboard.LIMEBaseKeyboard;
 import org.limeime.keyboard.LIMEKeyboard;
 import org.limeime.keyboard.LIMEKeyboardView;
+import org.limeime.keyboard.PhoneKeyboardModePolicy;
 import org.limeime.keyboard.ReachGeometry;
 
 import android.content.Context;
@@ -315,11 +316,37 @@ public class LIMEKeyboardSwitcher {
 				if(DEBUG)
 					Log.i(TAG,"getKeyboard() keyboard for id, " + id + ", is not exist. create one now.");
 	        	boolean numpadXml = isNumpadXml(id.mXml);
-	        	LIMEKeyboard keyboard = new LIMEKeyboard(
+				boolean splitEligible = !numpadXml; // SPLIT_ONE_HAND_KB: numpad-based layouts never split
+				DisplayMetrics dmBuild = mThemedContext.getResources().getDisplayMetrics();
+				boolean isTabletBuild =
+						mThemedContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+				boolean landscapeBuild = dmBuild.widthPixels > dmBuild.heightPixels;
+				// Issue #169: tablets keep the legacy split_keyboard_mode value; phones use
+				// the integrated portrait mode + separate landscape split, resolved here so
+				// the keyboard reads exactly one canonical decision.
+				int splitArg;
+				boolean phoneSplitForced;
+				int phoneOneHandAnchor;
+				if (isTabletBuild) {
+					splitArg = numpadXml ? LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER : mLIMEPref.getSplitKeyboard();
+					phoneSplitForced = false;
+					phoneOneHandAnchor = 0;
+				} else {
+					int portraitMode = mLIMEPref.getPhonePortraitKeyboardMode();
+					boolean landscapeSplit = mLIMEPref.getPhoneLandscapeSplit();
+					splitArg = LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER;
+					phoneSplitForced = splitEligible
+							&& ((landscapeBuild && mLIMEPref.getShowArrowKeys() != 0)
+							|| PhoneKeyboardModePolicy.phoneSplitActive(
+									landscapeBuild, true, portraitMode, landscapeSplit));
+					phoneOneHandAnchor = PhoneKeyboardModePolicy.oneHandAnchorMode(landscapeBuild, portraitMode);
+				}
+				LIMEKeyboard keyboard = new LIMEKeyboard(
 						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
-	                numpadXml ? LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER : mLIMEPref.getSplitKeyboard(), //Jeremy '12,5,27 add the split keyboard option
-	                !numpadXml // SPLIT_ONE_HAND_KB: numpad-based layouts never split
+	                splitArg, //Jeremy '12,5,27 add the split keyboard option
+	                splitEligible,
+	                phoneSplitForced // issue #169: resolved phone portrait/landscape split
                 );
                 keyboard.setKeyboardSwitcher(this);
                 if (id.mCjSemicolonKey) {
@@ -328,26 +355,24 @@ public class LIMEKeyboardSwitcher {
                 if (id.mEnableShiftLock) {
                     keyboard.enableShiftLock();
                 }
-	            // SPLIT_ONE_HAND_KB: horizontal anchoring. One-hand = gated phones, portrait
-	            // only (iOS built-in parity); numpad anchoring = tablets, numpad layouts only.
-	            DisplayMetrics dm = mThemedContext.getResources().getDisplayMetrics();
-	            boolean isTablet = mThemedContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
-	            boolean portrait = dm.widthPixels < dm.heightPixels;
-	            if (isTablet && numpadXml) {
+	            // SPLIT_ONE_HAND_KB / issue #169: horizontal anchoring. Phone portrait
+	            // one-hand applies to EVERY phone regardless of screen width (no gate);
+	            // numpad anchoring = tablets, numpad layouts only. oneHandWidth still
+	            // clamps to the available width, so a narrow phone simply gets a full-width
+	            // block, but the mode is always honored — never gated by device size.
+	            if (isTabletBuild && numpadXml) {
 	                int anchor = mLIMEPref.getNumpadAnchor();
 	                if (anchor != 0)
 	                    keyboard.applyHorizontalAnchor(
-	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dm.xdpi),
+	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dmBuild.xdpi),
 	                            anchor, false);
-	            } else if (!isTablet && portrait) {
-	                // Phone split renders landscape-only (LIMEBaseKeyboard gate), so
-	                // portrait always belongs to one-hand mode regardless of split pref.
-	                int mode = mLIMEPref.getOneHandMode();
-	                if (mode != 0 && ReachGeometry.oneHandAvailable(dm.widthPixels, dm.xdpi))
-	                    keyboard.applyHorizontalAnchor(
-	                            ReachGeometry.oneHandWidth(keyboard.getDisplayWidth(), dm.xdpi),
-	                            mode == 1 ? LIMEBaseKeyboard.ANCHOR_LEFT : LIMEBaseKeyboard.ANCHOR_RIGHT,
-	                            true);
+	            } else if (!isTabletBuild && phoneOneHandAnchor != 0) {
+	                // Issue #169: portrait one-hand (oneHandAnchorMode returns 0 in landscape),
+	                // applies to all portrait layouts including numpad-based ones.
+	                keyboard.applyHorizontalAnchor(
+	                        ReachGeometry.oneHandWidth(keyboard.getDisplayWidth(), dmBuild.xdpi),
+	                        phoneOneHandAnchor == 1 ? LIMEBaseKeyboard.ANCHOR_LEFT : LIMEBaseKeyboard.ANCHOR_RIGHT,
+	                        true);
 	            }
 	            mKeyboards.put(id, keyboard);
 	        }

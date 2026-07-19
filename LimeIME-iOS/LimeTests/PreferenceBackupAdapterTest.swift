@@ -170,6 +170,38 @@ final class PreferenceBackupAdapterTest: XCTestCase {
         XCTAssertNil(defaults.object(forKey: "physical_keyboard_sort"))
     }
 
+    func testRestoreLegacyAndroidBackupMigratesPhoneProfileOverPersistedDefaults() throws {
+        defaults.set(PhoneKeyboardPortraitMode.standard.rawValue, forKey: "phone_portrait_keyboard_mode")
+        defaults.set(false, forKey: "phone_landscape_split")
+        let data = try JSONSerialization.data(withJSONObject: [
+            "schema": 1,
+            "sourcePlatform": "android",
+            "preferences": ["split_keyboard_mode": 1, "one_hand_mode": 0]
+        ])
+
+        XCTAssertTrue(try PreferenceBackupAdapter.restoreManifestData(data, defaults: defaults))
+        XCTAssertEqual(defaults.integer(forKey: "phone_portrait_keyboard_mode"),
+                       PhoneKeyboardPortraitMode.split.rawValue)
+        XCTAssertTrue(defaults.bool(forKey: "phone_landscape_split"))
+        XCTAssertEqual(defaults.integer(forKey: "split_keyboard_mode"), 1)
+    }
+
+    func testRestoreLegacyIosBackupPreservesOneHandWithoutInventingPhoneSplit() throws {
+        defaults.set(PhoneKeyboardPortraitMode.standard.rawValue, forKey: "phone_portrait_keyboard_mode")
+        defaults.set(true, forKey: "phone_landscape_split")
+        let data = try JSONSerialization.data(withJSONObject: [
+            "schema": 1,
+            "sourcePlatform": "ios",
+            "preferences": ["split_keyboard_mode": 1, "one_hand_mode": 2]
+        ])
+
+        XCTAssertTrue(try PreferenceBackupAdapter.restoreManifestData(data, defaults: defaults))
+        XCTAssertEqual(defaults.integer(forKey: "phone_portrait_keyboard_mode"),
+                       PhoneKeyboardPortraitMode.oneHandRight.rawValue)
+        XCTAssertFalse(defaults.bool(forKey: "phone_landscape_split"))
+        XCTAssertEqual(defaults.integer(forKey: "split_keyboard_mode"), 1)
+    }
+
     func testRestoreManifestIgnoresWrongTypesAndRejectsInvalidSchema() throws {
         let wrongTypes = """
         {
@@ -206,6 +238,10 @@ final class PreferenceBackupAdapterTest: XCTestCase {
             "number_row_in_english": false,
             "show_arrow_key": 2,
             "split_keyboard_mode": 1,
+            "one_hand_mode": 2,
+            "phone_portrait_keyboard_mode": 3,
+            "phone_landscape_split": true,
+            "numpad_anchor": 2,
             "vibrate_on_keypress": false,
             "vibrate_level": 80,
             "sound_on_keypress": true,
