@@ -5,17 +5,15 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/172
 - Classification: `bug`, `Priority-Medium`, `Type-Defect`
 - State: open
+- Assignee: `jrywu`
 - Source: private support-email report summarized by the project account. The original table and screenshots remain private test evidence.
 - Confirmed environment: iPhone 12, iOS 17.6, imported `liu7.cin`; the exact LIME version is not yet known.
 
 ## Problem statement
 
-The user reports that importing `liu7.cin` completes, but selecting the imported input method does not produce characters. The current report does not yet distinguish among these failure stages:
+The user reports that importing `liu7.cin` completes, but selecting the imported input method does not produce characters. Inspection of the private UTF-8 fixture now identifies a concrete parser failure before candidate lookup: all 31,556 `%chardef` mapping rows align the code and output columns with repeated ASCII spaces, and the current iOS parser reads the first empty field after the code as the output. A static replay of the current parser therefore accepts zero mappings from those rows while still completing the metadata/import lifecycle.
 
-1. the CIN parser imports zero or incomplete mapping rows;
-2. the imported table is not fully registered or activated for the keyboard extension;
-3. the keyboard sends roots that do not match the table's imported `imkeys`/key-name metadata;
-4. mappings exist but are not published or queried from the runtime database used by the keyboard extension.
+The reporter's selected destination input method, visible imported-count message, runtime registration/activation state, and one exact user-entered code still need device confirmation. Those checks may reveal a secondary issue, but they are no longer prerequisites for establishing the fixture's repeated-space parser defect.
 
 This is independent of issue #160, which concerns missing iOS keyboard-layout resources.
 
@@ -31,6 +29,8 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
   - These entry points do not themselves call `registerIM(...)` or rebuild `keyboard_state`.
 - `LimeIME-iOS/Shared/Database/LimeDB.swift`
   - `importTxtFile(...)` parses `%chardef`, `%keyname`, `%version`, `%cname`, selection/end-key metadata, inserts mapping rows, writes `im` metadata, and assigns a default keyboard.
+  - The first space-separated CIN data row selects a single space as `detectedDelimiter`. `splitEscapedFields(...)` emits an empty field for every adjacent delimiter, while mapping insertion assumes `parts[1]` is the output. For the private fixture's aligned rows, `parts[1]` is empty and every mapping row is skipped.
+  - Import completion still writes `source`, `version`, `name`, `amount`, and keyboard metadata. A non-empty CIN file can therefore complete with `amount = 0` without throwing an error.
   - `setImConfig(...)` creates key-value rows in `im`.
   - `applyDefaultKeyboardForImportedIM(...)` creates a `title="keyboard"` row with the keyboard code in the `keyboard` column.
   - `seedCustomIM()` returns when *any* `im` row already exists for `custom`. Because text import has already written metadata and a keyboard row, the post-import seed call normally does not create its synthetic registration row.
@@ -43,33 +43,27 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
 - `LimeIME-iOS/LimeTests/LimeDBTest.swift` covers basic CIN parsing, `%version`/`%cname`/`%selkey` metadata, comment skipping, mapping lookup, default keyboard selection, and some `getAllImConfigs()` behavior.
 - The inspected tests use small synthetic tables and do not cover the full Settings-to-keyboard-extension flow for a realistic imported CIN file: import, registration/activation, cold-to-hot publication, active-IM selection, key acceptance, and candidate lookup.
 - No existing test was found that imports the private `liu7.cin` fixture or reproduces the reported no-output behavior end to end.
+- No inspected CIN test uses repeated spaces between code and output. Existing one-space fixtures therefore do not exercise the empty-field behavior in `splitEscapedFields(...)`.
+
+### Android comparison
+
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` normalizes repeated spaces before parsing space-delimited CIN rows.
+- Android does not share the exact adjacent-space failure path demonstrated by this fixture, although a focused parity test should preserve that existing behavior.
 
 ## Likely failure areas
 
-The exact root cause is not yet proven. The strongest code-level risks are:
+The source-backed root cause for the supplied fixture is inconsistent repeated-space handling between the platform importers. Android collapses repeated spaces before reading CIN fields. iOS treats every space as an independent delimiter and assumes the output is always at index 1, so the private fixture's aligned mapping rows all produce an empty output and are skipped.
 
-1. **Registration/activation gap:** text import writes mapping/config rows and publishes the table but does not explicitly rebuild `keyboard_state`. The later `seedCustomIM()` call can no-op because metadata rows already exist.
-2. **CIN compatibility gap:** the supplied file may use a key-name, delimiter, encoding, or metadata shape not represented by current synthetic tests, resulting in imported rows or `imkeys` that do not match the keys sent by the keyboard.
-3. **Runtime publication/query gap:** successful Settings-side row insertion may not guarantee that the keyboard extension selects and queries the newly imported table in the same session.
-
-Do not attribute the report solely to missing `%cname` or to issue #160 without a reproduction from the supplied file.
+Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname`, issue #160, or a registration-only failure unless post-parser testing finds separate evidence.
 
 ## Proposed investigation and fix plan
 
-1. Reproduce on a fresh iOS database with the private `liu7.cin` attachment while recording:
-   - imported mapping-row count;
-   - parsed `imkeys`, key names, selection keys, and sample mappings;
-   - resulting `im` rows and resolved `ImConfig`;
-   - `keyboard_state`, `active_im`, and the table selected by the keyboard extension;
-   - candidate query results for one reporter-confirmed input code.
-2. Add a sanitized minimal CIN fixture that preserves the failing format without publishing private user data.
-3. Add a RED end-to-end regression test covering import through runtime candidate lookup.
-4. Fix the narrow proven boundary. Depending on reproduction, this may require:
-   - robust registration/activation and an explicit post-import state sync;
-   - parser support for the supplied CIN format/encoding;
-   - corrected `imkeys`/key-name handling;
-   - or corrected publication/runtime table selection.
-5. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+1. Add a sanitized RED CIN fixture with `%chardef` rows separated by two, five, and seven spaces. Assert the expected mappings are inserted and `amount` is non-zero.
+2. Add repeated-space `%keyname` coverage and keep one-space, tab-delimited, metadata, comment, score/base-score, and `.lime` escaped-delimiter tests passing.
+3. Add a dedicated CIN whitespace parser that treats an ASCII-whitespace run as one separator for `%keyname` and `%chardef` data rows. Do not globally alter pipe/tab/comma escaped-field behavior.
+4. Decide whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
+5. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
+6. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
 
 ## Follow-up questions
 
@@ -94,8 +88,8 @@ Request or confirm through the private support-email thread:
 
 ### Android
 
-Android has a separate Java import/runtime implementation and is not confirmed affected by this iOS report. Use the same sanitized CIN fixture to verify Android import count, metadata/default keyboard assignment, and candidate lookup before claiming platform parity or platform isolation. No Android APK retest is warranted from the current evidence.
+Android has a separate Java importer that already normalizes repeated spaces, so it is not expected to share this exact parser defect. Use the same sanitized fixture to verify import count, metadata/default keyboard assignment, and candidate lookup and preserve that behavior. No Android release change or APK retest is currently warranted for #172 unless the parity check finds a separate failure.
 
 ## Retest condition
 
-Do not ask the user to retest the currently installed build. Retest only after the private file reproduces a specific failure and a newer iOS build contains the corresponding fix. Route the request through the private support-email thread unless the reporter chooses to participate on GitHub.
+Do not ask the user to retest the currently installed build. Retest only after a newer iOS build contains the repeated-space parser fix and passes the private-fixture import checks. Route the request through the private support-email thread unless the reporter chooses to participate on GitHub.
