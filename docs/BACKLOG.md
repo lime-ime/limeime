@@ -5,6 +5,7 @@ Public backlog for confirmed unresolved fixes and product work. Issue-specific i
 Last reviewed: 2026-07-19
 
 ## Pending fixes
+- fix#172 iOS: importing the private `liu7.cin` support fixture reports success but the selected input method cannot produce candidates on iPhone 12 / iOS 17.6. Reproduce with the private attachment, isolate a sanitized fixture, and trace parser output, IM registration/activation, cold-to-hot publication, active-table selection, and runtime candidate lookup before choosing a fix. Retest only with a newer targeted iOS build through the private support-email thread. Android is not confirmed affected and needs parity verification with the sanitized fixture. See `docs/#172_ISSUE.md`.
 - fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. PR #168 merged the separate Android filtered-management-list deletion refresh fix as `285b9fde57384203c074f9b16094f2bdc757a3c6`, but v6.1.33 predates that merge, so Android remains pending a newer APK/Google Play build and reporter verification of the deletion flow. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
 
 ## Product work
