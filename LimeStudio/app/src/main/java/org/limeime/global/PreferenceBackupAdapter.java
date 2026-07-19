@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
 
+import org.limeime.keyboard.PhoneKeyboardModePolicy;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,6 +47,11 @@ public final class PreferenceBackupAdapter {
         add("show_arrow_key", Type.INTEGER_AS_STRING);
         add("split_keyboard_mode", Type.INTEGER_AS_STRING);
         add("one_hand_mode", Type.INTEGER_AS_STRING);
+        // Issue #169: integrated phone portrait mode + phone landscape split.
+        // Kept alongside the legacy tablet/iPad keys so a backup restored across
+        // form factors preserves both the phone and tablet profiles.
+        add("phone_portrait_keyboard_mode", Type.INTEGER_AS_STRING);
+        add("phone_landscape_split", Type.BOOLEAN);
         add("numpad_anchor", Type.INTEGER_AS_STRING);
         add("vibrate_on_keypress", Type.BOOLEAN);
         add("vibrate_level", Type.INTEGER_AS_STRING);
@@ -143,6 +149,31 @@ public final class PreferenceBackupAdapter {
                 restoreValue(editor, key, dynamicSpec.type, values.get(key));
             }
         }
+        // Issue #169: an old backup has only the separate split/one-hand keys. Derive the
+        // canonical phone profile during restore even if this installation already persisted
+        // new-key defaults. Old iOS split belonged to iPad, so only an Android source may infer
+        // phone split from split_keyboard_mode.
+        boolean hasLegacyGeometry = values.has("split_keyboard_mode") || values.has("one_hand_mode");
+        boolean targetIsPhone = context.getResources().getConfiguration().smallestScreenWidthDp < 600;
+        if (hasLegacyGeometry && targetIsPhone) {
+            int legacySplit = values.optInt("split_keyboard_mode", 0);
+            int legacyOneHand = values.optInt("one_hand_mode", 0);
+            boolean legacyPhoneSplitSupported = !"ios".equalsIgnoreCase(root.optString("sourcePlatform"));
+            if (!values.has("phone_portrait_keyboard_mode")) {
+                editor.putString("phone_portrait_keyboard_mode", Integer.toString(
+                        PhoneKeyboardModePolicy.migratePortraitMode(
+                                legacyOneHand, legacySplit, legacyPhoneSplitSupported)));
+            }
+            if (!values.has("phone_landscape_split")) {
+                editor.putBoolean("phone_landscape_split",
+                        PhoneKeyboardModePolicy.migrateLandscapeSplit(
+                                legacySplit, legacyPhoneSplitSupported));
+            }
+        }
+        // A restore may change active phone/tablet geometry while the IME process is alive.
+        // Invalidate its startup snapshot in the same transaction as the restored values.
+        LIMEPreferenceManager.putNextStartupConfigVersion(
+                PreferenceManager.getDefaultSharedPreferences(context), editor);
         return editor.commit();
     }
 

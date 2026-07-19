@@ -93,6 +93,38 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(rec.seq, 2)
     }
 
+    func testPrefInboxCarriesPhonePortraitAndLandscapeSplit() throws {
+        // Issue #169: app→keyboard inbox carries the integrated iPhone phone prefs; later
+        // writes merge per-field, so the first still carries forward.
+        let base = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("prefinbox-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let suite = "prefinbox-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        try PrefInbox.write(base: base, defaults: defaults, phonePortraitMode: 2)       // seq 1
+        try PrefInbox.write(base: base, defaults: defaults, phoneLandscapeSplit: true)  // seq 2
+        let rec = try XCTUnwrap(PrefInbox.read(base: base))
+        XCTAssertEqual(rec.phonePortraitMode, 2)
+        XCTAssertEqual(rec.phoneLandscapeSplit, true)
+        XCTAssertEqual(rec.seq, 2)
+    }
+
+    func testRelayPrefSyncAppliesPhonePortraitMode() {
+        // Issue #169: a globe-menu phone-portrait change relays back and updates the
+        // settings app's cold store, exactly like split does.
+        let suite = "relaysync-test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        XCTAssertTrue(RelayPrefSync.apply(han: nil, split: nil,
+                                          phonePortraitMode: 3, phoneLandscapeSplit: true,
+                                          pts: 100, to: defaults))
+        XCTAssertEqual(defaults.integer(forKey: "phone_portrait_keyboard_mode"), 3)
+        XCTAssertTrue(defaults.bool(forKey: "phone_landscape_split"))
+    }
+
     func testEditorRefreshPayloadsRoundTrip() throws {
         let request = EditorRefreshRequest(requestUUID: "req-1",
                                            table: "custom",

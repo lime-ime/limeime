@@ -628,6 +628,10 @@ enum LayoutMetrics {
         static let appearDuration: TimeInterval = 0.2
         // Translation offset applied at start of the slide-in animation.
         static let appearTranslationY: CGFloat = 20
+
+        static func segmentedAxis(isPad: Bool, isLandscape: Bool) -> NSLayoutConstraint.Axis {
+            !isPad && isLandscape ? .horizontal : .vertical
+        }
     }
 
     // The expanded candidates panel (rendered by the controller) reuses
@@ -644,7 +648,6 @@ enum ReachGeometry {
     static let splitHalfMaxMM: CGFloat = 66
     static let splitRowMaxMM: CGFloat = 12
     static let oneHandMaxWidthMM: CGFloat = 60
-    static let oneHandGateMarginMM: CGFloat = 4
     static let numpadKeyMM: CGFloat = 14
     static let numpadAnchorMaxFraction: CGFloat = 0.40
 
@@ -663,14 +666,16 @@ enum ReachGeometry {
         return min(legacy, capPt / viewWidth)
     }
 
+    /// Android phone parity: portrait reserves two key columns in the centre,
+    /// landscape reserves three. iPad continues to use splitHalfMaxFraction.
+    static func phoneSplitContentFraction(keysInRow: Int, isLandscape: Bool) -> CGFloat {
+        guard keysInRow > 0 else { return 1 }
+        return CGFloat(keysInRow) / CGFloat(keysInRow + (isLandscape ? 3 : 2))
+    }
+
     /// Vertical thumb-sweep cap on split-mode row height.
     static func splitRowHeightCap(sizeClass: IPadSizeClass) -> CGFloat {
         splitRowMaxMM * ptPerMM(isPad: true, sizeClass: sizeClass)
-    }
-
-    /// Gate: one-hand mode only where shrinking is meaningful (≈5.5"+ phones).
-    static func oneHandAvailable(screenWidthPt: CGFloat) -> Bool {
-        screenWidthPt > (oneHandMaxWidthMM + oneHandGateMarginMM) * ptPerMM(isPad: false, sizeClass: .small)
     }
 
     static func oneHandWidth(viewWidth: CGFloat) -> CGFloat {

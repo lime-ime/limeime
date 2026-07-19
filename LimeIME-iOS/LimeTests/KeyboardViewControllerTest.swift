@@ -340,6 +340,19 @@ final class KeyboardViewControllerTest: XCTestCase {
                                                                     keyDef: dualGlyphKey))
     }
 
+    func testInlineMenuUsesHorizontalSegmentedRowsOnlyOnIPhoneLandscape() {
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: false, isLandscape: true), .horizontal)
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: false, isLandscape: false), .vertical)
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: true, isLandscape: true), .vertical)
+    }
+
+    func testSplitPhoneDualLabelsUseRenderedHalfWidth() {
+        XCTAssertTrue(KeyboardView.dualLabelUsesVerticalLayout(
+            viewWidth: 393, rowWidthFraction: 10.0 / 24.0,
+            keyPercent: 10, totalPercent: 50, keyHGap: 3,
+            usableHeight: 42, labelLength: 1))
+    }
+
     func testShiftedSymbolKeysDoNotShowChineseRootSubLabels() throws {
         let layoutIDs = [
             "lime_phonetic_shift",

@@ -1,5 +1,10 @@
 ﻿# Split & One-Handed Keyboard Implementation Plan (goal-mode)
 
+> **Historical plan:** Issue #169 supersedes every `oneHandAvailable` and phone-size-gate
+> instruction below. `SPLIT_ONE_HAND_KB.md` is authoritative: every phone uses the integrated
+> phone profile, while Android tablets at `smallestScreenWidthDp >= 600` and every iPad retain
+> independent tablet split and numpad-anchor profiles.
+
 > **For agentic workers:** This plan is written for a single autonomous **goal-mode** run that
 > finishes ALL tasks and ALL test gates in one session, without user checkpoints. Use
 > superpowers:executing-plans (inline) or superpowers:subagent-driven-development. Steps use

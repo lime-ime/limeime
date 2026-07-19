@@ -41,16 +41,17 @@ final class ReachGeometryTests: XCTestCase {
         XCTAssertEqual(f, (1 - LayoutMetrics.KeyboardRow.splitGapFraction) / 2, accuracy: 0.001)
     }
 
-    // Gate = 64 mm × 6.0 = 384 pt: Pro-Max (430) and 6.1" (390) pass, mini/SE (375) fail.
-    func testOneHandGate() {
-        XCTAssertTrue(ReachGeometry.oneHandAvailable(screenWidthPt: 430))
-        XCTAssertTrue(ReachGeometry.oneHandAvailable(screenWidthPt: 390))
-        XCTAssertFalse(ReachGeometry.oneHandAvailable(screenWidthPt: 375))
+    func testPhoneSplitContentFractionMatchesAndroidReservedColumns() {
+        XCTAssertEqual(ReachGeometry.phoneSplitContentFraction(keysInRow: 10, isLandscape: false),
+                       10.0 / 12.0, accuracy: 0.001)
+        XCTAssertEqual(ReachGeometry.phoneSplitContentFraction(keysInRow: 10, isLandscape: true),
+                       10.0 / 13.0, accuracy: 0.001)
     }
 
     func testOneHandWidth() {
-        XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 430), 60 * 6.0, accuracy: 0.001)
-        XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 300), 300, accuracy: 0.001)
+        XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 430), 360, accuracy: 0.01)
+        XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 375), 360, accuracy: 0.01)
+        XCTAssertEqual(ReachGeometry.oneHandWidth(viewWidth: 320), 320, accuracy: 0.01)
     }
 
     // 11" landscape (1194 pt, .medium): 5 × 14 mm × 5.20 = 364 pt < 40% cap (477.6);
@@ -90,5 +91,71 @@ final class ReachGeometryTests: XCTestCase {
         XCTAssertEqual(right.count, 7)
         XCTAssertEqual(left.reduce(0) { $0 + $1.widthPercent },
                        right.reduce(0) { $0 + $1.widthPercent }, accuracy: 0.001)
+    }
+
+    func testPhonePortraitMigrationAlignsWithAndroidWithoutInventingLegacyIPhoneSplit() {
+        XCTAssertEqual(PhoneKeyboardModePolicy.migratePortraitMode(legacyOneHand: 1,
+                                                                    legacySplit: 1,
+                                                                    legacyPhoneSplitSupported: false),
+                       .oneHandLeft)
+        XCTAssertEqual(PhoneKeyboardModePolicy.migratePortraitMode(legacyOneHand: 0,
+                                                                    legacySplit: 1,
+                                                                    legacyPhoneSplitSupported: false),
+                       .standard)
+        XCTAssertFalse(PhoneKeyboardModePolicy.migrateLandscapeSplit(legacySplit: 1,
+                                                                      legacyPhoneSplitSupported: false))
+    }
+
+    func testPhonePortraitModesAreMutuallyExclusive() {
+        XCTAssertTrue(PhoneKeyboardModePolicy.splitActive(isLandscape: false,
+                                                           splitEligible: true,
+                                                           portraitMode: .split,
+                                                           landscapeSplit: false))
+        XCTAssertFalse(PhoneKeyboardModePolicy.splitActive(isLandscape: false,
+                                                            splitEligible: true,
+                                                            portraitMode: .oneHandLeft,
+                                                            landscapeSplit: true))
+        XCTAssertEqual(PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: false,
+                                                              portraitMode: .oneHandLeft), 1)
+        XCTAssertEqual(PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: false,
+                                                              portraitMode: .oneHandRight), 2)
+        XCTAssertEqual(PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: false,
+                                                              portraitMode: .split), 0)
+    }
+
+    func testPhoneLandscapeUsesOnlyLandscapeSplitAndNumpadNeverSplits() {
+        XCTAssertTrue(PhoneKeyboardModePolicy.splitActive(isLandscape: true,
+                                                           splitEligible: true,
+                                                           portraitMode: .standard,
+                                                           landscapeSplit: true))
+        XCTAssertFalse(PhoneKeyboardModePolicy.splitActive(isLandscape: true,
+                                                            splitEligible: true,
+                                                            portraitMode: .split,
+                                                            landscapeSplit: false))
+        XCTAssertFalse(PhoneKeyboardModePolicy.splitActive(isLandscape: true,
+                                                            splitEligible: false,
+                                                            portraitMode: .split,
+                                                            landscapeSplit: true))
+    }
+
+    // Issue #169: the integrated phone controls apply to EVERY iPhone and NEVER to
+    // iPad — no screen-width or physical-size gate.
+    func testPhoneControlsApplyToEveryPhoneNeverPad() {
+        XCTAssertTrue(PhoneKeyboardModePolicy.phoneControlsApply(isPad: false))
+        XCTAssertFalse(PhoneKeyboardModePolicy.phoneControlsApply(isPad: true))
+    }
+
+    // A narrow iPhone (previously below the removed one-hand width gate) still resolves
+    // its portrait one-hand anchor purely from the stored mode — width is not an input.
+    func testNarrowPhoneStillResolvesPortraitOneHandWithoutWidthGate() {
+        XCTAssertTrue(PhoneKeyboardModePolicy.phoneControlsApply(isPad: false))
+        XCTAssertEqual(PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: false,
+                                                             portraitMode: .oneHandLeft), 1)
+        XCTAssertEqual(PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: false,
+                                                             portraitMode: .oneHandRight), 2)
+        XCTAssertTrue(PhoneKeyboardModePolicy.splitActive(isLandscape: false,
+                                                          splitEligible: true,
+                                                          portraitMode: .split,
+                                                          landscapeSplit: false))
     }
 }

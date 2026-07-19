@@ -14,7 +14,6 @@ public final class ReachGeometry {
     public static final float SPLIT_KEY_MAX_MM = 13f;
     public static final float SPLIT_ROW_MAX_MM = 12f;
     public static final float ONE_HAND_MAX_W_MM = 60f;
-    public static final float ONE_HAND_GATE_MARGIN_MM = 4f;
     public static final float NUMPAD_KEY_MM = 14f;
     public static final float NUMPAD_ANCHOR_MAX_FRACTION = 0.40f;
 
@@ -34,12 +33,6 @@ public final class ReachGeometry {
         capped = Math.max(mmToPx(SPLIT_KEY_MIN_MM, xdpi),
                  Math.min(capped, mmToPx(SPLIT_KEY_MAX_MM, xdpi)));
         return Math.min(legacy, capped);
-    }
-
-    /** Gate: show/apply one-hand mode only when shrinking is meaningful (≈5.5"+). */
-    public static boolean oneHandAvailable(int screenWidthPx, float xdpi) {
-        return xdpi > 0
-                && screenWidthPx > mmToPx(ONE_HAND_MAX_W_MM + ONE_HAND_GATE_MARGIN_MM, xdpi);
     }
 
     public static int oneHandWidth(int displayWidthPx, float xdpi) {

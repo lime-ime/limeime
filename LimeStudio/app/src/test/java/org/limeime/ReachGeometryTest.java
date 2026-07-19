@@ -27,18 +27,17 @@ public class ReachGeometryTest {
         assertEquals(Math.round(2560f / 17f), ReachGeometry.splitKeyWidth(2560, 10, 7, 0f));
     }
 
-    // 6.7"-class portrait: 1290 px @ 460 xdpi ≈ 71 mm wide → gate (64 mm) passes,
-    // one-hand width = 60 mm.
+    // 6.7"-class portrait: one-hand width = 60 mm.
     @Test
-    public void oneHandGateAndWidth() {
-        assertTrue(ReachGeometry.oneHandAvailable(1290, 460f));
+    public void oneHandWidthCapsLargePhoneAtSixtyMillimetres() {
         assertEquals(ReachGeometry.mmToPx(60f, 460f), ReachGeometry.oneHandWidth(1290, 460f));
     }
 
-    // mini-class: 1080 px @ 440 xdpi ≈ 62.3 mm → below the 64 mm gate.
+    // Every phone supports the mode. On a phone narrower than 60 mm, geometry clamps safely
+    // to the full available width rather than using a visibility/application gate.
     @Test
-    public void oneHandGateExcludesNarrowPhones() {
-        assertFalse(ReachGeometry.oneHandAvailable(1080, 440f));
+    public void oneHandWidthClampsToNarrowPhoneWidth() {
+        assertEquals(900, ReachGeometry.oneHandWidth(900, 440f));
     }
 
     // Large tablet: 5 × 14 mm = 70 mm wins under the 40% cap; small tablet: the

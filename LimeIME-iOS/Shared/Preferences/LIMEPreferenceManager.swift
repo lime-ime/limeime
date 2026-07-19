@@ -135,6 +135,22 @@ final class LIMEPreferenceManager {
         set { defaults.set(newValue, forKey: "one_hand_mode") }
     }
 
+    /// Issue #169: integrated phone portrait keyboard mode. 0=standard, 1=split,
+    /// 2=one-hand left, 3=one-hand right. iPhone only; applies to every iPhone
+    /// regardless of screen width (no gate). Shared key/value semantics with
+    /// Android `phone_portrait_keyboard_mode` (see PhoneKeyboardModePolicy).
+    var phonePortraitKeyboardMode: Int {
+        get { intValue("phone_portrait_keyboard_mode", default: 0) }
+        set { defaults.set(newValue, forKey: "phone_portrait_keyboard_mode") }
+    }
+
+    /// Issue #169: separate phone landscape split toggle, independent of the
+    /// portrait mode. iPhone only. Shared key with Android `phone_landscape_split`.
+    var phoneLandscapeSplit: Bool {
+        get { boolValue("phone_landscape_split", default: false) }
+        set { defaults.set(newValue, forKey: "phone_landscape_split") }
+    }
+
     /// Numpad-based layout horizontal anchor. 0=fit, 1=left, 2=right, 3=center.
     var numpadAnchor: Int {
         get { intValue("numpad_anchor", default: 0) }

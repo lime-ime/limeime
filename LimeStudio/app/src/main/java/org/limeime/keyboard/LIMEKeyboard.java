@@ -89,7 +89,13 @@ public class LIMEKeyboard extends LIMEBaseKeyboard {
    // }
 
     public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible ) {
-        super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard, splitEligible);
+        this(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard, splitEligible, false);
+    }
+
+    // SPLIT_ONE_HAND_KB / issue #169: phoneSplitForced = phone split decision from
+    // PhoneKeyboardModePolicy (see LIMEKeyboardSwitcher.getKeyboard).
+    public LIMEKeyboard(Context context, int xmlLayoutResId, int mode, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible, boolean phoneSplitForced ) {
+        super(context, xmlLayoutResId, mode, keySizeScale, showArrowKeys, splitKeyboard, splitEligible, phoneSplitForced);
         if(DEBUG)
             Log.i(TAG, "LIMEKeyboard()");
         //Resources mRes = context.getResources();

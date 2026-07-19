@@ -64,7 +64,6 @@
                 android:id="@+id/han_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
@@ -172,7 +171,6 @@
                 android:id="@+id/split_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
@@ -233,12 +231,129 @@
 
         </LinearLayout>
 
-        <!-- 單手鍵盤 — inline segmented control (關閉 / 靠左 / 靠右). Hidden unless the
-             screen is wide enough for one-hand shrinking to be meaningful (phones
-             only; ReachGeometry.oneHandAvailable gates it). -->
+        <!-- 直向鍵盤模式 — integrated phone portrait control (標準 / 分離 / 靠左 / 靠右),
+             issue #169. 分離 hidden for numpad layouts. Shown on every phone in portrait
+             regardless of screen width (no width gate). Phones only. -->
         <!-- ponytail: reuse split icon; swap for dedicated icons if ever drawn -->
         <LinearLayout
-            android:id="@+id/menu_onehand_block"
+            android:id="@+id/menu_portrait_mode_block"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="20dp"
+                    android:tint="?attr/colorPrimary"
+                    android:src="@drawable/ic_split_24"
+                    android:contentDescription="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/phone_portrait_keyboard_mode"
+                    android:textAppearance="@style/LIME.Body" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/portrait_mode_toggle_group"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                xmlns:app="http://schemas.android.com/apk/res-auto">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/portrait_opt_standard"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/portrait_mode_standard"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/portrait_opt_split"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/portrait_mode_split"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/portrait_opt_left"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/portrait_mode_left"
+                    android:textAllCaps="false" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/portrait_opt_right"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:insetLeft="0dp"
+                    android:insetRight="0dp"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:maxLines="1"
+                    android:text="@string/portrait_mode_right"
+                    android:textAllCaps="false" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        </LinearLayout>
+
+        <!-- 橫向分離鍵盤 — binary phone landscape split (關閉 / 開啟), issue #169.
+             Independent of the portrait mode; hidden for numpad layouts. Phones only. -->
+        <LinearLayout
+            android:id="@+id/menu_landscape_split_block"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -265,23 +380,22 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/one_hand_mode"
+                    android:text="@string/phone_landscape_split"
                     android:textAppearance="@style/LIME.Body" />
 
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/onehand_toggle_group"
+                android:id="@+id/landscape_split_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"
                 xmlns:app="http://schemas.android.com/apk/res-auto">
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/onehand_opt_off"
+                    android:id="@+id/landscape_split_opt_off"
                     style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -294,11 +408,11 @@
                     android:paddingStart="2dp"
                     android:paddingEnd="2dp"
                     android:maxLines="1"
-                    android:text="@string/one_hand_off"
+                    android:text="@string/split_keyboard_off"
                     android:textAllCaps="false" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/onehand_opt_left"
+                    android:id="@+id/landscape_split_opt_on"
                     style="?attr/materialButtonOutlinedStyle"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -311,24 +425,7 @@
                     android:paddingStart="2dp"
                     android:paddingEnd="2dp"
                     android:maxLines="1"
-                    android:text="@string/one_hand_left"
-                    android:textAllCaps="false" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/onehand_opt_right"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    android:minWidth="0dp"
-                    android:insetLeft="0dp"
-                    android:insetRight="0dp"
-                    android:paddingStart="2dp"
-                    android:paddingEnd="2dp"
-                    android:maxLines="1"
-                    android:text="@string/one_hand_right"
+                    android:text="@string/split_keyboard_on"
                     android:textAllCaps="false" />
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
@@ -376,7 +473,6 @@
                 android:id="@+id/numpad_anchor_toggle_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="44dp"
                 android:layout_marginTop="10dp"
                 app:singleSelection="true"
                 app:selectionRequired="true"

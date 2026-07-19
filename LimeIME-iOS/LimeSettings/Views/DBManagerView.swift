@@ -518,6 +518,8 @@ struct DBManagerView: View {
         try? PrefInbox.write(base: base, defaults: cold,
                              hanConvert: cold.object(forKey: "han_convert_option") as? Int,
                              splitKeyboard: cold.object(forKey: "split_keyboard_mode") as? Int,
+                             phonePortraitMode: cold.object(forKey: "phone_portrait_keyboard_mode") as? Int,
+                             phoneLandscapeSplit: cold.object(forKey: "phone_landscape_split") as? Bool,
                              activeIM: cold.string(forKey: "active_im")
                                        ?? cold.string(forKey: "keyboard_list"))
         for (key, value) in cold.dictionaryRepresentation()

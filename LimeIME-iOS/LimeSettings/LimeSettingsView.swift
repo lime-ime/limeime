@@ -288,6 +288,8 @@ struct LimeSettingsView: View {
                             split: payload.split,
                             reverseLookupIM: payload.rlim,
                             reverseLookupValue: payload.rlval,
+                            phonePortraitMode: payload.phonePortraitMode,
+                            phoneLandscapeSplit: payload.phoneLandscapeSplit,
                             pts: payload.pts,
                             to: sharedDefaults)
         rootRelayDidReceivePayload = true

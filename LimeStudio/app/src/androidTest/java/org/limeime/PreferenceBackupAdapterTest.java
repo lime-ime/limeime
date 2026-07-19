@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 
 import androidx.preference.PreferenceManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -115,6 +116,74 @@ public class PreferenceBackupAdapterTest {
     }
 
     @Test
+    public void restoreLegacyAndroidBackupMigratesPhoneProfileEvenWhenDefaultsAlreadyExist() throws Exception {
+        prefs.edit()
+                .putString("phone_portrait_keyboard_mode", "0")
+                .putBoolean("phone_landscape_split", false)
+                .putLong("startup_config_version", 123L)
+                .commit();
+        JSONObject values = new JSONObject()
+                .put("split_keyboard_mode", 1)
+                .put("one_hand_mode", 0);
+        JSONObject manifest = new JSONObject()
+                .put("schema", 1)
+                .put("sourcePlatform", "android")
+                .put("preferences", values);
+
+        assertTrue(PreferenceBackupAdapter.restoreManifest(context, manifest));
+
+        assertEquals("1", prefs.getString("phone_portrait_keyboard_mode", null));
+        assertTrue(prefs.getBoolean("phone_landscape_split", false));
+        assertEquals("1", prefs.getString("split_keyboard_mode", null));
+        assertTrue(prefs.getLong("startup_config_version", 0L) > 123L);
+    }
+
+    @Test
+    public void restoreLegacyIosBackupPreservesOneHandButDoesNotInventPhoneSplit() throws Exception {
+        prefs.edit()
+                .putString("phone_portrait_keyboard_mode", "0")
+                .putBoolean("phone_landscape_split", true)
+                .commit();
+        JSONObject values = new JSONObject()
+                .put("split_keyboard_mode", 1)
+                .put("one_hand_mode", 2);
+        JSONObject manifest = new JSONObject()
+                .put("schema", 1)
+                .put("sourcePlatform", "ios")
+                .put("preferences", values);
+
+        assertTrue(PreferenceBackupAdapter.restoreManifest(context, manifest));
+
+        assertEquals("3", prefs.getString("phone_portrait_keyboard_mode", null));
+        assertFalse(prefs.getBoolean("phone_landscape_split", true));
+        assertEquals("1", prefs.getString("split_keyboard_mode", null));
+    }
+
+    @Test
+    public void restoreLegacyMixedGeometryOnTabletDoesNotDeriveDormantPhoneProfile() throws Exception {
+        prefs.edit()
+                .putString("phone_portrait_keyboard_mode", "3")
+                .putBoolean("phone_landscape_split", false)
+                .commit();
+        JSONObject values = new JSONObject()
+                .put("split_keyboard_mode", 1)
+                .put("one_hand_mode", 0);
+        JSONObject manifest = new JSONObject()
+                .put("schema", PreferenceBackupAdapter.SCHEMA_VERSION)
+                .put("sourcePlatform", "android")
+                .put("preferences", values);
+        Configuration tabletConfig = new Configuration(context.getResources().getConfiguration());
+        tabletConfig.smallestScreenWidthDp = 600;
+        Context tabletContext = context.createConfigurationContext(tabletConfig);
+
+        assertTrue(PreferenceBackupAdapter.restoreManifest(tabletContext, manifest));
+
+        assertEquals("3", prefs.getString("phone_portrait_keyboard_mode", null));
+        assertFalse(prefs.getBoolean("phone_landscape_split", true));
+        assertEquals("1", prefs.getString("split_keyboard_mode", null));
+    }
+
+    @Test
     public void restoreManifestRestoresEveryAndroidPrefsTableValue() throws Exception {
         Map<String, Object> expected = fullAndroidPrefsTableFixture();
         JSONObject values = new JSONObject();
@@ -193,6 +262,10 @@ public class PreferenceBackupAdapterTest {
         values.put("number_row_in_english", false);
         values.put("show_arrow_key", 2);
         values.put("split_keyboard_mode", 1);
+        values.put("one_hand_mode", 2);
+        values.put("phone_portrait_keyboard_mode", 3);
+        values.put("phone_landscape_split", true);
+        values.put("numpad_anchor", 2);
         values.put("vibrate_on_keypress", false);
         values.put("vibrate_level", 80);
         values.put("sound_on_keypress", true);
@@ -285,6 +358,9 @@ public class PreferenceBackupAdapterTest {
                 "keyboard_theme",
                 "show_arrow_key",
                 "split_keyboard_mode",
+                "one_hand_mode",
+                "phone_portrait_keyboard_mode",
+                "numpad_anchor",
                 "vibrate_level",
                 "enable_emoji_position",
                 "similiar_list",
