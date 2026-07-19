@@ -2,10 +2,10 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-19
+Last reviewed: 2026-07-20
 
 ## Pending fixes
-- fix#169 release/retest follow-up: PR #171 merged the integrated phone portrait keyboard model as `9667c82db800a899b12e13b9211c77dbda7c26fb`. Android is delivered in verified GitHub APK v6.1.34, and the community issue is open pending reporter confirmation. The iOS implementation passed focused simulator tests but still needs verified TestFlight/App Store delivery. See `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
+- fix#169 iOS release QA: PR #171 merged the integrated phone portrait keyboard model as `9667c82db800a899b12e13b9211c77dbda7c26fb`. The reporter answered both Android checks in the v6.1.34 retest request as normal on the Google Play build, and community issue #169 is closed. The iOS implementation passed focused simulator tests but still needs verified TestFlight/App Store delivery. See `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
 - fix#172 iOS release QA: PR #174 merged the CIN-only `[ \t]+` separator fix as `f5110419456235acdc075825757b7ceaf6ada133`. Android is delivered in verified GitHub APK v6.1.34. The merged test tree still needs explicit aligned `%keyname` assertions and the iOS legacy unescaped `.lime` empty-field compatibility regression. iOS also needs XCTest/Xcode validation, private-fixture verification, and verified TestFlight/App Store delivery before the private reporter is asked to retest. See `docs/#172_ISSUE.md`.
 - fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. Verified GitHub APK v6.1.34 contains PR #168's separate Android filtered-management-list deletion refresh fix, and targeted reporter verification is pending. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and verified TestFlight/App Store delivery. See `docs/#161_ISSUE.md`.
 

@@ -1,14 +1,19 @@
 # Issue #169 — Integrated phone portrait keyboard model (no width gate)
 
-Status: Android-delivered in GitHub Release v6.1.34 after PR #171 (`9667c82db800a899b12e13b9211c77dbda7c26fb`).
-The community issue was reopened for reporter confirmation after maintainer close-on-merge.
+Status: Resolved and closed after the reporter answered both checks in the v6.1.34 retest request
+as normal on the Google Play build: portrait split renders and mode switching shows no conflicting
+simultaneous modes. The confirmation is
+https://github.com/lime-ime/limeime/issues/169#issuecomment-5017534231 and the closing
+acknowledgement is https://github.com/lime-ime/limeime/issues/169#issuecomment-5017538523.
+Android was delivered after PR #171 (`9667c82db800a899b12e13b9211c77dbda7c26fb`).
 GitHub Release v6.1.34 targets `d45aa437b6356bfef5079ceebbfcd8d295a300b8` and contains the
 Android fix. Its verified GitHub testing-track APK is `LIMEHD2026-6.1.34.apk` (7,112,576 bytes,
-SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). The retained
-retest request is https://github.com/lime-ime/limeime/issues/169#issuecomment-5016727812.
+SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). The reporter confirmed the
+separate Google Play build, not this GitHub testing-track APK. The completed retest request was
+https://github.com/lime-ime/limeime/issues/169#issuecomment-5016727812.
 The iOS changes are source-fixed and simulator-validated, but verified TestFlight/App Store
 delivery remains separate.
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 ## Problem
 
@@ -104,6 +109,9 @@ preserves one-hand but never invents a legacy iPhone split).
 
 ## Verification status
 
+- The reporter answered both requested checks in the v6.1.34 retest request as normal on the Google
+  Play build: phone portrait split renders and mode switching shows no conflicting simultaneous
+  modes. This confirms the reported Android path only; iOS delivery remains separate.
 - Android full gate passed on the Pixel 9 Pro AVD:
   - `:app:testDebugUnitTest`
   - `:app:lintDebug`
