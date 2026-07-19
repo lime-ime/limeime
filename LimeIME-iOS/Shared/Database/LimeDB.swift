@@ -3525,7 +3525,12 @@ final class LimeDB {
                 delimiterDetected = true
             }
 
-            let parts = splitEscapedFields(trimmed, delimiter: detectedDelimiter, escapedFormat: escapedFormat)
+            let parts = splitEscapedFields(
+                trimmed,
+                delimiter: detectedDelimiter,
+                escapedFormat: escapedFormat,
+                collapseUnescapedSpaces: isCinFormat
+            )
             if isRelatedTable {
                 if parts.count >= 4 {
                     let pword = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3737,12 +3742,16 @@ final class LimeDB {
         return nil
     }
 
-    private func splitEscapedFields(_ line: String, delimiter: Character, escapedFormat: Bool) -> [String] {
-        // CIN files commonly align columns with runs of spaces. Treat unescaped
-        // whitespace-delimited rows as fields rather than preserving empty columns.
-        // Keep literal delimiter handling for tabs, commas, pipes, and escaped LIME v2.
-        if delimiter == " " && !escapedFormat {
-            return line.split(whereSeparator: { $0.isWhitespace }).map(String.init)
+    private func splitEscapedFields(
+        _ line: String,
+        delimiter: Character,
+        escapedFormat: Bool,
+        collapseUnescapedSpaces: Bool = false
+    ) -> [String] {
+        // CIN files commonly align columns with runs of ASCII spaces. Scope this
+        // normalization to CIN callers so legacy unescaped LIME field semantics stay intact.
+        if delimiter == " " && !escapedFormat && collapseUnescapedSpaces {
+            return line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
         }
 
         var fields: [String] = []

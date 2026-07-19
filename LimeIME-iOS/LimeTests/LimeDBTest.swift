@@ -423,6 +423,24 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"), "Ａ|Ｂ")
     }
 
+    func testLegacyUnescapedLimePreservesEmptyScoreField() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        // Two adjacent spaces intentionally encode an empty score field before baseScore.
+        try "a 測  7\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        let results = try XCTUnwrap(db.getMappingByCode("a", softKeyboard: true, getAllRecords: true))
+        let mapping = try XCTUnwrap(results.first { $0.code == "a" && $0.word == "測" })
+        XCTAssertEqual(mapping.score, 0)
+        XCTAssertEqual(mapping.baseScore, 7)
+    }
+
     func testLimeDBGetMappingByCodeWithAllRecords() throws {
         let db = try makeLimeDB()
         db.setTableName(LIME.DB_TABLE_CUSTOM)

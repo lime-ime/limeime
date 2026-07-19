@@ -205,9 +205,13 @@ public class LimeDBTest {
             writeUtf8(fixture,
                     "%ename issue172\n" +
                     "%cname Issue172\n" +
+                    "%keyname begin\n" +
+                    "a       A\n" +
+                    "b       B\n" +
+                    "%keyname end\n" +
                     "%chardef begin\n" +
                     "a       \u5C0D\n" +
-                    "aa      \u5BF8\n" +
+                    "ab      \u5BF8\n" +
                     "%chardef end\n");
 
             limeDB.setTableName(LIME.DB_TABLE_CUSTOM);
@@ -217,8 +221,10 @@ public class LimeDBTest {
             waitForImportThread(limeDB);
 
             assertEquals("\u5C0D", limeDB.getMappingByCode("a", false, true).get(0).getWord());
-            assertEquals("\u5BF8", limeDB.getMappingByCode("aa", false, true).get(0).getWord());
+            assertEquals("\u5BF8", limeDB.getMappingByCode("ab", false, true).get(0).getWord());
             assertEquals("2", limeDB.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"));
+            assertEquals("ab", limeDB.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeys"));
+            assertEquals("A|B", limeDB.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"));
         } finally {
             if (fixture.exists() && !fixture.delete()) {
                 Log.w(TAG, "Failed to delete issue172 cin fixture");
