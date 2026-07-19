@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/172
 - Classification: `bug`, `Priority-Medium`, `Type-Defect`
-- State: closed/source fixed by maintainer after PR #174 merged; build delivery and private-reporter verification remain pending
+- State: closed/source fixed by maintainer after PR #174 merged; Android is delivered in GitHub APK v6.1.34, while verified iOS delivery and private-reporter verification remain pending
 - Assignee: `jrywu`
 - Fix: PR #174, merged as `f5110419456235acdc075825757b7ceaf6ada133` on 2026-07-19
 - Source: private support-email report summarized by the project account. The original table and screenshots remain private test evidence.
@@ -65,12 +65,13 @@ Completed on `master` through PR #174:
 3. Scoped iOS normalization to CIN imports so the shared unescaped `.lime` delimiter path remains unchanged.
 4. Android verification reported the focused instrumentation test and all 216 `LimeDBTest` tests passing, plus unit tests, instrumentation-test compilation, lint, and `git diff --check`. Swift/Xcode was unavailable, so the new iOS test was not run before merge.
 5. Maintainer `jrywu` merged PR #174 as `f5110419456235acdc075825757b7ceaf6ada133` and closed the internal tracking issue. There was no public issue comment.
+6. GitHub Release v6.1.34 targets `d45aa437b6356bfef5079ceebbfcd8d295a300b8` and contains the Android parity fix. Its verified GitHub testing-track asset is `LIMEHD2026-6.1.34.apk` (7,112,576 bytes, SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). No Android reporter retest is required for this iOS-origin report.
 
 Remaining release QA and follow-up:
 
 1. Run the new iOS whitespace test and broader iOS `LimeDBTest` suite in Xcode/Xcode Cloud.
 2. Reproduce on a fresh iOS database with the private attachment, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup for one reporter-confirmed code. Fix those boundaries only if they remain broken after mappings import correctly.
-3. Include the fix in newer Android and iOS builds before requesting user verification. The current v6.1.33 release target `b2fa71779d8423b92896fa1a0262706bb62ea4fa` predates PR #174, so this is release QA rather than an active public issue watch.
+3. Include the fix in a verified newer iOS build before requesting user verification. Android delivery is complete in GitHub APK v6.1.34, while iOS remains release QA rather than an active public issue watch.
 4. Restore focused `%keyname` coverage and an iOS legacy unescaped `.lime` empty-field compatibility regression before relying on those safeguards as automated release gates. They were described in the PR but are not present in the merged tree.
 5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
 6. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.

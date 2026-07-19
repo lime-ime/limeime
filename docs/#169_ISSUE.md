@@ -1,10 +1,12 @@
 # Issue #169 — Integrated phone portrait keyboard model (no width gate)
 
-Status: Source-fixed on `master` by PR #171 (`9667c82db800a899b12e13b9211c77dbda7c26fb`).
-The community issue was closed by maintainer action after the merge. GitHub Release v6.1.33
-targets `b2fa71779d8423b92896fa1a0262706bb62ea4fa` and predates the fix, so Android reporter
-retesting waits for a newer build that contains the merge. The iOS changes are also source-fixed
-and simulator-validated, but still await delivery in a newer TestFlight/App Store build.
+Status: Android-delivered in GitHub Release v6.1.34 after PR #171 (`9667c82db800a899b12e13b9211c77dbda7c26fb`).
+The community issue was closed by maintainer action after the merge. GitHub Release v6.1.34
+targets `d45aa437b6356bfef5079ceebbfcd8d295a300b8` and contains the Android fix. Its verified
+GitHub testing-track APK is `LIMEHD2026-6.1.34.apk` (7,112,576 bytes, SHA-256
+`d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). No new public
+retest comment was added to the already-closed issue. The iOS changes are source-fixed and
+simulator-validated, but verified TestFlight/App Store delivery remains separate.
 Last updated: 2026-07-19
 
 ## Problem
