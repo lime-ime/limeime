@@ -25,7 +25,15 @@
 | `font_size` | Picker / ListPreference | "1" · 字型大小 · §8.1 鍵盤外觀 | **"1"** · 字型大小 · lime_keyboard | "1" · 字型大小 · pref_section_appearance | Candidate-strip font scale. Moved from §8.3 into §8.1 (UI grouping). |
 | `number_row_in_english` | Toggle / CheckBox | true · 數字列英文鍵盤 · §8.1 鍵盤外觀 (**iPhone-only** — hidden on iPad) | true · 數字列英文鍵盤 · lime_keyboard | true · 數字列英文鍵盤 · pref_section_appearance | Digit row in English layout. Moved from §8.3 into §8.1 (UI grouping). iOS gates to iPhone in `PreferencesTabView.swift`. |
 | `show_arrow_key` | Picker / ListPreference | 0 · 顯示方向鍵 · §8.1 鍵盤外觀 | "0" · 顯示方向鍵 · lime_keyboard | "0" · 顯示方向鍵 · pref_section_appearance | 無 / 軟鍵盤上方 / 軟鍵盤下方. |
-| `split_keyboard_mode` | Picker / ListPreference | 0 · 分離鍵盤 · §8.1 鍵盤外觀 (iPad-only) | "0" · 分離鍵盤 · lime_keyboard | "0" · 分離鍵盤 · pref_section_appearance | 0=關閉, 1=開啟, 2=僅橫向開啟. |
+| `phone_portrait_keyboard_mode` | Picker / ListPreference | 0 · 直向鍵盤模式 · §8.1 鍵盤外觀 (every iPhone) | *(new)* | "0" · 直向鍵盤模式 · pref_section_appearance (every phone `<600dp`) | 0=標準, 1=分離, 2=靠左, 3=靠右. Integrated phone-only portrait mode; no screen-width/physical-size gate. |
+| `phone_landscape_split` | Toggle / SwitchPreference | false · 橫向分離鍵盤 · §8.1 鍵盤外觀 (every iPhone) | *(new)* | false · 橫向分離鍵盤 · pref_section_appearance (every phone `<600dp`) | Independent phone-landscape split switch; no width gate. |
+| `split_keyboard_mode` | Picker / ListPreference | 0 · 分離鍵盤 · §8.1 鍵盤外觀 (iPad-only) | "0" · 分離鍵盤 · lime_keyboard | "0" · 分離鍵盤 · pref_section_appearance (Android tablet `≥600dp` only) | Tablet/iPad profile only: 0=關閉, 1=開啟, 2=僅橫向開啟. Never rewritten by phone changes. |
+| `numpad_anchor` | Picker / ListPreference | 0 · 數字鍵盤位置 · §8.1 鍵盤外觀 (iPad-only) | *(new)* | "0" · 數字鍵盤位置 · pref_section_appearance (Android tablet `≥600dp` only) | Tablet/iPad numpad profile: 0=滿版/fit, 1=靠左, 2=靠右, 3=置中. |
+
+Issue #169 migration uses legacy `one_hand_mode` first, then legacy `split_keyboard_mode` where
+phone split previously existed. The canonical phone keys are included in Android/iOS backup and
+restore. On iOS they also travel through PrefInbox/relay because both Settings and the keyboard
+menu can write them. See `docs/#169_ISSUE.md`.
 
 ## 8.2 Keyboard Feedback (鍵盤回饋)
 
@@ -156,7 +164,7 @@ Pre-back-port had **3 flat categories** (`lime_keyboard` / `lime_im` / `lime_map
 
 | Pre-back-port category | Current category | Items |
 |---|---|---|
-| lime_keyboard (鍵盤) | pref_section_appearance (§8.1) | keyboard_theme, keyboard_size, font_size, number_row_in_english, show_arrow_key, split_keyboard_mode |
+| lime_keyboard (鍵盤) | pref_section_appearance (§8.1) | keyboard_theme, keyboard_size, font_size, number_row_in_english, show_arrow_key, split_keyboard_mode; current also adds phone_portrait_keyboard_mode, phone_landscape_split, numpad_anchor |
 | lime_keyboard | pref_section_feedback (§8.2) | vibrate_on_keypress, vibrate_level, sound_on_keypress, keypress_sound_volume |
 | lime_keyboard | pref_section_im_behaviour (§8.4) | enable_emoji_position, persistent_language_mode |
 | lime_keyboard | pref_section_physical_keyboard | hide_software_keyboard_typing_with_physical, switch_english_mode, switch_english_mode_shift |

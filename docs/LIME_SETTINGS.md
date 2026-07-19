@@ -1228,7 +1228,7 @@ Error branch: catch sets `isWorking = false`, `preparingShare = false`, `backupP
 
 ## 8. Feature: IM Preferences (喜好設定 Tab)
 
-**Purpose**: Replicate all settings from Android's `LIMEPreference` (`preference.xml`). All values persist to `UserDefaults(suiteName: "group.org.limeime")` so the keyboard extension can read them without IPC.
+**Purpose**: Replicate all settings from Android's `LIMEPreference` (`preference.xml`). All values persist to `UserDefaults(suiteName: "group.org.limeime")`. Preferences written from both the settings app and keyboard menu additionally use the PrefInbox/text-relay path described below so hot extension state and cold App Group state remain coherent.
 
 **Title**: The IM Preferences root screen title is always `喜好設定` on both platforms. This applies to the iOS tab/navigation title, the Android settings tab toolbar title, and the standalone Android `LIMEPreference` Activity launched from the keyboard long-press menu. Do not use an app-level settings title or old keyboard-preferences wording for this screen.
 
@@ -1252,7 +1252,16 @@ Use `@AppStorage(key, store: UserDefaults(suiteName: "group.org.limeime"))` (ali
 | `Picker` "字型大小" | `font_size` | String | "1" | 特大/大/一般/小/特小 (same scale values as `keyboard_size`; the derived `candidateFontSize` Double is separate, see §9) |
 | `Toggle` "數字列英文鍵盤" | `number_row_in_english` | Bool | true | 在英文鍵盤顯示數字列(5列鍵盤); **iPhone only** — hidden on iPad (`PreferencesTabView.swift` gates with `userInterfaceIdiom != .pad`) |
 | `Picker` "顯示方向鍵" | `show_arrow_key` | Int | 0 | 0=無 1=軟鍵盤上方 2=軟鍵盤下方 |
-| `Picker` "分離鍵盤" | `split_keyboard_mode` | Int | 0 | 0=關閉 1=開啟 2=僅橫向開啟; **iPad only** — hidden on iPhone |
+| `Picker` "直向鍵盤模式" | `phone_portrait_keyboard_mode` | Int | 0 | 0=標準 1=分離 2=靠左 3=靠右; shown on **every iPhone**, with no screen-width/physical-size gate |
+| `Toggle` "橫向分離鍵盤" | `phone_landscape_split` | Bool | false | Independent landscape split; shown on **every iPhone**, with no width gate |
+| `Picker` "分離鍵盤" | `split_keyboard_mode` | Int | 0 | 0=關閉 1=開啟 2=僅橫向開啟; **iPad only** — hidden on iPhone and never rewritten by phone controls |
+| `Picker` "數字鍵盤位置" | `numpad_anchor` | Int | 0 | 0=滿版 1=靠左 2=靠右 3=置中; **iPad only** — hidden on iPhone |
+
+Android applies the identical profile split: `phone_portrait_keyboard_mode` and
+`phone_landscape_split` appear on every phone (`smallestScreenWidthDp < 600`), while
+`split_keyboard_mode` and `numpad_anchor` appear only on tablets (`>= 600dp`). Phone controls have
+no width gate. The keyboard menu follows the active orientation: 直向鍵盤模式 in portrait and
+橫向分離鍵盤 in landscape; numpad layouts omit phone split.
 
 > The keyboard extension reads `keyboard_theme` at `viewDidLoad`.
 > - Values **0–5**: fixed colour themes regardless of system appearance. 0=淺色, 1=深色, 2=粉紅, 3=科技藍, 4=時尚紫, 5=放鬆綠.
@@ -1317,7 +1326,7 @@ All pickers default to `"none"`. Picker rows are dynamic: iOS loads the same ena
 |---|---|---|---|---|
 | `Picker` "中文簡/繁體字碼轉換" (`.segmented`) | `han_convert_option` | Int | 0 | 無 / 繁轉簡 / 簡轉繁 (0 / 1 / 2) |
 
-iOS uses a `.segmented` `Picker`. Android renders an inline M3 segmented control (無 / 繁轉簡 / 簡轉繁) via `SegmentedHanPreference` (`preference_han_segmented.xml`), persisting the same `han_convert_option` String. The Android **keyboard extension** exposes the *same* segmented control inline at the top level of its long-press options menu — alongside an inline **分離鍵盤** segmented control (`split_keyboard`) — and applies both on dismiss (see the revision note "Long-press keyboard-key options menu"); all write the same keys as the Settings app.
+iOS uses a `.segmented` `Picker`. Android renders an inline M3 segmented control (無 / 繁轉簡 / 簡轉繁) via `SegmentedHanPreference` (`preference_han_segmented.xml`), persisting the same `han_convert_option` String. The keyboard long-press menu exposes the same conversion control plus the device-appropriate geometry control: 直向鍵盤模式 or 橫向分離鍵盤 on phones, 分離鍵盤 on ordinary tablet/iPad layouts, and 數字鍵盤位置 on tablet/iPad numpads. Choices apply on dismiss and write the same canonical keys as Settings.
 
 At the maximum accessibility sizes (font scale 2.0 + largest display), three side-by-side segments can't fit the Chinese labels. `SegmentedHanPreference.stackIfClipped()` runs after layout and, if any segment's label is ellipsized, flips the `MaterialButtonToggleGroup` to **vertical** (full-width buttons) so every label shows in full — horizontal at normal sizes, a 3-row stack only when needed. Labels are 無 / 繁→簡 / 簡→繁. Same helper is reused by the keyboard long-press menu's 簡繁轉換 and 分離鍵盤 controls.
 
@@ -1355,7 +1364,10 @@ All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 | `font_size` | `font_size` | String | "1" |
 | `candidateFontSize` | *(derived)* | Double | 18 |
 | `show_arrow_key` | `show_arrow_key` | Int | 0 |
+| `phone_portrait_keyboard_mode` | `phone_portrait_keyboard_mode` | Int | 0 *(phone only: standard / split / left / right)* |
+| `phone_landscape_split` | `phone_landscape_split` | Bool | false *(phone only)* |
 | `split_keyboard_mode` | `split_keyboard_mode` | Int | 0 |
+| `numpad_anchor` | `numpad_anchor` | Int | 0 *(tablet/iPad only: fit / left / right / center)* |
 | `vibrate_on_keypress` | `vibrate_on_keypress` | Bool | true |
 | `vibrate_level` | `vibrate_level` | Int | 40 |
 | `sound_on_keypress` | `sound_on_keypress` | Bool | false |
@@ -1422,6 +1434,7 @@ All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 |---|---|
 | Three-state status banner | Real-time green / orange / red detection on scene activation |
 | Split keyboard (iPad-only) | `split_keyboard_mode` row hidden on `UIDevice.current.userInterfaceIdiom == .phone` |
+| Integrated phone geometry | `phone_portrait_keyboard_mode` + `phone_landscape_split` shown on every iPhone; iPad keeps `split_keyboard_mode` + `numpad_anchor` |
 | Share-sheet backup | `UIActivityViewController` bridge (`ShareSheet`) for `.limedb` output |
 | `@AppStorage(store:)` | Shared suite ensures keyboard extension reads prefs without IPC |
 | `UIImpactFeedbackGenerator` | Maps `vibrate_level` → `.light / .medium / .heavy` style |
@@ -1431,6 +1444,14 @@ All stored in `UserDefaults(suiteName: "group.org.limeime")`.
 - **Always** use `UserDefaults(suiteName: "group.org.limeime")` — never `UserDefaults.standard`.
 - **Never** use `@AppStorage` without the explicit `store:` parameter.
 - Preferences are **not** synced via iCloud (`NSUbiquitousKeyValueStore`); that is a future opt-in.
+
+**Issue #169 two-writer exception.** `phone_portrait_keyboard_mode` and
+`phone_landscape_split` can be changed from either the settings app or keyboard menu. iOS carries
+them through `PrefInbox` / `RelayPrefState`; the Full-Access-off text relay uses `pp=` / `pls=`.
+`RelayPrefSync.apply` writes the cold App Group values, while the keyboard seeds/migrates its hot
+values at startup. Backup/restore includes both canonical keys. Legacy `one_hand_mode` and
+`split_keyboard_mode` are migration inputs only for the phone profile; phone changes never rewrite
+the tablet/iPad `split_keyboard_mode` value.
 
 **Exception — LimeSettings-only keys**: `backup_on_delete_{tableNick}` and `restore_on_import_{tableNick}` intentionally use `UserDefaults.standard` (not the App Group suite). These are UI-only preferences read exclusively by LimeSettings; the keyboard extension never reads them. Using `UserDefaults.standard` avoids polluting the shared App Group namespace with host-app-only state.
 
@@ -1522,7 +1543,7 @@ guard let db = openDB() else {
 - [x] Progress overlay during backup / restore
 
 ### IM Preferences (§8)
-- **Keyboard Appearance** (§8.1): `keyboard_theme` (values 0–5 + **6=系統設定** on both platforms — **§13.2 done**), `keyboard_size`, `font_size`, `number_row_in_english` (iPhone-only), `show_arrow_key`, `split_keyboard_mode` (iPad)
+- **Keyboard Appearance** (§8.1): `keyboard_theme` (values 0–5 + **6=系統設定** on both platforms — **§13.2 done**), `keyboard_size`, `font_size`, `number_row_in_english` (iPhone-only), `show_arrow_key`, `phone_portrait_keyboard_mode` + `phone_landscape_split` (every iPhone), `split_keyboard_mode` + `numpad_anchor` (iPad)
 - **Feedback** (§8.2): `vibrate_on_keypress`, `vibrate_level`, `sound_on_keypress`, `keypress_sound_volume`
 - **IM Behaviour** (§8.4): `smart_chinese_input`, `auto_chinese_symbol`, `enable_emoji_position`, `similiar_list` (建議字顯示數量), `reverse_lookup_screen` (`candidate_switch` is declared but has **no UI** — free-scroll candidate selection is always on)
 - **Array10 detail page** (§5.2): `auto_commit`
@@ -1553,6 +1574,19 @@ Implemented: the `自建` family (import-only, no cloud variants) in `IMCatalog`
 
 ## 14. Revision history
 
+### Integrated phone keyboard geometry — issue #169 (2026-07)
+
+- Replaced the contradictory phone `split_keyboard_mode` + `one_hand_mode` UI with
+  `phone_portrait_keyboard_mode` (標準 / 分離 / 靠左 / 靠右) and independent
+  `phone_landscape_split`; both apply to every phone without a width gate.
+- Android tablets (`smallestScreenWidthDp >= 600`) and every iPad retain the independent
+  `split_keyboard_mode` / `numpad_anchor` profile.
+- iPhone split width follows Android phone reserved columns (2 portrait / 3 landscape); iPad's
+  physical 66 mm reach cap is unchanged. Tall split keys use top/bottom labels from their actual
+  rendered width, and iPhone-landscape menu segments use one-line rows.
+- Canonical phone keys are covered by Android/iOS backup, iOS hot/cold PrefInbox transport, and
+  legacy migration. See `docs/#169_ISSUE.md`.
+
 ### 4-tab top-page re-layout (2026-06)
 
 The four top-level tabs (設定 · 輸入法 · 喜好設定 · 資料庫) were re-laid-out to bring iOS and
@@ -1575,4 +1609,5 @@ Android as visually close as possible. The full deltas are folded into the secti
 - **資料庫 tab.** Unified three-section layout; 還原預設資料庫 carries a red irreversible-action warning;
   tonal buttons use a dark-mode-legible fill.
 - **Keyboard extension.** The long-press options menu was restyled to match 喜好設定 (icons + inline
-  segmented 簡繁轉換 / 分離鍵盤) on both platforms; the menu title is now 萊姆輸入法.
+  segmented 簡繁轉換 and the active phone/tablet geometry control) on both platforms; the menu
+  title is now 萊姆輸入法.
