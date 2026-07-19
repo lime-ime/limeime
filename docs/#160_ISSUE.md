@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/160
 - Classification: bug, usability, cross-platform parity
-- State: shipped in App Store iOS v6.1.33 build 17, now `READY_FOR_SALE`. PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Both merges are included in build 17. Reporter validation still requires phone/full-iPad/narrow-iPad device verification.
+- State: iOS v6.1.33 build 17 is `READY_FOR_SALE` and public rollout has started. Apple's 2026-07-19 lookup reports v6.1.33 in the US and Hong Kong stores, while the Taiwan storefront still reports v6.1.32, so Taiwan propagation is not yet complete. PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Both merges are included in build 17. Reporter validation still requires v6.1.33 availability on their storefront plus phone/full-iPad/narrow-iPad device verification.
 - Platform: iOS only. Android is **reporter-confirmed working** and is **not** changed by this fix.
 - Public acknowledgement: reporter is a community iPhone user (see privacy-safe summary below). No private account details are recorded in this repo.
 
@@ -116,5 +116,6 @@ A community iPhone user reported that selecting the `LIME+數字符號鍵盤` (`
 - [x] Reproduce and correct the merged iPad punctuation semantic regression with source-independent RED assertions on a focused follow-up branch.
 - [x] Review and merge corrective follow-up PR #164 as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`.
 - [ ] Simulator/device verification of phone, full iPad, and narrow iPad normal/Shift layouts.
-- [x] App Store release containing PR #162 and PR #164: iOS v6.1.33 build 17 is `READY_FOR_SALE`.
+- [x] App Store release containing PR #162 and PR #164: iOS v6.1.33 build 17 is `READY_FOR_SALE`, with public rollout verified in the US and Hong Kong stores.
+- [ ] Verify the Taiwan storefront advances from v6.1.32 to v6.1.33.
 - [ ] Reporter confirmation on iPhone normal/Shift layouts. Treat the later Pixel 7 comment as separate Android investigation if it persists on Android v6.1.33.
