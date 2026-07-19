@@ -35,14 +35,14 @@ if (keystorePropsFile.exists()) {
 }
 
 android {
-    namespace 'org.limeime'
+    namespace = 'org.limeime'
     signingConfigs {
         if (hasReleaseSigning) {
             release {
-                storeFile file(keystoreProps['storeFile'])
-                storePassword keystoreProps['storePassword']
-                keyAlias keystoreProps['keyAlias']
-                keyPassword keystoreProps['keyPassword']
+                storeFile = file(keystoreProps['storeFile'])
+                storePassword = keystoreProps['storePassword']
+                keyAlias = keystoreProps['keyAlias']
+                keyPassword = keystoreProps['keyPassword']
             }
         }
     }
@@ -71,12 +71,12 @@ android {
                 signingConfig signingConfigs.release
             }
             minifyEnabled true
-            shrinkResources true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            enableUnitTestCoverage true
-            enableAndroidTestCoverage true
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
     productFlavors {
@@ -87,13 +87,13 @@ android {
         }
     }
     lint {
-        abortOnError false
+        abortOnError = false
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-        coreLibraryDesugaringEnabled true
+        coreLibraryDesugaringEnabled = true
     }
 
     sourceSets {

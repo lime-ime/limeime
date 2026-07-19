@@ -195,6 +195,39 @@ public class LimeDBTest {
     }
 
     @Test(timeout = 15000)
+    public void cinImportAcceptsHorizontalWhitespaceBetweenFields() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue(initializeDatabase(limeDB));
+
+        File fixture = new File(appContext.getCacheDir(), "multiple_spaces.cin");
+        try {
+            writeUtf8(fixture,
+                    "%chardef begin\n" +
+                    "a       \u6E2C\n" +
+                    "aa\t  \u8A66\n" +
+                    "aaa  \t\u7532\n" +
+                    "aaaa\t\t  \u4E59\n" +
+                    "%chardef end\n");
+
+            limeDB.setTableName(LIME.DB_TABLE_CUSTOM);
+            limeDB.clearTable(LIME.DB_TABLE_CUSTOM);
+            limeDB.setFilename(fixture);
+            limeDB.importTxtTable(LIME.DB_TABLE_CUSTOM, null);
+            waitForImportThread(limeDB);
+
+            assertEquals("\u6E2C", limeDB.getMappingByCode("a", false, true).get(0).getWord());
+            assertEquals("\u8A66", limeDB.getMappingByCode("aa", false, true).get(0).getWord());
+            assertEquals("\u7532", limeDB.getMappingByCode("aaa", false, true).get(0).getWord());
+            assertEquals("\u4E59", limeDB.getMappingByCode("aaaa", false, true).get(0).getWord());
+        } finally {
+            if (fixture.exists() && !fixture.delete()) {
+                Log.w(TAG, "Failed to delete multiple-spaces CIN fixture");
+            }
+        }
+    }
+
+    @Test(timeout = 15000)
     public void limeImportSkipsHashCommentsAndPersistsCnameVersion() throws Exception {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         LimeDB limeDB = new LimeDB(appContext);

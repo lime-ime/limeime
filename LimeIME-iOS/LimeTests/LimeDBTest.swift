@@ -752,6 +752,31 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"), "2")
     }
 
+    func testImportTxtFileAcceptsHorizontalWhitespaceBetweenCinFields() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef begin
+        a       測
+        aa\t  試
+        aaa  \t甲
+        aaaa\t\t  乙
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "amount"), "4")
+        XCTAssertEqual(db.getMappingByCode("a", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "測")
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "試")
+        XCTAssertEqual(db.getMappingByCode("aaa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "甲")
+        XCTAssertEqual(db.getMappingByCode("aaaa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "乙")
+    }
+
     func testImportTxtFileSkipsCinCommentLinesInsideChardef() throws {
         let db = try makeLimeDB()
         let importURL = FileManager.default.temporaryDirectory
