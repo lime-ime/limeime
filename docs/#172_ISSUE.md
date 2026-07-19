@@ -9,14 +9,13 @@
 - Fix: PR #174, merged as `f5110419456235acdc075825757b7ceaf6ada133` on 2026-07-19
 - Source: private support-email report summarized by the project account. The original table and screenshots remain private test evidence.
 - Confirmed environment: iPhone 12, iOS 17.6, imported `liu7.cin`; the exact LIME version is not yet known.
+- Latest reporter evidence: after updating LIME on 2026-07-19, the problem still reproduced and the reporter supplied four additional screenshots. The updated LIME version remains unconfirmed, and the current v6.1.33 release predates the merged parser fix.
 
 ## Problem statement
 
 The user reports that importing `liu7.cin` completes, but selecting the imported input method does not produce characters. Inspection of the private UTF-8 fixture now identifies a concrete parser failure before candidate lookup: its `%chardef` mapping rows align the code and output columns with repeated ASCII spaces, and the pre-fix iOS parser read the first empty field after the code as the output. A static replay of that parser therefore accepted zero mappings from the aligned rows while still completing the metadata/import lifecycle.
 
 The reporter's selected destination input method, visible imported-count message, runtime registration/activation state, and one exact user-entered code still need device confirmation. Those checks may reveal a secondary issue, but they are no longer prerequisites for establishing the fixture's repeated-space parser defect.
-
-This is independent of issue #160, which concerns missing iOS keyboard-layout resources.
 
 ## Source evidence inspected
 
@@ -55,7 +54,7 @@ This is independent of issue #160, which concerns missing iOS keyboard-layout re
 
 The source-backed root cause for the supplied fixture is repeated-space handling in both platform importers. Each treated every space as an independent delimiter and assumed the output was always at index 1, so aligned mapping rows produced an empty output and were skipped.
 
-Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname`, issue #160, or a registration-only failure unless post-parser testing finds separate evidence.
+Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname` or a registration-only failure unless post-parser testing finds separate evidence.
 
 ## Merged implementation and remaining release QA
 
