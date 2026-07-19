@@ -89,7 +89,7 @@ An independent post-generation semantic audit found that the generator-relative 
 - Narrow iPad Shift retains `…` and loses both `_` and `+`.
 - Normal narrow iPad drops `=` (code `61`).
 
-Follow-up PR #164 added source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. PR #164 merged as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`; the focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. Xcode/device verification and reporter-testable release delivery remain pending.
+Follow-up PR #164 added source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. PR #164 merged as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`; the focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. The fix is delivered in iOS v6.1.33, with public rollout verified in the US and Hong Kong stores. Taiwan storefront propagation plus device/reporter verification remain pending.
 
 1. Build the keyboard extension and confirm all six phone/iPad JSONs are copied into the bundle.
 2. On iPhone, select `limenumsym` and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm Shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
@@ -100,7 +100,7 @@ Follow-up PR #164 added source-independent assertions for the explicit phone/XML
 
 ### Android
 
-No change and no retest indicated. Android is confirmed unaffected and used as the parity reference.
+No Android source change was made because Android already contains the XML resources missing from iOS. The reporter's later Pixel 7 observation is not explained by the confirmed iOS root cause and remains a separate unresolved datapoint. If it persists on Android v6.1.33, collect the active IM, selected keyboard configuration, and screenshot before investigating Android's loading path.
 
 ## Privacy-safe reporter summary
 
