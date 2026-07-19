@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: open after the reporter confirmed the Android v6.1.33 search and immediate candidate-refresh fixes; the uploaded recording shows a separate Android management-list refresh defect after deletion, while iOS binary delivery and corrected-source validation remain separate
+- State: open after the reporter confirmed the Android v6.1.33 search and immediate candidate-refresh fixes; the separate Android management-list refresh fix is merged in PR #168 but is not in v6.1.33, so reporter verification waits for a newer Android build, while iOS binary delivery and corrected-source validation remain separate
 
 ## Corrected scope
 
@@ -59,7 +59,8 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - Reporter `coral0819` confirmed both requested Android checks in https://github.com/lime-ime/limeime/issues/161#issuecomment-5012137623: previously unfindable related records can now be found and deleted, and keyboard related candidates update immediately after add/update/delete. The comment was then edited to add a public Google Drive recording. The downloaded 21.376-second MP4 is 15,818,451 bytes with SHA-256 `0bce29c2e256c53dd7251053b77b2a98cf6955fa3ad175d38111506c95e83497`.
 - The recording establishes a separate Android management-list synchronization defect. With search text `/`, the list initially shows three records with the same parent `/084V9P2` and children `/084V9P2`, `台中`, and `/`. After a delete is confirmed, the filtered list count changes but a visible row can retain the deleted record's text; tapping that stale-looking row opens a different surviving record. Clearing/re-entering the search refreshes the visible row contents. This does not invalidate the confirmed prefix-search or keyboard-candidate cache fixes, but it keeps #161 open for a focused list-refresh fix.
 - Root cause: `ManageRelatedFragment.removeRelated()` removed the row directly from the same mutable list previously submitted to `ListAdapter`, violating DiffUtil's immutable-list contract. The adapter's internal item count changed without a matching RecyclerView diff/rebind, so visible holder text and the refreshed database position could diverge. The fragment also requested a second redundant refresh after `ManageImController.deleteRelatedPhrase()` had already refreshed the view.
-- Focused Android fix branch `fix/161-android-related-delete-list` keeps the submitted page unchanged until the controller returns a fresh database result, removes the redundant delete refresh, and makes `ManageRelatedAdapter` snapshot each submitted list defensively. Instrumentation regression coverage first reproduced RED when caller mutation changed the adapter count from 2 to 1 without a new submission, then passed GREEN after the fix; a second RED/GREEN test verifies `removeRelated()` does not mutate the current page before controller refresh.
+- PR #168 merged the focused Android fix to `master` as `285b9fde57384203c074f9b16094f2bdc757a3c6` from final head `356ba547830ca0af0dd9807e308a059863fdd9fb`. The fix keeps the submitted page unchanged until the controller returns a fresh database result, removes the redundant delete refresh, and makes `ManageRelatedAdapter` snapshot each submitted list defensively. Instrumentation regression coverage first reproduced RED when caller mutation changed the adapter count from 2 to 1 without a new submission, then passed GREEN after the fix; a second RED/GREEN test verifies `removeRelated()` does not mutate the current page before controller refresh.
+- GitHub Release v6.1.33 targets `b2fa71779d8423b92896fa1a0262706bb62ea4fa`, which is an ancestor of the PR #168 merge and therefore predates this deletion-list fix. Do not ask the reporter to retest this follow-up until a newer Android GitHub APK or Google Play build contains `285b9fde57384203c074f9b16094f2bdc757a3c6`.
 - iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. The Android APK does not verify iOS behavior.
 
 ## Acceptance criteria
@@ -75,4 +76,5 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] Android manual related add/update/delete invalidates both initial and full runtime related-cache entries (whole-cache flush in the generic mutation wrappers + regression test)
 - [x] iOS manual related add/update/delete signals `needsKeyboardCacheReset` so the keyboard flushes `relatedCache` on next activation
 - [x] Reporter verifies Android search/deletion and immediate candidate refresh in v6.1.33
-- [ ] Android filtered management list refreshes row contents after deletion so the visible row and the record opened by tapping it remain identical
+- [x] Android filtered-management-list source fix merged in PR #168 / `285b9fde57384203c074f9b16094f2bdc757a3c6`
+- [ ] A newer Android build contains PR #168 and the reporter confirms that deletion refreshes visible row contents so the row and opened record remain identical
