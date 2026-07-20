@@ -392,8 +392,8 @@
           "longPressCode": 0
         },
         {
-          "code": -10,
-          "label": "中",
+          "code": -9,
+          "label": "EN",
           "sublabel": "",
           "widthPercent": 11.0,
           "icon": "",

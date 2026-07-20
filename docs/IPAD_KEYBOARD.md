@@ -165,6 +165,22 @@ Every generated Chinese IM iPad layout uses this fixed 6-key bottom row:
 - `globe` is always present on iPad; do not hide it because of
   `needsInputModeSwitchKey`.
 
+#### Language-mode key invariant (#181)
+
+Every committed `*_ipad.json` and `*_ipad_narrow*.json` layout has exactly one language-mode key:
+
+- Non-English layouts, including Chinese IM, number, number-symbol, shift, and symbol pages, use
+  `code = -9` labelled `EN` or `abc`. They must not contain `code = -10` or a `中` language key.
+- English-mode families `lime_english*`, `lime_abc*`, `lime_email*`, and `lime_url*` use
+  `code = -10` labelled `中` so the user can return to the active Chinese IM.
+- A symbol-page `code = -2` key labelled `abc` is a separate page-navigation key. Preserve it in
+  addition to the `code = -9` language key.
+- Full and narrow iPad variants must preserve the same language-mode direction. Narrow trimming
+  must not reclassify Chinese number, number-symbol, or shift pages as English layouts.
+
+`scripts/test_ipad_language_mode_key.py` scans every committed iPad layout and enforces both sides
+of this contract. Generator changes must pass it after regenerating full and narrow resources.
+
 ### Shift mirroring rule
 
 A dual-sliding key (`hint\nprimary`) on the unshifted row becomes a **fixed

@@ -51,12 +51,15 @@ def fix_total(keys, target=100.0):
 # Fixed rows
 # ---------------------------------------------------------------------------
 
-def bottom_row(sym='.?123', left_cjk=False, cjk=False, shifted=False):
+def bottom_row(sym='.?123', left_lang=False, cjk=False, shifted=False):
     # Non-CJK: globe(8) + left(10) + emoji(7) + space(57) + sym(10) + dismiss(8) = 100
     # CJK:     globe(8) + left(10) + emoji(7) + space(50) + ，/。(7) + sym(10) + dismiss(8) = 100
     # shifted: ，/。 key becomes 。only
-    # left_cjk=True: replace left sym key with 中 (C_IM) key for symbol layouts
-    left_key = (mk(C_IM, label='中', width=10.0, mod=True) if left_cjk
+    # left_lang=True: replace left sym key with the language mode key for symbol
+    # layouts. Symbol pages are reached from Chinese mode, so the escape hatch
+    # they need is EN (C_EN), not 中 — see issue #181. The right-hand C_SYM key
+    # keeps its 'abc' label; that one returns to the letter page, not to English.
+    left_key = (mk(C_EN, label='EN', width=10.0, mod=True) if left_lang
                 else mk(C_SYM, label=sym, width=10.0, mod=True))
     if cjk:
         comma_key = (mk(0x3002, label='。', width=7.0) if shifted
@@ -498,7 +501,7 @@ def make_symbols1():
 
     write_layout('symbols1_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('abc', left_cjk=True), True),
+        (bottom_row('abc', left_lang=True), True),
     ])
 
 
@@ -557,7 +560,7 @@ def make_symbols2():
 
     write_layout('symbols2_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('abc', left_cjk=True), True),
+        (bottom_row('abc', left_lang=True), True),
     ])
 
 
@@ -612,7 +615,7 @@ def make_symbols3():
 
     write_layout('symbols3_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('abc', left_cjk=True), True),
+        (bottom_row('abc', left_lang=True), True),
     ])
 
 

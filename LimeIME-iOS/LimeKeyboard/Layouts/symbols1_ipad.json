@@ -922,11 +922,11 @@
           "popupCharacters": ""
         },
         {
-          "code": -10,
+          "code": -9,
           "codes": [
-            -10
+            -9
           ],
-          "label": "中",
+          "label": "EN",
           "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
