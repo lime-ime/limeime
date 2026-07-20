@@ -25,7 +25,15 @@
 | `font_size` | Picker / ListPreference | "1" · 字型大小 · §8.1 鍵盤外觀 | **"1"** · 字型大小 · lime_keyboard | "1" · 字型大小 · pref_section_appearance | Candidate-strip font scale. Moved from §8.3 into §8.1 (UI grouping). |
 | `number_row_in_english` | Toggle / CheckBox | true · 數字列英文鍵盤 · §8.1 鍵盤外觀 (**iPhone-only** — hidden on iPad) | true · 數字列英文鍵盤 · lime_keyboard | true · 數字列英文鍵盤 · pref_section_appearance | Digit row in English layout. Moved from §8.3 into §8.1 (UI grouping). iOS gates to iPhone in `PreferencesTabView.swift`. |
 | `show_arrow_key` | Picker / ListPreference | 0 · 顯示方向鍵 · §8.1 鍵盤外觀 | "0" · 顯示方向鍵 · lime_keyboard | "0" · 顯示方向鍵 · pref_section_appearance | 無 / 軟鍵盤上方 / 軟鍵盤下方. |
-| `split_keyboard_mode` | Picker / ListPreference | 0 · 分離鍵盤 · §8.1 鍵盤外觀 (iPad-only) | "0" · 分離鍵盤 · lime_keyboard | "0" · 分離鍵盤 · pref_section_appearance | 0=關閉, 1=開啟, 2=僅橫向開啟. |
+| `phone_portrait_keyboard_mode` | Picker / ListPreference | 0 · 直向鍵盤模式 · §8.1 鍵盤外觀 (every iPhone) | *(new)* | "0" · 直向鍵盤模式 · pref_section_appearance (every phone `<600dp`) | 0=標準, 1=分離, 2=靠左, 3=靠右. Integrated phone-only portrait mode; no screen-width/physical-size gate. |
+| `phone_landscape_split` | Toggle / SwitchPreference | false · 橫向分離鍵盤 · §8.1 鍵盤外觀 (every iPhone) | *(new)* | false · 橫向分離鍵盤 · pref_section_appearance (every phone `<600dp`) | Independent phone-landscape split switch; no width gate. |
+| `split_keyboard_mode` | Picker / ListPreference | 0 · 分離鍵盤 · §8.1 鍵盤外觀 (iPad-only) | "0" · 分離鍵盤 · lime_keyboard | "0" · 分離鍵盤 · pref_section_appearance (Android tablet `≥600dp` only) | Tablet/iPad profile only: 0=關閉, 1=開啟, 2=僅橫向開啟. Never rewritten by phone changes. |
+| `numpad_anchor` | Picker / ListPreference | 0 · 數字鍵盤位置 · §8.1 鍵盤外觀 (iPad-only) | *(new)* | "0" · 數字鍵盤位置 · pref_section_appearance (Android tablet `≥600dp` only) | Tablet/iPad numpad profile: 0=滿版/fit, 1=靠左, 2=靠右, 3=置中. |
+
+Issue #169 migration uses legacy `one_hand_mode` first, then legacy `split_keyboard_mode` where
+phone split previously existed. The canonical phone keys are included in Android/iOS backup and
+restore. On iOS they also travel through PrefInbox/relay because both Settings and the keyboard
+menu can write them. See `docs/#169_ISSUE.md`.
 
 ## 8.2 Keyboard Feedback (鍵盤回饋)
 
@@ -45,7 +53,7 @@
 | `candidate_switch` | *(hidden — no UI)* | always `true` (UI toggle removed; getter forced to `true` in `LIMEPreferenceManager`) | true · 滑動選取 · **lime_mapping (§8.6)** · summary=滑動選取輸入法建議文字 | *(hidden — no UI)* · always `true` (UI removed from `pref_section_im_behaviour`; `LIMEPreferenceManager.getSelectDefaultOnSliding()` returns `true`) | Swipe vs paged candidate selection. The paged alternative is obsolete on modern iOS/Android, so the toggle was removed and the value is hardcoded to `true` (free-scroll). Stored UserDefaults / SharedPreferences entry is ignored. |
 | `persistent_language_mode` | Toggle / CheckBox | false · 記憶中英模式 · §8.4 輸入法行為 · subtext=下次切換前保持中英模式 | false · 記憶中英模式 · **lime_keyboard (§8.1)** · summary=下次切換前保持中英模式 | false · 記憶中英模式 · pref_section_im_behaviour | Persist CN/EN mode across app focus. Re-classified from §8.8 to §8.4 (UI grouping). |
 | `enable_emoji_position` | Picker / ListPreference | 5 · 設定 EMOJI 候選列顯示位置 · §8.4 輸入法行為 · options=0 不顯示, 2–10 第 N 候選字後顯示 | "3" · 設定 EMOJI 候選列顯示位置 · lime_keyboard | "5" · 設定 EMOJI 候選列顯示位置 · pref_section_im_behaviour | Position index of emoji in candidate strip; default 5. Value 0 disables inline emoji candidates. When comma/period full-width Chinese punctuation is present at that slot, emoji insertion moves after it so punctuation stays before emoji. |
-| `similiar_list` | Picker / ListPreference | 20 · 建議字顯示數量 · §8.4 輸入法行為 · gated by `similiar_enable` (§8.6 toggle) on iOS | "20" · 建議字顯示數量 · **lime_mapping (§8.6)** | "20" · 建議字顯示數量 · pref_section_im_behaviour | Suggestion-count limit: 0 / 10 / 20 / 30 / 40 / 50. Re-categorised from §8.6 to §8.4 on both iOS and Android current; pre-back-port Android kept it in §8.6 (lime_mapping). |
+| `similiar_list` | Picker / ListPreference | 20 · 建議字顯示數量 · §8.4 輸入法行為 · drives `similarCodeCandidatesCap` UNGATED (Android parity; `similiar_enable` does NOT gate it — #5 / `8a338e7b`) | "20" · 建議字顯示數量 · **lime_mapping (§8.6)** | "20" · 建議字顯示數量 · pref_section_im_behaviour | Suggestion-count limit: 0 / 10 / 20 / 30 / 40 / 50. Re-categorised from §8.6 to §8.4 on both iOS and Android current; pre-back-port Android kept it in §8.6 (lime_mapping). |
 | `reverse_lookup_screen` | Drill-down / PreferenceScreen | *(screen)* · 字根反查設定 · §8.4.1 字根反查設定 | *(flat entries in lime_im; no wrapper)* | *(screen)* · 字根反查設定 · pref_section_im_behaviour | Opens the reverse-lookup sub-screen. Last item in §8.4 on both platforms. |
 
 ## 8.5 Han Conversion (簡繁轉換)
@@ -156,7 +164,7 @@ Pre-back-port had **3 flat categories** (`lime_keyboard` / `lime_im` / `lime_map
 
 | Pre-back-port category | Current category | Items |
 |---|---|---|
-| lime_keyboard (鍵盤) | pref_section_appearance (§8.1) | keyboard_theme, keyboard_size, font_size, number_row_in_english, show_arrow_key, split_keyboard_mode |
+| lime_keyboard (鍵盤) | pref_section_appearance (§8.1) | keyboard_theme, keyboard_size, font_size, number_row_in_english, show_arrow_key, split_keyboard_mode; current also adds phone_portrait_keyboard_mode, phone_landscape_split, numpad_anchor |
 | lime_keyboard | pref_section_feedback (§8.2) | vibrate_on_keypress, vibrate_level, sound_on_keypress, keypress_sound_volume |
 | lime_keyboard | pref_section_im_behaviour (§8.4) | enable_emoji_position, persistent_language_mode |
 | lime_keyboard | pref_section_physical_keyboard | hide_software_keyboard_typing_with_physical, switch_english_mode, switch_english_mode_shift |

@@ -117,7 +117,7 @@ that `mappingCache` serves it in **~1.4 µs**. So per session you pay ~3 ms
 **once per distinct code**, never again — and it's on a background
 `.userInteractive` thread, so it delays the candidate bar by a few ms, once per
 new code, without blocking the keypress. Simulator / Apple-Silicon-host numbers;
-confirm on the WJIP17 before treating as absolute (§5.3).
+confirm on the physical test iPhone before treating as absolute (§5.3).
 
 ## 4. Findings
 
@@ -189,7 +189,7 @@ optimize the learning path for tap-to-tap.
    about the *shape* of the ~2% of work, not a claim that the keyboard is busy.
 3. **Simulator ≠ device.** Apple-Silicon-host SQLite is faster than real A19
    flash on cold reads. The relative ranking holds; absolute numbers do not.
-   Confirm on the WJIP17 before acting on the query cost.
+   Confirm on the physical test iPhone before acting on the query cost.
 4. **One session** (~22 s, one `你好`×12 burst) — directional, not a baseline.
 
 ## 6. Reproduce

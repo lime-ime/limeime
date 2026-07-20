@@ -4,8 +4,10 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/153
 - Classification: bug, usability
-- State: open
+- State: closed as completed on 2026-07-14
 - Assignee: `jrywu`
+- Fix commit: `83c5d5af320469af262f98883280ede193c2d1b7`
+- Delivery: included in the v6.1.30 iOS source/release flow. This is a maintainer-created tracking issue, so no separate public reporter retest is pending.
 - Platform: iOS confirmed by the maintainer report; Android comparison path is working and already contains a dedicated exception
 
 ## Problem statement
@@ -85,4 +87,4 @@ No Android source change is indicated. The Android path already has the dedicate
 
 ## Follow-up condition
 
-This maintainer-created issue does not need a routine public acknowledgement or community APK retest request. After an iOS fix is merged, verify it in a newer TestFlight/App Store build before marking binary delivery complete.
+This maintainer-created issue does not need a routine public acknowledgement or community APK retest request. The iOS source fix landed in `83c5d5af320469af262f98883280ede193c2d1b7` and is included in the v6.1.30 release flow, so the tracking issue was closed as completed on 2026-07-14.

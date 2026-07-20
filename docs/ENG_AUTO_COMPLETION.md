@@ -280,7 +280,7 @@ Implemented short-term behavior without new dictionary data:
 Target (now implemented by the scored dictionary — replaces the #103 `rowid ASC`):
 
 ```text
-ORDER BY (score + basescore) DESC, word ASC
+ORDER BY score DESC, basescore DESC, word ASC
 ```
 
 where:
@@ -310,7 +310,7 @@ CREATE TABLE dictionary (
 );
 
 CREATE INDEX IF NOT EXISTS dictionary_word_idx ON dictionary(word);
-CREATE INDEX IF NOT EXISTS dictionary_rank_idx ON dictionary(score + basescore);
+CREATE INDEX IF NOT EXISTS dictionary_score_basescore_idx ON dictionary(score DESC, basescore DESC);
 ```
 
 ### Prefix lookup — indexed range scan, no FTS
@@ -321,15 +321,15 @@ FROM dictionary
 WHERE word >= :prefix
   AND word <  :prefixUpperBound   -- :prefix with final code point incremented ("sal" -> "sam")
   AND word <> :prefix             -- keep #103 exact-match filter
-ORDER BY (score + basescore) DESC, word ASC
+ORDER BY score DESC, basescore DESC, word ASC
 LIMIT :limit;
 ```
 
 ### basescore is log-scaled frequency, not a rank
 
 `basescore` is the **log-scaled** Ngrams frequency, normalized to **0..10000** — the LatinIME
-approach (which uses a 0..255 log-frequency), broadened here for finer resolution and more
-headroom against user `score`:
+approach (which uses a 0..255 log-frequency), broadened here for finer resolution among
+words with the same user `score`:
 
 ```text
 basescore = round(10000 * (log(count) - log(min_count)) / (log(max_count) - log(min_count)))
@@ -337,10 +337,9 @@ basescore = round(10000 * (log(count) - log(min_count)) / (log(max_count) - log(
 
 Why log-scaled, **not** a dense rank (1..N): English frequency is ~Zipfian, spanning ~10^7:1
 between `the` and a mid-list word. A rank flattens that to evenly-spaced integers — `the`,
-`of`, `and` would sit 1 apart — discarding the *magnitude* that makes frequency useful and
-letting a handful of user picks leapfrog genuinely-common words. Log-scaling preserves
-relative magnitude: `the`≈10000, `of`≈9600, `salt`≈5900, rare words near 0, so common words
-keep a strong prior that `score += 1` per pick adjusts gradually rather than overturns.
+`of`, `and` would sit 1 apart — discarding the *magnitude* that makes frequency useful.
+Log-scaling preserves relative magnitude when `basescore` breaks ties. As in Chinese IM,
+any positive user `score` takes priority over bundled frequency.
 
 The bootstrap (`--source wordlist`) path has only frequency *order*, no counts, so it
 approximates via Zipf (count ~ 1/rank) then applies the same log-scale; the shipped payload
@@ -513,7 +512,7 @@ Key invariants:
 ### Learning — `score` writeback (Android)
 
 When the user picks an English suggestion, increment that word's `score`, so frequently
-chosen words rank higher (the `ORDER BY (score + basescore) DESC` query). This mirrors the
+chosen words rank higher (the `ORDER BY score DESC, basescore DESC` query). This mirrors the
 existing emoji-usage hook, which already lives at the same pick site.
 
 Where: `LIMEService` English suggestion pick (the non-emoji branch, ~line 5616) already
@@ -622,8 +621,8 @@ contains `score`, that is the user's private backup data.
 ## Code changes by file (Android)
 
 Decisions locked for the first PR: **data source = Google Books Ngrams 1-grams (CC BY
-3.0)**; **scope = mechanism + learning** (pick → `score += 1`); **ranking = `(score +
-basescore) DESC, word ASC`** (changes the #103 `rowid ASC` ordering — re-verify the #103
+3.0)**; **scope = mechanism + learning** (pick → `score += 1`); **ranking = `score DESC,
+basescore DESC, word ASC`** (changes the #103 `rowid ASC` ordering — re-verify the #103
 cases against the new frequency rank).
 
 | Concern | File | Change |
@@ -633,7 +632,7 @@ cases against the new frequency rank).
 | Payload asset (new) | `LimeStudio/app/src/main/res/raw/dictionary.db` | The bundled scored payload. |
 | Refresh + schema | `LimeDB.java` | Add `DICTIONARY_DATA_VERSION` constant + `refreshDictionaryDataIfNeeded()` / `ensureDictionarySchema()` / `importDictionaryData(File)`, modeled on the emoji equivalents (`refreshEmojiDataIfNeeded` / `createEmojiTables` / `importEmojiData`, including the `cacheDir` temp-file + `ATTACH` pattern via `LIMEUtilities.copyRAWFile`). |
 | Open-path wiring | `LimeDB.java` `ensureCurrentDatabase()` | Call `refreshDictionaryDataIfNeeded()` right after `refreshEmojiDataIfNeeded()` (line ~885). |
-| Query rewrite | `LimeDB.java` `getEnglishSuggestions(String)` (line 4898) | Replace `word MATCH '<typed>*'` with the indexed prefix range query; **ranking changes to `(score + basescore) DESC, word ASC`** (was `rowid ASC` from #103). Keep the `word <> :prefix` #103 exact-match filter and the `getSimilarCodeCandidates()` limit. Build `:prefixUpperBound` in code. |
+| Query rewrite | `LimeDB.java` `getEnglishSuggestions(String)` (line 4898) | Replace `word MATCH '<typed>*'` with the indexed prefix range query; rank like Chinese IM with **`score DESC, basescore DESC, word ASC`** (was `rowid ASC` from #103). Keep the `word <> :prefix` #103 exact-match filter and the `getSimilarCodeCandidates()` limit. Build `:prefixUpperBound` in code. |
 | Learning (new) | `LIMEService.java` (~5616) + `SearchServer` + `LimeDB.java` | On a non-emoji English pick, call `SearchSrv.recordEnglishUsage(word)` (parallel to `recordEmojiUsage` at 5613). `recordEnglishUsage` → `LimeDB` `UPDATE dictionary SET score = score + 1 WHERE word = ?` (async, `checkDBConnection()` guarded, UPDATE-only). See "Learning" above. |
 | Lazy guard | `LimeDB.java` | At the top of `getEnglishSuggestions`, ensure the dictionary is current (mirror emoji's `checkEmojiDB()`), so a session that never opened settings still has a valid table. |
 

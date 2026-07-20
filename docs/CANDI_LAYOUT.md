@@ -244,11 +244,15 @@ reused to show that candidate's codes in the configured lookup IM (e.g.
 `日=ㄇㄧˋ; ㄖˋ`). The strip stays visible until the next keystroke or
 a dismiss-button tap — there is no auto-dismiss timer.
 
-**Implementation guard** (`KeyboardViewController`): `isShowingReverseLookup: Bool`
-is set to `true` by `showReverseLookup(_:)` and cleared by `didPress` /
-`cancelComposing`. While the flag is `true`, `hideComposingPopup()` is a
-no-op, preventing post-commit cleanup (related-phrase fetch, `clearSuggestions`)
-from racing away the result before the user can read it.
+**Implementation** (`KeyboardViewController`): after a full commit, the codes are
+fetched on a background queue and shown via `showLimeToast(result, persistent: true)`
+— `persistent` means **no auto-dismiss timer** (the default 1.5 s timer is what used
+to cut it short; fixed in `7782379a`). The async completion is guarded by
+`mComposing.isEmpty`, so a lookup that lands *after* the user starts a new stroke
+can't clobber the live composing strip and stick. It is cleared by the next key —
+`keyboardView(_:didPress:)` calls `hideLimeToast()` first thing — matching Android's
+"stays until the next keystroke / dismiss." (Note: `showReverseLookupPicker()` is the
+unrelated hamburger source-picker, not this display path.)
 
 **Key naming**: the UserDefaults key is `"\(activeIM)_im_reverselookup"` where
 `activeIM` equals the IM's `tableNick` from the database (e.g. `"phonetic"`,
@@ -357,16 +361,19 @@ var rowH    = firstRowH      // candidateBarHeight
 var rowBias = stripH / 2
 
 for candidate in expandedCandidates {
-    // ... compute btnW ...
+    // ... compute btnW (floored at minCandidateCellWidth) ...
     if needsWrap {
-        x = 0
+        x = dismissZone + hPad   // every row starts at the same left margin
         y += rowH                // advance by OLD row's height
         rowH = restRowH          // shorter from now on
         rowBias = 0              // no strip-bias from now on
     }
-    btn.frame = CGRect(x: x, y: y, width: btnW, height: rowH)
+    // Row 0 → fixed header container; rows 2+ → scroll content (y shifted up by firstRowH).
+    let inHeader = row == 0
+    btn.frame = CGRect(x: x, y: inHeader ? y : y - firstRowH, width: btnW, height: rowH)
     btn.contentEdgeInsets.top    =  rowBias
     btn.contentEdgeInsets.bottom = -rowBias
+    (inHeader ? firstRowContainer : contentView).addSubview(btn)
     // ...
 }
 ```
@@ -385,33 +392,64 @@ y = 94  ┴─────── row 2 bottom (rowH = 36pt)
 
 Symmetric padding above and below the glyph, no wasted strip area.
 
-### Wrap point — must use chevron button width, NOT bar height
+### Fixed first row + rows-2+ scroll below (expand-in-place)
+
+Row 1 is built into a **fixed header container** (`expandedFirstRowContainer`,
+pinned at the panel top with the exact collapsed-bar geometry). Rows 2+ live in
+the scroll view, whose top is offset down by the first-row height
+(`expandedScrollTopConstraint = activeCandidateBarHeight`). So when the grid
+scrolls, row 1 and the chrome (composing strip, dismiss, chevron) never move and
+nothing slides under them — the earlier single-scroll-view design let lower rows
+scroll up behind the clear chrome.
+
+### Wrap point — chevron GLYPH on row 0, full width on rows 2+
 
 ```swift
-let chevronZone = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad)
-let rowMaxX = panelWidth - chevronZone - expandedSepWidth
+let chevronZone      = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad)
+let chevronGlyphLeft = panelWidth - chevronZone/2
+                     - LayoutMetrics.CandidateBar.Chevron.iconSize(isPad: isOnPad)/2
+func expandedRowMaxX(row: Int) -> CGFloat {
+    // Row 0 shares the chevron → stop at the chevron glyph (its side padding is
+    // empty). Rows 2+ scroll below the header (no chevron) → full screen width.
+    return row == 0 ? chevronGlyphLeft - expandedSepWidth : panelWidth
+}
+
+// Wrap on the item's NATURAL width (glyph + pads), not the floored btnW.
+// Row 0 may overflow ~10% into the chevron-glyph margin (on-screen); rows 2+
+// wrap cleanly at the screen edge so nothing clips off-screen.
+let wrapExtent = row == 0 ? intrinsicW * 0.9 : intrinsicW
+if x + wrapExtent > expandedRowMaxX(row: row) { /* wrap */ }
 ```
 
-A row wraps when the next candidate's right edge would cross `rowMaxX`.
-This must use `Chevron.buttonWidth` (40pt iPhone, 52pt iPad) — using
-`candidateBarHeight` here (the historical pre-refactor mistake) would
-over-reserve the right edge by ~22pt on iPad and push the last
-fully-visible row-1 candidate to row 2.
+The wrap must never use `candidateBarHeight` (the historical pre-refactor
+mistake). Row 0 stops at the chevron **glyph** rather than the full 40pt button
+so the last cell fills the row instead of wrapping early against the button's
+empty side padding; rows 2+ have no chevron beneath them and fill the full
+width. Each cell is floored at `minCandidateCellWidth` (`fontPointSize + 2·hPad`,
+the bar's rule) so narrow glyphs (composing echo, single bopomofo) get a
+Han-sized cell — the wrap check uses the *natural* width so the floored padding
+of a narrow cell may spill into the reserved margin without forcing a wrap.
 
 ### Selection pill in the panel
 
 Computed manually (the panel doesn't use `CandidateButton`; it builds
-plain `UIButton(type: .system)` cells):
+plain `UIButton(type: .system)` cells). The pill must hug the *centered*
+glyph — because cells are floored at `minCandidateCellWidth`, a narrow glyph's
+cell is wider than the glyph and UIButton centers the title, so a left-aligned
+pill would miss it:
 
 ```swift
-let pillW = (btnW − 2 × cellHPad) + 2 × pillPadX     // hug glyph horizontally
+let textW = intrinsicW − 2 × cellHPad                // real glyph width (unfloored)
+let pillW = textW + 2 × pillPadX                     // hug glyph horizontally
 let pillH = min(rowH, btnFont.lineHeight + 2 × pillPadY)
-let pillX = cellHPad − pillPadX
+let pillX = (btnW − pillW) / 2                        // centered in the (possibly floored) cell
 let pillY = max(0, (rowH − pillH) / 2) + rowBias     // center vertically + apply row bias
 ```
 
-`rowBias` is `stripH/2` for row 1 (so the pill matches row-1's biased
-glyph) and 0 for rows 2+ (centered with the unbiased glyph).
+This mirrors `CandidateButton.layoutSubviews` (`pill = label.frame.insetBy(-padX,
+-padY)`), where `label.frame` is the centered title. `rowBias` is `stripH/2` for
+row 1 (so the pill matches row-1's biased glyph) and 0 for rows 2+ (centered with
+the unbiased glyph).
 
 ### Collapse chevron — width is static, height tracks the bar
 
@@ -452,9 +490,10 @@ expand-in-place. Bug history is preserved in the comments around
    gives back `stripHeight` pixels per row.
 3. **The chevron leading edge is at the same X on both surfaces.**
    Both use `Chevron.buttonWidth(isPad:)` for the button's width.
-4. **The wrap point is the same on both surfaces.** Both use
-   `Chevron.buttonWidth(isPad:) + dividerWidth` as the right-edge
-   reserve.
+4. **Row 1 never scrolls.** It is a fixed header container; only rows 2+
+   scroll, below it — so the composing strip, dismiss, and chevron stay
+   put and nothing scrolls under the clear chrome. (Row-0 wrap reserves the
+   chevron *glyph*; rows 2+ use the full width — see §4 Wrap point.)
 5. **Font-scale changes propagate live.** The bar's
    `candidateBarHeightConstraint` and the panel's
    `expandedCollapseHeightConstraint` are both updated in
@@ -603,7 +642,7 @@ button) so panel row 1 starts at the same X as the collapsed bar:
 ```swift
 let dismissZone = Chevron.buttonWidth(isPad: isOnPad) / 2   // = actual button width
 var x: CGFloat  = dismissZone + hPad   // every row, including wraps
-let rowMaxX     = panelWidth - chevronZone - expandedSepWidth  // unchanged
+// Right edge: row 0 stops at the chevron glyph; rows 2+ use full width (see §4 Wrap point).
 ```
 
 ### Invariants preserved
@@ -1033,4 +1072,4 @@ English keyboard layout files (`lime_abc.json`, `lime_abc_shift.json`, `lime_abc
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update "English keyboard launcher placement" section — remove keyboard-layout changes; replace with candidate-bar approach (reference §9 of this document).
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update "Shared contract" table — remove bottom-row position rows for iPhone/iPad/Android; add candidate-bar emoji button row.
 + [ ] **`docs/EMOJI_KEYBOARD.md`**: Update verification step 1 (keyboard layout check) to match new design; remove step 9 iPhone home-row `中` check.
-+ [ ] Verify all TODO items above with manual test on WJIP17 (iPhone), iPad, and Android emulator.
++ [ ] Verify all TODO items above with manual test on the physical test iPhone, iPad, and Android emulator.

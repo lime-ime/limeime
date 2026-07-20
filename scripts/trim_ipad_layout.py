@@ -27,7 +27,7 @@ NARROW_WIDTH_BY_BASE = {
     "lime_hs": 7.5,
 }
 ROOT_HEAVY_BASES = {"lime_ez", "lime_hs"}
-ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_shift"}
+ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_number_symbol", "lime_shift"}
 
 IM_ROOTS = {
     "lime_phonetic": "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-",
@@ -292,6 +292,24 @@ def trim_digit(row, root_set):
         right_quota -= 1
 
 
+def preserve_number_symbol_narrow_punctuation(row, layout_id):
+    """Keep the phone number-symbol punctuation reachable after narrowing.
+
+    The narrow digit-row quota removes the rightmost =/+ key. Pair that
+    output with the adjacent -/_ key before trimming instead of silently
+    losing it.
+    """
+    if base_id(layout_id) != "lime_number_symbol":
+        return
+    pair = (95, 43, "+\\n_") if layout_id.endswith("_shift") else (45, 61, "=\\n-")
+    primary_code, long_press_code, label = pair
+    for key in row["keys"]:
+        if key.get("code") == primary_code:
+            key["longPressCode"] = long_press_code
+            key["label"] = label
+            return
+
+
 def enforce_visible_cap(row, class_name):
     return
 
@@ -366,6 +384,7 @@ def trim_layout(layout):
         if cls == "bottom":
             row["keys"] = bottom_narrow_for(result["id"])
         elif cls == "digit":
+            preserve_number_symbol_narrow_punctuation(row, result["id"])
             trim_digit(row, root_set)
         if cls in ("digit", "qwerty", "asdf", "zxcv"):
             apply_row_policy(row, cls, result["id"], root_set)

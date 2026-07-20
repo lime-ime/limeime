@@ -109,6 +109,22 @@ final class SearchServerTest: XCTestCase {
         XCTAssertEqual(second.getMappingByCodeCallArgs, ["bb"])
     }
 
+    func test_similarCodeCandidatesCap_ungated_by_similiarEnable_android_parity() throws {
+        // Android drives the between-search cap from similiar_list ONLY; similiar_enable never
+        // gates the query (getSimilarEnable has zero call sites). iOS must match — otherwise the
+        // phonetic candidate SET flips (full between-search list vs exact-match-only) with the
+        // "啟用關聯字庫" toggle, so two devices with different similiar_enable diverge on the same DB.
+        let ss = try makeSearchServer()
+        ss.similiarList = 20
+        ss.similiarEnable = true
+        ss.applyPrefsToDatabase()
+        XCTAssertEqual(ss._testSimilarCodeCandidatesCap, 20)
+        ss.similiarEnable = false            // toggling "啟用關聯字庫" must not change the query cap
+        ss.applyPrefsToDatabase()
+        XCTAssertEqual(ss._testSimilarCodeCandidatesCap, 20,
+                       "similiar_enable must NOT gate the between-search cap (Android parity)")
+    }
+
     // MARK: - 3.1 getMappingByCode
 
     // SKIPPED: test_3_1_1_2_getMappingByCode_null_dbadapter_returns_empty — static field injection, not portable
@@ -2802,14 +2818,16 @@ final class SearchServerTest: XCTestCase {
                        "learnRelatedWords should be false when candidateSuggestion=false")
     }
 
-    /// similiarEnable=false → db.similarCodeCandidatesCap=0.
-    func test_prefs_similiarEnable_false_zeroes_cap() throws {
+    /// Android parity: similiarEnable「啟用關聯字庫」 gates only the post-commit
+    /// related popup, never the query cap. false must NOT zero the cap — the cap
+    /// tracks similiar_list alone (Android getSimilarCodeCandidates() is ungated).
+    func test_prefs_similiarEnable_false_does_not_zero_cap() throws {
         let ss = try makeSearchServer()
         ss.similiarEnable = false
         ss.similiarList = 20
         ss.applyPrefsToDatabase()
-        XCTAssertEqual(ss._testSimilarCodeCandidatesCap, 0,
-                       "cap should be 0 when similiarEnable=false")
+        XCTAssertEqual(ss._testSimilarCodeCandidatesCap, 20,
+                       "cap must equal similiarList regardless of similiarEnable (Android parity)")
     }
 
     /// similiarList propagates to db.similarCodeCandidatesCap when similiarEnable=true.

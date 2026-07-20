@@ -31,16 +31,32 @@ import org.limeime.data.ImConfig;
 import org.limeime.data.Keyboard;
 import org.limeime.global.LIME;
 import org.limeime.global.LIMEPreferenceManager;
+import org.limeime.keyboard.LIMEBaseKeyboard;
 import org.limeime.keyboard.LIMEKeyboard;
 import org.limeime.keyboard.LIMEKeyboardView;
+import org.limeime.keyboard.PhoneKeyboardModePolicy;
+import org.limeime.keyboard.ReachGeometry;
 
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.util.Log;
 
 public class LIMEKeyboardSwitcher {
 
 	static final boolean DEBUG = false;
 	static final String TAG = "LIMEKeyboardSwitcher";
+
+	// SPLIT_ONE_HAND_KB: the numpad-based layouts never split (they anchor instead).
+	// phone/phone_shift are the 5-column T9-style phone-IM keypads — same grid class.
+	private boolean isNumpadXml(int xml) {
+		return xml == R.xml.phone_simple || xml == R.xml.computer_simple || xml == R.xml.phone_number
+				|| xml == R.xml.phone || xml == R.xml.phone_shift;
+	}
+
+	// SPLIT_ONE_HAND_KB: used by Task 5 to gate one-hand UI against the numpad-anchored path.
+	public boolean isNumpadKeyboard() {
+		return isNumpadXml(mCurrentXmlId);
+	}
     
 	public static final int MODE_TEXT = 1;
     public static final int MODE_SYMBOLS = 2;
@@ -97,6 +113,7 @@ public class LIMEKeyboardSwitcher {
 	Context mThemedContext;
 
     //private KeyboardId mCurrentId;
+    private int mCurrentXmlId; // SPLIT_ONE_HAND_KB: current-XML tracking for isNumpadKeyboard()
     private final Map<KeyboardId, LIMEKeyboard> mKeyboards;
     
     private int mMode = KEYBOARD_MODE_NORMAL;
@@ -298,10 +315,38 @@ public class LIMEKeyboardSwitcher {
 	        if (!mKeyboards.containsKey(id)) {
 				if(DEBUG)
 					Log.i(TAG,"getKeyboard() keyboard for id, " + id + ", is not exist. create one now.");
-	        	LIMEKeyboard keyboard = new LIMEKeyboard(
+	        	boolean numpadXml = isNumpadXml(id.mXml);
+				boolean splitEligible = !numpadXml; // SPLIT_ONE_HAND_KB: numpad-based layouts never split
+				DisplayMetrics dmBuild = mThemedContext.getResources().getDisplayMetrics();
+				boolean isTabletBuild =
+						mThemedContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+				boolean landscapeBuild = dmBuild.widthPixels > dmBuild.heightPixels;
+				// Issue #169: tablets keep the legacy split_keyboard_mode value; phones use
+				// the integrated portrait mode + separate landscape split, resolved here so
+				// the keyboard reads exactly one canonical decision.
+				int splitArg;
+				boolean phoneSplitForced;
+				int phoneOneHandAnchor;
+				if (isTabletBuild) {
+					splitArg = numpadXml ? LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER : mLIMEPref.getSplitKeyboard();
+					phoneSplitForced = false;
+					phoneOneHandAnchor = 0;
+				} else {
+					int portraitMode = mLIMEPref.getPhonePortraitKeyboardMode();
+					boolean landscapeSplit = mLIMEPref.getPhoneLandscapeSplit();
+					splitArg = LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER;
+					phoneSplitForced = splitEligible
+							&& ((landscapeBuild && mLIMEPref.getShowArrowKeys() != 0)
+							|| PhoneKeyboardModePolicy.phoneSplitActive(
+									landscapeBuild, true, portraitMode, landscapeSplit));
+					phoneOneHandAnchor = PhoneKeyboardModePolicy.oneHandAnchorMode(landscapeBuild, portraitMode);
+				}
+				LIMEKeyboard keyboard = new LIMEKeyboard(
 						mThemedContext, id.mXml, id.mMode, mKeySizeScale,
 	                mLIMEPref.getShowArrowKeys(), //Jeremy '12,5,21 add the show arrow keys option
-	                mLIMEPref.getSplitKeyboard() //Jeremy '12,5,27 add the split keyboard option
+	                splitArg, //Jeremy '12,5,27 add the split keyboard option
+	                splitEligible,
+	                phoneSplitForced // issue #169: resolved phone portrait/landscape split
                 );
                 keyboard.setKeyboardSwitcher(this);
                 if (id.mCjSemicolonKey) {
@@ -310,6 +355,25 @@ public class LIMEKeyboardSwitcher {
                 if (id.mEnableShiftLock) {
                     keyboard.enableShiftLock();
                 }
+	            // SPLIT_ONE_HAND_KB / issue #169: horizontal anchoring. Phone portrait
+	            // one-hand applies to EVERY phone regardless of screen width (no gate);
+	            // numpad anchoring = tablets, numpad layouts only. oneHandWidth still
+	            // clamps to the available width, so a narrow phone simply gets a full-width
+	            // block, but the mode is always honored — never gated by device size.
+	            if (isTabletBuild && numpadXml) {
+	                int anchor = mLIMEPref.getNumpadAnchor();
+	                if (anchor != 0)
+	                    keyboard.applyHorizontalAnchor(
+	                            ReachGeometry.numpadWidth(keyboard.getDisplayWidth(), 5, dmBuild.xdpi),
+	                            anchor, false);
+	            } else if (!isTabletBuild && phoneOneHandAnchor != 0) {
+	                // Issue #169: portrait one-hand (oneHandAnchorMode returns 0 in landscape),
+	                // applies to all portrait layouts including numpad-based ones.
+	                keyboard.applyHorizontalAnchor(
+	                        ReachGeometry.oneHandWidth(keyboard.getDisplayWidth(), dmBuild.xdpi),
+	                        phoneOneHandAnchor == 1 ? LIMEBaseKeyboard.ANCHOR_LEFT : LIMEBaseKeyboard.ANCHOR_RIGHT,
+	                        true);
+	            }
 	            mKeyboards.put(id, keyboard);
 	        }
 	        return mKeyboards.get(id);
@@ -561,8 +625,9 @@ public class LIMEKeyboardSwitcher {
 	        
 	        
 	        LIMEKeyboard keyboard = getKeyboard(kid);
-	
+
 	       // mCurrentId = kid;
+	        mCurrentXmlId = kid.mXml; // SPLIT_ONE_HAND_KB
 	        mInputView.setKeyboard(keyboard);
 
 			assert keyboard != null;
@@ -595,6 +660,21 @@ public class LIMEKeyboardSwitcher {
 
     public boolean isAlphabetMode() {
         return false;
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: rebuild the current keyboard in place after a geometry change
+     * (one-hand / split / numpad anchor), keeping the IME shown. Clears the keyboard
+     * cache then re-attaches the same keyboard state so it is reconstructed with the
+     * new geometry prefs.
+     */
+    public void rebuildCurrentKeyboard() {
+        if (ImCode == null) return; // never shown yet; nothing to rebuild
+        resetKeyboards(true);
+        if (mIsChinese)
+            this.setKeyboardMode(ImCode, 0, mImeOptions, true, mIsSymbols, mIsShifted);
+        else
+            this.setKeyboardMode(ImCode, mMode, mImeOptions, false, mIsSymbols, mIsShifted);
     }
 
     public void toggleShift() {
@@ -670,6 +750,7 @@ public class LIMEKeyboardSwitcher {
         KeyboardId kid = new KeyboardId(getKeyboardXMLID("phone_simple"));
         LIMEKeyboard keyboard = getKeyboard(kid);
         if (keyboard == null) return;
+        mCurrentXmlId = kid.mXml; // SPLIT_ONE_HAND_KB
         mInputView.setKeyboard(keyboard);
         keyboard.setShifted(false);
         mInputView.setKeyboard(mInputView.getKeyboard());

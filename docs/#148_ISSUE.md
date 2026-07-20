@@ -6,7 +6,7 @@
 - Classification: `question` + `Usability`
 - Reporter: `01disney`
 - Reported version/device: LIME IME v6.1.27, Android 16, Poco F6 Pro
-- Current state: open; v6.1.28 retest requested in https://github.com/lime-ime/limeime/issues/148#issuecomment-4916998522, pending reporter confirmation
+- Current state: closed as completed by maintainer `jrywu` on 2026-07-18 after the v6.1.28 delivery/retest request in https://github.com/lime-ime/limeime/issues/148#issuecomment-4916998522; no reporter confirmation was posted before closure
 
 ## Problem statement
 
@@ -121,7 +121,7 @@ Add a tolerance only if users still report failed double-taps after the LatinIME
 ## Verification plan
 
 - Automated coverage:
-  - Android focused unit test: `./gradlew :app:testDebugUnitTest --tests net.toload.main.hd.AcceptsIntoComposingTest`
+  - Android focused unit test: `./gradlew :app:testDebugUnitTest --tests org.limeime.AcceptsIntoComposingTest`
   - iOS focused XCTest: `KeyboardViewControllerTest/testShiftDoubleTapWindowNonShiftCancelsPendingShiftTap`
   - iOS focused XCTest: `KeyboardViewControllerTest/testShiftDoubleTapWindowShiftKeepsPendingShiftTap`
 - Manual Android smoke test:
@@ -132,6 +132,13 @@ Add a tolerance only if users still report failed double-taps after the LatinIME
   - Tap Shift, type a letter, tap Shift quickly: should not enter Caps Lock from the first Shift tap.
 - Manual iOS smoke test:
   - Repeat the same five Shift checks on iPhone and iPad layouts.
+
+## Closure state
+
+- Source hardening was delivered in v6.1.28 and the Google Play update/retest path was posted for the reporter.
+- Maintainer `jrywu` closed the issue as completed on 2026-07-18.
+- The closure is maintainer-confirmed delivery, not reporter-verified behavior on the reported Poco F6 Pro / Android 16 device.
+- No active retest watch remains unless the reporter reopens the issue or adds new double-tap reliability evidence.
 
 ## Public response note
 

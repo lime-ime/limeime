@@ -132,6 +132,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var candidateSwitch:         Bool = true    // mirrors Android candidate_switch; true=free scroll, false=paged
     private var showArrowKey:            Int  = 0       // 0=none, 1=above, 2=below
     private var splitKeyboardMode:       Int  = 0       // 0=off, 1=on, 2=landscape-only (iPad only)
+    private var oneHandMode:             Int  = 0       // 0=off, 1=left, 2=right (portrait only)
+    private var numpadAnchor:            Int  = 0       // 0=fit, 1=left, 2=right, 3=center
+    // Issue #169: integrated iPhone portrait mode + separate landscape split.
+    private var phonePortraitKeyboardMode: Int  = 0     // 0=standard, 1=split, 2=left, 3=right (iPhone only)
+    private var phoneLandscapeSplit:       Bool = false  // iPhone landscape split, independent of portrait mode
 
     // MARK: - Activated IM Cycling (spec §10)
     private var activatedIMs:  [ImConfig] = []
@@ -140,6 +145,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // MARK: - Expanded Candidates Panel
     private var expandedCandidatesPanel: UIView?
     private var expandedScrollView: UIScrollView?
+    /// Scroll-view top offset (= first-row height) so the candidate grid scrolls BELOW the fixed
+    /// first row, which never moves — nothing slides under the composing strip / dismiss on scroll.
+    private var expandedScrollTopConstraint: NSLayoutConstraint?
+    /// Fixed first-row header: holds row-0 candidate buttons at the exact collapsed-bar geometry
+    /// (full height + strip bias) so expanding reads as the bar growing in place.
+    private var expandedFirstRowContainer: UIView?
+    private var expandedFirstRowHeightConstraint: NSLayoutConstraint?
     private var expandedContentView: UIView?
     private var expandedContentHeightConstraint: NSLayoutConstraint?
     private var isExpandedCandidatesVisible = false
@@ -240,6 +252,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// (`UIDevice.current.userInterfaceIdiom` is the wrong signal here.)
     private var isOnPad: Bool { traitCollection.userInterfaceIdiom == .pad }
 
+    /// SPLIT_ONE_HAND_KB: the true numpad-grid layouts (spec decision — per-IM
+    /// *_number layers are 10-column full-width layouts and stay ordinary).
+    /// "phone" covers phone / phone_shift / phone_number / phone_simple — all
+    /// 5-column keypad grids (Android isNumpadXml parity). lime_phonetic* is safe:
+    /// it starts with "lime_", not "phone".
+    var isNumpadLayout: Bool {
+        currentLayout.id.hasPrefix("phone") || currentLayout.id.hasPrefix("computer_simple")
+    }
+
     @discardableResult
     private func syncLayoutEnvironmentFromTraits() -> Bool {
         let oldHostIsPad = LayoutLoader.hostIsPad
@@ -290,6 +311,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
     private var candidateBarTopConstraint: NSLayoutConstraint?
     private var candidateBarHeightConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: candidate bar follows the anchored key block (one-hand / numpad anchor).
+    private var candidateBarLeadingConstraint: NSLayoutConstraint?
+    private var candidateBarTrailingConstraint: NSLayoutConstraint?
+    // SPLIT_ONE_HAND_KB: expanded-candidates panel follows the same anchor insets.
+    private var expandedPanelLeadingConstraint: NSLayoutConstraint?
+    private var expandedPanelTrailingConstraint: NSLayoutConstraint?
     private var keyboardTopToCandidateConstraint: NSLayoutConstraint?
     private var keyboardTopToViewConstraint: NSLayoutConstraint?
     private var emojiPanelBottomConstraint: NSLayoutConstraint?
@@ -302,7 +329,28 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private var emojiSearchCandidates: [Mapping] = []
     // keyRowHeight removed — height is now driven by KeyboardView.preferredHeight,
     // which sums actual per-row heights (54 pt regular, 56 pt bottom row).
+    // #139: this is the CONTENT height constraint (on keyboardView, not view) —
+    // the extension view's height is derived from the subview chain. An explicit
+    // view.heightAnchor constant made iOS latch a stale keyboard frame on rotation.
     private var keyboardHeightConstraint: NSLayoutConstraint?
+    /// #139 switch-in experiment (final cell of the matrix): overshoot the height
+    /// ABOVE iOS's memory-restored value while the attach transaction is still
+    /// open (viewDidAppear, mid-storm) — the only conditions matching Gboard's
+    /// honored post-attach resize (its edge fires above its provisional while its
+    /// attach animation fences are active). All below-stored and post-settle
+    /// variants are probe-falsified.
+    private var attachOvershoot = false
+    private static let attachOvershootDelta: CGFloat = 20
+    /// #139: true from rotation start until ~0.3 s after the coordinator
+    /// completes. While set, applyHeight() must NOT move the height constraint:
+    /// any height change inside the rotation transaction gets baked into iOS's
+    /// stale keyboard-frame notification with no later correction. The deferred
+    /// applyHeight() after settling is a plain stationary height change, which
+    /// hosts track correctly (same path as keyboard_size / emoji-panel resizes).
+    private var rotationSettling = false
+    /// Authoritative destination orientation supplied by UIKit during rotation.
+    /// UIScreen bounds can temporarily report the old orientation while relayout runs.
+    private var layoutIsLandscape: Bool?
     private weak var inlineMenuPanel: UIView?
     private weak var inlineMenuDismissTapGesture: UITapGestureRecognizer?
     /// Fired once when the inline menu is dismissed (完成 / tap-outside). Used by the
@@ -449,8 +497,28 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        // #139: overshoot NOW, mid-storm, while the attach transaction is open —
+        // targeting kbTarget+Δ, a size above iOS's memory-restored height. See
+        // attachOvershoot doc. Restored by the settle-gate in
+        // viewWillLayoutSubviews or the fallback below.
+        attachOvershoot = true
+        applyHeight()
+        // Safety net: never leave the keyboard at the overshoot height.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.attachOvershoot else { return }
+            self.attachOvershoot = false
+            self.applyHeight()
+        }
         disableKeyboardWindowTouchDelay()
         scheduleRelayResponse()
+        // #139 (in-place keyboard switch): switching from a shorter keyboard to
+        // LIME emits NO keyboard notification to the host — documented iOS
+        // behavior (keyboardWillShow fires only on first-responder changes, not
+        // globe switches), and probe runs show iOS also ignores every height
+        // channel from the warm extension until a fresh input session
+        // (constraint dip, enc, preferredContentSize all silent). Not fixable
+        // extension-side; heals on field tap or dismiss/reopen. See
+        // docs/#139_ISSUE.md → in-place switch findings.
     }
 
     /// The app's invisible probe *loads* the keyboard (viewWillAppear fires — that's the
@@ -524,13 +592,104 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // so view.bounds.width > view.bounds.height is always true and would
         // permanently force landscape row heights and horizontal label layout.
         let screen = UIScreen.main.bounds
-        let landscape = screen.width > screen.height
+        let landscape = layoutIsLandscape ?? (screen.width > screen.height)
         keyboardView?.isLandscape = landscape
         let isPad   = isOnPad
-        let doSplit = isPad && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
+        let numpad  = isNumpadLayout
+        let splitEligible = !numpad
+        let portraitMode = PhoneKeyboardPortraitMode(rawValue: phonePortraitKeyboardMode) ?? .standard
+        let doSplit: Bool
+        if isPad {
+            doSplit = splitEligible
+                      && (splitKeyboardMode == 1 || (splitKeyboardMode == 2 && landscape))
+        } else {
+            // Issue #169: iPhone split — portrait reads the integrated mode, landscape
+            // reads phone_landscape_split. Applies to every iPhone (no width gate);
+            // numpad layouts never split.
+            doSplit = PhoneKeyboardModePolicy.splitActive(isLandscape: landscape,
+                                                          splitEligible: splitEligible,
+                                                          portraitMode: portraitMode,
+                                                          landscapeSplit: phoneLandscapeSplit)
+        }
         keyboardView?.splitMode = doSplit
+
+        // SPLIT_ONE_HAND_KB / issue #169 horizontal anchoring.
+        var leading: CGFloat = 0, trailing: CGFloat = 0, chevron = false
+        let vw = view.bounds.width
+        if isPad {
+            if numpad, numpadAnchor != 0 {
+                let w = ReachGeometry.numpadAnchorWidth(viewWidth: vw, columns: 5,
+                                                        sizeClass: LayoutLoader.iPadSizeClass)
+                let free = max(0, vw - w)
+                switch numpadAnchor {
+                case 1: trailing = free            // 靠左
+                case 2: leading = free             // 靠右
+                case 3: leading = free / 2; trailing = free / 2   // 置中
+                default: break
+                }
+            }
+        } else {
+            // iPhone portrait one-hand applies to EVERY iPhone regardless of screen
+            // width — no gate. oneHandWidth still clamps to the available width, so a
+            // narrow phone gets a full-width block (free == 0, no strip/chevron) while
+            // the mode is always honored. Applies to all portrait layouts incl. numpad.
+            let anchor = PhoneKeyboardModePolicy.oneHandAnchor(isLandscape: landscape,
+                                                               portraitMode: portraitMode)
+            if anchor != 0 {
+                let free = max(0, vw - ReachGeometry.oneHandWidth(viewWidth: vw))
+                if anchor == 1 { trailing = free } else { leading = free }   // 靠左 / 靠右
+                chevron = free > 0
+            }
+        }
+        keyboardView?.setHorizontalAnchor(leading: leading, trailing: trailing, restoreChevron: chevron)
+        // SPLIT_ONE_HAND_KB: keep the candidate bar's usable area aligned with the key block.
+        if candidateBarLeadingConstraint?.constant != leading {
+            candidateBarLeadingConstraint?.constant = leading
+        }
+        if candidateBarTrailingConstraint?.constant != -trailing {
+            candidateBarTrailingConstraint?.constant = -trailing
+        }
+        // The expanded-candidates panel mirrors the same insets.
+        if expandedPanelLeadingConstraint?.constant != leading {
+            expandedPanelLeadingConstraint?.constant = leading
+        }
+        if expandedPanelTrailingConstraint?.constant != -trailing {
+            expandedPanelTrailingConstraint?.constant = -trailing
+        }
         applyHeight()
         updateGlobeAndDismissBindings()
+        // #139 switch-in: once the view has RENDERED at the overshoot size,
+        // restore the true height (second edge). See attachOvershoot doc.
+        if attachOvershoot, let c = keyboardHeightConstraint {
+            let overViewHeight = c.constant + activeCandidateBarHeight + emojiSearchHeaderHeight
+            if abs(view.bounds.height - overViewHeight) < 1 {
+                attachOvershoot = false
+                applyHeight()
+            }
+        }
+    }
+
+    // #139: hold the current keyboard height through the entire rotation
+    // transaction, then apply the new orientation's height as a plain
+    // stationary change once iOS has settled. Height changes made DURING the
+    // transaction get baked into iOS's keyboard-frame notification at a stale/
+    // interpolated value with no later correction (probe-verified across ten
+    // variants); stationary changes go through the normal publish path that
+    // hosts track correctly. See docs/#139_ISSUE.md.
+    override func viewWillTransition(to size: CGSize,
+                                     with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        rotationSettling = true
+        layoutIsLandscape = size.width > size.height
+        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                guard let self else { return }
+                self.rotationSettling = false
+                self.view.setNeedsLayout()
+                self.view.layoutIfNeeded()
+                self.applyHeight()
+            }
+        }
     }
 
     // MARK: - Trait / Theme Change (spec §2)
@@ -998,17 +1157,26 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
+    /// Maps the `phonetic_keyboard_type` pref to its dedicated visible layout id, or nil when the
+    /// type has no special layout (standard → resolved via the keyboard-config path below).
+    /// This is the single source of truth for the phonetic visible layout, mirroring Android's
+    /// `resolvePhoneticKeyboardCode()` (#156): the pref drives the layout directly, so et_41 no
+    /// longer depends on the persisted `im.keyboard` config round-trip that its siblings bypass.
+    static func phoneticSpecialLayoutId(for kbType: String) -> String? {
+        if kbType == "et_41" || kbType == "eten" { return "lime_et_41" }   // #156 ETEN 41-key
+        if kbType.hasPrefix("eten26") || kbType == "et26" { return "lime_et26" }
+        if kbType.hasPrefix("hsu") { return "lime_hsu" }
+        return nil
+    }
+
     private func resolvedLayoutId(for tableNick: String) -> String {
         // For phonetic IMs, keyboard type determines the visible layout.
-        // Mirrors Android: eten26/hsu use QWERTY-shaped Chinese layouts so the
+        // Mirrors Android: eten/eten26/hsu use QWERTY-shaped Chinese layouts so the
         // mode key changes to abc while composing stays in the active IM.
-        if tableNick == "phonetic" {
-            let kbType = phoneticKeyboardType
-            if kbType.hasPrefix("eten26") || kbType == "et26" {
-                if LayoutLoader.load("lime_et26") != nil { return "lime_et26" }
-            } else if kbType.hasPrefix("hsu") {
-                if LayoutLoader.load("lime_hsu") != nil { return "lime_hsu" }
-            }
+        if tableNick == "phonetic",
+           let special = KeyboardViewController.phoneticSpecialLayoutId(for: phoneticKeyboardType),
+           LayoutLoader.load(special) != nil {
+            return special
         }
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
             return "lime_\(tableNick)"
@@ -1062,8 +1230,39 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         return hot.integer(forKey: key)
     }
 
+    /// §1.8 hot-store seed for an Int pref that also needs a one-time migration when
+    /// neither hot nor cold holds it yet (issue #169 phone_portrait_keyboard_mode).
+    private func seededHotInt(_ key: String, cold: UserDefaults?, migrate: () -> Int) -> Int {
+        let hot = UserDefaults.standard
+        if hot.object(forKey: key) == nil {
+            if let seed = cold?.object(forKey: key) as? Int {
+                hot.set(seed, forKey: key)
+            } else {
+                hot.set(migrate(), forKey: key)
+            }
+        }
+        return hot.integer(forKey: key)
+    }
+
+    /// §1.8 hot-store seed for a Bool pref, with one-time migration when neither hot
+    /// nor cold holds it yet (issue #169 phone_landscape_split).
+    private func seededHotBool(_ key: String, cold: UserDefaults?, migrate: () -> Bool) -> Bool {
+        let hot = UserDefaults.standard
+        if hot.object(forKey: key) == nil {
+            if let seed = cold?.object(forKey: key) as? Bool {
+                hot.set(seed, forKey: key)
+            } else {
+                hot.set(migrate(), forKey: key)
+            }
+        }
+        return hot.bool(forKey: key)
+    }
+
     /// §1.8: reverse-lookup (per-IM) from the hot store, seeded once from cold on first read.
-    private func hotReverseLookup(for im: String) -> String {
+    /// This is the single effective reverse-lookup reader — hamburger picker, runtime commit,
+    /// and menu label all route through it so the hot value always wins over stale cold (#157).
+    /// `internal` (not `private`) so the read policy is unit-testable via `@testable import`.
+    func hotReverseLookup(for im: String) -> String {
         let key = "\(im)_im_reverselookup"
         if UserDefaults.standard.object(forKey: key) == nil,
            let seed = sharedDefaults?.string(forKey: key) {
@@ -1090,6 +1289,22 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             UserDefaults.standard.set(split, forKey: "split_keyboard_mode")
             splitKeyboardMode = split
         }
+        if let oneHand = rec.oneHand {
+            UserDefaults.standard.set(oneHand, forKey: "one_hand_mode")
+            oneHandMode = oneHand
+        }
+        if let anchor = rec.numpadAnchor {
+            UserDefaults.standard.set(anchor, forKey: "numpad_anchor")
+            numpadAnchor = anchor
+        }
+        if let pp = rec.phonePortraitMode {
+            UserDefaults.standard.set(pp, forKey: "phone_portrait_keyboard_mode")
+            phonePortraitKeyboardMode = pp
+        }
+        if let pls = rec.phoneLandscapeSplit {
+            UserDefaults.standard.set(pls, forKey: "phone_landscape_split")
+            phoneLandscapeSplit = pls
+        }
         if let reverse = rec.reverseLookup {
             for (im, value) in reverse { hotPrefs.setReverseLookup(value, for: im) }
         }
@@ -1106,8 +1321,13 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let firstReverse = rec.reverseLookup?.first
         _ = try? relayPrefStore.update(hanConvert: hanConvertOption,
                                        splitKeyboard: splitKeyboardMode,
+                                       oneHand: oneHandMode,
+                                       numpadAnchor: numpadAnchor,
                                        reverseLookupIM: firstReverse?.key,
-                                       reverseLookupValue: firstReverse?.value)
+                                       reverseLookupValue: firstReverse?.value,
+                                       phonePortraitMode: phonePortraitKeyboardMode,
+                                       phoneLandscapeSplit: phoneLandscapeSplit,
+                                       geometryProfile: isOnPad ? "tablet" : "phone")
         return true
     }
 
@@ -1172,6 +1392,24 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         candidateSwitch = true
         showArrowKey      = d?.integer(forKey: "show_arrow_key")      ?? 0
         splitKeyboardMode = seededHotInt("split_keyboard_mode", cold: d)   // §1.8 hot store
+        oneHandMode  = seededHotInt("one_hand_mode",  cold: d)   // §1.8 hot store
+        numpadAnchor = seededHotInt("numpad_anchor",  cold: d)   // §1.8 hot store
+        // Issue #169: integrated iPhone portrait mode + landscape split. Seeded from
+        // cold; if absent, migrated once from the legacy one_hand_mode / split pair
+        // (legacyPhoneSplitSupported: false — iPhone split was never shipped, so we
+        // preserve one-hand but do not invent a legacy iPhone split).
+        phonePortraitKeyboardMode = seededHotInt("phone_portrait_keyboard_mode", cold: d, migrate: {
+            PhoneKeyboardModePolicy.migratePortraitMode(
+                legacyOneHand: d?.integer(forKey: "one_hand_mode") ?? 0,
+                legacySplit: d?.integer(forKey: "split_keyboard_mode") ?? 0,
+                legacyPhoneSplitSupported: false).rawValue
+        })
+        phoneLandscapeSplit = seededHotBool("phone_landscape_split", cold: d, migrate: {
+            PhoneKeyboardModePolicy.migrateLandscapeSplit(
+                legacySplit: d?.integer(forKey: "split_keyboard_mode") ?? 0,
+                legacyPhoneSplitSupported: false)
+        })
+        UserDefaults.standard.set(isOnPad ? "tablet" : "phone", forKey: "keyboard_geometry_profile")
         applyPrefsToSearchEngine()
     }
 
@@ -1308,8 +1546,16 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                 candidateBarTopConstraint = c
                 return c
             }(),
-            candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            {
+                let c = candidateBar.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+                candidateBarLeadingConstraint = c
+                return c
+            }(),
+            {
+                let c = candidateBar.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+                candidateBarTrailingConstraint = c
+                return c
+            }(),
             {
                 let c = candidateBar.heightAnchor.constraint(equalToConstant: candidateBarHeight)
                 candidateBarHeightConstraint = c
@@ -1356,16 +1602,32 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         panel.addSubview(scrollThumb)
 
         let contentView = UIView()
+        // Keyboard extensions drop touches on fully transparent pixels (IOS_CANDI_TOUCH.md
+        // §Resolution): a .clear content view leaves the gaps between candidate cells (and the
+        // ragged row-ends) dead to both tap and scroll. The near-invisible touch-trap fill lets
+        // the scroll view receive those touches.
+        contentView.backgroundColor = LayoutMetrics.TouchTrap.fill
         contentView.translatesAutoresizingMaskIntoConstraints = false
         sv.addSubview(contentView)
 
+        // Scroll top starts at the dismiss-button top (offset = active composing-strip height,
+        // set per-show in updateExpandedCandidateChromeMetrics) so the grid scrolls below the
+        // fixed composing strip instead of under it.
+        let svTop = sv.topAnchor.constraint(equalTo: panel.topAnchor)
+        expandedScrollTopConstraint = svTop
+        // SPLIT_ONE_HAND_KB: leading/trailing carry the anchor insets (constants set
+        // alongside the candidate bar's) so the panel matches the anchored key block.
+        let panelLeading = panel.leadingAnchor.constraint(equalTo: view.leadingAnchor)
+        let panelTrailing = panel.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        expandedPanelLeadingConstraint = panelLeading
+        expandedPanelTrailingConstraint = panelTrailing
         NSLayoutConstraint.activate([
             panel.topAnchor.constraint(equalTo: candidateBar.topAnchor),
-            panel.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            panel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            panelLeading,
+            panelTrailing,
             panel.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 
-            sv.topAnchor.constraint(equalTo: panel.topAnchor),
+            svTop,
             sv.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
             sv.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
             sv.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
@@ -1383,6 +1645,23 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         expandedContentView              = contentView
         expandedContentHeightConstraint  = hc
         expandedScrollThumb              = scrollThumb
+
+        // Fixed first-row header (row-0 candidates) pinned at the panel top, in front of the
+        // scroll view but behind the chrome. Height tracks the bar per-show. Rows 2+ scroll
+        // below it, so nothing slides under the composing strip / dismiss button on scroll.
+        let firstRowContainer = UIView()
+        firstRowContainer.backgroundColor = .clear
+        firstRowContainer.translatesAutoresizingMaskIntoConstraints = false
+        panel.addSubview(firstRowContainer)
+        let firstRowH = firstRowContainer.heightAnchor.constraint(equalToConstant: 0)
+        NSLayoutConstraint.activate([
+            firstRowContainer.topAnchor.constraint(equalTo: panel.topAnchor),
+            firstRowContainer.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            firstRowContainer.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            firstRowH,
+        ])
+        expandedFirstRowContainer = firstRowContainer
+        expandedFirstRowHeightConstraint = firstRowH
 
         // Collapse button (chevron.up) pinned to top-right, same width as candi bar chevron.
         // Mirror the collapsed bar's chevron point size so the two surfaces
@@ -1403,9 +1682,8 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         collapseBtn.setValue(NSValue(uiEdgeInsets: UIEdgeInsets(top: chevronBias, left: 0,
                                                                 bottom: -chevronBias, right: 0)),
                              forKey: "contentEdgeInsets")
-        // 0.01-alpha touch-trap fill so taps in the chevron's padding land on
-        // a non-clear pixel — keyboard extensions drop touches on transparent
-        // pixels (see docs/IOS_CANDI_TOUCH.md §Resolution).
+        // 0.01-alpha touch-trap fill so taps in the chevron's padding land on a non-clear pixel —
+        // keyboard extensions drop touches on transparent pixels (docs/IOS_CANDI_TOUCH.md §Resolution).
         collapseBtn.backgroundColor = LayoutMetrics.TouchTrap.fill
         collapseBtn.translatesAutoresizingMaskIntoConstraints = false
         collapseBtn.addTarget(self, action: #selector(collapseExpandedCandidates), for: .touchUpInside)
@@ -1521,16 +1799,36 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let totalHeight = isEmojiPanelVisible && !isEmojiSearchMode
             ? max(keyboardHeight, emojiPanelView?.preferredPanelHeight ?? keyboardHeight)
             : keyboardHeight
+        // #139: drive the extension view's height FROM CONTENT (keyboardView gets
+        // the explicit height; the bar-top/bar-height/kb-top/kb-bottom chain then
+        // defines view height) instead of an explicit view.heightAnchor constant.
+        // With the explicit view-height constant, iOS latched a stale keyboard
+        // frame during rotation and reported it to notification-based hosts
+        // (LINE) with no way to correct it — peers without that constraint don't
+        // reproduce. Content-driven height is the structural difference.
+        var kbTarget = totalHeight - emojiSearchHeaderHeight - barH
+        if attachOvershoot { kbTarget += Self.attachOvershootDelta }
         let didChangeHeight: Bool
-        if let existing = keyboardHeightConstraint {
-            didChangeHeight = abs(existing.constant - totalHeight) > 0.5
-            if didChangeHeight { existing.constant = totalHeight }
-        } else {
-            let c = view.heightAnchor.constraint(equalToConstant: totalHeight)
-            c.priority = UILayoutPriority(rawValue: 999)
+        if rotationSettling, keyboardHeightConstraint != nil {
+            // #139: hold height until the rotation settles (see viewWillTransition).
+            didChangeHeight = false
+        } else if let existing = keyboardHeightConstraint {
+            didChangeHeight = abs(existing.constant - kbTarget) > 0.5
+            if didChangeHeight { existing.constant = kbTarget }
+        } else if let kbView = keyboardView {
+            let c = kbView.heightAnchor.constraint(equalToConstant: kbTarget)
+            // Required, not 999: during rotation iOS's own required
+            // UIView-Encapsulated-Layout-Height pins the view at the OLD height
+            // until after the last keyboard-frame notification fires, so a
+            // 999-priority height loses the race and hosts get a stale frame
+            // (#139). At required priority the view snaps to the final height
+            // the moment applyHeight runs mid-rotation, before the notification.
+            c.priority = .required
             c.isActive = true
             keyboardHeightConstraint = c
             didChangeHeight = true
+        } else {
+            didChangeHeight = false
         }
         if didChangeHeight {
             publishKeyboardHeightToUIKit()
@@ -2280,81 +2578,48 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let capturedEnableEmoji = enableEmoji
         let capturedEmojiPosition = enableEmojiPosition
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-            // Stage 1: quick fetch (INITIAL_RESULT_LIMIT). Shows candidates fast.
-            // PROFILING: BEGIN — T2 stage-1 DB query (background).
+            // Stage 1: quick fetch (INITIAL_RESULT_LIMIT).
             let q1ID = Prof.newID()
             Prof.begin("DBQueryStage1", id: q1ID)
-            // PROFILING: END
             var results = ss.getMappingByCode(code, isSoftKeyboard: true)
-            // PROFILING: BEGIN — T2 stage-1 query close.
             Prof.end("DBQueryStage1", id: q1ID)
-            // PROFILING: END
             if !results.isEmpty, capturedEnableEmoji {
                 results = ss.injectEmoji(into: results, insertAt: capturedEmojiPosition)
             }
             let wasTruncated = results.contains(where: { $0.isHasMoreMarkRecord })
             DispatchQueue.main.async { [weak self] in
                 guard let self = self, self.currentSearchID == sid else {
-                    // PROFILING: BEGIN — stale-stroke cancellation path.
                     Prof.event("StrokeCancelled")
                     Prof.end("Stroke", id: strokeID)
-                    // PROFILING: END
                     return
                 }
-                // P2 (see docs/IOS_MISS_KEY.md): defer the heavy candidate-bar reload
-                // one runloop tick so UIKit can dispatch any queued touchDown/touchUp
-                // events before the reload locks the main thread. Re-checks stale in
-                // case the user typed again during the hop.
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self, self.currentSearchID == sid else {
-                        // PROFILING: BEGIN — stale-stroke cancellation path (deferred).
                         Prof.event("StrokeCancelled")
                         Prof.end("Stroke", id: strokeID)
-                        // PROFILING: END
                         return
                     }
-                    // PROFILING: BEGIN — T2 candidate bar reload (main thread).
                     let reloadID = Prof.newID()
                     Prof.begin("CandidateReload", id: reloadID)
-                    // PROFILING: END
                     results.isEmpty ? self.clearSuggestions() : self.setSuggestions(results)
-                    // PROFILING: BEGIN — T2 reload close + Stroke close.
                     Prof.end("CandidateReload", id: reloadID)
                     Prof.end("Stroke", id: strokeID)
-                    // PROFILING: END
                 }
             }
-            // Stage 2: full fetch (FINAL_RESULT_LIMIT). Upgrades bar without scroll reset.
-            // Only runs when stage 1 was truncated (see docs/TWO_STAGE_CANDI.md).
+            // Stage 2: full fetch, auto-fired when stage 1 was truncated. Upgrades the bar to the
+            // full set without a scroll (see docs/TWO_STAGE_CANDI.md).
             guard wasTruncated else { return }
-            // PROFILING: BEGIN — T3 stage-2 full DB query.
             let q2ID = Prof.newID()
             Prof.begin("DBQueryStage2", id: q2ID)
-            // PROFILING: END
             var fullResults = ss.getMappingByCode(code, isSoftKeyboard: true, getAllRecords: true)
-            // PROFILING: BEGIN — T3 stage-2 query close.
             Prof.end("DBQueryStage2", id: q2ID)
-            // PROFILING: END
             if !fullResults.isEmpty, capturedEnableEmoji {
                 fullResults = ss.injectEmoji(into: fullResults, insertAt: capturedEmojiPosition)
             }
-            // Stage 2 must land AFTER the stage-1 bar reload. Stage 1 uses a
-            // nested DispatchQueue.main.async (P2 deferral, see IOS_MISS_KEY.md);
-            // if stage 2 uses a single async, M3 can fire before stage 1's inner
-            // M2 — applyFullCandidateResults then bails on hasCandidatesShown and
-            // the `…` sentinel is left in the bar (see docs/#77_ISSUE.md).
-            // Double-dispatch stage 2 so M3 is always enqueued after M2 (FIFO).
             DispatchQueue.main.async { [weak self] in
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
-                    // PROFILING: BEGIN — T3 candidate swap (main thread).
-                    let swapID = Prof.newID()
-                    Prof.begin("CandidateSwap", id: swapID)
-                    // PROFILING: END
                     self.applyFullCandidateResults(fullResults, sid: sid)
-                    // PROFILING: BEGIN — T3 swap close.
-                    Prof.end("CandidateSwap", id: swapID)
-                    // PROFILING: END
                 }
             }
         }
@@ -2450,6 +2715,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         expandedMoreSepCenterYConstraint?.constant = bias
         expandedDismissCenterYConstraint?.constant = bias
         expandedDismissHeightConstraint?.constant = -stripH
+        // Grid scrolls below the fixed first row (which stays put, identical to the collapsed bar).
+        expandedScrollTopConstraint?.constant = activeCandidateBarHeight
+        expandedFirstRowHeightConstraint?.constant = activeCandidateBarHeight
         expandedCollapseButton?.tintColor = chromeText
         expandedMoreSep?.backgroundColor = chromeText.withAlphaComponent(LayoutMetrics.CandidateBar.separatorAlpha)
         expandedDismissButton?.tintColor = chromeText
@@ -2474,8 +2742,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func reloadExpandedCandidates() {
         guard let contentView = expandedContentView else { return }
 
-        // Remove all previous subviews
+        // Remove all previous subviews (scroll body + fixed first-row header)
         contentView.subviews.forEach { $0.removeFromSuperview() }
+        expandedFirstRowContainer?.subviews.forEach { $0.removeFromSuperview() }
 
         let pal = KeyboardPalette.palettes[max(0, min(resolvedKeyboardTheme, KeyboardPalette.palettes.count - 1))]
         let t = resolvedKeyboardTheme
@@ -2490,7 +2759,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         } else {
             highlightColor = pal.candiHighlight
         }
-        let panelWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        // SPLIT_ONE_HAND_KB: the panel is inset to the anchored key block; wrap cells
+        // to the inset width, not the full view width.
+        let fullWidth = view.bounds.width > 0 ? view.bounds.width : UIScreen.main.bounds.width
+        let anchorLeading = expandedPanelLeadingConstraint?.constant ?? 0
+        let anchorTrailing = -(expandedPanelTrailingConstraint?.constant ?? 0)
+        let panelWidth = max(1, fullWidth - anchorLeading - anchorTrailing)
         // Row 1 mirrors the collapsed bar exactly. Chinese composing keeps
         // the top keyname strip; emoji search disables it, so the expanded
         // row must read the active strip metrics from CandidateBarView instead
@@ -2498,8 +2772,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         let hPad:         CGFloat = 0
         let vPad:         CGFloat = 0
         let activeStripH = candidateBar.activeComposingStripHeight
+        // Row 0 is the fixed header — identical to the collapsed bar (full height + strip bias).
+        // Rows 2+ scroll below it at the shorter no-strip height.
         let firstRowH:    CGFloat = activeCandidateBarHeight
-        let restRowH:     CGFloat = max(0, candidateBarHeight - candidateBar.composingStripHeight)
+        let restRowH:     CGFloat = max(0, activeCandidateBarHeight - activeStripH)
         var rowH:         CGFloat = firstRowH
         var rowBias:      CGFloat = activeStripH / 2
         // Match CandidateBarView font sizing exactly: iPad = 26/22, iPhone = 22/16.
@@ -2517,11 +2793,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         let dismissZone = LayoutMetrics.CandidateBar.Chevron.dismissButtonWidth(isPad: isOnPad)
         let chevronZone = LayoutMetrics.CandidateBar.Chevron.buttonWidth(isPad: isOnPad)
+        // Left edge of the chevron's centered glyph: row 0 items may fill up to here (the
+        // button's side padding is empty), so the last item doesn't wrap early against the
+        // full 40pt button.
+        let chevronGlyphLeft = panelWidth - chevronZone / 2
+            - LayoutMetrics.CandidateBar.Chevron.iconSize(isPad: isOnPad) / 2
+        // All rows start at the same left (dismiss-width) margin so columns align.
         func expandedRowStartX(row: Int) -> CGFloat {
-            return row == 0 ? dismissZone + hPad : hPad
+            return dismissZone + hPad
         }
         func expandedRowMaxX(row: Int) -> CGFloat {
-            return row == 0 ? panelWidth - chevronZone - expandedSepWidth : panelWidth
+            // Row 0 shares the chevron → stop at the chevron glyph. Rows 2+ scroll below the
+            // header (no chevron) → full screen width.
+            return row == 0 ? chevronGlyphLeft - expandedSepWidth : panelWidth
         }
 
         var row = 0
@@ -2539,6 +2823,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             // same contentEdgeInsets of 10pt). Using NSString.size drifts slightly
             // vs. UIButton's actual width and pushes the last row-1 item to row 2.
             let btn = UIButton(type: .system)
+            btn.backgroundColor = LayoutMetrics.TouchTrap.fill   // commit taps on a glyph's transparent padding (IOS_CANDI_TOUCH.md §Resolution), mirroring makeCandidateButton
             btn.setTitle(text, for: .normal)
             btn.titleLabel?.font = btnFont
             let cellHPad = LayoutMetrics.CandidateBar.candidateHPad(isPad: onPad)
@@ -2550,10 +2835,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             btn.setValue(NSValue(uiEdgeInsets: UIEdgeInsets(top: 0, left: cellHPad,
                                                             bottom: 0, right: cellHPad)),
                          forKey: "contentEdgeInsets")
-            let btnW = btn.intrinsicContentSize.width
+            // Floor cell width at the bar's minimum (one em + side pads) so narrow glyphs
+            // (composing echo, single bopomofo) get the same Han-sized cell as the collapsed
+            // bar — otherwise row 0 packs tighter and every candidate shifts left vs the bar.
+            let intrinsicW = btn.intrinsicContentSize.width
+            let btnW = max(intrinsicW,
+                           CandidateBarView.minCandidateCellWidth(fontPointSize: btnFont.pointSize, hPad: cellHPad))
 
             if !isFirstInRow {
-                if x + btnW > expandedRowMaxX(row: row) {
+                // Wrap on the item's NATURAL width (glyph + side pads), not the floored btnW.
+                // Row 0 may overflow ~10% into the chevron glyph area (on-screen, empty-ish);
+                // rows 2+ end at the screen edge so they wrap cleanly — nothing clips off-screen.
+                let wrapExtent = row == 0 ? intrinsicW * 0.9 : intrinsicW
+                if x + wrapExtent > expandedRowMaxX(row: row) {
                     // Wrap to next row. Advance by the OLD row's height,
                     // then switch to the shorter rows-2+ height with no
                     // strip-bias.
@@ -2578,24 +2872,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     ? adaptedCandiText.withAlphaComponent(LayoutMetrics.CandidateBar.composingCodeDimAlpha)
                     : adaptedCandiText,
                 for: .normal)
-            btn.frame = CGRect(x: x, y: y, width: btnW, height: rowH)
+            // Row 0 → fixed header container (panel-top coords). Rows 2+ → scroll content,
+            // shifted up by the first-row height so the first scrolling row sits at content y=0.
+            let inHeader = row == 0
+            btn.frame = CGRect(x: x, y: inHeader ? y : y - firstRowH, width: btnW, height: rowH)
             btn.tag = i
             btn.addTarget(self, action: #selector(expandedCandidateTapped(_:)), for: .touchUpInside)
-            contentView.addSubview(btn)
+            (inHeader ? (expandedFirstRowContainer ?? contentView) : contentView).addSubview(btn)
 
-            // Match CandidateBarView's pill geometry exactly: pill hugs the title
-            // label (text width + padX*2), positioned at (cellHPad - padX) so it
-            // aligns to the glyph rather than the full button frame. Mirrors
-            // CandidateButton.layoutSubviews (cellHPad=10, padX=4, padY=2).
+            // Match CandidateButton.layoutSubviews exactly: pill = label.frame inset by
+            // (-padX, -padY). UIButton centers the title in the cell, so the pill hugs the
+            // ACTUAL glyph width centered in btnW — NOT (btnW - 2·cellHPad), which is wrong
+            // once the cell is floored wider than the glyph (narrow glyphs / composing echo).
             if isSelected {
                 let padX = LayoutMetrics.CandidateBar.pillPadX
                 let padY = LayoutMetrics.CandidateBar.pillPadY
-                let textW  = btnW - 2 * cellHPad
+                let textW  = intrinsicW - 2 * cellHPad
                 let pillW  = textW + 2 * padX
                 // Match CandidateButton.layoutSubviews exactly: pill hugs the
                 // title label which UIKit sizes to font.lineHeight (not ceiled).
                 let pillH  = min(rowH, btnFont.lineHeight + 2 * padY)
-                let pillX  = cellHPad - padX
+                let pillX  = (btnW - pillW) / 2
                 // The label's vertical center is shifted by the FULL bias
                 // (insets are top:+bias, bottom:-bias → content-rect center
                 // moves by bias). Use rowBias (which is `stripH/2` for row 1,
@@ -2614,9 +2911,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             isFirstInRow = false
         }
 
-        // Drive scroll view content height via constraint
+        // Scroll content holds only rows 2+ (row 0 is the fixed header), so subtract the first row.
         let totalH = expandedCandidates.isEmpty ? 0 : (y + rowH + vPad)
-        expandedContentHeightConstraint?.constant = totalH
+        expandedContentHeightConstraint?.constant = max(0, totalH - firstRowH)
         expandedScrollView?.layoutIfNeeded()
         updateExpandedScrollThumb()
     }
@@ -2855,16 +3152,9 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             }
             return
         }
-        let wasComposingCodeCommit = candidate.isComposingCodeRecord
         selectedCandidate = candidate
         commitTyped()
-        if wasComposingCodeCommit {
-            // Mixed-mode raw-English commit: no related phrases; clear the bar
-            // (updateRelatedPhrase bails for composing-code records without clearing).
-            clearSuggestions()
-        } else {
-            updateRelatedPhrase()
-        }
+        updateRelatedPhrase()
     }
 
     private func appendPickedCandidateToEmojiSearch(_ candidate: Mapping) -> Bool {
@@ -2957,18 +3247,26 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // Record committed candidate + its code for runtime phrase suggestion cross-check (spec §6)
         if smartChineseInput { searchServer?.addToSuggestionContext(candidate, code: candidate.code) }
 
-        // Reverse lookup: show committed word's codes in the configured IM strip (spec §8, §13)
-        let imKey = "\(activeIM)_im_reverselookup"
+        // Reverse lookup: show committed word's codes in the configured IM strip (spec §8, §13).
+        // §1.8: read the hot store so a hamburger-menu change takes effect immediately, without
+        // waiting for the keyboard→app relay or a keyboard restart (#157).
         let notifyEnabled = sharedDefaults?.object(forKey: "reverse_lookup_notify") as? Bool ?? true
+        let lookupTable = hotReverseLookup(for: activeIM)
         if notifyEnabled,
-           let lookupTable = sharedDefaults?.string(forKey: imKey),
            lookupTable != "none", !lookupTable.isEmpty,
            let ss = searchServer {
             let word = candidate.word
             DispatchQueue.global(qos: .background).async { [weak self] in
                 guard let result = ss.getCodeListStringFromWord(word, usingTable: lookupTable),
                       !result.isEmpty else { return }
-                DispatchQueue.main.async { self?.showLimeToast(result) }
+                DispatchQueue.main.async {
+                    // Persist the reverse-lookup strip until the next key tap / new composing
+                    // (didPress → hideLimeToast) — mirrors Android's dedicated reverse-lookup
+                    // space, no auto-dismiss timer. Skip if a new stroke already started so a
+                    // late async result can't clobber live composing and stick.
+                    guard let self = self, self.mComposing.isEmpty else { return }
+                    self.showLimeToast(result, persistent: true)
+                }
             }
         }
     }
@@ -2980,7 +3278,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
               !committed.word.isEmpty,
               !committed.isEmojiRecord,
               !committed.isChinesePunctuationRecord,
-              !committed.isComposingCodeRecord,   // mixed-mode raw-code commit has no related phrases
               let ss = searchServer else { return }
 
         // Clear stale composing candidates immediately so the bar doesn't linger.
@@ -2996,13 +3293,17 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
 
         let word = committed.word
+        // Android-parity two-stage related fetch (docs/TWO_STAGE_CANDI.md): stage 1 is
+        // the quick INITIAL_RESULT_LIMIT page (with `…` sentinel when truncated); stage 2
+        // auto-fires and upgrades the bar to the full list, so the sentinel can no longer
+        // stick (the #77 fix 7 always-full fetch is superseded by this upgrade path).
+        currentSearchID &+= 1
+        let sid = currentSearchID
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
-            // Always fetch the full related list — there is no stage-2 upgrade
-            // for related phrases, so a truncated fetch would leave the `…`
-            // sentinel stuck in the bar (see docs/#77_ISSUE.md fix 7).
-            let related = ss.getRelatedByWord(word, getAllRecords: true)
+            let related = ss.getRelatedByWord(word, getAllRecords: false)
+            let wasTruncated = related.contains(where: { $0.isHasMoreMarkRecord })
             DispatchQueue.main.async { [weak self] in
-                guard let self = self, self.mComposing.isEmpty else { return }
+                guard let self = self, self.currentSearchID == sid, self.mComposing.isEmpty else { return }
                 if related.isEmpty {
                     // spec §8 step 6: no related results → nil committedCandidate, clear bar
                     self.committedCandidate = nil
@@ -3020,6 +3321,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                     self.selectedCandidate      = related.first
                     self.showCandidates(related)
                 }
+            }
+            // Stage 2: full fetch, auto-fired when stage 1 was truncated. Upgrades the
+            // bar in place; both stages share one sid so a newer stroke cancels this.
+            guard wasTruncated else { return }
+            let full = ss.getRelatedByWord(word, getAllRecords: true)
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self, self.currentSearchID == sid,
+                      self.mComposing.isEmpty, self.isShowingRelatedPhrases,
+                      !full.isEmpty else { return }
+                self.mCandidateList    = full
+                self.selectedCandidate = full.first
+                self.candidateBar.appendCandidates(full, selectedIndex: 0)
             }
         }
     }
@@ -3781,6 +4094,16 @@ extension KeyboardViewController: KeyboardViewDelegate {
         hideKeyPreview(animated: true)
     }
 
+    func keyboardViewDidTapOneHandRestore() {
+        // Issue #169: chevron restores full width by resetting the integrated portrait
+        // mode to standard, persisted (§1.8 hot store + relay back to the settings app).
+        phonePortraitKeyboardMode = PhoneKeyboardPortraitMode.standard.rawValue
+        hotPrefs.phonePortraitKeyboardMode = PhoneKeyboardPortraitMode.standard.rawValue
+        _ = try? relayPrefStore.update(phonePortraitMode: PhoneKeyboardPortraitMode.standard.rawValue,
+                                       geometryProfile: "phone")
+        view.setNeedsLayout()
+    }
+
     func keyboardView(_ view: KeyboardView, didLongPress keyDef: KeyDef) {
         // Keyboard key (code -3): show the LIME options menu (spec §10).
         // Globe long-press is routed through UIInputViewController.handleInputModeList.
@@ -4127,6 +4450,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
         scroll.addSubview(stack)
 
         let iconPointSize = LayoutMetrics.InlineMenu.buttonFontSize
+        let segmentedAxis = LayoutMetrics.InlineMenu.segmentedAxis(
+            isPad: isOnPad,
+            isLandscape: layoutIsLandscape ?? (root.bounds.width > root.bounds.height))
         func addSeparator() {
             let sep = UIView()
             sep.backgroundColor = UIColor.separator
@@ -4190,7 +4516,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
                     seg.selectedSegmentIndex = max(0, min(selected, labels.count - 1))
                     seg.addAction(UIAction { _ in onSelect(seg.selectedSegmentIndex) }, for: .valueChanged)
                     let col = UIStackView(arrangedSubviews: [hRow, seg])
-                    col.axis = .vertical
+                    col.axis = segmentedAxis
                     col.spacing = 8
                     col.isLayoutMarginsRelativeArrangement = true
                     col.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
@@ -4200,7 +4526,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
                     seg.selectedSegmentIndex = max(0, min(selected, labels.count - 1))
                     seg.addAction(UIAction { _ in onSelect(seg.selectedSegmentIndex) }, for: .valueChanged)
                     let col = UIStackView(arrangedSubviews: [header, seg])
-                    col.axis = .vertical
+                    col.axis = segmentedAxis
                     col.spacing = 8
                     col.isLayoutMarginsRelativeArrangement = true
                     col.layoutMargins = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
@@ -4277,8 +4603,9 @@ extension KeyboardViewController: KeyboardViewDelegate {
     private func showGlobeMenu(from sourceView: UIView) {
         var entries: [InlineMenuEntry] = []
 
-        // 字根反查 — drill-down sub-picker.
-        let reverseLookupValue = LIMEPreferenceManager.shared.reverseLookup(for: activeIM)
+        // 字根反查 — drill-down sub-picker. §1.8: read the hot store so the row label reflects a
+        // prior hamburger-menu change instead of a stale App Group value (#157).
+        let reverseLookupValue = hotReverseLookup(for: activeIM)
         let reverseLookupOptions = LIMEPreferenceManager.reverseLookupOptions(from: activatedIMs)
         let reverseLookupLabel = LIMEPreferenceManager.reverseLookupLabel(for: reverseLookupValue,
                                                                           options: reverseLookupOptions)
@@ -4294,13 +4621,48 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                   labels: ["無", "繁→簡", "簡→繁"], selected: pendingHan,
                                   onSelect: { pendingHan = $0 }))
 
-        // 分離鍵盤 — iPad only: inline segmented control (關閉 / 開啟 / 僅橫向).
+        // Menu exclusivity keyed off the active layout + orientation (issue #169):
+        //  · iPad ordinary  → 分離鍵盤 (tri-state); iPad numpad → 數字鍵盤位置.
+        //  · iPhone portrait → 直向鍵盤模式 (標準/分離/靠左/靠右; 分離 hidden for numpad).
+        //  · iPhone landscape → 橫向分離鍵盤 (binary; hidden for numpad).
+        // iPhone controls are shown on EVERY iPhone regardless of screen width — no gate.
+        let numpadLayout = isNumpadLayout
+        let landscape = layoutIsLandscape ?? (UIScreen.main.bounds.width > UIScreen.main.bounds.height)
         var pendingSplit = max(0, min(splitKeyboardMode, 2))
         let splitStart = pendingSplit
-        if isOnPad {
+        if isOnPad && !numpadLayout {
             entries.append(.segmented(title: "分離鍵盤", icon: "rectangle.split.2x1",
                                       labels: ["關閉", "開啟", "僅橫向"], selected: pendingSplit,
                                       onSelect: { pendingSplit = $0 }))
+        }
+        // 直向鍵盤模式 (iPhone portrait): 分離 hidden for numpad layouts. pendingPortrait
+        // keeps its raw value until the user taps, so an impossible stored 分離 on a
+        // numpad layout is shown as 標準 without being rewritten on dismiss.
+        var pendingPortrait = max(0, min(phonePortraitKeyboardMode, 3))
+        let portraitStart = pendingPortrait
+        if !isOnPad && !landscape {
+            let modeValues: [Int]    = numpadLayout ? [0, 2, 3] : [0, 1, 2, 3]
+            let modeLabels: [String] = numpadLayout ? ["標準", "靠左", "靠右"]
+                                                    : ["標準", "分離", "靠左", "靠右"]
+            let selectedIdx = modeValues.firstIndex(of: pendingPortrait) ?? 0
+            entries.append(.segmented(title: "直向鍵盤模式", icon: "keyboard",
+                                      labels: modeLabels, selected: selectedIdx,
+                                      onSelect: { pendingPortrait = modeValues[$0] }))
+        }
+        // 橫向分離鍵盤 (iPhone landscape, ordinary layouts only).
+        var pendingLandscapeSplit = phoneLandscapeSplit
+        let landscapeSplitStart = pendingLandscapeSplit
+        if !isOnPad && landscape && !numpadLayout {
+            entries.append(.segmented(title: "橫向分離鍵盤", icon: "rectangle.split.2x1",
+                                      labels: ["關閉", "開啟"], selected: pendingLandscapeSplit ? 1 : 0,
+                                      onSelect: { pendingLandscapeSplit = ($0 == 1) }))
+        }
+        var pendingAnchor = max(0, min(numpadAnchor, 3))
+        let anchorStart = pendingAnchor
+        if isOnPad && numpadLayout {
+            entries.append(.segmented(title: "數字鍵盤位置", icon: "rectangle.righthalf.inset.filled",
+                                      labels: ["滿版", "靠左", "靠右", "置中"], selected: pendingAnchor,
+                                      onSelect: { pendingAnchor = $0 }))
         }
 
         // LIME 輸入法切換 — mirrors Android showIMPicker()
@@ -4325,10 +4687,32 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 self.view.setNeedsLayout()   // re-applies splitMode in viewWillLayoutSubviews
                 changed = true
             }
+            if pendingPortrait != portraitStart {
+                self.phonePortraitKeyboardMode = pendingPortrait
+                self.hotPrefs.phonePortraitKeyboardMode = pendingPortrait   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
+            if pendingLandscapeSplit != landscapeSplitStart {
+                self.phoneLandscapeSplit = pendingLandscapeSplit
+                self.hotPrefs.phoneLandscapeSplit = pendingLandscapeSplit   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
+            if pendingAnchor != anchorStart {
+                self.numpadAnchor = pendingAnchor
+                self.hotPrefs.numpadAnchor = pendingAnchor   // §1.8 hot store, not cold
+                self.view.setNeedsLayout()
+                changed = true
+            }
             if changed {
-                try? self.relayPrefStore.write(RelayPrefState(hanConvert: self.hanConvertOption,
-                                                              splitKeyboard: self.splitKeyboardMode,
-                                                              updatedAt: Date().timeIntervalSince1970))
+                _ = try? self.relayPrefStore.update(hanConvert: self.hanConvertOption,
+                                                    splitKeyboard: self.splitKeyboardMode,
+                                                    oneHand: self.oneHandMode,
+                                                    numpadAnchor: self.numpadAnchor,
+                                                    phonePortraitMode: self.phonePortraitKeyboardMode,
+                                                    phoneLandscapeSplit: self.phoneLandscapeSplit,
+                                                    geometryProfile: self.isOnPad ? "tablet" : "phone")
             }
         })
     }

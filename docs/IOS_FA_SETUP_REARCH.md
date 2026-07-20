@@ -11,7 +11,7 @@ Design sources (single source of truth — implementation deviations require upd
 ## Ground rules (apply to every iteration)
 
 - Branch: `ios-fa-rearch`, created via superpowers:using-git-worktrees. One commit per iteration, message `feat(ios): FA re-arch I<N> — <scope>`. No Claude co-author trailer (repo rule).
-- Build/test oracle: `.claude/scripts/ios-gate.sh` (headless unit gate; always prefix xcodebuild with `GIT_CONFIG_COUNT=0`). NEVER run xcodegen; edit `project.pbxproj` by hand. Device deploys use `-allowProvisioningUpdates`, device WJIP17.
+- Build/test oracle: `.claude/scripts/ios-gate.sh` (headless unit gate; always prefix xcodebuild with `GIT_CONFIG_COUNT=0`). NEVER run xcodegen; edit `project.pbxproj` by hand. Device deploys use `-allowProvisioningUpdates`, device the physical test iPhone.
 - Encoding: Swift/`.md` UTF-8 **with** BOM; `.json`/`.plist-as-text` scripts without BOM. Subagent briefs/reports in `.claude/txt/`, helper scripts in `.claude/scripts/` — never new files at repo root.
 - TDD (superpowers:test-driven-development): every task lands its failing test in `LimeTests` first, then the implementation. The unit gate is the per-iteration oracle; `ios-visual-verify` and on-device runs are the end-to-end oracles.
 - Rule of three (repo rule 7): 3 failed attempts on the same issue → stop retrying, switch to superpowers:systematic-debugging + external research before the next attempt.
@@ -57,7 +57,7 @@ Implementation tasks are delegated to Codex CLI; review is NEVER delegated — C
 ### I0 — Feasibility spikes (load-bearing assumptions)
 
 Tasks:
-- T1 device probe: temporary `#if DEBUG` code in `KeyboardViewController` — FA OFF, read a marker file from the App Group, write result + a copy into the keyboard's own container, show pass/fail in the keyboard banner. Deploy to WJIP17.
+- T1 device probe: temporary `#if DEBUG` code in `KeyboardViewController` — FA OFF, read a marker file from the App Group, write result + a copy into the keyboard's own container, show pass/fail in the keyboard banner. Deploy to the physical test iPhone.
 - T2 Darwin spike: app posts `org.limeime.tables.updated`; keyboard observer logs receipt (both FA states). Same deploy.
 - T3 import timing probe: measure attach+bulk-copy time for the largest table (關聯字庫-sized fixture) in the extension on device; record chunk-size choice.
 
@@ -116,7 +116,7 @@ All of the following, each verified with fresh output (superpowers:verification-
 1. `ios-gate.sh` fully green on `ios-fa-rearch`.
 2. Entire unit suite green, including all tests added in I1–I6.
 3. Simulator end-to-end (ios-visual-verify + verify skill): fresh-install typing; download 倉頡 → probe → import → typing with it; uninstall; restore backup zip; 還原預設資料庫; backup flow (FA simulated); tri-state banner states; 前往設定 variant.
-4. Device matrix on WJIP17 (if attached): the FA OFF/ON rows of IOS_FULL_ACCESS.md §Test matrix + IOS_FULL_ACCESS_DETECT.md §Test matrix + I0 probes re-confirmed on release build. If no device: emit `docs/IOS_FA_DEVICE_CHECKLIST` content into the final report (do NOT create the file outside an explicit request) and mark residue.
+4. Device matrix on the physical test iPhone (if attached): the FA OFF/ON rows of IOS_FULL_ACCESS.md §Test matrix + IOS_FULL_ACCESS_DETECT.md §Test matrix + I0 probes re-confirmed on release build. If no device: emit `docs/IOS_FA_DEVICE_CHECKLIST` content into the final report (do NOT create the file outside an explicit request) and mark residue.
 5. Docs in sync: the three design docs reflect as-built behavior; LIME_SETTINGS.md §4/§7 updated; open-items list pruned to genuinely-open only.
 6. Review stack clean over the WHOLE branch diff: /code-review zero unresolved CONFIRMED findings; ponytail:ponytail-review zero unresolved findings; ponytail:ponytail-debt ledger emitted in the final report.
 7. superpowers:finishing-a-development-branch executed — branch merge-ready, no co-author trailers, per-iteration commits intact.

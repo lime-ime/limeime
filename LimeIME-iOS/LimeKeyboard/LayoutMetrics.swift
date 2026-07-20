@@ -628,6 +628,10 @@ enum LayoutMetrics {
         static let appearDuration: TimeInterval = 0.2
         // Translation offset applied at start of the slide-in animation.
         static let appearTranslationY: CGFloat = 20
+
+        static func segmentedAxis(isPad: Bool, isLandscape: Bool) -> NSLayoutConstraint.Axis {
+            !isPad && isLandscape ? .horizontal : .vertical
+        }
     }
 
     // The expanded candidates panel (rendered by the controller) reuses
@@ -636,4 +640,50 @@ enum LayoutMetrics {
     // ("expand-in-place"). No `ExpandedPanel` enum exists — that would
     // invite drift. See KeyboardViewController.setupKeyboardUI() for
     // the exact mapping.
+}
+
+/// SPLIT_ONE_HAND_KB: pure reach-geometry math (docs/SPLIT_ONE_HAND_KB.md).
+/// mm → pt uses a per-device-class table; every constant is a calibration knob.
+enum ReachGeometry {
+    static let splitHalfMaxMM: CGFloat = 66
+    static let splitRowMaxMM: CGFloat = 12
+    static let oneHandMaxWidthMM: CGFloat = 60
+    static let numpadKeyMM: CGFloat = 14
+    static let numpadAnchorMaxFraction: CGFloat = 0.40
+
+    /// iPad mini class = 163 pt/in, regular iPads = 132 pt/in, iPhone ≈ 153 pt/in.
+    static func ptPerMM(isPad: Bool, sizeClass: IPadSizeClass) -> CGFloat {
+        guard isPad else { return 6.0 }
+        return sizeClass == .small ? 6.42 : 5.20
+    }
+
+    /// Per-half width fraction for split mode: the legacy (1 − gap)/2 half,
+    /// capped by the two-hand thumb reach. Small iPads keep legacy behavior.
+    static func splitHalfMaxFraction(viewWidth: CGFloat, sizeClass: IPadSizeClass) -> CGFloat {
+        let legacy = (1 - LayoutMetrics.KeyboardRow.splitGapFraction) / 2
+        guard viewWidth > 0 else { return legacy }
+        let capPt = splitHalfMaxMM * ptPerMM(isPad: true, sizeClass: sizeClass)
+        return min(legacy, capPt / viewWidth)
+    }
+
+    /// Android phone parity: portrait reserves two key columns in the centre,
+    /// landscape reserves three. iPad continues to use splitHalfMaxFraction.
+    static func phoneSplitContentFraction(keysInRow: Int, isLandscape: Bool) -> CGFloat {
+        guard keysInRow > 0 else { return 1 }
+        return CGFloat(keysInRow) / CGFloat(keysInRow + (isLandscape ? 3 : 2))
+    }
+
+    /// Vertical thumb-sweep cap on split-mode row height.
+    static func splitRowHeightCap(sizeClass: IPadSizeClass) -> CGFloat {
+        splitRowMaxMM * ptPerMM(isPad: true, sizeClass: sizeClass)
+    }
+
+    static func oneHandWidth(viewWidth: CGFloat) -> CGFloat {
+        min(viewWidth, oneHandMaxWidthMM * ptPerMM(isPad: false, sizeClass: .small))
+    }
+
+    static func numpadAnchorWidth(viewWidth: CGFloat, columns: Int, sizeClass: IPadSizeClass) -> CGFloat {
+        let byKeys = CGFloat(columns) * numpadKeyMM * ptPerMM(isPad: true, sizeClass: sizeClass)
+        return min(byKeys, viewWidth * numpadAnchorMaxFraction)
+    }
 }

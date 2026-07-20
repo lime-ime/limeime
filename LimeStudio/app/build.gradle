@@ -35,25 +35,25 @@ if (keystorePropsFile.exists()) {
 }
 
 android {
-    namespace 'org.limeime'
+    namespace = 'org.limeime'
     signingConfigs {
         if (hasReleaseSigning) {
             release {
-                storeFile file(keystoreProps['storeFile'])
-                storePassword keystoreProps['storePassword']
-                keyAlias keystoreProps['keyAlias']
-                keyPassword keystoreProps['keyPassword']
+                storeFile = file(keystoreProps['storeFile'])
+                storePassword = keystoreProps['storePassword']
+                keyAlias = keystoreProps['keyAlias']
+                keyPassword = keystoreProps['keyPassword']
             }
         }
     }
-    compileSdkVersion 36
+    compileSdkVersion 37
     defaultConfig {
         applicationId "org.limeime"
 
-        minSdkVersion 21
-        targetSdkVersion 36
-        versionCode 202661300
-        versionName 'v6.1.30'
+        minSdkVersion 25
+        targetSdkVersion 37
+        versionCode 202661340
+        versionName 'v6.1.34'
 
         //multiDexEnabled = true
 
@@ -71,12 +71,12 @@ android {
                 signingConfig signingConfigs.release
             }
             minifyEnabled true
-            shrinkResources true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            enableUnitTestCoverage true
-            enableAndroidTestCoverage true
+            enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
     }
     productFlavors {
@@ -87,13 +87,13 @@ android {
         }
     }
     lint {
-        abortOnError false
+        abortOnError = false
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
-        coreLibraryDesugaringEnabled true
+        coreLibraryDesugaringEnabled = true
     }
 
     sourceSets {
@@ -185,8 +185,8 @@ dependencies {
 
 
     implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.browser:browser:1.8.0'
-    implementation 'androidx.core:core:1.17.0'
+    implementation 'androidx.browser:browser:1.10.0'
+    implementation 'androidx.core:core:1.19.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'androidx.preference:preference:1.2.1'
@@ -194,9 +194,9 @@ dependencies {
 
     implementation(platform('org.jetbrains.kotlin:kotlin-bom:2.2.0'))
 
-    implementation 'com.google.android.material:material:1.13.0'
+    implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.11.0'
 
     // AndroidX Test dependencies
     testImplementation "junit:junit:4.13.2"

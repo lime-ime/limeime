@@ -363,6 +363,31 @@ iPhone does not use these global Android-style keyboard swipes. It uses specific
 - Popup-key long press: floating mini keyboard.
 - iPad dual-row pan/long press: secondary glyph.
 
+## Touch Handling — Gaps And Row Margins (iPhone)
+
+On iPhone the whole keyboard is driven by a single `KeyTouchLayer` per row, not by
+N per-key `UIButton`s (see [IOS_TOUCH_REWRITE.md](IOS_TOUCH_REWRITE.md)). Two
+consequences matter to layout authors:
+
+- **The per-row touch layer spans the full row width; keys are centered inside it
+  via a layout guide.** A tap in an indented row's side margin, or in a `gap` /
+  transparent spacer between keys, resolves to the **nearest key by proximity**
+  (`KeyDetector`) instead of being dead. A layout may leave gaps/margins for visual
+  spacing without creating dead zones — taps beyond the proximity threshold of any
+  real key are still ignored.
+- **The hit surface must not be fully transparent.** iOS custom-keyboard extensions
+  drop touches that land on fully transparent pixels *before* hit-testing
+  ([IOS_CANDI_TOUCH.md §Resolution](IOS_CANDI_TOUCH.md)). The `KeyTouchLayer` (and the
+  expanded candidate panel's scroll content + cells) therefore use a near-invisible
+  `LayoutMetrics.TouchTrap.fill` (`white 0.5, alpha 0.01`). Key frames already have
+  solid backgrounds, so on-key taps were never affected — only the between-key gaps
+  were, until they were given the trap fill (commit `7188a4ae`).
+
+Android has no equivalent workaround: one custom view owns the whole `MotionEvent`
+stream and there is no transparent-pixel gate, so gaps resolve through
+`ProximityKeyDetector` directly. For iPad spacer/gap specifics, see
+[IPAD_KEYBOARD.md §4.2.7](IPAD_KEYBOARD.md).
+
 ## Editing Notes
 
 - For Android English layouts, keep the `中` key immediately left of the space key across all English variants and modes.

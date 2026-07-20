@@ -63,7 +63,7 @@ xcodebuild test -project "$PROJ" -scheme LimeUITests -destination "$DEST"
 
 ### Autonomy boundary — what goal mode may NOT self-certify
 
-Goal mode runs entirely in the **simulator**. It **cannot** verify the subjective "feels less clunky than Android" complaint, the **physical haptic**, or real-finger drop-rate — those need the **WJIP17 device** and a human (LimeIME scheme + force-refresh protocol, IOS_MISS_KEY.md §verification). When all gates are green, goal mode must report: *"simulator gates green; on-device feel/haptic verification is the remaining human step,"* and must **not** claim the feel complaint is resolved.
+Goal mode runs entirely in the **simulator**. It **cannot** verify the subjective "feels less clunky than Android" complaint, the **physical haptic**, or real-finger drop-rate — those need the **the physical test iPhone device** and a human (LimeIME scheme + force-refresh protocol, IOS_MISS_KEY.md §verification). When all gates are green, goal mode must report: *"simulator gates green; on-device feel/haptic verification is the remaining human step,"* and must **not** claim the feel complaint is resolved.
 
 ## 1. Why this exists
 
@@ -225,8 +225,8 @@ Ordered so each phase is shippable and reversible on its own.
 
 ## 7. Test / verification plan
 
-- Phase 1 & 2 land a runnable check: a headless `KeyDetector` test asserting frame/proximity/hysteresis resolution against a captured multi-row layout. Sample horizontal, vertical, and diagonal gaps plus a grid of points across the owned key surface; all in-grid samples must resolve non-`nil`.
-- On the WJIP17 device (LimeIME scheme, force-refresh the extension binary per IOS_MISS_KEY.md §gotcha):
+- Phase 1 & 2 land a runnable check: a headless `KeyDetector` test asserting frame/proximity/hysteresis resolution against a captured layout.
+- On the physical test iPhone (LimeIME scheme, force-refresh the extension binary per IOS_MISS_KEY.md §gotcha):
   - Fast-burst `wo3jiao4li2ming2…` → drop rate before/after Phase 1.
   - Flint sweep `q→w→e→r` commits the release key; boundary wobble is stable.
   - Vertical flint from one row into the next commits the release-row key; tapping between rows and at four-key intersections always produces exactly one nearest-key event.
@@ -262,7 +262,7 @@ The earlier "Phase 0→1 first, then measure" note was a *feel-tuning* suggestio
 **This authoring environment is Windows with no Swift/Xcode toolchain** (`swift`/`xcodebuild`/`xcrun` absent; UIKit and CoreGraphics do not exist on Windows). Therefore:
 
 - **On Windows (here):** author this plan and, if asked, author the Swift source as targeted edits. **No gate can run** — not the build, not the simulator, not even the pure `KeyDetector` test (it needs CoreGraphics geometry). Any code produced here is **unverified until built on Apple hardware** and must be labeled as such.
-- **On the Mac-side Claude/CI:** run the gated loop in §9. That environment has `xcodebuild` + the iOS simulator (per [docs/IOS_MISS_KEY.md](IOS_MISS_KEY.md): iPhone 17 Pro, iOS 26.5) and is the only place GATE 1–3 are meaningful. Deploy/observe on the WJIP17 device via the **LimeIME scheme** with the force-refresh protocol from IOS_MISS_KEY.md §verification.
+- **On the Mac-side Claude/CI:** run the gated loop in §9. That environment has `xcodebuild` + the iOS simulator (per [docs/IOS_MISS_KEY.md](IOS_MISS_KEY.md): iPhone 17 Pro, iOS 26.5) and is the only place GATE 1–3 are meaningful. Deploy/observe on the physical test iPhone via the **LimeIME scheme** with the force-refresh protocol from IOS_MISS_KEY.md §verification.
 
 **Consequence for "finish at once":** the *loop* finishes in one run — but that run must execute on the Mac-side Claude/CI, because the gates are the loop. If code is drafted on Windows first, it is a pre-seed for the Mac loop, not a finished result; the Mac loop still has to compile it, and the first-ever compile of a blind-drafted touch rewrite will surface errors that only the gate can catch. Cleanest path: **run the whole loop on the Mac side from Phase 0**, so every phase is authored against a live compiler.
 
@@ -313,9 +313,9 @@ Perceived responsiveness is dominated by (a)+(b) — the stages we own.
 ### 13.2 Two code suspects — experiments applied 2026-07-12
 
 1. **Key preview fades in over 80 ms.** `showPreviewFor` animated alpha 0→1 + scale 0.88→1 as a spring with `KeyPreview.appearDuration = 0.08` ([LayoutMetrics.swift](../LimeIME-iOS/LimeKeyboard/LayoutMetrics.swift), used at [KeyboardViewController.swift:3676](../LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift#L3676)). The system keyboard's preview **pops instantly, no fade** — an 80 ms ramp is ~5 frames of visible mush per keystroke. **Change: `appearDuration` 0.08 → 0** (instant pop). `disappearDuration` untouched — the system preview does animate out.
-2. **No ProMotion opt-in.** The keyboard extension's Info.plist had no `CADisableMinimumFrameDurationOnPhone`; on a ProMotion device (WJIP17) our Core Animation work may be capped at 60 Hz while the system keyboard runs the full 120 Hz touch-to-photon path. **Change: added the key = `true`** to [LimeKeyboard/Info.plist](../LimeIME-iOS/LimeKeyboard/Info.plist). Hypothesis only — Apple documents the key for apps; whether it is honored for a keyboard extension's process is exactly what the device test decides. Check with the FPS overlay (IOS_PROFILING.md §3.1).
+2. **No ProMotion opt-in.** The keyboard extension's Info.plist had no `CADisableMinimumFrameDurationOnPhone`; on a ProMotion device (physical test iPhone) our Core Animation work may be capped at 60 Hz while the system keyboard runs the full 120 Hz touch-to-photon path. **Change: added the key = `true`** to [LimeKeyboard/Info.plist](../LimeIME-iOS/LimeKeyboard/Info.plist). Hypothesis only — Apple documents the key for apps; whether it is honored for a keyboard extension's process is exactly what the device test decides. Check with the FPS overlay (IOS_PROFILING.md §3.1).
 
-### 13.3 Verification (human + WJIP17)
+### 13.3 Verification (human + physical test iPhone)
 
 1. Deploy via the LimeIME scheme + force-refresh protocol (IOS_MISS_KEY.md §gotcha).
 2. Feel-test a typing burst side-by-side vs the system keyboard.
@@ -338,62 +338,21 @@ the existing 40 Hz haptic throttle remains unchanged. A focused unit test assert
 that commit occurs before the deferred haptic request. Device verification remains
 the final oracle for whether the one-turn feedback delay feels acceptable.
 
-## 14. Post-ship gap-ownership correction (2026-07-13) — OPEN
+## 14. Follow-on — gap taps needed a non-transparent hit surface (2026-07-15)
 
-Device testing found a remaining correctness hole: tapping some visible gaps between
-keys produces no key event. The original unit test proved only that a synthetic
-horizontal gap point resolves inside an isolated `KeyDetector`; it did not prove that
-every real gap is owned by the runtime touch view or that the detector can see keys in
-another row.
+§12's `KeyTouchLayer` `hitTest` claims plain keys **and transparent gaps** — but
+claiming a region in `hitTest` is necessary, not sufficient. iOS's custom-keyboard
+touch gate drops a touch on a fully transparent pixel **before** `hitTest` runs
+([docs/IOS_CANDI_TOUCH.md §Resolution](IOS_CANDI_TOUCH.md)), and the layer's
+background was `.clear` — so taps in the gaps / edges / margins **between** keys were
+silently dead at any typing speed (on-key taps always worked; key frames have solid
+backgrounds).
 
-### 14.1 Current implementation mismatch
-
-The shipped code creates a separate `KeyTouchLayer` inside each row (and inside each
-half of an iPad split row). `plainTouchContext(in:)` then builds a separate instance of
-the existing `KeyDetector` from only the `KeyButton`s below that layer. Consequently:
-
-- horizontal gaps internal to one layer usually resolve;
-- space outside a centered row's narrower content layer is not owned by that layer;
-- a vertical move remains owned by its starting row and cannot resolve a key in the
-  next row;
-- the center between split halves has no common owner; and
-- the center-distance proximity cutoff can still return `nil` at a real vertical or
-  diagonal gap even though the point is inside the keyboard.
-
-Calling this implementation a "single-owner layer" means one owner per touch only;
-it does **not** mean the keyboard currently has one full-grid owner. That distinction
-must remain explicit in this document and in IOS_MISS_KEY.md.
-
-### 14.2 Required modification (P5)
-
-1. Install exactly one `KeyTouchLayer` whose bounds cover the complete key-grid area.
-2. Keep rows and split halves as rendering/layout containers beneath that owner; do
-   not create a detector or touch owner per row/half.
-3. Convert every eligible key frame into the keyboard-wide layer's coordinate system
-   and build one instance of the **existing** `KeyDetector` from that complete list.
-4. Add an inside-grid nearest-key lookup that never applies the proximity cutoff.
-   Measure squared distance to the key rectangle, so each visible gap is divided at
-   the nearest-edge centerline. Keep the existing bounded lookup for uses outside the
-   owned grid.
-5. Use the same all-row detector for `touchesBegan` and `touchesMoved`, preserving the
-   existing hysteresis, modifier pinning, popup, repeat, space, chord, and swipe rules.
-6. Preserve direct UIKit ownership for the system globe/legacy picker key. Its direct
-   hit must pass through with the original `UIEvent`; its adjacent gap policy needs a
-   focused device test rather than synthesizing a picker action.
-
-### 14.3 P5 verification gate
-
-- Unit: captured multi-row frames resolve key centers plus horizontal, vertical, and
-  diagonal gap midpoints; a dense sample of the owned key-grid bounds contains no
-  `nil` result.
-- Unit: unequal-width and staggered-row gaps choose the key with the nearest rectangle
-  edge, not merely the nearest center.
-- Interaction: taps in every visible phone/iPad gap produce exactly one key event.
-- Interaction: horizontal and vertical flint both commit the release key; moving
-  across a row boundary never loses the tracker.
-- Regression: all existing G1–G5 checks remain green, including shift-hold, rollover,
-  popup slide-select, repeat, space caret drag, swipe, accessibility, system globe,
-  and iPad split mode.
-
-Until P5 is implemented and device-confirmed, §12 remains accurate for the original
-rewrite features but must not be read as claiming complete gap coverage.
+**Fix (`7188a4ae`):** give `KeyTouchLayer` `LayoutMetrics.TouchTrap.fill`
+(`white 0.5, alpha 0.01`, non-transparent so the gate passes the touch through) and
+widen the per-row touch layer to the **full row width** (keys still centered via a
+layout guide) so indented-row side margins resolve to the edge key by proximity. The
+expanded candidate panel got the same fill on its scroll content + cells. Regression
+test in `TouchLayerGestureTests`. Dead-tap-family framing: [docs/IOS_MISS_KEY.md
+§2026-07-15](IOS_MISS_KEY.md); layout-author framing: [ANDROID_IPHONE_KEYBOARD.md
+§Touch Handling](ANDROID_IPHONE_KEYBOARD.md) and [IPAD_KEYBOARD.md §4.2.7](IPAD_KEYBOARD.md).

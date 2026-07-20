@@ -114,6 +114,12 @@ public class LIMEBaseKeyboard {
     public static final int SPLIT_KEYBOARD_ALWAYS = 1;
     public static final int SPLIT_KEYBOARD_LANDSCAPD_ONLY = 2;
 
+    // SPLIT_ONE_HAND_KB
+    public static final int KEYCODE_ONE_HAND_RESTORE = -120;
+    public static final int ANCHOR_LEFT = 1;
+    public static final int ANCHOR_RIGHT = 2;
+    public static final int ANCHOR_CENTER = 3;
+
     /**
      * Drawable for arrow keys
      */
@@ -203,6 +209,13 @@ public class LIMEBaseKeyboard {
      * Height of the screen
      */
     private final int mDisplayHeight;
+
+    // SPLIT_ONE_HAND_KB: horizontal dots-per-inch, used to convert reach-geometry mm constants to px.
+    private float mXdpi;
+
+    // SPLIT_ONE_HAND_KB: horizontal insets applied by applyHorizontalAnchor (0 when full width).
+    private int mAnchorLeftInset = 0;
+    private int mAnchorRightInset = 0;
 
     /**
      * Keyboard mode, or zero, if none.
@@ -757,7 +770,7 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      */
     public LIMEBaseKeyboard(Context context, int xmlLayoutResId, float keySizeScale, int showArrowKeys, int splitKeyboard) {
-        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard);
+        this(context, xmlLayoutResId, 0, keySizeScale, showArrowKeys, splitKeyboard, true);
     }
 
     /**
@@ -768,13 +781,22 @@ public class LIMEBaseKeyboard {
      * @param xmlLayoutResId the resource file that contains the keyboard layout and keys.
      * @param modeId         keyboard mode identifier
      */
-    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard) {
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible) {
+        this(context, xmlLayoutResId, modeId, keySizeScale, showArrowKeys, splitKeyboard, splitEligible, false);
+    }
+
+    // SPLIT_ONE_HAND_KB / issue #169: phoneSplitForced carries the phone split
+    // decision already resolved by PhoneKeyboardModePolicy in LIMEKeyboardSwitcher
+    // (integrated portrait mode + separate landscape split). Tablets ignore it and
+    // keep the legacy value-based, orientation-gated decision below.
+    public LIMEBaseKeyboard(Context context, int xmlLayoutResId, int modeId, float keySizeScale, int showArrowKeys, int splitKeyboard, boolean splitEligible, boolean phoneSplitForced) {
         DisplayMetrics dm = context.getResources().getDisplayMetrics();
         // Issue #47: use the actual usable window width (excluding system bars and
         // display cutout insets) so percentage-based key widths don't overflow the
         // IME container on devices with notches, gesture nav, or split-screen.
         mDisplayWidth = getUsableDisplayWidth(context, dm.widthPixels);
         mDisplayHeight = dm.heightPixels;
+        mXdpi = dm.xdpi;
 
         if (DEBUG)
             Log.i(TAG, "LIMEBaseKeyboard() mDisplayWidth = " + mDisplayWidth + ". mDisplayHeight" + mDisplayHeight);
@@ -801,11 +823,23 @@ public class LIMEBaseKeyboard {
         }
 
         //Jeremy '12,5,26 reserve  columns in the middle for arrow keys in landscape mode.
-        //Jeremy '12,5,27 read splitkeyboard setting from preference. 
+        //Jeremy '12,5,27 read splitkeyboard setting from preference.
         //Jeremy '12,6,19  add orientation consideration on split keyboard
-        mSplitKeyboard = (mLandScape && mShowArrowKeys != 0)
-                || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                || splitKeyboard == SPLIT_KEYBOARD_ALWAYS;
+        // SPLIT_ONE_HAND_KB / issue #169: tablets keep the legacy value-based,
+        // orientation-gated split decision. Phones use the integrated portrait mode
+        // + separate landscape split, resolved into phoneSplitForced by
+        // PhoneKeyboardModePolicy in LIMEKeyboardSwitcher (portrait split is honored;
+        // landscape split uses phone_landscape_split unless Android arrow keys force the
+        // centre split required by the legacy arrow-key layout).
+        boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        if (tablet) {
+            mSplitKeyboard = splitEligible
+                    && ((mLandScape && mShowArrowKeys != 0)
+                    || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
+                    || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
+        } else {
+            mSplitKeyboard = splitEligible && phoneSplitForced;
+        }
 
         loadKeyboard(context, context.getResources().getXml(xmlLayoutResId));
     }
@@ -1154,6 +1188,50 @@ public class LIMEBaseKeyboard {
 
     }
 
+    public int getDisplayWidth() {
+        return mDisplayWidth;
+    }
+
+    /**
+     * SPLIT_ONE_HAND_KB: shrink every key horizontally to targetWidth and pin the
+     * block to an edge (or center). Pure post-pass over the loaded keys — vertical
+     * geometry and keyboard height are untouched. With withRestoreChevron, the
+     * vacated strip becomes a single restore key whose arrow points toward the
+     * empty side (iOS built-in one-handed style).
+     */
+    public void applyHorizontalAnchor(int targetWidth, int anchor, boolean withRestoreChevron) {
+        if (targetWidth <= 0 || targetWidth >= mDisplayWidth) return;
+        final float s = (float) targetWidth / (float) mDisplayWidth;
+        final int free = mDisplayWidth - targetWidth;
+        final int offset = (anchor == ANCHOR_RIGHT) ? free
+                         : (anchor == ANCHOR_CENTER) ? free / 2 : 0;
+        mAnchorLeftInset = offset;
+        mAnchorRightInset = mDisplayWidth - targetWidth - offset;
+        for (Key k : mKeys) {
+            k.x = Math.round(k.x * s) + offset;
+            k.width = Math.round(k.width * s);
+            k.gap = Math.round(k.gap * s);
+        }
+        mTotalWidth = mDisplayWidth;   // full-width canvas; the strip stays background
+        if (withRestoreChevron && anchor != ANCHOR_CENTER) {
+            Row row = new Row(this);
+            Key chevron = new Key(row);
+            chevron.x = (anchor == ANCHOR_RIGHT) ? 0 : targetWidth;
+            chevron.y = 0;
+            chevron.width = free;
+            chevron.height = mTotalHeight;
+            chevron.gap = 0;
+            chevron.modifier = true;
+            chevron.codes = new int[]{KEYCODE_ONE_HAND_RESTORE};
+            chevron.icon = (anchor == ANCHOR_RIGHT) ? mDrawableArrowLeft : mDrawableArrowRight;
+            mKeys.add(chevron);
+        }
+    }
+
+    /** SPLIT_ONE_HAND_KB: horizontal insets applied by applyHorizontalAnchor (0 when full width). */
+    public int getAnchorLeftInset() { return mAnchorLeftInset; }
+    public int getAnchorRightInset() { return mAnchorRightInset; }
+
 
     private void loadKeyboard(Context context, XmlResourceParser parser) {
         boolean inKey = false;
@@ -1352,6 +1430,10 @@ public class LIMEBaseKeyboard {
             mDefaultHeight = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_keyHeight, //Jeremy '11,9,4
                     mDisplayHeight, DEFAULT_KEY_HEIGHT_PX, mKeySizeScale);
+            // SPLIT_ONE_HAND_KB: cap row height to the vertical thumb sweep in split mode.
+            if (mSplitKeyboard && mXdpi > 0)
+                mDefaultHeight = Math.min(mDefaultHeight,
+                        ReachGeometry.mmToPx(ReachGeometry.SPLIT_ROW_MAX_MM, mXdpi));
             mDefaultHorizontalGap = getDimensionOrFraction(a,
                     R.styleable.LIMEBaseKeyboard_horizontalGap,
                     mDisplayWidth, 0);
@@ -1371,7 +1453,8 @@ public class LIMEBaseKeyboard {
         mReservedColumnsForSplitedKeyboard = res.getInteger(R.integer.reserved_columns_for_seperated_keyboard);
 
         mKeysInRow = Math.round((float) mDisplayWidth / mDefaultWidth);
-        mSplitKeyWidth = Math.round((float) mDisplayWidth / (mKeysInRow + mReservedColumnsForSplitedKeyboard));
+        mSplitKeyWidth = ReachGeometry.splitKeyWidth(mDisplayWidth, mKeysInRow,
+                mReservedColumnsForSplitedKeyboard, mXdpi);
         mSplitedKeyWidthScale = (float) (mSplitKeyWidth) / (float) (mDefaultWidth);
         if (DEBUG)
             Log.i(TAG, "mKeysInRow = " + mKeysInRow

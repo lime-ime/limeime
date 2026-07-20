@@ -429,7 +429,7 @@ Any Swift source file added or edited must be saved as **UTF-8 with BOM** (Chine
 
 ## Verification (iOS + Android v1)
 
-End-to-end manual test on iPhone (WJIP17 per `reference_ios_devices.md`), iPad, Android phone, and Android tablet/emulator:
+End-to-end manual test on iPhone (the physical test iPhone), iPad, Android phone, and Android tablet/emulator:
 
 1. Open LimeIME in a text field with no composing text.
    - **iPhone/iPad/Android**: confirm the candidate bar's left-end zone shows the 😀 emoji launcher.

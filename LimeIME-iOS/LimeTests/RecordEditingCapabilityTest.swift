@@ -100,6 +100,12 @@ final class EditorRefreshViewSourceTest: XCTestCase {
 
         XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
         XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
+        XCTAssertTrue(source.contains("@FocusState private var probeFocused: Bool"))
+        XCTAssertTrue(source.contains("probeFocused = true"))
+        XCTAssertTrue(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
+        XCTAssertTrue(source.contains("probeFocused = false"))
+        XCTAssertTrue(source.contains("case .failure(let error):"))
+        XCTAssertTrue(source.contains("error.localizedDescription"))
         XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
         XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
         XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))

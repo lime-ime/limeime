@@ -218,8 +218,8 @@ public class ManageImController extends BaseController {
     public void loadRelatedPhrases(String pWord, int offset, int limit) {
         try {
 
-            List<Related> phrases = searchServer.getRelatedByWord(pWord, limit, offset);
-            int count = searchServer.countRecordsRelated(pWord);
+            List<Related> phrases = searchServer.searchRelatedForManagement(pWord, limit, offset);
+            int count = searchServer.countRelatedForManagement(pWord);
             
             if (manageRelatedView != null) {
                 manageRelatedView.updatePhraseCount(count);

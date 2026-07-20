@@ -218,6 +218,7 @@ IM_ROOTS = {
     "lime_url":           "",
     "lime_english_number": "",
     "lime_number":        "",
+    "lime_number_symbol": "",
     "lime_shift":         "",
     "symbols1":           "",
     "symbols2":           "",
@@ -538,7 +539,7 @@ Production layout families read by the narrow generator:
 - **WB stroke**: `lime_wb` (base only — 2 content rows, 5 stroke keys).
   `lime_wb_shift` ships an anomalous full layout — see §A.10.
 - **English-family**: existing production `_ipad` English, email, URL,
-  number, and shift layouts stay shipped. Narrow generation may add
+  number, number-symbol, and shift layouts stay shipped. Narrow generation may add
   `_ipad_narrow` siblings, but must not remove or modify the production
   files.
 - **Symbol pages**: existing production `symbols*_ipad.json` files stay
@@ -567,6 +568,7 @@ implementation detail. Bottom row always 6.
 | `lime_hs` | 14 / 14 / 13 / 12 | 13 / 13 / 12 / 12 |
 | `lime_wb` | 3 / 4 (no-op) | 3 / 4 (no-op) |
 | `lime_english` + `lime_abc` (English-only on iPad — see §A.12) | 14 / 14 / 13 / 12 | 12 / 12 / 11 / 11 |
+| `lime_number_symbol` (LIME number-symbol IM — see §A.12.1) | 14 / 14 / 13 / 12 | base: 12 / 12 / 12 / 13; Shift: 12 / 12 / 12 / 12 |
 | `symbols1` + `symbols2` + `symbols3` (phone-style symbol pages — see §A.13) | phone pages | copied phone content rows + narrow symbol bottom |
 
 Function keys must be at least as wide as normal keys. Narrow digit
@@ -965,6 +967,48 @@ zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ "|,
 
 The English narrow bottom row carries the `[中]` mode key; content rows
 do not.
+
+### A.12.1 `lime_number_symbol`
+
+`lime_number_symbol` is the LIME number-symbol IM selected by the
+`limenumsym` catalog entry. It follows the full Chinese-IM scaffold rather
+than the three-page `symbols1/2/3` family. The unshifted and shifted full
+layouts use the standard 14 / 14 / 13 / 12 content-row counts:
+
+```
+lime_number_symbol_ipad
+digit  (14): ~|` !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 _|- +|= [⌫]
+qwerty (14): [Tab] q w e r t y u i o p 『|「 』|」 ？|、
+asdf   (13): [abc] a s d f g h j k l ；|： 。|， [↩]
+zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [⇧]
+
+lime_number_symbol_ipad_shift
+digit  (14): ~ ! @ # $ % ^ & * ( ) _ + [⌫]
+qwerty (14): [Tab] Q W E R T Y U I O P 『 』 ？
+asdf   (13): [abc] A S D F G H J K L ； 。 [↩]
+zxcv   (12): [⇧] Z X C V B N M < > ? [⇧]
+```
+
+The generic English trim would discard one of the phone layout's guaranteed
+punctuation characters. The number-symbol exception therefore pairs `=` with
+`-` on the unshifted narrow row and `+` with `_` on the shifted narrow row,
+keeping all four characters reachable:
+
+```
+lime_number_symbol_ipad_narrow
+digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 =|- [⌫]
+qwerty (12): q w e r t y u i o p 『|「 』|」
+asdf   (12): [spacer] a s d f g h j k l ；|： [↩]
+zxcv   (13): [⇧] z x c v b n m <|, >|. ?|/ 。|， [spacer]
+
+lime_number_symbol_ipad_narrow_shift
+digit  (12): ! @ # $ % ^ & * ( ) +|_ [⌫]
+qwerty (12): Q W E R T Y U I O P 『 』
+asdf   (12): [spacer] A S D F G H J K L ； [↩]
+zxcv   (12): [⇧] Z X C V B N M < > ? [spacer]
+```
+
+Both narrow bottom rows are `globe .?123 emoji space 中 dismiss`.
 
 ### A.13 Symbol narrow layouts
 

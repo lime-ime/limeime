@@ -651,6 +651,24 @@
     <string name="split_keyboard_on">開啟</string>
     <string name="split_keyboard_landscape">僅橫向</string>
 
+    <string name="one_hand_mode">單手鍵盤</string>
+    <string name="one_hand_off">關閉</string>
+    <string name="one_hand_left">靠左</string>
+    <string name="one_hand_right">靠右</string>
+    <!-- Issue #169: integrated phone portrait keyboard mode (直向鍵盤模式) and phone
+         landscape split (橫向分離鍵盤). Phones only; no screen-width gate. -->
+    <string name="phone_portrait_keyboard_mode">直向鍵盤模式</string>
+    <string name="portrait_mode_standard">標準</string>
+    <string name="portrait_mode_split">分離</string>
+    <string name="portrait_mode_left">靠左</string>
+    <string name="portrait_mode_right">靠右</string>
+    <string name="phone_landscape_split">橫向分離鍵盤</string>
+    <string name="numpad_anchor">數字鍵盤位置</string>
+    <string name="numpad_anchor_fit">滿版</string>
+    <string name="numpad_anchor_left">靠左</string>
+    <string name="numpad_anchor_right">靠右</string>
+    <string name="numpad_anchor_center">置中</string>
+
     <string name="voice_input">啟動語音輸入…</string>
 
     <string name="show_arrow_keys">顯示方向鍵</string>
@@ -688,6 +706,42 @@
         <item>關閉</item>
         <item>開啟</item>
         <item>僅橫向開啟</item>
+    </string-array>
+
+    <string-array name="one_hand_mode_options">
+        <item>@string/one_hand_off</item>
+        <item>@string/one_hand_left</item>
+        <item>@string/one_hand_right</item>
+    </string-array>
+    <string-array name="one_hand_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <!-- Issue #169: 直向鍵盤模式 (0=標準 1=分離 2=靠左 3=靠右). Phones only. -->
+    <string-array name="phone_portrait_keyboard_mode_options">
+        <item>@string/portrait_mode_standard</item>
+        <item>@string/portrait_mode_split</item>
+        <item>@string/portrait_mode_left</item>
+        <item>@string/portrait_mode_right</item>
+    </string-array>
+    <string-array name="phone_portrait_keyboard_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="numpad_anchor_options">
+        <item>@string/numpad_anchor_fit</item>
+        <item>@string/numpad_anchor_left</item>
+        <item>@string/numpad_anchor_right</item>
+        <item>@string/numpad_anchor_center</item>
+    </string-array>
+    <string-array name="numpad_anchor_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
     </string-array>
 
 

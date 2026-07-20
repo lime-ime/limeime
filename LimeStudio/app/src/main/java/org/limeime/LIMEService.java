@@ -128,6 +128,7 @@ public class LIMEService extends InputMethodService
     private static final boolean DEBUG = false;
     private static final String TAG = "LIMEService";
     private static final String IMKEYS_CONFIG = "imkeys";
+    private static final String IMKEYNAMES_CONFIG = "imkeynames";
 
     private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
 
@@ -295,6 +296,7 @@ public class LIMEService extends InputMethodService
     // Cached root set (imkeys) for the active IM — the authoritative acceptance/selkey test.
     // Refreshed in initialIMKeyboard(); empty only for a custom IM imported without imkeys.
     private String currentImKeys = "";
+    private final HashMap<String, String> imConfigCache = new HashMap<>();
     private boolean hasQuickSwitch = false;
 
     // Hard Keyboad Shift + Space Status
@@ -2273,6 +2275,14 @@ public class LIMEService extends InputMethodService
             keyDownUp(KeyEvent.KEYCODE_DPAD_LEFT, hasCandidatesShown);
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_OPTIONS) {
             handleOptions();
+        } else if (primaryCode == LIMEBaseKeyboard.KEYCODE_ONE_HAND_RESTORE) {
+            // Issue #169: chevron tap restores full width by setting the integrated
+            // portrait mode back to standard, persisted (spec).
+            // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
+            mLIMEPref.setPhonePortraitKeyboardMode(
+                    org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_STANDARD);
+            invalidateStartupConfigSnapshot();
+            applyGeometryChangeInPlace();
         } else if (primaryCode == LIMEKeyboardView.KEYCODE_SPACE_LONGPRESS) {
             showIMPicker();
         } else if (primaryCode == KEYCODE_SWITCH_TO_SYMBOL_MODE && mInputView != null) { //->symbol keyboard
@@ -2340,17 +2350,12 @@ public class LIMEService extends InputMethodService
     }
 
     private boolean handleEndkeyCommit(int primaryCode) {
-        String endkey = "";
-        String imkeys = "";
-        if (SearchSrv != null && activeIM != null) {
-            endkey = SearchSrv.getImConfig(activeIM, LIME.IM_LIME_ENDKEY);
-            imkeys = SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
-        }
-        if (!isEndkeyCommitKey(primaryCode, endkey, mEnglishOnly, mComposing.length(), hasCandidatesShown)) {
+        if (!isEndkeyCommitKey(primaryCode, cachedImConfig(LIME.IM_LIME_ENDKEY), mEnglishOnly,
+                mComposing.length(), hasCandidatesShown)) {
             return false;
         }
 
-        if (isKeyInImkeys(primaryCode, imkeys)) {
+        if (isKeyInImkeys(primaryCode, cachedImConfig(IMKEYS_CONFIG))) {
             return commitComposingWithAppendedEndkey(primaryCode);
         }
 
@@ -2359,6 +2364,24 @@ public class LIMEService extends InputMethodService
         }
 
         return commitFreshEndkeyOrRaw(primaryCode);
+    }
+
+    private void refreshImConfigCache() {
+        imConfigCache.clear();
+        if (SearchSrv == null || activeIM == null) return;
+
+        cacheImConfig(LIME.IM_LIME_ENDKEY, SearchSrv.getImConfig(activeIM, LIME.IM_LIME_ENDKEY));
+        cacheImConfig(IMKEYS_CONFIG, SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG));
+        cacheImConfig(IMKEYNAMES_CONFIG, SearchSrv.getImConfig(activeIM, IMKEYNAMES_CONFIG));
+    }
+
+    private void cacheImConfig(String field, String value) {
+        imConfigCache.put(field, value == null ? "" : value);
+    }
+
+    private String cachedImConfig(String field) {
+        String value = imConfigCache.get(field);
+        return value == null ? "" : value;
     }
 
     private boolean commitCurrentEndkeyComposing() {
@@ -3661,7 +3684,25 @@ public class LIMEService extends InputMethodService
         final boolean isLandScape = displayWidth > displayHeight;
 
         //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
-        final boolean hasSplitOption = !(isLandScape && mShowArrowKeys > 0);
+        // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
+        // ordinary layouts show 分離鍵盤 / 單手鍵盤. (spec: keyboard-menu rule)
+        final boolean isNumpadKb = mKeyboardSwitcher.isNumpadKeyboard();
+        final boolean isTablet = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        // Issue #169: tablets keep the tri-state 分離鍵盤 control (ordinary layouts) and
+        // 數字鍵盤位置 (numpad layouts). Phones use the integrated 直向鍵盤模式 in portrait
+        // and the binary 橫向分離鍵盤 in landscape — shown on EVERY phone regardless of
+        // screen width (no gate). Numpad layouts never split, so on a phone the portrait
+        // control hides its 分離 segment and the landscape control is not shown.
+        final boolean phoneControls =
+                org.limeime.keyboard.PhoneKeyboardModePolicy.phoneControlsApply(isTablet);
+        final boolean hasTabletSplitOption = isTablet && !isNumpadKb
+                && !(isLandScape && mShowArrowKeys > 0);
+        final boolean hasPhonePortraitMode = phoneControls && !isLandScape;
+        // Android's legacy landscape arrow-key layout requires the centre split. Hide the
+        // binary preference while arrows force it on, because 關閉 could not take effect.
+        final boolean hasPhoneLandscapeSplit = phoneControls && isLandScape && !isNumpadKb
+                && mShowArrowKeys == 0;
+        final boolean hasNumpadAnchorOption = isTablet && isNumpadKb;
 
         // Custom panel: every entry is a styled row and 簡繁轉換 hosts its segmented
         // control inline at the top level (no drill-down), matching the 喜好設定 page.
@@ -3715,11 +3756,11 @@ public class LIMEService extends InputMethodService
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(hanGroup);
         }
 
-        // 分離鍵盤 inline segmented control (0=關閉 1=開啟 2=僅橫向), shown only when
-        // the split option is available in the current orientation.
+        // 分離鍵盤 inline segmented control (0=關閉 1=開啟 2=僅橫向), tablets only —
+        // ordinary (non-numpad) layouts. Phones use 直向鍵盤模式 / 橫向分離鍵盤 below.
         final int splitCurrent = clampIndex(mSplitKeyboard, 3);
         final int[] pendingSplit = { splitCurrent };
-        if (hasSplitOption) {
+        if (hasTabletSplitOption) {
             panel.findViewById(R.id.menu_split_block).setVisibility(android.view.View.VISIBLE);
             com.google.android.material.button.MaterialButtonToggleGroup splitGroup =
                     panel.findViewById(R.id.split_toggle_group);
@@ -3734,16 +3775,100 @@ public class LIMEService extends InputMethodService
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(splitGroup);
         }
 
+        // 直向鍵盤模式 integrated phone-portrait control (0=標準 1=分離 2=靠左 3=靠右).
+        // Issue #169: shown on every phone in portrait, no width gate. 分離 is hidden
+        // for numpad layouts (numpads never split); if a stored 分離 meets a numpad
+        // layout it is shown as 標準 without rewriting the stored value.
+        final int portraitCurrent = clampIndex(mLIMEPref.getPhonePortraitKeyboardMode(), 4);
+        final int[] pendingPortrait = { portraitCurrent };
+        if (hasPhonePortraitMode) {
+            panel.findViewById(R.id.menu_portrait_mode_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup portraitGroup =
+                    panel.findViewById(R.id.portrait_mode_toggle_group);
+            final int[] portraitIds = { R.id.portrait_opt_standard, R.id.portrait_opt_split,
+                    R.id.portrait_opt_left, R.id.portrait_opt_right };
+            if (isNumpadKb) {
+                panel.findViewById(R.id.portrait_opt_split).setVisibility(android.view.View.GONE);
+                portraitGroup.check(portraitIds[portraitCurrent
+                        == org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_SPLIT
+                        ? org.limeime.keyboard.PhoneKeyboardModePolicy.PORTRAIT_STANDARD
+                        : portraitCurrent]);
+            } else {
+                portraitGroup.check(portraitIds[portraitCurrent]);
+            }
+            portraitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                for (int i = 0; i < portraitIds.length; i++) {
+                    if (portraitIds[i] == checkedId) { pendingPortrait[0] = i; break; }
+                }
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(portraitGroup);
+        }
+
+        // 橫向分離鍵盤 binary phone-landscape control (關閉 / 開啟), independent of the
+        // portrait mode. Issue #169: shown on every phone in landscape (ordinary
+        // layouts only; numpads never split), no width gate.
+        final boolean landscapeSplitCurrent = mLIMEPref.getPhoneLandscapeSplit();
+        final boolean[] pendingLandscapeSplit = { landscapeSplitCurrent };
+        if (hasPhoneLandscapeSplit) {
+            panel.findViewById(R.id.menu_landscape_split_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup landscapeSplitGroup =
+                    panel.findViewById(R.id.landscape_split_toggle_group);
+            final int[] landscapeSplitIds = { R.id.landscape_split_opt_off, R.id.landscape_split_opt_on };
+            landscapeSplitGroup.check(landscapeSplitIds[landscapeSplitCurrent ? 1 : 0]);
+            landscapeSplitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                pendingLandscapeSplit[0] = checkedId == R.id.landscape_split_opt_on;
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(landscapeSplitGroup);
+        }
+
+        // 數字鍵盤位置 inline segmented control (0=滿版 1=靠左 2=靠右 3=置中), shown only
+        // for numpad-based layouts on tablets.
+        final int anchorCurrent = clampIndex(mLIMEPref.getNumpadAnchor(), 4);
+        final int[] pendingAnchor = { anchorCurrent };
+        if (hasNumpadAnchorOption) {
+            panel.findViewById(R.id.menu_numpad_anchor_block).setVisibility(android.view.View.VISIBLE);
+            com.google.android.material.button.MaterialButtonToggleGroup anchorGroup =
+                    panel.findViewById(R.id.numpad_anchor_toggle_group);
+            final int[] anchorIds = { R.id.numpad_anchor_opt_fit, R.id.numpad_anchor_opt_left,
+                    R.id.numpad_anchor_opt_right, R.id.numpad_anchor_opt_center };
+            anchorGroup.check(anchorIds[anchorCurrent]);
+            anchorGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
+                if (!isChecked) return;
+                for (int i = 0; i < anchorIds.length; i++) {
+                    if (anchorIds[i] == checkedId) { pendingAnchor[0] = i; break; }
+                }
+            });
+            org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(anchorGroup);
+        }
+
         // Apply the inline choices once, on dismiss.
         mOptionsDialog.setOnDismissListener(d -> {
             if (pendingHan[0] != hanCurrent) {
                 handleHanConvertSelection(pendingHan[0]);
             }
+            boolean geometryChanged = false;
             if (pendingSplit[0] != splitCurrent) {
                 mLIMEPref.setSplitKeyboard(pendingSplit[0]);
+                geometryChanged = true;
+            }
+            if (pendingPortrait[0] != portraitCurrent) {
+                mLIMEPref.setPhonePortraitKeyboardMode(pendingPortrait[0]);
+                geometryChanged = true;
+            }
+            if (pendingLandscapeSplit[0] != landscapeSplitCurrent) {
+                mLIMEPref.setPhoneLandscapeSplit(pendingLandscapeSplit[0]);
+                geometryChanged = true;
+            }
+            if (pendingAnchor[0] != anchorCurrent) {
+                mLIMEPref.setNumpadAnchor(pendingAnchor[0]);
+                geometryChanged = true;
+            }
+            if (geometryChanged) {
                 invalidateStartupConfigSnapshot();
-                handleClose();
-                mKeyboardSwitcher.resetKeyboards(true);
+                // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
+                applyGeometryChangeInPlace();
             }
         });
 
@@ -4477,7 +4602,8 @@ public class LIMEService extends InputMethodService
 
                     // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
                     if (SearchSrv != null && SearchSrv.getTablename() != null) {
-                        String keynameString = SearchSrv.keyToKeyname(finalKeyString); //.toLowerCase(Locale.US)); moved to LimeDB
+                        String keynameString = SearchSrv.keyToKeyname(finalKeyString,
+                                cachedImConfig(IMKEYS_CONFIG), cachedImConfig(IMKEYNAMES_CONFIG));
                         if (mCandidateView != null
                                 && !keynameString.toUpperCase(Locale.US).equals(finalKeyString.toUpperCase(Locale.US))
                                 && !keynameString.trim().isEmpty()
@@ -5467,9 +5593,10 @@ public class LIMEService extends InputMethodService
         // stored "imkeys" meta is always BPMF — so resolve per type (mirror iOS imKeysForTable),
         // else et26/hsu acceptance wrongly composes BPMF's digits / ; / - . Other IMs read the
         // stored imkeys (matches the endkey path's getImConfig(activeIM, IMKEYS_CONFIG) at :2334).
+        refreshImConfigCache();
         String activeImKeys = activeIM.equals(LIME.IM_PHONETIC)
                 ? SearchSrv.getPhoneticImKeys(mLIMEPref.getPhoneticKeyboardType())
-                : SearchSrv.getImConfig(activeIM, IMKEYS_CONFIG);
+                : cachedImConfig(IMKEYS_CONFIG);
         currentImKeys = (activeImKeys == null) ? "" : activeImKeys;
     }
 
@@ -5726,6 +5853,21 @@ public class LIMEService extends InputMethodService
         return true;
     }
 
+    /**
+     * SPLIT_ONE_HAND_KB: apply a keyboard geometry change (one-hand / split / numpad
+     * anchor) by rebuilding the current keyboard in place, keeping the IME shown.
+     */
+    private void applyGeometryChangeInPlace() {
+        finishComposing();
+        if (mInputView != null) {
+            mInputView.closing(); // dismiss key previews / mini keyboards, not the IME
+        }
+        if (mKeyboardSwitcher != null) {
+            mKeyboardSwitcher.rebuildCurrentKeyboard();
+        }
+        updateCandidateViewWidthConstraint(); // re-align strip with new anchored key block
+    }
+
     private void handleClose() {
         if (DEBUG) Log.i(TAG, "handleClose()");
         // cancel candidate view if it's shown
@@ -5836,7 +5978,8 @@ public class LIMEService extends InputMethodService
             //Jeremy '12,4,29 use mEnglishOnly instead of onIM
             commitTyped(ic);
         } else if (mLIMEPref.getEnglishPrediction() && tempEnglishList != null
-                && !tempEnglishList.isEmpty()) {  // user picked English prediction suggestions
+                && !tempEnglishList.isEmpty()
+                && index < tempEnglishList.size()) {  // user picked English prediction suggestions
 
 
             //Log.i("EMOJI-commit-index:", index + "");
@@ -5851,8 +5994,13 @@ public class LIMEService extends InputMethodService
                 }
             } else {
                 String pickedWord = this.tempEnglishList.get(index).getWord();
+                // tempEnglishList is built async (queryThread) and can lag tempEnglishWord
+                // by a keystroke — a stale candidate may be shorter than the current prefix
+                // (Vitals: StringIndexOutOfBounds length=9 index=10). Clamp: worst case
+                // commits just the trailing space, next keystroke refreshes the list.
+                int typedPrefixLen = Math.min(tempEnglishWord.length(), pickedWord.length());
                 if (ic != null) ic.commitText(
-                        pickedWord.substring(tempEnglishWord.length()) + " ", 1);
+                        pickedWord.substring(typedPrefixLen) + " ", 1);
                 // ENG_AUTO_COMPLETION.md "Learning": increment the picked word's score so
                 // frequently chosen words rank higher (mirrors the emoji recordEmojiUsage hook).
                 if (SearchSrv != null) SearchSrv.recordEnglishUsage(pickedWord);

@@ -340,6 +340,19 @@ final class KeyboardViewControllerTest: XCTestCase {
                                                                     keyDef: dualGlyphKey))
     }
 
+    func testInlineMenuUsesHorizontalSegmentedRowsOnlyOnIPhoneLandscape() {
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: false, isLandscape: true), .horizontal)
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: false, isLandscape: false), .vertical)
+        XCTAssertEqual(LayoutMetrics.InlineMenu.segmentedAxis(isPad: true, isLandscape: true), .vertical)
+    }
+
+    func testSplitPhoneDualLabelsUseRenderedHalfWidth() {
+        XCTAssertTrue(KeyboardView.dualLabelUsesVerticalLayout(
+            viewWidth: 393, rowWidthFraction: 10.0 / 24.0,
+            keyPercent: 10, totalPercent: 50, keyHGap: 3,
+            usableHeight: 42, labelLength: 1))
+    }
+
     func testShiftedSymbolKeysDoNotShowChineseRootSubLabels() throws {
         let layoutIDs = [
             "lime_phonetic_shift",
@@ -918,7 +931,23 @@ final class KeyboardViewControllerTest: XCTestCase {
 
         XCTAssertTrue(source.contains("keyboardView?.keySizeScale      = keyboardSize"))
         XCTAssertTrue(source.contains("let keysHeight = keyboardView?.preferredHeight"))
-        XCTAssertTrue(source.contains("view.heightAnchor.constraint(equalToConstant: totalHeight)"))
+        // #139: height is content-driven — the explicit constraint lives on
+        // keyboardView; view height derives from the subview chain. An explicit
+        // view.heightAnchor constant made iOS latch stale rotation frames.
+        XCTAssertTrue(source.contains("kbView.heightAnchor.constraint(equalToConstant: kbTarget)"))
+        XCTAssertFalse(source.contains("view.heightAnchor.constraint(equalToConstant: totalHeight)"))
+        // #139: the height constant must never move inside a rotation
+        // transaction; it is applied once after the coordinator settles.
+        XCTAssertTrue(source.contains("rotationSettling = true"))
+        XCTAssertTrue(source.contains("if rotationSettling"))
+        XCTAssertTrue(source.contains("self.rotationSettling = false"))
+        // #139 switch-in: the attach overshoot must fire at viewDidAppear
+        // (mid-attach) targeting kbTarget + delta, and be restored by the
+        // rendered-settle gate. Removing it re-breaks in-place keyboard
+        // switches (host never told LIME's real frame).
+        XCTAssertTrue(source.contains("attachOvershoot = true"))
+        XCTAssertTrue(source.contains("if attachOvershoot { kbTarget += Self.attachOvershootDelta }"))
+        XCTAssertTrue(source.contains("attachOvershoot = false"))
         XCTAssertFalse(source.contains("applyEffectiveKeySizeScaleForHeight()"))
         XCTAssertFalse(source.contains("private func effectiveKeySizeScaleForHeight()"))
         XCTAssertTrue(source.contains("publishKeyboardHeightToUIKit()"))
@@ -1063,6 +1092,27 @@ final class KeyboardViewControllerTest: XCTestCase {
         let clearRange = try XCTUnwrap(branch.range(of: "self.clearSuggestions()"))
         XCTAssertLessThan(restoreRange.lowerBound, clearRange.lowerBound,
                           "case (b): hasCandidatesShown must be restored before clearSuggestions()")
+    }
+
+    func testRawCodeCommitRequestsRelatedPhrasesLikeAndroid() throws {
+        let sourceURL = projectFileURL("LimeKeyboard/KeyboardViewController.swift")
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        let selectionPattern = #"func pickCandidateManually[\s\S]*?\n    \}"#
+        let selectionRegex = try NSRegularExpression(pattern: selectionPattern)
+        let sourceRange = NSRange(source.startIndex..<source.endIndex, in: source)
+        let selectionMatch = try XCTUnwrap(selectionRegex.firstMatch(in: source, range: sourceRange))
+        let selection = String(source[Range(selectionMatch.range, in: source)!])
+        XCTAssertFalse(selection.contains("wasComposingCodeCommit"))
+        XCTAssertTrue(selection.contains("commitTyped()"))
+        XCTAssertTrue(selection.contains("updateRelatedPhrase()"))
+
+        let relatedPattern = #"func updateRelatedPhrase[\s\S]*?\n    \}"#
+        let relatedRegex = try NSRegularExpression(pattern: relatedPattern)
+        let relatedMatch = try XCTUnwrap(relatedRegex.firstMatch(in: source, range: sourceRange))
+        let related = String(source[Range(relatedMatch.range, in: source)!])
+        XCTAssertFalse(related.contains("!committed.isComposingCodeRecord"))
+        XCTAssertTrue(related.contains("ss.getRelatedByWord(word, getAllRecords: true)"))
     }
 
     // docs/AUTO_CHINESE_PUNC.md §10.3 (T-iOS-3): clearSuggestions() is the single
@@ -2026,6 +2076,44 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(longerButtons.map(\.tag), [0, 1, 2, 3])
         XCTAssertTrue(longerButtons[1].pillView.backgroundColor?.isEqual(UIColor.clear) ?? false)
         XCTAssertFalse(longerButtons[2].pillView.backgroundColor?.isEqual(UIColor.clear) ?? true)
+    }
+
+    // #157: hamburger reverse-lookup selection must be immediate and persistent. Every keyboard
+    // consumer (runtime commit, menu label, picker) reads hotReverseLookup(for:), which must let a
+    // hot-store value win over a stale cold App Group value, and seed once from cold when hot absent.
+    func testHotReverseLookupWinsOverStaleColdAndSeedsOnceWhenAbsent() {
+        let controller = KeyboardViewController()
+        let im = "rl157test"                       // distinctive nick so no real IM key collides
+        let key = "\(im)_im_reverselookup"
+        let hot = UserDefaults.standard
+        let cold = UserDefaults(suiteName: LIMEPreferenceManager.suiteName)
+        defer { hot.removeObject(forKey: key); cold?.removeObject(forKey: key) }
+
+        // Hot value present → wins over an older cold value (the #157 "not immediate" case).
+        cold?.set("cangjie", forKey: key)
+        hot.set("dayi", forKey: key)
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "dayi")
+
+        // Hot absent → seed once from cold, then cold is never consulted again for this key.
+        hot.removeObject(forKey: key)
+        cold?.set("array30", forKey: key)
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // seeded from cold
+        cold?.set("phonetic", forKey: key)                               // later cold change
+        XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // hot still wins
+    }
+
+    // #156: Phonetic et41 must resolve to the ETEN 41-key layout, not standard. The visible
+    // layout is driven by the phonetic_keyboard_type pref (Android parity), so et_41/eten map to
+    // lime_et_41 like eten26→lime_et26 and hsu→lime_hsu; standard has no special layout (nil →
+    // resolved via the keyboard-config path).
+    func testPhoneticSpecialLayoutIdMapsEt41AndSiblingsFromPref() {
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "et_41"), "lime_et_41")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten"), "lime_et_41")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26"), "lime_et26")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26_symbol"), "lime_et26")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu"), "lime_hsu")
+        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu_symbol"), "lime_hsu")
+        XCTAssertNil(KeyboardViewController.phoneticSpecialLayoutId(for: "standard"))   // not et41
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {

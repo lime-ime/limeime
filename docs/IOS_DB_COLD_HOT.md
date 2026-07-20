@@ -55,6 +55,27 @@ transport, and the keyboard-owned prefs all live in
 the cold/hot database itself. The version markers the channel delivers — `epoch_uuid`,
 `generation`, per-table `rev` — are the subject of §1.0.3.
 
+#### Issue #169 phone keyboard preferences are preference cold/hot, not DB cold/hot
+
+`phone_portrait_keyboard_mode` and `phone_landscape_split` deliberately do **not** enter
+`sync_meta`, a DB snapshot, or table reconciliation. Their cold/hot contract is:
+
+- **Cold:** App Group `UserDefaults`, written by Settings and included in preference backup/restore.
+- **Hot:** keyboard-private `UserDefaults.standard`, seeded once from cold (or migrated from legacy
+  `one_hand_mode` / `split_keyboard_mode`) and used for live rendering.
+- **App → keyboard:** `PrefInboxRecord.phonePortraitMode` / `phoneLandscapeSplit`; the keyboard
+  drains the sequenced inbox into hot before reapplying its layout. Restore pushes both values
+  through this same inbox.
+- **Keyboard → app:** `RelayPrefState` emits `pp=` / `pls=` in the FA-off-safe text relay;
+  `RelayPrefSync.apply` validates portrait values (`0...3`) and writes both values to cold.
+- **Backup:** during the FA-on export handshake, `flushHotPrefsToColdForBackup()` copies only the
+  active device profile. A phone flushes these two keys; an iPad flushes
+  `split_keyboard_mode` / `numpad_anchor`, so one device class never overwrites the other's
+  dormant profile.
+
+This is intentionally separate from the database direction rules below: no preference change
+bumps `generation`, changes an epoch, or replaces either DB.
+
 ### 1.0.3 Sync metadata — the `sync_meta` table (in-DB, not a sidecar)
 
 All sync bookkeeping lives in a **`sync_meta` table inside each DB file**, read and

@@ -85,6 +85,30 @@
             app:useSimpleSummaryProvider="true"
             android:layout="@layout/preference_value_chevron"
             android:title="@string/split_keyboard" />
+        <!-- Issue #169: integrated phone portrait mode + phone landscape split.
+             Phones only (gated in LIMEPreference), no screen-width gate. -->
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/phone_portrait_keyboard_mode"
+            android:entries="@array/phone_portrait_keyboard_mode_options"
+            android:entryValues="@array/phone_portrait_keyboard_mode_values"
+            android:key="phone_portrait_keyboard_mode"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_value_chevron"
+            android:title="@string/phone_portrait_keyboard_mode" />
+        <SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="phone_landscape_split"
+            android:title="@string/phone_landscape_split" />
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="@string/numpad_anchor"
+            android:entries="@array/numpad_anchor_options"
+            android:entryValues="@array/numpad_anchor_values"
+            android:key="numpad_anchor"
+            app:useSimpleSummaryProvider="true"
+            android:layout="@layout/preference_value_chevron"
+            android:title="@string/numpad_anchor" />
     </PreferenceCategory>
 
     <!-- 2. 鍵盤回饋 -->

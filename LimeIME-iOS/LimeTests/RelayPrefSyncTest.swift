@@ -62,6 +62,21 @@ final class RelayPrefSyncTest: XCTestCase {
         XCTAssertEqual(try store.read(), updated)
     }
 
+    func testOldRelayJsonDoesNotResetMigratedPhonePreferences() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let oldJson = #"{"hanConvert":0,"splitKeyboard":1,"updatedAt":42}"#.data(using: .utf8)!
+        try oldJson.write(to: dir.appendingPathComponent("relay-prefs.json"))
+
+        let state = try XCTUnwrap(try LimeIME.KeyboardRelayPrefStore(baseDirectory: dir).read())
+        XCTAssertNil(state.phonePortraitMode)
+        XCTAssertNil(state.phoneLandscapeSplit)
+        let payload = LimeIME.encodeRelayPayload(faOn: false, ts: 43, prefs: state)
+        XCTAssertFalse(payload.contains(";pp="))
+        XCTAssertFalse(payload.contains(";pls="))
+    }
+
     func testRelayPrefApplyIsLastWriterWins() throws {
         let (defaults, suite) = try makeDefaults()
         defer { UserDefaults.standard.removePersistentDomain(forName: suite) }
