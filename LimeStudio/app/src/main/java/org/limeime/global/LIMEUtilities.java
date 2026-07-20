@@ -28,8 +28,6 @@ import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
@@ -370,7 +368,6 @@ public class LIMEUtilities {
 
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(context, channelId) // Pass channel ID here
-						.setLargeIcon(getNotificationIconBitmap(context))
 						.setContentTitle(title)
 						.setAutoCancel(autoCancel)
 						.setTicker(message)
@@ -388,30 +385,6 @@ public class LIMEUtilities {
 		return R.drawable.logobw ;
 	}
 
-	private static Bitmap getNotificationIconBitmap(Context context) {
-		BitmapFactory.Options bounds = new BitmapFactory.Options();
-		bounds.inJustDecodeBounds = true;
-		BitmapFactory.decodeResource(context.getResources(), R.drawable.logo, bounds);
-
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inSampleSize = calculateInSampleSize(
-				bounds.outWidth,
-				bounds.outHeight,
-				context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_width),
-				context.getResources().getDimensionPixelSize(android.R.dimen.notification_large_icon_height));
-		return BitmapFactory.decodeResource(context.getResources(), R.drawable.logo, options);
-	}
-
-	public static int calculateInSampleSize(int width, int height, int targetWidth, int targetHeight) {
-		int sampleSize = 1;
-		while (width / (sampleSize * 2) >= targetWidth
-				&& height / (sampleSize * 2) >= targetHeight) {
-			sampleSize *= 2;
-		}
-		return sampleSize;
-	}
-
-	
 	public static String isVoiceSearchServiceExist(Context context){
 		if(DEBUG) Log.i(TAG, "isVoiceSearchServiceExist()");
 		

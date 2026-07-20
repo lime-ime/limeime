@@ -8,8 +8,9 @@ This section makes the plan runnable end-to-end by an autonomous agent on macOS.
 
 1. iOS keyboard supports **flint**: pressing a key and sliding to a neighboring key releases the old key and presses the new one; releasing commits the key currently under the finger.
 2. Tap input has **proximity correction** (near-miss taps resolve to the nearest key) — parity with Android's `ProximityKeyDetector`.
-3. All existing key behaviors (shift, backspace repeat, long-press popup, iPad dual-row, space caret drag, candidate bar) **unchanged**.
-4. Every gate below is green.
+3. The visible key grid has **no dead gaps**: horizontal, vertical, and diagonal gap points inside the keyboard resolve to the nearest key; flint can cross both columns and rows.
+4. All existing key behaviors (shift, backspace repeat, long-press popup, iPad dual-row, space caret drag, candidate bar) **unchanged**.
+5. Every gate below is green.
 
 ### Environment (goal mode requires macOS — cannot run on the authoring Windows box)
 
@@ -39,8 +40,8 @@ xcodebuild test -project "$PROJ" -scheme LimeUITests -destination "$DEST"
 | Gate | Pass criterion |
 |---|---|
 | G1 build | `** BUILD SUCCEEDED **`, and **no new compiler warnings** on files this loop touched |
-| G2 unit | `KeyDetectorTests` all pass — asserts: key-center→self, gap-point→nearest within threshold, sub-hysteresis wobble does **not** switch key |
-| G3 flint XCUITest | new `FlintUITest` passes: synthesized drag `q→w→e→r` types **`r`** (release key), and a sub-key-width wobble types the **start** key once (no double-fire); existing `LimeUITests` still pass |
+| G2 unit | `KeyDetectorTests` all pass — asserts: key-center→self; horizontal, vertical, and diagonal gap points→nearest key; every sampled point inside the key grid resolves non-`nil`; sub-hysteresis wobble does **not** switch key |
+| G3 flint XCUITest | new `FlintUITest` passes: synthesized drag `q→w→e→r` types **`r`** (release key), a vertical drag crosses into the adjacent row and types its release key, and a sub-key-width wobble types the **start** key once (no double-fire); existing `LimeUITests` still pass |
 | G4 chord XCUITest | new `ChordUITest` passes: **shift-hold** (hold shift, tap `a` → `A`, shift stays active while held); **rollover** (press `a`, press `s` before releasing `a` → types `as` in order); a held modifier that drifts does **not** flint |
 | G5 popup-slide XCUITest | new `PopupSlideUITest` passes: long-press a key with alternates, slide into the popup, release on the 2nd alternate → that alternate is typed (§4.2 #9); swipe-left across the keyboard → backspace, swipe-right → commit candidate (§4.2 #12) |
 
@@ -51,6 +52,7 @@ xcodebuild test -project "$PROJ" -scheme LimeUITests -destination "$DEST"
 - **P2** flint live; **modifier touches pinned (no flint, §4.1 rule 1)**; new `FlintUITest` added and green; G1+G2+G3+G4 all green.
 - **P3** long-press/repeat/dual-row/space re-hosted onto the layer; **slide-into-popup select (§4.2 #9)** and **swipe-left/right commands (§4.2 #12)** implemented; **repeat cancelled when 2+ non-modifier keys down (§4.1 rule 3)**; new `PopupSlideUITest` added; G1+G2+G3+G4+G5 green with the full regression sweep (§7).
 - **P4** dead `UIButton`/gesture plumbing **and the five scattered `isMultipleTouchEnabled` flags** removed; G1+G2+G3+G4+G5 green; accessibility elements present (see §6).
+- **P5 gap-ownership correction** one keyboard-wide `KeyTouchLayer` owns all rows and uses the existing `KeyDetector` with every key frame in the layer's coordinate system; no in-grid point returns `nil`; horizontal/vertical flint works; G1+G2+G3+G4+G5 green.
 
 ### Failure & stop policy
 
@@ -107,19 +109,27 @@ Reference: Android `PointerTracker.java` / `ProximityKeyDetector.java` / `LIMEKe
 Mirror Android's model. Keys stay as views for **rendering only** — they stop being the touch owners.
 
 ```
-KeyboardView (or a dedicated full-bleed KeyTouchLayer on top of the rows)
-  ├─ overrides touchesBegan / touchesMoved / touchesEnded / touchesCancelled
-  ├─ KeyDetector.keyAt(point) -> KeyModel?         // frame test + proximity threshold
-  ├─ per-UITouch TouchTracker { currentKey, downKey, isSliding, longPressTimer, repeatTimer }
-  └─ fires existing callbacks (didPress / fireHaptic / showPreviewFor / didLongPress)
-       from the tracker instead of from UIButton targets
+KeyboardView
+  └─ one full-bleed KeyTouchLayer spanning every row and column
+       ├─ rendering-only key rows/views
+       ├─ overrides touchesBegan / touchesMoved / touchesEnded / touchesCancelled
+       ├─ one existing KeyDetector containing every key in layer-local coordinates
+       ├─ KeyDetector.keyAt(point) -> KeyModel?         // direct hit + bounded proximity outside grid
+       ├─ KeyDetector.nearestKeyAt(point) -> KeyModel?  // unbounded nearest key for points inside layer
+       ├─ per-UITouch TouchTracker { currentKey, downKey, isSliding, longPressTimer, repeatTimer }
+       └─ fires existing callbacks (didPress / fireHaptic / showPreviewFor / didLongPress)
+            from the tracker instead of from UIButton targets
 ```
+
+The ownership scope is important: this is **not one `KeyTouchLayer` and one detector per row**. A touch remains owned by the view in which it began, so row-local owners cannot re-detect a key in another row during a vertical move. All key frames must be converted into the single layer's coordinate system. The existing `KeyDetector` remains the geometry component; only its input set and inside-grid lookup policy change.
+
+Inside the keyboard-wide layer, key faces and the gaps between them form a continuous hit map. A direct frame hit wins. Otherwise the nearest key is selected by squared distance to the **key rectangle edge**, not its center: horizontal gaps split between left/right keys, vertical gaps split between upper/lower keys, and diagonal intersections select the nearest rectangle. The proximity threshold remains useful only for callers outside the owned keyboard surface; it must not create a dead point inside the key grid.
 
 New iOS pieces (each maps to a named Android piece):
 
 | New iOS type | Android analog | Responsibility |
 |---|---|---|
-| `KeyDetector` | `ProximityKeyDetector` | `keyAt(CGPoint) -> KeyModel?`, frame test + `proximityThreshold`, hysteresis dead-zone |
+| `KeyDetector` | `ProximityKeyDetector` | frame test, nearest-key-to-rectangle lookup, optional outside-grid `proximityThreshold`, hysteresis dead-zone; one instance receives all rows |
 | `TouchTracker` (per `UITouch`) | `PointerTracker` | holds `currentKey`; on move re-detects, fires release-old/press-new; owns long-press + repeat timers |
 | `KeyTouchLayer` | `onTouchEvent` dispatch in `LIMEKeyboardBaseView` | routes each `UITouch` to its `TouchTracker` by identity |
 | `KeyModel` | `Key` | frame + codes + primary/secondary glyph + flags (repeatable, popup, dual-row, space) |
@@ -179,7 +189,7 @@ Ordered so each phase is shippable and reversible on its own.
 - **Ship/verify:** builds clean, zero runtime change.
 
 ### Phase 1 — Own the touch stream for the basic tap
-- Add `KeyTouchLayer` overriding `touchesBegan/Moved/Ended/Cancelled` over the key rows.
+- Add one keyboard-wide `KeyTouchLayer` overriding `touchesBegan/Moved/Ended/Cancelled` over all key rows. Rendering rows may remain separate subviews, but they are not separate touch owners.
 - On `began`: detect key, apply pressed highlight, fire haptic + preview, start any repeat/long-press timers.
 - On `ended` inside the same key: fire `didPress` (existing callback).
 - **Disable** the per-key `UIButton` press targets (highlight, `keyDown/keyUp`) so there's one owner. Keep buttons as views.
@@ -208,7 +218,7 @@ Ordered so each phase is shippable and reversible on its own.
 
 - **Gesture arbitration:** today long-press/pan recognizers sit on the buttons and some keys defer `didPress` to `.touchUpInside` so a recognizer can pre-empt (globe/dismiss/popup, ~L873). Under the new model *we* own that arbitration in the tracker — port the defer logic deliberately, don't drop it.
 - **Space key duality:** space is both a tap (space char) and a drag (caret). Keep Android's "sticky while dragging" flag semantics so a short drag past the dead-zone doesn't emit a space.
-- **iPad split layout:** two content halves; the touch layer must span both or be installed per half. Android's grid detector is layout-agnostic — keep the iOS detector driven off actual frames, not hard-coded columns.
+- **iPad split layout:** two rendering halves still use one full-keyboard touch owner. Do not install an owner per half: that recreates the cross-owner dead zone and prevents a continuous move from being re-detected. The detector remains driven by actual frames, not hard-coded columns; the intentionally empty split center may be excluded explicitly if product behavior requires it.
 - **Compose-path interaction:** flint fires more `press` events faster than tapping. Confirm it doesn't worsen the candidate-reload starvation in IOS_MISS_KEY.md — the diffable `rebuildButtons` (P1 there) becomes more important, not less.
 - **Accessibility:** individual `UIButton`s currently give VoiceOver per-key elements for free. Owning touch means we must re-expose keys as accessibility elements manually. **Do not skip** — add `UIAccessibilityElement`s per key.
 - **Do not empty/rewrite `KeyboardView.swift`** — per repo rules, all changes are targeted edits; the new layer is additive, the old plumbing is disabled then removed incrementally.
@@ -219,6 +229,7 @@ Ordered so each phase is shippable and reversible on its own.
 - On the physical test iPhone (LimeIME scheme, force-refresh the extension binary per IOS_MISS_KEY.md §gotcha):
   - Fast-burst `wo3jiao4li2ming2…` → drop rate before/after Phase 1.
   - Flint sweep `q→w→e→r` commits the release key; boundary wobble is stable.
+  - Vertical flint from one row into the next commits the release-row key; tapping between rows and at four-key intersections always produces exactly one nearest-key event.
   - Regression sweep: shift, backspace repeat, long-press accents, iPad dual-row, space caret drag, emoji/candidate bar untouched.
   - Side-by-side vs iOS system keyboard for residual feel.
 

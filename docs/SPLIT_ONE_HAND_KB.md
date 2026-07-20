@@ -48,6 +48,11 @@ proposal, all shipped:
 - **Candidate strip AND expanded-candidates panel follow the anchor insets** (the expanded panel
   was originally a v1 non-goal; it now wraps and positions to the anchored block width on both
   platforms).
+- **Geometry-control icon unification is planned as feat#N05.** The current settings and
+  in-keyboard controls use text labels. The follow-up replaces option text with one shared
+  keyboard-shape icon language across phone portrait, phone landscape, tablet/iPad split, and
+  tablet/iPad numpad anchoring. This is a presentation-only follow-up and does not change the
+  geometry model or persisted values defined in this document.
 
 ## What already exists (do not rebuild)
 
@@ -250,9 +255,45 @@ Shared Android/iOS canonical geometry prefs exposed in app settings and the in-k
 | `split_keyboard_mode` | 0 off / 1 always / 2 landscape-only | Android tablet ≥600dp / iPad only |
 | `numpad_anchor` | 0 fit / 1 left / 2 right / 3 center | tablet / iPad |
 
-Presentation: phone portrait uses one integrated list/segmented control named **直向鍵盤模式**
-(標準/分離/靠左/靠右). Phone landscape uses a binary **橫向分離鍵盤** control.
-`numpad_anchor` uses the same segmented style with four options.
+Presentation: all geometry preferences use the shared feat#N05 keyboard-shape icon set and
+selection style in both the Settings preference tab and the in-keyboard menu. The section title
+remains visible, while option text is replaced by icons. Phone portrait uses one integrated
+control named **直向鍵盤模式** with standard, split, left, and right icons. Phone landscape uses
+a binary **橫向分離鍵盤** control with standard and split icons. Tablet/iPad ordinary layouts use
+the same standard and split vocabulary, including a landscape marker for landscape-only split.
+Tablet/iPad numpad anchoring uses full-width, left, right, and center icons.
+
+### Shared geometry icon contract (feat#N05)
+
+The icon meanings are semantic and must remain the same across Android, iOS, Settings, and the
+in-keyboard menu:
+
+| Meaning | Visual model | Used by |
+|---|---|---|
+| Standard / full / off | keyboard block spanning the available frame | phone portrait standard, phone landscape standard, tablet split off, numpad fit |
+| Split | left and right key clusters with a clear center gap | phone portrait split, phone landscape split, tablet split on |
+| Landscape-only split | split icon with a landscape-orientation marker | tablet/iPad split landscape-only |
+| Left anchor | compact keyboard block aligned to the left edge | phone one-hand left, tablet/iPad numpad left |
+| Right anchor | compact keyboard block aligned to the right edge | phone one-hand right, tablet/iPad numpad right |
+| Center anchor | compact keyboard block centered in the frame | tablet/iPad numpad center |
+
+Implementation requirements:
+
+- Use one coherent silhouette, stroke weight, padding, and selected-state treatment. Android may
+  use vector drawables and iOS may use SF Symbols or matching custom vectors, but their meanings
+  and proportions must remain visually equivalent.
+- Do not use emoji or text glyphs as the icons. The control title may remain visible, but option
+  labels such as 標準、分離、靠左、靠右、滿版、置中 are accessibility text rather than visible
+  segmented-button text.
+- Settings and the in-keyboard menu must use the same icon order for the same persisted values.
+  A value selected in either surface must look selected in the other surface after normal pref
+  synchronization.
+- Keep a clear checked/selected state in light, dark, fixed-theme, and follow-system appearances.
+  Selection cannot depend on color alone.
+- Every icon requires a Traditional Chinese accessibility label or content description. Preserve
+  the existing user-facing names and value order.
+- Icon conversion must not change orientation gating, layout eligibility, mutual exclusion,
+  migration, backup, hot/cold preference transport, or in-place geometry rebuilding.
 
 Keyboard-side menu exclusivity — split and anchor are never shown together; the menu keys off
 the **currently active layout**, not just the device:
@@ -352,6 +393,13 @@ When the key block is horizontally anchored (one-hand mode, numpad anchor):
   numpad layouts show anchor and never split.
 - Phone portrait and landscape controls use the same names, values, and persisted keys on Android
   and iOS. Tablet/iPad split and numpad preferences remain independent and portable.
+- Phone portrait, phone landscape, tablet/iPad split, and tablet/iPad numpad anchoring use the
+  shared keyboard-shape icon contract in both Settings and the in-keyboard menu. The same value
+  has the same icon, order, selected-state treatment, and Traditional Chinese accessibility name
+  on both platforms and in both surfaces.
+- Icon controls remain understandable at large system font and display scales, in light and dark
+  appearance, and with screen readers. Removing visible option text must not remove accessible
+  names or enlarge, shrink, or reorder the underlying geometry choices.
 - Anchored numpad on iPad: left/right/center/fit all render, keys ≈14 mm square, `fit`
   pixel-identical to today.
 - Numpad-based layouts never render split regardless of `split_keyboard_mode`.
@@ -416,3 +464,16 @@ Phase 6 — #169 integrated phone model correction (width gate removed — every
       (Android `PreferenceBackupAdapter`, iOS `PreferenceBackupAdapter` + hot→cold flush + restore push)
 - [ ] Android phone device verification and iPhone/iPad Xcode Cloud/unit verification (on-device
       only; Linux CI ran Android unit tests + iOS source contracts)
+
+Phase 7 — feat#N05 unified geometry icons (planned)
+- [ ] Define the shared standard/full, split, landscape-only split, left, right, and center icon
+      silhouettes. Verify the set at compact phone widths before implementation.
+- [ ] Android: replace visible option text in the Settings preference controls and keyboard menu
+      geometry controls with the shared vector icon set. Preserve content descriptions and all
+      existing preference values, orientation gates, and active-layout menu exclusivity.
+- [ ] iOS: use the matching icon set and selection style in `PreferencesTabView` and the
+      globe/hamburger keyboard menu. Preserve accessibility labels and cold/hot pref transport.
+- [ ] Verify phone portrait, phone landscape, tablet/iPad ordinary split, and tablet/iPad numpad
+      anchoring in both Settings and the keyboard menu. Confirm matching order and selected state.
+- [ ] Add accessibility and visual regression coverage for light/dark appearance, large text,
+      screen readers, narrow menus, and every supported geometry value.

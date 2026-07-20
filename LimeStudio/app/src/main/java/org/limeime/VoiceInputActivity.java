@@ -33,6 +33,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.activity.ComponentActivity;
+import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -86,6 +87,7 @@ public class VoiceInputActivity extends ComponentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         
         // Make activity transparent
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -219,5 +221,4 @@ public class VoiceInputActivity extends ComponentActivity {
         Log.i(TAG, "onDestroy()");
     }
 }
-
 

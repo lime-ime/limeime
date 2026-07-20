@@ -4,8 +4,9 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/160
 - Classification: bug, usability, cross-platform parity
-- State: iOS v6.1.33 build 17 is `READY_FOR_SALE` and public rollout has started. Apple's 2026-07-19 lookup reports v6.1.33 in the US and Hong Kong stores, while the Taiwan storefront still reports v6.1.32, so Taiwan propagation is not yet complete. PR #162 merged to `master` as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Both merges are included in build 17. Reporter validation still requires v6.1.33 availability on their storefront plus phone/full-iPad/narrow-iPad device verification.
+- State: resolved and closed on 2026-07-20. PR #162 merged the missing iOS layout resources as `c56593f8e3fd76b4a800b66b12ab76b7a6b96f46`, and follow-up PR #164 merged the source-independent semantic oracle and iPad punctuation corrections as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`. Both fixes shipped in App Store iOS v6.1.33. After the v6.1.33 retest request, the reporter confirmed that the iPhone 17 user could use the keyboard normally. This confirms the original iPhone scope, but the reply did not separately enumerate the normal and Shift pages or verify the full/narrow iPad variants.
 - Platform: the confirmed root cause and shipped fix are iOS-only. The original report said Android worked, but the reporter later added an unresolved Pixel 7 datapoint. Android already contains the corresponding XML resources and was not changed by this fix; if the problem persists on Android v6.1.33, investigate its loading path separately after collecting the active IM, selected keyboard configuration, and screenshot.
+- Closing acknowledgement: https://github.com/lime-ime/limeime/issues/160#issuecomment-5018358768
 - Public acknowledgement: reporter is a community iPhone user (see privacy-safe summary below). No private account details are recorded in this repo.
 
 ## Problem statement
@@ -78,7 +79,7 @@ RED (before the phone fix): all three original tests failed because the base JSO
 - All six new JSONs validate as JSON. Each file is referenced four times in the Xcode project (build file, file reference, group child, and LimeKeyboard resources).
 - Existing suite `scripts/test_build_emoji_db.py` → 6 passed (no regression). Android tree untouched.
 
-### iOS / Xcode (residual — cannot run on Linux)
+### iOS / Xcode and reporter verification
 
 Xcode Cloud run 16 succeeded for exact PR head `f7730083ae355eb3f5aedb78c5b307d06486ba58` (required test and archive actions both succeeded). This proves the project builds and archives, but it does not validate the generated keyboard's punctuation semantics.
 
@@ -89,7 +90,7 @@ An independent post-generation semantic audit found that the generator-relative 
 - Narrow iPad Shift retains `…` and loses both `_` and `+`.
 - Normal narrow iPad drops `=` (code `61`).
 
-Follow-up PR #164 added source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. PR #164 merged as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`; the focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. The fix is delivered in iOS v6.1.33, with public rollout verified in the US and Hong Kong stores. Taiwan storefront propagation plus device/reporter verification remain pending.
+Follow-up PR #164 added source-independent assertions for the explicit phone/XML codes and labels across phone, full iPad, and narrow iPad normal/Shift variants. Its RED run reproduced all four losses. The generator now preserves `_` in full iPad Shift, while the narrow trimmer retains `=` / `+` as labeled long-press outputs on `-` / `_` without widening the row. The three affected JSON resources were regenerated. PR #164 merged as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`; the focused suite is GREEN with 6 tests, the emoji DB suite remains 6/6, generator parity passes, and `git diff --check` is clean. The fix shipped in iOS v6.1.33. After the release retest request, the reporter confirmed that the iPhone 17 user could use the keyboard normally. The confirmation did not separately enumerate the normal and Shift pages, so the broader phone/full-iPad/narrow-iPad checklist below remains future regression QA rather than an active reporter watch.
 
 1. Build the keyboard extension and confirm all six phone/iPad JSONs are copied into the bundle.
 2. On iPhone, select `limenumsym` and confirm the `lime_number_symbol` layout renders the number row plus semicolon, apostrophe, minus, and equals keys. Confirm Shift shows `lime_number_symbol_shift` with the expected symbols, uppercase letters, and punctuation.
@@ -115,7 +116,7 @@ A community iPhone user reported that selecting the `LIME+數字符號鍵盤` (`
 - [x] Xcode Cloud build/test/archive for PR head `f7730083ae355eb3f5aedb78c5b307d06486ba58`.
 - [x] Reproduce and correct the merged iPad punctuation semantic regression with source-independent RED assertions on a focused follow-up branch.
 - [x] Review and merge corrective follow-up PR #164 as `66b1577f0c58eee1359d5e921ce57ebaeca9a68d`.
-- [ ] Simulator/device verification of phone, full iPad, and narrow iPad normal/Shift layouts.
+- [ ] Broader simulator/device regression verification of phone, full iPad, and narrow iPad normal/Shift layouts.
 - [x] App Store release containing PR #162 and PR #164: iOS v6.1.33 build 17 is `READY_FOR_SALE`, with public rollout verified in the US and Hong Kong stores.
-- [ ] Verify the Taiwan storefront advances from v6.1.32 to v6.1.33.
-- [ ] Reporter confirmation on iPhone normal/Shift layouts. Treat the later Pixel 7 comment as separate Android investigation if it persists on Android v6.1.33.
+- [x] Reporter confirmation for the original iPhone scope: the reporter said the iPhone 17 user could use the keyboard normally after the v6.1.33 retest request. The reply did not separately enumerate the normal and Shift pages.
+- [ ] Treat the earlier Pixel 7 observation as a separate Android investigation if it persists on a current Android version; it is not explained by the iOS resource fix.
