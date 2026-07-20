@@ -27,7 +27,11 @@ NARROW_WIDTH_BY_BASE = {
     "lime_hs": 7.5,
 }
 ROOT_HEAVY_BASES = {"lime_ez", "lime_hs"}
-ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_number_symbol", "lime_shift"}
+# Layout families that *are* the English mode. Only these keep the -10/中 key,
+# which is the way back to Chinese. Every other layout (including the number,
+# number-symbol and shift pages, which are reached from Chinese mode) needs the
+# -9 key so English stays reachable — see issue #181.
+ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number"}
 
 IM_ROOTS = {
     "lime_phonetic": "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-",
