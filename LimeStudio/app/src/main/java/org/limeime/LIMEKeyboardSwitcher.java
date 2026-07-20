@@ -520,7 +520,11 @@ public class LIMEKeyboardSwitcher {
 				return R.xml.lime_number_symbol;
 			case "lime_number_symbol_shift":
 				return R.xml.lime_number_symbol_shift;
-			
+			case "lime_num_sym2":
+				return R.xml.lime_num_sym2;
+			case "lime_num_sym2_shift":
+				return R.xml.lime_num_sym2_shift;
+
 			default:
 				// Return 0 for unknown keyboard layouts (should not happen with valid database entries)
 				if (DEBUG) {
