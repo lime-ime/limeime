@@ -51,13 +51,12 @@ def fix_total(keys, target=100.0):
 # Fixed rows
 # ---------------------------------------------------------------------------
 
-def bottom_row(sym='.?123', symbol_overlay=False, cjk=False, shifted=False):
+def bottom_row(sym='.?123', left_cjk=False, cjk=False, shifted=False):
     # Non-CJK: globe(8) + left(10) + emoji(7) + space(57) + sym(10) + dismiss(8) = 100
     # CJK:     globe(8) + left(10) + emoji(7) + space(50) + ，/。(7) + sym(10) + dismiss(8) = 100
     # shifted: ，/。 key becomes 。only
-    # Symbol pages are neutral overlays, not Chinese IM layouts. Match Android:
-    # C_SYM/EN exits to English and C_IM/中 exits to the active Chinese IM.
-    left_key = (mk(C_IM, label='中', width=10.0, mod=True) if symbol_overlay
+    # left_cjk=True: replace left sym key with 中 (C_IM) key for symbol layouts
+    left_key = (mk(C_IM, label='中', width=10.0, mod=True) if left_cjk
                 else mk(C_SYM, label=sym, width=10.0, mod=True))
     if cjk:
         comma_key = (mk(0x3002, label='。', width=7.0) if shifted
@@ -499,7 +498,7 @@ def make_symbols1():
 
     write_layout('symbols1_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('EN', symbol_overlay=True), True),
+        (bottom_row('abc', left_cjk=True), True),
     ])
 
 
@@ -558,7 +557,7 @@ def make_symbols2():
 
     write_layout('symbols2_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('EN', symbol_overlay=True), True),
+        (bottom_row('abc', left_cjk=True), True),
     ])
 
 
@@ -613,7 +612,7 @@ def make_symbols3():
 
     write_layout('symbols3_ipad', [
         (r1, False), (r2, False), (r3, False), (r4, False),
-        (bottom_row('EN', symbol_overlay=True), True),
+        (bottom_row('abc', left_cjk=True), True),
     ])
 
 

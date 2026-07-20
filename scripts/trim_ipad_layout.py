@@ -68,7 +68,7 @@ BOTTOM_NARROW_ZH = [
 
 SYMBOL_BOTTOM_NARROW = [
     {"code": -200, "label": "globe", "sublabel": "", "widthPercent": 9.0, "icon": "globe", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
-    {"code": -2, "label": "EN", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -2, "label": "abc", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": -201, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "face.smiling", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": 32, "label": "", "sublabel": "", "widthPercent": 53.0, "icon": "space.bar", "isModifier": False, "isRepeatable": True, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": -10, "label": "中", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},

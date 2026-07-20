@@ -16,9 +16,9 @@
 # layouts shipped a -10/中 key, so their language-mode key could not switch
 # directly to English.
 #
-# Symbol pages are neutral overlays, not Chinese IM layouts. Android parity
-# gives them two explicit exits: code -2 labelled EN and code -10 labelled 中.
-# They must not be forced through the Chinese-layout -9 invariant.
+# Symbol pages are neutral overlays, not Chinese IM layouts. They preserve
+# Android's two exit codes, but the intended iPad presentation labels code -2
+# as abc rather than Android's EN. Code -10 remains 中 and no -9 is added.
 #
 # Usage: python3 scripts/test_ipad_language_mode_key.py
 
@@ -144,8 +144,8 @@ class IPadLanguageModeKeyTest(unittest.TestCase):
                     f"got {keys[0].get('label')!r} (#181)",
                 )
 
-    def test_symbol_pages_keep_android_parity_exits(self):
-        """Symbol overlays keep separate EN and Chinese exits, as on Android."""
+    def test_symbol_pages_keep_ipad_design_and_android_exit_codes(self):
+        """Symbol overlays keep the iPad abc label and both Android exit codes."""
         for path in self.paths:
             if not is_symbol_page(path.stem):
                 continue
@@ -168,8 +168,16 @@ class IPadLanguageModeKeyTest(unittest.TestCase):
                     for key in keys
                     if key.get("code") in {-2, -10}
                 )
-                self.assertEqual(android_exits, ios_exits,
-                                 f"{path.stem} must match Android symbol exits (#181)")
+                self.assertEqual(
+                    [(-10, "中"), (-2, "abc")],
+                    ios_exits,
+                    f"{path.stem} must preserve the intended iPad symbol labels (#181)",
+                )
+                self.assertEqual(
+                    [code for code, _ in android_exits],
+                    [code for code, _ in ios_exits],
+                    f"{path.stem} must preserve Android's two symbol exits (#181)",
+                )
                 self.assertNotIn(
                     -9,
                     [key.get("code") for key in keys],
