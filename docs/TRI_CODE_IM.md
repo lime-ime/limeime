@@ -170,15 +170,15 @@ symbol keys are roots — never trimmed, never fullwidth-substituted):
 lime_num_sym2_ipad_narrow
 digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— [⌫]
 qwerty (12): q w e r t y u i o p 『|「 』|」
-asdf   (12): a s d f g h j k l :|; "|' [↩]
-zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [spacer]
+asdf   (12): [spacer] a s d f g h j k l :|; [↩]
+zxcv   (13): [⇧] z x c v b n m <|, >|. ?|/ "|' [spacer]
 bottom  (6): [globe] [.?123] [emoji] [space] [abc] [dismiss]
 
 lime_num_sym2_ipad_narrow_shift
 digit  (12): ! @ # $ % ^ & * ( ) … [⌫]
 qwerty (12): Q W E R T Y U I O P 『 』
-asdf   (12): A S D F G H J K L : " [↩]
-zxcv   (12): [⇧] Z X C V B N M < > ? [spacer]
+asdf   (12): [spacer] A S D F G H J K L : [↩]
+zxcv   (13): [⇧] Z X C V B N M < > ? " [spacer]
 bottom  (6): [globe] [.?123] [emoji] [space] [abc] [dismiss]
 ```
 
@@ -186,11 +186,15 @@ bottom  (6): [globe] [.?123] [emoji] [space] [abc] [dismiss]
   `lime_number_symbol` §A.12.1 `=|-`/`+|_` pairing exception does NOT apply here — this
   layout's phone source has no `-`/`=` keys at all, so there is nothing to pair; the
   `…|—` scaffold fallback survives instead.
-- asdf drops `[abc]` (mode key moves to the bottom row); `:|;` and `"|'` survive as roots,
-  so no leading spacer is needed (9 letters + 2 root cells + `[↩]` = 12).
-- zxcv is 12 cells on BOTH layers. `lime_num_sym2` has no `。|，` cell at any tier (its
-  full-tier asdf slot holds the `"|'` root instead), so the trimmer has nothing to
-  displace into zxcv and both layers stay symmetric naturally.
+- asdf drops `[abc]` (mode key moves to the bottom row) and follows the standard
+  11-visible stair shape (leading spacer + a…l + `:|;` + `[↩]`).
+- The quote root key is displaced, not trimmed: the trimmer moves `"|'` (unshifted) /
+  `"` (shifted) from asdf to the zxcv right edge — the same slot other Chinese IMs give
+  their displaced `。|，` — for cross-row key alignment. Both layers stay symmetric
+  (zxcv 13/13). Root protection means this is an explicit `lime_num_sym2` branch in
+  `trim_layout`, not the trim walk.
+- `lime_num_sym2` has no `。|，` cell at any tier, so the Phase 3b `。` mirror fix does
+  not apply to it.
 - Bottom row is `BOTTOM_NARROW_ZH` (Chinese IM → `abc` mode key right of space).
 
 ### Phase 3b — Fix the pre-existing narrow-shift zxcv mirror bug

@@ -208,11 +208,12 @@ IM_ROOTS = {
     "lime_et_41":         "abcdefghijklmnopqrstuvwxyz12347890-=;',./",
     "lime_hsu":           "azwsxedcrfvtgbyhnujmikolpq,.",
     # Includes both the tap glyph and the shift-collapsed long-press glyph of
-    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so the narrow-shift
-    # variant keeps both root cells too -- lime_num_sym2 is the only IM whose
-    # asdf row carries two symbol roots at once, so unlike lime_dayi_sym (one
-    # symbol root, trim quota never touches it) the trimmer's single-removal
-    # search can reach the second root and must find it protected.
+    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so neither layer's
+    # trim walk can drop them. The quote root is not trimmed but DISPLACED:
+    # trim_layout moves it from asdf to the zxcv right edge (standard stair
+    # shape / key alignment — §A.12.2), so asdf keeps `:|;` as its single
+    # symbol root like lime_dayi_sym, and the quote key rides zxcv like the
+    # displaced `。|，` of other IMs.
     "lime_num_sym2":      "\"';:,./abcdefghijklmnopqrstuvwxyz",
     "lime_wb":            ",./mn",
     # Derived from Database/{ez,hs}.db (2026-05 read):
@@ -576,7 +577,7 @@ implementation detail. Bottom row always 6.
 | `lime_wb` | 3 / 4 (no-op) | 3 / 4 (no-op) |
 | `lime_english` + `lime_abc` (English-only on iPad — see §A.12) | 14 / 14 / 13 / 12 | 12 / 12 / 11 / 11 |
 | `lime_number_symbol` (LIME number-symbol IM — see §A.12.1) | 14 / 14 / 13 / 12 | base: 12 / 12 / 12 / 13; Shift: 12 / 12 / 12 / 13 |
-| `lime_num_sym2` (LIME+數字符號鍵盤2, feat#159 — see §A.12.2) | 14 / 14 / 13 / 12 | narrow (both layers): 12 / 12 / 12 / 12 |
+| `lime_num_sym2` (LIME+數字符號鍵盤2, feat#159 — see §A.12.2) | 14 / 14 / 13 / 12 | narrow (both layers): 12 / 12 / 12 / 13 |
 | `symbols1` + `symbols2` + `symbols3` (phone-style symbol pages — see §A.13) | phone pages | copied phone content rows + narrow symbol bottom |
 
 Phase 3b fix (feat#159): before this fix, the `_narrow_shift` sibling of any
@@ -1084,14 +1085,14 @@ long-press glyphs) are roots and are never trimmed, never fullwidth-substituted:
 lime_num_sym2_ipad_narrow
 digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— [⌫]
 qwerty (12): q w e r t y u i o p 『|「 』|」
-asdf   (12): a s d f g h j k l :|; "|' [↩]
-zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [spacer]
+asdf   (12): [spacer] a s d f g h j k l :|; [↩]
+zxcv   (13): [⇧] z x c v b n m <|, >|. ?|/ "|' [spacer]
 
 lime_num_sym2_ipad_narrow_shift
 digit  (12): ! @ # $ % ^ & * ( ) … [⌫]
 qwerty (12): Q W E R T Y U I O P 『 』
-asdf   (12): A S D F G H J K L : " [↩]
-zxcv   (12): [⇧] Z X C V B N M < > ? [spacer]
+asdf   (12): [spacer] A S D F G H J K L : [↩]
+zxcv   (13): [⇧] Z X C V B N M < > ? " [spacer]
 ```
 
 Both narrow bottom rows are `globe .?123 emoji space abc dismiss`.
@@ -1100,14 +1101,16 @@ Both narrow bottom rows are `globe .?123 emoji space abc dismiss`.
   The `lime_number_symbol` `=|-`/`+|_` pairing exception does not apply here
   — this layout's phone source has no `-`/`=` keys at all, so there is
   nothing to pair; the `…|—` scaffold fallback survives instead.
-- asdf drops `[abc]` (mode key moves to the bottom row); `:|;` and `"|'`
-  survive as roots, so no leading spacer is needed (9 letters, 2 root cells,
-  and `[↩]` total 12).
-- zxcv is 12 raw cells on BOTH layers, unlike the other 11 Chinese IMs.
-  `lime_num_sym2` has no `。|，` cell at any tier (its full-tier asdf slot
-  holds the `"|'` root instead), so the trimmer has nothing to displace into
-  zxcv and both layers stay symmetric naturally — the Phase 3b fix above does
-  not touch `lime_num_sym2`.
+- asdf drops `[abc]` (mode key moves to the bottom row) and follows the
+  standard 11-visible stair shape (leading spacer + a…l + `:|;` + `[↩]`).
+- The quote root key is **displaced, not trimmed**: the trimmer moves `"|'`
+  (unshifted) / `"` (shifted) from asdf to the zxcv right edge — the same
+  position other Chinese IMs give their displaced `。|，` — so the key stays
+  aligned across rows and both layers stay symmetric (13/13). It is
+  root-protected, so the displacement is an explicit `lime_num_sym2` branch
+  in `trim_layout`, not the trim walk.
+- `lime_num_sym2` has no `。|，` cell at any tier, so the Phase 3b `。`
+  mirror fix does not apply to it.
 
 ### A.13 Symbol narrow layouts
 

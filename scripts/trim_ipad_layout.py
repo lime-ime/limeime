@@ -41,11 +41,12 @@ IM_ROOTS = {
     "lime_et_41": "abcdefghijklmnopqrstuvwxyz12347890-=;',./",
     "lime_hsu": "azwsxedcrfvtgbyhnujmikolpq,.",
     # Includes both the tap glyph and the shift-collapsed long-press glyph of
-    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so the narrow-shift
-    # variant keeps both root cells too -- lime_num_sym2 is the only IM whose
-    # asdf row carries two symbol roots at once, so unlike lime_dayi_sym (one
-    # symbol root, trim quota never touches it) the trimmer's single-removal
-    # search can reach the second root and must find it protected.
+    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so neither layer's
+    # trim walk can drop them. The quote root is not trimmed but DISPLACED:
+    # trim_layout moves it from asdf to the zxcv right edge (standard stair
+    # shape / key alignment), so asdf keeps `:|;` as its single symbol root
+    # like lime_dayi_sym, and the quote key rides zxcv like the displaced
+    # `。|，` of other IMs.
     "lime_num_sym2": "\"';:,./abcdefghijklmnopqrstuvwxyz",
     "lime_wb": ",./mn",
     "lime_ez": "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
@@ -337,19 +338,14 @@ def apply_row_policy(row, class_name, layout_id, root_set):
         trim_tail_to_visible(row, 13 if root_heavy else 12, root_set, stop_codes={-5}, allow_root_trim=True)
 
 
-def apply_widths(row, class_name, key_width, layout_id=None):
+def apply_widths(row, class_name, key_width):
     if row.get("isBottomRow"):
         return
     for key in row["keys"]:
         if is_visible(key):
             key["widthPercent"] = key_width
 
-    # lime_num_sym2's asdf row already reaches the 12-key narrow-tier target
-    # via its two root-protected symbol keys (:|; "|') with no [abc] modifier
-    # to fill the leading slot, so it needs no balancing leading spacer
-    # (docs/TRI_CODE_IM.md iPad layout spec, narrow tier, asdf note).
-    skip_leading_spacer = layout_id is not None and base_id(layout_id) == "lime_num_sym2"
-    if class_name == "asdf" and not skip_leading_spacer:
+    if class_name == "asdf":
         row["keys"].insert(0, edge_spacer(round(NARROW_GLOBE_WIDTH / 2.0, 4)))
     elif class_name == "zxcv" and row["keys"] and row["keys"][0].get("code") == -1:
         row["keys"][0]["widthPercent"] = NARROW_GLOBE_WIDTH
@@ -393,6 +389,15 @@ def trim_layout(layout):
                 candidate = visible_keys[-2]
                 if candidate.get("code") in (65292, 12290):
                     zxcv_extra_key = copy.deepcopy(candidate)
+                elif base_id(result["id"]) == "lime_num_sym2" and candidate.get("code") in (39, 34):
+                    # lime_num_sym2: move the quote root key ("|' unshifted, " shifted)
+                    # from asdf to the zxcv right edge so narrow asdf matches the
+                    # standard 11-visible stair shape (leading spacer + a…l + :|; + ↩)
+                    # and the quote key aligns like other IMs' displaced punctuation.
+                    # It is root-protected, so it must be removed here explicitly —
+                    # the trim walk never drops it.
+                    zxcv_extra_key = copy.deepcopy(candidate)
+                    row["keys"] = [k for k in row["keys"] if k is not candidate]
         if cls == "bottom":
             row["keys"] = bottom_narrow_for(result["id"])
         elif cls == "digit":
@@ -415,7 +420,7 @@ def trim_layout(layout):
         cls = row_class(row)
         if cls in ("digit", "qwerty", "asdf", "zxcv"):
             before = copy.deepcopy(row)
-            apply_widths(row, cls, key_width, layout_id=result["id"])
+            apply_widths(row, cls, key_width)
             changed = changed or row != before
 
     result["id"] = result["id"].replace("_ipad", "_ipad_narrow", 1)
