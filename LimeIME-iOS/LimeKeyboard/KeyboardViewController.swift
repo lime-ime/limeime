@@ -947,6 +947,21 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         activated.contains(requested) ? requested : firstAvailable
     }
 
+    /// fix#177: historical `custom` im.keyboard values that cannot produce a usable
+    /// keyboard. "lime" is the old import fallthrough and names a layout iOS does not
+    /// ship; "lime_abc" is the old seed and is the Chinese-mode alphabet layout whose
+    /// mode key is `中` (switchToIM) instead of an `abc` English switch; "" is an
+    /// unset row. Anything else is a keyboard the user deliberately selected.
+    static let customKeyboardBadDefaults: Set<String> = ["", "lime", "lime_abc"]
+
+    /// Repairs a legacy `custom` keyboard code so existing installs resolve on the
+    /// next IM switch without re-importing the table. Non-bad values pass through
+    /// untouched so a user-picked keyboard is never overridden.
+    static func repairedCustomKeyboardCode(_ stored: String?) -> String {
+        let value = stored ?? ""
+        return customKeyboardBadDefaults.contains(value) ? "limenum" : value
+    }
+
     static func hasSymbolMappingForKeyboard(_ baseHasSymbolMapping: Bool, keyboardId: String) -> Bool {
         baseHasSymbolMapping
             || keyboardId == "cj_semi"
@@ -1181,7 +1196,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
             return "lime_\(tableNick)"
         }
-        let kbCode = imConfig.keyboardId
+        // fix#177: repair a legacy `custom` keyboard code before resolving, so an
+        // existing install lands on lime_number on the next IM switch without
+        // re-importing the table. This must run BEFORE the direct-layout early return:
+        // "lime_abc" is itself loadable, so a later repair would never be reached.
+        // "limenum" is not a layout filename, so it resolves via getKeyboardConfig below.
+        let kbCode = tableNick == "custom"
+            ? KeyboardViewController.repairedCustomKeyboardCode(imConfig.keyboardId)
+            : imConfig.keyboardId
         // If kbCode is a directly loadable layout filename (e.g. "lime_array", "phone_simple"),
         // use it as-is. This covers the fallback list path where we store the layout name directly.
         if LayoutLoader.load(kbCode) != nil {

@@ -4,83 +4,76 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/177
 - Classification: `bug`, `Type-Defect`, `Usability`
-- State: open, confirmed plausible from a private support-email report and source inspection
-- Source: private support email received 2026-07-20. The sender identity, imported table, screenshot, and recording remain private.
-- Environment: iOS and current App Store LIME after an update. Exact iPhone model, iOS version, and LIME version were requested from the reporter.
+- State: open
+- Platform: iOS
 
 ## Problem statement
 
-After importing a custom CIN table, switching from another LIME internal input method such as Array 10 to `custom` can leave the previous input method's visible keyboard layout on screen. Closing and reopening the keyboard then shows the custom IM's default layout.
+After importing a custom CIN table, switching from another LIME internal input method such as Array 10 to `custom` can leave the previous input method's keyboard layout visible. Closing and reopening the keyboard then shows a default layout.
 
-The custom layout also presents a `中` mode key rather than an `abc` key, leaving the reporter without a way to switch from custom composition to the normal English keyboard.
+The custom IM can also show a `中` mode key rather than an `abc` key, leaving no direct route from custom composition to the English keyboard.
 
-These are related user-visible failures but may have separate causes:
+## Root cause
 
-1. The active table changes to `custom`, but the warm keyboard process does not immediately replace `currentLayout` with the resolved custom layout.
-2. The custom IM is registered with `lime_abc`, whose current JSON uses `switchToIM` (`code: -10`, label `中`) instead of the Chinese-layout `switchToEnglish` action.
+Android is the reference implementation. `LimeDB.getDefaultKeyboardCodeForImportedIM()` groups `DB_TABLE_CUSTOM` with `DB_TABLE_PINYIN` and assigns keyboard code `limenum`. That keyboard configuration resolves Chinese composition to the existing `lime_number` / `lime_number_shift` layouts, whose mode key switches to English.
+
+iOS diverged in two places:
+
+1. `defaultKeyboardCodeForImportedIM()` omitted `custom`, so a text import fell through to keyboard code `lime`. Its `imkb` value is also `lime`, but iOS has no bundled `lime.json`. Layout loading therefore failed and left the previous IM's keyboard visible.
+2. `seedCustomIM()` used `lime_abc`. That is a directly loadable English-mode layout whose mode key is `中` (`-10` / `switchToIM`), not the Chinese composition layout expected for a custom IM.
+
+## Fix design
+
+Match Android and reuse existing iOS resources. No new keyboard layout family is needed.
+
+- Map imported `custom` tables to keyboard code `limenum`.
+- Seed fresh `custom` registrations with `limenum`.
+- Repair only known invalid historical values for `custom`: `NULL`, empty string, `lime`, and `lime_abc`.
+- Preserve every other keyboard value as an explicit user selection.
+- Apply the same narrow repair during runtime resolution so existing users recover on the next IM switch without re-importing.
+- Resolve `limenum` through the existing keyboard catalog to `lime_number` / `lime_number_shift`.
 
 ## Source evidence
 
-### iOS custom registration and publication
+### Android
 
-- `LimeIME-iOS/LimeSettings/Views/IMInstallView.swift`
-  - Successful custom `.cin`/`.lime` and database imports call `DBServer.shared.seedCustomIM()`.
+- `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java`
+  - `getDefaultKeyboardCodeForImportedIM()` returns `limenum` for `DB_TABLE_CUSTOM`.
+  - Import stores that keyboard code through `setIMConfigKeyboard()`.
+- Android keyboard catalog
+  - `limenum.imkb = lime_number`
+  - `limenum.imshiftkb = lime_number_shift`
+- `LimeStudio/app/src/main/res/xml/lime_number.xml`
+  - The Chinese composition layout exposes `EN` with code `-9`.
+
+### iOS
+
 - `LimeIME-iOS/Shared/Database/LimeDB.swift`
-  - `seedCustomIM()` inserts `custom` with keyboard `lime_abc` only when no `custom` IM row exists.
-- `LimeIME-iOS/Shared/Database/DBServer.swift`
-  - `seedCustomIM()` writes through the current datasource. The import path separately publishes table and IM changes for the keyboard extension.
-
-### iOS runtime switching
-
+  - `defaultKeyboardCodeForImportedIM()` previously had no `custom` case.
+  - `seedCustomIM()` previously inserted `lime_abc`.
+  - `getKeyboardConfig("limenum")` already resolves to `lime_number` / `lime_number_shift`.
 - `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-  - `switchToNextActivatedIM(forward:)` updates `activeIM`, reconfigures `SearchServer`, resolves the active layout, and calls `keyboardView.setLayout(...)` when the resolved layout differs from `currentLayout`.
-  - `resolvedLayoutId(for:)` returns a directly loadable `keyboardId`, resolves a keyboard-table code through `imkb`, or falls back to `lime_<tableNick>`.
-  - The report indicates that the warm switching path can retain the prior visible layout even though reopening the keyboard performs enough setup to resolve the custom layout.
-- `LimeIME-iOS/LimeKeyboard/Layouts/lime_abc.json`
-  - The mode key is `code: -10` with label `中`. In `KeyboardViewController`, `-10` maps to `switchToIM`, while normal Chinese layouts use the English-switch action and label `abc`.
+  - `resolvedLayoutId(for:)` can resolve a keyboard catalog code through `imkb`.
+  - A directly loadable `lime_abc` value bypasses that catalog resolution, so legacy data must be repaired before the direct-layout check.
 
-## Relationship to earlier issues
+## Regression coverage
 
-- #119 fixed default keyboard assignment for known imported IMs. It treated the separately seeded `custom → lime_abc` path as valid, so it did not cover this runtime switch or custom mode-key behavior.
-- #121 covered first activation after a cloud IM install showing a layout inconsistent with English runtime mode. This report concerns a user-imported custom IM, retention of the previous IM's layout, and the inability to enter English mode.
+- `custom` import defaults to `limenum`, matching Android.
+- A fresh custom registration uses `limenum`.
+- Legacy `NULL`, empty, `lime`, and `lime_abc` values repair to `limenum`.
+- User-selected non-default keyboard values remain unchanged.
+- Runtime resolution repairs affected values before layout loading.
+- `limenum` resolves to bundled `lime_number` resources with an English-switch key.
+- No Android files change.
 
-Issue #177 therefore remains a distinct follow-up rather than reopening either closed issue.
+## Remaining verification
 
-## Platform impact
-
-### iOS
-
-Confirmed plausible and user-visible. The report includes private media, but visual conclusions have not been inferred beyond the reporter's written description. Exact device/version details remain pending.
-
-### Android
-
-No matching report is known. Verify Android custom import, internal IM switching, and Chinese/English mode behavior for parity, but do not assume the iOS lifecycle defect applies.
-
-## Proposed investigation
-
-1. Add a focused test for resolving and applying `custom` after switching from a different active IM in a warm keyboard controller.
-2. Capture `activeIM`, `activeIMIndex`, cached `activatedIMs.keyboardId`, resolved layout ID, and `currentLayout` before and after the switch.
-3. Verify whether custom import publishes a new or updated IM row and whether a warm extension refreshes `activatedIMs` before switching.
-4. Decide whether custom should use a dedicated Chinese-composition alphabet layout or whether `lime_abc` should carry `switchToEnglish` when used by `custom`.
-5. Preserve normal English layout behavior and avoid changing `lime_abc` globally if it is also used as the actual English-mode layout.
-
-## Verification plan
-
-### iOS
-
-- Import a sanitized alphabetic custom CIN fixture.
-- Switch Array 10 → custom, another Chinese IM → custom, custom → another IM, and both forward/backward directions.
-- Verify the visible layout, active table, accepted root keys, and candidate lookup immediately after every switch.
-- Verify the custom layout offers a working path to English and that switching back restores custom composition.
-- Repeat with a cold keyboard launch and an already-running keyboard extension.
-- Test fresh installation and an existing database where `custom` metadata already exists.
-- Device-test on the reporter's environment after exact versions are supplied.
-
-### Android
-
-- Verify custom CIN import, immediate internal-IM layout switching, and Chinese/English mode toggling.
-- Keep Android out of the fix scope unless testing confirms equivalent behavior.
-
-## Reporter follow-up
-
-The support reply links issue #177, confirms receipt of one private recording and one image, and asks for the iPhone model, iOS version, and LIME version. The reporter may continue by email, and any result must be synchronized to the issue without exposing private identity or attachments.
+- Run iOS XCTest through Xcode/Xcode Cloud.
+- Verify on iPhone and iPad:
+  - another IM → custom switches the layout immediately
+  - custom → another IM switches back immediately
+  - forward and backward cyclic switching
+  - direct menu switching
+  - custom Chinese composition → English → custom composition
+  - fresh and upgraded databases
+  - user-selected custom keyboard layouts remain preserved

@@ -2008,6 +2008,35 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(rewritten.sublabel, ";", file: file, line: line)
     }
 
+    // fix#177: users who already have a custom IM row must resolve to a usable
+    // layout on the next IM switch, without re-importing their table. Only the
+    // three known-bad historical values are repaired.
+    func testLegacyCustomKeyboardBadDefaultsAreRepairedToLimenum() {
+        for bad in ["", "lime", "lime_abc"] {
+            XCTAssertEqual(KeyboardViewController.repairedCustomKeyboardCode(bad), "limenum",
+                           "known-bad custom keyboard \"\(bad)\" must be repaired")
+        }
+        XCTAssertEqual(KeyboardViewController.repairedCustomKeyboardCode(nil), "limenum",
+                       "a missing custom keyboard value must be repaired")
+    }
+
+    // The repair must never override a keyboard the user deliberately picked.
+    func testUserSelectedCustomKeyboardIsPreserved() {
+        for selected in ["limenumsym", "cjnum", "computernum", "phone_simple", "arraynum"] {
+            XCTAssertEqual(KeyboardViewController.repairedCustomKeyboardCode(selected), selected,
+                           "user-selected keyboard \"\(selected)\" must be preserved")
+        }
+    }
+
+    // The repaired code must resolve through the keyboard catalog to a layout that
+    // is actually bundled — "lime" did not, which is the root cause of #177.
+    func testRepairedCustomKeyboardResolvesToABundledLayout() throws {
+        XCTAssertNotNil(try? loadKeyLayoutFixture("lime_number"),
+                        "limenum's imkb layout lime_number must be bundled")
+        XCTAssertNil(try? loadKeyLayoutFixture("lime"),
+                     "precondition: iOS ships no 'lime' layout, so it is an unusable default")
+    }
+
     func testCangjieSemicolonKeyboardCodesForceSymbolMapping() {
         XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_semi"))
         XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_num_semi"))

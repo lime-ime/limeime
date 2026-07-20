@@ -3696,7 +3696,12 @@ final class LimeDB {
             return "hs"
         case "ez":
             return "ez"
-        case "pinyin":
+        case "pinyin", "custom":
+            // fix#177: Android groups DB_TABLE_CUSTOM with DB_TABLE_PINYIN here.
+            // Without the "custom" case an imported custom table fell through to
+            // "lime", whose imkb is "lime" — a layout the iOS keyboard extension
+            // does not ship — so layout resolution dead-ended and the previously
+            // active IM's keyboard stayed on screen.
             return "limenum"
         default:
             return "lime"
@@ -3893,15 +3898,31 @@ final class LimeDB {
 
     /// Registers the "custom" (自建) IM in the im table if it is not already present.
     /// Always seeded on explicit user action — even when the custom table is empty.
+    /// fix#177: seeds "limenum" to match defaultKeyboardCodeForImportedIM/Android.
+    /// The previous 'lime_abc' is the Chinese-mode alphabet layout, whose mode key is
+    /// `中` (code -10 → switchToIM) rather than an `abc` English switch, so a custom
+    /// user had no way to reach the English keyboard.
     func seedCustomIM() throws {
         try dbQueue.write { db in
             let exists = (try? Int.fetchOne(db,
                 sql: "SELECT COUNT(*) FROM im WHERE code = ?",
                 arguments: ["custom"]) ?? 0) ?? 0 > 0
-            guard !exists else { return }
+            guard !exists else {
+                // fix#177: an existing registration may still carry one of the historical
+                // unusable values — NULL/'' (unset), 'lime' (old import fallthrough, names
+                // a layout iOS does not ship) or 'lime_abc' (old seed, `中` mode key).
+                // Repair only those; any other value is a keyboard the user chose.
+                try db.execute(sql: """
+                    UPDATE im SET keyboard = 'limenum'
+                    WHERE code = 'custom'
+                      AND title IN ('自建', 'keyboard')
+                      AND (keyboard IS NULL OR keyboard IN ('', 'lime', 'lime_abc'))
+                """)
+                return
+            }
             try db.execute(sql: """
                 INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                VALUES ('custom', '自建', '', 'lime_abc', 0, '', '', '')
+                VALUES ('custom', '自建', '', 'limenum', 0, '', '', '')
             """)
         }
     }
