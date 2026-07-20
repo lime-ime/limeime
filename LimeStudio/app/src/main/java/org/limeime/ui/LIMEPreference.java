@@ -38,7 +38,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -81,12 +80,7 @@ public class LIMEPreference extends AppCompatActivity {
 		// Enable edge-to-edge across all API levels via the AndroidX helper. Replaces
 		// manual setDecorFitsSystemWindows + the deprecated setStatusBarColor/
 		// setNavigationBarColor calls (no-ops on API 35+; flagged by Play Console).
-		if (LIMESettings.shouldUseEdgeToEdgeHelper(Build.VERSION.SDK_INT)) {
-			EdgeToEdge.enable(this);
-		} else {
-			// Preserve the pre-Android-15 layout used by this standalone preference screen.
-			WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-		}
+		EdgeToEdge.enable(this);
 
 		this.SearchSrv = new SearchServer(this);
 
