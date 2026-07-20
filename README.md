@@ -25,8 +25,8 @@ App 僅在功能需要時宣告少數權限（如下載碼表、按鍵震動、�
 
 ### 最新正式版（GitHub Release）
 
-- 版本：v6.1.34
-- APK：[LIMEHD2026-6.1.34.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.34/LIMEHD2026-6.1.34.apk)
+- 版本：v6.1.35
+- APK：[LIMEHD2026-6.1.35.apk](https://github.com/lime-ime/limeime/releases/download/v6.1.35/LIMEHD2026-6.1.35.apk)
 
 ## 版本與相容性
 
