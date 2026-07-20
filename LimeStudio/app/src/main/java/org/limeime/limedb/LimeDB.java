@@ -624,7 +624,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             LIME.DB_TABLE_CJ, LIME.DB_TABLE_CJ4, LIME.DB_TABLE_CJ5, LIME.DB_TABLE_CUSTOM,
             LIME.DB_TABLE_DAYI, LIME.DB_TABLE_ECJ, LIME.DB_TABLE_EZ,
             LIME.DB_TABLE_HS, LIME.DB_TABLE_PHONETIC, LIME.DB_TABLE_PINYIN,
-            LIME.DB_TABLE_SCJ, LIME.DB_TABLE_WB,
+            LIME.DB_TABLE_SCJ, LIME.DB_TABLE_TRICODE, LIME.DB_TABLE_WB,
             LIME.DB_TABLE_IMTABLE2, LIME.DB_TABLE_IMTABLE3, LIME.DB_TABLE_IMTABLE4,
             LIME.DB_TABLE_IMTABLE5, LIME.DB_TABLE_IMTABLE6, LIME.DB_TABLE_IMTABLE7,
             LIME.DB_TABLE_IMTABLE8, LIME.DB_TABLE_IMTABLE9, LIME.DB_TABLE_IMTABLE10,
@@ -680,6 +680,8 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             case LIME.DB_TABLE_PINYIN:
             case LIME.DB_TABLE_CUSTOM:
                 return "limenum";
+            case LIME.DB_TABLE_TRICODE:
+                return "limenumsym2";
             default:
                 return getFallbackDefaultKeyboardCode();
         }
@@ -972,8 +974,10 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         }
 
         ensureCj4Schema(db);
+        ensureTricodeSchema(db);
         ensureComputerNumKeyboard(db);
         ensureCangjieSemicolonKeyboards(db);
+        ensureLimeNumSym2Keyboard(db);
         if (db.getVersion() < DATABASE_VERSION) {
             db.setVersion(DATABASE_VERSION);
         }
@@ -5692,6 +5696,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     /**
+     * feat#159: tricode.limedb ships only a `custom` mapping table (LIMEDB_SPEC.md), so the
+     * `tricode` table itself is never created by import. Create it here, idempotently, so
+     * existing installs also get it.
+     */
+    private static void ensureTricodeSchema(SQLiteDatabase targetDb) {
+        targetDb.execSQL("CREATE TABLE IF NOT EXISTS " + LIME.DB_TABLE_TRICODE + " (" +
+                "_id INTEGER primary key autoincrement, " +
+                "code text, " +
+                "code3r text, " +
+                "word text, " +
+                "related text, " +
+                "score integer, " +
+                "'basescore' type integer)");
+        targetDb.execSQL("CREATE INDEX IF NOT EXISTS tricode_idx_code ON " + LIME.DB_TABLE_TRICODE + " (code)");
+    }
+
+    /**
      * feat#N02: seed the computer-numpad keyboard into the global keyboard list if absent,
      * so every IM's keyboard picker can choose it (it loads the computer_simple layout —
      * phone_simple with 7 8 9 on top). Mirrors phonenum exactly except imkb points at
@@ -5726,14 +5747,30 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private static void ensureCangjieSemicolonKeyboards(SQLiteDatabase targetDb) {
         insertKeyboardIfAbsent(targetDb, "cj_semi", "倉頡分號", "倉頡分號鍵盤",
+                "cj_keyboard_preview",
                 "lime_cj_semi", "lime_cj_semi_shift",
                 "lime", "lime_shift",
                 "lime_cj_semi", "lime_cj_semi_shift",
                 "lime_cj_number_semi", "lime_cj_number_semi_shift");
         insertKeyboardIfAbsent(targetDb, "cj_num_semi", "倉頡數字分號", "倉頡數字分號鍵盤",
+                "cj_keyboard_preview",
                 "lime_cj_number_semi", "lime_cj_number_semi_shift",
                 "lime_number", "lime_number_shift",
                 "lime_cj_number_semi", "lime_cj_number_semi_shift",
+                "", "");
+    }
+
+    /**
+     * feat#159: seed the limenumsym2 keyboard (三碼/tricode) into the global keyboard list if
+     * absent. tricode.limedb never imports the keyboard table (LIMEDB_SPEC.md), so this seeds
+     * it in code, mirroring ensureComputerNumKeyboard, so it also appears on existing installs.
+     */
+    private static void ensureLimeNumSym2Keyboard(SQLiteDatabase targetDb) {
+        insertKeyboardIfAbsent(targetDb, "limenumsym2", "LIMENUMSYM2", "LIME+數字符號鍵盤2",
+                "lime_number_symbol_keyboard_priview",
+                "lime_num_sym2", "lime_num_sym2_shift",
+                "lime_english_number", "lime_english_shift",
+                "", "",
                 "", "");
     }
 
@@ -5741,6 +5778,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                                String code,
                                                String name,
                                                String desc,
+                                               String image,
                                                String imkb,
                                                String imshiftkb,
                                                String engkb,
@@ -5762,7 +5800,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         cv.put(LIME.DB_KEYBOARD_COLUMN_NAME, name);
         cv.put(LIME.DB_KEYBOARD_COLUMN_DESC, desc);
         cv.put(LIME.DB_KEYBOARD_COLUMN_TYPE, "phone");
-        cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, "cj_keyboard_preview");
+        cv.put(LIME.DB_KEYBOARD_COLUMN_IMAGE, image);
         cv.put(LIME.DB_KEYBOARD_COLUMN_IMKB, imkb);
         cv.put(LIME.DB_KEYBOARD_COLUMN_IMSHIFTKB, imshiftkb);
         cv.put(LIME.DB_KEYBOARD_COLUMN_ENGKB, engkb);

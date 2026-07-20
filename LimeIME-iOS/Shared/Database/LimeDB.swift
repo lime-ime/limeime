@@ -315,6 +315,7 @@ final class LimeDB {
         }
         if version < 104 {
             try LimeDB.ensureCj4Schema(db)
+            try LimeDB.ensureTricodeSchema(db)
         }
         // Stamp the new version
         try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
@@ -333,8 +334,10 @@ final class LimeDB {
             try dbQueue.write { db in
                 try LimeDB.createEmojiTables(db, forceRecreate: false)
                 try LimeDB.ensureCj4Schema(db)
+                try LimeDB.ensureTricodeSchema(db)
                 try LimeDB.ensureComputerNumKeyboard(db)
                 try LimeDB.ensureCangjieSemicolonKeyboards(db)
+                try LimeDB.ensureLimeNumSym2Keyboard(db)
                 let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
                 if version < LimeDB.CURRENT_DB_VERSION {
                     try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
@@ -385,6 +388,7 @@ final class LimeDB {
                 """)
                 try LimeDB.ensureComputerNumKeyboard(db)
                 try LimeDB.ensureCangjieSemicolonKeyboards(db)
+                try LimeDB.ensureLimeNumSym2Keyboard(db)
             }
         } catch {
             NSLog("LimeDB keyboard catalog repair failed: \(error)")
@@ -481,7 +485,7 @@ final class LimeDB {
         guard let name = name, !name.isEmpty else { return false }
         let valid: Set<String> = [
             "array", "array10", "cj", "cj4", "cj5", "custom", "dayi", "ecj", "ez",
-            "hs", "phonetic", "pinyin", "scj", "wb",
+            "hs", "phonetic", "pinyin", "scj", "tricode", "wb",
             "imtable2", "imtable3", "imtable4", "imtable5",
             "imtable6", "imtable7", "imtable8", "imtable9", "imtable10",
             "related", "im", "keyboard"
@@ -1295,6 +1299,17 @@ final class LimeDB {
                                   type: "phone", image: "dayi_keyboard_preview",
                                   imkb: "lime_dayi_sym", imshiftkb: "lime_dayi_sym_shift",
                                   engkb: "lime", engshiftkb: "lime_shift",
+                                  symbolkb: "symbols", symbolshiftkb: "symbols_shift",
+                                  isDisabled: false)
+        }
+        // feat#159: hardcoded fallback for "limenumsym2" (三碼/tricode) — mirrors the
+        // insertKeyboardIfAbsent seed row (ensureLimeNumSym2Keyboard) column-for-column,
+        // matching Android's ensureLimeNumSym2Keyboard (LimeDB.java).
+        if keyboard == "limenumsym2" {
+            return KeyboardConfig(id: 0, code: "limenumsym2", name: "LIMENUMSYM2", desc: "LIME+數字符號鍵盤2",
+                                  type: "phone", image: "lime_number_symbol_keyboard_priview",
+                                  imkb: "lime_num_sym2", imshiftkb: "lime_num_sym2_shift",
+                                  engkb: "lime_english_number", engshiftkb: "lime_english_shift",
                                   symbolkb: "symbols", symbolshiftkb: "symbols_shift",
                                   isDisabled: false)
         }
@@ -2736,6 +2751,24 @@ final class LimeDB {
         try db.execute(sql: "DELETE FROM keyboard WHERE code = ?", arguments: ["cj4"])
     }
 
+    /// feat#159: mirrors ensureCj4Schema — tricode.limedb (三碼) never imports the mapping
+    /// table itself, so this seeds the empty `tricode` table (and its code index) in code
+    /// on every DB open, so existing installs pick it up too.
+    private static func ensureTricodeSchema(_ db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS tricode (
+                _id INTEGER primary key autoincrement,
+                code text,
+                code3r text,
+                word text,
+                related text,
+                score integer,
+                'basescore' type integer
+            )
+        """)
+        try db.execute(sql: "CREATE INDEX IF NOT EXISTS tricode_idx_code ON tricode (code)")
+    }
+
     /// feat#N02: seed the computer-numpad keyboard into the global keyboard list if absent,
     /// so every IM's keyboard picker can choose it (it loads the computer_simple layout —
     /// phone_simple with 7 8 9 on top). Insert-if-absent only: this helper is the sole
@@ -2762,6 +2795,7 @@ final class LimeDB {
             code: "cj_semi",
             name: "倉頡分號",
             desc: "倉頡分號鍵盤",
+            image: "cj_keyboard_preview",
             imkb: "lime_cj_semi",
             imshiftkb: "lime_cj_semi_shift",
             engkb: "lime",
@@ -2774,6 +2808,7 @@ final class LimeDB {
             code: "cj_num_semi",
             name: "倉頡數字分號",
             desc: "倉頡數字分號鍵盤",
+            image: "cj_keyboard_preview",
             imkb: "lime_cj_number_semi",
             imshiftkb: "lime_cj_number_semi_shift",
             engkb: "lime_number",
@@ -2784,10 +2819,31 @@ final class LimeDB {
             extendedshiftkb: "")
     }
 
+    /// feat#159: seed the limenumsym2 keyboard (三碼/tricode) into the global keyboard list
+    /// if absent. tricode.limedb never imports the keyboard table (LIMEDB_SPEC.md), so this
+    /// seeds it in code, mirroring ensureComputerNumKeyboard, so it also appears on existing
+    /// installs. Column values match Android's ensureLimeNumSym2Keyboard (LimeDB.java).
+    private static func ensureLimeNumSym2Keyboard(_ db: Database) throws {
+        try insertKeyboardIfAbsent(db,
+            code: "limenumsym2",
+            name: "LIMENUMSYM2",
+            desc: "LIME+數字符號鍵盤2",
+            image: "lime_number_symbol_keyboard_priview",
+            imkb: "lime_num_sym2",
+            imshiftkb: "lime_num_sym2_shift",
+            engkb: "lime_english_number",
+            engshiftkb: "lime_english_shift",
+            defaultkb: "",
+            defaultshiftkb: "",
+            extendedkb: "",
+            extendedshiftkb: "")
+    }
+
     private static func insertKeyboardIfAbsent(_ db: Database,
                                                code: String,
                                                name: String,
                                                desc: String,
+                                               image: String,
                                                imkb: String,
                                                imshiftkb: String,
                                                engkb: String,
@@ -2805,12 +2861,12 @@ final class LimeDB {
                 imkb, imshiftkb, engkb, engshiftkb,
                 symbolkb, symbolshiftkb, defaultkb, defaultshiftkb,
                 extendedkb, extendedshiftkb, disable)
-            VALUES (?, ?, ?, 'phone', 'cj_keyboard_preview',
+            VALUES (?, ?, ?, 'phone', ?,
                 ?, ?, ?, ?,
                 'symbols', 'symbols_shift', ?, ?,
                 ?, ?, 0)
         """, arguments: [
-            code, name, desc,
+            code, name, desc, image,
             imkb, imshiftkb, engkb, engshiftkb,
             defaultkb, defaultshiftkb,
             extendedkb, extendedshiftkb
@@ -3696,8 +3752,15 @@ final class LimeDB {
             return "hs"
         case "ez":
             return "ez"
-        case "pinyin":
+        case "pinyin", "custom":
+            // fix#177: Android groups DB_TABLE_CUSTOM with DB_TABLE_PINYIN here.
+            // Without the "custom" case an imported custom table fell through to
+            // "lime", whose imkb is "lime" — a layout the iOS keyboard extension
+            // does not ship — so layout resolution dead-ended and the previously
+            // active IM's keyboard stayed on screen.
             return "limenum"
+        case "tricode":
+            return "limenumsym2"
         default:
             return "lime"
         }
@@ -3893,15 +3956,31 @@ final class LimeDB {
 
     /// Registers the "custom" (自建) IM in the im table if it is not already present.
     /// Always seeded on explicit user action — even when the custom table is empty.
+    /// fix#177: seeds "limenum" to match defaultKeyboardCodeForImportedIM/Android.
+    /// The previous 'lime_abc' is the Chinese-mode alphabet layout, whose mode key is
+    /// `中` (code -10 → switchToIM) rather than an `abc` English switch, so a custom
+    /// user had no way to reach the English keyboard.
     func seedCustomIM() throws {
         try dbQueue.write { db in
             let exists = (try? Int.fetchOne(db,
                 sql: "SELECT COUNT(*) FROM im WHERE code = ?",
                 arguments: ["custom"]) ?? 0) ?? 0 > 0
-            guard !exists else { return }
+            guard !exists else {
+                // fix#177: an existing registration may still carry one of the historical
+                // unusable values — NULL/'' (unset), 'lime' (old import fallthrough, names
+                // a layout iOS does not ship) or 'lime_abc' (old seed, `中` mode key).
+                // Repair only those; any other value is a keyboard the user chose.
+                try db.execute(sql: """
+                    UPDATE im SET keyboard = 'limenum'
+                    WHERE code = 'custom'
+                      AND title IN ('自建', 'keyboard')
+                      AND (keyboard IS NULL OR keyboard IN ('', 'lime', 'lime_abc'))
+                """)
+                return
+            }
             try db.execute(sql: """
                 INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                VALUES ('custom', '自建', '', 'lime_abc', 0, '', '', '')
+                VALUES ('custom', '自建', '', 'limenum', 0, '', '', '')
             """)
         }
     }

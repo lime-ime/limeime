@@ -97,6 +97,8 @@ public class LIME {
 	public static final String DATABASE_CLOUD_IM_HS_V2 = DATABASE_CLOUD_URL_BASED + "hs2.zip";
 	public static final String DATABASE_CLOUD_IM_HS_V3 = DATABASE_CLOUD_URL_BASED + "hs3.zip";
 	public static final String DATABASE_CLOUD_IM_HS_KEYBOARD = "hs";
+	public static final String DATABASE_CLOUD_IM_TRICODE = DATABASE_CLOUD_URL_BASED + "tricode.limedb";
+	public static final String DATABASE_CLOUD_IM_TRICODE_KEYBOARD = "limenumsym2";
 	// Database Tables
 	public static final String DB_TABLE_IMTABLE2 = "imtable2";
 	public static final String DB_TABLE_IMTABLE3 = "imtable3";
@@ -120,6 +122,7 @@ public class LIME {
 	public static final String DB_TABLE_PHONETIC = "phonetic";
 	public static final String DB_TABLE_PINYIN = "pinyin";
 	public static final String DB_TABLE_SCJ = "scj";
+	public static final String DB_TABLE_TRICODE = "tricode";
 	public static final String DB_TABLE_WB = "wb";
 	
 	// Input Method Types

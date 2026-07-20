@@ -119,6 +119,7 @@ Measured from GitHub raw asset sizes (to be added to `CloudVariant`):
 | 華象 v3 | hs_v3 | 64,324 | ~1.2 MB |
 | 五筆 | wb | 26,378 | ~590 KB |
 | 拼音 | pinyin | 34,753 | ~730 KB |
+| 三碼 | tricode | 14,250 | 227 KB |
 
 > **Note**: Sizes marked "Est." — verify by fetching `Content-Length` headers from the GitHub raw URLs before shipping.
 

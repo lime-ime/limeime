@@ -42,6 +42,7 @@ iPad layouts:
 - `lime_et26`, `lime_et26_shift`
 - `lime_et_41`, `lime_et_41_shift`
 - `lime_hsu`, `lime_hsu_shift`
+- `lime_num_sym2`, `lime_num_sym2_shift`
 - `lime_wb`, `lime_wb_shift`
 
 The generator must always exclude these layouts, including shifted variants:
@@ -183,6 +184,39 @@ Examples:
 | `。\\n，` (65292, lp 12290) | `，` (12290) |
 | `<\\n,` (44, lp 60) | `<` (60) — already in source shift |
 | `？\\n、` (12289, lp 65311) | `？` (65311) |
+
+### `lime_num_sym2` iPad layout spec (normative, full tier)
+
+`lime_num_sym2` (LIME+數字符號鍵盤2, feat#159 / issue #159, table `tricode`)
+follows the standard 14 / 14 / 13 / 12 / 6 Chinese-IM scaffold. Notation as
+above: `X|Y` = dual-slide cell, slide/long-press glyph before `|`, direct-tap
+glyph after `|`; `[…]` = modifier. Tap codes for the five 3code code keys are
+always ASCII: `;`=59, `'`=39, `,`=44, `.`=46, `/`=47.
+
+```text
+lime_num_sym2_ipad
+digit  (14): ~|` !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— +|= [⌫]
+qwerty (14): [Tab] q w e r t y u i o p 『|「 』|」 ？|、
+asdf   (13): [abc] a s d f g h j k l :|; "|' [↩]
+zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [⇧]
+bottom  (6): [globe] [.?123] [emoji] [space] [.?123] [dismiss]
+
+lime_num_sym2_ipad_shift    (dual cells collapse to slide output; same counts)
+digit  (14): ~ ! @ # $ % ^ & * ( ) … + [⌫]
+qwerty (14): [Tab] Q W E R T Y U I O P 『 』 ？
+asdf   (13): [abc] A S D F G H J K L : " [↩]
+zxcv   (12): [⇧] Z X C V B N M < > ? [⇧]
+bottom  (6): [globe] [.?123] [emoji] [space] [.?123] [dismiss]
+```
+
+- asdf `:|;` = tap 59 / slide 58; `"|'` = tap 39 / slide 34 — the `〃` key
+  promoted from the phone bottom row (English-layout `"|,` precedent), NOT
+  the fullwidth `；\n：`/`。\n，` scaffold cells.
+- digit `…|—` / `+|=` and qwerty `『|「 』|」 ？|、` are standard iPad scaffold
+  fallbacks (not 3code code keys). The dash slot is `…|—`, not `_|-`: the
+  phone source has no `-` key, so the established Chinese-IM-class dash
+  fallback (`…|—`, as in dayi/cj/hsu) applies when the source has no dash
+  slot.
 
 ### Implemented ✅
 

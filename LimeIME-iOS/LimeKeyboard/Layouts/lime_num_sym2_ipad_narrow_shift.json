@@ -1,5 +1,5 @@
 ﻿{
-  "id": "lime_phonetic_ipad_narrow_shift",
+  "id": "lime_num_sym2_ipad_narrow_shift",
   "defaultWidthPercent": 7.0,
   "rows": [
     {
@@ -169,7 +169,7 @@
         {
           "code": 81,
           "label": "Q",
-          "sublabel": "ㄆ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -182,7 +182,7 @@
         {
           "code": 87,
           "label": "W",
-          "sublabel": "ㄊ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -195,7 +195,7 @@
         {
           "code": 69,
           "label": "E",
-          "sublabel": "ㄍ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -208,7 +208,7 @@
         {
           "code": 82,
           "label": "R",
-          "sublabel": "ㄐ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -221,7 +221,7 @@
         {
           "code": 84,
           "label": "T",
-          "sublabel": "ㄔ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -234,7 +234,7 @@
         {
           "code": 89,
           "label": "Y",
-          "sublabel": "ㄗ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -247,7 +247,7 @@
         {
           "code": 85,
           "label": "U",
-          "sublabel": "一",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -260,7 +260,7 @@
         {
           "code": 73,
           "label": "I",
-          "sublabel": "ㄛ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -273,7 +273,7 @@
         {
           "code": 79,
           "label": "O",
-          "sublabel": "ㄟ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -286,7 +286,7 @@
         {
           "code": 80,
           "label": "P",
-          "sublabel": "ㄣ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -346,7 +346,7 @@
         {
           "code": 65,
           "label": "A",
-          "sublabel": "ㄇ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -359,7 +359,7 @@
         {
           "code": 83,
           "label": "S",
-          "sublabel": "ㄋ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -372,7 +372,7 @@
         {
           "code": 68,
           "label": "D",
-          "sublabel": "ㄎ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -385,7 +385,7 @@
         {
           "code": 70,
           "label": "F",
-          "sublabel": "ㄑ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -398,7 +398,7 @@
         {
           "code": 71,
           "label": "G",
-          "sublabel": "ㄕ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -411,7 +411,7 @@
         {
           "code": 72,
           "label": "H",
-          "sublabel": "ㄘ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -424,7 +424,7 @@
         {
           "code": 74,
           "label": "J",
-          "sublabel": "ㄨ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -437,7 +437,7 @@
         {
           "code": 75,
           "label": "K",
-          "sublabel": "ㄜ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -450,7 +450,7 @@
         {
           "code": 76,
           "label": "L",
-          "sublabel": "ㄠ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -507,7 +507,7 @@
         {
           "code": 90,
           "label": "Z",
-          "sublabel": "ㄈ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -520,7 +520,7 @@
         {
           "code": 88,
           "label": "X",
-          "sublabel": "ㄌ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -533,7 +533,7 @@
         {
           "code": 67,
           "label": "C",
-          "sublabel": "ㄏ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -546,7 +546,7 @@
         {
           "code": 86,
           "label": "V",
-          "sublabel": "ㄒ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -559,7 +559,7 @@
         {
           "code": 66,
           "label": "B",
-          "sublabel": "ㄖ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -572,7 +572,7 @@
         {
           "code": 78,
           "label": "N",
-          "sublabel": "ㄙ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -585,7 +585,7 @@
         {
           "code": 77,
           "label": "M",
-          "sublabel": "ㄩ",
+          "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
           "isModifier": false,
@@ -635,8 +635,8 @@
           "longPressCode": 0
         },
         {
-          "code": 12290,
-          "label": "。",
+          "code": 34,
+          "label": "\"",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",

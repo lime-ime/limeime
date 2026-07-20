@@ -44,6 +44,14 @@ IM_ROOTS = {
     "lime_et26": "qazwsxedcrfvtgbyhnujmikolp,.",
     "lime_et_41": "abcdefghijklmnopqrstuvwxyz12347890-=;',./",
     "lime_hsu": "azwsxedcrfvtgbyhnujmikolpq,.",
+    # Includes both the tap glyph and the shift-collapsed long-press glyph of
+    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so neither layer's
+    # trim walk can drop them. The quote root is not trimmed but DISPLACED:
+    # trim_layout moves it from asdf to the zxcv right edge (standard stair
+    # shape / key alignment), so asdf keeps `:|;` as its single symbol root
+    # like lime_dayi_sym, and the quote key rides zxcv like the displaced
+    # `。|，` of other IMs.
+    "lime_num_sym2": "\"';:,./abcdefghijklmnopqrstuvwxyz",
     "lime_wb": ",./mn",
     "lime_ez": "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
     "lime_hs": "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
@@ -383,8 +391,17 @@ def trim_layout(layout):
             visible_keys = [key for key in row["keys"] if is_visible(key)]
             if len(visible_keys) >= 2 and visible_keys[-1].get("code") == 10:
                 candidate = visible_keys[-2]
-                if candidate.get("code") == 65292:
+                if candidate.get("code") in (65292, 12290):
                     zxcv_extra_key = copy.deepcopy(candidate)
+                elif base_id(result["id"]) == "lime_num_sym2" and candidate.get("code") in (39, 34):
+                    # lime_num_sym2: move the quote root key ("|' unshifted, " shifted)
+                    # from asdf to the zxcv right edge so narrow asdf matches the
+                    # standard 11-visible stair shape (leading spacer + a…l + :|; + ↩)
+                    # and the quote key aligns like other IMs' displaced punctuation.
+                    # It is root-protected, so it must be removed here explicitly —
+                    # the trim walk never drops it.
+                    zxcv_extra_key = copy.deepcopy(candidate)
+                    row["keys"] = [k for k in row["keys"] if k is not candidate]
         if cls == "bottom":
             row["keys"] = bottom_narrow_for(result["id"])
         elif cls == "digit":

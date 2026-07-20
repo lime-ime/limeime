@@ -919,7 +919,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             hasActivatedIMs: !activatedIMs.isEmpty,
             englishLayout: englishLayout,
             resolvedActiveLayoutId: resolvedActiveLayout)
-        if let newLayout = LayoutLoader.load(layoutName) ?? LayoutLoader.load(englishLayout) {
+        let loadedLayout = (!mEnglishOnly && !activatedIMs.isEmpty)
+            ? loadChineseLayout(preferred: layoutName)
+            : LayoutLoader.load(layoutName)
+        if let newLayout = loadedLayout {
             let adjusted = cj4SemicolonAdjusted(newLayout)
             if adjusted != currentLayout {
                 currentLayout = adjusted
@@ -945,6 +948,35 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// `requested` (cold start with no saved IM) also falls through to `firstAvailable`.
     static func reconciledActiveIM(requested: String, activated: [String], firstAvailable: String) -> String {
         activated.contains(requested) ? requested : firstAvailable
+    }
+
+    /// fix#177: historical `custom` im.keyboard values that cannot produce a usable
+    /// keyboard. "lime" is the old import fallthrough and names a layout iOS does not
+    /// ship; "lime_abc" is the old seed and is the Chinese-mode alphabet layout whose
+    /// mode key is `中` (switchToIM) instead of an `abc` English switch; "" is an
+    /// unset row. Anything else is a keyboard the user deliberately selected.
+    static let customKeyboardBadDefaults: Set<String> = ["", "lime", "lime_abc"]
+
+    /// Repairs a legacy `custom` keyboard code so existing installs resolve on the
+    /// next IM switch without re-importing the table. Non-bad values pass through
+    /// untouched so a user-picked keyboard is never overridden.
+    static func repairedCustomKeyboardCode(_ stored: String?) -> String {
+        let value = stored ?? ""
+        return customKeyboardBadDefaults.contains(value) ? "limenum" : value
+    }
+
+    /// A Chinese IM must never degrade to the preference-driven English runtime layout.
+    /// If its resolved layout is unavailable, use the existing generic Chinese composition
+    /// keyboard (`lime_number`, with an EN switch) rather than `lime_abc`/`lime_english*`.
+    static func chineseLayoutCandidates(preferred: String) -> [String] {
+        preferred == "lime_number" ? [preferred] : [preferred, "lime_number"]
+    }
+
+    private func loadChineseLayout(preferred: String) -> LimeKeyLayout? {
+        for candidate in Self.chineseLayoutCandidates(preferred: preferred) {
+            if let layout = LayoutLoader.load(candidate) { return layout }
+        }
+        return nil
     }
 
     static func hasSymbolMappingForKeyboard(_ baseHasSymbolMapping: Bool, keyboardId: String) -> Bool {
@@ -1101,7 +1133,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     private func applyResolvedActiveIMLayout() {
         guard !mEnglishOnly else { return }
         let layoutName = resolvedLayoutId(for: activeIM)
-        guard let layout = LayoutLoader.load(layoutName) else { return }
+        guard let layout = loadChineseLayout(preferred: layoutName) else { return }
         let adjusted = cj4SemicolonAdjusted(layout)
         guard adjusted != currentLayout else { return }
         clearShiftState()
@@ -1147,7 +1179,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // If the phonetic IM is currently active, swap the visible layout immediately.
         if activeIM == "phonetic", !mEnglishOnly {
             let newLayoutId = resolvedLayoutId(for: "phonetic")
-            if let newLayout = LayoutLoader.load(newLayoutId) {
+            if let newLayout = loadChineseLayout(preferred: newLayoutId) {
                 let adjusted = cj4SemicolonAdjusted(newLayout)
                 guard adjusted != currentLayout else { return }
                 currentLayout = adjusted
@@ -1181,7 +1213,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
             return "lime_\(tableNick)"
         }
-        let kbCode = imConfig.keyboardId
+        // fix#177: repair a legacy `custom` keyboard code before resolving, so an
+        // existing install lands on lime_number on the next IM switch without
+        // re-importing the table. This must run BEFORE the direct-layout early return:
+        // "lime_abc" is itself loadable, so a later repair would never be reached.
+        // "limenum" is not a layout filename, so it resolves via getKeyboardConfig below.
+        let kbCode = tableNick == "custom"
+            ? KeyboardViewController.repairedCustomKeyboardCode(imConfig.keyboardId)
+            : imConfig.keyboardId
         // If kbCode is a directly loadable layout filename (e.g. "lime_array", "phone_simple"),
         // use it as-is. This covers the fallback list path where we store the layout name directly.
         if LayoutLoader.load(kbCode) != nil {
@@ -3408,7 +3447,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         resetTempEnglishWord()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
         let layoutName = toEnglish ? englishLayoutId() : resolvedLayoutId(for: activeIM)
-        if let loaded = LayoutLoader.load(layoutName) { currentLayout = cj4SemicolonAdjusted(loaded) }
+        let loaded = toEnglish
+            ? LayoutLoader.load(layoutName)
+            : loadChineseLayout(preferred: layoutName)
+        if let loaded { currentLayout = cj4SemicolonAdjusted(loaded) }
         keyboardView.setLayout(currentLayout)
         applyHeight()
     }
@@ -3443,7 +3485,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
         // Update keyboard layout to match the new IM if available
         let preferredLayout = resolvedLayoutId(for: activeIM)
-        if let newLayout = LayoutLoader.load(preferredLayout) {
+        if let newLayout = loadChineseLayout(preferred: preferredLayout) {
             let adjusted = cj4SemicolonAdjusted(newLayout)
             if adjusted != currentLayout {
                 currentLayout = adjusted
@@ -4262,7 +4304,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                        keyboardId: keyboardId))
         searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
-        if let layout = LayoutLoader.load(resolvedLayoutId(for: activeIM)) {
+        if let layout = loadChineseLayout(preferred: resolvedLayoutId(for: activeIM)) {
             let adjusted = cj4SemicolonAdjusted(layout)
             if adjusted != currentLayout {
                 currentLayout = adjusted
@@ -4910,7 +4952,10 @@ extension KeyboardViewController: KeyboardViewDelegate {
         let layoutName = toEnglish
             ? englishLayoutId()
             : resolvedLayoutId(for: activeIM)
-        guard let layout = LayoutLoader.load(layoutName) else { return }
+        let loaded = toEnglish
+            ? LayoutLoader.load(layoutName)
+            : loadChineseLayout(preferred: layoutName)
+        guard let layout = loaded else { return }
         let adjusted = cj4SemicolonAdjusted(layout)
         currentLayout = adjusted
         keyboardView.setLayout(adjusted)

@@ -134,6 +134,16 @@ Rows should normally total to 100% parent width once key widths and gaps are con
 
 For iPad-specific row structure and generation invariants, defer to [IPAD_KEYBOARD.md](IPAD_KEYBOARD.md). That file owns the current rules for 5-row iPad layouts, row key counts, bottom-row template, shift mirroring, transparent spacers, globe visibility, and dual-sliding key label convention.
 
+### Chinese-mode layout invariant
+
+An active Chinese IM must never silently fall back to an English runtime layout. English layouts
+such as `lime_english*` and the legacy `lime_abc` are valid only after an explicit mode switch or
+for a host field that requires English. If a resolved Chinese layout cannot be loaded, iOS uses
+the bundled generic Chinese composition layout `lime_number`. Its mode key explicitly switches to
+English, so degraded layout resolution preserves Chinese composition state and a working EN path.
+Android and iOS mapping changes must preserve this invariant, with Android's imported-IM keyboard
+mapping used as the parity reference.
+
 ## Special Key Codes
 
 Shared Android/iOS codes:

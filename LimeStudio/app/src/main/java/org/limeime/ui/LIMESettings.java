@@ -149,9 +149,7 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
         super.onCreate(savedInstanceState);
         // Enable edge-to-edge across all API levels via the AndroidX helper (replaces
         // the deprecated setStatusBarColor/setNavigationBarColor calls flagged by Play).
-        if (shouldUseEdgeToEdgeHelper(Build.VERSION.SDK_INT)) {
-            EdgeToEdge.enable(this);
-        }
+        EdgeToEdge.enable(this);
         // Register back gesture/press callback for AndroidX
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
@@ -503,10 +501,6 @@ public class LIMESettings extends AppCompatActivity implements LIMESettingsView 
 
         // Transparent system bars and light/dark bar-icon appearance are handled by
         // EdgeToEdge.enable(this) in onCreate (auto-detects night mode across API levels).
-    }
-
-    public static boolean shouldUseEdgeToEdgeHelper(int sdkInt) {
-        return sdkInt >= Build.VERSION_CODES.VANILLA_ICE_CREAM;
     }
 
     /**
