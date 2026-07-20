@@ -337,7 +337,7 @@ So iOS holds the touch in the thin **screen-edge strip** to disambiguate its own
 
 ### 2026-07-02 — RESOLVED. Root cause was UIKit touch-delivery delay, NOT `rebuildButtons` starvation
 
-**Fixed and device-confirmed on branch `ios-touch-rewrite`.** After the touch rewrite (docs/IOS_TOUCH_REWRITE.md) gave the single-owner `KeyTouchLayer`, the residual high-speed misses were closed via the plan in **docs/IOS_OPT_TOUCH.md**. The result reframes this doc's central hypothesis.
+**Fixed and device-confirmed on branch `ios-touch-rewrite`.** After the touch rewrite (docs/IOS_TOUCH_REWRITE.md) moved ordinary keys to `KeyTouchLayer` ownership, the residual high-speed misses were closed via the plan in **docs/IOS_OPT_TOUCH.md**. At this point the implementation has one owner **per row/half**, not one full-keyboard owner; see the 2026-07-13 correction below. The result still reframes this doc's central missed-key hypothesis.
 
 **Correction to this document's main theory.** The dominant cause was **not** `CandidateBarView.rebuildButtons()` main-thread starvation. Two pieces of evidence:
 
@@ -355,7 +355,7 @@ The actual dominant cause was **UIKit delaying/dropping `touchesBegan`** — the
 - Commit plain keys on `touchesBegan` not release (`d97d52f3`) — a dropped `touchesEnded` can no longer silently swallow a key.
 - **P1 of this doc (diffable `rebuildButtons`) finally landed** (`4daae397`, docs/IOS_OPT_TOUCH.md Task 6): grow/shrink/configure-in-place instead of teardown-all. Still worthwhile for Chinese/candidate-active bursts and battery, just not the root of the misses. **P2 (defer one runloop) was NOT needed** and left unimplemented.
 
-**Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on the single `KeyTouchLayer` (the actual touch owner), and the scattered per-view flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`.
+**Hypothesis (4) update (2026-05-24 multi-touch).** The five scattered `isMultipleTouchEnabled = true` flags were subsumed by the rewrite: multi-touch now lives on each `KeyTouchLayer` that can own a touch, and the scattered container flags were removed in the rewrite's P4. Rollover is handled by one `TouchTracker` per `UITouch`. P5 in IOS_TOUCH_REWRITE.md will consolidate those row/half owners into one keyboard-wide layer.
 
 **Device outcome (the physical test iPhone, LimeIME scheme, force-refreshed per the protocol above):** high-speed misses went from frequent → "much better" (after Phase 1) → confirmed fixed by the user. Full headless suite green (130/0).
 
