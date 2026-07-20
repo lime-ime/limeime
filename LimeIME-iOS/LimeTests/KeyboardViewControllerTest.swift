@@ -221,6 +221,20 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    func testAllIPadJsonLayoutsLabelSwitchToEnglishAsAbc() throws {
+        let urls = try FileManager.default.contentsOfDirectory(
+            at: projectFileURL("LimeKeyboard/Layouts"),
+            includingPropertiesForKeys: nil
+        ).filter { $0.lastPathComponent.contains("_ipad") && $0.pathExtension == "json" }
+
+        for url in urls {
+            let layout = try JSONDecoder().decode(KeyboardLayoutFixture.self, from: Data(contentsOf: url))
+            for key in layout.rows.flatMap(\.keys) where key.code == LimeKeyCode.switchToEnglish.rawValue {
+                XCTAssertEqual(key.label, "abc", url.lastPathComponent)
+            }
+        }
+    }
+
     func testIPadBottomRowSumsToHundredPercent() throws {
         for id in iPadLayoutsForBottomRowAudit {
             let layout = try loadKeyboardLayoutFixture(id)
