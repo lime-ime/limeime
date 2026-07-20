@@ -474,11 +474,24 @@
           "longPressCode": 0
         },
         {
+          "code": 12290,
+          "label": "。",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
           "code": 0,
           "codes": [
             0
           ],
-          "widthPercent": 11.0,
+          "widthPercent": 3.0,
           "label": "",
           "sublabel": "",
           "icon": "",

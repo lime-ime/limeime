@@ -207,6 +207,14 @@ IM_ROOTS = {
     "lime_et26":          "qazwsxedcrfvtgbyhnujmikolp,.",
     "lime_et_41":         "abcdefghijklmnopqrstuvwxyz12347890-=;',./",
     "lime_hsu":           "azwsxedcrfvtgbyhnujmikolpq,.",
+    # Includes both the tap glyph and the shift-collapsed long-press glyph of
+    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so neither layer's
+    # trim walk can drop them. The quote root is not trimmed but DISPLACED:
+    # trim_layout moves it from asdf to the zxcv right edge (standard stair
+    # shape / key alignment — §A.12.2), so asdf keeps `:|;` as its single
+    # symbol root like lime_dayi_sym, and the quote key rides zxcv like the
+    # displaced `。|，` of other IMs.
+    "lime_num_sym2":      "\"';:,./abcdefghijklmnopqrstuvwxyz",
     "lime_wb":            ",./mn",
     # Derived from Database/{ez,hs}.db (2026-05 read):
     "lime_ez":            "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
@@ -568,8 +576,24 @@ implementation detail. Bottom row always 6.
 | `lime_hs` | 14 / 14 / 13 / 12 | 13 / 13 / 12 / 12 |
 | `lime_wb` | 3 / 4 (no-op) | 3 / 4 (no-op) |
 | `lime_english` + `lime_abc` (English-only on iPad — see §A.12) | 14 / 14 / 13 / 12 | 12 / 12 / 11 / 11 |
-| `lime_number_symbol` (LIME number-symbol IM — see §A.12.1) | 14 / 14 / 13 / 12 | base: 12 / 12 / 12 / 13; Shift: 12 / 12 / 12 / 12 |
+| `lime_number_symbol` (LIME number-symbol IM — see §A.12.1) | 14 / 14 / 13 / 12 | base: 12 / 12 / 12 / 13; Shift: 12 / 12 / 12 / 13 |
+| `lime_num_sym2` (LIME+數字符號鍵盤2, feat#159 — see §A.12.2) | 14 / 14 / 13 / 12 | narrow (both layers): 12 / 12 / 12 / 13 |
 | `symbols1` + `symbols2` + `symbols3` (phone-style symbol pages — see §A.13) | phone pages | copied phone content rows + narrow symbol bottom |
+
+Phase 3b fix (feat#159): before this fix, the `_narrow_shift` sibling of any
+layout whose unshifted narrow zxcv displaces `。|，` off asdf (`lime_phonetic`,
+`lime_dayi`, `lime_dayi_sym`, `lime_array`, `lime_array_number`, `lime_cj`,
+`lime_cj_number`, `lime_et26`, `lime_et_41`, `lime_hsu`, `lime_number_symbol`)
+dropped that cell instead of mirroring it, so the shift-side zxcv row shipped
+one cell short of the unshifted row (raw shipped `_ipad_narrow_shift.json`
+zxcv key-list length 12 vs. the unshifted 13, once the invisible trailing
+alignment spacer is included in the count). The shift row now carries a fixed
+`。` (12290) in that slot, so raw zxcv key-list length is 13 on both layers
+for all 11 layouts — the shift-mirror rule (§12 of `IPAD_KEYBOARD.md`) holds
+at the narrow tier the same as at the full tier. `lime_ez` keeps its
+pre-existing exclusion (its `。|，` handling is a different, ez-specific code
+path); `lime_num_sym2` (§A.12.2) is unaffected — it has no `。|，` cell at any
+tier, so nothing is displaced.
 
 Function keys must be at least as wide as normal keys. Narrow digit
 rows with Backspace preserve 11 content keys where the source has them,
@@ -1005,10 +1029,88 @@ lime_number_symbol_ipad_narrow_shift
 digit  (12): ! @ # $ % ^ & * ( ) +|_ [⌫]
 qwerty (12): Q W E R T Y U I O P 『 』
 asdf   (12): [spacer] A S D F G H J K L ； [↩]
-zxcv   (12): [⇧] Z X C V B N M < > ? [spacer]
+zxcv   (13): [⇧] Z X C V B N M < > ? 。 [spacer]
 ```
 
 Both narrow bottom rows are `globe .?123 emoji space 中 dismiss`.
+
+Phase 3b fix: the trimmer now mirrors the unshifted zxcv row's displaced
+`。|，` as a fixed `。` (12290) on the shift layer, so zxcv is 13 raw cells on
+both layers (previously the shift layer dropped the cell and shipped 12,
+one short of the unshifted 13 — the blank slot was neither typeable nor
+visible while shift/caps-lock was active). The shift-mirror rule
+(`IPAD_KEYBOARD.md` §12) now holds at the narrow tier for `lime_number_symbol`
+the same as it does at the full tier. `lime_ez` is excepted — its `。|，`
+handling goes through a different, ez-specific code path and is out of
+scope for this fix.
+
+### A.12.2 `lime_num_sym2`
+
+`lime_num_sym2` (LIME+數字符號鍵盤2, feat#159 / issue #159, table `tricode`,
+keyboard `limenumsym2`) is a new Chinese IM — same key set as
+`lime_number_symbol` (a–z + `; ' , . /`) but the `lime_dayi_sym`/`lime_phonetic`
+row structure. It follows the full Chinese-IM scaffold, 14 / 14 / 13 / 12
+content-row counts:
+
+```
+lime_num_sym2_ipad
+digit  (14): ~|` !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— +|= [⌫]
+qwerty (14): [Tab] q w e r t y u i o p 『|「 』|」 ？|、
+asdf   (13): [abc] a s d f g h j k l :|; "|' [↩]
+zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [⇧]
+
+lime_num_sym2_ipad_shift
+digit  (14): ~ ! @ # $ % ^ & * ( ) … + [⌫]
+qwerty (14): [Tab] Q W E R T Y U I O P 『 』 ？
+asdf   (13): [abc] A S D F G H J K L : " [↩]
+zxcv   (12): [⇧] Z X C V B N M < > ? [⇧]
+```
+
+- asdf `:|;` = tap 59 / slide 58; `"|'` = tap 39 / slide 34 — the `〃` key
+  promoted from the phone bottom row (English-layout `"|,` precedent), NOT
+  the fullwidth `；\n：`/`。\n，` scaffold cells.
+- digit `…|—` / `+|=` and qwerty `『|「 』|」 ？|、` are standard iPad scaffold
+  fallbacks (not 3code code keys). The dash slot is `…|—`, not `_|-`: the
+  phone source has no `-` key, so the established Chinese-IM-class dash
+  fallback (`…|—`, as in dayi/cj/hsu) applies rather than the
+  `lime_number_symbol` §A.12.1 `=|-`/`+|_` pairing exception (that exception
+  exists only because `lime_number_symbol`'s phone source *does* have `-`/`=`
+  keys to pair; `lime_num_sym2` has none).
+
+Narrow tier trims per §6 with `IM_ROOTS = "\"';:,./abcdefghijklmnopqrstuvwxyz"`
+(§6.2) — the five 3code code keys (both their tap and shift-collapsed
+long-press glyphs) are roots and are never trimmed, never fullwidth-substituted:
+
+```
+lime_num_sym2_ipad_narrow
+digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— [⌫]
+qwerty (12): q w e r t y u i o p 『|「 』|」
+asdf   (12): [spacer] a s d f g h j k l :|; [↩]
+zxcv   (13): [⇧] z x c v b n m <|, >|. ?|/ "|' [spacer]
+
+lime_num_sym2_ipad_narrow_shift
+digit  (12): ! @ # $ % ^ & * ( ) … [⌫]
+qwerty (12): Q W E R T Y U I O P 『 』
+asdf   (12): [spacer] A S D F G H J K L : [↩]
+zxcv   (13): [⇧] Z X C V B N M < > ? " [spacer]
+```
+
+Both narrow bottom rows are `globe .?123 emoji space abc dismiss`.
+
+- The digit row keeps `…|—` before `[⌫]` (11 content keys, BALANCE rule).
+  The `lime_number_symbol` `=|-`/`+|_` pairing exception does not apply here
+  — this layout's phone source has no `-`/`=` keys at all, so there is
+  nothing to pair; the `…|—` scaffold fallback survives instead.
+- asdf drops `[abc]` (mode key moves to the bottom row) and follows the
+  standard 11-visible stair shape (leading spacer + a…l + `:|;` + `[↩]`).
+- The quote root key is **displaced, not trimmed**: the trimmer moves `"|'`
+  (unshifted) / `"` (shifted) from asdf to the zxcv right edge — the same
+  position other Chinese IMs give their displaced `。|，` — so the key stays
+  aligned across rows and both layers stay symmetric (13/13). It is
+  root-protected, so the displacement is an explicit `lime_num_sym2` branch
+  in `trim_layout`, not the trim walk.
+- `lime_num_sym2` has no `。|，` cell at any tier, so the Phase 3b `。`
+  mirror fix does not apply to it.
 
 ### A.13 Symbol narrow layouts
 

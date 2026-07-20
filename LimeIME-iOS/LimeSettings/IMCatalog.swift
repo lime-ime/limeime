@@ -152,6 +152,16 @@ enum IMCatalog {
             ]
         ),
         .init(
+            id: "tricode",
+            chineseName: "三碼",
+            englishName: "3code",
+            description: "三碼輸入法，一字最多三碼",
+            systemIcon: "textformat.alt",
+            variants: [
+                .init(id: "tricode", name: "三碼 v.20260715.1", filename: "tricode.limedb", tableName: "tricode", imName: "tricode", label: "三碼", keyboardId: "limenumsym2", recordCount: 14_250, compressedKB: 227),
+            ]
+        ),
+        .init(
             id: "ez",
             chineseName: "輕鬆",
             englishName: "EZ",
