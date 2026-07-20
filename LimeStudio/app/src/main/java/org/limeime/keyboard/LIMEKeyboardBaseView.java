@@ -953,6 +953,15 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
         return label;
     }
 
+    private static int fittedTextSize(Paint paint, String text, int textSize,
+                                      int availableWidth, int availableHeight, float minimumScale) {
+        paint.setTextSize(textSize);
+        Paint.FontMetrics metrics = paint.getFontMetrics();
+        float scale = KeyLabelFit.scale(availableWidth, availableHeight, paint.measureText(text),
+                metrics.descent - metrics.ascent, minimumScale);
+        return Math.max(1, Math.round(textSize * scale));
+    }
+
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // Round up a little
@@ -1087,7 +1096,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                 boolean shouldDrawIcon = true;
                 if (label != null) {
                     // For characters, use large font. For labels like "Done", use small font.
-                    final int labelSize;
+                    int labelSize;
 
 //                    if (DEBUG)
 //                        Log.i(TAG, "onBufferDraw():" + label
@@ -1137,6 +1146,17 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     }
                     paint.setTextSize(labelSize);
 
+                    final int drawableWidth = Math.max(1, key.width - padding.left - padding.right);
+                    final int drawableHeight = Math.max(1, key.height - padding.top - padding.bottom);
+                    final boolean verticalLabels = hasSubLabel
+                            && (key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel);
+                    final int labelWidthLimit = hasSubLabel && !verticalLabels
+                            ? drawableWidth / 2 : drawableWidth;
+                    final int labelHeightLimit = verticalLabels ? drawableHeight / 2 : drawableHeight;
+                    labelSize = fittedTextSize(paint, label, labelSize, labelWidthLimit,
+                            labelHeightLimit, hasSubLabel ? 0.6f : 0.5f);
+                    paint.setTextSize(labelSize);
+
 
                     int labelHeight = 0;
                     int labelWidth = 0;
@@ -1172,11 +1192,21 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     float baseline = centerY
                             + labelHeight * KEY_LABEL_VERTICAL_ADJUSTMENT_FACTOR;
                     if (hasSubLabel) {
-                        final int subLabelSize = (int) (mSubLabelTextSize * keySizeScale * labelSizeScale);
+                        int subLabelSize = (int) (mSubLabelTextSize * keySizeScale * labelSizeScale);
                         final int subLabelHeight;
                         final int subLabelWidth;
                         paint.setTypeface(Typeface.DEFAULT_BOLD);
 
+                        paint.setTextSize(subLabelSize);
+                        int subLabelWidthLimit = verticalLabels ? drawableWidth : drawableWidth / 2;
+                        if (hasSecondSubLabel) subLabelWidthLimit /= 2;
+                        subLabelSize = fittedTextSize(paint, subLabel, subLabelSize,
+                                subLabelWidthLimit, verticalLabels ? drawableHeight / 2 : drawableHeight,
+                                0.6f);
+                        if (hasSecondSubLabel) {
+                            subLabelSize = Math.min(subLabelSize, fittedTextSize(paint, secondSubLabel,
+                                    subLabelSize, subLabelWidthLimit, drawableHeight / 2, 0.6f));
+                        }
                         paint.setTextSize(subLabelSize);
                         if (mTextHeightCache.get(subLabelSize) != null) {
                             Integer cachedSubLabelHeight = mTextHeightCache.get(subLabelSize);

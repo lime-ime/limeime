@@ -335,10 +335,8 @@ public class LIMEKeyboardSwitcher {
 					int portraitMode = mLIMEPref.getPhonePortraitKeyboardMode();
 					boolean landscapeSplit = mLIMEPref.getPhoneLandscapeSplit();
 					splitArg = LIMEBaseKeyboard.SPLIT_KEYBOARD_NEVER;
-					phoneSplitForced = splitEligible
-							&& ((landscapeBuild && mLIMEPref.getShowArrowKeys() != 0)
-							|| PhoneKeyboardModePolicy.phoneSplitActive(
-									landscapeBuild, true, portraitMode, landscapeSplit));
+					phoneSplitForced = PhoneKeyboardModePolicy.phoneSplitActive(
+							landscapeBuild, splitEligible, portraitMode, landscapeSplit);
 					phoneOneHandAnchor = PhoneKeyboardModePolicy.oneHandAnchorMode(landscapeBuild, portraitMode);
 				}
 				LIMEKeyboard keyboard = new LIMEKeyboard(

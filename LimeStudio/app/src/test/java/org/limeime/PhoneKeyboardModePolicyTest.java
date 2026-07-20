@@ -66,6 +66,21 @@ public class PhoneKeyboardModePolicyTest {
     }
 
     @Test
+    public void tabletLandscapeUsesOnlyTabletSplitPreference() {
+        assertFalse(PhoneKeyboardModePolicy.tabletSplitActive(true, true, 0));
+        assertTrue(PhoneKeyboardModePolicy.tabletSplitActive(true, true, 1));
+        assertTrue(PhoneKeyboardModePolicy.tabletSplitActive(true, true, 2));
+        assertFalse(PhoneKeyboardModePolicy.tabletSplitActive(false, true, 2));
+    }
+
+    @Test
+    public void unsplitLandscapeKeepsRequestedArrowRow() {
+        assertTrue(PhoneKeyboardModePolicy.usesArrowRow(true, false));
+        assertFalse(PhoneKeyboardModePolicy.usesArrowRow(true, true));
+        assertTrue(PhoneKeyboardModePolicy.usesArrowRow(false, true));
+    }
+
+    @Test
     public void numpadNeverSplitsButCanUsePortraitOneHand() {
         assertFalse(PhoneKeyboardModePolicy.phoneSplitActive(
                 false, false, PhoneKeyboardModePolicy.PORTRAIT_SPLIT, true));

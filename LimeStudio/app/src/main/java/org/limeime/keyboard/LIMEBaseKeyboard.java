@@ -829,14 +829,11 @@ public class LIMEBaseKeyboard {
         // orientation-gated split decision. Phones use the integrated portrait mode
         // + separate landscape split, resolved into phoneSplitForced by
         // PhoneKeyboardModePolicy in LIMEKeyboardSwitcher (portrait split is honored;
-        // landscape split uses phone_landscape_split unless Android arrow keys force the
-        // centre split required by the legacy arrow-key layout).
+        // landscape split uses phone_landscape_split).
         boolean tablet = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
         if (tablet) {
-            mSplitKeyboard = splitEligible
-                    && ((mLandScape && mShowArrowKeys != 0)
-                    || (mLandScape && splitKeyboard == SPLIT_KEYBOARD_LANDSCAPD_ONLY)
-                    || (splitKeyboard == SPLIT_KEYBOARD_ALWAYS && (tablet || mLandScape)));
+            mSplitKeyboard = PhoneKeyboardModePolicy.tabletSplitActive(
+                    mLandScape, splitEligible, splitKeyboard);
         } else {
             mSplitKeyboard = splitEligible && phoneSplitForced;
         }
@@ -1246,10 +1243,11 @@ public class LIMEBaseKeyboard {
         Resources res = context.getResources();
         boolean skipRow;
 
-        /* Show arrow keys on top of the soft keyboard in portrait mode.*/
-        boolean showArrowKeysOnTop = (mShowArrowKeys == 1) && (mDisplayWidth < mDisplayHeight);
-        /* Show arrow keys on bottom of the soft keyboard in portrait mode.*/
-        boolean showArrowKeysOnBottom = (mShowArrowKeys == 2) && (mDisplayWidth < mDisplayHeight);
+        // Split landscape uses the center arrow column; every other geometry uses a full row.
+        boolean usesArrowRow = PhoneKeyboardModePolicy.usesArrowRow(
+                mDisplayWidth > mDisplayHeight, mSplitKeyboard);
+        boolean showArrowKeysOnTop = mShowArrowKeys == 1 && usesArrowRow;
+        boolean showArrowKeysOnBottom = mShowArrowKeys == 2 && usesArrowRow;
         /* The left bound of the center blank area on split keyboard. */
         int leftSplitBorder = 0;
         /* The distance to be shifted for right side keyboard */

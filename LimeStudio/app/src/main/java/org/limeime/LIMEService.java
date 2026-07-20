@@ -3668,9 +3668,8 @@ public class LIMEService extends InputMethodService
 
         builder.setCancelable(true);
         builder.setIcon(R.drawable.logo);
-        // Inline segmented controls make a "Cancel" button a logic mismatch (you'd
-        // select, then cancel). Use a positive 完成 that simply dismisses; the inline
-        // choices are applied on dismiss (see setOnDismissListener below).
+        // Geometry controls apply immediately; 完成 simply dismisses the panel.
+        // Han conversion remains deferred until dismissal.
         builder.setPositiveButton(R.string.keyboard_menu_done, null);
         builder.setTitle(getResources().getString(R.string.ime_name));
 
@@ -3683,7 +3682,6 @@ public class LIMEService extends InputMethodService
         int displayHeight = dm.heightPixels;
         final boolean isLandScape = displayWidth > displayHeight;
 
-        //Jeremy '12,5,27 do not show split/merge keyboard option if in landscape mode and show arrow keys is on
         // SPLIT_ONE_HAND_KB exclusivity: numpad layouts show 數字鍵盤位置 only;
         // ordinary layouts show 分離鍵盤 / 單手鍵盤. (spec: keyboard-menu rule)
         final boolean isNumpadKb = mKeyboardSwitcher.isNumpadKeyboard();
@@ -3695,13 +3693,9 @@ public class LIMEService extends InputMethodService
         // control hides its 分離 segment and the landscape control is not shown.
         final boolean phoneControls =
                 org.limeime.keyboard.PhoneKeyboardModePolicy.phoneControlsApply(isTablet);
-        final boolean hasTabletSplitOption = isTablet && !isNumpadKb
-                && !(isLandScape && mShowArrowKeys > 0);
+        final boolean hasTabletSplitOption = isTablet && !isNumpadKb;
         final boolean hasPhonePortraitMode = phoneControls && !isLandScape;
-        // Android's legacy landscape arrow-key layout requires the centre split. Hide the
-        // binary preference while arrows force it on, because 關閉 could not take effect.
-        final boolean hasPhoneLandscapeSplit = phoneControls && isLandScape && !isNumpadKb
-                && mShowArrowKeys == 0;
+        final boolean hasPhoneLandscapeSplit = phoneControls && isLandScape && !isNumpadKb;
         final boolean hasNumpadAnchorOption = isTablet && isNumpadKb;
 
         // Custom panel: every entry is a styled row and 簡繁轉換 hosts its segmented
@@ -3737,9 +3731,8 @@ public class LIMEService extends InputMethodService
                 getString(R.string.voice_input), null,
                 () -> handleKeyboardMenuAction(ACTION_VOICEINPUT, isLandScape));
 
-        // Inline segmented controls record a pending choice; both are applied on
-        // dismiss (完成 / back / outside-tap), so the panel stays stable while the
-        // user adjusts more than one and the keyboard rebuilds only once.
+        // Han conversion is deferred until dismissal. Geometry controls below apply
+        // immediately so their selected state always matches the keyboard behind them.
         final int hanCurrent = clampIndex(mLIMEPref.getHanCovertOption(), 3);
         final int[] pendingHan = { hanCurrent };
         com.google.android.material.button.MaterialButtonToggleGroup hanGroup =
@@ -3769,7 +3762,14 @@ public class LIMEService extends InputMethodService
             splitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
                 for (int i = 0; i < splitIds.length; i++) {
-                    if (splitIds[i] == checkedId) { pendingSplit[0] = i; break; }
+                    if (splitIds[i] == checkedId && pendingSplit[0] != i) {
+                        pendingSplit[0] = i;
+                        mSplitKeyboard = i;
+                        mLIMEPref.setSplitKeyboard(i);
+                        invalidateStartupConfigSnapshot();
+                        applyGeometryChangeInPlace();
+                        break;
+                    }
                 }
             });
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(splitGroup);
@@ -3799,7 +3799,13 @@ public class LIMEService extends InputMethodService
             portraitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
                 for (int i = 0; i < portraitIds.length; i++) {
-                    if (portraitIds[i] == checkedId) { pendingPortrait[0] = i; break; }
+                    if (portraitIds[i] == checkedId && pendingPortrait[0] != i) {
+                        pendingPortrait[0] = i;
+                        mLIMEPref.setPhonePortraitKeyboardMode(i);
+                        invalidateStartupConfigSnapshot();
+                        applyGeometryChangeInPlace();
+                        break;
+                    }
                 }
             });
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(portraitGroup);
@@ -3818,7 +3824,13 @@ public class LIMEService extends InputMethodService
             landscapeSplitGroup.check(landscapeSplitIds[landscapeSplitCurrent ? 1 : 0]);
             landscapeSplitGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
-                pendingLandscapeSplit[0] = checkedId == R.id.landscape_split_opt_on;
+                boolean selected = checkedId == R.id.landscape_split_opt_on;
+                if (pendingLandscapeSplit[0] != selected) {
+                    pendingLandscapeSplit[0] = selected;
+                    mLIMEPref.setPhoneLandscapeSplit(selected);
+                    invalidateStartupConfigSnapshot();
+                    applyGeometryChangeInPlace();
+                }
             });
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(landscapeSplitGroup);
         }
@@ -3837,38 +3849,23 @@ public class LIMEService extends InputMethodService
             anchorGroup.addOnButtonCheckedListener((g, checkedId, isChecked) -> {
                 if (!isChecked) return;
                 for (int i = 0; i < anchorIds.length; i++) {
-                    if (anchorIds[i] == checkedId) { pendingAnchor[0] = i; break; }
+                    if (anchorIds[i] == checkedId && pendingAnchor[0] != i) {
+                        pendingAnchor[0] = i;
+                        mLIMEPref.setNumpadAnchor(i);
+                        invalidateStartupConfigSnapshot();
+                        applyGeometryChangeInPlace();
+                        break;
+                    }
                 }
             });
             org.limeime.ui.view.SegmentedHanPreference.stackIfClipped(anchorGroup);
         }
 
-        // Apply the inline choices once, on dismiss.
+        // Geometry choices apply immediately so the highlighted option and rendered
+        // keyboard cannot disagree behind the dialog. Han conversion remains deferred.
         mOptionsDialog.setOnDismissListener(d -> {
             if (pendingHan[0] != hanCurrent) {
                 handleHanConvertSelection(pendingHan[0]);
-            }
-            boolean geometryChanged = false;
-            if (pendingSplit[0] != splitCurrent) {
-                mLIMEPref.setSplitKeyboard(pendingSplit[0]);
-                geometryChanged = true;
-            }
-            if (pendingPortrait[0] != portraitCurrent) {
-                mLIMEPref.setPhonePortraitKeyboardMode(pendingPortrait[0]);
-                geometryChanged = true;
-            }
-            if (pendingLandscapeSplit[0] != landscapeSplitCurrent) {
-                mLIMEPref.setPhoneLandscapeSplit(pendingLandscapeSplit[0]);
-                geometryChanged = true;
-            }
-            if (pendingAnchor[0] != anchorCurrent) {
-                mLIMEPref.setNumpadAnchor(pendingAnchor[0]);
-                geometryChanged = true;
-            }
-            if (geometryChanged) {
-                invalidateStartupConfigSnapshot();
-                // Rebuild in place — handleClose() would requestHideSelf() and dismiss the IME.
-                applyGeometryChangeInPlace();
             }
         });
 

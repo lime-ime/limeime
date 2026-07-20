@@ -39,6 +39,15 @@ public final class PhoneKeyboardModePolicy {
         return landscape ? landscapeSplit : portraitMode == PORTRAIT_SPLIT;
     }
 
+    public static boolean tabletSplitActive(boolean landscape, boolean splitEligible,
+                                            int splitMode) {
+        return splitEligible && (splitMode == 1 || (landscape && splitMode == 2));
+    }
+
+    public static boolean usesArrowRow(boolean landscape, boolean split) {
+        return !landscape || !split;
+    }
+
     public static int oneHandAnchorMode(boolean landscape, int portraitMode) {
         if (landscape) return 0;
         if (portraitMode == PORTRAIT_ONE_HAND_LEFT) return 1;
