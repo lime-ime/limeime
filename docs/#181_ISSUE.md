@@ -5,7 +5,8 @@
 - Issue: https://github.com/lime-ime/limeime/issues/181
 - Classification: bug, usability, iPad layout generation
 - Platform: iOS iPad layouts only. Phone JSON and Android XML resources are unchanged.
-- State: corrected on a clean replacement branch after Android parity review. Not yet released.
+- State: corrected on clean replacement PR #183 after Android parity review. Not yet released.
+- Pull request: https://github.com/lime-ime/limeime/pull/183
 
 ## Correct layout categories
 
