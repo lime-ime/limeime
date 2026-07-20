@@ -27,7 +27,7 @@ Done means: on both platforms the user can download 三碼 from the install list
      15%     15%     10%      20%    10%   15%    15%
   ```
 
-  The site's `〃` label is the fullwidth keyname of ASCII `'` — the key sends code 39 (`'`, what the cin uses), labeled `'`/`〃`. Space is 20%p (precedent: `lime_phonetic` bottom row). Rows 1–4 and the bottom-row modifier pattern are cloned from `lime_dayi_sym` (:30–101), minus the dayi radical sub-labels.
+  The site's `〃` label is the fullwidth keyname of ASCII `'` — the key sends code 39 (`'`, what the cin uses) and is labeled plain `'` on the keyface; `〃` is the IM keyname (carried by the im metadata `imkeynames`, shown in the composing display), not baked into the layout. Space is 20%p (precedent: `lime_phonetic` bottom row). Rows 1–4 and the bottom-row modifier pattern are cloned from `lime_dayi_sym` (:30–101), minus the dayi radical sub-labels.
 - `.limedb` never imports the `keyboard` table (LIMEDB_SPEC.md §Keyboard Table) — the `limenumsym2` keyboard row MUST be seeded in code on both platforms (`insertKeyboardIfAbsent` pattern, precedent `ensureCangjieSemicolonKeyboards()`), so it also appears on existing installs.
 
 ## Source facts (from `.claude/txt/3code.cin`, downloaded from https://3code-type.github.io/3code.cin)

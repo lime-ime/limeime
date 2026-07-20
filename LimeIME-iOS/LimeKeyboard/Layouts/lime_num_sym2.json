@@ -556,7 +556,7 @@
         {
           "code": 39,
           "label": "'",
-          "sublabel": "〃",
+          "sublabel": "",
           "widthPercent": 10.0,
           "icon": "",
           "isModifier": false,
