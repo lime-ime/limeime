@@ -27,7 +27,11 @@ NARROW_WIDTH_BY_BASE = {
     "lime_hs": 7.5,
 }
 ROOT_HEAVY_BASES = {"lime_ez", "lime_hs"}
-ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number", "lime_number", "lime_number_symbol", "lime_shift"}
+# Layout families that *are* the English mode. Only these keep the -10/中 key,
+# which is the way back to Chinese. Every other layout (including the number,
+# number-symbol and shift pages, which are reached from Chinese mode) needs the
+# -9 key so English stays reachable — see issue #181.
+ENGLISH_BASES = {"lime_english", "lime_abc", "lime_email", "lime_url", "lime_english_number"}
 
 IM_ROOTS = {
     "lime_phonetic": "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik,9ol.0p;/-",
@@ -64,7 +68,7 @@ BOTTOM_NARROW_ZH = [
 
 SYMBOL_BOTTOM_NARROW = [
     {"code": -200, "label": "globe", "sublabel": "", "widthPercent": 9.0, "icon": "globe", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": -100},
-    {"code": -2, "label": "abc", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
+    {"code": -2, "label": "EN", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": -201, "label": "", "sublabel": "", "widthPercent": 8.0, "icon": "face.smiling", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": 32, "label": "", "sublabel": "", "widthPercent": 53.0, "icon": "space.bar", "isModifier": False, "isRepeatable": True, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
     {"code": -10, "label": "中", "sublabel": "", "widthPercent": 11.0, "icon": "", "isModifier": True, "isRepeatable": False, "isSticky": False, "popupKeyboard": "", "popupCharacters": "", "longPressCode": 0},
