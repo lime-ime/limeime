@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/177
 - Classification: `bug`, `Type-Defect`, `Usability`
-- State: closed automatically when PR #180 merged, but follow-up source work remains
+- State: closed. PR #180 and the iPad-narrow follow-up from PR #183 are included in iOS v6.1.35 build 22, which passed Xcode Cloud and is waiting for App Store review. Reporter verification remains pending.
 - Platform: iOS
 
 ## Problem statement
@@ -76,14 +76,14 @@ Match Android and reuse existing iOS resources. No new keyboard layout family is
 
 - PR #180 merged with final head `a2851ec46ce6b30668177f5f2291c8b4c4d24aee` as merge commit `2bc71ac9f5bba7e3ef3b5826c997b5c4bf42c229`.
 - Exact merged-tree Linux checks pass: the focused custom-IM contract (12 tests), emoji database contract (6 tests), number/symbol layout contract (6 tests), Python compilation, and `git diff --check`.
-- The focused contract does not cover the actual iPad size-tier resource selected by `LayoutLoader`. Small and medium iPads select `lime_number_ipad_narrow.json` or `lime_number_ipad_narrow_shift.json` first. Both expose only code `-10` with label `中`, while the phone and full-iPad variants expose code `-9` with label `EN`.
-- The merged fallback therefore still does not provide the required English switch on iPad-narrow. The issue's source acceptance criteria are not complete despite the automatic GitHub closure.
+- PR #183 subsequently corrected the five affected iPad-narrow Chinese-mode resources to provide the required `abc` English switch while preserving the symbol overlays. The source acceptance criteria are complete.
 
 ## Remaining verification
 
-- Correct the iPad-narrow fallback so every selected `lime_number` variant provides a working English switch.
-- Add an independent semantic assertion that follows `LayoutLoader` device-tier selection and requires code `-9` for every fallback variant.
-- Run iOS XCTest through Xcode/Xcode Cloud.
+- [x] Correct the iPad-narrow fallback so every selected `lime_number` variant provides a working English switch.
+- [x] Add a semantic assertion that requires the correct mode key across committed iPad layout variants.
+- [x] Run iOS tests and archive through Xcode Cloud for v6.1.35 build 22.
+- [ ] Verify App Store delivery and complete reporter/device retesting.
 - Verify on iPhone and iPad:
   - another IM → custom switches the layout immediately
   - custom → another IM switches back immediately

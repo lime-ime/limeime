@@ -6,7 +6,7 @@
 - Pull request: https://github.com/lime-ime/limeime/pull/183
 - Classification: bug, usability, iPad narrow layout generation
 - Platform: iOS iPad layouts only. Phone JSON and Android XML resources are unchanged.
-- State: PR #183 merged and issue #181 closed. Not yet released.
+- State: PR #183 merged and issue #181 closed. Included in iOS v6.1.35 build 22, which passed Xcode Cloud and is waiting for App Store review.
 - Final PR head: `dc8fa0159903b60137daf1ebd775d8db539382e1`
 - Merge commit: `bc05231f3d17f8300e30c7c84e5f5fe94bfa63ee`
 
@@ -65,4 +65,4 @@ Their full iPad siblings already use `-9`, confirming a narrow-trimming defect.
 - Generator rerun is deterministic.
 - Final generated-resource diff contains exactly the five narrow Chinese-mode layouts.
 - `git diff --check` passes.
-- Source merge is complete. Xcode/XCTest, rendered full/narrow iPad verification, and verified TestFlight/App Store delivery remain pending.
+- Source merge and Xcode Cloud verification are complete for iOS v6.1.35 build 22. Rendered full/narrow iPad verification and verified App Store delivery remain pending.
