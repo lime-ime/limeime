@@ -721,6 +721,7 @@ private func reregisterKnownIMs(server: DBServer) {
         ("ez",       "輕鬆",     "lime_ez"),
         ("scj",      "速成",     "lime_cj_number"),
         ("ecj",      "易倉頡",   "lime_cj_number"),
+        ("tricode",  "三碼",     "limenumsym2"),
     ]
     for im in knownIMs {
         guard server.tableHasData(im.name) else { continue }
