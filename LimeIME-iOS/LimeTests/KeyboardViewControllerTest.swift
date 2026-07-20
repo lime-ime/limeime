@@ -362,8 +362,15 @@ final class KeyboardViewControllerTest: XCTestCase {
 
     func testSplitPhoneDualLabelsUseRenderedHalfWidth() {
         XCTAssertTrue(KeyboardView.dualLabelUsesVerticalLayout(
-            viewWidth: 393, rowWidthFraction: 10.0 / 24.0,
+            isLandscape: true, viewWidth: 393, rowWidthFraction: 10.0 / 24.0,
             keyPercent: 10, totalPercent: 50, keyHGap: 3,
+            usableHeight: 42, labelLength: 1))
+    }
+
+    func testPortraitDualLabelsIgnoreStaleLandscapeWidthAfterRotation() {
+        XCTAssertTrue(KeyboardView.dualLabelUsesVerticalLayout(
+            isLandscape: false, viewWidth: 956, rowWidthFraction: 1,
+            keyPercent: 10, totalPercent: 100, keyHGap: 3,
             usableHeight: 42, labelLength: 1))
     }
 
@@ -891,7 +898,7 @@ final class KeyboardViewControllerTest: XCTestCase {
         let function = String(source[functionRange])
 
         let modeRange = try XCTUnwrap(function.range(of: "mEnglishOnly = false"))
-        let layoutRange = try XCTUnwrap(function.range(of: "LayoutLoader.load(resolvedLayoutId(for: activeIM))"))
+        let layoutRange = try XCTUnwrap(function.range(of: "loadChineseLayout(preferred: resolvedLayoutId(for: activeIM))"))
 
         XCTAssertLessThan(modeRange.lowerBound, layoutRange.lowerBound)
     }
@@ -955,6 +962,8 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(source.contains("rotationSettling = true"))
         XCTAssertTrue(source.contains("if rotationSettling"))
         XCTAssertTrue(source.contains("self.rotationSettling = false"))
+        XCTAssertFalse(source.contains("layoutIsLandscape = size.width > size.height"))
+        XCTAssertFalse(source.contains("layoutIsLandscape ??"))
         // #139 switch-in: the attach overshoot must fire at viewDidAppear
         // (mid-attach) targeting kbTarget + delta, and be restored by the
         // rendered-settle gate. Removing it re-breaks in-place keyboard

@@ -348,9 +348,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     /// applyHeight() after settling is a plain stationary height change, which
     /// hosts track correctly (same path as keyboard_size / emoji-panel resizes).
     private var rotationSettling = false
-    /// Authoritative destination orientation supplied by UIKit during rotation.
-    /// UIScreen bounds can temporarily report the old orientation while relayout runs.
-    private var layoutIsLandscape: Bool?
     private weak var inlineMenuPanel: UIView?
     private weak var inlineMenuDismissTapGesture: UITapGestureRecognizer?
     /// Fired once when the inline menu is dismissed (完成 / tap-outside). Used by the
@@ -592,7 +589,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // so view.bounds.width > view.bounds.height is always true and would
         // permanently force landscape row heights and horizontal label layout.
         let screen = UIScreen.main.bounds
-        let landscape = layoutIsLandscape ?? (screen.width > screen.height)
+        let landscape = screen.width > screen.height
         keyboardView?.isLandscape = landscape
         let isPad   = isOnPad
         let numpad  = isNumpadLayout
@@ -680,7 +677,6 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
                                      with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
         rotationSettling = true
-        layoutIsLandscape = size.width > size.height
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 guard let self else { return }
@@ -4494,7 +4490,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
         let iconPointSize = LayoutMetrics.InlineMenu.buttonFontSize
         let segmentedAxis = LayoutMetrics.InlineMenu.segmentedAxis(
             isPad: isOnPad,
-            isLandscape: layoutIsLandscape ?? (root.bounds.width > root.bounds.height))
+            isLandscape: UIScreen.main.bounds.width > UIScreen.main.bounds.height)
         func addSeparator() {
             let sep = UIView()
             sep.backgroundColor = UIColor.separator
@@ -4669,7 +4665,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
         //  · iPhone landscape → 橫向分離鍵盤 (binary; hidden for numpad).
         // iPhone controls are shown on EVERY iPhone regardless of screen width — no gate.
         let numpadLayout = isNumpadLayout
-        let landscape = layoutIsLandscape ?? (UIScreen.main.bounds.width > UIScreen.main.bounds.height)
+        let landscape = UIScreen.main.bounds.width > UIScreen.main.bounds.height
         var pendingSplit = max(0, min(splitKeyboardMode, 2))
         let splitStart = pendingSplit
         if isOnPad && !numpadLayout {

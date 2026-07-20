@@ -1230,7 +1230,8 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
                     // keys (abc / pqrs / ()'" / +-*/ …) render up/down instead of the side-by-side split.
                     let viewWidth = bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width
                     isTall = Self.dualLabelUsesVerticalLayout(
-                        viewWidth: viewWidth, rowWidthFraction: rowWidthFraction,
+                        isLandscape: isLandscape, viewWidth: viewWidth,
+                        rowWidthFraction: rowWidthFraction,
                         keyPercent: keyDef.widthPercent, totalPercent: totalPercent,
                         keyHGap: keyHGap, usableHeight: usableHeight,
                         labelLength: displayLabel.count)
@@ -1286,10 +1287,12 @@ final class KeyboardView: UIView, UIInputViewAudioFeedback {
         }
     }
 
-    static func dualLabelUsesVerticalLayout(viewWidth: CGFloat, rowWidthFraction: CGFloat,
+    static func dualLabelUsesVerticalLayout(isLandscape: Bool, viewWidth: CGFloat,
+                                            rowWidthFraction: CGFloat,
                                             keyPercent: CGFloat, totalPercent: CGFloat,
                                             keyHGap: CGFloat, usableHeight: CGFloat,
                                             labelLength: Int) -> Bool {
+        if !isLandscape { return true }
         guard totalPercent > 0 else { return true }
         let keyWidth = viewWidth * rowWidthFraction * keyPercent / totalPercent - keyHGap
         return usableHeight > keyWidth || labelLength > 2
