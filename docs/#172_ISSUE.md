@@ -4,12 +4,12 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/172
 - Classification: `bug`, `Priority-Medium`, `Type-Defect`
-- State: closed/source fixed by maintainer after PR #174 merged; Android and iOS v6.1.34 delivery are verified, while private-reporter verification remains pending
+- State: closed/reporter-confirmed fixed; PR #174 is delivered in Android and iOS v6.1.34, and the private reporter confirmed successful iOS use after updating and re-importing `liu7.cin`
 - Assignee: `jrywu`
 - Fix: PR #174, merged as `f5110419456235acdc075825757b7ceaf6ada133` on 2026-07-19
 - Source: private support-email report summarized by the project account. The original table and screenshots remain private test evidence.
-- Confirmed environment: iPhone 12, iOS 17.6, imported `liu7.cin`; the exact LIME version is not yet known.
-- Latest reporter evidence: after updating LIME on 2026-07-19, the problem still reproduced and the reporter supplied four additional screenshots. The updated LIME version remains unconfirmed, and that test preceded iOS v6.1.34, which contains the parser fix.
+- Confirmed environment: iPhone 12, iOS 17.6, imported `liu7.cin`; the successful retest used App Store iOS v6.1.34.
+- Latest reporter evidence: on 2026-07-20, after the v6.1.34 update and requested `liu7.cin` re-import, the private reporter confirmed that the input method works and supplied one additional private screenshot. This supersedes the failed pre-v6.1.34 retest.
 
 ## Problem statement
 
@@ -56,7 +56,7 @@ The source-backed parser defect identified for the supplied fixture is repeated-
 
 Registration/activation and runtime publication remain secondary device-level checks because the report does not yet include the visible import count or exact selected table. Do not attribute this issue to missing `%cname` or a registration-only failure unless post-parser testing finds separate evidence.
 
-## Merged implementation and remaining release QA
+## Merged implementation and remaining verification hardening
 
 Completed on `master` through PR #174:
 
@@ -67,19 +67,19 @@ Completed on `master` through PR #174:
 5. Maintainer `jrywu` merged PR #174 as `f5110419456235acdc075825757b7ceaf6ada133` and closed the public maintainer-created tracking issue. There was no public issue comment.
 6. GitHub Release v6.1.34 targets `d45aa437b6356bfef5079ceebbfcd8d295a300b8` and contains the Android parity fix. Its verified GitHub testing-track asset is `LIMEHD2026-6.1.34.apk` (7,112,576 bytes, SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). No Android reporter retest is required for this iOS-origin report.
 7. App Store Connect reports iOS v6.1.34 build 19 as `READY_FOR_SALE`, `VALID`, and `APP_STORE_ELIGIBLE`. The public Taiwan, US, and Hong Kong App Store pages show v6.1.34 in version history with the repeated-space/Tab CIN import fix. Apple's lookup endpoint was still returning v6.1.33 during the initial propagation check, so the direct storefront pages are the current delivery evidence.
+8. The private reporter updated to iOS v6.1.34, re-imported `liu7.cin`, and confirmed on 2026-07-20 that the input method now works. One accompanying private screenshot remains internal and was not interpreted for additional claims.
 
-Remaining release QA and follow-up:
+Remaining verification hardening:
 
-1. Ask the private reporter to update to iOS v6.1.34, re-import `liu7.cin`, and report whether candidate output now works.
-2. If the fixed build still fails, obtain one exact input code and expected character, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup. Reopen this issue or create a focused follow-up only for a reproducible remaining failure.
-3. Run the new iOS whitespace test and broader iOS `LimeDBTest` suite in Xcode/Xcode Cloud when the next validation lane is available.
-4. Restore focused `%keyname` coverage and an iOS legacy unescaped `.lime` empty-field compatibility regression before relying on those safeguards as automated release gates. They were described in the PR but are not present in the merged tree.
-5. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
-6. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+1. Run the new iOS whitespace test and broader iOS `LimeDBTest` suite in Xcode/Xcode Cloud when the next validation lane is available.
+2. Restore focused `%keyname` coverage and an iOS legacy unescaped `.lime` empty-field compatibility regression before relying on those safeguards as automated release gates. They were described in the PR but are not present in the merged tree.
+3. Decide separately whether a non-empty CIN mapping block that yields zero valid mappings should return an error or warning instead of a successful completion message.
+4. Keep existing imported metadata and user mappings intact, and avoid overwriting user-selected keyboard configuration.
+5. If the failure recurs, obtain one exact input code and expected character, then verify the resulting `ImConfig`, `keyboard_state`, `active_im`, cold-to-hot publication, and candidate lookup before reopening this issue or creating a focused follow-up.
 
-## Follow-up questions
+## Follow-up questions if the failure recurs
 
-Request or confirm through the private support-email thread:
+Request through the private support-email thread only if a reproducible failure returns:
 
 - exact LIME version used;
 - one input-code sequence and expected character from `liu7.cin`;
@@ -96,12 +96,12 @@ Request or confirm through the private support-email thread:
 - Verify registration, enabled state, active-IM selection, cold-to-hot publication, and keyboard-extension candidate lookup.
 - Verify a fresh install and an existing user database.
 - Device-test on iPhone/iOS 17 and a currently supported iOS version.
-- Confirm through the private email thread using App Store iOS v6.1.34, which contains merge commit `f5110419456235acdc075825757b7ceaf6ada133`.
+- Preserve the confirmed App Store iOS v6.1.34 result as the release baseline and investigate only if a reproducible failure returns.
 
 ### Android
 
-Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs, and the PR reports that the focused test and all 216 `LimeDBTest` tests passed. No Android reporter retest is currently required because the support report is iOS-only, but the next Android build should include the parity fix.
+Android has a separate Java importer but shared this parser defect. Its focused instrumentation fixture covers spaces, tabs, and mixed runs, and the PR reports that the focused test and all 216 `LimeDBTest` tests passed. The parity fix is delivered in the verified Android v6.1.34 testing APK. No Android reporter retest is required because the support report is iOS-only.
 
-## Retest condition
+## Retest result
 
-Ask the user to retest with App Store iOS v6.1.34, which contains merge commit `f5110419456235acdc075825757b7ceaf6ada133`. Route the request through the private support-email thread unless the reporter chooses to participate on GitHub. Reopen this issue or create a focused follow-up only if the fixed build still fails.
+The private reporter confirmed through the support-email thread that App Store iOS v6.1.34 works after re-importing `liu7.cin`. Treat the reported iOS failure as resolved. Reopen this issue or create a focused follow-up only if a reproducible failure returns.
