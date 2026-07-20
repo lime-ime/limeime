@@ -4782,8 +4782,9 @@ public class LIMEService extends InputMethodService
         // Modified by Jeremy '10, 4,1. getCode -> getWord
         // if( tempMatched != null && tempMatched.getCode() != null &&
         // !tempMatched.getCode().equals("")){
-        if (committedCandidate != null && committedCandidate.getWord() != null
-                && !committedCandidate.getWord().isEmpty()) {
+        final Mapping relatedCandidate = committedCandidate;
+        if (relatedCandidate != null && relatedCandidate.getWord() != null
+                && !relatedCandidate.getWord().isEmpty()) {
 
             final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
             if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
@@ -4798,11 +4799,11 @@ public class LIMEService extends InputMethodService
                     }
 
 
-                    if (committedCandidate != null && hasMappingList) {
+                    if (hasMappingList) {
                         if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
                         try {
-                            if (!committedCandidate.isEmojiRecord() && !committedCandidate.isChinesePunctuationSymbolRecord()) {
-                                list.addAll(SearchSrv.getRelatedByWord(committedCandidate.getWord(), getAllRecords));
+                            if (!relatedCandidate.isEmojiRecord() && !relatedCandidate.isChinesePunctuationSymbolRecord()) {
+                                list.addAll(SearchSrv.getRelatedByWord(relatedCandidate.getWord(), getAllRecords));
                             }
                         } catch (RemoteException e) {
                             Log.e(TAG, "Error in suggestion processing", e);
