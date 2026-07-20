@@ -6,7 +6,9 @@
 - Pull request: https://github.com/lime-ime/limeime/pull/183
 - Classification: bug, usability, iPad narrow layout generation
 - Platform: iOS iPad layouts only. Phone JSON and Android XML resources are unchanged.
-- State: fixed on PR #183. Not yet released.
+- State: PR #183 merged and issue #181 closed. Not yet released.
+- Final PR head: `dc8fa0159903b60137daf1ebd775d8db539382e1`
+- Merge commit: `bc05231f3d17f8300e30c7c84e5f5fe94bfa63ee`
 
 ## Correct layout categories
 
@@ -55,11 +57,12 @@ Their full iPad siblings already use `-9`, confirming a narrow-trimming defect.
 ## Verification performed
 
 - Corrected RED test failed on all six symbol resources while PR #183 changed their intended `abc` labels.
-- Regression suite passes after restoring the symbol resources untouched.
-- `scripts/test_number_symbol_layout_ios.py`: six tests pass.
-- `scripts/test_build_emoji_db.py`: six tests pass.
-- All layout JSON files parse.
+- The merged tree is identical to the final PR head for this change.
+- `scripts/test_ipad_language_mode_key.py`: four tests pass across all 84 iPad resources.
+- `scripts/test_number_symbol_layout_ios.py`: six tests pass on the merged tree.
+- `scripts/test_build_emoji_db.py`: six tests pass on the merged tree.
+- All 137 layout JSON files parse.
 - Generator rerun is deterministic.
 - Final generated-resource diff contains exactly the five narrow Chinese-mode layouts.
 - `git diff --check` passes.
-- Xcode/XCTest and rendered iPad verification remain pending.
+- Source merge is complete. Xcode/XCTest, rendered full/narrow iPad verification, and verified TestFlight/App Store delivery remain pending.
