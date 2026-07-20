@@ -79,8 +79,8 @@ Run with `python3 scripts/test_ipad_language_mode_key.py`.
 
 ## Platform impact analysis
 
-- **iOS:** Confirmed affected on the iPad layout resources listed above, including full-size symbol pages and narrow number, number-symbol, shift, and symbol pages. Phone JSON layouts are outside the reported scope and remain unchanged. Device-family verification is still required on both full-size and narrow iPad configurations because the Linux regression test validates resource semantics rather than rendered UI behavior.
-- **Android:** Not affected by this iOS JSON generation defect. Android uses its existing XML resources rather than `generate_ipad_layouts.py` or `trim_ipad_layout.py`, and this fix does not modify Android source or resources. No Android behavior change or Android retest is required for this issue.
+- **iOS:** Confirmed affected on the iPad layout resources listed above, including full-size symbol pages and narrow number, number-symbol, shift, and symbol pages. Phone JSON layouts are outside this issue's explicitly iPad-only scope and remain unchanged. Device-family verification is still required on both full-size and narrow iPad configurations because the Linux regression test validates resource semantics rather than rendered UI behavior.
+- **Android:** Not affected by the two iOS iPad generator defects fixed here. Android uses XML resources and a separate symbol-page contract with both page-navigation and language-mode controls, rather than `generate_ipad_layouts.py` or `trim_ipad_layout.py`. This iPad-specific contract must not be extrapolated to Android, and the fix makes no Android source or resource change.
 
 ## Verification performed
 

@@ -13,8 +13,8 @@
 #     must offer the way *back* to Chinese: code -10 (C_IM), labelled "中".
 #
 # Issue #181 reported iPad layouts that got this backwards: several non-English
-# layouts shipped a -10/中 key, so tapping it while already in Chinese mode was
-# a no-op (or bounced the user), and there was no way to reach English at all.
+# layouts shipped a -10/中 key, so their language-mode key could not switch
+# directly to English.
 #
 # Note the distinction from the symbol-page key: symbol layouts also carry a
 # code -2 (C_SYM) key that is *labelled* "abc" and returns to the letter page.
@@ -140,7 +140,14 @@ class IPadLanguageModeKeyTest(unittest.TestCase):
 
     def test_symbol_page_abc_keys_are_preserved(self):
         """The code -2 abc key returns to letters and is not a language key."""
-        for stem in ("symbols1_ipad", "symbols2_ipad", "symbols3_ipad"):
+        for stem in (
+            "symbols1_ipad",
+            "symbols1_ipad_narrow",
+            "symbols2_ipad",
+            "symbols2_ipad_narrow",
+            "symbols3_ipad",
+            "symbols3_ipad_narrow",
+        ):
             path = LAYOUTS_DIR / f"{stem}.json"
             with self.subTest(layout=stem):
                 self.assertTrue(path.exists(), f"{stem}.json missing")
