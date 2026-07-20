@@ -2,16 +2,12 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-07-19
+Last reviewed: 2026-07-20
 
 ## Pending fixes
-- fix#169 Android+iOS release/retest follow-up: PR #171 merged the integrated phone portrait
-  keyboard model as `9667c82db800a899b12e13b9211c77dbda7c26fb`. GitHub Release v6.1.33
-  predates the merge, so Android needs a newer APK/Google Play build and reporter verification.
-  The iOS implementation passed focused simulator tests but still needs delivery in a newer
-  TestFlight/App Store build. See `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
-- fix#172 Android+iOS release QA: PR #174 merged the CIN-only `[ \t]+` separator fix as `f5110419456235acdc075825757b7ceaf6ada133`. The current v6.1.33 release predates the merge. The merged test tree still needs explicit aligned `%keyname` assertions and the iOS legacy unescaped `.lime` empty-field compatibility regression. A newer Android build is needed, while iOS also needs XCTest/Xcode validation, private-fixture verification, and delivery in a newer TestFlight/App Store build before the private reporter is asked to retest. See `docs/#172_ISSUE.md`.
-- fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. PR #168 merged the separate Android filtered-management-list deletion refresh fix as `285b9fde57384203c074f9b16094f2bdc757a3c6`, but v6.1.33 predates that merge, so Android remains pending a newer APK/Google Play build and reporter verification of the deletion flow. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. See `docs/#161_ISSUE.md`.
+- fix#169 iOS release QA: PR #171 merged the integrated phone portrait keyboard model as `9667c82db800a899b12e13b9211c77dbda7c26fb`. The reporter answered both Android checks in the v6.1.34 retest request as normal on the Google Play build, and community issue #169 is closed. The iOS implementation passed focused simulator tests but still needs verified TestFlight/App Store delivery. See `docs/#169_ISSUE.md` and `docs/SPLIT_ONE_HAND_KB.md`.
+- fix#172 iOS verification follow-up: PR #174 merged the CIN-only `[ \t]+` separator fix as `f5110419456235acdc075825757b7ceaf6ada133`. Android is delivered in verified GitHub APK v6.1.34, and App Store iOS v6.1.34 build 19 is `READY_FOR_SALE` with the Taiwan, US, and Hong Kong storefront pages showing the fix in version history. Private-reporter verification is pending. The merged test tree still needs explicit aligned `%keyname` assertions, the iOS legacy unescaped `.lime` empty-field compatibility regression, and XCTest/Xcode validation. See `docs/#172_ISSUE.md`.
+- fix#161 Android+iOS follow-up: the reporter confirmed Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete. Verified GitHub APK v6.1.34 contains PR #168's separate Android filtered-management-list deletion refresh fix, and targeted reporter verification is pending. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and verified TestFlight/App Store delivery. See `docs/#161_ISSUE.md`.
 
 ## Product work
 

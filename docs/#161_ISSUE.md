@@ -5,7 +5,7 @@
 - GitHub issue: https://github.com/lime-ime/limeime/issues/161
 - Classification: `bug` + `Usability`
 - Platforms: Android and iOS
-- State: open after the reporter confirmed the Android v6.1.33 search and immediate candidate-refresh fixes; the separate Android management-list refresh fix is merged in PR #168 but is not in v6.1.33, so reporter verification waits for a newer Android build, while iOS binary delivery and corrected-source validation remain separate
+- State: open after the reporter confirmed the Android v6.1.33 search and immediate candidate-refresh fixes; GitHub APK v6.1.34 now contains the separate Android management-list refresh fix from PR #168, and targeted reporter verification is pending, while iOS binary delivery remains separate
 
 ## Corrected scope
 
@@ -61,6 +61,7 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - Root cause: `ManageRelatedFragment.removeRelated()` removed the row directly from the same mutable list previously submitted to `ListAdapter`, violating DiffUtil's immutable-list contract. The adapter's internal item count changed without a matching RecyclerView diff/rebind, so visible holder text and the refreshed database position could diverge. The fragment also requested a second redundant refresh after `ManageImController.deleteRelatedPhrase()` had already refreshed the view.
 - PR #168 merged the focused Android fix to `master` as `285b9fde57384203c074f9b16094f2bdc757a3c6` from final head `356ba547830ca0af0dd9807e308a059863fdd9fb`. The fix keeps the submitted page unchanged until the controller returns a fresh database result, removes the redundant delete refresh, and makes `ManageRelatedAdapter` snapshot each submitted list defensively. Instrumentation regression coverage first reproduced RED when caller mutation changed the adapter count from 2 to 1 without a new submission, then passed GREEN after the fix; a second RED/GREEN test verifies `removeRelated()` does not mutate the current page before controller refresh.
 - GitHub Release v6.1.33 targets `b2fa71779d8423b92896fa1a0262706bb62ea4fa`, which is an ancestor of the PR #168 merge and therefore predates this deletion-list fix. Do not ask the reporter to retest this follow-up until a newer Android GitHub APK or Google Play build contains `285b9fde57384203c074f9b16094f2bdc757a3c6`.
+- GitHub Release v6.1.34 targets `d45aa437b6356bfef5079ceebbfcd8d295a300b8` and contains PR #168. Its verified GitHub testing-track asset is `LIMEHD2026-6.1.34.apk` (7,112,576 bytes, SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`) at https://github.com/lime-ime/limeime/releases/download/v6.1.34/LIMEHD2026-6.1.34.apk. The targeted deletion-list retest request is https://github.com/lime-ime/limeime/issues/161#issuecomment-5016727224.
 - iOS delivery still requires corrected-source XCTest/Xcode Cloud validation and a verified newer TestFlight/App Store build. The Android APK does not verify iOS behavior.
 
 ## Acceptance criteria
@@ -77,4 +78,5 @@ Management search is separate from runtime candidate lookup. A non-empty query p
 - [x] iOS manual related add/update/delete signals `needsKeyboardCacheReset` so the keyboard flushes `relatedCache` on next activation
 - [x] Reporter verifies Android search/deletion and immediate candidate refresh in v6.1.33
 - [x] Android filtered-management-list source fix merged in PR #168 / `285b9fde57384203c074f9b16094f2bdc757a3c6`
-- [ ] A newer Android build contains PR #168 and the reporter confirms that deletion refreshes visible row contents so the row and opened record remain identical
+- [x] Android GitHub APK v6.1.34 contains PR #168
+- [ ] The reporter confirms that deletion refreshes visible row contents so the row and opened record remain identical
