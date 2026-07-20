@@ -2862,7 +2862,10 @@ final class LimeDBTest: XCTestCase {
             "hs": "hs",
             "ez": "ez",
             "pinyin": "limenum",
-            "custom": "lime"
+            // fix#177: custom used to fall through to "lime", whose imkb is "lime" —
+            // a layout iOS does not ship, so the previous IM's keyboard stayed on
+            // screen. Android groups DB_TABLE_CUSTOM with DB_TABLE_PINYIN → "limenum".
+            "custom": "limenum"
         ]
 
         for (table, keyboard) in expected {
@@ -2871,6 +2874,82 @@ final class LimeDBTest: XCTestCase {
             XCTAssertNotNil(db.getKeyboardConfig(keyboard),
                             "keyboard config should resolve for \(keyboard)")
         }
+    }
+
+    // fix#177: a fresh custom seed must land on Android's "limenum" keyboard code,
+    // which resolves to the already-bundled lime_number layouts. The old 'lime_abc'
+    // seed is a Chinese-mode alphabet layout whose mode key is `中` (switchToIM),
+    // so the reporter had no way to reach the English keyboard from custom.
+    func testSeedCustomIMUsesLimenumKeyboard() throws {
+        let db = try makeLimeDB()
+        try db.seedCustomIM()
+
+        // seedCustomIM writes the IM *registration* row (title "自建"), not the
+        // title="keyboard" config row that setIMConfigKeyboard maintains.
+        let registration = db.getImConfigList("custom", nil).first { $0.title == "自建" }
+        XCTAssertEqual(registration?.keyboard, "limenum",
+                       "fresh custom seed must use the limenum keyboard code")
+        XCTAssertEqual(db.getKeyboardConfig("limenum")?.imkb, "lime_number",
+                       "limenum must resolve to the bundled lime_number layout")
+    }
+
+    // fix#177: an install that already has a custom registration never reaches the
+    // INSERT above, so the repair has to happen on the existing row. Only the three
+    // historical unusable values are repaired.
+    func testSeedCustomIMRepairsLegacyCustomKeyboards() throws {
+        for legacy in ["", "lime", "lime_abc"] {
+            let db = try makeLimeDB()
+            try db.seedCustomIM()
+            try setCustomRegistrationKeyboard(legacy)
+
+            try db.seedCustomIM()
+
+            let registration = db.getImConfigList("custom", nil).first { $0.title == "自建" }
+            XCTAssertEqual(registration?.keyboard, "limenum",
+                           "legacy custom keyboard \"\(legacy)\" must be repaired to limenum")
+            try db.closeForReplacement()
+            try? FileManager.default.removeItem(at: tempURL)
+        }
+    }
+
+    // Metadata rows share the same code but do not carry a keyboard assignment. The repair
+    // must not spray `limenum` into their otherwise-NULL keyboard column.
+    func testSeedCustomIMLeavesUnrelatedMetadataRowsUntouched() throws {
+        let db = try makeLimeDB()
+        try db.seedCustomIM()
+        db.setImConfig("custom", "version", "#177-test")
+
+        try db.seedCustomIM()
+
+        let version = db.getImConfigList("custom", nil).first { $0.title == "version" }
+        XCTAssertNotNil(version)
+        XCTAssertNotEqual(version?.keyboard, "limenum",
+                          "custom metadata rows must not receive a keyboard assignment")
+    }
+
+    // The repair must never clobber a keyboard the user deliberately selected.
+    func testSeedCustomIMPreservesUserSelectedKeyboard() throws {
+        let db = try makeLimeDB()
+        try db.seedCustomIM()
+        try setCustomRegistrationKeyboard("cjnum")
+
+        try db.seedCustomIM()
+
+        let registration = db.getImConfigList("custom", nil).first { $0.title == "自建" }
+        XCTAssertEqual(registration?.keyboard, "cjnum",
+                       "a user-selected custom keyboard must survive seedCustomIM")
+    }
+
+    /// Rewrites the custom IM registration's keyboard column to simulate an install
+    /// created by an older build.
+    private func setCustomRegistrationKeyboard(_ keyboard: String) throws {
+        let queue = try DatabaseQueue(path: tempURL.path)
+        try queue.write { db in
+            try db.execute(
+                sql: "UPDATE im SET keyboard = ? WHERE code = 'custom' AND title = '自建'",
+                arguments: [keyboard])
+        }
+        try queue.close()
     }
 
     // feat#N02: the computer-numpad keyboard is seeded into the global keyboard list on
