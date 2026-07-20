@@ -141,14 +141,14 @@ Full tier (row invariant 14 / 14 / 13 / 12 / 6):
 
 ```text
 lime_num_sym2_ipad
-digit  (14): ~|` !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 _|- +|= [⌫]
+digit  (14): ~|` !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— +|= [⌫]
 qwerty (14): [Tab] q w e r t y u i o p 『|「 』|」 ？|、
 asdf   (13): [abc] a s d f g h j k l :|; "|' [↩]
 zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [⇧]
 bottom  (6): [globe] [.?123] [emoji] [space] [.?123] [dismiss]
 
 lime_num_sym2_ipad_shift    (dual cells collapse to slide output; same counts)
-digit  (14): ~ ! @ # $ % ^ & * ( ) _ + [⌫]
+digit  (14): ~ ! @ # $ % ^ & * ( ) … + [⌫]
 qwerty (14): [Tab] Q W E R T Y U I O P 『 』 ？
 asdf   (13): [abc] A S D F G H J K L : " [↩]
 zxcv   (12): [⇧] Z X C V B N M < > ? [⇧]
@@ -158,31 +158,34 @@ bottom  (6): [globe] [.?123] [emoji] [space] [.?123] [dismiss]
 - asdf `:|;` = tap 59 / slide 58; `"|'` = tap 39 / slide 34 — the `〃` key promoted from
   the phone bottom row (English-layout `"|,` precedent), NOT the fullwidth `；\n：`/`。\n，`
   scaffold cells.
-- digit `_|-` / `+|=` and qwerty `『|「 』|」 ？|、` are standard iPad scaffold fallbacks
-  (not 3code code keys).
+- digit `…|—` / `+|=` and qwerty `『|「 』|」 ？|、` are standard iPad scaffold fallbacks
+  (not 3code code keys). The dash slot is `…|—`, not `_|-`: the phone source has no `-`
+  key, and `IPAD_KEYBOARD.md` §12 prescribes the established Chinese-IM-class dash
+  fallback (`…|—`, as in dayi/cj/hsu) when the source has no dash slot.
 
 Narrow tier (trim per §6 with `IM_ROOTS = "',./;abcdefghijklmnopqrstuvwxyz"`; the five
 symbol keys are roots — never trimmed, never fullwidth-substituted):
 
 ```text
 lime_num_sym2_ipad_narrow
-digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 =|- [⌫]
+digit  (12): !|1 @|2 #|3 $|4 %|5 ^|6 &|7 *|8 (|9 )|0 …|— [⌫]
 qwerty (12): q w e r t y u i o p 『|「 』|」
 asdf   (12): a s d f g h j k l :|; "|' [↩]
 zxcv   (12): [⇧] z x c v b n m <|, >|. ?|/ [spacer]
 bottom  (6): [globe] [.?123] [emoji] [space] [abc] [dismiss]
 
 lime_num_sym2_ipad_narrow_shift
-digit  (12): ! @ # $ % ^ & * ( ) +|_ [⌫]
+digit  (12): ! @ # $ % ^ & * ( ) … [⌫]
 qwerty (12): Q W E R T Y U I O P 『 』
 asdf   (12): A S D F G H J K L : " [↩]
 zxcv   (12): [⇧] Z X C V B N M < > ? [spacer]
 bottom  (6): [globe] [.?123] [emoji] [space] [abc] [dismiss]
 ```
 
-- digit `=|-` (unshifted) / `+|_` (shifted) keep all four characters reachable — same
-  pairing exception as `lime_number_symbol` §A.12.1, and it keeps 11 content keys before
-  `[⌫]` per the BALANCE rule.
+- The digit row keeps `…|—` before `[⌫]` (11 content keys per the BALANCE rule). The
+  `lime_number_symbol` §A.12.1 `=|-`/`+|_` pairing exception does NOT apply here — this
+  layout's phone source has no `-`/`=` keys at all, so there is nothing to pair; the
+  `…|—` scaffold fallback survives instead.
 - asdf drops `[abc]` (mode key moves to the bottom row); `:|;` and `"|'` survive as roots,
   so no leading spacer is needed (9 letters + 2 root cells + `[↩]` = 12).
 - zxcv is 12 cells on BOTH layers. `lime_num_sym2` has no `。|，` cell at any tier (its
