@@ -207,6 +207,26 @@ class IOSLegacyRepair(unittest.TestCase):
             "the repair must run BEFORE the direct-layout early return: 'lime_abc' is "
             "itself loadable, so a later repair would never be reached.")
 
+    def test_chinese_layout_resolution_never_falls_back_to_english(self):
+        self.assertNotIn(
+            "LayoutLoader.load(layoutName) ?? LayoutLoader.load(englishLayout)",
+            self.source,
+            "a Chinese IM must never fall back to the English runtime layout")
+        helper = re.search(
+            r"static func chineseLayoutCandidates\(preferred: String\) -> \[String\] \{"
+            r"(.*?)\n    \}",
+            self.source,
+            re.S,
+        )
+        self.assertIsNotNone(
+            helper,
+            "Chinese layout loading needs an explicit candidate policy that cannot include "
+            "the preference-driven English runtime layout")
+        body = helper.group(1)
+        self.assertIn('"lime_number"', body)
+        self.assertNotIn("englishLayoutId", body)
+        self.assertNotIn('"lime_abc"', body)
+
 
 class LimenumLayoutResourceContract(unittest.TestCase):
     """limenum points at already-bundled layouts; #177 adds no new layout resource."""

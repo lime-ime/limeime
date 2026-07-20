@@ -32,6 +32,10 @@ Match Android and reuse existing iOS resources. No new keyboard layout family is
 - Preserve every other keyboard value as an explicit user selection.
 - Apply the same narrow repair during runtime resolution so existing users recover on the next IM switch without re-importing.
 - Resolve `limenum` through the existing keyboard catalog to `lime_number` / `lime_number_shift`.
+- Enforce the mode invariant globally: while a Chinese IM is active, layout loading must never
+  fall back to the preference-driven English runtime layout. If the resolved Chinese layout is
+  unavailable, use the bundled generic Chinese composition layout `lime_number`, whose mode key
+  explicitly switches to English.
 
 ## Source evidence
 
@@ -64,6 +68,8 @@ Match Android and reuse existing iOS resources. No new keyboard layout family is
 - User-selected non-default keyboard values remain unchanged.
 - Runtime resolution repairs affected values before layout loading.
 - `limenum` resolves to bundled `lime_number` resources with an English-switch key.
+- Chinese-mode layout candidates never contain `lime_abc` or `lime_english*`. Missing Chinese
+  layouts fall back only to `lime_number`, not to an English runtime layout.
 - No Android files change.
 
 ## Remaining verification

@@ -2037,6 +2037,20 @@ final class KeyboardViewControllerTest: XCTestCase {
                      "precondition: iOS ships no 'lime' layout, so it is an unusable default")
     }
 
+    // A Chinese IM may degrade to a generic Chinese composition keyboard, but must
+    // never silently become the preference-driven English runtime keyboard.
+    func testChineseLayoutCandidatesNeverIncludeEnglishRuntimeLayout() {
+        XCTAssertEqual(
+            KeyboardViewController.chineseLayoutCandidates(preferred: "lime_custom_missing"),
+            ["lime_custom_missing", "lime_number"])
+        XCTAssertEqual(
+            KeyboardViewController.chineseLayoutCandidates(preferred: "lime_number"),
+            ["lime_number"])
+        XCTAssertFalse(
+            KeyboardViewController.chineseLayoutCandidates(preferred: "lime_custom_missing")
+                .contains("lime_abc"))
+    }
+
     func testCangjieSemicolonKeyboardCodesForceSymbolMapping() {
         XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_semi"))
         XCTAssertTrue(KeyboardViewController.hasSymbolMappingForKeyboard(false, keyboardId: "cj_num_semi"))
