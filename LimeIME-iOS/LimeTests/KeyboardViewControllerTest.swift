@@ -1645,6 +1645,147 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(state.isShowing)
     }
 
+    // MARK: - Issue #177: custom IM layout family
+
+    /// Every custom variant, the lime_abc variant it mirrors, and the English-switch
+    /// label for that form factor (phone "EN" per lime_cj, iPad "abc" per lime_cj_ipad).
+    private static let customLayoutVariants: [(custom: String, abc: String, label: String)] = [
+        ("lime_custom", "lime_abc", "EN"),
+        ("lime_custom_shift", "lime_abc_shift", "EN"),
+        ("lime_custom_ipad", "lime_abc_ipad", "abc"),
+        ("lime_custom_ipad_shift", "lime_abc_ipad_shift", "abc"),
+        ("lime_custom_ipad_narrow", "lime_abc_ipad_narrow", "abc"),
+        ("lime_custom_ipad_narrow_shift", "lime_abc_ipad_narrow_shift", "abc"),
+    ]
+
+    /// #177: composing with an imported CIN table left no route to the English keyboard,
+    /// because `custom` was registered against `lime_abc`, whose mode key is 中 (switchToIM).
+    func testCustomLayoutFamilyExposesEnglishSwitchOnEveryVariant() throws {
+        for variant in Self.customLayoutVariants {
+            let layout = try loadKeyboardLayoutFixture(variant.custom)
+            let keys = layout.rows.flatMap(\.keys)
+
+            let toEnglish = keys.filter { $0.code == LimeKeyCode.switchToEnglish.rawValue }
+            XCTAssertEqual(toEnglish.count, 1,
+                           "\(variant.custom) should expose exactly one English switch (#177)")
+            XCTAssertEqual(toEnglish.first?.label, variant.label,
+                           "\(variant.custom) English switch should be labelled \(variant.label)")
+            XCTAssertFalse(keys.contains { $0.code == LimeKeyCode.switchToIM.rawValue },
+                           "\(variant.custom) should not carry the English keyboard's 中 key (#177)")
+        }
+    }
+
+    /// The custom keyboard must stay on the alphabetic grid users already type on —
+    /// a custom CIN table keys off a-z, so only the mode key may differ from lime_abc.
+    func testCustomLayoutFamilyMirrorsAbcGeometry() throws {
+        for variant in Self.customLayoutVariants {
+            let custom = try loadKeyboardLayoutFixture(variant.custom)
+            let abc = try loadKeyboardLayoutFixture(variant.abc)
+
+            XCTAssertEqual(custom.rows.map(\.keys.count), abc.rows.map(\.keys.count),
+                           "\(variant.custom) should keep \(variant.abc)'s row shape (#177)")
+            XCTAssertEqual(custom.rows.map(\.isBottomRow), abc.rows.map(\.isBottomRow),
+                           "\(variant.custom) should keep \(variant.abc)'s bottom-row flags")
+
+            // Non-mode keys must match code-for-code and width-for-width.
+            let modeCodes = [LimeKeyCode.switchToEnglish.rawValue, LimeKeyCode.switchToIM.rawValue]
+            let customKeys = custom.rows.flatMap(\.keys).filter { !modeCodes.contains($0.code) }
+            let abcKeys = abc.rows.flatMap(\.keys).filter { !modeCodes.contains($0.code) }
+            XCTAssertEqual(customKeys.map(\.code), abcKeys.map(\.code),
+                           "\(variant.custom) should keep \(variant.abc)'s key codes (#177)")
+            XCTAssertEqual(customKeys.map(\.widthPercent), abcKeys.map(\.widthPercent),
+                           "\(variant.custom) should keep \(variant.abc)'s key widths (#177)")
+        }
+    }
+
+    /// #177: users who imported a table on an older build already have a `custom` row
+    /// pointing at lime_abc, so seeding alone would only fix fresh installs.
+    func testSeedCustomIMRegistersDedicatedLayoutAndRepairsLegacyRows() throws {
+        let source = try String(contentsOf: projectFileURL("Shared/Database/LimeDB.swift"),
+                                encoding: .utf8)
+        guard let start = source.range(of: "func seedCustomIM() throws {"),
+              let end = source.range(of: "\n    }\n", range: start.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate seedCustomIM body")
+        }
+        let body = String(source[start.upperBound..<end.lowerBound])
+
+        XCTAssertTrue(body.contains("'lime_custom'"),
+                      "seedCustomIM should register custom against its dedicated layout (#177)")
+        XCTAssertTrue(body.contains("UPDATE im SET keyboard = 'lime_custom'"),
+                      "seedCustomIM should repair rows seeded by older builds (#177)")
+        XCTAssertTrue(body.contains("keyboard = 'lime_abc'"),
+                      "the repair should be scoped to the legacy value so a deliberate "
+                      + "layout choice is never overwritten (#177)")
+        XCTAssertFalse(body.contains("guard !exists else { return }"),
+                       "the early return on an existing custom row blocks migration (#177)")
+    }
+
+    /// #177 stale-layout symptom: switching Array 10 → custom kept the previous IM's
+    /// keyboard on screen, because a nil `LayoutLoader.load` skipped `setLayout` entirely.
+    func testInternalIMSwitchAppliesSafeLayoutInsteadOfKeepingPreviousKeyboard() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        guard let start = source.range(of: "private func switchToNextActivatedIM(forward: Bool)"),
+              let end = source.range(of: "// MARK: - Symbol Keyboard",
+                                     range: start.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate switchToNextActivatedIM body")
+        }
+        let body = String(source[start.upperBound..<end.lowerBound])
+
+        XCTAssertTrue(body.contains("safeLayout("),
+                      "switchToNextActivatedIM should resolve through safeLayout so a missing "
+                      + "layout falls back instead of stranding the previous keyboard (#177)")
+        XCTAssertFalse(body.contains("if let newLayout = LayoutLoader.load(preferredLayout)"),
+                       "the optional-binding form skips setLayout on nil — the #177 stale path")
+    }
+
+    /// safeLayout must be total: every branch returns a layout, so no caller can be
+    /// left holding the previous IM's keyboard.
+    func testSafeLayoutFallsBackThroughLoadableChain() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        guard let start = source.range(of: "func safeLayout("),
+              let end = source.range(of: "// MARK: - Shared UserDefaults",
+                                     range: start.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate safeLayout body")
+        }
+        let body = String(source[start.upperBound..<end.lowerBound])
+
+        XCTAssertTrue(body.contains("\"lime_custom\""),
+                      "safeLayout should use an alphabetic Chinese-composition fallback (#177)")
+        XCTAssertTrue(body.contains("\"lime_abc\""),
+                      "safeLayout should end on an always-bundled backstop layout (#177)")
+    }
+
+    func testLegacyCustomMetadataResolvesDedicatedLayoutImmediately() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        guard let start = source.range(of: "private func resolvedLayoutId(for tableNick: String)"),
+              let end = source.range(of: "func safeLayout(", range: start.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate resolvedLayoutId body")
+        }
+        let body = String(source[start.upperBound..<end.lowerBound])
+
+        XCTAssertTrue(body.contains("tableNick == \"custom\""))
+        XCTAssertTrue(body.contains("kbCode == \"lime_abc\""))
+        XCTAssertTrue(body.contains("return \"lime_custom\""))
+    }
+
+    func testAbsoluteMenuIMSwitchUsesSafeLayout() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        guard let start = source.range(of: "private func switchIM(toIndex i: Int)"),
+              let end = source.range(of: "private func displayName(for im: ImConfig)",
+                                     range: start.upperBound..<source.endIndex) else {
+            return XCTFail("could not isolate switchIM body")
+        }
+        let body = String(source[start.upperBound..<end.lowerBound])
+
+        XCTAssertTrue(body.contains("safeLayout("),
+                      "the direct LIME menu switch must not retain the previous layout (#177)")
+        XCTAssertFalse(body.contains("if let layout = LayoutLoader.load"))
+    }
+
     private func loadKeyboardLayoutFixture(_ layoutID: String) throws -> KeyboardLayoutFixture {
         let url = projectFileURL("LimeKeyboard/Layouts/\(layoutID).json")
         let data = try Data(contentsOf: url)

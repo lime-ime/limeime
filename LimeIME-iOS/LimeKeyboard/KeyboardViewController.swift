@@ -1182,6 +1182,12 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             return "lime_\(tableNick)"
         }
         let kbCode = imConfig.keyboardId
+        // Existing installs may still carry the pre-#177 custom → lime_abc binding.
+        // Resolve it at runtime so the fix applies before the user imports again and
+        // seedCustomIM gets another chance to repair the stored row.
+        if tableNick == "custom" && (kbCode.isEmpty || kbCode == "lime_abc") {
+            return "lime_custom"
+        }
         // If kbCode is a directly loadable layout filename (e.g. "lime_array", "phone_simple"),
         // use it as-is. This covers the fallback list path where we store the layout name directly.
         if LayoutLoader.load(kbCode) != nil {
@@ -1199,6 +1205,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         if tableNick == "array10" { return "phone_simple" }
         return "lime_\(tableNick)"
     }
+
+    /// Resolve `preferred` to a layout that is guaranteed to exist (#177).
+    ///
+    /// `LayoutLoader.load` returns nil for an id with no bundled JSON. Callers used to
+    /// bind that optional and simply skip `setLayout` on nil, which could leave the
+    /// previous IM's keyboard visible after an internal IM switch (#177). Resolution can
+    /// legitimately miss when stored metadata names a layout that is not bundled.
+    ///
+    /// Every layout-applying path therefore routes through here so a miss degrades to a
+    /// usable keyboard instead of retaining the previous IM. Chinese-composition callers
+    /// use `lime_custom`; the English-mode caller passes `lime_abc` directly.
+    func safeLayout(_ preferred: String, fallback: String = "lime_custom") -> LimeKeyLayout {
+        for candidate in [preferred, fallback, "lime_abc"] {
+            if let loaded = LayoutLoader.load(candidate) {
+                return cj4SemicolonAdjusted(loaded)
+            }
+        }
+        return currentLayout
+    }
+
+    // MARK: - Shared UserDefaults
 
     /// Shared UserDefaults for reading settings written by the container app.
     private var sharedDefaults: UserDefaults? {
@@ -3408,7 +3435,7 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         resetTempEnglishWord()
         // English runtime layout is preference-driven; legacy KeyboardConfig engkb fields are DB compatibility data only.
         let layoutName = toEnglish ? englishLayoutId() : resolvedLayoutId(for: activeIM)
-        if let loaded = LayoutLoader.load(layoutName) { currentLayout = cj4SemicolonAdjusted(loaded) }
+        currentLayout = safeLayout(layoutName, fallback: toEnglish ? "lime_abc" : "lime_custom")
         keyboardView.setLayout(currentLayout)
         applyHeight()
     }
@@ -3441,15 +3468,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         ss.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
 
-        // Update keyboard layout to match the new IM if available
-        let preferredLayout = resolvedLayoutId(for: activeIM)
-        if let newLayout = LayoutLoader.load(preferredLayout) {
-            let adjusted = cj4SemicolonAdjusted(newLayout)
-            if adjusted != currentLayout {
-                currentLayout = adjusted
-                keyboardView?.setLayout(currentLayout)
-                applyHeight()
-            }
+        // Update keyboard layout to match the new IM. Resolution goes through safeLayout
+        // so an unresolvable id falls back to a loadable layout rather than silently
+        // leaving the previous IM's keyboard on screen (#177).
+        let adjusted = safeLayout(resolvedLayoutId(for: activeIM))
+        if adjusted != currentLayout {
+            currentLayout = adjusted
+            keyboardView?.setLayout(currentLayout)
+            applyHeight()
         }
         showLimeToast(displayName(for: im))
     }
@@ -4262,13 +4288,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
                                        keyboardId: keyboardId))
         searchServer?.setPhoneticKeyboardType(phoneticKeyboardType)
         refreshImKeys()
-        if let layout = LayoutLoader.load(resolvedLayoutId(for: activeIM)) {
-            let adjusted = cj4SemicolonAdjusted(layout)
-            if adjusted != currentLayout {
-                currentLayout = adjusted
-                keyboardView?.setLayout(currentLayout)
-                applyHeight()
-            }
+        let adjusted = safeLayout(resolvedLayoutId(for: activeIM))
+        if adjusted != currentLayout {
+            currentLayout = adjusted
+            keyboardView?.setLayout(currentLayout)
+            applyHeight()
         }
         showLimeToast(displayName(for: im))
     }

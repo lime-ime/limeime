@@ -3891,17 +3891,36 @@ final class LimeDB {
         }
     }
 
-    /// Registers the "custom" (自建) IM in the im table if it is not already present.
+    /// Registers the "custom" (自建) IM in the im table if it is not already present,
+    /// and repairs rows seeded by older builds (#177).
     /// Always seeded on explicit user action — even when the custom table is empty.
+    ///
+    /// `custom` composes Chinese from an imported CIN table, so it needs the dedicated
+    /// `lime_custom` layout family rather than the English runtime `lime_abc`.
+    /// `lime_abc` carries the `switchToIM` (中) mode key, which leaves custom
+    /// composition without a direct route to the English keyboard. A dedicated,
+    /// bundled layout also gives internal-IM switching a valid custom fallback.
+    ///
+    /// Anyone who imported a table before this fix already has a `custom` row pointing at
+    /// `lime_abc`, so seeding alone would only help fresh installs — hence the repair pass.
+    /// It is deliberately scoped to the known-bad values (`lime_abc`, empty, NULL) so a
+    /// deliberately chosen layout is never overwritten.
     func seedCustomIM() throws {
         try dbQueue.write { db in
             let exists = (try? Int.fetchOne(db,
                 sql: "SELECT COUNT(*) FROM im WHERE code = ?",
                 arguments: ["custom"]) ?? 0) ?? 0 > 0
-            guard !exists else { return }
+            if exists {
+                try db.execute(sql: """
+                    UPDATE im SET keyboard = 'lime_custom'
+                    WHERE code = 'custom'
+                      AND (keyboard = 'lime_abc' OR keyboard IS NULL OR keyboard = '')
+                """)
+                return
+            }
             try db.execute(sql: """
                 INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
-                VALUES ('custom', '自建', '', 'lime_abc', 0, '', '', '')
+                VALUES ('custom', '自建', '', 'lime_custom', 0, '', '', '')
             """)
         }
     }

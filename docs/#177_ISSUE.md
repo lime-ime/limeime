@@ -1,86 +1,102 @@
-# Issue #177: iOS custom IM does not refresh its layout and cannot switch to English
+# Issue #177: iOS custom IM layout is stale and cannot switch to English
 
 ## Status
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/177
-- Classification: `bug`, `Type-Defect`, `Usability`
-- State: open, confirmed plausible from a private support-email report and source inspection
-- Source: private support email received 2026-07-20. The sender identity, imported table, screenshot, and recording remain private.
-- Environment: iOS and current App Store LIME after an update. Exact iPhone model, iOS version, and LIME version were requested from the reporter.
+- Classification: bug (`Type-Defect`, `Usability`)
+- State: open
+- Scope: iOS source fix implemented on `fix/177-ios-custom-layout`; Xcode and device verification remain pending
 
 ## Problem statement
 
-After importing a custom CIN table, switching from another LIME internal input method such as Array 10 to `custom` can leave the previous input method's visible keyboard layout on screen. Closing and reopening the keyboard then shows the custom IM's default layout.
+After importing a custom CIN table on iOS, switching from another LIME internal input method to `custom` can retain the previous input method's visible keyboard until the keyboard extension is reopened. The custom keyboard also displays a `中` mode key and provides no direct route to the English keyboard.
 
-The custom layout also presents a `中` mode key rather than an `abc` key, leaving the reporter without a way to switch from custom composition to the normal English keyboard.
+## Reproduction
 
-These are related user-visible failures but may have separate causes:
+1. Import an alphabetic custom CIN table.
+2. Activate another LIME internal input method, such as Array 10.
+3. Select Custom from the LIME input-method menu.
+4. Observe whether the visible keyboard updates immediately.
+5. On the Custom keyboard, inspect and use the language-mode key.
 
-1. The active table changes to `custom`, but the warm keyboard process does not immediately replace `currentLayout` with the resolved custom layout.
-2. The custom IM is registered with `lime_abc`, whose current JSON uses `switchToIM` (`code: -10`, label `中`) instead of the Chinese-layout `switchToEnglish` action.
+Expected behavior:
 
-## Source evidence
+- Selecting Custom immediately loads its alphabetic composing layout.
+- The Custom layout provides an `EN`/`abc` key that switches to the normal English keyboard.
 
-### iOS custom registration and publication
+## Source evidence and likely root cause
 
-- `LimeIME-iOS/LimeSettings/Views/IMInstallView.swift`
-  - Successful custom `.cin`/`.lime` and database imports call `DBServer.shared.seedCustomIM()`.
-- `LimeIME-iOS/Shared/Database/LimeDB.swift`
-  - `seedCustomIM()` inserts `custom` with keyboard `lime_abc` only when no `custom` IM row exists.
-- `LimeIME-iOS/Shared/Database/DBServer.swift`
-  - `seedCustomIM()` writes through the current datasource. The import path separately publishes table and IM changes for the keyboard extension.
+`LimeDB.seedCustomIM()` registered `custom` with `lime_abc`. That layout is the English runtime layout, so its mode key is `code: -10`, label `中`, which returns to a Chinese input method rather than entering English mode. A custom CIN table is itself a Chinese composing input method and needs a separate alphabetic layout whose mode key is `switchToEnglish` (`code: -9`).
 
-### iOS runtime switching
+The switch handlers also used optional layout loads. If the resolved layout ID was absent from the keyboard extension bundle, they skipped `setLayout`, allowing the previous input method's keyboard to remain visible. This code structure plausibly permits the reported stale-layout behavior. The exact device sequence still requires simulator/device reproduction.
 
-- `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
-  - `switchToNextActivatedIM(forward:)` updates `activeIM`, reconfigures `SearchServer`, resolves the active layout, and calls `keyboardView.setLayout(...)` when the resolved layout differs from `currentLayout`.
-  - `resolvedLayoutId(for:)` returns a directly loadable `keyboardId`, resolves a keyboard-table code through `imkb`, or falls back to `lime_<tableNick>`.
-  - The report indicates that the warm switching path can retain the prior visible layout even though reopening the keyboard performs enough setup to resolve the custom layout.
-- `LimeIME-iOS/LimeKeyboard/Layouts/lime_abc.json`
-  - The mode key is `code: -10` with label `中`. In `KeyboardViewController`, `-10` maps to `switchToIM`, while normal Chinese layouts use the English-switch action and label `abc`.
+Existing installations need special handling because their `custom` row may already contain the legacy `lime_abc` value. Repairing only newly inserted rows would not affect those installations.
 
-## Relationship to earlier issues
+## Fix
 
-- #119 fixed default keyboard assignment for known imported IMs. It treated the separately seeded `custom → lime_abc` path as valid, so it did not cover this runtime switch or custom mode-key behavior.
-- #121 covered first activation after a cloud IM install showing a layout inconsistent with English runtime mode. This report concerns a user-imported custom IM, retention of the previous IM's layout, and the inability to enter English mode.
+1. Add a dedicated custom layout family based on the existing alphabetic geometry:
+   - `lime_custom`
+   - `lime_custom_shift`
+   - `lime_custom_ipad`
+   - `lime_custom_ipad_shift`
+   - `lime_custom_ipad_narrow`
+   - `lime_custom_ipad_narrow_shift`
+2. Give each variant exactly one `switchToEnglish` key, labelled `EN` on phone and `abc` on iPad, while preserving the corresponding `lime_abc` key geometry.
+3. Register all six JSON files in the LimeKeyboard resource build phase.
+4. Seed new `custom` rows with `lime_custom` and repair existing rows whose keyboard value is `lime_abc`, empty, or null.
+5. Resolve legacy in-memory `custom → lime_abc` metadata to `lime_custom` immediately, so an existing user does not need to import again before receiving the runtime fix.
+6. Route forward/backward internal-IM cycling, direct menu selection, and Chinese/English mode switching through a total layout resolver. A missing preferred layout now falls back to bundled `lime_abc` rather than retaining the previous keyboard.
 
-Issue #177 therefore remains a distinct follow-up rather than reopening either closed issue.
+## Existing coverage and regression gap
+
+The existing iOS tests covered general layout loading, input-field layout selection, database synchronization, and active-IM reconciliation. They did not assert:
+
+- the layout assigned to a seeded custom IM;
+- the language-mode key across every custom device/shift variant;
+- migration of an existing custom row;
+- direct and cyclic internal-IM switching when a preferred layout cannot be loaded;
+- LimeKeyboard target membership for a complete custom layout family.
+
+New XCTest source/layout contract cases and `scripts/test_custom_layout_ios.py` cover those contracts. The Python suite is runnable on Linux; behavioral XCTest and extension UI verification still require Xcode.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed plausible and user-visible. The report includes private media, but visual conclusions have not been inferred beyond the reporter's written description. Exact device/version details remain pending.
+Confirmed report scope. The affected seed path, JSON layouts, bundle resources, and `KeyboardViewController` switch paths are iOS-specific. The fix changes iOS source and resources only.
 
 ### Android
 
-No matching report is known. Verify Android custom import, internal IM switching, and Chinese/English mode behavior for parity, but do not assume the iOS lifecycle defect applies.
-
-## Proposed investigation
-
-1. Add a focused test for resolving and applying `custom` after switching from a different active IM in a warm keyboard controller.
-2. Capture `activeIM`, `activeIMIndex`, cached `activatedIMs.keyboardId`, resolved layout ID, and `currentLayout` before and after the switch.
-3. Verify whether custom import publishes a new or updated IM row and whether a warm extension refreshes `activatedIMs` before switching.
-4. Decide whether custom should use a dedicated Chinese-composition alphabet layout or whether `lime_abc` should carry `switchToEnglish` when used by `custom`.
-5. Preserve normal English layout behavior and avoid changing `lime_abc` globally if it is also used as the actual English-mode layout.
+No matching behavior is reported. Android uses separate keyboard resources and switching code, so this iOS root cause does not directly apply and no Android source change is included. Android custom import and Chinese/English switching should still receive a parity smoke test during coordinated QA.
 
 ## Verification plan
 
-### iOS
+### Automated
 
-- Import a sanitized alphabetic custom CIN fixture.
-- Switch Array 10 → custom, another Chinese IM → custom, custom → another IM, and both forward/backward directions.
-- Verify the visible layout, active table, accepted root keys, and candidate lookup immediately after every switch.
-- Verify the custom layout offers a working path to English and that switching back restores custom composition.
-- Repeat with a cold keyboard launch and an already-running keyboard extension.
-- Test fresh installation and an existing database where `custom` metadata already exists.
-- Device-test on the reporter's environment after exact versions are supplied.
+- Parse all six custom layouts.
+- Verify each mirrors the matching `lime_abc` geometry except for layout ID and mode key.
+- Verify exactly one `switchToEnglish` key and no `switchToIM` key in every custom variant.
+- Verify every custom resource is in the LimeKeyboard Resources build phase.
+- Verify new-row seeding and scoped legacy-row repair.
+- Verify legacy runtime metadata resolves to `lime_custom`.
+- Verify cyclic switching, direct menu switching, and Chinese/English switching use safe layout resolution.
+- Run existing Linux-runnable layout/resource regression scripts.
+- Run focused XCTest on macOS/Xcode.
 
-### Android
+### Simulator/device
 
-- Verify custom CIN import, immediate internal-IM layout switching, and Chinese/English mode toggling.
-- Keep Android out of the fix scope unless testing confirms equivalent behavior.
+- Test another IM → Custom and Custom → another IM in both directions.
+- Test direct menu selection and next/previous cycling.
+- Confirm visible layout, active table, root-key input, and candidate lookup immediately after each switch.
+- Switch Custom → English → Custom and continue composing.
+- Test a fresh database and an upgraded database containing `custom → lime_abc`.
+- Test phone, regular iPad, and iPad-narrow layouts in normal and shifted states.
+- Repeat from a cold extension launch and an already-running extension.
 
-## Reporter follow-up
+## Follow-up questions
 
-The support reply links issue #177, confirms receipt of one private recording and one image, and asks for the iPhone model, iOS version, and LIME version. The reporter may continue by email, and any result must be synchronized to the issue without exposing private identity or attachments.
+Device model, iOS version, and exact LIME version remain useful for final device reproduction, but they do not block the source fix or regression coverage.
+
+## Retest condition
+
+Request user verification only after the fix is merged and available in a newer iOS build.

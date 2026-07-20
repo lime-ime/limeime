@@ -1,0 +1,975 @@
+﻿{
+  "id": "lime_custom_ipad_shift",
+  "defaultWidthPercent": 7.15,
+  "rows": [
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": 126,
+          "codes": [
+            126
+          ],
+          "label": "~",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 33,
+          "codes": [
+            33
+          ],
+          "label": "!",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 64,
+          "codes": [
+            64
+          ],
+          "label": "@",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 35,
+          "codes": [
+            35
+          ],
+          "label": "#",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 36,
+          "codes": [
+            36
+          ],
+          "label": "$",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 37,
+          "codes": [
+            37
+          ],
+          "label": "%",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 94,
+          "codes": [
+            94
+          ],
+          "label": "^",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 38,
+          "codes": [
+            38
+          ],
+          "label": "&",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 42,
+          "codes": [
+            42
+          ],
+          "label": "*",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 40,
+          "codes": [
+            40
+          ],
+          "label": "(",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 41,
+          "codes": [
+            41
+          ],
+          "label": ")",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 95,
+          "codes": [
+            95
+          ],
+          "label": "_",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 43,
+          "codes": [
+            43
+          ],
+          "label": "+",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -5,
+          "codes": [
+            -5
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 9.0,
+          "icon": "delete.backward",
+          "isModifier": true,
+          "isRepeatable": true,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": 9,
+          "codes": [
+            9
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 9.0,
+          "icon": "arrow.forward.to.line",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 113,
+          "codes": [
+            113
+          ],
+          "label": "Q",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 119,
+          "codes": [
+            119
+          ],
+          "label": "W",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 101,
+          "codes": [
+            101
+          ],
+          "label": "E",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 114,
+          "codes": [
+            114
+          ],
+          "label": "R",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 116,
+          "codes": [
+            116
+          ],
+          "label": "T",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 121,
+          "codes": [
+            121
+          ],
+          "label": "Y",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 117,
+          "codes": [
+            117
+          ],
+          "label": "U",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 105,
+          "codes": [
+            105
+          ],
+          "label": "I",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 111,
+          "codes": [
+            111
+          ],
+          "label": "O",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 112,
+          "codes": [
+            112
+          ],
+          "label": "P",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 123,
+          "codes": [
+            123
+          ],
+          "label": "{",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 125,
+          "codes": [
+            125
+          ],
+          "label": "}",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 124,
+          "codes": [
+            124
+          ],
+          "label": "|",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": -9,
+          "codes": [
+            -10
+          ],
+          "label": "abc",
+          "sublabel": "",
+          "widthPercent": 11.5,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 97,
+          "codes": [
+            97
+          ],
+          "label": "A",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 115,
+          "codes": [
+            115
+          ],
+          "label": "S",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 100,
+          "codes": [
+            100
+          ],
+          "label": "D",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 102,
+          "codes": [
+            102
+          ],
+          "label": "F",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 103,
+          "codes": [
+            103
+          ],
+          "label": "G",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 104,
+          "codes": [
+            104
+          ],
+          "label": "H",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 106,
+          "codes": [
+            106
+          ],
+          "label": "J",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 107,
+          "codes": [
+            107
+          ],
+          "label": "K",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 108,
+          "codes": [
+            108
+          ],
+          "label": "L",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 58,
+          "codes": [
+            58
+          ],
+          "label": ":",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "@xml/popup_c_punctuation",
+          "popupCharacters": ""
+        },
+        {
+          "code": 34,
+          "codes": [
+            34
+          ],
+          "label": "\"",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 10,
+          "codes": [
+            10
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 11.5,
+          "icon": "return",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": -1,
+          "codes": [
+            -1
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 15.0,
+          "icon": "shift",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": true,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 122,
+          "codes": [
+            122
+          ],
+          "label": "Z",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 120,
+          "codes": [
+            120
+          ],
+          "label": "X",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 99,
+          "codes": [
+            99
+          ],
+          "label": "C",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 118,
+          "codes": [
+            118
+          ],
+          "label": "V",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 98,
+          "codes": [
+            98
+          ],
+          "label": "B",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 110,
+          "codes": [
+            110
+          ],
+          "label": "N",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 109,
+          "codes": [
+            109
+          ],
+          "label": "M",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 60,
+          "codes": [
+            60
+          ],
+          "label": "<",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 62,
+          "codes": [
+            62
+          ],
+          "label": ">",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 63,
+          "codes": [
+            63
+          ],
+          "label": "?",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -1,
+          "codes": [
+            -1
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 15.0,
+          "icon": "shift",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": true,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": true,
+      "keys": [
+        {
+          "code": -200,
+          "codes": [
+            -200
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "globe",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": -100,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -2,
+          "codes": [
+            -2
+          ],
+          "label": ".?123",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -201,
+          "codes": [
+            -201
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 7.0,
+          "icon": "face.smiling",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 32,
+          "codes": [
+            32
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 57.0,
+          "icon": "space.bar",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -2,
+          "codes": [
+            -2
+          ],
+          "label": ".?123",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -3,
+          "codes": [
+            -3
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "keyboard.chevron.compact.down",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": -100,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    }
+  ]
+}
