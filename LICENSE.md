@@ -46,6 +46,7 @@ LIME IME 內建或下載多種繁體中文輸入法碼表與字典。特此感�
 | 筆順五碼字根 | 感謝香港長者資訊天地提供授權。 |
 | 哈哈倉頡字根 | 感謝尹卂提供哈哈倉頡碼表，依 CC BY 4.0 授權釋出。來源與更新網址：https://ejsoon.vip/haha |
 | 快速倉頡第六代字根 | 快倉2000／快速倉頡輸入法第六代（SmartCangJie6）來源為 https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt，Copyright (C) 2002-2009 麥志洪與 Quintus Leung，依 GPL version 3 or later 授權。 |
+| 三碼輸入法字根表／碼表 | 感謝三碼輸入法作者無書自通（源自王堯世先生象形王碼輸入法二代之改編創作）授權。官方網站及版本來源：https://3code-type.github.io/ 。 |
 
 若您是下載字根表的作者或提供者，希望修正致謝文字，或提出版權異議，請透過
 GitHub Issue 提出，我們會儘快處理。
@@ -55,6 +56,9 @@ GitHub Issue 提出，我們會儘快處理。
 LIME 是一個輸入法框架。從網路下載或自行加入的輸入法碼表與字典，
 可能各自有不同的版權或授權條件。使用者與散布者加入外部碼表時，
 應尊重原作者或提供者的授權條款。
+
+三碼輸入法（GitHub issue #159）：作者無書自通同意 LIME 專案保存、轉換、打包、
+散布及維護更新三碼碼表；僅限免費使用，不得作商業用途。
 
 ## Third-Party Open Source Notices
 
@@ -67,6 +71,7 @@ Their licenses remain with their respective authors.
 |------|--------|---------|
 | English word frequency dictionary (`dictionary.db` `basescore`) | Google Books Ngrams (<https://books.google.com/ngrams>), English 1-grams v3 (2020-02-17) | Creative Commons Attribution 3.0 Unported (CC BY 3.0) |
 | SmartCangJie6 / 快速倉頡第六代 table (`scj`) | SCJ2000 / 快倉2000 (`scj6.txt`, <https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt>) | GNU General Public License version 3 or later (GPL-3.0-or-later) |
+| 三碼輸入法 table (`tricode`) | 無書自通, 三碼輸入法 (<https://3code-type.github.io/>, table v.20260715.1) | Free use, non-commercial (see 「輸入法碼表版權聲明」 above) |
 
 The bundled English `basescore` data is derived from Google Books Ngrams English
 1-gram frequency counts, aggregated and log-scaled to a word-frequency score by
