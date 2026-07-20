@@ -2,7 +2,7 @@
 
 ## Goal
 
-Ship 三碼輸入法 by 無書自通 (https://3code-type.github.io/, table v.20260715.1, free use / non-commercial) as a built-in downloadable IM on Android and iOS in one pass:
+Ship 三碼輸入法 by 無書自通 (https://3code-type.github.io/, table v.20260720.3, free use / non-commercial) as a built-in downloadable IM on Android and iOS in one pass:
 
 1. Convert `3code.cin` into a `.limedb` and commit it to `Database/`.
 2. Add it to the Android and iOS IM install (download) lists.
@@ -32,7 +32,7 @@ Done means: on both platforms the user can download 三碼 from the install list
 
 ## Source facts (from `.claude/txt/3code.cin`, downloaded from https://3code-type.github.io/3code.cin)
 
-- `%ename 3code` / `%cname 三碼輸入法`; header comment: author 無書自通（改編）, v.20260715.1, ~13,060+ chars, 14,428 lines.
+- `%ename 3code` / `%cname 三碼輸入法`; header comment: author 無書自通（改編）, v.20260720.3, ~13,060+ chars, 14,544 lines; 14,489 deduplicated mapping rows.
 - `%selkey 1234567890`. **No** `%endkey` / `%limeendkey` / `%spacestyle` — leave those empty.
 - `%keyname` order: `' , . / ;` then a–z, with fullwidth labels `〃 ， ． ／ ； Ａ…Ｚ`.
 - `%chardef` quirks the build script must handle: `#`-comment lines interleaved inside the block; trailing spaces after words; tab-delimited; duplicate (code, word) pairs (e.g. two `,of 訴/訢` entries and repeated `㠯` rows) — dedupe exact duplicates; multi-char candidates exist (`sr 啊！`, `sk 呵…`) — keep them.
@@ -77,7 +77,7 @@ Phase 4 (license/docs):
      | code | title | desc | keyboard |
      |---|---|---|---|
      | tricode | source | https://3code-type.github.io/3code.cin | |
-     | tricode | version | 20260715.1 | |
+     | tricode | version | 20260720.3 | |
      | tricode | name | 三碼 | |
      | tricode | amount | <row count> | |
      | tricode | import | <date passed via --date arg> | |
@@ -99,7 +99,7 @@ Phase 4 (license/docs):
 6. Keyboard row seeding: alongside `ensureCangjieSemicolonKeyboards()` (:5724), seed via `insertKeyboardIfAbsent()` (:5740), cloning the `limenumsym` row values:
    `code=limenumsym2, name=LIMENUMSYM2, desc=LIME+數字符號鍵盤2, type=phone, image=lime_number_symbol_keyboard_priview (reuse), imkb=lime_num_sym2, imshiftkb=lime_num_sym2_shift, engkb=lime_english_number, engshiftkb=lime_english_shift, symbolkb=symbols, symbolshiftkb=symbols_shift, disable=false`.
 7. Install list: in `ImInstallFragment.buildFamilyList()` add after an existing family (clone the 大易 block :405–414):
-   one `CloudVariant("三碼 v.20260715.1", "<count>", "<size> KB", LIME.DATABASE_CLOUD_IM_TRICODE)` → `new ImFamily(LIME.DB_TABLE_TRICODE, "三碼", tricode, true, false, false, R.drawable.ic_textformat_alt)` (family names are string literals here; no strings.xml entry needed).
+   one `CloudVariant("三碼 v.20260720.3", "14,489", "234 KB", LIME.DATABASE_CLOUD_IM_TRICODE)` → `new ImFamily(LIME.DB_TABLE_TRICODE, "三碼", tricode, true, false, false, R.drawable.ic_textformat_alt)` (family names are string literals here; no strings.xml entry needed).
 
 ### Phase 3 — iOS
 
@@ -128,7 +128,7 @@ Phase 4 (license/docs):
    - Narrow shape follows the `lime_number_symbol` exception (§A.12.1) with the symbol keys root-protected. Generated rows MUST match the normative spec below, cell for cell.
 7. Add all 6 new JSONs to `project.pbxproj` (individual fileRef/buildFile/group/resources entries — `lime_number_symbol` has 24 refs; reuse `scripts/add_ipad_layouts_to_xcodeproj.py` if applicable, else hand-edit; never xcodegen).
 8. `IMCatalog.swift`: add an `IMFamily` (clone dayi :143–152):
-   `id: "tricode", chineseName: "三碼", englishName: "3code", description: "三碼輸入法，一字最多三碼", systemIcon: "textformat.alt"`, one variant `.init(id: "tricode", name: "三碼 v.20260715.1", filename: "tricode.limedb", tableName: "tricode", imName: "tricode", label: "三碼", keyboardId: "limenumsym2", recordCount: <count>, compressedKB: <size>)`.
+   `id: "tricode", chineseName: "三碼", englishName: "3code", description: "三碼輸入法，一字最多三碼", systemIcon: "textformat.alt"`, one variant `.init(id: "tricode", name: "三碼 v.20260720.3", filename: "tricode.limedb", tableName: "tricode", imName: "tricode", label: "三碼", keyboardId: "limenumsym2", recordCount: 14_489, compressedKB: 234)`.
 9. `SetupImController.swift` `reregisterKnownIMs` (:711–723): add `("tricode", "三碼", "limenumsym2")`.
 
 #### iPad layout spec — `lime_num_sym2` (normative)
@@ -247,7 +247,7 @@ the `，/。` slot renders blank and neither character is typeable. `IPAD_KB_SIZ
    - 「輸入法碼表致謝」 table: new row — 三碼輸入法字根表／碼表，作者 無書自通（源自王堯世先生象形王碼輸入法二代之改編創作），官方網站及版本來源 https://3code-type.github.io/ 。
    - 「輸入法碼表版權聲明」: note the grant from issue #159 — 作者同意 LIME 專案保存、轉換、打包、散布及維護更新；免費使用、不得作商業用途。
    - "Third-Party Open Source Notices › Bundled Data" table: add `tricode` row (source URL + non-commercial free license).
-2. `docs/BACKLOG.md:25` feat#159: mark implemented (target v6.1.34), note table version 20260715.1.
+2. `docs/BACKLOG.md:25` feat#159: mark implemented (target v6.1.35), note table version 20260720.3.
 3. `docs/ANDROID_IM_CATALOG.md`: add 三碼 row to the per-table size/count reference table.
 4. `docs/IPAD_KEYBOARD.md`: add `lime_num_sym2`, `lime_num_sym2_shift` to the §12 Chinese-IM iPad generator allowed-layout list, and copy the **full-tier** row spec from this plan (the `lime_num_sym2_ipad` / `_ipad_shift` blocks above, including the ASCII-tap-code notes) into §12 alongside the other layout contracts.
 5. `docs/IPAD_KB_SIZE_TIERS.md`: add the `IM_ROOTS` entry (§6.2); add `lime_num_sym2` row `14 / 14 / 13 / 12 → narrow (both layers): 12 / 12 / 12 / 12` to the §A.0.2 counts table; add a new appendix section `A.12.2 lime_num_sym2` copying the full + narrow row specs from this plan verbatim (model on §A.12.1), with the five ASCII symbol keys marked as protected roots and a note that zxcv stays 12/12 symmetric because this layout has no `。|，` cell to displace.

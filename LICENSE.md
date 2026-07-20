@@ -71,7 +71,7 @@ Their licenses remain with their respective authors.
 |------|--------|---------|
 | English word frequency dictionary (`dictionary.db` `basescore`) | Google Books Ngrams (<https://books.google.com/ngrams>), English 1-grams v3 (2020-02-17) | Creative Commons Attribution 3.0 Unported (CC BY 3.0) |
 | SmartCangJie6 / 快速倉頡第六代 table (`scj`) | SCJ2000 / 快倉2000 (`scj6.txt`, <https://github.com/scj2000/scj-tables/blob/master/scj6/scj6.txt>) | GNU General Public License version 3 or later (GPL-3.0-or-later) |
-| 三碼輸入法 table (`tricode`) | 無書自通, 三碼輸入法 (<https://3code-type.github.io/>, table v.20260715.1) | Free use, non-commercial (see 「輸入法碼表版權聲明」 above) |
+| 三碼輸入法 table (`tricode`) | 無書自通, 三碼輸入法 (<https://3code-type.github.io/>, table v.20260720.3) | Free use, non-commercial (see 「輸入法碼表版權聲明」 above) |
 
 The bundled English `basescore` data is derived from Google Books Ngrams English
 1-gram frequency counts, aggregated and log-scaled to a word-frequency score by

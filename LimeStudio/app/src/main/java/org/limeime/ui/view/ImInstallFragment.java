@@ -414,7 +414,7 @@ public class ImInstallFragment extends Fragment {
 
         // 三碼
         List<CloudVariant> tricode = new ArrayList<>();
-        tricode.add(new CloudVariant("三碼 v.20260715.1", "14,250", "227 KB",
+        tricode.add(new CloudVariant("三碼 v.20260720.3", "14,489", "234 KB",
                 LIME.DATABASE_CLOUD_IM_TRICODE));
         list.add(new ImFamily(LIME.DB_TABLE_TRICODE, "三碼", tricode, true, false, false,
                 R.drawable.ic_textformat_alt));
