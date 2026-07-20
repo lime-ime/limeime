@@ -281,6 +281,12 @@
 		3A78C716F58EC5B16C2E43AA /* lime_number_symbol_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */; };
 		9D8121A845097DE9402F40EC /* lime_number_symbol_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */; };
 		678CB7B769F1DF9773A8257B /* lime_number_symbol_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */; };
+		5F2CC12A37984455AA795A00 /* lime_num_sym2.json in Resources */ = {isa = PBXBuildFile; fileRef = CCC108E6390C4491B1C71DD2 /* lime_num_sym2.json */; };
+		A6C8CDDE662D4017961E2F14 /* lime_num_sym2_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 6D1150235BD54ADB9840E50F /* lime_num_sym2_shift.json */; };
+		89181C0F748843A89EDA3867 /* lime_num_sym2_ipad.json in Resources */ = {isa = PBXBuildFile; fileRef = 2D9FDBD8B67A40158661F72D /* lime_num_sym2_ipad.json */; };
+		DD91AB66B2CD4F5DB2E0AAF8 /* lime_num_sym2_ipad_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 705D69A8D5044F61BBF6FF1E /* lime_num_sym2_ipad_shift.json */; };
+		391C9CF404394B38829912EB /* lime_num_sym2_ipad_narrow.json in Resources */ = {isa = PBXBuildFile; fileRef = 588F120BED324AAC9711E665 /* lime_num_sym2_ipad_narrow.json */; };
+		AC6CF06D9B08484FB448828D /* lime_num_sym2_ipad_narrow_shift.json in Resources */ = {isa = PBXBuildFile; fileRef = 4139C8ACCAA6482C9A290A7B /* lime_num_sym2_ipad_narrow_shift.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -549,6 +555,12 @@
 		AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_shift.json; sourceTree = "<group>"; };
 		13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_narrow.json; sourceTree = "<group>"; };
 		B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_number_symbol_ipad_narrow_shift.json; sourceTree = "<group>"; };
+		CCC108E6390C4491B1C71DD2 /* lime_num_sym2.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2.json; sourceTree = "<group>"; };
+		6D1150235BD54ADB9840E50F /* lime_num_sym2_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2_shift.json; sourceTree = "<group>"; };
+		2D9FDBD8B67A40158661F72D /* lime_num_sym2_ipad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2_ipad.json; sourceTree = "<group>"; };
+		705D69A8D5044F61BBF6FF1E /* lime_num_sym2_ipad_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2_ipad_shift.json; sourceTree = "<group>"; };
+		588F120BED324AAC9711E665 /* lime_num_sym2_ipad_narrow.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2_ipad_narrow.json; sourceTree = "<group>"; };
+		4139C8ACCAA6482C9A290A7B /* lime_num_sym2_ipad_narrow_shift.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = lime_num_sym2_ipad_narrow_shift.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -806,6 +818,12 @@
 				AE94CA3C2DD305E14CA209D6 /* lime_number_symbol_ipad_shift.json */,
 				13D353644490954A4B320A0D /* lime_number_symbol_ipad_narrow.json */,
 				B9CC0FAA1772F3272207C9D3 /* lime_number_symbol_ipad_narrow_shift.json */,
+				CCC108E6390C4491B1C71DD2 /* lime_num_sym2.json */,
+				6D1150235BD54ADB9840E50F /* lime_num_sym2_shift.json */,
+				2D9FDBD8B67A40158661F72D /* lime_num_sym2_ipad.json */,
+				705D69A8D5044F61BBF6FF1E /* lime_num_sym2_ipad_shift.json */,
+				588F120BED324AAC9711E665 /* lime_num_sym2_ipad_narrow.json */,
+				4139C8ACCAA6482C9A290A7B /* lime_num_sym2_ipad_narrow_shift.json */,
 				D08E51EEBCCC4312888F7BD7 /* lime_number_ipad.json */,
 				6A321BAF09034686AC3E2A29 /* lime_number_ipad_shift.json */,
 				BC7C55BF2A2E802706106E50 /* lime_number_shift.json */,
@@ -1129,6 +1147,12 @@
 				3A78C716F58EC5B16C2E43AA /* lime_number_symbol_ipad_shift.json in Resources */,
 				9D8121A845097DE9402F40EC /* lime_number_symbol_ipad_narrow.json in Resources */,
 				678CB7B769F1DF9773A8257B /* lime_number_symbol_ipad_narrow_shift.json in Resources */,
+				5F2CC12A37984455AA795A00 /* lime_num_sym2.json in Resources */,
+				A6C8CDDE662D4017961E2F14 /* lime_num_sym2_shift.json in Resources */,
+				89181C0F748843A89EDA3867 /* lime_num_sym2_ipad.json in Resources */,
+				DD91AB66B2CD4F5DB2E0AAF8 /* lime_num_sym2_ipad_shift.json in Resources */,
+				391C9CF404394B38829912EB /* lime_num_sym2_ipad_narrow.json in Resources */,
+				AC6CF06D9B08484FB448828D /* lime_num_sym2_ipad_narrow_shift.json in Resources */,
 				52A2BC2194D460DE8925686B /* lime_number_shift.json in Resources */,
 				3627870C41CBCF6BBC97C35C /* symbols1.json in Resources */,
 				F4B771FCE2D64699B5EF2728 /* symbols3.json in Resources */,

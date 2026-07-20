@@ -60,6 +60,7 @@ IM_LAYOUTS = {
     "lime_et26",     "lime_et26_shift",
     "lime_et_41",    "lime_et_41_shift",
     "lime_hsu",      "lime_hsu_shift",
+    "lime_num_sym2", "lime_num_sym2_shift",
     "lime_wb",       "lime_wb_shift",
 }
 
@@ -630,47 +631,62 @@ def apply_zxcv_punct_sliding(row):
     return row
 
 
-def append_semicolon_key(row, semicolon_popup=None):
-    """Detect the asdf row (last primary code â {58, 59, 108, 76}) and add ï¼\\nï¼.
+def append_semicolon_key(row, source_id, semicolon_popup=None):
+    """Detect the asdf row (last primary code in {58, 59, 108, 76}) and add fullwidth ；\n：.
 
-    - Source `;` (59) or `:` (58) without sublabel â upgraded in-place to full-shape
-      ï¼\\nï¼(65306 tap, 65307 long-press).
-    - Source `;`/`:` with sublabel (IM component, e.g. phonetic ã¤ / et_41 ã)
-      â left unchanged; the IM key stays as the last character key.
-    - No `;`/`:` in the row (last â {108, 76}) â full-shape ï¼\\nï¼appended after l.
+    - Source `;` (59) or `:` (58) without sublabel -> upgraded in-place to
+      fullwidth ；\n：(65306 tap, 65307 long-press).
+    - Exception: lime_num_sym2 / lime_num_sym2_shift keep the ASCII tap code --
+      `;`/`:` is one of the five 3code symbol keys and must survive the iPad
+      scaffold -- upgraded in-place to `:\n;` (59 tap, 58 long-press)
+      instead of the fullwidth glyph.
+    - Source `;`/`:` with sublabel (IM component, e.g. phonetic ㄧ / et_41 ㄦ)
+      -> left unchanged; the IM key stays as the last character key.
+    - No `;`/`:` in the row (last in {108, 76}) -> fullwidth ；\n：appended after l.
     """
     if row.get("isBottomRow", False):
         return row
     keys = row["keys"]
     if not keys or keys[-1].get("code") not in (58, 59, 108, 76):
         return row
+    ascii_tap = source_id in ("lime_num_sym2", "lime_num_sym2_shift")
     if keys[-1].get("code") in (58, 59):
         lk = keys[-1]
         if not lk.get("sublabel", ""):
-            lk["code"]         = 65306
-            lk["label"]        = "\uff1b\\n\uff1a"
-            lk["longPressCode"] = 65307
-            if semicolon_popup:
-                lk["popupKeyboard"], lk["popupCharacters"] = semicolon_popup
-        # else: IM component key â leave unchanged
+            if ascii_tap:
+                lk["code"]         = 59
+                lk["label"]        = ':\\n;'
+                lk["longPressCode"] = 58
+            else:
+                lk["code"]         = 65306
+                lk["label"]        = '；\\n：'
+                lk["longPressCode"] = 65307
+                if semicolon_popup:
+                    lk["popupKeyboard"], lk["popupCharacters"] = semicolon_popup
+        # else: IM component key -- leave unchanged
     else:
         popup, chars = semicolon_popup or ("", "")
         keys.append({
-            "code": 65306, "label": "\uff1b\\n\uff1a", "sublabel": "", "widthPercent": 7.0,
+            "code": 65306, "label": '；\\n：', "sublabel": "", "widthPercent": 7.0,
             "icon": "", "isModifier": False, "isRepeatable": False, "isSticky": False,
             "popupKeyboard": popup, "popupCharacters": chars, "longPressCode": 65307,
         })
     return row
 
 
-def append_fullshape_period(row):
-    """Detect the asdf row and append ã\\nï¼.
+def append_fullshape_period(row, source_id):
+    """Detect the asdf row and append fullwidth 。\n，, or (for lime_num_sym2)
+    the promoted 〃 key ("\n').
 
-    Detection: last primary code â {58, 59, 65306, 108, 76}.
+    Detection: last primary code in {58, 59, 65306, 108, 76}.
     58 (:) and 59 (;) are included for IM shift layouts whose last asdf key is an
-    IM component (sublabel present) so append_semicolon_key left it unchanged.
-    65306 (ï¼) is included because append_semicolon_key may have placed it last.
-    Full-shape comma (65292) on tap, full-shape period (12290) on long-press.
+    IM component (sublabel present) so append_semicolon_key left it unchanged, and
+    for lime_num_sym2 / lime_num_sym2_shift whose semicolon key stays ASCII (59).
+    65306 (；) is included because append_semicolon_key may have placed it last.
+    Fullwidth comma (65292) on tap, fullwidth period (12290) on long-press.
+    Exception: lime_num_sym2 / lime_num_sym2_shift append the promoted 〃 (')
+    key instead -- ASCII `'` (39) on tap, `"` (34) on long-press -- since this IM
+    has no 。/，characters and the phone bottom-row `'` key needs an iPad home.
     Always placed left of the Enter key on the asdf row.
     """
     if row.get("isBottomRow", False):
@@ -678,23 +694,31 @@ def append_fullshape_period(row):
     keys = row["keys"]
     if not keys or keys[-1].get("code") not in (58, 59, 65306, 108, 76):
         return row
-    keys.append({
-        "code": 65292, "label": "\u3002\\n\uff0c", "sublabel": "", "widthPercent": 7.0,
-        "icon": "", "isModifier": False, "isRepeatable": False, "isSticky": False,
-        "popupKeyboard": "", "popupCharacters": "", "longPressCode": 12290,
-    })
+    if source_id in ("lime_num_sym2", "lime_num_sym2_shift"):
+        keys.append({
+            "code": 39, "label": '"\\n\'', "sublabel": "", "widthPercent": 7.0,
+            "icon": "", "isModifier": False, "isRepeatable": False, "isSticky": False,
+            "popupKeyboard": "", "popupCharacters": "", "longPressCode": 34,
+        })
+    else:
+        keys.append({
+            "code": 65292, "label": '。\\n，', "sublabel": "", "widthPercent": 7.0,
+            "icon": "", "isModifier": False, "isRepeatable": False, "isSticky": False,
+            "popupKeyboard": "", "popupCharacters": "", "longPressCode": 12290,
+        })
     return row
 
 
 def append_enter_key(row):
     """Append Enter (code 10) to the asdf row after append_fullshape_period ran.
 
-    Detection: last primary code = 65292 (the ãkey just added).
+    Detection: last primary code in {65292, 39} (the 。key, or -- for
+    lime_num_sym2 / lime_num_sym2_shift -- the promoted 〃(') key, just added).
     """
     if row.get("isBottomRow", False):
         return row
     keys = row["keys"]
-    if not keys or keys[-1].get("code") != 65292:
+    if not keys or keys[-1].get("code") not in (65292, 39):
         return row
     keys.append({
         "code": 10, "label": "", "sublabel": "", "widthPercent": 7.0,
@@ -1017,8 +1041,8 @@ def make_ipad_layout(phone, source_id):
         )
         row = transform_qwerty_row(row, lbracket=lbracket, backslash=backslash, rbracket=rbracket, has_digit_row=has_digit_row)
         row = prepend_abc_modifier(row)
-        row = append_semicolon_key(row, semicolon_popup=semicolon_popup)
-        row = append_fullshape_period(row)
+        row = append_semicolon_key(row, source_id, semicolon_popup=semicolon_popup)
+        row = append_fullshape_period(row, source_id)
         row = append_enter_key(row)
         row = ensure_zxcv_shifts(row, extra_keys=bottom_syms)
         row = apply_zxcv_punct_sliding(row)
@@ -1073,6 +1097,9 @@ JOBS = [
     # lime_number_symbol
     ("lime_number_symbol",       "lime_number_symbol_ipad"),
     ("lime_number_symbol_shift", "lime_number_symbol_ipad_shift"),
+    # lime_num_sym2
+    ("lime_num_sym2",       "lime_num_sym2_ipad"),
+    ("lime_num_sym2_shift", "lime_num_sym2_ipad_shift"),
     # lime_wb
     ("lime_wb",               "lime_wb_ipad"),
     ("lime_wb_shift",         "lime_wb_ipad_shift"),

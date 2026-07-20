@@ -40,6 +40,13 @@ IM_ROOTS = {
     "lime_et26": "qazwsxedcrfvtgbyhnujmikolp,.",
     "lime_et_41": "abcdefghijklmnopqrstuvwxyz12347890-=;',./",
     "lime_hsu": "azwsxedcrfvtgbyhnujmikolpq,.",
+    # Includes both the tap glyph and the shift-collapsed long-press glyph of
+    # the two asdf-row symbol roots (`;`/`:` and `'`/`"`) so the narrow-shift
+    # variant keeps both root cells too -- lime_num_sym2 is the only IM whose
+    # asdf row carries two symbol roots at once, so unlike lime_dayi_sym (one
+    # symbol root, trim quota never touches it) the trimmer's single-removal
+    # search can reach the second root and must find it protected.
+    "lime_num_sym2": "\"';:,./abcdefghijklmnopqrstuvwxyz",
     "lime_wb": ",./mn",
     "lime_ez": "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
     "lime_hs": "',-./0123456789;=[\\]abcdefghijklmnopqrstuvwxyz",
@@ -330,14 +337,19 @@ def apply_row_policy(row, class_name, layout_id, root_set):
         trim_tail_to_visible(row, 13 if root_heavy else 12, root_set, stop_codes={-5}, allow_root_trim=True)
 
 
-def apply_widths(row, class_name, key_width):
+def apply_widths(row, class_name, key_width, layout_id=None):
     if row.get("isBottomRow"):
         return
     for key in row["keys"]:
         if is_visible(key):
             key["widthPercent"] = key_width
 
-    if class_name == "asdf":
+    # lime_num_sym2's asdf row already reaches the 12-key narrow-tier target
+    # via its two root-protected symbol keys (:|; "|') with no [abc] modifier
+    # to fill the leading slot, so it needs no balancing leading spacer
+    # (docs/TRI_CODE_IM.md iPad layout spec, narrow tier, asdf note).
+    skip_leading_spacer = layout_id is not None and base_id(layout_id) == "lime_num_sym2"
+    if class_name == "asdf" and not skip_leading_spacer:
         row["keys"].insert(0, edge_spacer(round(NARROW_GLOBE_WIDTH / 2.0, 4)))
     elif class_name == "zxcv" and row["keys"] and row["keys"][0].get("code") == -1:
         row["keys"][0]["widthPercent"] = NARROW_GLOBE_WIDTH
@@ -379,7 +391,7 @@ def trim_layout(layout):
             visible_keys = [key for key in row["keys"] if is_visible(key)]
             if len(visible_keys) >= 2 and visible_keys[-1].get("code") == 10:
                 candidate = visible_keys[-2]
-                if candidate.get("code") == 65292:
+                if candidate.get("code") in (65292, 12290):
                     zxcv_extra_key = copy.deepcopy(candidate)
         if cls == "bottom":
             row["keys"] = bottom_narrow_for(result["id"])
@@ -403,7 +415,7 @@ def trim_layout(layout):
         cls = row_class(row)
         if cls in ("digit", "qwerty", "asdf", "zxcv"):
             before = copy.deepcopy(row)
-            apply_widths(row, cls, key_width)
+            apply_widths(row, cls, key_width, layout_id=result["id"])
             changed = changed or row != before
 
     result["id"] = result["id"].replace("_ipad", "_ipad_narrow", 1)

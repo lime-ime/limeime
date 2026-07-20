@@ -1,5 +1,5 @@
 ﻿{
-  "id": "lime_number_symbol_ipad_narrow_shift",
+  "id": "lime_num_sym2_ipad_narrow_shift",
   "defaultWidthPercent": 7.0,
   "rows": [
     {
@@ -136,8 +136,8 @@
           "longPressCode": 0
         },
         {
-          "code": 95,
-          "label": "+\\n_",
+          "code": 8230,
+          "label": "…",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
@@ -146,7 +146,7 @@
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": "",
-          "longPressCode": 43
+          "longPressCode": 0
         },
         {
           "code": -5,
@@ -328,22 +328,6 @@
       "isBottomRow": false,
       "keys": [
         {
-          "code": 0,
-          "codes": [
-            0
-          ],
-          "widthPercent": 4.5,
-          "label": "",
-          "sublabel": "",
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": "",
-          "longPressCode": 0
-        },
-        {
           "code": 65,
           "label": "A",
           "sublabel": "",
@@ -461,8 +445,21 @@
           "longPressCode": 0
         },
         {
-          "code": 65307,
-          "label": "；",
+          "code": 58,
+          "label": ":",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": 34,
+          "label": "\"",
           "sublabel": "",
           "widthPercent": 8.0,
           "icon": "",
@@ -477,7 +474,7 @@
           "code": 10,
           "label": "",
           "sublabel": "",
-          "widthPercent": 15.5,
+          "widthPercent": 12.0,
           "icon": "return",
           "isModifier": true,
           "isRepeatable": false,
@@ -496,7 +493,7 @@
           "label": "",
           "sublabel": "",
           "widthPercent": 9.0,
-          "icon": "sym_keyboard_shift_shifted",
+          "icon": "shift",
           "isModifier": true,
           "isRepeatable": false,
           "isSticky": true,
@@ -635,24 +632,11 @@
           "longPressCode": 0
         },
         {
-          "code": 12290,
-          "label": "。",
-          "sublabel": "",
-          "widthPercent": 8.0,
-          "icon": "",
-          "isModifier": false,
-          "isRepeatable": false,
-          "isSticky": false,
-          "popupKeyboard": "",
-          "popupCharacters": "",
-          "longPressCode": 0
-        },
-        {
           "code": 0,
           "codes": [
             0
           ],
-          "widthPercent": 3.0,
+          "widthPercent": 11.0,
           "label": "",
           "sublabel": "",
           "icon": "",
@@ -721,8 +705,8 @@
           "longPressCode": 0
         },
         {
-          "code": -10,
-          "label": "中",
+          "code": -9,
+          "label": "abc",
           "sublabel": "",
           "widthPercent": 11.0,
           "icon": "",
