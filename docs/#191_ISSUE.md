@@ -8,7 +8,7 @@
 - Android: reporter-confirmed working and used as the behavioral oracle
 - iOS: source fix merged to `master` in PR #192 as `9a50eb7509e937c2e2e51574ddcdc9d91b1369ee`
 - Delivery boundary: App Store v6.1.35 was released before the merge and does not contain the fix
-- Pending: a newer reporter-testable iOS build, reporter confirmation, and full/narrow iPad runtime verification
+- Pending: a newer reporter-testable iOS build, reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
 
 ## Problem statement
 
@@ -27,7 +27,7 @@ Expected: the Phonetic IM remains active for Hsu composition, but the visible ke
 
 The defect is confirmed in the iOS layout-resolution source.
 
-Settings correctly persists different keyboard codes for the two Hsu choices in `LimeIME-iOS/LimeSettings/Views/IMDetailView.swift`:
+Before the final cross-platform seed change, Settings persisted different keyboard codes for the two Hsu choices in `LimeIME-iOS/LimeSettings/Views/IMDetailView.swift`:
 
 - `hsu` (`許氏（英文）`) -> `lime` or `limenum`
 - `hsu_symbol` (`許氏（符號）`) -> `hsu`
@@ -53,7 +53,7 @@ PR #192 keeps direct preference routing only where the visible layout can be sel
 - `hsu_symbol` -> `lime_hsu`
 - English `eten26` and `hsu` -> no special override, allowing `resolvedLayoutId(for:)` to resolve the persisted `lime`/`limenum` keyboard selection
 
-This is a narrow iOS-only correction. It preserves Hsu/ETEN26 composition remapping, which continues to use `phonetic_keyboard_type`, and changes only the visible layout routing.
+The resolver correction is iOS-only. It preserves Hsu/ETEN26 composition remapping, which continues to use `phonetic_keyboard_type`, and changes only the visible layout routing. The merged PR also contains the documented cross-platform product change that seeds `limenum` when an English Hsu/ETEN26 type is selected.
 
 ## Follow-on defects found during runtime verification
 
@@ -85,12 +85,13 @@ Completed before merge:
 2. The XCTest resolver contract covers persisted English layouts and the dedicated symbol/ETEN 41-key layouts.
 3. The focused phonetic, custom-IM, and number/symbol Python regression suites pass.
 4. The full `LimeTests/KeyboardViewControllerTest` XCTest gate passes on an iPhone simulator.
+5. Android `:app:compileDebugJavaWithJavac` passes for the cross-platform seed change.
 
 ### iOS runtime
 
 On iPhone, full iPad, and narrow iPad:
 
-1. Select `許氏（英文）` with the English number row enabled and disabled. Confirm the visible keyboard uses the corresponding English-face layout while Hsu composition still produces candidates.
+1. Select `許氏（英文）`. Confirm it seeds the five-row English face and Hsu composition still produces candidates. Then manually select the four-row LIME keyboard and confirm that persisted choice also renders correctly.
 2. Select `許氏（符號）`. Confirm the dedicated Hsu symbol-face layout still appears and composes normally.
 3. Repeat the equivalent English/symbol checks for ETEN26 because the same routing branch was corrected.
 4. Switch away and back, then close/reopen the keyboard, and confirm each selection persists.
