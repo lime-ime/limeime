@@ -268,16 +268,6 @@ final class KeyboardViewControllerTest: XCTestCase {
             XCTAssertTrue(codes.contains(65), "\(id): expected the uppercase shift face")
             XCTAssertFalse(codes.contains(97), "\(id): expected the uppercase shift face")
         }
-
-        // Membership in the appex Resources phase — several sibling layouts already sit on
-        // disk unbundled, so existence on disk alone proves nothing about shipping.
-        let pbxproj = try String(
-            contentsOf: projectFileURL("LimeIME.xcodeproj/project.pbxproj"), encoding: .utf8)
-        for file in ["lime.json", "lime_ipad.json", "lime_ipad_narrow.json",
-                     "lime_shift.json", "lime_ipad_shift.json", "lime_ipad_narrow_shift.json"] {
-            XCTAssertTrue(pbxproj.contains("/* \(file) in Resources */,"),
-                          "\(file) missing from the Resources build phase — it will not ship")
-        }
     }
 
     func testIPadBottomRowSumsToHundredPercent() throws {

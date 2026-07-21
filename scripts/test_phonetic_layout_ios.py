@@ -8,6 +8,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTROLLER = ROOT / "LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift"
+KEYBOARD_XCTEST = ROOT / "LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift"
+PBXPROJ = ROOT / "LimeIME-iOS/LimeIME.xcodeproj/project.pbxproj"
 
 
 class PhoneticLayoutRoutingTest(unittest.TestCase):
@@ -79,6 +81,29 @@ class PhoneticLayoutRoutingTest(unittest.TestCase):
             r"phoneticVisibleLayoutId\(\s*for: phoneticKeyboardType,\s*"
             r"persistedLayoutId: persistedLayoutId\)",
         )
+
+    def test_lime_layout_membership_check_does_not_require_cloud_source_checkout(self) -> None:
+        xctest = KEYBOARD_XCTEST.read_text(encoding="utf-8")
+        self.assertNotIn(
+            'projectFileURL("LimeIME.xcodeproj/project.pbxproj")',
+            xctest,
+            "simulator XCTest must not read project.pbxproj from the unavailable Cloud source checkout",
+        )
+
+        pbxproj = PBXPROJ.read_text(encoding="utf-8")
+        for filename in (
+            "lime.json",
+            "lime_ipad.json",
+            "lime_ipad_narrow.json",
+            "lime_shift.json",
+            "lime_ipad_shift.json",
+            "lime_ipad_narrow_shift.json",
+        ):
+            self.assertIn(
+                f"/* {filename} in Resources */",
+                pbxproj,
+                f"{filename} must ship in the keyboard extension Resources phase",
+            )
 
 
 if __name__ == "__main__":
