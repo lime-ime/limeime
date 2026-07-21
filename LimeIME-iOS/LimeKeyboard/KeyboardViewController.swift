@@ -1162,7 +1162,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // 2. DB-side (controls visible layout via resolvedLayoutId → activatedIMs cache)
         guard let idx = activatedIMs.firstIndex(where: { $0.tableNick == "phonetic" }) else { return }
         // §1.5: read `im` config from `im.json` (via DBServer), not SearchServer's hot LimeDB.
-        let freshKb = DBServer.shared.getImConfig("phonetic", "keyboard")
+        // Must be the keyboard CODE column: setIMConfigKeyboard stores desc = human
+        // description, keyboard = code, and getImConfig returns desc — comparing that
+        // against keyboardId always mismatched, clobbering the cache with the description
+        // on every warm re-show (visible layout then dead-ended to lime_phonetic, #191).
+        let freshKb = DBServer.shared.getImConfigList("phonetic", "keyboard").first?.keyboard ?? ""
         guard !freshKb.isEmpty, freshKb != activatedIMs[idx].keyboardId else { return }
         let old = activatedIMs[idx]
         activatedIMs[idx] = ImConfig(

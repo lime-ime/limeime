@@ -1,4 +1,4 @@
-# Issue #191: iOS Hsu English keyboard renders the symbol layout
+﻿# Issue #191: iOS Hsu English keyboard renders the symbol layout
 
 ## Status
 
@@ -52,6 +52,22 @@ Keep direct preference routing only where the visible layout can be selected una
 - English `eten26` and `hsu` -> no special override, allowing `resolvedLayoutId(for:)` to resolve the persisted `lime`/`limenum` keyboard selection
 
 This is a narrow iOS-only correction. It preserves Hsu/ETEN26 composition remapping, which continues to use `phonetic_keyboard_type`, and changes only the visible layout routing.
+
+## Follow-on defects found during runtime verification
+
+Two additional defects surfaced once the resolver correction made the English variants depend on the persisted keyboard code. Both are fixed in the same branch.
+
+### 1. Number-row-off dead end: no `lime` layout on iOS
+
+With `number_row_in_english` off, Settings persists keyboard code `lime`, whose `imkb` is `lime` — a layout iOS never ported from Android's `lime.xml` (the same gap #177 routed around for custom imports). Resolution silently degraded to `lime_number` via `chineseLayoutCandidates`, so the number row showed regardless of the toggle, and the pickable "LIME 預設鍵盤" catalog row was equally unusable.
+
+Fix: port `lime.json` / `lime_ipad.json` / `lime_ipad_narrow.json` (Chinese-IM face: lowercase letters, one `-9` EN key, never `-10`; base = `lime_number*` minus the phone number row). The pre-existing `lime_shift_ipad(_narrow).json` files were renamed to `lime_ipad(_narrow)_shift.json` — `LayoutLoader` composes `<base>_ipad_shift`, so the old names were unreachable — and all six files are registered in the LimeKeyboard Resources phase.
+
+### 2. Warm re-show clobber: refresh compared the kv `desc`, not the keyboard code
+
+Reported as "first popup shows the correct layout, re-show shows phonetic standard." `setIMConfigKeyboard` stores the kv row as `desc` = human description (e.g. `LIME+數字列鍵盤`) and `keyboard` = the code (`limenum`). `refreshPhoneticKeyboardPrefs` read the value back via `getImConfig("phonetic", "keyboard")`, which returns `desc` — the description never equals the cached `keyboardId`, so every warm re-show clobbered the cache with the description, and resolution dead-ended to `lime_phonetic`. Cold first shows escaped because `initOnStartInput` runs before `setupDatabase` populates `activatedIMs`, so the refresh bailed early. The bug was latent pre-fix: prefix-routed variants never consulted the persisted code, and for `standard` the dead end coincidentally resolved to the intended `lime_phonetic`. Android reads the keyboard column (`getKeyboard()`), never the desc.
+
+Fix: read the code column — `getImConfigList("phonetic", "keyboard").first?.keyboard` — guarded by a RED/GREEN source regression in `scripts/test_phonetic_layout_ios.py`.
 
 ## Follow-up questions
 

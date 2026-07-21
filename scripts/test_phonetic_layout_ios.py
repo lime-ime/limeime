@@ -33,6 +33,32 @@ class PhoneticLayoutRoutingTest(unittest.TestCase):
             raise AssertionError("phoneticVisibleLayoutId helper is missing")
         cls.visible_helper = visible_match.group("body")
 
+    def test_refresh_reads_keyboard_code_column_not_kv_desc(self) -> None:
+        # setIMConfigKeyboard writes the kv row as desc = human description
+        # ("LIME+數字列鍵盤") and keyboard = the code ("limenum"). getImConfig
+        # returns desc, so refreshPhoneticKeyboardPrefs must NOT use it for the
+        # code comparison: the description never matches keyboardId, so every
+        # warm re-show clobbered the cache and the layout dead-ended to
+        # lime_phonetic (the "second popup shows standard" #191 follow-on).
+        match = re.search(
+            r"private func refreshPhoneticKeyboardPrefs\(\) \{(?P<body>.*?)\n    \}",
+            self.source,
+            re.S,
+        )
+        self.assertIsNotNone(match, "refreshPhoneticKeyboardPrefs is missing")
+        body = match.group("body")
+        self.assertNotIn(
+            'getImConfig("phonetic", "keyboard")',
+            body,
+            "refresh must read the keyboard CODE column, not the kv desc",
+        )
+        self.assertIn(
+            'getImConfigList("phonetic", "keyboard")',
+            body,
+            "refresh must read the keyboard code via getImConfigList(...).keyboard",
+        )
+        self.assertRegex(body, r"first\?\s*\.keyboard")
+
     def test_english_and_symbol_variants_do_not_share_symbol_layout(self) -> None:
         self.assertNotIn(
             'kbType.hasPrefix("hsu")',
