@@ -3,11 +3,11 @@
 Status: Open pending reporter/device confirmation for the v6.1.35 portrait-split key-label
 regression. PR #188 merged the source fix as
 `d18edf9543c601fd64d086386d4c609f364e5dee` from final head
-`0966b0dfb657e9c7d33e9a0abfd4feb7136c1454`. Verified GitHub Release v6.1.36 targets
-`4060a46e585c9e46321953736c60335f40f7db94` and contains the merge. Its testing-track APK is
-`LIMEHD2026-6.1.36.apk` (7,114,460 bytes, SHA-256
-`995462d0ffb61b8b4910efa9096b86bce4ecd39177ce47a5bf0b7918b666898e`). The reporter previously
-tested through Google Play, so do not send the separate GitHub APK link. The original v6.1.33
+`0966b0dfb657e9c7d33e9a0abfd4feb7136c1454`. Android v6.1.36 is published through GitHub and
+Google Play and contains the merge. Signed-candidate runtime verification confirmed portrait split
+geometry and vertically stacked visible dual labels without edge clipping. The reporter previously
+tested through Google Play, so request a store update/retest rather than sending the separate GitHub
+APK link. The original v6.1.33
 geometry-mode regression remains reporter-confirmed fixed in Google Play v6.1.34: portrait split
 rendered and mode switching showed no conflicting simultaneous modes. The confirmation is
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5017534231 and the closing
@@ -18,12 +18,13 @@ Android fix. Its verified GitHub testing-track APK is `LIMEHD2026-6.1.34.apk` (7
 SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). The reporter confirmed the
 separate Google Play build, not this GitHub testing-track APK. The completed retest request was
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5016727812.
-The iOS geometry changes are source-fixed and simulator-validated, but verified TestFlight/App
-Store delivery remains separate. The v6.1.35 Android regression is tracked by the reopening and
+The iOS geometry changes are source-fixed and simulator-validated. iOS v6.1.36 build 25 passed the
+required Xcode Cloud actions and is submitted for App Store review, but public rollout and device
+verification remain separate. The v6.1.35 Android regression is tracked by the reopening and
 maintainer analysis at https://github.com/lime-ime/limeime/issues/169#issuecomment-5029109344.
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
-## Android v6.1.35 regression — source fixed, awaiting build and retest
+## Android v6.1.35 regression — published fix, awaiting reporter retest
 
 ### Problem statement
 
@@ -66,16 +67,16 @@ placement.
   instrumentation suite, and emulator verification of portrait split plus the unchanged portrait
   arrow row. GitHub had no configured PR checks.
 - Source merged: complete (`d18edf9543c601fd64d086386d4c609f364e5dee`).
-- Reporter-testable GitHub build containing the merge: verified in v6.1.36. Google Play delivery is
-  a separate channel and was not established by the GitHub Release event.
+- Reporter-testable Android build containing the merge: published through GitHub and Google Play in
+  v6.1.36. Signed-candidate portrait-split runtime verification passed.
 - Reporter/device confirmation: pending. Keep issue #169 open until this succeeds or a maintainer
   explicitly directs otherwise.
 
 ### Platform impact
 
 - **Android:** Confirmed affected in v6.1.35 by maintainer reproduction and source inspection. The
-  regression is in Android `LIMEKeyboardBaseView` label placement. The source fix is merged, but a
-  newer reporter-testable build and reporter/device confirmation remain pending.
+  regression is in Android `LIMEKeyboardBaseView` label placement. The source fix is published in
+  v6.1.36 through GitHub and Google Play; reporter/device confirmation remains pending.
 - **iOS:** No matching v6.1.35 regression is established. iOS uses a separate Swift rendering path and
   was not changed by Android commit `463dcd74`; retain iOS release QA for the broader phone-geometry
   work, but do not infer this Android label defect on iOS.

@@ -2,7 +2,7 @@
 
 ## Status
 
-Open pending reporter confirmation. The reporter's Android v6.1.35 retest failed on two phones because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is included in verified GitHub Release v6.1.36, and a targeted retest was requested. The iOS catalog remains separate unverified product work.
+Open pending reporter confirmation. The reporter's Android v6.1.35 retest failed on two phones because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. The signed release candidate passed catalog install, activation, Chinese-candidate, and commit smoke checks. A targeted reporter retest was requested at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560. The iOS catalog remains separate unverified product work.
 
 ## Problem statement
 
@@ -63,8 +63,8 @@ If local instrumentation cannot reproduce the failure, ask the reporter only for
 - Remove 三碼, import the coding file into the dedicated 三碼 slot, and repeat the same checks.
 - Verify the existing 自建/manual-selection path remains working.
 - Upgrade from a database that previously installed the broken v6.1.35 configuration and verify stale metadata is repaired or replaced.
-- Verified GitHub Release v6.1.36 targets `4060a46e585c9e46321953736c60335f40f7db94` and includes `935338dc13f70056c5ec22855bdee1b66eb73810`.
-- Verified asset: `LIMEHD2026-6.1.36.apk`, 7,114,460 bytes, SHA-256 `995462d0ffb61b8b4910efa9096b86bce4ecd39177ce47a5bf0b7918b666898e`.
+- Android v6.1.36 is published through GitHub and Google Play and includes `935338dc13f70056c5ec22855bdee1b66eb73810`.
+- The signed release candidate passed the built-in catalog install path, activated 三碼 with `limenumsym2`, produced Chinese candidates, and committed a selected candidate.
 - A targeted v6.1.36 retest was requested on the reporter's Nokia 3.4 and Redmi 13C at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560. Keep the issue open pending the result.
 
 ### iOS

@@ -7,8 +7,8 @@
 - Reporter: `Poul9`
 - Android: reporter-confirmed working and used as the behavioral oracle
 - iOS: source fix merged to `master` in PR #192 as `9a50eb7509e937c2e2e51574ddcdc9d91b1369ee`
-- Delivery boundary: App Store v6.1.35 was released before the merge and does not contain the fix
-- Pending: a newer reporter-testable iOS build, reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
+- Delivery boundary: iOS v6.1.36 build 25 passed the required Xcode Cloud test/archive actions on the release commit, is App Store eligible, and is submitted for review. It is not publicly released yet.
+- Pending: App Store approval/public rollout, reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
 
 ## Problem statement
 
@@ -102,7 +102,7 @@ The maintainer verified the corrected Hsu English face on iPhone on first show a
 
 ### iOS
 
-Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed, while both iPad layout tiers and delivery in a newer TestFlight/App Store build remain pending.
+Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed. iOS v6.1.36 build 25 passed the required Xcode Cloud actions and is submitted for App Store review; both iPad layout tiers, public rollout, and reporter confirmation remain pending.
 
 ### Android
 
