@@ -946,11 +946,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         activated.contains(requested) ? requested : firstAvailable
     }
 
-    /// fix#177: historical `custom` im.keyboard values that cannot produce a usable
-    /// keyboard. "lime" is the old import fallthrough and names a layout iOS does not
-    /// ship; "lime_abc" is the old seed and is the Chinese-mode alphabet layout whose
-    /// mode key is `中` (switchToIM) instead of an `abc` English switch; "" is an
-    /// unset row. Anything else is a keyboard the user deliberately selected.
+    /// fix#177: historical `custom` im.keyboard values that cannot produce the intended
+    /// keyboard. "lime" is the old import fallthrough, written before imports seeded
+    /// "limenum" (Android's custom default) — still repaired now that the base lime
+    /// layout ships (#191), because a stored fallthrough was never a deliberate choice
+    /// (cost: a fresh LIME預設 pick for custom is also remapped); "lime_abc" is the old
+    /// seed and is the Chinese-mode alphabet layout whose mode key is `中` (switchToIM)
+    /// instead of an `abc` English switch; "" is an unset row. Anything else is a
+    /// keyboard the user deliberately selected.
     static let customKeyboardBadDefaults: Set<String> = ["", "lime", "lime_abc"]
 
     /// Repairs a legacy `custom` keyboard code so existing installs resolve on the
@@ -1159,7 +1162,11 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         // 2. DB-side (controls visible layout via resolvedLayoutId → activatedIMs cache)
         guard let idx = activatedIMs.firstIndex(where: { $0.tableNick == "phonetic" }) else { return }
         // §1.5: read `im` config from `im.json` (via DBServer), not SearchServer's hot LimeDB.
-        let freshKb = DBServer.shared.getImConfig("phonetic", "keyboard")
+        // Must be the keyboard CODE column: setIMConfigKeyboard stores desc = human
+        // description, keyboard = code, and getImConfig returns desc — comparing that
+        // against keyboardId always mismatched, clobbering the cache with the description
+        // on every warm re-show (visible layout then dead-ended to lime_phonetic, #191).
+        let freshKb = DBServer.shared.getImConfigList("phonetic", "keyboard").first?.keyboard ?? ""
         guard !freshKb.isEmpty, freshKb != activatedIMs[idx].keyboardId else { return }
         let old = activatedIMs[idx]
         activatedIMs[idx] = ImConfig(
@@ -1185,27 +1192,34 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
-    /// Maps the `phonetic_keyboard_type` pref to its dedicated visible layout id, or nil when the
-    /// type has no special layout (standard → resolved via the keyboard-config path below).
-    /// This is the single source of truth for the phonetic visible layout, mirroring Android's
-    /// `resolvePhoneticKeyboardCode()` (#156): the pref drives the layout directly, so et_41 no
-    /// longer depends on the persisted `im.keyboard` config round-trip that its siblings bypass.
+    /// Maps only phonetic preferences whose visible layout can be derived without consulting the
+    /// persisted keyboard code. English ETEN26/HSU variants deliberately return nil so
+    /// `resolvedLayoutId(for:)` follows their `lime`/`limenum` keyboard selection; only the
+    /// explicit symbol variants use the dedicated ETEN26/HSU symbol-face layouts.
     static func phoneticSpecialLayoutId(for kbType: String) -> String? {
         if kbType == "et_41" || kbType == "eten" { return "lime_et_41" }   // #156 ETEN 41-key
-        if kbType.hasPrefix("eten26") || kbType == "et26" { return "lime_et26" }
-        if kbType.hasPrefix("hsu") { return "lime_hsu" }
+        if kbType == "eten26_symbol" || kbType == "et26" { return "lime_et26" }
+        if kbType == "hsu_symbol" { return "lime_hsu" }
         return nil
     }
 
+    static func phoneticVisibleLayoutId(for kbType: String, persistedLayoutId: String) -> String {
+        phoneticSpecialLayoutId(for: kbType) ?? persistedLayoutId
+    }
+
     private func resolvedLayoutId(for tableNick: String) -> String {
-        // For phonetic IMs, keyboard type determines the visible layout.
-        // Mirrors Android: eten/eten26/hsu use QWERTY-shaped Chinese layouts so the
-        // mode key changes to abc while composing stays in the active IM.
-        if tableNick == "phonetic",
-           let special = KeyboardViewController.phoneticSpecialLayoutId(for: phoneticKeyboardType),
-           LayoutLoader.load(special) != nil {
-            return special
-        }
+        let persistedLayoutId = resolvedPersistedLayoutId(for: tableNick)
+        guard tableNick == "phonetic" else { return persistedLayoutId }
+
+        // Dedicated symbol/ET41 layouts are preference-driven. English ETEN26/HSU variants
+        // retain the persisted generic English-face layout, matching Android while composition
+        // remains in the active phonetic IM.
+        return KeyboardViewController.phoneticVisibleLayoutId(
+            for: phoneticKeyboardType,
+            persistedLayoutId: persistedLayoutId)
+    }
+
+    private func resolvedPersistedLayoutId(for tableNick: String) -> String {
         guard let imConfig = activatedIMs.first(where: { $0.tableNick == tableNick }) else {
             return "lime_\(tableNick)"
         }

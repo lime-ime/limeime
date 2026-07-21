@@ -8,8 +8,9 @@
 # iOS diverged in two places, which together produce the #177 report:
 #   1. defaultKeyboardCodeForImportedIM() has no "custom" case, so a text-imported
 #      custom table falls through to the default "lime". The "lime" catalog row has
-#      imkb = "lime", and the keyboard extension ships NO lime.json — so
-#      LayoutLoader.load() dead-ends and the previous IM's layout stays on screen.
+#      imkb = "lime", and at the time the keyboard extension shipped no lime.json —
+#      so LayoutLoader.load() dead-ended and the previous IM's layout stayed on
+#      screen. (#191 later ported lime.json; the repair below is kept regardless.)
 #   2. seedCustomIM() hardcodes keyboard 'lime_abc'. lime_abc IS a loadable layout,
 #      so resolvedLayoutId returns it directly — but it is the Chinese-mode alphabet
 #      layout whose mode key is `中` (code -10 → switchToIM) rather than an `abc`
@@ -22,7 +23,7 @@
 #   1. Android really maps custom → limenum (the parity source of truth),
 #   2. iOS maps custom → limenum on import and on fresh seed,
 #   3. the lime_number layouts that limenum points at exist, parse, and are bundled,
-#   4. iOS ships no lime.json, so "lime" must never be the custom default,
+#   4. lime.json ships since #191, but "lime" stays a repaired custom default,
 #   5. legacy repair covers only the known-bad values and preserves user choices.
 #
 # Usage: python3 scripts/test_custom_im_keyboard_ios.py
@@ -114,13 +115,17 @@ class IOSImportDefault(unittest.TestCase):
             CUSTOM_KEYBOARD_CODE, mapping["custom"],
             "custom must resolve to Android's 'limenum' keyboard code")
 
-    def test_custom_does_not_rely_on_the_unshipped_lime_default(self):
+    def test_default_fallthrough_names_a_bundled_layout(self):
+        # Pre-#191 this asserted the opposite: the default arm's "lime" had no
+        # layout JSON, which is why custom needed its own explicit case (#177).
+        # The explicit custom → limenum case stays; since #191 the default arm's
+        # keyboard resolves to a real bundled layout too.
         fallthrough = re.search(r"default:\s*\n\s*return \"([a-z_0-9]+)\"", self.body)
         self.assertIsNotNone(fallthrough, "default arm not found")
-        self.assertFalse(
+        self.assertTrue(
             (IOS_LAYOUTS_DIR / f"{fallthrough.group(1)}.json").exists(),
-            "Precondition drifted: the default arm now names a bundled layout. "
-            "Re-check whether #177's dead-end fallthrough still applies.")
+            "#191: the default arm's layout must be bundled so no imported IM "
+            "dead-ends in LayoutLoader.")
 
 
 class IOSFreshSeed(unittest.TestCase):
@@ -189,16 +194,16 @@ class IOSLegacyRepair(unittest.TestCase):
 
     def test_runtime_resolution_applies_the_repair_for_custom(self):
         match = re.search(
-            r"private func resolvedLayoutId\(for tableNick: String\) -> String \{"
+            r"private func resolvedPersistedLayoutId\(for tableNick: String\) -> String \{"
             r"(.*?)\n    \}",
             self.source,
             re.S,
         )
-        self.assertIsNotNone(match, "resolvedLayoutId not found")
+        self.assertIsNotNone(match, "resolvedPersistedLayoutId not found")
         body = match.group(1)
         self.assertIn(
             "repairedCustomKeyboardCode", body,
-            "#177: resolvedLayoutId must repair a legacy custom keyboard code before "
+            "#177: persisted layout resolution must repair a legacy custom keyboard code before "
             "resolving, so a cyclic/direct IM switch lands on lime_number immediately.")
         repair_at = body.index("repairedCustomKeyboardCode")
         load_at = body.index("if LayoutLoader.load(kbCode) != nil")
@@ -242,11 +247,20 @@ class LimenumLayoutResourceContract(unittest.TestCase):
                 self.fail(f"{path.name} is not valid JSON: {exc}")
             self.assertTrue(parsed.get("rows"), f"{path.name} has no rows")
 
-    def test_ios_ships_no_lime_json(self):
-        self.assertFalse(
-            (IOS_LAYOUTS_DIR / "lime.json").exists(),
-            "A lime.json appeared. #177 is fixed by reusing lime_number, not by "
-            "adding a new layout resource — re-evaluate this fix if that changed.")
+    def test_lime_json_ships_but_lime_stays_a_bad_custom_default(self):
+        # #191 ported the lime base faces (LIME 預設鍵盤 / 許氏英文 with the English
+        # number row off), so lime.json now ships. The #177 repair is unchanged:
+        # a legacy custom row storing "lime" was a fallthrough, never a deliberate
+        # choice, and Android's custom default is limenum.
+        path = IOS_LAYOUTS_DIR / "lime.json"
+        self.assertTrue(path.exists(), "lime.json must ship since #191")
+        parsed = json.loads(path.read_text(encoding="utf-8-sig"))
+        self.assertTrue(parsed.get("rows"), "lime.json has no rows")
+        source = read(IOS_CONTROLLER)
+        self.assertIn(
+            'customKeyboardBadDefaults: Set<String> = ["", "lime", "lime_abc"]',
+            source,
+            '"lime" must stay a repaired custom default (Android parity: limenum).')
 
     def test_limenum_catalog_row_points_at_those_layouts(self):
         source = read(IOS_LIMEDB)

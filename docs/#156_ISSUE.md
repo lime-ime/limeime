@@ -40,22 +40,26 @@ This row exists in Android's source-of-truth `LimeStudio/app/src/main/res/raw/li
 - **Android** — `LimeDB.resolvePhoneticKeyboardCode()` reads the `phonetic_keyboard_type` preference *directly* and maps it to a keyboard code (`et_41`/`eten` → `phoneticet41`), then `LIMEKeyboardSwitcher` uses `kConfig.getImkb()` (= `lime_et_41`) generically. **One source of truth: the preference, recomputed on every keyboard show.**
 - **iOS** — `KeyboardViewController.resolvedLayoutId(for:)` had explicit preference-driven branches only for `eten26` → `lime_et26` and `hsu` → `lime_hsu`. **`et_41` was omitted.** It therefore fell through to the *persisted `im.keyboard` config* path (`activatedIMs[idx].keyboardId` → `getKeyboardConfig(...)?.imkb`), a **second source of truth** that must be written by Settings (`setImConfigKeyboard`) and refreshed into the in-memory cache (`refreshPhoneticKeyboardPrefs()`) before it takes effect. When that round-trip is stale, resolution falls back to `lime_<tableNick>` = `lime_phonetic` — the standard layout.
 
-So `et_41` was the only phonetic type whose visible layout depended on the fragile config round-trip instead of the preference. Its siblings `eten26` / `hsu` (and all of Android) read the preference directly and were never affected.
+For the #156 ETEN 41-key failure, `et_41` was the only affected type whose visible layout depended on the fragile config round-trip instead of direct preference routing. The sibling routing was outside that issue's reported scope and was preserved unchanged at the time.
 
-## Fix (landed)
+## Fix landed for #156 (historical)
 
 `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
 
-- Added a pure helper `phoneticSpecialLayoutId(for kbType:)` that maps the `phonetic_keyboard_type` preference to its dedicated visible layout id, mirroring Android's `resolvePhoneticKeyboardCode()`:
-  - `et_41` / `eten` → `lime_et_41`  ← the fix for #156
-  - `eten26*` / `et26` → `lime_et26`
-  - `hsu*` → `lime_hsu`
-  - otherwise → `nil` (standard; resolved via the keyboard-config path)
-- `resolvedLayoutId(for:)` now calls that helper for the phonetic IM, so the visible layout is driven straight from the preference. `et_41` no longer depends on the `im.keyboard` config round-trip. Behavior for `eten26` / `hsu` is unchanged (the previous inline branches were consolidated into the helper verbatim).
+The v6.1.31 fix added a pure helper `phoneticSpecialLayoutId(for:)` and consolidated the then-existing routing:
 
-The Settings-side write (`updatePhoneticKeyboard` → `setImConfigKeyboard`) and `refreshPhoneticKeyboardPrefs()` are left in place; they are now redundant for the phonetic visible layout but still keep the persisted config and the detail-page label consistent.
+- `et_41` / `eten` → `lime_et_41`  ← the fix for #156
+- `eten26*` / `et26` → `lime_et26`
+- `hsu*` → `lime_hsu`
+- otherwise → `nil` (standard; resolved via the keyboard-config path)
 
-## Test coverage added
+That change made ETEN 41-key preference-driven and left the prior ETEN26/HSU behavior unchanged.
+
+## Subsequent English/symbol correction
+
+Issue #191 later confirmed that the preserved prefix routing incorrectly conflated the English and symbol variants. The #191 change keeps direct preference routing for `et_41`/`eten`, `eten26_symbol`/legacy `et26`, and `hsu_symbol`, while English `eten26` and `hsu` use the persisted `lime`/`limenum` layout selected by Settings. The Settings-side write and `refreshPhoneticKeyboardPrefs()` therefore remain part of visible-layout resolution for those English variants. See `docs/#191_ISSUE.md`.
+
+## Test coverage added for #156
 
 `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift`
 

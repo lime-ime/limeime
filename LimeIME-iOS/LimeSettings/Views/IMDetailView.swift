@@ -500,22 +500,21 @@ struct IMDetailView: View {
     /// Picker value → keyboard.code routing (matches Android LIMEPreference.java:209-235):
     ///   "standard"       → "phonetic"
     ///   "et_41" / "eten" → "phoneticet41"
-    ///   "eten26"         → "limenum" or "lime" (number_row_in_english toggle)
+    ///   "eten26"         → "limenum" (5-row English face; LIME預設 stays available in the picker)
     ///   "eten26_symbol"  → "et26"
-    ///   "hsu"            → "limenum" or "lime"
+    ///   "hsu"            → "limenum"
     ///   "hsu_symbol"     → "hsu"
     private func updatePhoneticKeyboard(type: String) {
         Task {
             await Task.detached(priority: .userInitiated) {
                 let server = DBServer.shared
-                let numberRow = sharedDefaults.bool(forKey: "number_row_in_english")
                 let targetCode: String
                 switch type {
                 case "standard":           targetCode = "phonetic"
                 case "et_41", "eten":      targetCode = "phoneticet41"
-                case "eten26":             targetCode = numberRow ? "limenum" : "lime"
+                case "eten26":             targetCode = "limenum"
                 case "eten26_symbol":      targetCode = "et26"
-                case "hsu":                targetCode = numberRow ? "limenum" : "lime"
+                case "hsu":                targetCode = "limenum"
                 case "hsu_symbol":         targetCode = "hsu"
                 default:                   targetCode = type
                 }

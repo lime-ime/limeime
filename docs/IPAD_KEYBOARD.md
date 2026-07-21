@@ -362,7 +362,7 @@ Alpha / IM layouts — exposed on iPad:
 - `lime_wb_ipad.json`, `lime_wb_shift_ipad.json`
 - `lime_number_symbol_ipad.json`, `lime_number_symbol_ipad_shift.json`
 - `lime_number_ipad.json`, `lime_number_shift_ipad.json`
-- `lime_shift_ipad.json`
+- `lime_ipad_shift.json` (renamed from `lime_shift_ipad.json` in #191 — LayoutLoader composes `<base>_ipad_shift`, so the old name was unreachable)
 - `symbols1_ipad.json`, `symbols2_ipad.json`, `symbols3_ipad.json`
 - `lime_email_ipad.json`, `lime_url_ipad.json`, `lime_english_number_ipad.json`, `lime_english_number_shift_ipad.json`
 
