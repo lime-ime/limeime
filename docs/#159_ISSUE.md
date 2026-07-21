@@ -70,7 +70,7 @@ No further reporter follow-up is needed for the resolved Android paths. The repo
 
 ### iOS
 
-The reporter supplied no iOS retest evidence. iOS has a separate implementation of the `tricode` catalog, default-keyboard mapping, metadata import, and `limenumsym2` registration. Before release, add equivalent import/registration assertions and verify phone, full-iPad, and narrow-iPad activation. Treat cross-platform impact as possible until an iOS test proves the automatic paths select the intended keyboard and enable Chinese composition.
+The reporter supplied no iOS retest evidence. iOS has a separate implementation of the `tricode` catalog, default-keyboard mapping, metadata import, and `limenumsym2` registration. For iOS release QA, add equivalent import/registration assertions and verify phone, full-iPad, and narrow-iPad activation. Treat cross-platform impact as possible until an iOS test proves the automatic paths select the intended keyboard and enable Chinese composition.
 
 ## Privacy-safe reporter summary
 
