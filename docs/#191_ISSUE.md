@@ -6,7 +6,9 @@
 - Classification: confirmed iOS bug
 - Reporter: `Poul9`
 - Android: reporter-confirmed working and used as the behavioral oracle
-- iOS: source fix prepared; device and TestFlight/App Store verification remain pending
+- iOS: source fix merged to `master` in PR #192 as `9a50eb7509e937c2e2e51574ddcdc9d91b1369ee`
+- Delivery boundary: App Store v6.1.35 was released before the merge and does not contain the fix
+- Pending: a newer reporter-testable iOS build, reporter confirmation, and full/narrow iPad runtime verification
 
 ## Problem statement
 
@@ -19,7 +21,7 @@ When the iOS Phonetic input method is configured as `許氏（英文）`, the vi
 3. Open or return to the LIME keyboard.
 4. Observe that the visible keyboard is still the symbol-face Hsu keyboard.
 
-Expected: the Phonetic IM remains active for Hsu composition, but the visible keys use the configured generic English-face keyboard, with or without the number row according to `number_row_in_english`.
+Expected: the Phonetic IM remains active for Hsu composition, but the visible keys use the configured generic English-face keyboard. Newly selected English variants seed the 5-row `limenum` keyboard, while the 4-row `lime` keyboard remains selectable in the per-IM keyboard picker.
 
 ## Evidence and root cause
 
@@ -32,9 +34,9 @@ Settings correctly persists different keyboard codes for the two Hsu choices in 
 
 Android preserves this distinction in `LimeDB.resolvePhoneticKeyboardCode()` and in the Settings mapping. That matches the reporter's working Android result.
 
-iOS then overrides the persisted distinction in `KeyboardViewController.phoneticSpecialLayoutId(for:)`. The current `kbType.hasPrefix("hsu")` branch routes both `hsu` and `hsu_symbol` directly to `lime_hsu`, so `resolvedLayoutId(for:)` never reaches the English `lime`/`limenum` keyboard code for the reported selection.
+Before the fix, iOS overrode the persisted distinction in `KeyboardViewController.phoneticSpecialLayoutId(for:)`. The `kbType.hasPrefix("hsu")` branch routed both `hsu` and `hsu_symbol` directly to `lime_hsu`, so `resolvedLayoutId(for:)` never reached the English `lime`/`limenum` keyboard code for the reported selection.
 
-The same over-broad helper also routes both `eten26` and `eten26_symbol` to `lime_et26`, despite Settings and Android distinguishing the English and symbol variants. No separate ETEN26 runtime report is available, but the source-level routing defect is identical.
+The same over-broad helper also routed both `eten26` and `eten26_symbol` to `lime_et26`, despite Settings and Android distinguishing the English and symbol variants. No separate ETEN26 runtime report is available, but the source-level routing defect was identical.
 
 ## Existing test coverage and why it missed the bug
 
@@ -42,9 +44,9 @@ The same over-broad helper also routes both `eten26` and `eten26_symbol` to `lim
 
 There was no regression test requiring English Hsu/ETEN26 choices to fall through to their persisted generic keyboard code.
 
-## Proposed solution
+## Implemented solution
 
-Keep direct preference routing only where the visible layout can be selected unambiguously:
+PR #192 keeps direct preference routing only where the visible layout can be selected unambiguously:
 
 - `et_41` / `eten` -> `lime_et_41`
 - `eten26_symbol` / legacy `et26` -> `lime_et26`
@@ -55,7 +57,7 @@ This is a narrow iOS-only correction. It preserves Hsu/ETEN26 composition remapp
 
 ## Follow-on defects found during runtime verification
 
-Two additional defects surfaced once the resolver correction made the English variants depend on the persisted keyboard code. Both are fixed in the same branch.
+Two additional defects surfaced once the resolver correction made the English variants depend on the persisted keyboard code. Both were fixed in the merged PR.
 
 ### 1. Number-row-off dead end: no `lime` layout on iOS
 
@@ -77,10 +79,12 @@ No reporter clarification is required for source correction. Runtime verificatio
 
 ### Automated
 
-1. Add a focused RED/GREEN source-level regression proving that English Hsu/ETEN26 variants are not routed to the symbol layouts, while explicit symbol variants remain routed there.
-2. Update the XCTest resolver contract so `hsu` and `eten26` retain their persisted layouts, while `hsu_symbol`, `eten26_symbol`, `et26`, and ETEN 41-key select their intended dedicated layouts.
-3. Run the focused source-level regression and the existing custom-IM iOS routing checks.
-4. Run the focused XCTest/Xcode gate on macOS/Xcode when available.
+Completed before merge:
+
+1. Focused RED/GREEN source-level coverage proves that English Hsu/ETEN26 variants do not route to the symbol layouts, while explicit symbol variants still do.
+2. The XCTest resolver contract covers persisted English layouts and the dedicated symbol/ETEN 41-key layouts.
+3. The focused phonetic, custom-IM, and number/symbol Python regression suites pass.
+4. The full `LimeTests/KeyboardViewControllerTest` XCTest gate passes on an iPhone simulator.
 
 ### iOS runtime
 
@@ -91,13 +95,13 @@ On iPhone, full iPad, and narrow iPad:
 3. Repeat the equivalent English/symbol checks for ETEN26 because the same routing branch was corrected.
 4. Switch away and back, then close/reopen the keyboard, and confirm each selection persists.
 
-Request reporter verification only after a newer iOS build containing the fix is available.
+The maintainer verified the corrected Hsu English face on iPhone on first show and after dismiss/reopen. Full and narrow iPad checks remain pending. Request reporter verification only after a newer iOS build containing the fix is available.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected by the reporter and by direct source inspection. The fix is iOS-only. Phone and both iPad layout tiers require runtime verification because layout selection later applies device-family variants.
+Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed, while both iPad layout tiers and delivery in a newer TestFlight/App Store build remain pending.
 
 ### Android
 
