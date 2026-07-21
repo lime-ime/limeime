@@ -2,7 +2,7 @@
 
 ## Status
 
-Open. The reporter's Android v6.1.35 retest failed on two phones. The catalog entry and mapping import appear to complete, but the installed 三碼 input method opens with the ordinary keyboard and accepts English only. Android needs a confirmed fix and a new reporter-testable build. The iOS catalog remains separate unverified product work.
+Open. The reporter's Android v6.1.35 retest failed on two phones. A focused catalog-import instrumentation test reproduced the stale startup configuration: the `limenumsym2` assignment is persisted, but `importDb(...)` does not invalidate the IME startup snapshot. The narrow Android fix now invalidates that snapshot after every valid table-import attempt, including partial/failure paths that may already have mutated the target, and passes RED/GREEN coverage. A complete candidate and reporter retest are still required. The iOS catalog remains separate unverified product work.
 
 ## Problem statement
 
@@ -37,23 +37,36 @@ The reporter did not include Android versions in this comment.
 - Text import maps `tricode` to `limenumsym2` through `getDefaultKeyboardCodeForImportedIM()` and falls back to `lime` if the requested keyboard row cannot be resolved.
 - Manual 自建 selection proving that `LIME+數字符號鍵盤2` can render and type narrows the defect away from the layout XML and basic mapping content. The failed automatic paths instead point toward table-specific IM registration, keyboard assignment, or activation state.
 
-## Likely root cause
+## Root cause
 
-The exact cause is not yet proven. The strongest shared suspect is the automatic registration/assignment boundary for the dedicated `tricode` table:
+The catalog `.limedb` path imports the `tricode` rows and the `keyboard = limenumsym2` assignment
+correctly, but `LimeDB.importDb(...)` previously left `startup_config_version` unchanged. The IME
+therefore continued using the pre-import activated-IM/keyboard snapshot. This matches the screenshots:
+Settings shows 三碼 installed and enabled, while LIME's internal switcher still lists only 注音.
 
-- Catalog `.limedb` import may import the metadata row but leave the runtime-selected IM or keyboard state stale.
-- Dedicated-table text import may resolve `limenumsym2` too early or fail to persist the assignment, then silently use the generic `lime` fallback.
-- IM activation may not refresh table-specific configuration after either import completes.
+A second import-path defect appeared when the failure-path regression ran immediately before the
+success case: `tableColumns(...)` used `SELECT * FROM sourceDB.custom LIMIT 0`. Android's compiled
+statement cache retained the previous attached database's column metadata after detach/reattach, so
+the next catalog could be evaluated against stale schema columns. This is relevant to the reporter's
+remove/reinstall sequence. Schema inspection now uses `PRAGMA sourceDB.table_info(...)`, which reads
+the currently attached database.
 
-The fact that manual 自建 plus explicit keyboard selection works argues against a missing layout resource or invalid mapping database. A focused failing test should identify which registration value differs among catalog import, dedicated-table text import, and the working 自建 path before source behavior is changed.
+The focused instrumentation test initializes a clean startup snapshot, imports a catalog-shaped
+database into `tricode`, verifies the persisted `limenumsym2` row, and then fails on v6.1.35 because
+the snapshot version remains nonzero. Resetting the startup configuration version after every valid
+table-import attempt makes the same test pass and also covers failures after overwrite or partial
+mutation. Running the forced-failure import followed by the valid catalog import also proves that
+reattaching a different database no longer reuses stale schema metadata. Manual 自建 plus explicit keyboard selection
+working remains consistent with this root cause and continues to argue against a layout or table-data
+defect.
 
 ## Proposed solution
 
-1. Add an Android regression test that imports the shipped `tricode.limedb` into the `tricode` table and verifies persisted IM metadata, especially the keyboard assignment `limenumsym2`, `imkeys`, and installed full-name row.
-2. Add a corresponding text-import test for the dedicated `tricode` slot.
-3. Compare both results with the working 自建 plus explicit-keyboard path, including the active table and keyboard configuration read by the IM service after import.
-4. Reproduce the stale/fallback behavior RED before modifying production code.
-5. Fix the narrow registration, assignment, or refresh boundary proven by the test. Do not special-case the keyboard renderer when the reporter has already shown that the renderer works.
+1. Keep the RED/GREEN catalog-import regression covering persisted `limenumsym2` plus startup-snapshot invalidation.
+2. Add/retain the corresponding text-import coverage for the dedicated `tricode` slot, whose existing path already resets the startup snapshot after keyboard assignment.
+3. Verify both paths against the working 自建 plus explicit-keyboard path, including the active table and keyboard configuration read by the IM service after import.
+4. Keep the production change narrow: invalidate the startup snapshot after every non-empty valid-table `.limedb` import attempt, including failures after overwrite or partial mutation. Do not special-case the keyboard renderer.
+5. Inspect attached schemas through `PRAGMA ... table_info(...)`, not cached `SELECT *` column metadata, and keep the failure-then-success sequence under test.
 6. Verify removal followed by reinstall/import so stale rows from the failed v6.1.35 path cannot preserve the defect.
 
 ## Follow-up questions
@@ -71,6 +84,7 @@ If local instrumentation cannot reproduce the failure, ask the reporter only for
 - Remove 三碼, import the coding file into the dedicated 三碼 slot, and repeat the same checks.
 - Verify the existing 自建/manual-selection path remains working.
 - Upgrade from a database that previously installed the broken v6.1.35 configuration and verify stale metadata is repaired or replaced.
+- Confirm the focused catalog-import test passes after previously failing with a nonzero startup snapshot.
 - Produce a newer Android test APK and request a targeted retest on the reporter's Nokia 3.4 and Redmi 13C.
 
 ### iOS

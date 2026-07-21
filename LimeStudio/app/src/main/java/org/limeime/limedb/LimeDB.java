@@ -3469,9 +3469,15 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             try {
                 db.execSQL("detach database sourceDB");
             } catch (Exception e2) {
-                // Ignore detach errors
+                Log.w(TAG, "importDb(): Failed to detach source database after import error", e2);
             }
         } finally {
+            // overwriteExisting mutates the target before ATTACH, and later statements can fail
+            // after partially importing mapping or IM rows. Invalidate on every table-import
+            // attempt so no changed configuration remains hidden behind the old startup snapshot.
+            if (mLIMEPref != null && !validTableNames.isEmpty()) {
+                mLIMEPref.resetStartupConfigVersion();
+            }
             unHoldDBConnection();
         }
     }
@@ -3520,10 +3526,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
 
     private Set<String> tableColumns(SQLiteDatabase database, String tableExpression) {
         Set<String> columns = new HashSet<>();
-        try (Cursor cursor = database.rawQuery("select * from " + tableExpression + " limit 0", null)) {
+        String schema = "";
+        String tableName = tableExpression;
+        int separator = tableExpression.indexOf('.');
+        if (separator >= 0) {
+            schema = tableExpression.substring(0, separator);
+            tableName = tableExpression.substring(separator + 1);
+        }
+        if ((!schema.isEmpty() && !"sourceDB".equals(schema)) || !isValidTableName(tableName)) {
+            throw new SQLiteException("Invalid table expression for schema inspection");
+        }
+        String pragma = "PRAGMA " + (schema.isEmpty() ? "" : schema + ".")
+                + "table_info(" + tableName + ")";
+        try (Cursor cursor = database.rawQuery(pragma, null)) {
             if (cursor == null) return columns;
-            for (String column : cursor.getColumnNames()) {
-                columns.add(column);
+            int nameColumn = cursor.getColumnIndex("name");
+            while (cursor.moveToNext()) {
+                if (nameColumn >= 0) columns.add(cursor.getString(nameColumn));
             }
         }
         return columns;

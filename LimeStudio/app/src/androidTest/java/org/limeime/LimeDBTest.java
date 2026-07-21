@@ -24,6 +24,7 @@
 package org.limeime;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -4754,6 +4755,87 @@ public class LimeDBTest {
                     Log.w(TAG, "Failed to delete backup file after test: " + backupFile.getAbsolutePath());
                 }
             }
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void catalogImportPublishesTricodeKeyboardAndInvalidatesStartupSnapshot() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue("database must initialize", initializeDatabase(limeDB));
+
+        File source = new File(appContext.getCacheDir(), "tricode-catalog-import.db");
+        if (source.exists()) assertTrue(source.delete());
+        SQLiteDatabase catalog = SQLiteDatabase.openOrCreateDatabase(source, null);
+        try {
+            catalog.execSQL("CREATE TABLE custom (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "code TEXT, code3r TEXT, word TEXT, related TEXT, score INTEGER, basescore INTEGER)");
+            catalog.execSQL("CREATE TABLE im (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "code TEXT, title TEXT, desc TEXT, keyboard TEXT, disable BOOLEAN, "
+                    + "selkey TEXT, endkey TEXT, spacestyle TEXT)");
+            catalog.execSQL("INSERT INTO custom(code, word, score, basescore) VALUES ('lh', '世', 0, 0)");
+            catalog.execSQL("INSERT INTO im(code, title, desc, keyboard) "
+                    + "VALUES ('tricode', 'name', '三碼', '')");
+            catalog.execSQL("INSERT INTO im(code, title, desc, keyboard) "
+                    + "VALUES ('tricode', 'keyboard', 'LIME+數字符號鍵盤2', 'limenumsym2')");
+            catalog.execSQL("INSERT INTO im(code, title, desc, keyboard) "
+                    + "VALUES ('tricode', 'imkeys', ''',./;abcdefghijklmnopqrstuvwxyz', '')");
+        } finally {
+            catalog.close();
+        }
+
+        try {
+            limeDB.clearTable(LIME.DB_TABLE_TRICODE);
+            limeDB.resetImConfig(LIME.DB_TABLE_TRICODE);
+            LIMEPreferenceManager prefs = new LIMEPreferenceManager(appContext);
+            assertTrue("startup snapshot version must start clean", prefs.initializeStartupConfigVersion() > 0L);
+
+            limeDB.importDb(source, Arrays.asList(LIME.DB_TABLE_TRICODE), false, true);
+
+            List<ImConfig> keyboardRows = limeDB.getImConfigList(
+                    LIME.DB_TABLE_TRICODE, LIME.DB_KEYBOARD);
+            assertEquals(1, keyboardRows.size());
+            assertEquals("limenumsym2", keyboardRows.get(0).getKeyboard());
+            assertEquals("catalog import must invalidate the IME startup snapshot",
+                    0L, prefs.getStartupConfigVersion());
+        } finally {
+            limeDB.clearTable(LIME.DB_TABLE_TRICODE);
+            limeDB.resetImConfig(LIME.DB_TABLE_TRICODE);
+            if (source.exists()) assertTrue(source.delete());
+        }
+    }
+
+    @Test(timeout = 10000)
+    public void failedCatalogImportStillInvalidatesStartupSnapshotAfterOverwriteMutation() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        LimeDB limeDB = new LimeDB(appContext);
+        assertTrue("database must initialize", initializeDatabase(limeDB));
+
+        File source = new File(appContext.getCacheDir(), "invalid-tricode-catalog-import.db");
+        if (source.exists()) assertTrue(source.delete());
+        SQLiteDatabase catalog = SQLiteDatabase.openOrCreateDatabase(source, null);
+        try {
+            // Missing the required word column makes importMappingRowsFromAttachedSource fail
+            // after overwriteExisting has already cleared the target table and IM rows.
+            catalog.execSQL("CREATE TABLE custom (_id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT)");
+            catalog.execSQL("CREATE TABLE im (_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + "code TEXT, title TEXT, desc TEXT, keyboard TEXT, disable BOOLEAN, "
+                    + "selkey TEXT, endkey TEXT, spacestyle TEXT)");
+        } finally {
+            catalog.close();
+        }
+
+        LIMEPreferenceManager prefs = new LIMEPreferenceManager(appContext);
+        try {
+            assertTrue("startup snapshot version must start clean",
+                    prefs.initializeStartupConfigVersion() > 0L);
+            limeDB.importDb(source, Arrays.asList(LIME.DB_TABLE_TRICODE), false, true);
+            assertEquals("failed import after overwrite must invalidate the startup snapshot",
+                    0L, prefs.getStartupConfigVersion());
+        } finally {
+            limeDB.clearTable(LIME.DB_TABLE_TRICODE);
+            limeDB.resetImConfig(LIME.DB_TABLE_TRICODE);
+            if (source.exists()) assertTrue(source.delete());
         }
     }
 
