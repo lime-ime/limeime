@@ -9,4 +9,9 @@ public final class KeyLabelFit {
         float heightScale = contentHeight > 0 ? availableHeight / contentHeight : 1f;
         return Math.max(minimumScale, Math.min(1f, Math.min(widthScale, heightScale)));
     }
+
+    public static boolean useVerticalLabels(boolean portrait, int keyWidth, int keyHeight,
+                                            int subLabelLength, boolean hasSecondSubLabel) {
+        return portrait || keyHeight > keyWidth || subLabelLength > 2 || hasSecondSubLabel;
+    }
 }
