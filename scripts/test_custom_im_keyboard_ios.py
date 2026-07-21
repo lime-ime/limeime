@@ -189,16 +189,16 @@ class IOSLegacyRepair(unittest.TestCase):
 
     def test_runtime_resolution_applies_the_repair_for_custom(self):
         match = re.search(
-            r"private func resolvedLayoutId\(for tableNick: String\) -> String \{"
+            r"private func resolvedPersistedLayoutId\(for tableNick: String\) -> String \{"
             r"(.*?)\n    \}",
             self.source,
             re.S,
         )
-        self.assertIsNotNone(match, "resolvedLayoutId not found")
+        self.assertIsNotNone(match, "resolvedPersistedLayoutId not found")
         body = match.group(1)
         self.assertIn(
             "repairedCustomKeyboardCode", body,
-            "#177: resolvedLayoutId must repair a legacy custom keyboard code before "
+            "#177: persisted layout resolution must repair a legacy custom keyboard code before "
             "resolving, so a cyclic/direct IM switch lands on lime_number immediately.")
         repair_at = body.index("repairedCustomKeyboardCode")
         load_at = body.index("if LayoutLoader.load(kbCode) != nil")

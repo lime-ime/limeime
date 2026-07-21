@@ -2168,18 +2168,42 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // hot still wins
     }
 
-    // #156: Phonetic et41 must resolve to the ETEN 41-key layout, not standard. The visible
-    // layout is driven by the phonetic_keyboard_type pref (Android parity), so et_41/eten map to
-    // lime_et_41 like eten26→lime_et26 and hsu→lime_hsu; standard has no special layout (nil →
-    // resolved via the keyboard-config path).
-    func testPhoneticSpecialLayoutIdMapsEt41AndSiblingsFromPref() {
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "et_41"), "lime_et_41")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten"), "lime_et_41")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26"), "lime_et26")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26_symbol"), "lime_et26")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu"), "lime_hsu")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu_symbol"), "lime_hsu")
-        XCTAssertNil(KeyboardViewController.phoneticSpecialLayoutId(for: "standard"))   // not et41
+    // #156: Phonetic et41 must resolve directly to the ETEN 41-key layout. #191: English
+    // ETEN26/HSU variants must retain their persisted lime/limenum layout; only the explicit
+    // symbol variants (and legacy et26 spelling) use dedicated symbol-face layouts.
+    func testPhoneticVisibleLayoutSeparatesEnglishAndSymbolVariants() {
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "et_41", persistedLayoutId: "lime_phonetic"),
+            "lime_et_41")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten", persistedLayoutId: "lime_phonetic"),
+            "lime_et_41")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten26", persistedLayoutId: "lime_number"),
+            "lime_number")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten26_symbol", persistedLayoutId: "lime_number"),
+            "lime_et26")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "et26", persistedLayoutId: "lime_number"),
+            "lime_et26")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "hsu", persistedLayoutId: "lime_number"),
+            "lime_number")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "hsu_symbol", persistedLayoutId: "lime_number"),
+            "lime_hsu")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "standard", persistedLayoutId: "lime_phonetic"),
+            "lime_phonetic")
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {
