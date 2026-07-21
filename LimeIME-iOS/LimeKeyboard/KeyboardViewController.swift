@@ -946,11 +946,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         activated.contains(requested) ? requested : firstAvailable
     }
 
-    /// fix#177: historical `custom` im.keyboard values that cannot produce a usable
-    /// keyboard. "lime" is the old import fallthrough and names a layout iOS does not
-    /// ship; "lime_abc" is the old seed and is the Chinese-mode alphabet layout whose
-    /// mode key is `中` (switchToIM) instead of an `abc` English switch; "" is an
-    /// unset row. Anything else is a keyboard the user deliberately selected.
+    /// fix#177: historical `custom` im.keyboard values that cannot produce the intended
+    /// keyboard. "lime" is the old import fallthrough, written before imports seeded
+    /// "limenum" (Android's custom default) — still repaired now that the base lime
+    /// layout ships (#191), because a stored fallthrough was never a deliberate choice
+    /// (cost: a fresh LIME預設 pick for custom is also remapped); "lime_abc" is the old
+    /// seed and is the Chinese-mode alphabet layout whose mode key is `中` (switchToIM)
+    /// instead of an `abc` English switch; "" is an unset row. Anything else is a
+    /// keyboard the user deliberately selected.
     static let customKeyboardBadDefaults: Set<String> = ["", "lime", "lime_abc"]
 
     /// Repairs a legacy `custom` keyboard code so existing installs resolve on the

@@ -969,6 +969,10 @@ def extract_im_key(phone_data):
             lbl = k.get('label', '')
             if lbl == '@string/label_symbol_key':
                 lbl = '123'
+            if c == C_EN:
+                # iPad convention (#183): -9 is always labeled "abc", not the phone
+                # layouts' "EN" — testAllIPadJsonLayoutsLabelSwitchToEnglishAsAbc.
+                lbl = 'abc'
             return (c, lbl, k.get('sublabel', ''))
     return (C_IM, '中', '')
 
@@ -1147,7 +1151,8 @@ def main():
     make_number_style('lime_english_number', 'lime_english_number_ipad')
     make_number_style('lime_english_number', 'lime_english_number_ipad_shift')
 
-    # lime_shift_ipad (standalone shift layout, same as english shift)
+    # lime_ipad_shift (shift face of lime_ipad; #191 — LayoutLoader composes
+    # <base>_ipad_shift, so the old lime_shift_ipad name was unreachable)
     phone = load_phone('lime_shift') or load_phone('lime_english')
     if phone:
         a0 = extract_alpha(phone, 0); a1 = extract_alpha(phone, 1); a2 = extract_alpha(phone, 2)
@@ -1155,7 +1160,7 @@ def main():
         im_code, im_lbl, im_sub = extract_im_key(phone)
         r3 = build_row3_english(im_code, im_lbl, a1[:9], im_sub)
         r4 = build_row4_english(a2[:7])
-        write_layout('lime_shift_ipad', [
+        write_layout('lime_ipad_shift', [
             (row1_english(), False), (r2, False), (r3, False), (r4, False),
             (bottom_row(), True),
         ])
@@ -1165,9 +1170,6 @@ def main():
     print('Cleaning up old *_shift_ipad.json files...')
     import glob
     for old in glob.glob(os.path.join(LAYOUTS_DIR, '*_shift_ipad.json')):
-        # Keep lime_shift_ipad.json (it's a real layout, not a naming artifact)
-        if os.path.basename(old) == 'lime_shift_ipad.json':
-            continue
         os.remove(old)
         print(f'  removed {os.path.basename(old)}')
 
