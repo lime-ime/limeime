@@ -101,4 +101,6 @@ Confirmed affected by the reporter and by direct source inspection. The fix is i
 
 ### Android
 
-Reporter-confirmed unaffected. Android already distinguishes English and symbol keyboard codes in both Settings and runtime resolution, so no Android source change is needed. Android remains the behavioral oracle for this issue.
+Reporter-confirmed unaffected by the routing defect: Android already distinguishes English and symbol keyboard codes in both Settings and runtime resolution, and it reads the keyboard code column (never the kv desc), so neither follow-on defect applies. Android remained the behavioral oracle for this issue.
+
+One deliberate product change is applied to both platforms together (not a defect fix): the 英文 variants now always seed the 5-row `limenum` keyboard instead of switching on `number_row_in_english` — modern phones fit five rows, and the 4-row LIME keyboard stays selectable through the per-IM keyboard picker. Android sites: `LimeDB.resolvePhoneticKeyboardCode()`, `LIMEPreference.onSharedPreferenceChanged()`, `ImDetailFragment.applyPhoneticKeyboardType()`. iOS site: `IMDetailView.updatePhoneticKeyboard()`. The default/fallback arms (`getFallbackDefaultKeyboardCode`, imported-IM defaults) are intentionally unchanged. Existing installs keep their persisted keyboard until the phonetic type is re-picked.

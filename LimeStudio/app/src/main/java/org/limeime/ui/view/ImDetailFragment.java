@@ -372,9 +372,6 @@ public class ImDetailFragment extends Fragment {
         if (ctrl == null) return;
         final org.limeime.SearchServer ss = ctrl.getSearchServer();
         if (ss == null) return;
-        final boolean numberRow = androidx.preference.PreferenceManager
-                .getDefaultSharedPreferences(requireContext())
-                .getBoolean("number_row_in_english", false);
         new Thread(() -> {
             try {
                 org.limeime.data.Keyboard kb;
@@ -383,13 +380,15 @@ public class ImDetailFragment extends Fragment {
                         kb = ss.getKeyboardConfig("phoneticet41");
                         break;
                     case org.limeime.global.LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
-                        kb = ss.getKeyboardConfig(numberRow ? "limenum" : "lime");
+                        // #191: always the 5-row limenum English face; the 4-row
+                        // LIME keyboard stays available via the keyboard picker.
+                        kb = ss.getKeyboardConfig("limenum");
                         break;
                     case "eten26_symbol":
                         kb = ss.getKeyboardConfig("et26");
                         break;
                     case org.limeime.global.LIME.IM_PHONETIC_KEYBOARD_HSU:
-                        kb = ss.getKeyboardConfig(numberRow ? "limenum" : "lime");
+                        kb = ss.getKeyboardConfig("limenum");
                         break;
                     case "hsu_symbol":
                         kb = ss.getKeyboardConfig(org.limeime.global.LIME.IM_PHONETIC_KEYBOARD_HSU);
