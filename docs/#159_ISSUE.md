@@ -2,7 +2,7 @@
 
 ## Status
 
-Open. The reporter's Android v6.1.35 retest failed on two phones. The catalog entry and mapping import appear to complete, but the installed 三碼 input method opens with the ordinary keyboard and accepts English only. Android needs a confirmed fix and a new reporter-testable build. The iOS catalog remains separate unverified product work.
+Open pending reporter confirmation. The reporter's Android v6.1.35 retest failed on two phones because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is included in verified GitHub Release v6.1.36, and a targeted retest was requested. The iOS catalog remains separate unverified product work.
 
 ## Problem statement
 
@@ -37,24 +37,16 @@ The reporter did not include Android versions in this comment.
 - Text import maps `tricode` to `limenumsym2` through `getDefaultKeyboardCodeForImportedIM()` and falls back to `lime` if the requested keyboard row cannot be resolved.
 - Manual 自建 selection proving that `LIME+數字符號鍵盤2` can render and type narrows the defect away from the layout XML and basic mapping content. The failed automatic paths instead point toward table-specific IM registration, keyboard assignment, or activation state.
 
-## Likely root cause
+## Root cause
 
-The exact cause is not yet proven. The strongest shared suspect is the automatic registration/assignment boundary for the dedicated `tricode` table:
-
-- Catalog `.limedb` import may import the metadata row but leave the runtime-selected IM or keyboard state stale.
-- Dedicated-table text import may resolve `limenumsym2` too early or fail to persist the assignment, then silently use the generic `lime` fallback.
-- IM activation may not refresh table-specific configuration after either import completes.
-
-The fact that manual 自建 plus explicit keyboard selection works argues against a missing layout resource or invalid mapping database. A focused failing test should identify which registration value differs among catalog import, dedicated-table text import, and the working 自建 path before source behavior is changed.
+`LIMEService.buildActivatedIMList()` maps enabled IM rows through the append-only `LIME.IM_CODES` array and silently drops an enabled code when no array index exists. The original 三碼 integration created and enabled `tricode` but did not append it to `IM_CODES`, `IM_FULL_NAMES`, and `IM_SHORT_NAMES`. As a result, the installed entry could not become an activated picker item even though its mapping data and `limenumsym2` keyboard metadata were present. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends the three values at index 14, preserving every existing persisted index. The same arrays also feed preference reverse lookup and legacy-name resolution, covering the catalog and dedicated-table import paths reported by the tester.
 
 ## Proposed solution
 
-1. Add an Android regression test that imports the shipped `tricode.limedb` into the `tricode` table and verifies persisted IM metadata, especially the keyboard assignment `limenumsym2`, `imkeys`, and installed full-name row.
-2. Add a corresponding text-import test for the dedicated `tricode` slot.
-3. Compare both results with the working 自建 plus explicit-keyboard path, including the active table and keyboard configuration read by the IM service after import.
-4. Reproduce the stale/fallback behavior RED before modifying production code.
-5. Fix the narrow registration, assignment, or refresh boundary proven by the test. Do not special-case the keyboard renderer when the reporter has already shown that the renderer works.
-6. Verify removal followed by reinstall/import so stale rows from the failed v6.1.35 path cannot preserve the defect.
+1. Keep the activated-IM arrays append-only because saved activation state persists their indices.
+2. Keep `tricode`, `三碼輸入法`, and `三碼` aligned at the same appended index in the code, full-name, and short-name arrays.
+3. Verify catalog install and dedicated-table import both expose 三碼 in the picker and preserve `limenumsym2` plus Chinese composition.
+4. Verify removal followed by reinstall/import so stale rows from the failed v6.1.35 path cannot preserve the defect.
 
 ## Follow-up questions
 
@@ -71,7 +63,9 @@ If local instrumentation cannot reproduce the failure, ask the reporter only for
 - Remove 三碼, import the coding file into the dedicated 三碼 slot, and repeat the same checks.
 - Verify the existing 自建/manual-selection path remains working.
 - Upgrade from a database that previously installed the broken v6.1.35 configuration and verify stale metadata is repaired or replaced.
-- Produce a newer Android test APK and request a targeted retest on the reporter's Nokia 3.4 and Redmi 13C.
+- Verified GitHub Release v6.1.36 targets `4060a46e585c9e46321953736c60335f40f7db94` and includes `935338dc13f70056c5ec22855bdee1b66eb73810`.
+- Verified asset: `LIMEHD2026-6.1.36.apk`, 7,114,460 bytes, SHA-256 `995462d0ffb61b8b4910efa9096b86bce4ecd39177ce47a5bf0b7918b666898e`.
+- A targeted v6.1.36 retest was requested on the reporter's Nokia 3.4 and Redmi 13C at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560. Keep the issue open pending the result.
 
 ### iOS
 
