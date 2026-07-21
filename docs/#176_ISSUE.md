@@ -1,92 +1,67 @@
-# Issue #176: Related-phrase design and custom-table smart composition
+# Issue #176: Related-phrase design and iOS custom-table smart composition
 
 ## Status
 
 - Issue: https://github.com/lime-ime/limeime/issues/176
-- Classification: by-design related-phrase behavior plus an unconfirmed Android custom-table smart-composition difference
-- State: open. Related lookup behavior is confirmed by design. The reporter's `自建` table is Array-derived, but controlled runtime and import checks find no `custom`-specific behavior when the underlying Array records are identical. The reporter's exported table is still needed to compare its actual mappings and scores with the built-in Array data.
-- Reporter environment: LIME 6.1.33, primarily 行列 10.
+- Classification: iOS defect plus separate Android/iOS product requests
+- State: open. The iOS `自建` input-method path does not produce the expected 中文智慧組詞 candidate for `我也是`, while Android produces it from the same imported table. Track the iOS defect as `fix#176`. Keep the approved bundled-database work under `feat#176`, while the longer cross-commit context proposal remains unapproved product evaluation in the issue.
+- Reporter environment: LIME 6.1.33. The original related-phrase examples use 行列 10.
 
-## Related-phrase behavior is by design
+## Separate product scope
 
 The reporter commits `命` and `運` separately. Related lookup uses the text from each individual commit as `pword`; it does not concatenate earlier commits into a longer lookup key. Therefore the second lookup uses `pword = 運`, not `pword = 命運`.
 
-A multi-character `pword = 命運` lookup occurs only when `命運` is committed in one action, such as through LD（連打詞輸入）. The reporter keeps 中文智慧組詞 disabled for normal 行列 10 use and does not use LD for this sequence. Their original `命運交響曲` observation therefore matches the designed exact-commit lookup model and is not a related-phrase defect.
+A multi-character `pword = 命運` lookup occurs only when `命運` is committed in one action, such as through LD（連打詞輸入）. The original `命運交響曲` observation therefore matches the current exact-commit lookup model and is not a related-phrase lookup defect.
 
-The separate request to refresh the bundled related-phrase database remains product work under `feat#176`.
+The reporter is requesting product improvements to preserve longer text context across commits and refresh the bundled related-phrase database. The database-refresh direction is tracked under `feat#176`. The longer-context proposal remains product evaluation and is not yet approved backlog work. Neither scope should be folded into the iOS defect fix.
 
-## Newly reported custom-table comparison
+## Confirmed iOS defect
 
-The reporter later stated that 中文智慧組詞 appears ineffective for `自建` and attached three Android screenshots:
+The project account confirmed the platform comparison in comment `5029971309`:
 
-| Table | Visible code | Visible smart candidate |
-| --- | --- | --- |
-| Built-in 倉頡 | `hqipdamyo` | `我也是` |
-| Built-in 行列 30 | `loxgdspc` | `我也是` |
-| `自建` | `ixaljn` | no `我也是`; visible candidates begin `我`, `祉`, `叟`, `後`, `这` |
+- iOS: entering the code sequence for `我也是` with the imported `自建` table does not produce the expected smart-composition candidate.
+- Android: the same imported table produces the expected candidate.
 
-The screenshots compare built-in 行列 30 with an Array-derived custom table, but the visible code sequences and therefore the actual mapping records differ. They demonstrate a result difference but do not by themselves prove that selecting table `custom` disables smart composition.
+Runtime evidence therefore establishes an iOS-only defect. Earlier Android screenshots showed a result difference but did not establish an Android custom-table defect. Android is the behavioral oracle for this scope.
 
-## Source and data-flow assessment
+## Platform impact
 
-Android does not intentionally exclude `custom` from smart composition:
+### iOS
 
-- `SearchServer.getMappingByCode()` calls `makeRunTimeSuggestion()` whenever `smart_chinese_input` is enabled and runtime suggestions have not been abandoned.
-- `SearchServer.setTableName()` applies the same query path to built-in and custom tables.
-- `makeRunTimeSuggestion()` is table-agnostic. It seeds from exact mappings, searches the remaining code, and builds a phrase candidate.
+Confirmed affected. `SearchServer.getMappingByCode()` calls `makeRunTimeSuggestion()` for both phonetic and non-phonetic tables when `smart_chinese_input` is enabled, and the Swift implementation is intended to mirror Android. The current test suite does not provide executed end-to-end coverage for smart composition through an imported `custom` table; many runtime-suggestion tests are skipped or test unrelated capability paths. The exact failing boundary remains unproven and may involve imported mapping metadata, exact-match classification, state/cache handling, or candidate assembly.
 
-The runtime result does depend on mapping data:
+### Android
 
-- each code segment must resolve to an exact mapping
-- the remaining segment must fit `maxCodeLength`
-- at `SearchServer.java:593`, a remaining exact mapping with `basescore < 2` is rejected
-- imported CIN/LIME text fills a missing base score through `LimeDB.getBaseScore(word)`, while imported/restored database content may preserve its existing score values
+Confirmed unaffected for the same imported table. Android's `SearchServer.makeRunTimeSuggestion()` produces the expected phrase and has no intentional exclusion for `custom`. No Android product-code change belongs in `fix#176`; Android should instead supply parity fixtures and expected behavior for iOS tests.
 
-## Controlled Android comparison
+## Likely root-cause boundary
 
-A temporary instrumentation fixture exercised the real `SearchServer` runtime-suggestion path with the same mappings and scores under both table names:
+The defect is inside the iOS imported-custom-table smart-composition path, but there is not yet enough focused runtime evidence to name a specific faulty condition. A source-only diagnosis would be premature because the Swift algorithm appears to invoke the same high-level stages as Android. The next investigation must capture the imported rows and each stage of iOS phrase construction, then compare those observations with Android using equivalent sanitized fixture data.
 
-- seed mappings composed `我` + `也` + `是`
-- table `array`, positive base scores: produced `我也是`
-- table `custom`, identical mappings and positive base scores: produced `我也是`
-- table `custom`, identical mappings but zero base scores for remaining segments: did not produce `我也是`
+## Proposed solution
 
-The focused instrumentation run completed two tests successfully on the Android emulator. The temporary characterization test was removed after the investigation and was not committed because one case deliberately records the current score-rejection behavior rather than an approved product contract.
+1. Reproduce the failure with a minimal, redistribution-safe custom table containing only the mappings needed for one multi-character smart-composition case.
+2. Add a RED iOS test that imports the fixture into `custom`, enables `smart_chinese_input`, enters the complete code sequence through the real search path, and asserts that the expected phrase candidate is returned.
+3. Run an equivalent Android fixture as the parity oracle.
+4. Identify the first platform divergence and make the smallest iOS-only correction. Do not redesign related-phrase context or alter Android behavior in this fix.
+5. Add regression coverage for built-in and imported tables, then verify the rendered candidate path on iPhone, full iPad, and narrow iPad.
 
-This establishes that the table name alone does not cause the observed difference. Mapping segmentation and score metadata can cause it.
+## Follow-up questions
 
-The real `.limedb` import path was also checked. `LimeDB.importMappingRowsFromAttachedSource()` copies `code`, `word`, `score`, and `basescore` from the archive's `custom` source table into either destination table through the same SQL path. A direct import-parity simulation using the current official `Database/array.limedb` copied all 32,850 rows into target tables named `array` and `custom`; bidirectional `EXCEPT` comparisons returned zero differences. The `我`、`也`、`是` control records and base scores remained identical. Therefore importing the same official Array database under `custom` does not itself explain the reporter's result.
+- Can the failure be reduced to a minimal custom fixture without redistributing the reporter's source table?
+- Do iOS and Android import identical `code`, `word`, `score`, `basescore`, and exact-match values for those fixture rows?
+- At which stage do the platforms first diverge: seed selection, remaining-code lookup, phrase scoring, cache/state update, or final candidate assembly?
 
-## Built-in Array control data
+## Verification plan
 
-The current official `Database/array.limedb` was inspected directly. Its 行列 30 sequence in the screenshot decomposes as:
-
-- `lox` → `我`, `basescore = 123003`
-- `gds` → `也`, `basescore = 33788`
-- `pc` → `是`, `basescore = 152789`
-
-These high positive scores satisfy the runtime-suggestion thresholds. The reporter's `自建` mappings and score fields for `ixaljn` are unavailable, so the custom result cannot yet be attributed to missing segment mappings, zero/low scores, or another metadata difference.
-
-## Information needed from the reporter
-
-Request either the exported Array-derived custom table or a minimal extract containing only the records needed for `ixaljn`, plus:
-
-1. the intended code split for `我`、`也`、`是`
-2. the source format: `.cin`, `.lime`, or `.limedb`
-3. each record's `score` and `basescore` if the format carries them
-4. confirmation that the same custom table produces each character separately
-
-With that fixture, reproduce the exact import path and compare the resulting `custom` rows to the built-in Array control.
-
-## Verification plan if a defect is confirmed
-
-1. Import the reporter's minimal fixture through its real format.
-2. Add a RED Android test proving the expected phrase is absent with equivalent per-character mappings.
-3. Identify whether the failing boundary is import scoring, exact-match flags, segmentation/max-code-length, or cache state.
-4. Test the smallest source fix, then rerun the focused and complete Android suites.
-5. Run an equivalent iOS fixture before assuming cross-platform impact.
-6. Verify no regression to ordinary exact candidates, LD, related lookup after commit, or mixed English input.
+1. RED: reproduce the missing phrase through the iOS imported-`custom` path.
+2. Confirm the same fixture is GREEN on Android before changing iOS behavior.
+3. GREEN: verify the smallest iOS fix returns the expected phrase candidate.
+4. Re-run focused `SearchServer`, import, and custom-table tests plus the complete iOS test suite.
+5. Verify ordinary exact candidates, backspace/restart state, LD, related lookup after commit, and mixed English input are unchanged.
+6. Perform runtime checks on iPhone, full iPad, and narrow iPad.
+7. Keep the `feat#176` database work and the unapproved longer-context evaluation separate from defect completion and release QA.
 
 ## Backlog decision
 
-No custom-table bug entry is added yet because the controlled test disproves a table-name-specific branch difference and the reporter's actual mapping metadata is still missing. `feat#176` remains limited to refreshing the bundled related-phrase database while preserving exact per-commit lookup.
+Add `fix#176 iOS` for the confirmed custom-table smart-composition defect. Retain `feat#176 Android+iOS` only for the approved related-phrase database refresh. Keep the longer cross-commit context proposal out of the backlog until a maintainer confirms its product direction.
