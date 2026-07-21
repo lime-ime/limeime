@@ -2,7 +2,7 @@
 
 ## Status
 
-Open pending reporter confirmation. The reporter's Android v6.1.35 retest failed on two phones because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. The signed release candidate passed catalog install, activation, Chinese-candidate, and commit smoke checks. A targeted reporter retest was requested at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560. The iOS catalog remains separate unverified product work.
+Resolved and closed after reporter confirmation. The reporter's Android v6.1.35 retest failed on Nokia 3.4 and Redmi 13C because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. After the targeted v6.1.36 retest request at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560, the reporter confirmed that 三碼 now works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. The issue was closed as completed with acknowledgement https://github.com/lime-ime/limeime/issues/159#issuecomment-5039613977. This confirmation covers the reported Android phone paths only. The iOS catalog remains separate unverified product work.
 
 ## Problem statement
 
@@ -50,7 +50,7 @@ The reporter did not include Android versions in this comment.
 
 ## Follow-up questions
 
-If local instrumentation cannot reproduce the failure, ask the reporter only for the missing Android versions and a screen recording showing selection of 三碼 through the installed IM list. Do not ask them to repeat the same generic v6.1.35 test.
+No further reporter follow-up is needed for the resolved Android paths. The reporter did not provide Android versions or restate the installed build/channel, but confirmed normal behavior on both originally tested phones after the v6.1.36 retest request.
 
 ## Verification plan
 
@@ -65,7 +65,8 @@ If local instrumentation cannot reproduce the failure, ask the reporter only for
 - Upgrade from a database that previously installed the broken v6.1.35 configuration and verify stale metadata is repaired or replaced.
 - Android v6.1.36 is published through GitHub and Google Play and includes `935338dc13f70056c5ec22855bdee1b66eb73810`.
 - The signed release candidate passed the built-in catalog install path, activated 三碼 with `limenumsym2`, produced Chinese candidates, and committed a selected candidate.
-- A targeted v6.1.36 retest was requested on the reporter's Nokia 3.4 and Redmi 13C at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560. Keep the issue open pending the result.
+- A targeted v6.1.36 retest was requested on the reporter's Nokia 3.4 and Redmi 13C at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560.
+- The reporter confirmed that 三碼 works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. This closes the reported Android catalog/install, switching, dedicated import, keyboard-selection, and basic-input scope.
 
 ### iOS
 
@@ -73,4 +74,4 @@ The reporter supplied no iOS retest evidence. iOS has a separate implementation 
 
 ## Privacy-safe reporter summary
 
-A community reporter tested the Android v6.1.35 GitHub build on two phone models. The dedicated 三碼 catalog and coding-file import paths installed an entry but did not activate Chinese input or the intended keyboard. The same mapping worked through 自建 after manually selecting `LIME+數字符號鍵盤2`. No private support context or personal information is included here.
+A community reporter tested the Android v6.1.35 GitHub build on two phone models. The dedicated 三碼 catalog and coding-file import paths installed an entry but did not activate Chinese input or the intended keyboard. The same mapping worked through 自建 after manually selecting `LIME+數字符號鍵盤2`. After the Android v6.1.36 retest request, the reporter confirmed that 三碼 works normally on both phones without restating the installed build or channel. No private support context or personal information is included here.
