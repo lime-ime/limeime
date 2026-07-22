@@ -1015,6 +1015,173 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    // MARK: - 10a. importTxtFile parity fix regression tests
+
+    func testImportReplacesRowsInsteadOfDuplicatingOnReimport() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef begin
+        aa 測
+        bb 試
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+        let firstCount = db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+        let secondCount = db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil)
+
+        XCTAssertEqual(secondCount, firstCount,
+                       "Re-importing the same file should replace rows, not duplicate them")
+    }
+
+    func testImportStripsUtf8BomFromFirstLine() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = "\u{FEFF}" + """
+        @cname@|BomName
+        %chardef begin
+        aa|詞
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "BomName",
+                       "Leading UTF-8 BOM on the first line must be stripped before parsing @cname@")
+    }
+
+    func testImportAcceptsChardefBeginWithExtraSpaces() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef  begin
+        aa 測
+        bb 試
+        %chardef  end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertGreaterThan(db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil), 0,
+                             "%chardef markers with extra internal spaces should still be recognized")
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "測")
+        XCTAssertEqual(db.getMappingByCode("bb", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "試")
+    }
+
+    func testImportV1MetadataValueWithPipesIsNotTruncated() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        @imkeynames@|ㄅ|ㄆ|ㄇ
+        %chardef begin
+        aa|測
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"), "ㄅ|ㄆ|ㄇ",
+                       "v1 pipe-delimited metadata value containing pipes must not be truncated to its first field")
+    }
+
+    func testImportCommaDelimitedMetadataIsParsed() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        @cname@,CommaName
+        aa,詞
+        bb,語
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "CommaName",
+                       "Comma-delimited @cname@ header should be parsed like pipe/tab delimited headers")
+    }
+
+    func testImportCollapsesMultipleSpacesInSpaceDelimitedLime() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = "aa   詞\nbb   語"
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "詞",
+                       "Runs of 2-5 spaces between aligned columns should collapse to a single delimiter")
+    }
+
+    // MARK: - 10b. fix#176 base-score parity (bundled hanconvertv2.db)
+
+    /// getBaseScore must read real frequencies from the bundled hanconvertv2.db,
+    /// mirroring Android LimeHanConverter. Values are the Android oracle from
+    /// docs/#176_ISSUE.md. Empty input is 0.
+    func testGetBaseScoreReadsBundledHanConvertFrequencies() throws {
+        let db = try makeLimeDB()
+        XCTAssertEqual(db.getBaseScore("我"), 123003)
+        XCTAssertEqual(db.getBaseScore("也"), 33788)
+        XCTAssertEqual(db.getBaseScore("是"), 152789)
+        XCTAssertEqual(db.getBaseScore(""), 0)
+    }
+
+    /// A scoreless .cin import (code+word only) must seed real base frequencies for
+    /// each character so runtime phrase composition (我也是 / LD) can build. Before
+    /// fix#176 iOS stored basescore 0, which the runtime suggestion path skipped.
+    func testScorelessCinImportSeedsBaseScoresForCustomTable() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %cname Issue176
+        %chardef begin
+        i 我
+        xal 也
+        jn 是
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        let wo = db.getMappingByCode("i", softKeyboard: true, getAllRecords: true)?.first { $0.word == "我" }
+        let ye = db.getMappingByCode("xal", softKeyboard: true, getAllRecords: true)?.first { $0.word == "也" }
+        let shi = db.getMappingByCode("jn", softKeyboard: true, getAllRecords: true)?.first { $0.word == "是" }
+        XCTAssertEqual(wo?.baseScore, 123003)
+        XCTAssertEqual(ye?.baseScore, 33788)
+        XCTAssertEqual(shi?.baseScore, 152789)
+    }
+
     func testImKeysForTableUsesStoredImkeysWhenNamesPresent() throws {
         let db = try makeLimeDB()
         db.setImConfig(LIME.DB_TABLE_CJ, "imkeys", "abc;'")
@@ -2693,14 +2860,16 @@ final class LimeDBTest: XCTestCase {
         ])
     }
 
-    // MARK: - 36. getBaseScore — documents always-0 decision
+    // MARK: - 36. getBaseScore — bundled hanconvertv2.db frequencies (fix#176)
 
-    func testLimeDBGetBaseScoreAlwaysZero() throws {
+    func testGetBaseScoreMissAndEdgeCases() throws {
         let db = try makeLimeDB()
-        // iOS decision: basescore always 0 (no hanconvertv2.db bundled; scores accumulate via learning)
-        XCTAssertEqual(db.getBaseScore("愛"), 0)
-        XCTAssertEqual(db.getBaseScore(""), 0)
-        XCTAssertEqual(db.getBaseScore(String(repeating: "測", count: 1000)), 0)
+        // fix#176: getBaseScore reads frequencies from the bundled hanconvertv2.db
+        // (mirrors Android LimeHanConverter), replacing the old always-0 stub.
+        XCTAssertEqual(db.getBaseScore("愛"), 12411)   // known char → TCSC.score
+        XCTAssertEqual(db.getBaseScore(""), 0)          // empty → 0
+        // Multi-char code absent from TCSC → Android phrase default of 1, not 0.
+        XCTAssertEqual(db.getBaseScore(String(repeating: "測", count: 1000)), 1)
     }
 
     // MARK: - 37. Cloud-IM install ↔ keyboard resolution

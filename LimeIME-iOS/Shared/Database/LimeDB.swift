@@ -3019,11 +3019,34 @@ final class LimeDB {
         return mutable as String
     }
 
-    /// Base score for a character — always returns 0 on iOS.
-    /// Android seeds basescore from hanconvertv2.db during import; that DB is not bundled on iOS.
-    /// Scores accumulate through user learning instead.
+    /// Read-only connection to the bundled `hanconvertv2.db` frequency table.
+    /// Opened lazily on first `getBaseScore` call (import time only) so LimeDB
+    /// instances that never import pay nothing. `nil` if the resource is absent.
+    // ponytail: lazy is not thread-safe, but imports run on a single serialized
+    // thread (importThread / importTxtFileAsync), so getBaseScore is not called
+    // concurrently. Add a lock only if a concurrent-import path is ever introduced.
+    private lazy var hanScoreQueue: DatabaseQueue? = {
+        guard let url = Bundle.main.url(forResource: "hanconvertv2", withExtension: "db") else { return nil }
+        var config = Configuration()
+        config.readonly = true
+        return try? DatabaseQueue(path: url.path, configuration: config)
+    }()
+
+    /// Base frequency score for a word, mirroring Android `LimeHanConverter.getBaseScore()`:
+    /// look up `TCSC.score` by exact code; on a miss, a phrase (length > 1) defaults to `1`
+    /// and a single character to `0`. Sourced from the bundled `hanconvertv2.db` (the same
+    /// Android raw asset) so scoreless `.cin`/`.lime` imports seed runtime phrase composition
+    /// instead of dead-ending at score 0. Explicit positive imported basescores are preserved
+    /// by the importer, which only calls this when basescore is missing or 0.
     func getBaseScore(_ input: String) -> Int {
-        return 0
+        guard !input.isEmpty else { return 0 }
+        if let queue = hanScoreQueue {
+            let found: Int?? = try? queue.read { db in
+                try Int.fetchOne(db, sql: "SELECT score FROM TCSC WHERE code = ?", arguments: [input])
+            }
+            if let score = found ?? nil { return score }
+        }
+        return input.utf16.count > 1 ? 1 : 0
     }
 
     // MARK: - Rename Table
@@ -3479,6 +3502,10 @@ final class LimeDB {
         guard isValidTableName(tableName) else { throw LimeDBError.invalidTableName(tableName) }
         let isRelatedTable = tableName == "related"
         if !isRelatedTable { try ensureMappingTable(tableName) }
+        // Mirror Android importTxtTable(): clear prior rows and IM config before
+        // import so re-importing the same file replaces rather than duplicates.
+        try dbQueue.write { db in try db.execute(sql: "DELETE FROM \(tableName)") }
+        resetImConfig(tableName)
         guard let reader = StreamReader(path: path) else { throw LimeDBError.fileNotFound(path) }
         importCancelled = false
 
@@ -3505,16 +3532,29 @@ final class LimeDB {
         var relatedBatch: [(pword: String, cword: String, baseScore: Int, userScore: Int)] = []
         let batchSize = 500
         var totalInserted = 0
+        var strippedBOM = false
         for line in reader {
             guard !importCancelled else { break }
-            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.lowercased().hasPrefix("%chardef begin") { inChardef = true;  continue }
-            if trimmed.lowercased().hasPrefix("%chardef end")   { inChardef = false; continue }
-            if trimmed.lowercased().hasPrefix("%keyname begin") { inKeyname = true; continue }
-            if trimmed.lowercased().hasPrefix("%keyname end") { inKeyname = false; continue }
+            var raw = line
+            if !strippedBOM {
+                if raw.hasPrefix("\u{FEFF}") { raw.removeFirst() }
+                strippedBOM = true
+            }
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            let lowerTrim = trimmed.lowercased()
+            if lowerTrim.hasPrefix("%chardef") {
+                if lowerTrim.hasSuffix("begin") { inChardef = true }
+                else if lowerTrim.hasSuffix("end") { inChardef = false }
+                continue
+            }
+            if lowerTrim.hasPrefix("%keyname") {
+                if lowerTrim.hasSuffix("begin") { inKeyname = true }
+                else if lowerTrim.hasSuffix("end") { inKeyname = false }
+                continue
+            }
 
             if trimmed.hasPrefix("@") {
-                let parts = splitEscapedFields(trimmed, delimiter: delimiterDetected ? detectedDelimiter : (trimmed.contains("|") ? "|" : "\t"), escapedFormat: escapedFormat)
+                let parts = splitLimeMetadataFields(trimmed, escapedFormat: escapedFormat)
                 if parts.count >= 2 {
                     let key = parts[0].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                     let value = parts[1].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3581,9 +3621,15 @@ final class LimeDB {
                 delimiterDetected = true
             }
 
+            var dataLine = trimmed
+            if !isCinFormat && detectedDelimiter == " " {
+                for run in ["     ", "    ", "   ", "  "] {
+                    dataLine = dataLine.replacingOccurrences(of: run, with: " ")
+                }
+            }
             let parseLine = isCinFormat
-                ? trimmed.replacingOccurrences(of: "[ \t]+", with: "\t", options: .regularExpression)
-                : trimmed
+                ? dataLine.replacingOccurrences(of: "[ \t]+", with: "\t", options: .regularExpression)
+                : dataLine
             let parts = splitEscapedFields(parseLine,
                                            delimiter: isCinFormat ? "\t" : detectedDelimiter,
                                            escapedFormat: escapedFormat)
@@ -3803,6 +3849,21 @@ final class LimeDB {
         }
 
         return nil
+    }
+
+    /// Mirror Android splitLimeMetadataFields(): try each delimiter in priority
+    /// order and return [key, value] where value re-joins any trailing fields, so
+    /// legacy v1 metadata whose value contains the delimiter survives.
+    private func splitLimeMetadataFields(_ line: String, escapedFormat: Bool) -> [String] {
+        for delimiter in ["|", "\t", ",", " "] {
+            let parts = splitEscapedFields(line, delimiter: Character(delimiter), escapedFormat: escapedFormat)
+            if parts.count >= 2, parts[0].trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("@") {
+                if parts.count == 2 { return parts }
+                let value = parts[1...].joined(separator: delimiter)
+                return [parts[0], value]
+            }
+        }
+        return [line]
     }
 
     private func splitEscapedFields(_ line: String, delimiter: Character, escapedFormat: Bool) -> [String] {
