@@ -7,8 +7,9 @@
 - Reporter: `Poul9`
 - Android: reporter-confirmed working and used as the behavioral oracle
 - iOS: source fix merged to `master` in PR #192 as `9a50eb7509e937c2e2e51574ddcdc9d91b1369ee`
-- Delivery boundary: iOS v6.1.36 build 25 passed the required Xcode Cloud test/archive actions on the release commit, is App Store eligible, and is submitted for review. It is not publicly released yet.
-- Pending: App Store approval/public rollout, reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
+- Delivery boundary: iOS v6.1.36 build 25 is `READY_FOR_SALE`, `VALID`, and publicly listed on the Taiwan App Store. The direct Taiwan storefront showed v6.1.36 on 2026-07-22 while Apple's Taiwan lookup endpoint was still briefly reporting v6.1.35.
+- Follow-up: issue #191 was reopened and the reporter was asked to retest public iOS v6.1.36 in https://github.com/lime-ime/limeime/issues/191#issuecomment-5042557276.
+- Pending: reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
 
 ## Problem statement
 
@@ -96,13 +97,13 @@ On iPhone, full iPad, and narrow iPad:
 3. Repeat the equivalent English/symbol checks for ETEN26 because the same routing branch was corrected.
 4. Switch away and back, then close/reopen the keyboard, and confirm each selection persists.
 
-The maintainer verified the corrected Hsu English face on iPhone on first show and after dismiss/reopen. Full and narrow iPad checks remain pending. Request reporter verification only after a newer iOS build containing the fix is available.
+The maintainer verified the corrected Hsu English face on iPhone on first show and after dismiss/reopen. Public iOS v6.1.36 now contains the fix, and the reporter has been asked to verify the same first-show and dismiss/reopen paths. Full and narrow iPad checks remain pending.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed. iOS v6.1.36 build 25 passed the required Xcode Cloud actions and is submitted for App Store review; both iPad layout tiers, public rollout, and reporter confirmation remain pending.
+Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed. iOS v6.1.36 build 25 is public on the Taiwan App Store and the community issue is open pending reporter confirmation. Both iPad layout tiers remain pending runtime verification.
 
 ### Android
 
