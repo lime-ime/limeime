@@ -698,7 +698,9 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 return "phoneticet41";
             case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
             case LIME.IM_PHONETIC_KEYBOARD_HSU:
-                return isNumberRowInEnglishEnabled(false) ? "limenum" : "lime";
+                // #191: always the 5-row limenum English face; the 4-row LIME
+                // keyboard stays available via the per-IM keyboard picker.
+                return "limenum";
             case "eten26_symbol":
                 return "et26";
             case "hsu_symbol":

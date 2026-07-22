@@ -378,21 +378,17 @@ public class LIMEPreference extends AppCompatActivity {
                             keyboardConfig = SearchSrv.getKeyboardConfig("phoneticet41");
                             break;
                         case LIME.IM_PHONETIC_KEYBOARD_TYPE_ETEN26:
-                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                keyboardConfig = SearchSrv.getKeyboardConfig("limenum");
-                            } else {
-                                keyboardConfig = SearchSrv.getKeyboardConfig("lime");
-                            }
+                            // #191: always the 5-row limenum English face; the 4-row
+                            // LIME keyboard stays available via the keyboard picker.
+                            keyboardConfig = SearchSrv.getKeyboardConfig("limenum");
                             break;
                         case "eten26_symbol":
                             keyboardConfig = SearchSrv.getKeyboardConfig("et26");
                             break;
                         case LIME.IM_PHONETIC_KEYBOARD_HSU:  //Jeremy '12,7,6 Add HSU english keyboard support
-                            if (mLIMEPref.getParameterBoolean("number_row_in_english", false)) {
-                                keyboardConfig = SearchSrv.getKeyboardConfig("limenum");
-                            } else {
-                                keyboardConfig = SearchSrv.getKeyboardConfig("lime");
-                            }
+                            // #191: always the 5-row limenum English face; the 4-row
+                            // LIME keyboard stays available via the keyboard picker.
+                            keyboardConfig = SearchSrv.getKeyboardConfig("limenum");
                             break;
                         case "hsu_symbol":
                             keyboardConfig = SearchSrv.getKeyboardConfig(LIME.IM_PHONETIC_KEYBOARD_HSU);

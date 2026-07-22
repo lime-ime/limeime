@@ -1,6 +1,13 @@
 # Issue #169 — Integrated phone portrait keyboard model (no width gate)
 
-Status: Reopened for an Android v6.1.35 portrait-split key-label regression. The original v6.1.33
+Status: Open pending reporter/device confirmation for the v6.1.35 portrait-split key-label
+regression. PR #188 merged the source fix as
+`d18edf9543c601fd64d086386d4c609f364e5dee` from final head
+`0966b0dfb657e9c7d33e9a0abfd4feb7136c1454`. Android v6.1.36 is published through GitHub and
+Google Play and contains the merge. Signed-candidate runtime verification confirmed portrait split
+geometry and vertically stacked visible dual labels without edge clipping. The reporter previously
+tested through Google Play, so request a store update/retest rather than sending the separate GitHub
+APK link. The original v6.1.33
 geometry-mode regression remains reporter-confirmed fixed in Google Play v6.1.34: portrait split
 rendered and mode switching showed no conflicting simultaneous modes. The confirmation is
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5017534231 and the closing
@@ -11,12 +18,13 @@ Android fix. Its verified GitHub testing-track APK is `LIMEHD2026-6.1.34.apk` (7
 SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). The reporter confirmed the
 separate Google Play build, not this GitHub testing-track APK. The completed retest request was
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5016727812.
-The iOS geometry changes are source-fixed and simulator-validated, but verified TestFlight/App
-Store delivery remains separate. The v6.1.35 Android regression is tracked by the reopening and
+The iOS geometry changes are source-fixed and simulator-validated. iOS v6.1.36 build 25 passed the
+required Xcode Cloud actions and is submitted for App Store review, but public rollout and device
+verification remain separate. The v6.1.35 Android regression is tracked by the reopening and
 maintainer analysis at https://github.com/lime-ime/limeime/issues/169#issuecomment-5029109344.
-Last updated: 2026-07-21
+Last updated: 2026-07-22
 
-## Reopened Android v6.1.35 regression
+## Android v6.1.35 regression — published fix, awaiting reporter retest
 
 ### Problem statement
 
@@ -25,23 +33,23 @@ label and numeric hint are arranged side by side, and text near the left and rig
 This is a new display regression after the reporter-confirmed v6.1.34 geometry-mode fix, not evidence
 that portrait split selection or mutual exclusion failed again.
 
-### Likely root cause
+### Root cause
 
 Commit `463dcd74f237dc5af4ada9be2dc4cfdb6ebbb410` added label fitting to
-`LIMEKeyboardBaseView`. It selects top/bottom versus left/right placement using rendered key shape:
-`key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel`. Portrait split can produce a
-dual-label key whose half-width is still greater than its height, so the heuristic chooses the
-landscape side-by-side branch even though the device orientation is portrait. The new
-`KeyLabelFitTest` checks only scale arithmetic and does not cover orientation-specific placement.
+`LIMEKeyboardBaseView`. Before PR #188, it selected top/bottom versus left/right placement using
+rendered key shape: `key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel`. Portrait
+split can produce a dual-label key whose half-width is still greater than its height, so the heuristic
+chose the landscape side-by-side branch even though the device orientation was portrait. The
+pre-fix `KeyLabelFitTest` checked only scale arithmetic and did not cover orientation-specific
+placement.
 
-### Proposed solution
+### Implemented solution
 
-- Make dual-label placement depend explicitly on keyboard/display orientation: portrait always uses
-  top/bottom placement and landscape uses left/right placement.
-- Use the same placement decision for fitting limits and final drawing so measurement and rendering
-  cannot disagree.
-- Preserve the existing three-label handling unless a failing regression test proves that it needs a
-  separate rule.
+- PR #188 makes dual-label placement depend explicitly on device orientation: portrait always uses
+  top/bottom placement, while landscape retains the existing key-shape and label-length fallbacks.
+- `KeyLabelFit.useVerticalLabels` now supplies one placement decision to both fitting limits and final
+  drawing so measurement and rendering cannot disagree.
+- Existing three-label handling remains unchanged.
 
 ### Follow-up questions
 
@@ -50,22 +58,25 @@ landscape side-by-side branch even though the device orientation is portrait. Th
 - Check whether portrait standard and one-hand geometry share the same wrong branch or whether the
   visible clipping is limited to split halves.
 
-### Verification plan
+### Verification and remaining gates
 
-- Add a RED unit-level placement-policy test covering portrait and landscape with both wide and narrow
-  keys, then verify portrait always stacks and landscape always uses side-by-side placement.
-- Add or extend an Android rendering/instrumentation regression for representative dual-label keys in
-  portrait split, standard, and one-hand modes, checking that labels remain inside each key.
-- Run focused unit tests, the Android unit-test suite, Java and Android-test compilation, lint, and
-  `git diff --check`.
-- Verify a phone in portrait split visually before requesting a reporter retest on a newer Android
-  build. Also smoke-test landscape split to ensure its side-by-side arrangement remains intact.
+- Merged-tree unit coverage checks portrait stacking and the retained landscape fallbacks in
+  `KeyLabelFitTest`.
+- Exact-head `git diff --check`, `KeyLabelFitTest`, and Android Java compilation passed before merge.
+  The PR records successful Android unit tests, lint, Android-test compilation, the full connected
+  instrumentation suite, and emulator verification of portrait split plus the unchanged portrait
+  arrow row. GitHub had no configured PR checks.
+- Source merged: complete (`d18edf9543c601fd64d086386d4c609f364e5dee`).
+- Reporter-testable Android build containing the merge: published through GitHub and Google Play in
+  v6.1.36. Signed-candidate portrait-split runtime verification passed.
+- Reporter/device confirmation: pending. Keep issue #169 open until this succeeds or a maintainer
+  explicitly directs otherwise.
 
 ### Platform impact
 
 - **Android:** Confirmed affected in v6.1.35 by maintainer reproduction and source inspection. The
-  regression is in Android `LIMEKeyboardBaseView` label placement and needs an Android fix and a newer
-  reporter-testable build.
+  regression is in Android `LIMEKeyboardBaseView` label placement. The source fix is published in
+  v6.1.36 through GitHub and Google Play; reporter/device confirmation remains pending.
 - **iOS:** No matching v6.1.35 regression is established. iOS uses a separate Swift rendering path and
   was not changed by Android commit `463dcd74`; retain iOS release QA for the broader phone-geometry
   work, but do not infer this Android label defect on iOS.

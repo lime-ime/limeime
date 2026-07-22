@@ -235,6 +235,41 @@ final class KeyboardViewControllerTest: XCTestCase {
         }
     }
 
+    // #191: the LIME 預設鍵盤 catalog row (keyboard code "lime", imkb "lime") must resolve to
+    // real bundled layouts. The base faces were never ported from Android's lime.xml, so every
+    // consumer — 許氏/倚天26（英文） with the English number row off, the keyboard picker, the
+    // imported-IM fallback — silently degraded to lime_number via chineseLayoutCandidates.
+    // Contract: Chinese-IM face — lowercase letters, one EN (-9) switch, never a 中 (-10) key.
+    func testLimeBaseLayoutsExistAndUseChineseImFaceContract() throws {
+        for id in ["lime", "lime_ipad", "lime_ipad_narrow"] {
+            let layout = try loadKeyboardLayoutFixture(id)
+            let codes = layout.rows.flatMap(\.keys).map(\.code)
+            XCTAssertEqual(codes.filter { $0 == LimeKeyCode.switchToEnglish.rawValue }.count, 1,
+                           "\(id): needs exactly one EN (-9) switch")
+            XCTAssertFalse(codes.contains(LimeKeyCode.switchToIM.rawValue),
+                           "\(id): a Chinese-IM face must not carry a 中 (-10) key")
+            XCTAssertTrue(codes.contains(97), "\(id): expected the unshifted lowercase face")
+            XCTAssertFalse(codes.contains(65), "\(id): expected the unshifted lowercase face")
+        }
+
+        // lime.json mirrors Android lime.xml = lime_number minus its number row.
+        let lime = try loadKeyboardLayoutFixture("lime")
+        let limeNumber = try loadKeyboardLayoutFixture("lime_number")
+        XCTAssertEqual(lime.rows.map { $0.keys.map(\.code) },
+                       Array(limeNumber.rows.dropFirst()).map { $0.keys.map(\.code) },
+                       "lime must equal lime_number minus the number row")
+
+        // Shift faces must follow the loader's <base>_ipad_shift naming (resourceId
+        // composes base + iPad suffix + "_shift"); the pre-#191 lime_shift_ipad* names
+        // were never reachable. Uppercase letters prove they are true shift faces.
+        for id in ["lime_shift", "lime_ipad_shift", "lime_ipad_narrow_shift"] {
+            let layout = try loadKeyboardLayoutFixture(id)
+            let codes = layout.rows.flatMap(\.keys).map(\.code)
+            XCTAssertTrue(codes.contains(65), "\(id): expected the uppercase shift face")
+            XCTAssertFalse(codes.contains(97), "\(id): expected the uppercase shift face")
+        }
+    }
+
     func testIPadBottomRowSumsToHundredPercent() throws {
         for id in iPadLayoutsForBottomRowAudit {
             let layout = try loadKeyboardLayoutFixture(id)
@@ -2052,12 +2087,15 @@ final class KeyboardViewControllerTest: XCTestCase {
     }
 
     // The repaired code must resolve through the keyboard catalog to a layout that
-    // is actually bundled — "lime" did not, which is the root cause of #177.
+    // is actually bundled. When #177 landed, "lime" named a layout iOS did not ship —
+    // that was the original root cause. #191 ported the lime base faces, so "lime" now
+    // loads; the repair stays because a legacy fallthrough value was never a deliberate
+    // choice and Android's custom default is limenum.
     func testRepairedCustomKeyboardResolvesToABundledLayout() throws {
         XCTAssertNotNil(try? loadKeyLayoutFixture("lime_number"),
                         "limenum's imkb layout lime_number must be bundled")
-        XCTAssertNil(try? loadKeyLayoutFixture("lime"),
-                     "precondition: iOS ships no 'lime' layout, so it is an unusable default")
+        XCTAssertNotNil(try? loadKeyLayoutFixture("lime"),
+                        "#191: the lime base layout ships now (LIME 預設鍵盤 / 許氏英文 number-row-off)")
     }
 
     // A Chinese IM may degrade to a generic Chinese composition keyboard, but must
@@ -2168,18 +2206,42 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(controller.hotReverseLookup(for: im), "array30")   // hot still wins
     }
 
-    // #156: Phonetic et41 must resolve to the ETEN 41-key layout, not standard. The visible
-    // layout is driven by the phonetic_keyboard_type pref (Android parity), so et_41/eten map to
-    // lime_et_41 like eten26→lime_et26 and hsu→lime_hsu; standard has no special layout (nil →
-    // resolved via the keyboard-config path).
-    func testPhoneticSpecialLayoutIdMapsEt41AndSiblingsFromPref() {
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "et_41"), "lime_et_41")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten"), "lime_et_41")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26"), "lime_et26")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "eten26_symbol"), "lime_et26")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu"), "lime_hsu")
-        XCTAssertEqual(KeyboardViewController.phoneticSpecialLayoutId(for: "hsu_symbol"), "lime_hsu")
-        XCTAssertNil(KeyboardViewController.phoneticSpecialLayoutId(for: "standard"))   // not et41
+    // #156: Phonetic et41 must resolve directly to the ETEN 41-key layout. #191: English
+    // ETEN26/HSU variants must retain their persisted lime/limenum layout; only the explicit
+    // symbol variants (and legacy et26 spelling) use dedicated symbol-face layouts.
+    func testPhoneticVisibleLayoutSeparatesEnglishAndSymbolVariants() {
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "et_41", persistedLayoutId: "lime_phonetic"),
+            "lime_et_41")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten", persistedLayoutId: "lime_phonetic"),
+            "lime_et_41")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten26", persistedLayoutId: "lime_number"),
+            "lime_number")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "eten26_symbol", persistedLayoutId: "lime_number"),
+            "lime_et26")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "et26", persistedLayoutId: "lime_number"),
+            "lime_et26")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "hsu", persistedLayoutId: "lime_number"),
+            "lime_number")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "hsu_symbol", persistedLayoutId: "lime_number"),
+            "lime_hsu")
+        XCTAssertEqual(
+            KeyboardViewController.phoneticVisibleLayoutId(
+                for: "standard", persistedLayoutId: "lime_phonetic"),
+            "lime_phonetic")
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {

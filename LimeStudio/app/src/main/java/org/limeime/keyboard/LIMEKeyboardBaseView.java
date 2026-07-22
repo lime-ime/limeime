@@ -34,6 +34,7 @@ package org.limeime.keyboard;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -1059,6 +1060,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
             final int kbdPaddingTop = getPaddingTop();
             final Key[] keys = mKeys;
             final Key invalidKey = mInvalidatedKey;
+            final boolean portrait = getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_PORTRAIT;
 
 
             boolean drawSingleKey = false;
@@ -1149,7 +1152,8 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                     final int drawableWidth = Math.max(1, key.width - padding.left - padding.right);
                     final int drawableHeight = Math.max(1, key.height - padding.top - padding.bottom);
                     final boolean verticalLabels = hasSubLabel
-                            && (key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel);
+                            && KeyLabelFit.useVerticalLabels(portrait, key.width, key.height,
+                                    subLabel.length(), hasSecondSubLabel);
                     final int labelWidthLimit = hasSubLabel && !verticalLabels
                             ? drawableWidth / 2 : drawableWidth;
                     final int labelHeightLimit = verticalLabels ? drawableHeight / 2 : drawableHeight;
@@ -1224,7 +1228,7 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
                         }
 
                         //portrait keyboard
-                        if (key.height > key.width || subLabel.length() > 2 || hasSecondSubLabel) {
+                        if (verticalLabels) {
                             // Anchor sub-label from top and main label from bottom; split the
                             // leftover vertical space as top : gap : bottom = 1 : 1 : 1 so the
                             // inter-text gap scales with free space instead of being the residual

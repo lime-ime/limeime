@@ -44,7 +44,7 @@ Phase 1 (asset build):
 - NEW `Database/tricode.limedb` (generated)
 
 Phase 2 (Android):
-- `LimeStudio/app/src/main/java/org/limeime/global/LIME.java` (~:53–123)
+- `LimeStudio/app/src/main/java/org/limeime/global/LIME.java` (~:53–123; IM arrays :305–321)
 - `LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java` (:624 whitelist, :658 default kb, ~:5679 cj4 ensure pattern for the `tricode` table, :5740 `insertKeyboardIfAbsent` for `limenumsym2`)
 - `LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java` (:347–474 `buildFamilyList()`)
 - NEW `LimeStudio/app/src/main/res/xml/lime_num_sym2.xml`, `lime_num_sym2_shift.xml`
@@ -100,6 +100,7 @@ Phase 4 (license/docs):
    `code=limenumsym2, name=LIMENUMSYM2, desc=LIME+數字符號鍵盤2, type=phone, image=lime_number_symbol_keyboard_priview (reuse), imkb=lime_num_sym2, imshiftkb=lime_num_sym2_shift, engkb=lime_english_number, engshiftkb=lime_english_shift, symbolkb=symbols, symbolshiftkb=symbols_shift, disable=false`.
 7. Install list: in `ImInstallFragment.buildFamilyList()` add after an existing family (clone the 大易 block :405–414):
    one `CloudVariant("三碼 v.20260720.3", "14,489", "234 KB", LIME.DATABASE_CLOUD_IM_TRICODE)` → `new ImFamily(LIME.DB_TABLE_TRICODE, "三碼", tricode, true, false, false, R.drawable.ic_textformat_alt)` (family names are string literals here; no strings.xml entry needed).
+8. **IM picker arrays (added 2026-07-21 after the issue #159 negative retest — this step was missing from the original plan):** append `"tricode"` / `"三碼輸入法"` / `"三碼"` to `LIME.IM_CODES` / `IM_FULL_NAMES` / `IM_SHORT_NAMES` (:305–321). `LIMEService.buildActivatedIMList()` (:4053) maps every enabled `im` row through `indexOfIMCode(IM_CODES, …)` and silently drops codes not in the array (`index < 0 → continue`), so without this the installed+enabled 三碼 never appears in the IM picker. **Append at the end only** — `mIMActivatedState` persists these indices in prefs; inserting mid-array corrupts every existing install's saved state. The same arrays feed `LIMEPreferenceManager` reverse-lookup options (:279) and `LimeDB` legacy name resolution (:4492, :6623), so one append covers all consumers. The parallel `strings_settings.xml` arrays still end at `pinyin` (cj4 precedent: LIME.java arrays only) and are left untouched. iOS needs no counterpart — `getAllImConfigs()` has no known-IM whitelist.
 
 ### Phase 3 — iOS
 
@@ -272,7 +273,7 @@ the `，/。` slot renders blank and neither character is typeable. `IPAD_KB_SIZ
    production-layout guard.
 
 1. `python3 scripts/build_tricode_db.py ...` → `Database/tricode.limedb` exists; `unzip -l` shows exactly one `tricode.db`; `sqlite3`: `select count(*) from custom` matches amount row; spot-check `select word from custom where code='lh'` → 世 and `code=';lh'` → 泄; im table has the 9 property rows.
-2. Android: gradle debug build passes. `android-visual-verify` skill: IM download list shows 三碼 family → download installs → keyboard switches to `limenumsym2` matching the TL;DR diagram (z-row ends `m , . /`; bottom row done/shift/123·EN/space/〃/del/enter; no `-` `=`) → typing `lh` + selkey gives 世; each of the 5 symbol keys `' , . / ;` enters a code (composing buffer shows `〃，．／；` keynames).
+2. Android: gradle debug build passes. `android-visual-verify` skill: IM download list shows 三碼 family → download installs → 三碼 appears in the IM picker (long-press space / picker menu — requires Phase 2 step 8; verified fixed 2026-07-21) → keyboard switches to `limenumsym2` matching the TL;DR diagram (z-row ends `m , . /`; bottom row done/shift/123·EN/space/〃/del/enter; no `-` `=`) → typing `lh` + selkey gives 世; each of the 5 symbol keys `' , . / ;` enters a code (composing buffer shows `〃，．／；` keynames).
 3. iOS: `.claude/scripts/ios-gate.sh` unit gate passes (prefix builds with `GIT_CONFIG_COUNT=0`). `ios-visual-verify` skill: install 三碼 from LimeSettings, same layout and typing checks; confirm the new `lime_num_sym2*` JSONs load (no LayoutLoader fallback warnings).
    - **Post-generation spec diff (before any sim run):** for each of the 4 generated `lime_num_sym2_ipad*` JSONs, dump per-row `(label, code, longPressCode)` (small `python3 -c` one-liner over the JSON) and compare cell-for-cell against the normative spec blocks in Phase 3 — row counts 14/14/13/12/6 (full) and 12/12/12/12/6 (narrow, both layers), and tap codes 59/39/44/46/47 present exactly once each. Any mismatch = fix the generator exception, regenerate; never hand-edit the generated JSON.
    - iPad (13" sim): 5-row layout appears matching the `lime_num_sym2_ipad` spec block; asdf row ends `:|; "|' [↩]`; typing `;lh` → 泄 proves the ASCII `;` tap code survives the iPad scaffold; `'`-coded chars (e.g. `''h` 併) prove the promoted `〃` key.

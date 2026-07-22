@@ -1,0 +1,877 @@
+{
+  "id": "lime_ipad_narrow_shift",
+  "defaultWidthPercent": 7.15,
+  "rows": [
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": 49,
+          "codes": [
+            49
+          ],
+          "label": "!\\n1",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 33,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 50,
+          "codes": [
+            50
+          ],
+          "label": "@\\n2",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 64,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 51,
+          "codes": [
+            51
+          ],
+          "label": "#\\n3",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 35,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 52,
+          "codes": [
+            52
+          ],
+          "label": "$\\n4",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 36,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 53,
+          "codes": [
+            53
+          ],
+          "label": "%\\n5",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 37,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 54,
+          "codes": [
+            54
+          ],
+          "label": "^\\n6",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 94,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 55,
+          "codes": [
+            55
+          ],
+          "label": "&\\n7",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 38,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 56,
+          "codes": [
+            56
+          ],
+          "label": "*\\n8",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 42,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 57,
+          "codes": [
+            57
+          ],
+          "label": "(\\n9",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 40,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 48,
+          "codes": [
+            48
+          ],
+          "label": ")\\n0",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 41,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 45,
+          "codes": [
+            45
+          ],
+          "label": "_\\n-",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 95,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": -5,
+          "codes": [
+            -5
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 12.0,
+          "icon": "delete.backward",
+          "isModifier": true,
+          "isRepeatable": true,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": 81,
+          "codes": [
+            81
+          ],
+          "label": "Q",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 87,
+          "codes": [
+            87
+          ],
+          "label": "W",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 69,
+          "codes": [
+            69
+          ],
+          "label": "E",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 82,
+          "codes": [
+            82
+          ],
+          "label": "R",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 84,
+          "codes": [
+            84
+          ],
+          "label": "T",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 89,
+          "codes": [
+            89
+          ],
+          "label": "Y",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 85,
+          "codes": [
+            85
+          ],
+          "label": "U",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 73,
+          "codes": [
+            73
+          ],
+          "label": "I",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 79,
+          "codes": [
+            79
+          ],
+          "label": "O",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 80,
+          "codes": [
+            80
+          ],
+          "label": "P",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 91,
+          "codes": [
+            91
+          ],
+          "label": "{\\n[",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 123,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 93,
+          "codes": [
+            93
+          ],
+          "label": "}\\n]",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 125,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": 0,
+          "codes": [
+            0
+          ],
+          "widthPercent": 4.5,
+          "label": "",
+          "sublabel": "",
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": 65,
+          "codes": [
+            65
+          ],
+          "label": "A",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 83,
+          "codes": [
+            83
+          ],
+          "label": "S",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 68,
+          "codes": [
+            68
+          ],
+          "label": "D",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 70,
+          "codes": [
+            70
+          ],
+          "label": "F",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 71,
+          "codes": [
+            71
+          ],
+          "label": "G",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 72,
+          "codes": [
+            72
+          ],
+          "label": "H",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 74,
+          "codes": [
+            74
+          ],
+          "label": "J",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 75,
+          "codes": [
+            75
+          ],
+          "label": "K",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 76,
+          "codes": [
+            76
+          ],
+          "label": "L",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 59,
+          "codes": [
+            59
+          ],
+          "label": ":\\n;",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 58,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 10,
+          "codes": [
+            10
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 15.5,
+          "icon": "return",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        }
+      ]
+    },
+    {
+      "isBottomRow": false,
+      "keys": [
+        {
+          "code": -1,
+          "codes": [
+            -1
+          ],
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 9.0,
+          "icon": "shift",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": true,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 90,
+          "codes": [
+            90
+          ],
+          "label": "Z",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 88,
+          "codes": [
+            88
+          ],
+          "label": "X",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 67,
+          "codes": [
+            67
+          ],
+          "label": "C",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 86,
+          "codes": [
+            86
+          ],
+          "label": "V",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 66,
+          "codes": [
+            66
+          ],
+          "label": "B",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 78,
+          "codes": [
+            78
+          ],
+          "label": "N",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 77,
+          "codes": [
+            77
+          ],
+          "label": "M",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 0,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 44,
+          "codes": [
+            44
+          ],
+          "label": "<\\n,",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 60,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 46,
+          "codes": [
+            46
+          ],
+          "label": ">\\n.",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 62,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 47,
+          "codes": [
+            47
+          ],
+          "label": "?\\n/",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "longPressCode": 63,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 0,
+          "codes": [
+            0
+          ],
+          "widthPercent": 11.0,
+          "label": "",
+          "sublabel": "",
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        }
+      ]
+    },
+    {
+      "isBottomRow": true,
+      "keys": [
+        {
+          "code": -200,
+          "label": "globe",
+          "sublabel": "",
+          "widthPercent": 9.0,
+          "icon": "globe",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": -100
+        },
+        {
+          "code": -2,
+          "label": ".?123",
+          "sublabel": "",
+          "widthPercent": 11.0,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": -201,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "face.smiling",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": 32,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 53.0,
+          "icon": "space.bar",
+          "isModifier": false,
+          "isRepeatable": true,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": -9,
+          "label": "abc",
+          "sublabel": "",
+          "widthPercent": 11.0,
+          "icon": "",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": 0
+        },
+        {
+          "code": -3,
+          "label": "",
+          "sublabel": "",
+          "widthPercent": 8.0,
+          "icon": "keyboard.chevron.compact.down",
+          "isModifier": true,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": "",
+          "longPressCode": -100
+        }
+      ]
+    }
+  ]
+}
