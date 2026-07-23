@@ -144,7 +144,7 @@ iOS downloads the same corrected archive and already uses `_id ASC` when sorting
 - Python 哈哈倉頡 regression suite: passed.
 - Android unit tests and Android-test compilation: passed.
 - Ponytail review removed speculative platform SQL/tests and aligned the archive with the existing `code` index and DEFLATE conventions.
-- Claude Code review found one stale catalog-size blocker from an intermediate snapshot; both catalogs now match the final 508,390-byte archive at 496 KB, and its suggested fresh-build-versus-committed-artifact assertion was added.
+- Claude Code review found one stale catalog-size blocker from an intermediate snapshot; both catalogs now match the final 508,390-byte archive at 496 KB. CI correctly retains semantic archive validation rather than cross-toolchain byte equality.
 - macOS/Xcode XCTest and device-tier runtime checks remain before merge/reporter retest.
 
 ## Release/retest gate

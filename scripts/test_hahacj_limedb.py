@@ -108,7 +108,6 @@ class HahacjArchiveTest(unittest.TestCase):
                     text=True,
                 )
             self.assertEqual(rebuilt_paths[0].read_bytes(), rebuilt_paths[1].read_bytes())
-            self.assertEqual(rebuilt_paths[0].read_bytes(), ARCHIVE.read_bytes())
 
             with zipfile.ZipFile(rebuilt_paths[0]) as archive:
                 archive.extract("cj4.db", temp_dir)
