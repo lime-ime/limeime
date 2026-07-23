@@ -37,6 +37,7 @@
         <Key limehd:keyLabel="「" />
         <Key limehd:keyLabel="？" />
         <Key limehd:keyLabel="：" />
+        <Key limehd:keyLabel="." />
         <Key limehd:keyLabel="．" />
         <Key limehd:keyLabel="。" />
         <Key limehd:keyLabel="＠" limehd:keyEdgeFlags="right" />

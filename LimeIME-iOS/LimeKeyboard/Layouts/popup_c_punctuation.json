@@ -79,6 +79,18 @@
         },
         {
           "code": 0,
+          "label": ".",
+          "sublabel": "",
+          "widthPercent": 10.0,
+          "icon": "",
+          "isModifier": false,
+          "isRepeatable": false,
+          "isSticky": false,
+          "popupKeyboard": "",
+          "popupCharacters": ""
+        },
+        {
+          "code": 0,
           "label": "．",
           "sublabel": "",
           "widthPercent": 10.0,
