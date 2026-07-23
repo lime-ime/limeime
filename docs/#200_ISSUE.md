@@ -11,10 +11,11 @@ Known environment:
 - Independent maintainer reproduction: physical Samsung phone (exact model and Android version not recorded)
 - Host app: LINE
 - Field: Add Friends → ID search
-- LIME version: not yet known
-- LINE version: not yet known
+- LIME version: 6.1.36
+- LINE version: 26.11.0
+- Keyboard-mode boundary: reproduces when entering Latin characters from the Chinese keyboard; does not reproduce from LIME's English keyboard
 
-The exact Android `EditorInfo.inputType`, IME options, keyboard mode, and whether all characters are affected are not yet known.
+The exact Android `EditorInfo.inputType`, IME options, and whether all characters are affected are not yet known.
 
 ## Reproduction Status
 
@@ -70,11 +71,8 @@ After capturing the reproduced runtime boundary:
 
 ## Follow-up Questions
 
-- Which LIME version is installed?
-- Which LINE version is installed?
 - Does every Latin letter duplicate, or only `j`?
 - Does it occur only in LINE's ID-search field?
-- Was LIME showing the English keyboard, or was the letter entered directly from a Chinese keyboard?
 - Does another keyboard enter one character correctly in the same field?
 
 ## Verification Plan
@@ -87,7 +85,7 @@ After capturing the reproduced runtime boundary:
 4. Add a failing automated test that proves one key tap currently produces two insertions at the isolated boundary.
 5. Verify the focused test turns GREEN after the correction.
 6. Run the relevant Android unit and instrumentation suites.
-7. Runtime-check LINE ID search plus password, email, URL/search, and ordinary text fields.
+7. Runtime-check the confirmed Chinese-keyboard path, the non-reproducing English-keyboard path, and password, email, URL/search, and ordinary text fields.
 8. Ask the original reporter to retest a publicly available build containing the fix before closing the issue.
 
 ### iOS
