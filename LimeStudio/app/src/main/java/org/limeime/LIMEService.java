@@ -2420,7 +2420,11 @@ public class LIMEService extends InputMethodService
         if (ic != null && mPredictionOn) {
             ic.setComposingText(mComposing, 1);
         }
-        return commitResolvedEndkeyComposing();
+        // The declared root was already appended. Consume this key even when the combined
+        // code has no immediate candidate; returning false would fall through to
+        // handleCharacter() and append the same punctuation a second time.
+        commitResolvedEndkeyComposing();
+        return true;
     }
 
     private boolean commitFreshEndkeyOrRaw(int primaryCode) {
