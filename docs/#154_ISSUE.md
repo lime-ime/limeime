@@ -2,9 +2,9 @@
 
 ## Status
 
-- Reopened pending reporter confirmation after the Android fix shipped in v6.1.29.
+- Closed as completed by maintainer `jrywu` on 2026-07-23. The reporter did not post a confirmation before closure.
 - Fix commit `d4fe8b271dccc5d8d8aa9d53d0c016a53c40e54f` is included in GitHub Release v6.1.29, published on 2026-07-12.
-- The reporter uses the Google Play channel. Retest comment https://github.com/lime-ime/limeime/issues/154#issuecomment-4950125609 asks them to update through Google Play after v6.1.29 is published there; GitHub Release publication does not verify Google Play delivery.
+- The reporter uses the Google Play channel. Retest comment https://github.com/lime-ime/limeime/issues/154#issuecomment-4950125609 asked them to update after the fix reached Google Play. The live Google Play listing showed v6.1.36 on 2026-07-23, which is newer than the v6.1.29 fix boundary.
 - Reported on 2026-07-11 by `01disney`.
 - Affected platform confirmed by the screenshot: Android.
 - Android debug build verified on the Pixel 9 Pro API 36 emulator.
