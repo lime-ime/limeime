@@ -97,5 +97,7 @@ No additional information is required to fix the committed archive. If post-fix 
 - Archive metadata: version `20260723_074910`, `limeendkey` `,.`, and ten `cj4` metadata rows.
 - Builder determinism: three consecutive builds produced the same SHA-256.
 - Python regressions: 哈哈倉頡 archive tests, emoji database tests, iOS custom-IM resource contract, and iOS number-symbol layout contract passed.
-- Android `testDebugUnitTest` and `compileDebugAndroidTestJavaWithJavac` passed. Device/runtime and Xcode checks remain pending.
+- Android `testDebugUnitTest` and `compileDebugAndroidTestJavaWithJavac` passed.
+- Full Android connected instrumentation passed on the Pixel 9 Pro API 36 emulator: 1,211 tests finished, zero failures, and eight skipped environment-gated tests.
+- A fixture-gated Android runtime test imported the exact committed `hahacj.limedb` archive through `DBServer.importZippedDb`, selected `cj4`, disabled selection sorting, queried through `SearchServer`, and returned exact candidates `都`, `十` in that order. Xcode checks remain pending.
 - Claude Code and Codex CLI review attempts were blocked by expired local OAuth sessions. A manual second-pass review checked the staged source/archive equality, metadata, platform import/query paths, catalog values, docs, and deterministic output before commit.
