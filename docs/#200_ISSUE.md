@@ -8,6 +8,7 @@ Known environment:
 
 - Android 14
 - Device model `ASUS_AI2202`
+- Independent maintainer reproduction: physical Samsung phone (exact model and Android version not recorded)
 - Host app: LINE
 - Field: Add Friends → ID search
 - LIME version: not yet known
@@ -17,9 +18,11 @@ The exact Android `EditorInfo.inputType`, IME options, keyboard mode, and whethe
 
 ## Reproduction Status
 
-The report provides a concrete user-visible path and result, but the behavior has not been reproduced in the current Linux-only investigation environment because LINE and an Android device are unavailable here.
+The defect is confirmed. A maintainer independently reproduced the same #200 behavior on a physical Samsung phone. This establishes that the duplicate-input symptom is not limited to the reporter's ASUS device.
 
-Before changing code, reproduce on a device and collect privacy-safe diagnostics that identify:
+The exact runtime boundary remains unknown. The Samsung reproduction confirms the user-visible defect, but no privacy-safe dispatch/commit trace has yet shown whether one tap is duplicated before `handleCharacter()`, inside LIME's composition/commit path, or by LINE's editor handling.
+
+Before changing code, collect privacy-safe diagnostics on the reproduced device path that identify:
 
 1. The field's `EditorInfo.inputType`, variation flags, and `imeOptions`.
 2. Whether one tap invokes `LIMEService.onKey()` once or twice.
@@ -58,7 +61,7 @@ A source-only fix based on the field name or an assumed Android variation would 
 
 No production change should be selected until the device trace identifies the failing boundary.
 
-After reproduction:
+After capturing the reproduced runtime boundary:
 
 1. Add the smallest RED regression test using the captured `EditorInfo` flags and the real affected LIME key path.
 2. Make one focused correction at the proven duplicate-dispatch, composition, or commit boundary.
@@ -78,9 +81,9 @@ After reproduction:
 
 ### Android
 
-1. Reproduce the exact LINE Add Friends → ID search path on Android 14.
-2. Repeat on `ASUS_AI2202` if available and on a second Android device.
-3. Capture privacy-safe `EditorInfo`, key-dispatch count, and `InputConnection` call count.
+1. Preserve the confirmed physical Samsung reproduction and record its model/Android version when available.
+2. Repeat on `ASUS_AI2202` if available to compare the original environment.
+3. Capture privacy-safe `EditorInfo`, key-dispatch count, and `InputConnection` call count on the reproduced path.
 4. Add a failing automated test that proves one key tap currently produces two insertions at the isolated boundary.
 5. Verify the focused test turns GREEN after the correction.
 6. Run the relevant Android unit and instrumentation suites.
