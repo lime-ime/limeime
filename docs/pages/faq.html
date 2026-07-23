@@ -107,11 +107,20 @@
         <div class="a"><p>可以。進入注音輸入法的詳細頁，於「注音鍵盤類型」選擇標準、倚天 41 鍵、倚天 26 鍵或許氏等配置。</p></div>
       </details>
       <details open>
-        <summary><span class="q">Q</span>如何把逗號、句號恢復成標點候選，不再當作結束鍵？</summary>
+        <summary><span class="q">Q</span>為什麼按 <code>,</code>、<code>.</code> 會直接輸出 <code>，</code>、<code>。</code>？如何改回半形標點？</summary>
         <div class="a">
-          <p>在 Android 版進入「輸入法」，點選要調整的輸入法以開啟「輸入法詳細資料」，再點選「結束鍵」，清除其中的 <code>,.</code> 後儲存。不需要修改或重新匯入碼表。儲存後請重新開啟鍵盤。</p>
-          <p>清除後，按 <code>,</code> 時，第一個候選（索引 0）是 <code>,</code>，第二個候選（索引 1）是 <code>，</code>。按 <code>.</code> 時，第一個候選（索引 0）是 <code>.</code>，第二個候選（索引 1）是 <code>。</code>。輸入法資訊與結束鍵的說明請看「<a href="ime-management.html#edit">管理輸入法 · 編輯輸入法與字根</a>」。</p>
-          <p><strong>注意：</strong>這是改用一般標點候選的設定，不等同於啟用「結束鍵」後直接送出目前候選字與標點。</p>
+          <p>部分輸入法，例如行列 10，預設將 <code>,.</code> 設為「結束鍵」。</p>
+          <p>啟用這項功能後：</p>
+          <ul>
+            <li>沒有組字時，按 <code>,</code> 會直接送出 <code>，</code>，按 <code>.</code> 會直接送出 <code>。</code>。</li>
+            <li>有組字和候選時，按 <code>,</code> 或 <code>.</code> 會送出目前選取的候選，再送出對應的全形標點。</li>
+          </ul>
+          <p>如果不需要這項功能，Android 和 iOS 都可以開啟 LIME 設定，進入「輸入法」，點選要調整的輸入法，再點選「結束鍵」，清除其中的 <code>,.</code> 後儲存。接著重新開啟鍵盤，不需要修改或重新匯入碼表。</p>
+          <p>清除後，<code>,</code> 和 <code>.</code> 會恢復為一般標點候選：</p>
+          <ul>
+            <li>按 <code>,</code> 時，候選字 0 是半形 <code>,</code>，候選字 1 是全形 <code>，</code>。</li>
+            <li>按 <code>.</code> 時，候選字 0 是半形 <code>.</code>，候選字 1 是全形 <code>。</code>。</li>
+          </ul>
         </div>
       </details>
       <details open>
