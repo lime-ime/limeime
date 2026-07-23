@@ -38,6 +38,18 @@ The screenshot visually shows a landscape Android keyboard, but the reporter did
 | sorting disabled | runtime query falls back to `_id ASC` | malformed archive IDs expose the wrong order |
 | platform | Android and iOS query code both preserve `_id` order | both consume the shared malformed `hahacj.limedb` |
 
+## Rebuild timeline
+
+| Date / release | Event | Archive consequence |
+|---|---|---|
+| 2026-05-24 | #84 added the first downloadable `cj4.limedb` | Predates the #91 ordering fix. |
+| 2026-06-03 | #91 changed sorting-disabled duplicate candidates to follow source insertion/`_id` order | Reporter verified direct `.cin` order in Android 6.1.16 on 2026-06-05. |
+| 2026-06-17 / 6.1.21 | #112 rebuilt/replaced the downloadable table as `hahacj.limedb` for the June table and Lime end keys | This post-#91 rebuild produced the malformed IDs/content later exposed by #194. |
+| 6.1.21–6.1.36 | Every release tag carrying `hahacj.limedb` contains byte-identical archive content | The table was not rebuilt again before #194; 6.1.36 still carries the 6.1.21 artifact. |
+| 2026-07-23 / PR #195 | Rebuilt from the final `20260723_082459` source with deterministic source-order IDs | Pending merge and platform delivery verification. |
+
+Therefore, the regression is specifically tied to the **#112 database rebuild after #91**, not to a later query-code regression between 6.1.21 and 6.1.36.
+
 ## Deeper causal chain: #91 → #112 → #194
 
 ### #91 correctly fixed direct `.cin` import behavior
