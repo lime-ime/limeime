@@ -103,14 +103,25 @@ The Android emulator regression failed before the fix with expected `都` but ac
 5. Explicitly order mapping rows by source `_id ASC` on Android import/export and both iOS import paths/export.
 6. Update Android/iOS catalog metadata to 33,044 mappings and 720 KB.
 7. Keep runtime regressions for direct `.cin` import, indexed `.limedb` import, and the committed archive.
+8. Gate every current and future `Database/*.limedb` update through the repository-wide source-order contract.
 
 ## Existing-install migration
 
 Updating the app alone does not replace a 哈哈倉頡 table that the user already downloaded. Current Android and iOS catalog UIs treat an installed family as installed and do not automatically apply newer table bytes.
 
-For #194 verification, existing users must remove/reinstall or re-download 哈哈倉頡 after installing the fixed build. Any automatic cloud-IM updater with learned-score backup/restore is separate product work and should not be added to this defect without its own migration design and tests.
+For #194 verification, existing users must remove/reinstall or re-download 哈哈倉頡 after installing the fixed build. The confirmed cross-platform one-step `更新碼表` details-page flow is tracked separately as `feat#N06`; it is not part of this defect.
 
 Reporter-facing test instructions must explicitly include re-downloading 哈哈倉頡; otherwise an old local `cj4` table can make the fix appear ineffective.
+
+## Repository-wide prevention gate
+
+- `Database/limedb-order-contracts.json` registers every current `.limedb` archive.
+- Existing archives without committed source material are grandfathered at their current hash. That hash is immutable across a PR/release baseline; changing it requires conversion to a source-backed contract.
+- New archives may not be grandfathered. They must declare a committed source, source format, and mapping-table contract from their first revision.
+- Source-backed archives are compared row-for-row as `(code, word)` in SQLite `_id ASC` order, in addition to ZIP and SQLite integrity checks.
+- Pull requests and pushes touching `Database/**`, table builders/tests, or platform import code run the all-table gate against a fetched base commit.
+- The release workflow is restricted to `master` and reruns the gate against the previous release tag before publishing.
+- Invalid or unavailable base refs fail closed, and a source-backed contract cannot be removed or downgraded to a hash-only contract.
 
 ## Platform impact
 

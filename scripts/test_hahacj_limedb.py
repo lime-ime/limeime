@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import hashlib
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -13,6 +15,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Database" / "hahacj-20260723.txt"
 ARCHIVE = ROOT / "Database" / "hahacj.limedb"
+PR_WORKFLOW = ROOT / ".github" / "workflows" / "database-integrity.yml"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "new_release.yml"
 EXPECTED_SOURCE_SHA256 = "c1ce0ddd185873597afa469a5156d76d71418867d2f8c8db4ab946839267abd9"
 EXPECTED_SOURCE_VERSION = "20260723_082459"
 EXPECTED_SOURCE_ROW_COUNT = 33_044
@@ -73,6 +77,36 @@ class HahacjArchiveTest(unittest.TestCase):
     def test_reported_single_key_order_starts_with_du(self) -> None:
         _, rows = parse_source(SOURCE)
         self.assertEqual([word for code, word in rows if code == "j"], ["都", "十"])
+
+    def test_builder_reproduces_committed_archive_byte_for_byte(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rebuilt = Path(temp_dir) / "hahacj.limedb"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts" / "build_hahacj_limedb.py"),
+                    "--source",
+                    str(SOURCE),
+                    "--output",
+                    str(rebuilt),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(rebuilt.read_bytes(), ARCHIVE.read_bytes())
+
+    def test_pr_and_release_workflows_run_database_gate(self) -> None:
+        pr_workflow = PR_WORKFLOW.read_text(encoding="utf-8")
+        release_workflow = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+        command = 'python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"'
+        self.assertIn(command, pr_workflow)
+        self.assertIn("github.event.pull_request.base.sha", pr_workflow)
+        self.assertIn("fetch-depth: 0", pr_workflow)
+        self.assertIn(command, release_workflow)
+        self.assertIn("if: github.ref == 'refs/heads/master'", release_workflow)
+        self.assertIn("git describe --tags --abbrev=0 HEAD^", release_workflow)
+        self.assertIn("fetch-depth: 0", release_workflow)
 
 
 if __name__ == "__main__":
