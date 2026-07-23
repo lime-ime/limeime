@@ -4,16 +4,21 @@
 
 On Android, typing one Latin character into LINE's Add Friends ID-search field can insert the character twice. The reported example is one `j` key tap producing `jj`.
 
-Known environment:
+Reporter-supplied environment:
 
 - Android 14
 - Device model `ASUS_AI2202`
-- Independent maintainer reproduction: physical Samsung phone (exact model and Android version not recorded)
 - Host app: LINE
 - Field: Add Friends → ID search
 - LIME version: 6.1.36
 - LINE version: 26.11.0
 - Keyboard-mode boundary: reproduces when entering Latin characters from the Chinese keyboard; does not reproduce from LIME's English keyboard
+
+Independent maintainer reproduction:
+
+- Physical Samsung phone
+- Same LINE Add Friends → ID-search symptom
+- Exact Samsung model, Android version, LIME version, and LINE version were not recorded
 
 The exact Android `EditorInfo.inputType`, IME options, and whether all characters are affected are not yet known.
 
@@ -29,7 +34,7 @@ Before changing code, collect privacy-safe diagnostics on the reproduced device 
 2. Whether one tap invokes `LIMEService.onKey()` once or twice.
 3. Whether LIME calls `InputConnection.commitText()` once or twice.
 4. Whether LINE renders one `commitText()` call twice, or whether duplication happens earlier in LIME.
-5. Whether the behavior differs between LIME's English keyboard and direct Latin input from a Chinese keyboard.
+5. What differs in dispatch/composition/commit traces between the reproducing Chinese-keyboard path and the non-reproducing English-keyboard path.
 
 Do not log the user's actual LINE ID or surrounding field contents.
 
