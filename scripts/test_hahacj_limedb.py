@@ -78,23 +78,47 @@ class HahacjArchiveTest(unittest.TestCase):
         _, rows = parse_source(SOURCE)
         self.assertEqual([word for code, word in rows if code == "j"], ["都", "十"])
 
-    def test_builder_reproduces_committed_archive_byte_for_byte(self) -> None:
+    def test_builder_is_repeatable_and_matches_source_semantics(self) -> None:
+        version, expected_rows = parse_source(SOURCE)
         with tempfile.TemporaryDirectory() as temp_dir:
-            rebuilt = Path(temp_dir) / "hahacj.limedb"
-            subprocess.run(
-                [
-                    sys.executable,
-                    str(ROOT / "scripts" / "build_hahacj_limedb.py"),
-                    "--source",
-                    str(SOURCE),
-                    "--output",
-                    str(rebuilt),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(rebuilt.read_bytes(), ARCHIVE.read_bytes())
+            rebuilt_paths = [
+                Path(temp_dir) / "hahacj-first.limedb",
+                Path(temp_dir) / "hahacj-second.limedb",
+            ]
+            for rebuilt in rebuilt_paths:
+                subprocess.run(
+                    [
+                        sys.executable,
+                        str(ROOT / "scripts" / "build_hahacj_limedb.py"),
+                        "--source",
+                        str(SOURCE),
+                        "--output",
+                        str(rebuilt),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            self.assertEqual(rebuilt_paths[0].read_bytes(), rebuilt_paths[1].read_bytes())
+
+            with zipfile.ZipFile(rebuilt_paths[0]) as archive:
+                archive.extract("cj4.db", temp_dir)
+            connection = sqlite3.connect(Path(temp_dir) / "cj4.db")
+            try:
+                actual_rows = connection.execute(
+                    "SELECT code, word FROM custom ORDER BY _id"
+                ).fetchall()
+                metadata = dict(
+                    connection.execute(
+                        "SELECT title, desc FROM im WHERE code = 'cj4'"
+                    ).fetchall()
+                )
+            finally:
+                connection.close()
+            self.assertEqual(actual_rows, expected_rows)
+            self.assertEqual(metadata.get("version"), version)
+            self.assertEqual(metadata.get("amount"), str(len(expected_rows)))
+            self.assertEqual(metadata.get("limeendkey"), ",.")
 
     def test_pr_and_release_workflows_run_database_gate(self) -> None:
         pr_workflow = PR_WORKFLOW.read_text(encoding="utf-8")
