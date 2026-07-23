@@ -4,6 +4,8 @@
 
 On Android, typing one Latin character into LINE's Add Friends ID-search field can insert the character twice. The reported example is one `j` key tap producing `jj`.
 
+The reporter later recalled seeing the same duplicate-input symptom in another infrequently used app or input context, but could not identify it. This suggests the scope may be broader than LINE's ID-search field, but it is not yet a second reproducible environment.
+
 Reporter-supplied environment:
 
 - Android 14
@@ -25,6 +27,8 @@ The exact Android `EditorInfo.inputType`, IME options, and whether all character
 ## Reproduction Status
 
 The defect is confirmed. A maintainer independently reproduced the same #200 behavior on a physical Samsung phone. This establishes that the duplicate-input symptom is not limited to the reporter's ASUS device.
+
+The unidentified second context is supplementary scope evidence only. Until its app, field type, and reproduction steps are known, keep LINE Add Friends → ID search as the sole concrete reproduction path and investigate common Android editor conditions rather than assuming a LINE-only defect.
 
 The exact runtime boundary remains unknown. The Samsung reproduction confirms the user-visible defect, but no privacy-safe dispatch/commit trace has yet shown whether one tap is duplicated before `handleCharacter()`, inside LIME's composition/commit path, or by LINE's editor handling.
 
@@ -77,7 +81,7 @@ After capturing the reproduced runtime boundary:
 ## Follow-up Questions
 
 - Does every Latin letter duplicate, or only `j`?
-- Does it occur only in LINE's ID-search field?
+- Can a second app and input-field purpose be identified if the symptom recurs?
 - Does another keyboard enter one character correctly in the same field?
 
 ## Verification Plan
@@ -91,7 +95,8 @@ After capturing the reproduced runtime boundary:
 5. Verify the focused test turns GREEN after the correction.
 6. Run the relevant Android unit and instrumentation suites.
 7. Runtime-check the confirmed Chinese-keyboard path, the non-reproducing English-keyboard path, and password, email, URL/search, and ordinary text fields.
-8. Ask the original reporter to retest a publicly available build containing the fix before closing the issue.
+8. If a second app/field becomes identifiable, verify it against the same isolated boundary.
+9. Ask the original reporter to retest a publicly available build containing the fix before closing the issue.
 
 ### iOS
 
