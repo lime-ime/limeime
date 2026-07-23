@@ -373,7 +373,7 @@ public class ImInstallFragment extends Fragment {
 
         // 四碼倉頡
         List<CloudVariant> cj4 = new ArrayList<>();
-        cj4.add(new CloudVariant("哈哈倉頡", "33,038", "716 KB",
+        cj4.add(new CloudVariant("哈哈倉頡", "33,044", "720 KB",
                 LIME.DATABASE_CLOUD_IM_CJ4));
         list.add(new ImFamily(LIME.DB_TABLE_CJ4, "四碼倉頡", cj4, true, false, false,
                 R.drawable.ic_grid_on_24));

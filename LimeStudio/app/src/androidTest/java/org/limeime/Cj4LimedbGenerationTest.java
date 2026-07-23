@@ -34,7 +34,45 @@ public class Cj4LimedbGenerationTest {
     private static final String OUTPUT_FILENAME = "cj4.limedb";
     private static final int EXPECTED_RECORD_COUNT = 33021;
     private static final String ISSUE_194_ARCHIVE = "hahacj.limedb";
-    private static final int ISSUE_194_RECORD_COUNT = 33038;
+    private static final int ISSUE_194_RECORD_COUNT = 33044;
+
+    @Test
+    public void importDbPreservesSourceIdOrderWhenCoveringIndexChangesScanOrder() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File sourceFile = new File(context.getCacheDir(), "issue194-indexed-source.db");
+        if (sourceFile.exists()) {
+            assertTrue("stale indexed source should be removable", sourceFile.delete());
+        }
+
+        try (SQLiteDatabase source = SQLiteDatabase.openOrCreateDatabase(sourceFile, null)) {
+            source.execSQL("CREATE TABLE custom ("
+                    + "_id INTEGER PRIMARY KEY, code TEXT, word TEXT, "
+                    + "score INTEGER DEFAULT 0, basescore INTEGER DEFAULT 0)");
+            source.execSQL("CREATE INDEX custom_cover ON custom(code, word, score, basescore)");
+            source.execSQL("CREATE TABLE im ("
+                    + "_id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT, title TEXT, desc TEXT, "
+                    + "keyboard TEXT, disable BOOLEAN, selkey TEXT, endkey TEXT, spacestyle TEXT)");
+            source.execSQL("INSERT INTO custom (_id, code, word, score, basescore) "
+                    + "VALUES (10, 'j', '都', 0, 0), (20, 'j', '十', 0, 0)");
+        }
+
+        DBServer.getInstance(context).importDb(sourceFile, LIME.DB_TABLE_CJ4);
+
+        File appDbFile = context.getDatabasePath(LIME.DATABASE_NAME);
+        try (SQLiteDatabase appDb = SQLiteDatabase.openDatabase(
+                appDbFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY);
+             Cursor cursor = appDb.rawQuery(
+                     "SELECT word FROM cj4 WHERE code='j' ORDER BY _id", null)) {
+            assertTrue("first imported j candidate should exist", cursor.moveToFirst());
+            assertEquals("都", cursor.getString(0));
+            assertTrue("second imported j candidate should exist", cursor.moveToNext());
+            assertEquals("十", cursor.getString(0));
+        } finally {
+            if (sourceFile.exists()) {
+                assertTrue("indexed source should be removable", sourceFile.delete());
+            }
+        }
+    }
 
     @Test
     public void importIssue194ArchivePreservesReportedCandidateOrder() throws Exception {

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import sqlite3
 import tempfile
 import unittest
@@ -12,6 +13,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Database" / "hahacj-20260723.txt"
 ARCHIVE = ROOT / "Database" / "hahacj.limedb"
+EXPECTED_SOURCE_SHA256 = "c1ce0ddd185873597afa469a5156d76d71418867d2f8c8db4ab946839267abd9"
+EXPECTED_SOURCE_VERSION = "20260723_082459"
+EXPECTED_SOURCE_ROW_COUNT = 33_044
 
 
 def parse_source(path: Path) -> tuple[str, list[tuple[str, str]]]:
@@ -34,6 +38,12 @@ def parse_source(path: Path) -> tuple[str, list[tuple[str, str]]]:
 
 
 class HahacjArchiveTest(unittest.TestCase):
+    def test_source_matches_authoritative_reporter_attachment(self) -> None:
+        self.assertEqual(hashlib.sha256(SOURCE.read_bytes()).hexdigest(), EXPECTED_SOURCE_SHA256)
+        version, rows = parse_source(SOURCE)
+        self.assertEqual(version, EXPECTED_SOURCE_VERSION)
+        self.assertEqual(len(rows), EXPECTED_SOURCE_ROW_COUNT)
+
     def test_archive_preserves_source_order_and_metadata(self) -> None:
         version, expected_rows = parse_source(SOURCE)
 
