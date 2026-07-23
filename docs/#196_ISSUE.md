@@ -53,16 +53,16 @@ Android already tests:
 - stale candidate resolution
 - punctuation candidate selection
 
-The missing case was the intersection of punctuation's global composition fallback with an opted-in punctuation end key absent from the table's declared `imkeys`. Existing tests used `;` for the absent-root path, so they did not detect the comma/period-specific helper behavior.
+The missing case was the intersection of punctuation's global composition fallback with an opted-in punctuation end key absent from the table's declared `imkeys`. Existing tests used `;` for the absent-root path, so they did not detect the comma/period-specific helper behavior. Review also found an adjacent declared-root failure path: after appending a declared punctuation root, an unresolved combined code returned `false`, so `onKey()` fell through to `handleCharacter()` and could append the same punctuation a second time.
 
-A focused Android instrumentation regression now reproduces the exact semantic path with `v → 好`, `limeendkey=,.`, alphabetic `imkeys`, and `, → ，`. It failed before the production change because the runtime queried the combined code instead of resolving `v` and `,` separately.
+Focused Android instrumentation regressions now encode the exact semantic path with `v → 好`, `limeendkey=,.`, alphabetic `imkeys`, and `, → ，`, plus the declared-root unresolved-code and already-selected-candidate paths. Before the production changes, the absent-root case queries the combined code instead of resolving `v` and `,` separately, while the unresolved declared-root case returns `false` after one append and permits the outer key handler to append again. The tests compile on this host, but connected execution remains pending because no ADB target is available.
 
 ## Proposed solution
 
 - Preserve global comma/period acceptance for normal composition.
 - Add a narrow declared-root check that reads only literal `imkeys` membership.
 - Use that declared-root check only in Android end-key routing.
-- Keep the existing behavior for tables that explicitly declare the end key as a root.
+- Keep append-to-code behavior for tables that explicitly declare the end key as a root, and consume the already-appended key even when the combined code has no immediate candidate so outer routing cannot append it again.
 - Keep tables without Lime end-key metadata unchanged.
 
 ## Platform impact analysis
@@ -81,10 +81,10 @@ No additional information is required for the source-level fix. Reporter/device 
 
 ## Verification plan
 
-1. Run the new focused Android instrumentation test and preserve RED/GREEN output.
+1. Run the new focused Android instrumentation tests and preserve RED/GREEN output, including the unresolved declared-root and already-selected-candidate paths.
 2. Run the adjacent Android end-key tests and full `LIMEServiceTest` class.
 3. Run Android unit, lint, Android-test compile, and full connected instrumentation gates.
 4. On an Android emulator/device, configure a table with alphabetic `imkeys` and `limeendkey=,.`, then verify `v` followed by `,` commits `好，` without leaving punctuation composing.
-5. Verify an explicitly declared punctuation root still follows the append-to-code behavior.
+5. Verify an explicitly declared punctuation root still follows the append-to-code behavior, and an unresolved combined code keeps exactly one appended punctuation root.
 6. Verify a table without `limeendkey` retains ordinary comma/period composition behavior.
 7. Ask the reporter to retest only after a newer Android build containing the fix is available. Keep #196 open until reporter confirmation or explicit maintainer direction.
