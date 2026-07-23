@@ -58,12 +58,25 @@ When selection sorting is disabled, candidate lookup must ignore learned/base sc
 
 ### #112 shipped an archive whose order lived in scores, not IDs
 
-The v6.1.36 archive contains:
+The reporter's June `.lime` source itself has the correct order:
+
+- line 7749: `j|都|25298|25298`
+- line 7750: `j|十|25297|25297`
+
+The rebuilt v6.1.36 archive instead contains:
 
 - `_id 3397`: `j → 十`, score `25280`
 - `_id 28161`: `j → 都`, score `25281`
 
-Sorting by score descending happens to return `都`, `十`, but sorting-disabled lookup correctly ignores those scores and returns IDs ascending: `十`, `都`. #91 therefore exposed, rather than caused, the malformed #112 archive.
+This is a systematic transformation, not random row drift:
+
+- The entire archive `_id` sequence is exactly `ORDER BY word ASC`; its first rows are punctuation ordered by output word.
+- `score` is a complete unique sequence from 33,021 down to 1 and retains the source rank after the 17-row loss.
+- Therefore `ORDER BY score DESC` reconstructs source order, while `ORDER BY _id ASC` reconstructs word order.
+
+The historical rebuild path materialized a word-sorted record set into SQLite IDs while carrying source rank in `score`, instead of assigning IDs directly from the `.cin`/`.lime` line sequence. The exact external generation command was not checked into the repository, but the archive ordering proves this transformation occurred before the artifact was committed.
+
+Sorting by score descending therefore happened to return `都`, `十`. Sorting-disabled lookup correctly ignores scores and returns IDs ascending: `十`, `都`. #91 exposed, rather than caused, the malformed #112 archive.
 
 The old archive is also not a faithful serialization of the June source:
 
