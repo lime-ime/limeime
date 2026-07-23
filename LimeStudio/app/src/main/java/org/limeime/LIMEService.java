@@ -2355,7 +2355,12 @@ public class LIMEService extends InputMethodService
             return false;
         }
 
-        if (isKeyInImkeys(primaryCode, cachedImConfig(IMKEYS_CONFIG))) {
+        // End-key routing must use the table's declared roots, not the broader input
+        // acceptance rule. isKeyInImkeys() intentionally accepts comma/period for every
+        // IM so their synthetic full-width candidates remain available, but treating that
+        // fallback as table metadata appends an opted-in punctuation end key to the current
+        // code instead of committing the current candidate and then the punctuation.
+        if (isKeyDeclaredInImkeys(primaryCode, cachedImConfig(IMKEYS_CONFIG))) {
             return commitComposingWithAppendedEndkey(primaryCode);
         }
 
@@ -2481,6 +2486,14 @@ public class LIMEService extends InputMethodService
         if (primaryCode == ',' || primaryCode == '.') {
             return true;
         }
+        if (imkeys == null || imkeys.isEmpty()) {
+            return false;
+        }
+        String key = String.valueOf((char) primaryCode);
+        return imkeys.contains(key) || imkeys.contains(key.toLowerCase(Locale.US));
+    }
+
+    private static boolean isKeyDeclaredInImkeys(int primaryCode, String imkeys) {
         if (imkeys == null || imkeys.isEmpty()) {
             return false;
         }
