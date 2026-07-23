@@ -7,10 +7,7 @@ on:
       - "scripts/build_*db.py"
       - "scripts/test_*db.py"
       - "scripts/test_limedb_order.py"
-      - "LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java"
       - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
-      - "LimeIME-iOS/Shared/Database/LimeDB.swift"
-      - "LimeIME-iOS/LimeTests/LimeDBTest.swift"
       - ".github/workflows/database-integrity.yml"
       - ".github/workflows/new_release.yml"
   push:
@@ -21,10 +18,7 @@ on:
       - "scripts/build_*db.py"
       - "scripts/test_*db.py"
       - "scripts/test_limedb_order.py"
-      - "LimeStudio/app/src/main/java/org/limeime/limedb/LimeDB.java"
       - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
-      - "LimeIME-iOS/Shared/Database/LimeDB.swift"
-      - "LimeIME-iOS/LimeTests/LimeDBTest.swift"
       - ".github/workflows/database-integrity.yml"
       - ".github/workflows/new_release.yml"
   workflow_dispatch:

@@ -66,10 +66,18 @@ class HahacjArchiveTest(unittest.TestCase):
                         "SELECT title, desc FROM im WHERE code = 'cj4'"
                     ).fetchall()
                 )
+                indexes = {
+                    row[1]: [
+                        column[2]
+                        for column in connection.execute(f'PRAGMA index_info("{row[1]}")')
+                    ]
+                    for row in connection.execute('PRAGMA index_list("custom")')
+                }
             finally:
                 connection.close()
 
         self.assertEqual(actual_rows, expected_rows)
+        self.assertEqual(indexes.get("custom_idx_code"), ["code"])
         self.assertEqual(metadata.get("version"), version)
         self.assertEqual(metadata.get("amount"), str(len(expected_rows)))
         self.assertEqual(metadata.get("limeendkey"), ",.")
@@ -100,6 +108,7 @@ class HahacjArchiveTest(unittest.TestCase):
                     text=True,
                 )
             self.assertEqual(rebuilt_paths[0].read_bytes(), rebuilt_paths[1].read_bytes())
+            self.assertEqual(rebuilt_paths[0].read_bytes(), ARCHIVE.read_bytes())
 
             with zipfile.ZipFile(rebuilt_paths[0]) as archive:
                 archive.extract("cj4.db", temp_dir)
@@ -113,9 +122,16 @@ class HahacjArchiveTest(unittest.TestCase):
                         "SELECT title, desc FROM im WHERE code = 'cj4'"
                     ).fetchall()
                 )
+                index_columns = [
+                    column[2]
+                    for column in connection.execute(
+                        'PRAGMA index_info("custom_idx_code")'
+                    )
+                ]
             finally:
                 connection.close()
             self.assertEqual(actual_rows, expected_rows)
+            self.assertEqual(index_columns, ["code"])
             self.assertEqual(metadata.get("version"), version)
             self.assertEqual(metadata.get("amount"), str(len(expected_rows)))
             self.assertEqual(metadata.get("limeendkey"), ",.")

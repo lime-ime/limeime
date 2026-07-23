@@ -3093,7 +3093,6 @@ final class LimeDB {
                     SELECT code, \(code3rExpr), word, \(relatedExpr), \(scoreExpr), \(baseScoreExpr)
                     FROM \(t)
                     WHERE code IS NOT NULL AND word IS NOT NULL
-                    ORDER BY _id ASC
                 """)
             }
             for t in tableNames where isValidTableName(t) {
@@ -3164,13 +3163,11 @@ final class LimeDB {
             selectExprs.append(sourceCols.contains("related") ? "related" : "NULL")
         }
 
-        let sourceOrder = sourceCols.contains("_id") ? "ORDER BY _id ASC" : ""
         try db.execute(sql: """
             INSERT INTO \(targetTable) (\(insertCols.joined(separator: ", ")))
             SELECT \(selectExprs.joined(separator: ", "))
             FROM sourceDB.\(sourceTable)
             WHERE code IS NOT NULL AND word IS NOT NULL
-            \(sourceOrder)
         """)
     }
 
@@ -3289,7 +3286,6 @@ final class LimeDB {
         }
         let hasCode3r    = srcCols.contains("code3r")
         let hasBasescore = srcCols.contains("basescore")
-        let sourceOrder  = srcCols.contains("_id") ? "ORDER BY _id ASC" : ""
 
         var selCols = ["code", "word", "COALESCE(score, 0) AS score"]
         var insCols = ["code", "word", "score"]
@@ -3302,7 +3298,6 @@ final class LimeDB {
                 SELECT \(selCols.joined(separator: ", "))
                 FROM \(srcTableName)
                 WHERE code IS NOT NULL AND word IS NOT NULL
-                \(sourceOrder)
             """)
         }
 

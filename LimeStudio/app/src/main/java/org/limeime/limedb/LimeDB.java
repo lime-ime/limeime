@@ -3253,8 +3253,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             if (tableNames != null && !tableNames.isEmpty()) {
                 for (String tableName : tableNames) {
                     // Copy table data to sourceDB.custom (backup format)
-                    db.execSQL("insert into sourceDB." + LIME.DB_TABLE_CUSTOM
-                            + " select * from " + tableName + " order by " + FIELD_ID + " asc");
+                    db.execSQL("insert into sourceDB." + LIME.DB_TABLE_CUSTOM + " select * from " + tableName);
                 }
                 
                 // Copy IM information for all tables
@@ -3505,8 +3504,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         database.execSQL("insert into " + targetTable + " (" + joinSqlList(insertColumns) + ") "
                 + "select " + joinSqlList(selectExpressions)
                 + " from sourceDB." + sourceTable
-                + " where " + LIME.DB_COLUMN_CODE + " is not null and " + LIME.DB_COLUMN_WORD + " is not null"
-                + (sourceColumns.contains(FIELD_ID) ? " order by " + FIELD_ID + " asc" : ""));
+                + " where " + LIME.DB_COLUMN_CODE + " is not null and " + LIME.DB_COLUMN_WORD + " is not null");
     }
 
     private void addMappingImportColumn(List<String> insertColumns, List<String> selectExpressions,

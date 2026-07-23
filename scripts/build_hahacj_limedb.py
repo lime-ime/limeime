@@ -99,6 +99,7 @@ def build_database(db_path: Path, source_name: str, metadata: dict[str, str],
         connection.executemany(
             "INSERT INTO custom (code, word, score, basescore) VALUES (?, ?, 0, 0)", rows
         )
+        connection.execute("CREATE INDEX custom_idx_code ON custom(code)")
 
         imkeys = "".join(key for key, _ in keynames)
         imkeynames = "|".join(name for _, name in keynames)
@@ -133,7 +134,7 @@ def write_archive(source: Path, output: Path) -> None:
         db_path = Path(temp_dir) / "cj4.db"
         build_database(db_path, source.name, metadata, keynames, rows)
         archive_entry = zipfile.ZipInfo("cj4.db", date_time=(2026, 7, 23, 0, 0, 0))
-        archive_entry.compress_type = zipfile.ZIP_STORED
+        archive_entry.compress_type = zipfile.ZIP_DEFLATED
         archive_entry.external_attr = 0o100644 << 16
         with zipfile.ZipFile(output, "w") as archive:
             archive.writestr(archive_entry, db_path.read_bytes())

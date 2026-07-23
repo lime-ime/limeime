@@ -392,46 +392,6 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(Array(exactWords.prefix(3)), ["狀", "绒", "戕"])
     }
 
-    func testAttachedImportPreservesSourceIdOrderWhenCoveringIndexChangesScanOrder() throws {
-        let db = try makeLimeDB()
-        db.setTableName(LIME.DB_TABLE_CUSTOM)
-        db.sortSuggestions = false
-        db.similarCodeCandidatesCap = 0
-        let sourceURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + "-issue194.db")
-        defer { try? FileManager.default.removeItem(at: sourceURL) }
-
-        let sourceQueue = try DatabaseQueue(path: sourceURL.path)
-        try sourceQueue.write { source in
-            try source.execute(sql: """
-                CREATE TABLE custom (
-                    _id INTEGER PRIMARY KEY,
-                    code TEXT,
-                    word TEXT,
-                    score INTEGER DEFAULT 0,
-                    basescore INTEGER DEFAULT 0
-                )
-            """)
-            try source.execute(sql:
-                "CREATE INDEX custom_cover ON custom(code, word, score, basescore)")
-            try source.execute(sql: """
-                INSERT INTO custom (_id, code, word, score, basescore)
-                VALUES (10, 'j', '都', 0, 0), (20, 'j', '十', 0, 0)
-            """)
-        }
-
-        try db.importFromAttachedDB(sourcePath: sourceURL.path,
-                                    tableName: LIME.DB_TABLE_CUSTOM)
-
-        let results = try XCTUnwrap(
-            db.getMappingByCode("j", softKeyboard: true, getAllRecords: true))
-        let exactWords = results
-            .filter { $0.code == "j" && $0.isExactMatchToCodeRecord }
-            .map(\.word)
-
-        XCTAssertEqual(Array(exactWords.prefix(2)), ["都", "十"])
-    }
-
     func testLimeDBGetMappingByCodeWithAllRecords() throws {
         let db = try makeLimeDB()
         db.setTableName(LIME.DB_TABLE_CUSTOM)

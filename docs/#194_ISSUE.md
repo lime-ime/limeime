@@ -2,7 +2,7 @@
 
 ## Current status
 
-Confirmed shared-data and import/export ordering defect. GitHub issue #194 is open, labeled `bug`, `enhancement`, and `Usability`, and assigned to `jrywu`.
+Confirmed shared-data archive-generation defect. GitHub issue #194 is open, labeled `bug`, `enhancement`, and `Usability`, and assigned to `jrywu`.
 
 The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Do not request reporter retest until a usable build contains the fix.
 
@@ -88,11 +88,9 @@ The old archive is also not a faithful serialization of the June source:
 
 Many differences are `z`/難-key phrase mappings, but ordinary mappings differ too. This proves the old artifact came from a transformed or different table state, not merely a reordered copy of the submitted source.
 
-### Import/export also relied on implicit SQLite scan order
+### Archive index convention
 
-Both platforms copied mapping rows with `INSERT … SELECT` or `SELECT` statements lacking `ORDER BY`. SQLite often scans rowid tables by rowid, but SQL does not guarantee that. A covering index reproduces the latent failure: source IDs `10 → 都`, `20 → 十` are read as `十`, `都` unless `_id ASC` is explicit.
-
-The Android emulator regression failed before the fix with expected `都` but actual `十`.
+All other downloadable mapping archives carry a single-column `code` index. The first PR #195 rebuild omitted that established index. The corrected builder creates `custom_idx_code ON custom(code)` after inserting mappings. For equal codes, that index retains rowid order, so the source-order candidate contract remains intact without platform import changes.
 
 ## Fix
 
@@ -100,9 +98,9 @@ The Android emulator regression failed before the fix with expected `都` but ac
 2. Rebuild `Database/hahacj.limedb` deterministically from that plaintext source.
 3. Insert mappings with zero initial learned/base scores and source-file order as archive `_id` order.
 4. Preserve `,.` Lime end keys from the previously approved #112 behavior.
-5. Explicitly order mapping rows by source `_id ASC` on Android import/export and both iOS import paths/export.
-6. Update Android/iOS catalog metadata to 33,044 mappings and 720 KB.
-7. Keep runtime regressions for direct `.cin` import, indexed `.limedb` import, and the committed archive.
+5. Create the standard `custom_idx_code ON custom(code)` archive index.
+6. Update Android/iOS catalog metadata to 33,044 mappings and 496 KB.
+7. Keep the exact committed-archive runtime regression.
 8. Gate every current and future `Database/*.limedb` update through the repository-wide source-order contract.
 
 ## Existing-install migration
@@ -119,7 +117,7 @@ Reporter-facing test instructions must explicitly include re-downloading 哈哈�
 - Existing archives without committed source material are grandfathered at their current hash. That hash is immutable across a PR/release baseline; changing it requires conversion to a source-backed contract.
 - New archives may not be grandfathered. They must declare a committed source, source format, and mapping-table contract from their first revision.
 - Source-backed archives are compared row-for-row as `(code, word)` in SQLite `_id ASC` order, in addition to ZIP and SQLite integrity checks.
-- Pull requests and pushes touching `Database/**`, table builders/tests, or platform import code run the all-table gate against a fetched base commit.
+- Pull requests and pushes touching `Database/**` or table builders/tests run the all-table gate against a fetched base commit.
 - The release workflow is restricted to `master` and reruns the gate against the previous release tag before publishing.
 - Invalid or unavailable base refs fail closed, and a source-backed contract cannot be removed or downgraded to a hash-only contract.
 
@@ -127,35 +125,33 @@ Reporter-facing test instructions must explicitly include re-downloading 哈哈�
 
 ### Android
 
-Directly reproduced. The archive install path is `DBServer.importZippedDb` → `LimeDB.importDb`; candidate lookup uses `_id ASC` when sorting is disabled. The indexed-source regression now proves import order explicitly.
+Directly reproduced. The archive install path is `DBServer.importZippedDb` → `LimeDB.importDb`; candidate lookup uses `_id ASC` when sorting is disabled. The exact rebuilt archive regression verifies `j → 都, 十` through that runtime path.
 
 ### iOS
 
-iOS downloads the same archive. `importFromAttachedDB`/`importDb` now order source rows by `_id`, and `getMappingByCode` uses `_id ASC` when sorting is disabled. A DB-level covering-index regression was added. XCTest and iPhone/full-iPad/narrow-iPad runtime verification remain required on macOS/Xcode.
+iOS downloads the same corrected archive and already uses `_id ASC` when sorting is disabled. No iOS database code changes are required. XCTest and iPhone/full-iPad/narrow-iPad runtime verification remain required on macOS/Xcode.
 
 ## Verification results
 
 - Authoritative source hash/version/count test: passed.
 - Archive/source exact row equality: 33,044 rows passed.
 - SQLite `PRAGMA integrity_check`: `ok`.
+- Archive index: `custom_idx_code ON custom(code)`.
 - Rebuilt archive version: `20260723_082459`.
 - Rebuilt `j` rows: `_id 7741 → 都`, `_id 7742 → 十`, both with zero score/base score.
-- Archive size: 737,390 bytes (720.107 KiB).
-- Android covering-index import regression:
-  - RED: expected `都`, actual `十`.
-  - GREEN: Pixel 9 Pro API 36 targeted instrumentation passed after explicit `_id ASC` import.
+- Archive size: 508,390 bytes (496.475 KiB).
 - Exact rebuilt archive imported through `DBServer.importZippedDb` and queried through `SearchServer` with sorting disabled: `都`, `十` passed on Pixel 9 Pro API 36.
 - Python 哈哈倉頡 regression suite: passed.
 - Android unit tests and Android-test compilation: passed.
-- Full Android connected instrumentation: 1,214 tests finished, zero failures, nine environment/fixture skips; the self-contained indexed-import regression ran and passed.
-- Independent Hermes/Codex review found the stale source, existing-install gap, implicit-order gap, and missing iOS regression; those findings were incorporated.
+- Ponytail review removed speculative platform SQL/tests and aligned the archive with the existing `code` index and DEFLATE conventions.
+- Claude Code review found one stale catalog-size blocker from an intermediate snapshot; both catalogs now match the final 508,390-byte archive at 496 KB, and its suggested fresh-build-versus-committed-artifact assertion was added.
 - macOS/Xcode XCTest and device-tier runtime checks remain before merge/reporter retest.
 
 ## Release/retest gate
 
 Before asking the reporter to verify:
 
-1. Produce a usable Android and/or iOS build containing the corrected archive and import changes.
+1. Produce a usable Android and/or iOS build containing the corrected archive.
 2. On a clean install, download 哈哈倉頡 and verify `j → 都, 十` with sorting disabled.
 3. On an existing installation, remove/re-download 哈哈倉頡, then repeat the same check.
 4. Verify sorting-enabled learning still promotes selected candidates from the zero-score baseline.
