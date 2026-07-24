@@ -1,5 +1,5 @@
 /*
- * Integration tests for the DB 104 seed, upgrade, restore, repair, and emoji
+ * Integration tests for the DB 105 seed, upgrade, restore, repair, and emoji
  * refresh paths.
  */
 package org.limeime;
@@ -32,7 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @RunWith(AndroidJUnit4.class)
-public class LimeDB103IntegrationTest {
+public class LimeDB105IntegrationTest {
 
     private Context appContext;
     private File appDb;
@@ -53,7 +53,7 @@ public class LimeDB103IntegrationTest {
         closeCurrentDatabase();
         hadOriginalDb = appDb.exists();
         if (hadOriginalDb) {
-            originalDbBackup = new File(appContext.getCacheDir(), "lime_db_103_original_backup.db");
+            originalDbBackup = new File(appContext.getCacheDir(), "lime_db_105_original_backup.db");
             copyFile(appDb, originalDbBackup);
         }
         deleteAppDatabaseFiles();
@@ -70,11 +70,11 @@ public class LimeDB103IntegrationTest {
     }
 
     @Test
-    public void freshInstallCopies103SeedAndRefreshesEmojiData() throws Exception {
+    public void freshInstallCopies105SeedAndRefreshesEmojiData() throws Exception {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertEquals("bundled lime.db is a schema-only IM seed", 0,
                 queryInt("SELECT COUNT(*) FROM im WHERE code NOT IN ('emoji', 'dictionary')"));
         assertCj4SchemaExists();
@@ -89,7 +89,7 @@ public class LimeDB103IntegrationTest {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -102,7 +102,7 @@ public class LimeDB103IntegrationTest {
         LimeDB db = new LimeDB(appContext);
         db.close();
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -170,7 +170,7 @@ public class LimeDB103IntegrationTest {
 
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -184,7 +184,7 @@ public class LimeDB103IntegrationTest {
 
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -198,7 +198,7 @@ public class LimeDB103IntegrationTest {
 
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
@@ -216,21 +216,21 @@ public class LimeDB103IntegrationTest {
         DBServer.getInstance(appContext).restoreDatabase(restoreZip.getPath());
 
         assertTrue("restored DB should exist in Android databases folder", appDb.exists());
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertCj4SchemaExists();
         assertEmojiSchemaExists();
         assertEmojiDataLoaded();
     }
 
     @Test
-    public void factoryResetRestores103SeedAndEmojiData() throws Exception {
+    public void factoryResetRestores105SeedAndEmojiData() throws Exception {
         replaceAppDatabaseWith(createSeedVariant("lime_factory_103_no_emoji.db", 103, true, false));
 
         LimeDB db = new LimeDB(appContext);
         db.restoredToDefault();
         db.close();
 
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertEquals("factory reset restores the schema-only IM seed", 0,
                 queryInt("SELECT COUNT(*) FROM im WHERE code NOT IN ('emoji', 'dictionary')"));
         assertCj4SchemaExists();
@@ -279,7 +279,10 @@ public class LimeDB103IntegrationTest {
         SQLiteDatabase db = SQLiteDatabase.openDatabase(dbFile.getPath(), null, SQLiteDatabase.OPEN_READWRITE);
         try {
             if (dropEmojiSchema) {
-                dropEmojiFtsSchemaRowsForFixture(db);
+                // Drop the FTS4 virtual table properly so SQLite removes its shadow
+                // tables and their auto-indexes; deleting sqlite_master rows by name
+                // pattern misses sqlite_autoindex_* and orphans them -> malformed db.
+                db.execSQL("DROP TABLE IF EXISTS emoji_fts");
                 db.execSQL("DROP TABLE IF EXISTS emoji_user");
                 db.execSQL("DROP TABLE IF EXISTS emoji_data");
                 db.execSQL("DELETE FROM im WHERE code = ?", new Object[]{"emoji"});
@@ -326,17 +329,6 @@ public class LimeDB103IntegrationTest {
             db.close();
         }
         return dbFile;
-    }
-
-    private void dropEmojiFtsSchemaRowsForFixture(SQLiteDatabase db) {
-        db.execSQL("PRAGMA writable_schema=ON");
-        try {
-            db.delete("sqlite_master",
-                    "name = ? OR tbl_name = ? OR name LIKE ?",
-                    new String[]{"emoji_fts", "emoji_fts", "emoji_fts_%"});
-        } finally {
-            db.execSQL("PRAGMA writable_schema=OFF");
-        }
     }
 
     private void insertStaleEmojiFtsSchema(SQLiteDatabase db) {
@@ -482,7 +474,7 @@ public class LimeDB103IntegrationTest {
 
         // user_version unchanged; dictionary is the scored shape (not fts); rows imported;
         // im version row stamped.
-        assertEquals(104, queryUserVersion());
+        assertEquals(105, queryUserVersion());
         assertEquals("dictionary must be a plain (non-fts) table",
                 0, queryInt("SELECT COUNT(*) FROM sqlite_master WHERE name='dictionary' "
                         + "AND sql LIKE '%USING fts%'"));

@@ -114,7 +114,7 @@ Field behavior:
 - `code`: required; trimmed; lowercased before insert unless it is metadata.
 - `word`: required; trimmed.
 - `score`: optional integer; defaults to `0`.
-- `basescore`: optional integer; a base score is calculated from the Han converter when missing or `0`.
+- `basescore`: optional integer. When the field is **present** — including an explicit `0` — it is authoritative and stored unchanged (`0` means "low base priority, not a frequent word"). Only an **absent** basescore field is filled from the Han base-frequency converter at import. See [§2.5.1 Base Score Rule](#251-base-score-rule).
 
 For the phonetic table, `code3r` is derived by removing tone characters `[3467 ]` from `code`.
 
@@ -285,13 +285,24 @@ Field behavior:
 - `code`: required; trimmed; lowercased before insert.
 - `word`: required; trimmed.
 - `score`: optional integer; defaults to `0`.
-- `basescore`: optional integer; a base score is calculated from the Han converter when missing or `0`.
+- `basescore`: optional integer. When the field is **present** — including an explicit `0` — it is authoritative and stored unchanged (`0` means "low base priority, not a frequent word"). Only an **absent** basescore field is filled from the Han base-frequency converter at import. See [§2.5.1 Base Score Rule](#251-base-score-rule).
 
 Regular mappings are inserted into:
 
 ```text
 code, word, score, basescore
 ```
+
+### 2.5.1 Base Score Rule
+
+`basescore` uses a field-presence rule shared by `.cin` and `.lime` on both Android and iOS:
+
+- When a record **carries a basescore field** — a 4-field `.lime` record `code|word|score|basescore`, or a `.cin` `code<TAB>word<TAB>score<TAB>basescore` record — that value is **authoritative and stored unchanged**, including an explicit `0`. A `basescore` of `0` is a legitimate value meaning "low base priority" (an entry that is not a frequently used word and should rank low unless promoted by user learning).
+- When a record **omits the basescore field** — a `.cin` `code word` line, or a `.lime` minimum record `code|word` — the base score is **filled from the bundled Han base-frequency table** (`hanconvertv2.db` `TCSC.score`) at import: a known character resolves to its frequency, an unknown multi-character word defaults to `1`, and an unknown single character resolves to `0`.
+
+The distinction is **field presence, not field value**: an explicit `0` is preserved, while a genuinely absent field is filled. This lets a traditional `.cin` (which never carries base scores) receive frequencies so runtime phrase composition works, while still allowing an author to pin an entry at low priority with an explicit `0`.
+
+**Round-trip.** Because regular-table export always writes all four fields (`code|word|score|basescore`), a `.lime` export→re-import preserves `basescore` exactly (the field is always present on re-import) — the `.lime` text format is round-trip lossless for base scores. `.limedb` (the zipped database backup) likewise copies raw rows unchanged.
 
 ### 2.6 Space-Delimited `.lime`
 
