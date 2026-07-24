@@ -148,6 +148,17 @@ final class LimeDB {
     private static let ARRAY10_KEY = "1234567890"
     // Arrow glyphs (⇡/⇣) match the array keyboard layout in lime_array.xml.
     private static let ARRAY_CHAR = "1⇡|1-|1⇣|2⇡|2-|2⇣|3⇡|3-|3⇣|4⇡|4-|4⇣|5⇡|5-|5⇣|6⇡|6-|6⇣|7⇡|7-|7⇣|8⇡|8-|8⇣|9⇡|9-|9⇣|0⇡|0-|0⇣"
+    // DB 105 prep: array/phonetic default `imkeys`/`imkeynames` written into the `im` table
+    // on import/backfill. Distinct from ARRAY_KEY/ARRAY_CHAR and BPMF_KEY/BPMF_CHAR above —
+    // those are the runtime physical-key→radical maps used by keyToKeyName/imKeysForTable —
+    // these are the stored-metadata defaults (verified NOT identical to the runtime maps),
+    // so they get their own constants rather than reusing ARRAY_KEY/ARRAY_CHAR/BPMF_KEY/BPMF_CHAR.
+    // Single source of truth for both applyDefaultMetadataForStandardIM (import path) and
+    // ensureStandardIMKeyMetadata (restore-backfill path, LIME_DB_105.md).
+    private static let ARRAY_IMKEYS = "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0"
+    private static let ARRAY_IMKEYNAMES = "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0"
+    private static let BPMF_IMKEYS = ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+"
+    private static let BPMF_IMKEYNAMES = "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋"
     private static let IM_CODES = [
         "custom", "cj", "scj", "cj5", "ecj", "dayi", "phonetic", "ez",
         "array", "array10", "wb", "hs", "pinyin", "cj4"
@@ -175,8 +186,8 @@ final class LimeDB {
 
     // MARK: - Schema Migration
 
-    // Current schema version (mirrors Android DB_VERSION = 104).
-    private static let CURRENT_DB_VERSION = 104
+    // Current schema version (mirrors Android DB_VERSION = 105).
+    private static let CURRENT_DB_VERSION = 105
     private static let EMOJI_DATA_VERSION = "17.0"
     private static let EMOJI_TABLE_DATA = "emoji_data"
     private static let EMOJI_TABLE_FTS = "emoji_fts"
@@ -317,7 +328,23 @@ final class LimeDB {
             try LimeDB.ensureCj4Schema(db)
             try LimeDB.ensureTricodeSchema(db)
         }
-        // Stamp the new version
+        // DB 105 goal 2: the post-104 schema/keyboard repairs — previously run UNCONDITIONALLY
+        // on every open by ensureCurrentDatabase() — become a one-time, version-gated migration.
+        // The branch runs the FULL idempotent schema set so that stamping user_version = 105
+        // GUARANTEES the DB is complete. That guarantee (105 ⟺ complete) is what lets the
+        // every-load net be removed: a restore of any pre-105 backup re-runs this via
+        // init()->migrate(); the bundled seed ships at 104 so a fresh install completes here;
+        // and no "stale 105" DB can exist because 105 is stamped only after this branch runs.
+        if version < 105 {
+            try LimeDB.createEmojiTables(db, forceRecreate: false)
+            try LimeDB.ensureCj4Schema(db)
+            try LimeDB.ensureTricodeSchema(db)
+            try LimeDB.ensureComputerNumKeyboard(db)
+            try LimeDB.ensureCangjieSemicolonKeyboards(db)
+            try LimeDB.ensureLimeNumSym2Keyboard(db)
+            try LimeDB.ensureStandardIMKeyMetadata(db)
+        }
+        // Stamp the new version (only after the branch above completes → 105 ⟺ complete).
         try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
     }
 
@@ -329,23 +356,30 @@ final class LimeDB {
         return true
     }
 
+    /// DB 105: all schema/keyboard repairs moved to the one-time `version < 105` migration in
+    /// `upgradeIfNeeded` (a 105 stamp now guarantees a complete DB, so there is nothing to repair
+    /// on every open). Only emoji CONTENT currency remains here: it is keyed on `EMOJI_DATA_VERSION`
+    /// (an `im` row), not `user_version`, because emoji data can refresh in a patch release without
+    /// a schema bump — so it is checked on every open but is a cheap no-op when already current.
     func ensureCurrentDatabase() {
+        refreshEmojiDataIfNeeded()
+    }
+
+    /// LIME DB 105 IM-load-time fallback: backfills `imkeys`/`imkeynames` for a single
+    /// standard table, scoped to `table`. `ensureCurrentDatabase()` only runs at open/after
+    /// restore/after factory reset, not mid-session, so a restore that populates a table in
+    /// an already-open, already-current database can be followed by an export/render before
+    /// the next `ensureCurrentDatabase()` — this call closes that gap. Opens its own
+    /// `dbQueue.write` (NOT nested — safe to call from a host-app context such as
+    /// `SetupImController.exportIMAsText`); no-op when the table already has metadata, so
+    /// it is safe to call on every load. Host-only: never call from the keyboard extension.
+    func ensureStandardIMKeyMetadata(forTable table: String) {
         do {
             try dbQueue.write { db in
-                try LimeDB.createEmojiTables(db, forceRecreate: false)
-                try LimeDB.ensureCj4Schema(db)
-                try LimeDB.ensureTricodeSchema(db)
-                try LimeDB.ensureComputerNumKeyboard(db)
-                try LimeDB.ensureCangjieSemicolonKeyboards(db)
-                try LimeDB.ensureLimeNumSym2Keyboard(db)
-                let version = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
-                if version < LimeDB.CURRENT_DB_VERSION {
-                    try db.execute(sql: "PRAGMA user_version = \(LimeDB.CURRENT_DB_VERSION)")
-                }
+                try LimeDB.ensureStandardIMKeyMetadata(db, table: table)
             }
-            refreshEmojiDataIfNeeded()
         } catch {
-            NSLog("LimeDB current database check failed: \(error)")
+            NSLog("LimeDB ensureStandardIMKeyMetadata(forTable:) failed: \(error)")
         }
     }
 
@@ -2873,6 +2907,77 @@ final class LimeDB {
         ])
     }
 
+    /// LIME DB 105 goal 1: known standard table → default `imkeys`/`imkeynames` map.
+    /// Mirrors the switch in `applyDefaultMetadataForStandardIM`, sourced from the SAME
+    /// constants (prep task) so the restore-backfill default equals the import default
+    /// byte-for-byte. `array10` / `custom` / `pinyin` / imported user tables are
+    /// intentionally excluded — array10 has no keyname conversion by design (only
+    /// ARRAY10_KEY exists, there is no ARRAY10_CHAR) and the others have no built-in map.
+    private static func standardIMKeyDefaults(for table: String) -> (imkeys: String, imkeynames: String)? {
+        switch table {
+        case "dayi":
+            return (DAYI_KEY, DAYI_CHAR)
+        case "cj", "cj4", "cj5", "ecj", "scj":
+            return (CJ_KEY, CJ_CHAR)
+        case "array":
+            return (ARRAY_IMKEYS, ARRAY_IMKEYNAMES)
+        case "ez":
+            return (EZ_KEY, EZ_CHAR)
+        case "phonetic":
+            return (BPMF_IMKEYS, BPMF_IMKEYNAMES)
+        default:
+            return nil
+        }
+    }
+
+    private static let STANDARD_IM_TABLES = ["dayi", "cj", "cj4", "cj5", "ecj", "scj", "array", "ez", "phonetic"]
+
+    /// LIME DB 105 goal 1: backfill `imkeys`/`imkeynames` for every known standard table
+    /// that exists and has at least one mapping row, when the `im` table is missing a
+    /// non-empty row for that title. Writes via the passed `db` handle ONLY — never
+    /// `setImConfig`/`applyDefaultMetadataForStandardIM` (both open their own
+    /// `dbQueue.write`; this runs inside `ensureCurrentDatabase()`'s write block, and
+    /// GRDB `write` is non-reentrant, so a nested write would deadlock).
+    /// Never overwrites an existing non-empty value — user-customised or imported
+    /// values always win; this only fills the empty/absent case.
+    private static func ensureStandardIMKeyMetadata(_ db: Database) throws {
+        for table in STANDARD_IM_TABLES {
+            try ensureStandardIMKeyMetadata(db, table: table)
+        }
+    }
+
+    /// Single-table variant of `ensureStandardIMKeyMetadata(_:)` above, reused by the
+    /// IM-load-time fallback (`LimeDB.ensureStandardIMKeyMetadata(forTable:)`), which opens
+    /// its own write and is safe to call outside `ensureCurrentDatabase()`.
+    private static func ensureStandardIMKeyMetadata(_ db: Database, table: String) throws {
+        guard let defaults = standardIMKeyDefaults(for: table) else { return }
+        let tableExists = (try Int.fetchOne(db,
+            sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+            arguments: [table]) ?? 0) > 0
+        guard tableExists else { return }
+        let hasMappingRows = (try Int.fetchOne(db,
+            sql: "SELECT EXISTS(SELECT 1 FROM \(table))") ?? 0) > 0
+        guard hasMappingRows else { return }
+
+        try ensureImKeyMetadataRow(db, table: table, title: "imkeys", defaultValue: defaults.imkeys)
+        try ensureImKeyMetadataRow(db, table: table, title: "imkeynames", defaultValue: defaults.imkeynames)
+    }
+
+    /// Writes `defaultValue` into `im(code=table, title=title)` only when no non-empty
+    /// row already exists for that title (NULL/empty treated as absent). Delete-then-insert
+    /// mirrors `setImConfig`'s pattern so a stray empty row left behind by an old import
+    /// doesn't accumulate duplicates across repeated ensure calls.
+    private static func ensureImKeyMetadataRow(_ db: Database, table: String, title: String,
+                                                defaultValue: String) throws {
+        let existing = try String.fetchOne(db,
+            sql: "SELECT desc FROM im WHERE code = ? AND title = ?",
+            arguments: [table, title])
+        if let existing = existing, !existing.isEmpty { return }
+        try db.execute(sql: "DELETE FROM im WHERE code = ? AND title = ?", arguments: [table, title])
+        try db.execute(sql: "INSERT INTO im (code, title, desc) VALUES (?, ?, ?)",
+                       arguments: [table, title, defaultValue])
+    }
+
     private static func rebuildEmojiFTS(_ db: Database) throws {
         try db.execute(sql: "INSERT INTO \(EMOJI_TABLE_FTS)(\(EMOJI_TABLE_FTS)) VALUES ('rebuild')")
     }
@@ -3668,8 +3773,13 @@ final class LimeDB {
                     if !word.isEmpty { imkeynames.append(word) }
                 } else if !code.isEmpty && !word.isEmpty {
                     let score = parts.count > 2 ? (Int(parts[2].trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0) : 0
-                    var baseScore = parts.count > 3 ? (Int(parts[3].trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0) : 0
-                    if baseScore == 0 { baseScore = getBaseScore(word) }
+                    // basescore is authoritative when the field is PRESENT — an explicit `0`
+                    // means "low base priority" and is preserved. Fill from the frequency table
+                    // only when the field is ABSENT (a `.cin` `code word` line or a `.lime`
+                    // `code|word`), i.e. the record never carried a base score. See CIN_LIME_SPEC §2.5.1.
+                    let baseScore = parts.count > 3
+                        ? (Int(parts[3].trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0)
+                        : getBaseScore(word)
                     batch.append((code: code, word: word, score: score, baseScore: baseScore))
                 }
             }
@@ -3730,19 +3840,19 @@ final class LimeDB {
         case "array":
             if !hasSelkey { setImConfig(tableName, "selkey", "1234567890") }
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0")
+                setImConfig(tableName, "imkeys", LimeDB.ARRAY_IMKEYS)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0")
+                setImConfig(tableName, "imkeynames", LimeDB.ARRAY_IMKEYNAMES)
             }
         case "phonetic":
             if !hasSelkey { setImConfig(tableName, "selkey", "123456789") }
             if !hasEndkey { setImConfig(tableName, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+") }
             if !hasImportedImkeys {
-                setImConfig(tableName, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+")
+                setImConfig(tableName, "imkeys", LimeDB.BPMF_IMKEYS)
             }
             if !hasImportedImkeynames {
-                setImConfig(tableName, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋")
+                setImConfig(tableName, "imkeynames", LimeDB.BPMF_IMKEYNAMES)
             }
         case "cj", "cj4", "cj5", "ecj", "scj":
             // Cangjie family (倉頡) shares one canonical key layout (matches lime_cj.xml).
@@ -4112,6 +4222,31 @@ final class LimeDB {
             default:
                 return ""
             }
+        }
+    }
+
+    /// Companion to `imKeysForTable(_:)` (LIME DB 105): returns the stored `imkeynames`
+    /// for a table if non-empty, else the known in-memory default. Lets the keyboard
+    /// extension resolve a correct display name for a known standard table whose `im`
+    /// row is empty (e.g. a table just restored into a live DB, before the host-app-only
+    /// `ensureStandardIMKeyMetadata` backfill has run) without any DB write. `array10`,
+    /// `custom`, and unknown tables have no built-in keyname map and resolve to "".
+    func imKeyNamesForTable(_ tableName: String) -> String {
+        let stored = getImConfig(tableName, "imkeynames") ?? ""
+        if !stored.isEmpty { return stored }
+        switch tableName {
+        case "dayi":
+            return LimeDB.DAYI_CHAR
+        case "cj", "cj4", "scj", "cj5", "ecj":
+            return LimeDB.CJ_CHAR
+        case "array":
+            return LimeDB.ARRAY_CHAR
+        case "ez":
+            return LimeDB.EZ_CHAR
+        case "phonetic":
+            return LimeDB.BPMF_CHAR
+        default:
+            return ""
         }
     }
 

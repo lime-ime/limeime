@@ -118,7 +118,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     }
 
     private static SQLiteDatabase db = null;  //Jeremy '12,5,1 add static modifier. Shared db instance for dbserver and searchserver
-    private final static int DATABASE_VERSION = 104;
+    private final static int DATABASE_VERSION = 105;
     private final static String EMOJI_DATA_VERSION = "17.0";
     // Scored English dictionary payload (docs/ENG_AUTO_COMPLETION.md). Self-versioned via
     // an im(code='dictionary', title='version') row — independent of DATABASE_VERSION.
@@ -230,6 +230,31 @@ public class LimeDB extends LimeSQLiteOpenHelper {
     private final static String BPMF_CHAR =
             "ㄅ|ㄆ|ㄇ|ㄈ|ㄉ|ㄊ|ㄋ|ㄌ|ˇ|ㄍ|ㄎ|ㄏ|ˋ|ㄐ|ㄑ|ㄒ|ㄓ|ㄔ|ㄕ|ㄖ|ˊ|ㄗ|ㄘ|ㄙ|˙|ㄧ|ㄨ|ㄩ|ㄚ|ㄛ|ㄜ|ㄝ|ㄞ|ㄟ|ㄠ|ㄡ|ㄢ|ㄣ|ㄤ|ㄥ|ㄦ";
 
+    // LIME DB 105 prep: array/phonetic default imkeys/imkeynames written into the im table on
+    // import/backfill. Distinct from ARRAY_KEY/ARRAY_CHAR and BPMF_KEY/BPMF_CHAR above — those
+    // are the runtime physical-key->radical maps used by keyToKeyName/getKeyRemapString, these
+    // are the stored-metadata defaults (not identical to the runtime maps), so they get their
+    // own constants rather than reusing ARRAY_KEY/ARRAY_CHAR/BPMF_KEY/BPMF_CHAR. Single source
+    // of truth for both the importer (importTxtTable -> applyStandardIMKeyDefaults) and the
+    // restore-backfill path (ensureStandardIMKeyMetadata). Values copied byte-for-byte from the
+    // former inline literals; mirrors iOS ARRAY_IMKEYS/ARRAY_IMKEYNAMES/BPMF_IMKEYS/BPMF_IMKEYNAMES.
+    private final static String ARRAY_IMKEYS = "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0";
+    private final static String ARRAY_IMKEYNAMES =
+            "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0";
+    private final static String BPMF_IMKEYS = ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+";
+    private final static String BPMF_IMKEYNAMES =
+            "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋";
+
+    // LIME DB 105 goal 1: known standard-table set for ensureStandardIMKeyMetadata() /
+    // applyStandardIMKeyDefaults(). array10/custom/pinyin/imported-user tables are
+    // intentionally excluded — array10 has no keyname conversion by design (only an
+    // ARRAY10_KEY-equivalent physical map exists, no keynames), the others have no built-in
+    // key map. Mirrors iOS LimeDB.STANDARD_IM_TABLES.
+    private final static String[] STANDARD_IM_TABLES = {
+            LIME.DB_TABLE_DAYI, LIME.DB_TABLE_CJ, LIME.DB_TABLE_CJ4, LIME.DB_TABLE_CJ5,
+            LIME.DB_TABLE_ECJ, LIME.DB_TABLE_SCJ, LIME.DB_TABLE_ARRAY, LIME.DB_TABLE_EZ,
+            LIME.DB_TABLE_PHONETIC
+    };
 
     private final static String SHIFTED_NUMBERIC_KEY = "!@#$%^&*()";
     private final static String SHIFTED_NUMBERIC_KEY_REMAP = "1234567890";
@@ -791,6 +816,23 @@ public class LimeDB extends LimeSQLiteOpenHelper {
         if (oldVersion < 104) {
             ensureCj4Schema(dbin);
         }
+        // LIME DB 105 goal 2: the post-104 schema/keyboard repairs (cj4/tricode schema and the
+        // computernum / cangjie-semicolon / limenumsym2 keyboards) plus the standard-IM
+        // imkeys/imkeynames backfill become a ONE-TIME, version-gated migration. SQLiteOpenHelper
+        // runs onUpgrade only when the stored version < DATABASE_VERSION and stamps the version
+        // itself afterwards, so a 105 stamp GUARANTEES the DB is complete. That guarantee lets the
+        // every-load net in ensureCurrentDatabase() be removed (the bundled seed ships at 104 so a
+        // fresh install completes here; a restore of any pre-105 backup re-runs onUpgrade). Emoji
+        // is NOT gated here — it floats free of user_version and stays in refreshEmojiDataIfNeeded
+        // (see the DB 103 note above).
+        if (oldVersion < 105) {
+            ensureCj4Schema(dbin);
+            ensureTricodeSchema(dbin);
+            ensureComputerNumKeyboard(dbin);
+            ensureCangjieSemicolonKeyboards(dbin);
+            ensureLimeNumSym2Keyboard(dbin);
+            ensureStandardIMKeyMetadata(dbin);
+        }
 
     }
 
@@ -975,14 +1017,12 @@ public class LimeDB extends LimeSQLiteOpenHelper {
             db = this.getWritableDatabase();
         }
 
-        ensureCj4Schema(db);
-        ensureTricodeSchema(db);
-        ensureComputerNumKeyboard(db);
-        ensureCangjieSemicolonKeyboards(db);
-        ensureLimeNumSym2Keyboard(db);
-        if (db.getVersion() < DATABASE_VERSION) {
-            db.setVersion(DATABASE_VERSION);
-        }
+        // LIME DB 105: the schema/keyboard repairs and the imkeys/imkeynames backfill moved to
+        // the one-time version < 105 migration in onUpgrade() — SQLiteOpenHelper runs it only on a
+        // version increase and stamps the version itself, so a 105 DB is complete and there is
+        // nothing to repair on every open. Only content-currency refreshes remain here: emoji and
+        // the English dictionary float free of user_version (gated on their own im-table version
+        // rows, per the DB 103 note in onUpgrade) and are cheap no-ops when already current.
         refreshEmojiDataIfNeeded();
         refreshDictionaryDataIfNeeded();
     }
@@ -4151,12 +4191,18 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                             }
 
                             int source_score = 0, source_basescore = 0;
+                            // Whether the record carried an explicit basescore field. A present
+                            // field (including an explicit 0 = "low base priority") is authoritative
+                            // and preserved; only an ABSENT field is filled from the frequency table.
+                            // See CIN_LIME_SPEC §2.5.1.
+                            boolean hasBaseScoreField = false;
                             String code = null, word = null;
                             String cinLine = null;
                             if (isCinFormat) {
                                 cinLine = line.trim();
                                 line = cinLine.replaceAll("[ \\t]+", "\t");
                                 List<String> parts = splitEscapedFields(line, "\t", false);
+                                hasBaseScoreField = parts.size() > 3;
                                 try {
                                     code = parts.get(0);
                                     word = parts.get(1);
@@ -4173,6 +4219,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 }
                             } else {
                                 List<String> parts = splitEscapedFields(line, delimiter_symbol, escapedFormat);
+                                hasBaseScoreField = parts.size() > 3;
                                 try {
                                     code = parts.get(0);
                                     word = parts.get(1);
@@ -4253,7 +4300,7 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                                 }
                                 cv.put(FIELD_WORD, word);
                                 cv.put(FIELD_SCORE, source_score);
-                                if (source_basescore == 0) {
+                                if (!hasBaseScoreField) {
                                     source_basescore = getBaseScore(word);
                                 }
                                 cv.put(FIELD_BASESCORE, source_basescore);
@@ -4326,52 +4373,16 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                     if (table.equals(LIME.DB_TABLE_PHONETIC)) {
                         if (selkey.isEmpty()) setImConfig(table, "selkey", "123456789");
                         if (endkey.isEmpty()) setImConfig(table, "endkey", "3467'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-                        if (!hasImportedImkeys) {
-                            setImConfig(table, "imkeys", ",-./0123456789;abcdefghijklmnopqrstuvwxyz'[]\\=<>?:\"{}|~!@#$%^&*()_+");
-                        }
-                        if (!hasImportedImkeynames) {
-                            setImConfig(table, "imkeynames", "ㄝ|ㄦ|ㄡ|ㄥ|ㄢ|ㄅ|ㄉ|ˇ|ˋ|ㄓ|ˊ|˙|ㄚ|ㄞ|ㄤ|ㄇ|ㄖ|ㄏ|ㄎ|ㄍ|ㄑ|ㄕ|ㄘ|ㄛ|ㄨ|ㄜ|ㄠ|ㄩ|ㄙ|ㄟ|ㄣ|ㄆ|ㄐ|ㄋ|ㄔ|ㄧ|ㄒ|ㄊ|ㄌ|ㄗ|ㄈ|、|「|」|＼|＝|，|。|？|：|；|『|』|│|～|！|＠|＃|＄|％|︿|＆|＊|（|）|－|＋");
-                        }
                     } else if (table.equals(LIME.DB_TABLE_ARRAY)) {
                         if (selkey.isEmpty()) setImConfig(table, "selkey", "1234567890");
-                        if (!hasImportedImkeys) {
-                            setImConfig(table, "imkeys", "abcdefghijklmnopqrstuvwxyz./;,?*#1#2#3#4#5#6#7#8#9#0");
-                        }
-                        if (!hasImportedImkeynames) {
-                            setImConfig(table, "imkeynames", "1-|5⇣|3⇣|3-|3⇡|4-|5-|6-|8⇡|7-|8-|9-|7⇣|6⇣|9⇡|0⇡|1⇡|4⇡|2-|5⇡|7⇡|4⇣|2⇡|2⇣|6⇡|1⇣|9⇣|0⇣|0-|8⇣|？|＊|1|2|3|4|5|6|7|8|9|0");
-                        }
-                    } else if (table.equals(LIME.DB_TABLE_CJ) || table.equals(LIME.DB_TABLE_CJ4)
-                            || table.equals(LIME.DB_TABLE_CJ5) || table.equals(LIME.DB_TABLE_ECJ)
-                            || table.equals(LIME.DB_TABLE_SCJ)) {
-                        // Cangjie family (倉頡) shares one canonical key layout (matches
-                        // lime_cj.xml). Reuse CJ_KEY/CJ_CHAR so the labels stay in one place.
-                        // Selkey is left to the imported file / existing config.
-                        if (!hasImportedImkeys) {
-                            setImConfig(table, "imkeys", CJ_KEY);
-                        }
-                        if (!hasImportedImkeynames) {
-                            setImConfig(table, "imkeynames", CJ_CHAR);
-                        }
-                    } else if (table.equals(LIME.DB_TABLE_DAYI)) {
-                        // Dayi (大易). Reuse DAYI_KEY/DAYI_CHAR (the same key→radical map the
-                        // app already uses to render dayi keynames). Selkey is left to the
-                        // imported file / existing config.
-                        if (!hasImportedImkeys) {
-                            setImConfig(table, "imkeys", DAYI_KEY);
-                        }
-                        if (!hasImportedImkeynames) {
-                            setImConfig(table, "imkeynames", DAYI_CHAR);
-                        }
-                    } else if (table.equals(LIME.DB_TABLE_EZ)) {
-                        // EZ (輕鬆輸入法). Reuse EZ_KEY/EZ_CHAR (extracted from ez.limedb).
-                        // Selkey is left to the imported file / existing config.
-                        if (!hasImportedImkeys) {
-                            setImConfig(table, "imkeys", EZ_KEY);
-                        }
-                        if (!hasImportedImkeynames) {
-                            setImConfig(table, "imkeynames", EZ_CHAR);
-                        }
                     }
+                    // LIME DB 105 goal 1: imkeys/imkeynames defaults extracted into
+                    // applyStandardIMKeyDefaults so the restore-backfill ensure path
+                    // (ensureStandardIMKeyMetadata) shares the exact same literal values.
+                    // Behavior-preserving: writes via the shared static `db` field, same as
+                    // the setImConfig calls this replaces (db is still open here, outside the
+                    // main mapping-row transaction which already ended above).
+                    applyStandardIMKeyDefaults(db, table, hasImportedImkeys, hasImportedImkeynames);
                     if (DEBUG)
                         Log.i(TAG, "importTxtTable():update IM info: imkeys:" + imkeys + " imkeynames:" + imkeynames);
 
@@ -5681,6 +5692,152 @@ public class LimeDB extends LimeSQLiteOpenHelper {
                 "use_count INTEGER NOT NULL DEFAULT 0)");
         if (recreatedEmojiFts && hasEmojiDataRows(targetDb)) {
             rebuildEmojiFts(targetDb);
+        }
+    }
+
+    /**
+     * LIME DB 105 goal 1: applies the standard-table {@code imkeys}/{@code imkeynames} defaults
+     * for {@code table}, extracted from {@link #importTxtTable(String, LIMEProgressListener)}'s
+     * finalize block so the same literal defaults back both the importer (called with the
+     * shared static {@code db} field) and the restore-backfill ensure path
+     * ({@link #ensureStandardIMKeyMetadata(SQLiteDatabase)}, called with an arbitrary
+     * {@code SQLiteDatabase} handle — e.g. {@code onUpgrade}'s {@code dbin}).
+     *
+     * <p>Writes via the passed {@code db} handle ONLY — never {@code setImConfig}/{@code
+     * addRecord}, which read the shared static {@code db} field. That field can be stale, null,
+     * or not yet pointed at the connection being migrated while this runs from {@code
+     * onUpgrade}'s {@code dbin} parameter during a version upgrade (the static field is only
+     * assigned {@code this.getWritableDatabase()}'s result AFTER {@code onUpgrade} returns), so
+     * using it here could silently write to the wrong connection or throw. This mirrors the
+     * write-through-{@code targetDb} pattern already used by {@link #ensureCj4Schema}.
+     *
+     * <p>{@code array10}/{@code custom}/{@code pinyin}/imported-user tables are intentionally
+     * excluded (no built-in key map) — the {@code else} branch is a no-op for any table not in
+     * {@link #STANDARD_IM_TABLES}. Never overwrites an existing value: pass {@code
+     * hasImkeys}/{@code hasImkeynames} = {@code true} for any title that must be left alone.
+     */
+    private void applyStandardIMKeyDefaults(SQLiteDatabase db, String table,
+                                             boolean hasImkeys, boolean hasImkeynames) {
+        String imkeysDefault;
+        String imkeynamesDefault;
+        if (table.equals(LIME.DB_TABLE_PHONETIC)) {
+            imkeysDefault = BPMF_IMKEYS;
+            imkeynamesDefault = BPMF_IMKEYNAMES;
+        } else if (table.equals(LIME.DB_TABLE_ARRAY)) {
+            imkeysDefault = ARRAY_IMKEYS;
+            imkeynamesDefault = ARRAY_IMKEYNAMES;
+        } else if (table.equals(LIME.DB_TABLE_CJ) || table.equals(LIME.DB_TABLE_CJ4)
+                || table.equals(LIME.DB_TABLE_CJ5) || table.equals(LIME.DB_TABLE_ECJ)
+                || table.equals(LIME.DB_TABLE_SCJ)) {
+            // Cangjie family (倉頡) shares one canonical key layout (matches lime_cj.xml).
+            imkeysDefault = CJ_KEY;
+            imkeynamesDefault = CJ_CHAR;
+        } else if (table.equals(LIME.DB_TABLE_DAYI)) {
+            // Dayi (大易). Reuse DAYI_KEY/DAYI_CHAR (the same key→radical map the app already
+            // uses to render dayi keynames).
+            imkeysDefault = DAYI_KEY;
+            imkeynamesDefault = DAYI_CHAR;
+        } else if (table.equals(LIME.DB_TABLE_EZ)) {
+            // EZ (輕鬆輸入法). Reuse EZ_KEY/EZ_CHAR (extracted from ez.limedb).
+            imkeysDefault = EZ_KEY;
+            imkeynamesDefault = EZ_CHAR;
+        } else {
+            return; // not a known standard table (array10/custom/pinyin/imported user tables)
+        }
+        if (!hasImkeys) {
+            writeStandardIMKeyRow(db, table, "imkeys", imkeysDefault);
+        }
+        if (!hasImkeynames) {
+            writeStandardIMKeyRow(db, table, "imkeynames", imkeynamesDefault);
+        }
+    }
+
+    /**
+     * Writes {@code value} into {@code im(code=table, title=title)}, deleting any existing row
+     * for that title first (mirrors {@code setImConfig}'s delete-then-insert pattern so a stray
+     * row left behind by an old import doesn't accumulate duplicates across repeated calls).
+     * Uses the passed {@code db} handle directly — see {@link #applyStandardIMKeyDefaults} for
+     * why this must not go through {@code setImConfig}/{@code addRecord}.
+     */
+    private static void writeStandardIMKeyRow(SQLiteDatabase db, String table, String title, String value) {
+        db.delete(LIME.DB_TABLE_IM,
+                LIME.DB_IM_COLUMN_CODE + " = ? AND " + LIME.DB_IM_COLUMN_TITLE + " = ?",
+                new String[]{table, title});
+        ContentValues cv = new ContentValues();
+        cv.put(LIME.DB_IM_COLUMN_CODE, table);
+        cv.put(LIME.DB_IM_COLUMN_TITLE, title);
+        cv.put(LIME.DB_IM_COLUMN_DESC, value);
+        db.insert(LIME.DB_TABLE_IM, null, cv);
+    }
+
+    /**
+     * LIME DB 105 goal 1: backfills {@code imkeys}/{@code imkeynames} for every known standard
+     * table ({@link #STANDARD_IM_TABLES}) that exists and has at least one mapping row, when the
+     * {@code im} table is missing a non-empty row for that title. Never overwrites an existing
+     * non-empty value — user-customised or imported values always win; this only fills the
+     * empty/absent case. Writes via the passed {@code targetDb} handle only (see {@link
+     * #applyStandardIMKeyDefaults}). Called from the every-load {@link #ensureCurrentDatabase()}
+     * net and from the {@code oldVersion < 105} branch of {@link #onUpgrade}.
+     */
+    private void ensureStandardIMKeyMetadata(SQLiteDatabase targetDb) {
+        for (String table : STANDARD_IM_TABLES) {
+            ensureStandardIMKeyMetadata(targetDb, table);
+        }
+    }
+
+    /**
+     * Single-table variant of {@link #ensureStandardIMKeyMetadata(SQLiteDatabase)}, reused by
+     * the public IM-load-time fallback ({@link #ensureStandardIMKeyMetadata(String)}), which
+     * operates on the shared static {@code db} field and is safe to call outside {@link
+     * #ensureCurrentDatabase()} (e.g. from a host-app export flow, LIME_DB_105.md).
+     */
+    private void ensureStandardIMKeyMetadata(SQLiteDatabase targetDb, String table) {
+        if (!tableExists(targetDb, table)) return;
+        if (!tableHasRows(targetDb, table)) return;
+        boolean hasImkeys = hasNonEmptyImValue(targetDb, table, "imkeys");
+        boolean hasImkeynames = hasNonEmptyImValue(targetDb, table, "imkeynames");
+        if (hasImkeys && hasImkeynames) return;
+        applyStandardIMKeyDefaults(targetDb, table, hasImkeys, hasImkeynames);
+    }
+
+    /**
+     * LIME DB 105 IM-load-time fallback: backfills {@code imkeys}/{@code imkeynames} for a
+     * single standard table, scoped to {@code table}. {@link #ensureCurrentDatabase()} only
+     * runs at open/after restore/after factory reset, not mid-session, so a restore that
+     * populates a table in an already-open, already-current database can be followed by an
+     * export/render before the next {@code ensureCurrentDatabase()} — this call closes that
+     * gap. Safe to call on every load: it is a no-op when the table already has metadata.
+     * Host-app only by construction — never call this from the keyboard service hot path.
+     * Mirrors iOS {@code LimeDB.ensureStandardIMKeyMetadata(forTable:)}.
+     */
+    public synchronized void ensureStandardIMKeyMetadata(String table) {
+        if (checkDBConnection()) return;
+        if (db == null || !db.isOpen()) return;
+        ensureStandardIMKeyMetadata(db, table);
+    }
+
+    private static boolean tableHasRows(SQLiteDatabase targetDb, String tableName) {
+        try (Cursor cursor = targetDb.rawQuery("SELECT COUNT(*) FROM " + tableName, null)) {
+            return cursor != null && cursor.moveToFirst() && cursor.getInt(0) > 0;
+        } catch (SQLiteException e) {
+            Log.e(TAG, "tableHasRows(): error checking table " + tableName, e);
+            return false;
+        }
+    }
+
+    private static boolean hasNonEmptyImValue(SQLiteDatabase targetDb, String table, String title) {
+        try (Cursor cursor = targetDb.rawQuery(
+                "SELECT " + LIME.DB_IM_COLUMN_DESC + " FROM " + LIME.DB_TABLE_IM +
+                        " WHERE " + LIME.DB_IM_COLUMN_CODE + " = ? AND " + LIME.DB_IM_COLUMN_TITLE + " = ?",
+                new String[]{table, title})) {
+            if (cursor != null && cursor.moveToFirst()) {
+                String value = cursor.getString(0);
+                return value != null && !value.isEmpty();
+            }
+            return false;
+        } catch (SQLiteException e) {
+            Log.e(TAG, "hasNonEmptyImValue(): error checking im." + title + " for " + table, e);
+            return false;
         }
     }
 

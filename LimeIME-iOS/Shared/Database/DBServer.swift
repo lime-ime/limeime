@@ -1188,6 +1188,15 @@ final class DBServer {
         publishColdMetadataOnly()
     }
 
+    /// LIME DB 105 IM-load-time fallback: backfills `imkeys`/`imkeynames` for a single
+    /// standard table if missing, scoped to `table`. Opens its own write (not nested), so
+    /// it is safe to call from a host-app (Settings) context such as
+    /// `SetupImController.exportIMAsText`. No-op when the table already has metadata.
+    /// Host-only by construction — never call this from the keyboard extension.
+    func ensureStandardIMKeyMetadata(_ table: String) {
+        datasource?.ensureStandardIMKeyMetadata(forTable: table)
+    }
+
     func updateIMEnabled(imName: String, enabled: Bool) {
         datasource?.updateIMEnabled(imName: imName, enabled: enabled)
         publishColdMetadataOnly()
