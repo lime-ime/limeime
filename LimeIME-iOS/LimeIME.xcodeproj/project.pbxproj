@@ -1316,6 +1316,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/../LimeStudio/app/src/main/res/raw/lime.db",
 			);
 			name = "Copy lime.db to bundle";
 			outputFileListPaths = (
@@ -1354,6 +1355,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/../LimeStudio/app/src/main/res/raw/lime.db",
 			);
 			name = "Copy lime.db to bundle";
 			outputFileListPaths = (
