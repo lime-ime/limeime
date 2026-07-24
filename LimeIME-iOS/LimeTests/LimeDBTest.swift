@@ -1015,6 +1015,207 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    // MARK: - 10a. importTxtFile parity fix regression tests
+
+    func testImportReplacesRowsInsteadOfDuplicatingOnReimport() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef begin
+        aa 測
+        bb 試
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+        let firstCount = db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+        let secondCount = db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil)
+
+        XCTAssertEqual(secondCount, firstCount,
+                       "Re-importing the same file should replace rows, not duplicate them")
+    }
+
+    func testImportStripsUtf8BomFromFirstLine() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = "\u{FEFF}" + """
+        @cname@|BomName
+        %chardef begin
+        aa|詞
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "BomName",
+                       "Leading UTF-8 BOM on the first line must be stripped before parsing @cname@")
+    }
+
+    func testImportAcceptsChardefBeginWithExtraSpaces() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %chardef  begin
+        aa 測
+        bb 試
+        %chardef  end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertGreaterThan(db.countRecords(LIME.DB_TABLE_CUSTOM, nil, nil), 0,
+                             "%chardef markers with extra internal spaces should still be recognized")
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "測")
+        XCTAssertEqual(db.getMappingByCode("bb", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "試")
+    }
+
+    func testImportV1MetadataValueWithPipesIsNotTruncated() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        @imkeynames@|ㄅ|ㄆ|ㄇ
+        %chardef begin
+        aa|測
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeynames"), "ㄅ|ㄆ|ㄇ",
+                       "v1 pipe-delimited metadata value containing pipes must not be truncated to its first field")
+    }
+
+    func testImportCommaDelimitedMetadataIsParsed() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        @cname@,CommaName
+        aa,詞
+        bb,語
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_CUSTOM, "name"), "CommaName",
+                       "Comma-delimited @cname@ header should be parsed like pipe/tab delimited headers")
+    }
+
+    func testImportCollapsesMultipleSpacesInSpaceDelimitedLime() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = "aa   詞\nbb   語"
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getMappingByCode("aa", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "詞",
+                       "Runs of 2-5 spaces between aligned columns should collapse to a single delimiter")
+    }
+
+    // MARK: - 10b. fix#176 base-score parity (bundled hanconvertv2.db)
+
+    /// getBaseScore must read real frequencies from the bundled hanconvertv2.db,
+    /// mirroring Android LimeHanConverter. Values are the Android oracle from
+    /// docs/#176_ISSUE.md. Empty input is 0.
+    func testGetBaseScoreReadsBundledHanConvertFrequencies() throws {
+        let db = try makeLimeDB()
+        XCTAssertEqual(db.getBaseScore("我"), 123003)
+        XCTAssertEqual(db.getBaseScore("也"), 33788)
+        XCTAssertEqual(db.getBaseScore("是"), 152789)
+        XCTAssertEqual(db.getBaseScore(""), 0)
+    }
+
+    /// A scoreless .cin import (code+word only) must seed real base frequencies for
+    /// each character so runtime phrase composition (我也是 / LD) can build. Before
+    /// fix#176 iOS stored basescore 0, which the runtime suggestion path skipped.
+    func testScorelessCinImportSeedsBaseScoresForCustomTable() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        let content = """
+        %cname Issue176
+        %chardef begin
+        i 我
+        xal 也
+        jn 是
+        %chardef end
+        """
+        try content.write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        let wo = db.getMappingByCode("i", softKeyboard: true, getAllRecords: true)?.first { $0.word == "我" }
+        let ye = db.getMappingByCode("xal", softKeyboard: true, getAllRecords: true)?.first { $0.word == "也" }
+        let shi = db.getMappingByCode("jn", softKeyboard: true, getAllRecords: true)?.first { $0.word == "是" }
+        XCTAssertEqual(wo?.baseScore, 123003)
+        XCTAssertEqual(ye?.baseScore, 33788)
+        XCTAssertEqual(shi?.baseScore, 152789)
+    }
+
+    /// Spec §2.5.1: a PRESENT basescore field is authoritative — an explicit `0` means
+    /// "low priority" and is preserved, NOT re-scored, even for a word with a real
+    /// frequency (我 = 123003). Presence, not value, gates the frequency fallback.
+    func testExplicitZeroBasescoreIsPreservedOnImport() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "aa|我|0|0\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        let wo = db.getMappingByCode("aa", softKeyboard: true, getAllRecords: true)?.first { $0.word == "我" }
+        XCTAssertEqual(wo?.baseScore, 0, "explicit basescore 0 must be preserved, not re-scored")
+    }
+
+    /// Spec §2.5.1: an ABSENT basescore field (a `.lime` `code|word` minimum record) is
+    /// filled from the frequency table — the contrast with the explicit-0 case above proves
+    /// the rule is presence-based, not value-based (same word 我, opposite result).
+    func testAbsentBasescoreFieldIsFilledFromFrequencyTable() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "aa|我\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        let wo = db.getMappingByCode("aa", softKeyboard: true, getAllRecords: true)?.first { $0.word == "我" }
+        XCTAssertEqual(wo?.baseScore, 123003, "an absent basescore field must be filled from the frequency table")
+    }
+
     func testImKeysForTableUsesStoredImkeysWhenNamesPresent() throws {
         let db = try makeLimeDB()
         db.setImConfig(LIME.DB_TABLE_CJ, "imkeys", "abc;'")
@@ -1185,6 +1386,192 @@ final class LimeDBTest: XCTestCase {
         db.resetImConfig("")
         db.resetImConfig("nonexistent_im_\(Date().timeIntervalSince1970)")
         XCTAssertTrue(true)
+    }
+
+    // MARK: - 10c. LIME DB 105 — ensureStandardIMKeyMetadata / imKeyNamesForTable
+
+    /// A dayi table restored/imported without imkeys/imkeynames metadata (e.g. a legacy
+    /// `.limedb` predating that metadata) must be backfilled by the public
+    /// `ensureStandardIMKeyMetadata(forTable:)` entry point, using the same defaults
+    /// `imKeysForTable`/`imKeyNamesForTable` resolve at runtime.
+    func testEnsureStandardIMKeyMetadataBackfillsDayiWhenMissing() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "a|言\n".write(to: importURL, atomically: true, encoding: .utf8)
+        // importTxtFile creates the "dayi" mapping table (a fresh temp DB has no
+        // standard-IM tables until the first import/restore touches them) and inserts
+        // one mapping row for it.
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_DAYI)
+
+        // The importer's own default-backfill may already have written imkeys/imkeynames
+        // on import; strip them so this test exercises ensureStandardIMKeyMetadata's
+        // restore-backfill path in isolation, as if the import predated that metadata.
+        db.removeImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        db.removeImConfig(LIME.DB_TABLE_DAYI, "imkeynames")
+        XCTAssertTrue(db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys")?.isEmpty ?? true)
+        XCTAssertTrue(db.getImConfig(LIME.DB_TABLE_DAYI, "imkeynames")?.isEmpty ?? true)
+
+        db.ensureStandardIMKeyMetadata(forTable: LIME.DB_TABLE_DAYI)
+
+        let imkeys = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        let imkeynames = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeynames")
+        XCTAssertFalse(imkeys?.isEmpty ?? true, "backfill must write a non-empty imkeys row")
+        XCTAssertFalse(imkeynames?.isEmpty ?? true, "backfill must write a non-empty imkeynames row")
+        XCTAssertEqual(imkeys, db.imKeysForTable(LIME.DB_TABLE_DAYI),
+                       "backfilled imkeys must equal imKeysForTable's resolved default")
+        XCTAssertEqual(imkeynames, db.imKeyNamesForTable(LIME.DB_TABLE_DAYI),
+                       "backfilled imkeynames must equal imKeyNamesForTable's resolved default")
+    }
+
+    /// A user-customised (or previously imported) non-empty imkeys value always wins;
+    /// the backfill must never overwrite it.
+    func testEnsureStandardIMKeyMetadataNeverOverwritesExisting() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "a|言\n".write(to: importURL, atomically: true, encoding: .utf8)
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_DAYI)
+
+        db.setImConfig(LIME.DB_TABLE_DAYI, "imkeys", "CUSTOMKEYS")
+
+        db.ensureStandardIMKeyMetadata(forTable: LIME.DB_TABLE_DAYI)
+
+        XCTAssertEqual(db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys"), "CUSTOMKEYS")
+    }
+
+    /// A dayi table with zero mapping rows (table exists but is empty, or does not exist
+    /// at all) must not gain synthetic imkeys metadata — the backfill only applies to
+    /// tables that actually carry data.
+    func testEnsureStandardIMKeyMetadataSkipsEmptyTable() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "a|言\n".write(to: importURL, atomically: true, encoding: .utf8)
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_DAYI)
+        db.clearTable(LIME.DB_TABLE_DAYI)
+        db.removeImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        db.removeImConfig(LIME.DB_TABLE_DAYI, "imkeynames")
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_DAYI, nil, nil), 0)
+
+        db.ensureStandardIMKeyMetadata(forTable: LIME.DB_TABLE_DAYI)
+
+        let imkeys = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        XCTAssertTrue(imkeys == nil || imkeys!.isEmpty,
+                      "backfill must not synthesize imkeys for a table with zero mapping rows")
+    }
+
+    /// `custom` (and other non-standard/imported tables) have no built-in key map and must
+    /// be left untouched by the backfill.
+    func testEnsureStandardIMKeyMetadataLeavesNonStandardTableUntouched() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_CUSTOM)
+        db.addOrUpdateMappingRecord("a", "測試")
+
+        db.ensureStandardIMKeyMetadata(forTable: LIME.DB_TABLE_CUSTOM)
+
+        let imkeys = db.getImConfig(LIME.DB_TABLE_CUSTOM, "imkeys")
+        XCTAssertTrue(imkeys == nil || imkeys!.isEmpty,
+                      "custom is not a known standard IM table; no synthetic imkeys should appear")
+    }
+
+    /// array10 is intentionally excluded from the standard-table map (行列10 has no
+    /// keyname conversion by design — only ARRAY10_KEY exists, there is no ARRAY10_CHAR),
+    /// so the backfill must never synthesize an imkeynames row for it.
+    func testEnsureStandardIMKeyMetadataArray10HasNoKeynames() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "q|一\n".write(to: importURL, atomically: true, encoding: .utf8)
+        try db.importTxtFile(at: importURL.path, tableName: "array10")
+
+        db.ensureStandardIMKeyMetadata(forTable: "array10")
+
+        let imkeynames = db.getImConfig("array10", "imkeynames")
+        XCTAssertTrue(imkeynames == nil || imkeynames!.isEmpty,
+                      "array10 has no keyname conversion by design; ensure must not synthesize imkeynames")
+    }
+
+    /// End-to-end reported case: an old-style `.limedb` backup whose `im` table predates
+    /// `imkeys`/`imkeynames` storage is restored via the real `importFromAttachedDB`
+    /// entry point (data lives in a `custom` table, matching the cloud/backup export
+    /// convention `importFromAttachedDB` already special-cases). `ensureCurrentDatabase()`
+    /// (the every-load net) must then backfill the metadata, and the subsequent export
+    /// must include `@imkeys@`/`@imkeynames@` — closing the gap in the original bug report.
+    func testRestoredDayiTableGainsImKeysThenExports() throws {
+        let db = try makeLimeDB()
+
+        let sourceURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + "_old_dayi.limedb")
+        defer { try? FileManager.default.removeItem(at: sourceURL) }
+
+        let srcQueue = try DatabaseQueue(path: sourceURL.path)
+        try srcQueue.write { srcDb in
+            try srcDb.execute(sql: """
+                CREATE TABLE custom (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT, word TEXT, score INTEGER DEFAULT 0, basescore INTEGER DEFAULT 0
+                )
+            """)
+            try srcDb.execute(sql: "INSERT INTO custom (code, word, score, basescore) VALUES ('a', '言', 0, 0)")
+            try srcDb.execute(sql: "INSERT INTO custom (code, word, score, basescore) VALUES ('s', '牛', 0, 0)")
+            try srcDb.execute(sql: """
+                CREATE TABLE im (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT, title TEXT, desc TEXT, keyboard TEXT,
+                    disable BOOLEAN, selkey TEXT, endkey TEXT, spacestyle TEXT
+                )
+            """)
+            try srcDb.execute(sql: "INSERT INTO im (code, title, desc) VALUES ('dayi', 'name', '大易輸入法')")
+            // Deliberately no imkeys/imkeynames rows — mirrors a pre-105 .limedb backup
+            // that predates that metadata (the reported-bug scenario).
+        }
+
+        try db.importFromAttachedDB(sourcePath: sourceURL.path, tableName: LIME.DB_TABLE_DAYI)
+
+        // Sanity: the restore landed mapping rows but no key metadata yet.
+        XCTAssertGreaterThanOrEqual(db.countRecords(LIME.DB_TABLE_DAYI, nil, nil), 2)
+        let imkeysAfterRestore = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        XCTAssertTrue(imkeysAfterRestore == nil || imkeysAfterRestore!.isEmpty)
+
+        // Restore-into-live-DB: the table was added to an already-105 DB (no reopen → no
+        // migration), so the imkeys/imkeynames backfill comes from the IM-load-time fallback —
+        // `ensureStandardIMKeyMetadata(forTable:)`, exactly what `SetupImController.exportIMAsText`
+        // invokes before export. (`ensureCurrentDatabase()` no longer does schema work under DB 105.)
+        db.ensureStandardIMKeyMetadata(forTable: LIME.DB_TABLE_DAYI)
+
+        let imkeys = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeys")
+        let imkeynames = db.getImConfig(LIME.DB_TABLE_DAYI, "imkeynames")
+        XCTAssertFalse(imkeys?.isEmpty ?? true,
+                       "ensureCurrentDatabase must backfill dayi imkeys after a legacy restore")
+        XCTAssertFalse(imkeynames?.isEmpty ?? true,
+                       "ensureCurrentDatabase must backfill dayi imkeynames after a legacy restore")
+
+        let exportURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".lime")
+        defer { try? FileManager.default.removeItem(at: exportURL) }
+
+        XCTAssertTrue(db.exportTxtTable(LIME.DB_TABLE_DAYI, targetFile: exportURL, imConfig: nil))
+        let output = try String(contentsOf: exportURL, encoding: .utf8)
+
+        XCTAssertTrue(output.contains("@imkeys@|"))
+        XCTAssertTrue(output.contains("@imkeynames@|"))
+    }
+
+    /// `imKeyNamesForTable` must return stable, non-empty defaults for known standard
+    /// tables (dayi) and "" for tables with no built-in keyname map (array10, custom).
+    func testImKeyNamesForTableReturnsDefaults() throws {
+        let db = try makeLimeDB()
+        let dayiNames = db.imKeyNamesForTable(LIME.DB_TABLE_DAYI)
+        XCTAssertFalse(dayiNames.isEmpty)
+        XCTAssertEqual(dayiNames, db.imKeyNamesForTable(LIME.DB_TABLE_DAYI))
+
+        XCTAssertEqual(db.imKeyNamesForTable("array10"), "")
+        XCTAssertEqual(db.imKeyNamesForTable(LIME.DB_TABLE_CUSTOM), "")
     }
 
     // MARK: - 11. getImConfigList
@@ -2693,14 +3080,16 @@ final class LimeDBTest: XCTestCase {
         ])
     }
 
-    // MARK: - 36. getBaseScore — documents always-0 decision
+    // MARK: - 36. getBaseScore — bundled hanconvertv2.db frequencies (fix#176)
 
-    func testLimeDBGetBaseScoreAlwaysZero() throws {
+    func testGetBaseScoreMissAndEdgeCases() throws {
         let db = try makeLimeDB()
-        // iOS decision: basescore always 0 (no hanconvertv2.db bundled; scores accumulate via learning)
-        XCTAssertEqual(db.getBaseScore("愛"), 0)
-        XCTAssertEqual(db.getBaseScore(""), 0)
-        XCTAssertEqual(db.getBaseScore(String(repeating: "測", count: 1000)), 0)
+        // fix#176: getBaseScore reads frequencies from the bundled hanconvertv2.db
+        // (mirrors Android LimeHanConverter), replacing the old always-0 stub.
+        XCTAssertEqual(db.getBaseScore("愛"), 12411)   // known char → TCSC.score
+        XCTAssertEqual(db.getBaseScore(""), 0)          // empty → 0
+        // Multi-char code absent from TCSC → Android phrase default of 1, not 0.
+        XCTAssertEqual(db.getBaseScore(String(repeating: "測", count: 1000)), 1)
     }
 
     // MARK: - 37. Cloud-IM install ↔ keyboard resolution
@@ -3034,7 +3423,7 @@ final class LimeDBTest: XCTestCase {
         try copyBundledLimeSeed(to: tempURL)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
         XCTAssertGreaterThan(db.countRecords("im", "title = ?", ["name"]), 0)
         assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
@@ -3047,7 +3436,7 @@ final class LimeDBTest: XCTestCase {
                                            insertCurrentEmojiVersion: false)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
         assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
     }
@@ -3059,7 +3448,7 @@ final class LimeDBTest: XCTestCase {
                                            insertCurrentEmojiVersion: true)
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
         assertCj4SchemaAndKeyboardLoaded(db)
         assertEmojiSchemaAndDataLoaded(db)
     }
@@ -3090,7 +3479,7 @@ final class LimeDBTest: XCTestCase {
 
         let db = try makeLimeDB()
 
-        XCTAssertEqual(try db.databaseVersionForTest(), 104)
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
         assertEmojiSchemaAndDataLoaded(db)
     }
 
@@ -3168,7 +3557,7 @@ final class LimeDBTest: XCTestCase {
         try DBServer().restoreDatabase(srcFilePath: restoreZip.path)
 
         let stats = try rawDB103Stats(liveDB)
-        XCTAssertEqual(stats.version, 104)
+        XCTAssertEqual(stats.version, 105)
         XCTAssertEqual(stats.cj4KeyboardRows, 0)
         XCTAssertEqual(stats.cjKeyboardRows, 1)
         XCTAssertGreaterThan(stats.emojiDataRows, 0)
@@ -3183,7 +3572,7 @@ final class LimeDBTest: XCTestCase {
         try DBServer().restoreBundledDatabase()
 
         let stats = try rawDB103Stats(liveDB)
-        XCTAssertEqual(stats.version, 104)
+        XCTAssertEqual(stats.version, 105)
         XCTAssertGreaterThan(stats.coreNameRows, 0)
         XCTAssertEqual(stats.cj4KeyboardRows, 0)
         XCTAssertEqual(stats.cjKeyboardRows, 1)
@@ -3201,6 +3590,71 @@ final class LimeDBTest: XCTestCase {
 
         XCTAssertGreaterThan(keyboards.count, 10)
         XCTAssertTrue(keyboards.contains { $0.code == "phonetic" && $0.desc == "注音輸入法鍵盤" })
+    }
+
+    /// LIME DB 105 test plan — "In-place upgrade (goal 1+2)": a `user_version = 104` DB with
+    /// a metadata-less dayi table and no `limenumsym2` keyboard row upgrades to 105 and gains
+    /// both the imkeys/imkeynames defaults (goal 1) and the post-104 keyboard rows (goal 2)
+    /// via `upgradeIfNeeded`'s `version < 105` branch.
+    func testInPlaceUpgrade104To105BackfillsDayiAndKeyboards() throws {
+        tempURL = try makeDB103SeedVariant(name: "lime_ios_104_upgrade_dayi.db",
+                                           userVersion: 104,
+                                           dropEmojiSchema: false,
+                                           insertCurrentEmojiVersion: false)
+        let queue = try DatabaseQueue(path: tempURL.path)
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS dayi (
+                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code      TEXT,
+                    word      TEXT,
+                    score     INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0,
+                    code3r    TEXT
+                )
+            """)
+            try db.execute(sql: "DELETE FROM dayi")
+            try db.execute(sql: "INSERT INTO dayi (code, word) VALUES ('a', '言')")
+            try db.execute(sql: "DELETE FROM im WHERE code = 'dayi' AND title IN ('imkeys', 'imkeynames')")
+            try db.execute(sql: "DELETE FROM keyboard WHERE code = 'limenumsym2'")
+        }
+
+        let db = try makeLimeDB()
+
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
+        XCTAssertFalse(db.getImConfig("dayi", "imkeys")?.isEmpty ?? true,
+                       "in-place upgrade must backfill dayi imkeys (goal 1)")
+        XCTAssertFalse(db.getImConfig("dayi", "imkeynames")?.isEmpty ?? true,
+                       "in-place upgrade must backfill dayi imkeynames (goal 1)")
+        XCTAssertGreaterThanOrEqual(db.countRecords("keyboard", "code = ?", ["limenumsym2"]), 1,
+                                    "in-place upgrade must formalize the post-104 limenumsym2 keyboard ensure (goal 2)")
+    }
+
+    /// LIME DB 105 — the bundled seed ships COMPLETE at `user_version 105` (regenerated by running
+    /// the Android `onUpgrade(104 -> 105)` on the previous 104 seed). It already contains the
+    /// post-104 `limenumsym2` keyboard and the `tricode` table, so a fresh install gets a complete
+    /// 105 DB directly and opening it is a no-op migration (no schema work in `ensureCurrentDatabase`).
+    /// The in-place upgrade path (a real pre-105 DB) is covered separately by
+    /// `testInPlaceUpgrade104To105BackfillsDayiAndKeyboards`.
+    func testBundledSeedIsCompleteV105() throws {
+        try copyBundledLimeSeed(to: tempURL)
+        let seedQueue = try DatabaseQueue(path: tempURL.path)
+        let seedVersion = try seedQueue.read { try Int.fetchOne($0, sql: "PRAGMA user_version") ?? 0 }
+        let seedLimeNumSym2 = try seedQueue.read {
+            try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM keyboard WHERE code = 'limenumsym2'") ?? 0
+        }
+        let seedTricode = try seedQueue.read {
+            try Int.fetchOne($0, sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='tricode'") ?? 0
+        }
+        try seedQueue.close()
+        XCTAssertEqual(seedVersion, 105, "bundled seed must ship complete at 105")
+        XCTAssertGreaterThanOrEqual(seedLimeNumSym2, 1, "complete seed already contains the post-104 limenumsym2 keyboard")
+        XCTAssertEqual(seedTricode, 1, "complete seed already contains the post-104 tricode table")
+
+        let db = try makeLimeDB()   // opening a complete 105 seed needs no migration
+
+        XCTAssertEqual(try db.databaseVersionForTest(), 105)
+        XCTAssertGreaterThanOrEqual(db.countRecords("keyboard", "code = ?", ["limenumsym2"]), 1)
     }
 
     private func assertEmojiSchemaAndDataLoaded(_ db: LimeDB) {

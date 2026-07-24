@@ -352,6 +352,10 @@ final class SetupImController: BaseController {
         return await Task.detached(priority: .userInitiated) {
             let dest = FileManager.default.temporaryDirectory
                 .appendingPathComponent("\(tableNick).lime")
+            // LIME DB 105 IM-load-time fallback: repair a table restored into an
+            // already-open, already-current DB (which ensureCurrentDatabase() would not
+            // have caught mid-session) before its metadata is read for export.
+            server.ensureStandardIMKeyMetadata(tableNick)
             let imConfigList = server.getImConfigList(tableNick, nil)
             let ok = server.exportTxtTable(table: tableNick, targetFile: dest, imConfigList: imConfigList)
             return ok ? dest : nil
@@ -690,13 +694,13 @@ private func validateRestoreDatabase(_ databaseURL: URL) throws {
            let raw = try String.fetchOne(db,
                                          sql: "SELECT value FROM sync_meta WHERE key = 'schema_version'"),
            let version = Int(raw) {
-            if version > 104 /* LimeDB.CURRENT_DB_VERSION is private; 104 = portable schema, lock-step Android/iOS */ {
+            if version > 105 /* LimeDB.CURRENT_DB_VERSION is private; 105 = portable schema, lock-step Android/iOS */ {
                 throw SetupImControllerError.restoreSchemaTooNew(version)
             }
             return
         }
         let userVersion = try Int.fetchOne(db, sql: "PRAGMA user_version") ?? 0
-        if userVersion > 0 && userVersion > 104 /* LimeDB.CURRENT_DB_VERSION is private; 104 = portable schema, lock-step Android/iOS */ {
+        if userVersion > 0 && userVersion > 105 /* LimeDB.CURRENT_DB_VERSION is private; 105 = portable schema, lock-step Android/iOS */ {
             throw SetupImControllerError.restoreSchemaTooNew(userVersion)
         }
     }
