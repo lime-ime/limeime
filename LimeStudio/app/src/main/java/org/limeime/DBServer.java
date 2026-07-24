@@ -277,6 +277,25 @@ public class  DBServer {
 	}
 
 	/**
+	 * LIME DB 105 IM-load-time fallback: backfills {@code imkeys}/{@code imkeynames} for a
+	 * single standard table if missing, scoped to {@code table}. No-op when the table already
+	 * has metadata, so it is safe to call on every load. Host-app only by construction — never
+	 * call this from the keyboard service hot path. Mirrors iOS
+	 * {@code DBServer.ensureStandardIMKeyMetadata(_:)}.
+	 *
+	 * <p>This method delegates to {@link LimeDB#ensureStandardIMKeyMetadata(String)}.
+	 *
+	 * @param table The IM table name to backfill (e.g. "dayi", "cj", "phonetic")
+	 */
+	public void ensureStandardIMKeyMetadata(String table) {
+		if (datasource == null) {
+			Log.e(TAG, "ensureStandardIMKeyMetadata(): datasource is null");
+			return;
+		}
+		datasource.ensureStandardIMKeyMetadata(table);
+	}
+
+	/**
 	 * Imports a related database file into the related table.
 	 *
 	 * <p>This method acts as a convenience wrapper for {@link LimeDB#importDbRelated(File)}

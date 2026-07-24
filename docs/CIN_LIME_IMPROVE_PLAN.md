@@ -1,6 +1,6 @@
 ﻿# CIN / LIME Import Export Improvement Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Execute this plan in Claude **goal mode** — pick the next unchecked (`- [ ]`) task, drive it to done, then check it off before moving on. Dispatch the implementation work to **Sonnet** subagents (`Agent` tool with `model: sonnet`), one focused task per agent; reserve the main session for sequencing, review, and marking steps complete. Steps use checkbox syntax for tracking.
 
 **Goal:** Preserve Android's long-standing `.cin` / `.lime` behavior as the compatibility baseline, align iOS importer/exporter behavior to that baseline, and then extend both platforms consistently for `.lime` `@cname@` metadata and escaped literal `|` / `@` values.
 
@@ -162,6 +162,19 @@ private func splitEscapedFields(_ line: String, delimiter: Character, escapedFor
   - v2 escaped pipe in word.
   - v2 escaped leading `@` in code.
   - metadata precedence between `@version@`, `@cname@`, `%version`, and `%cname`.
+
+### 5.1 Completed 2026-07-22 — iOS importer parity gaps closed
+
+Six iOS-only `importTxtFile` gaps against the Android `importTxtTable` oracle were fixed in `LimeIME-iOS/Shared/Database/LimeDB.swift` (Android untouched). Each has a regression test in `LimeIME-iOS/LimeTests/LimeDBTest.swift` (§10a); the full `LimeTests/LimeDBTable` XCTest gate passes on iPhone 17 Pro (iOS 26.5).
+
+1. **Pre-import wipe** — added `DELETE FROM <table>` + `resetImConfig(table)` before the loop (mirrors Android). Without it, the table has no UNIQUE index so `INSERT OR IGNORE` never fired and re-importing the same file doubled every mapping. Test: `testImportReplacesRowsInsteadOfDuplicatingOnReimport`.
+2. **UTF-8 BOM strip** — first-line `\u{FEFF}` is removed (`.whitespacesAndNewlines` trimming does not). Test: `testImportStripsUtf8BomFromFirstLine`.
+3. **Tolerant `%chardef`/`%keyname` matching** — `hasPrefix("%chardef") && hasSuffix("begin"/"end")` so `%chardef  begin` with extra spaces still opens the block (previously imported zero records). Test: `testImportAcceptsChardefBeginWithExtraSpaces`.
+4. **v1 `@`-metadata value re-join** — new `splitLimeMetadataFields` helper re-joins trailing fields so a v1 `@imkeynames@|ㄅ|ㄆ|ㄇ` keeps its full value instead of truncating at the first `|`. Test: `testImportV1MetadataValueWithPipesIsNotTruncated`.
+5. **Comma/space metadata delimiter fallback** — the same helper tries `|`, tab, comma, space in order, so `@cname@,Name` / `@cname@ Name` headers parse. Test: `testImportCommaDelimitedMetadataIsParsed`.
+6. **Multi-space collapse for space-delimited `.lime`** — runs of 2–5 spaces collapse to one before splitting, so aligned columns (`aa   詞`) no longer yield an empty word. Test: `testImportCollapsesMultipleSpacesInSpaceDelimitedLime`.
+
+Still open from §5's test list: `.cin` `%version/%selkey/%endkey/%spacestyle` parity, `%keyname`→`imkeys/imkeynames` parity, score/basescore parity, and `@version@`/`@cname@`/`%version`/`%cname` precedence tests.
 
 ## 6. iOS Exporter
 

@@ -417,7 +417,13 @@ public class SetupImController extends BaseController implements ImportDialog.On
     public File exportTxtTable(String tableName, File targetFile, Runnable onProgress) {
         try {
             showProgress(settingsView, context.getString(R.string.setup_load_migrate_export));
-            
+
+            // LIME DB 105 IM-load-time fallback: repair a table restored into an already-open,
+            // already-current DB (which ensureCurrentDatabase() would not have caught
+            // mid-session) before its metadata is read for export. Mirrors iOS
+            // SetupImController.exportIMAsText's prologue call.
+            dbServer.ensureStandardIMKeyMetadata(tableName);
+
             List<ImConfig> imConfigList = searchServer.getImAllConfigList(tableName);
             if (onProgress != null) {
                 onProgress.run();

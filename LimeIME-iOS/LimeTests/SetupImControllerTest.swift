@@ -532,6 +532,9 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected .lime re-import to succeed, got \(error)")
         }
+        // A `.lime` round-trip is lossless for basescore: export writes all four fields
+        // (code|word|score|basescore), and re-import preserves a PRESENT basescore verbatim
+        // — including the seeded 0 (spec §2.5.1). So the re-imported snapshot equals `before`.
         XCTAssertEqual(customRecordSnapshot(db, prefix: prefix), before)
     }
 
