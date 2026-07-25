@@ -2423,7 +2423,13 @@ public class LIMEService extends InputMethodService
         // The declared root was already appended. Consume this key even when the combined
         // code has no immediate candidate; returning false would fall through to
         // handleCharacter() and append the same punctuation a second time.
-        commitResolvedEndkeyComposing();
+        if (!commitResolvedEndkeyComposing()) {
+            // Nothing was committed, so the appended root stays in the composing buffer
+            // awaiting further input. Refresh the candidate strip for the combined code;
+            // otherwise mCandidateView/mCandidateList/selectedCandidate keep representing
+            // the pre-append code while the editor already shows the appended root.
+            updateCandidates();
+        }
         return true;
     }
 

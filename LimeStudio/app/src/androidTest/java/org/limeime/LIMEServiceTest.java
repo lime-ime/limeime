@@ -481,8 +481,66 @@ public class LIMEServiceTest {
 
         assertTrue((Boolean) handleEndkeyCommit.invoke(service, (int) ','));
         assertEquals("v,", getPrivateField(service, "mComposing").toString());
-        verify(searchServer).getMappingByCode("v,", true, false);
+        // The combined code is resolved once synchronously, and once more by the candidate
+        // strip refresh (updateCandidates) that reconciles the strip to the appended root.
+        verify(searchServer, atLeastOnce()).getMappingByCode("v,", true, false);
         verify(inputConnection, never()).commitText(any(), anyInt());
+    }
+
+    @Test
+    public void declaredPunctuationRootWithoutCombinedCandidateRefreshesCandidateStrip() throws Exception {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        InputConnection inputConnection = mock(InputConnection.class);
+
+        class TestableLIMEService extends LIMEService {
+            @Override
+            public InputConnection getCurrentInputConnection() {
+                return inputConnection;
+            }
+        }
+
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getImConfig("custom", LIME.IM_LIME_ENDKEY)).thenReturn(",.");
+        when(searchServer.getImConfig("custom", "imkeys")).thenReturn("abcdefghijklmnopqrstuvwxyz,");
+        when(searchServer.getMappingByCode("v,", true, false)).thenReturn(new LinkedList<>());
+
+        TestableLIMEService service = new TestableLIMEService();
+        initializeEndkeyTestService(service, appContext, searchServer, "custom", "custom", "v", true);
+
+        // Prediction on: setComposingText moves the editor to the appended root, so the
+        // candidate strip must be reconciled to the combined code instead of continuing to
+        // show the pre-append code's candidates.
+        setPrivateField(service, "mPredictionOn", true);
+        CandidateView candidateView = createMockCandidateView();
+        setPrivateField(service, "mCandidateView", candidateView);
+
+        Method handleEndkeyCommit = LIMEService.class.getDeclaredMethod("handleEndkeyCommit", int.class);
+        handleEndkeyCommit.setAccessible(true);
+
+        assertTrue((Boolean) handleEndkeyCommit.invoke(service, (int) ','));
+
+        // The appended root stays in the composing buffer and is reflected in the editor.
+        assertEquals("v,", getPrivateField(service, "mComposing").toString());
+        verify(inputConnection).setComposingText(
+                argThat(text -> text != null && "v,".contentEquals(text)), eq(1));
+        verify(inputConnection, never()).commitText(any(), anyInt());
+
+        // updateCandidates() performs the strip refresh on a background query thread.
+        joinQueryThread();
+
+        // The combined code has no candidate, so the stale pre-append strip must be cleared
+        // rather than left showing the previous code's candidates.
+        verify(candidateView, atLeastOnce()).clear();
+    }
+
+    /** Waits for the current asynchronous candidate query thread to finish, if any. */
+    private void joinQueryThread() throws Exception {
+        java.lang.reflect.Field queryThreadField = LIMEService.class.getDeclaredField("queryThread");
+        queryThreadField.setAccessible(true);
+        Thread queryThread = (Thread) queryThreadField.get(null);
+        if (queryThread != null) {
+            queryThread.join(2_000);
+        }
     }
 
     @Test
