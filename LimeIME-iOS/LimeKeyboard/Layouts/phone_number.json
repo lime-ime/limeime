@@ -19,17 +19,17 @@
         { "code": 52,  "label": "4",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
         { "code": 53,  "label": "5",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
         { "code": 54,  "label": "6",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
-        { "code": 47,  "label": "./",  "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "@xml/popup_template" }
+        { "code": 47,  "label": "/",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" }
       ]
     },
     {
       "isBottomRow": false,
       "keys": [
-        { "code": 40,  "label": "(",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
+        { "code": 46,  "label": "(",   "sublabel": ".", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "@xml/popup_template", "popupCharacters": "(" },
         { "code": 55,  "label": "7",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
         { "code": 56,  "label": "8",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
         { "code": 57,  "label": "9",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" },
-        { "code": 41,  "label": ")",   "sublabel": "", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "" }
+        { "code": 44,  "label": ")",   "sublabel": ",", "widthPercent": 20.0, "icon": "", "isModifier": false, "isRepeatable": false, "isSticky": false, "popupKeyboard": "@xml/popup_template", "popupCharacters": ")" }
       ]
     },
     {
