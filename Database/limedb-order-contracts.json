@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "archives": {
+    "array.limedb": {
+      "grandfathered_sha256": "cca7b08d2f908faf13f2b290c8ce17f8b3d2b8c4b90675241486d8e16b6fc866"
+    },
+    "array10.limedb": {
+      "grandfathered_sha256": "d6c5ab14dc85943a739bf557fe1719ac78caed3738d0d1ae500826db3039db12"
+    },
+    "ez.limedb": {
+      "grandfathered_sha256": "6e179feee89a65b00334d9d475184518b25cc2a4519024625e278b6f94a0144f"
+    },
+    "hahacj.limedb": {
+      "source": "Database/hahacj-20260723.txt",
+      "source_format": "cin",
+      "source_sha256": "c1ce0ddd185873597afa469a5156d76d71418867d2f8c8db4ab946839267abd9",
+      "inner_database": "cj4.db",
+      "mapping_table": "custom",
+      "metadata_code": "cj4",
+      "expected_metadata": {
+        "version": "20260723_082459",
+        "amount": "33044",
+        "limeendkey": ",."
+      }
+    },
+    "scj.limedb": {
+      "grandfathered_sha256": "35a776cf86f06925ddc01e23459e1aeccde24ea62cc2f8ffd4f46fe1c5f4bc52"
+    },
+    "tricode.limedb": {
+      "grandfathered_sha256": "dd7f34a69e55d152b01d563baff20c242c61236b0157d329bb15f0a955ce9213"
+    }
+  }
+}

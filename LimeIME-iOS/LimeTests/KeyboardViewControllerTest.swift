@@ -1462,6 +1462,80 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertFalse(source.contains("let selectedIdx = LimeEndkeyPolicy.defaultCommitCandidateIndex(list)"))
     }
 
+    // MARK: - #196 follow-up: declared punctuation-root end key parity with Android
+    //
+    // On the declared-root path (a table that lists the punctuation literally in imkeys and as a
+    // Lime end key), when the appended combined code (e.g. "v," after "v") has no committable
+    // candidate, iOS must — like Android — consume the key once (no double-insert via the
+    // handleCharacter() fall-through), refresh the candidate strip, and synchronously drop the stale
+    // pre-append selection. The behavioral tests below drive the real onKey() handler through a
+    // #if DEBUG same-file seam to prove each of those.
+
+    /// Behavioral end-to-end: drive the real onKey() handler for the declared-root/no-candidate
+    /// case and assert the composing buffer holds exactly one appended root ("v,"), not "v,,".
+    /// Pre-fix, commitComposingWithAppendedEndkey returned false, onKey fell through to
+    /// handleCharacter(44), and the comma was appended a second time; the fix consumes the key once
+    /// and refreshes the strip. This exercises the actual input path, not just the source shape.
+    @MainActor
+    func testDeclaredPunctuationRootDrivesSingleAppendAndClearsStrip() {
+        let controller = KeyboardViewController()
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        controller._testConfigureDeclaredEndkeyPath(
+            imkeys: "abcdefghijklmnopqrstuvwxyz,",
+            limeendkey: ",",
+            composing: "v",
+            candidateBar: bar)
+
+        controller._testDriveKey(44)   // ','
+
+        XCTAssertEqual(controller._testComposing, "v,",
+            "declared root must be appended exactly once; \"v,,\" means onKey fell through to "
+                + "handleCharacter and double-inserted the punctuation (Android #198 parity)")
+        XCTAssertEqual(controller._testCandidateCount, 0,
+            "the unresolved combined code must leave no stale candidates in the strip (Android #206 parity)")
+        XCTAssertFalse(controller._testHasCandidatesShown,
+            "the pre-append candidate strip must not remain shown after an unresolved declared root")
+    }
+
+    // Note: the stale-selection drop is proven by the mPredictionOn=true test below. A
+    // mPredictionOn=false variant is intentionally omitted: with no searchServer,
+    // updateCandidates() short-circuits to a synchronous clearSuggestions() that already nils
+    // selectedCandidate / empties mCandidateList, so such a test would pass with or without the
+    // explicit reset (not RED-proving). The real Chinese-IME path is mPredictionOn=true.
+
+    /// Behavioral, real async path: with mPredictionOn=true and a searchServer, updateCandidates()
+    /// dispatches an async DB query and only reconciles state on completion — so the stale selection
+    /// must be dropped SYNCHRONOUSLY in commitComposingWithAppendedEndkey, or a soft Space/Enter/arrow
+    /// (gated on hasCandidatesShown) could commit it during the async window. Asserted synchronously,
+    /// immediately after the key, before the async completion posts back to the main thread.
+    @MainActor
+    func testDeclaredPunctuationRootClearsStaleSelectionSynchronouslyUnderPrediction() {
+        let controller = KeyboardViewController()
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        let spyDB = SpyLimeDB()   // getMappingByCode returns nil → empty result for "v,"
+        let searchServer = SearchServer(db: spyDB)
+        controller._testConfigureDeclaredEndkeyPath(
+            imkeys: "abcdefghijklmnopqrstuvwxyz,",
+            limeendkey: ",",
+            composing: "v",
+            candidateBar: bar,
+            preloadStaleWord: "好",
+            predictionOn: true,
+            searchServer: searchServer)
+
+        controller._testDriveKey(44)   // ','
+
+        // Synchronous assertions: the async DB completion has not run yet, so these prove the reset
+        // happened synchronously rather than being deferred to clearSuggestions() on async completion.
+        XCTAssertEqual(controller._testComposing, "v,")
+        XCTAssertNil(controller._testSelectedCandidateWord,
+            "under prediction the stale selection must be dropped synchronously, not left committable "
+                + "during updateCandidates()'s async DB query")
+        XCTAssertEqual(controller._testCandidateCount, 0)
+        XCTAssertFalse(controller._testHasCandidatesShown,
+            "hasCandidatesShown gates soft Space/Enter/arrow selection; it must be false synchronously")
+    }
+
     func testSettingsGroupedSurfacesMatchSetupTabColors() throws {
         let settingsSource = try String(
             contentsOf: projectFileURL("LimeSettings/LimeSettingsView.swift"),

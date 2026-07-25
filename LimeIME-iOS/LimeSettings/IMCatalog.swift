@@ -105,7 +105,7 @@ enum IMCatalog {
             description: "四碼倉頡輸入法",
             systemIcon: "square.grid.2x2",
             variants: [
-                .init(id: "cj4", name: "哈哈倉頡", filename: "hahacj.limedb", tableName: "cj4", imName: "cj4", label: "哈哈倉頡", keyboardId: "cjnum", recordCount: 33_021, compressedKB: 598),
+                .init(id: "cj4", name: "哈哈倉頡", filename: "hahacj.limedb", tableName: "cj4", imName: "cj4", label: "哈哈倉頡", keyboardId: "cjnum", recordCount: 33_044, compressedKB: 496),
             ]
         ),
         .init(
