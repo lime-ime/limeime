@@ -160,6 +160,28 @@ public class LIMEService extends InputMethodService
                 || variation == EditorInfo.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS;
     }
 
+    /**
+     * The input class LIME should classify a field as, correcting a specific malformed shape.
+     *
+     * #200: some hosts (e.g. LINE's Add-Friends ID search) declare a password/visible-password or
+     * email field with a null input class — observed {@code inputType=0x90}: VISIBLE_PASSWORD
+     * variation with class TYPE_NULL instead of {@code 0x91} (TYPE_CLASS_TEXT | VISIBLE_PASSWORD).
+     * The forced-English handling in {@code initOnStartInput()} is gated on TYPE_CLASS_TEXT, so such
+     * a field otherwise falls through to the Chinese composing path: a Latin key is placed in a
+     * composing region (setComposingText) instead of committed, and the host editor duplicates it
+     * ("j"→"jj"). Reinterpret a null-class field that carries a forced-English text variation as text
+     * so the existing password/email commit-only handling applies. Every other input type is returned
+     * unchanged, so ordinary Chinese text fields keep composing.
+     */
+    static int effectiveInputClass(int inputType) {
+        int inputClass = inputType & EditorInfo.TYPE_MASK_CLASS;
+        if (inputClass == 0 /* InputType.TYPE_NULL */
+                && isForcedEnglishTextVariation(inputType & EditorInfo.TYPE_MASK_VARIATION)) {
+            return EditorInfo.TYPE_CLASS_TEXT;
+        }
+        return inputClass;
+    }
+
     //Jeremy '16,7,22 To control delayed hiding candidate view and avoid hide and show candidate view in short time.
     private static final int DELAY_BEFORE_HIDE_CANDIDATE_VIEW = 200;
 
@@ -928,7 +950,7 @@ public class LIMEService extends InputMethodService
         tempEnglishList = new LinkedList<>();
 
 
-        switch (attribute.inputType & EditorInfo.TYPE_MASK_CLASS) {
+        switch (effectiveInputClass(attribute.inputType)) {
             case EditorInfo.TYPE_CLASS_NUMBER:  //0x02
                 mEnglishOnly = true;
                 mKeyboardSwitcher.setKeyboardMode(activeIM,

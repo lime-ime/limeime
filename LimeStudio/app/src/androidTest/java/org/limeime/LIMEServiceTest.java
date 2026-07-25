@@ -12468,6 +12468,55 @@ public class LIMEServiceTest {
                 LIMEService.isForcedEnglishTextVariation(EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
     }
 
+    @Test
+    public void test_200_NullClassForcedEnglishVariationResolvesToText() {
+        // #200: LINE's Add-Friends ID search declares inputType=0x90 — a VISIBLE_PASSWORD variation
+        // with a null input class instead of the well-formed 0x91 (TYPE_CLASS_TEXT|VISIBLE_PASSWORD).
+        // It must resolve to TYPE_CLASS_TEXT so the forced-English (commit-only, no composing) path
+        // applies; otherwise a Latin key composes and the host editor duplicates it ("j"->"jj").
+        int nullClassVisiblePassword =
+                EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD; // 0x90, class bits == 0
+        assertEquals("Null-class visible-password field must be treated as text",
+                EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(nullClassVisiblePassword));
+
+        // The same rule covers the whole forced-English set (all password + email variations) with
+        // null class.
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD));
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD));
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS));
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS));
+
+        // Well-formed fields are returned unchanged — the fix must not over-force.
+        assertEquals("Well-formed visible-password stays text",
+                EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(
+                        EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
+        assertEquals("Ordinary text field unchanged",
+                EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_CLASS_TEXT));
+        assertEquals("Number field unchanged",
+                EditorInfo.TYPE_CLASS_NUMBER,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_CLASS_NUMBER));
+
+        // Negative case: the reroute is gated on class==NULL, not on the variation bits. A non-null
+        // class (e.g. NUMBER) whose variation bits happen to coincide with a text forced-English
+        // variation must NOT be reinterpreted (number variations share the 0xff0 bits with text).
+        assertEquals("Number field with password-like variation bits stays number",
+                EditorInfo.TYPE_CLASS_NUMBER,
+                LIMEService.effectiveInputClass(
+                        EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
+
+        // A true null field (no forced-English variation) must stay null so ordinary Chinese
+        // composing is preserved — this is what keeps the fix from disabling composing everywhere.
+        assertEquals("Null field with normal variation stays null (composing preserved)",
+                0, LIMEService.effectiveInputClass(0));
+    }
+
     /**
      * Tests translateKeyDown branches with mocks.
      * Targets lines 943-1082 (30% coverage)

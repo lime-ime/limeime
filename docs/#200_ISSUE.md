@@ -1,103 +1,98 @@
 # Issue #200 Analysis: LINE ID Search Duplicates Typed Characters on Android
 
-## Problem Statement
+## Live issue state
 
-On Android, typing one Latin character into LINE's Add Friends ID-search field can insert the character twice. The reported example is one `j` key tap producing `jj`.
+- Issue: https://github.com/lime-ime/limeime/issues/200
+- Status: root-caused on-device and fixed in PR #207 (branch `fix/200-null-class-forced-english`); reporter retest on a release build pending.
+- Reporter: physical Samsung reproduction by the maintainer; original reporter on `ASUS_AI2202`.
+- Reported version: Android LIME 6.1.36, LINE 26.11.0.
 
-The reporter later recalled seeing the same duplicate-input symptom in another infrequently used app or input context, but could not identify it. This suggests the scope may be broader than LINE's ID-search field, but it is not yet a second reproducible environment.
+## Problem statement
 
-Reporter-supplied environment:
+On Android, typing one Latin character into LINE's Add Friends → ID-search field inserts the character twice (one `j` tap produces `jj`). The defect reproduces when entering Latin characters **from the Chinese keyboard** and does **not** reproduce from LIME's dedicated English keyboard.
 
-- Android 14
-- Device model `ASUS_AI2202`
-- Host app: LINE
-- Field: Add Friends → ID search
-- LIME version: 6.1.36
-- LINE version: 26.11.0
-- Keyboard-mode boundary: reproduces when entering Latin characters from the Chinese keyboard; does not reproduce from LIME's English keyboard
+The reporter also recalled the same symptom in another infrequently used app or input context but could not identify it, so the scope may be broader than LINE; that second context is not yet a reproducible environment.
 
-Independent maintainer reproduction:
+## Reproduction
 
-- Physical Samsung phone
-- Same LINE Add Friends → ID-search symptom
-- Exact Samsung model, Android version, LIME version, and LINE version were not recorded
+- Original reporter: `ASUS_AI2202`, Android 14, LINE Add Friends → ID search.
+- Maintainer: independently reproduced the same symptom on a physical Samsung `SM-A1760`.
+- The Samsung reproduction was used to capture the runtime `EditorInfo`/dispatch trace below.
 
-The exact Android `EditorInfo.inputType`, IME options, and whether all characters are affected are not yet known.
+## Root cause (LIME side confirmed by on-device trace; host duplication inferred)
 
-## Reproduction Status
+A privacy-safe trace (field type + dispatch/commit counts, no field contents) was captured on the Samsung `SM-A1760` while typing one Latin key into the reproducing field.
 
-The defect is confirmed. A maintainer independently reproduced the same #200 behavior on a physical Samsung phone. This establishes that the duplicate-input symptom is not limited to the reporter's ASUS device.
+The field reports:
 
-The unidentified second context is supplementary scope evidence only. Until its app, field type, and reproduction steps are known, keep LINE Add Friends → ID search as the sole concrete reproduction path and investigate common Android editor conditions rather than assuming a LINE-only defect.
-
-The exact runtime boundary remains unknown. The Samsung reproduction confirms the user-visible defect, but no privacy-safe dispatch/commit trace has yet shown whether one tap is duplicated before `handleCharacter()`, inside LIME's composition/commit path, or by LINE's editor handling.
-
-Before changing code, collect privacy-safe diagnostics on the reproduced device path that identify:
-
-1. The field's `EditorInfo.inputType`, variation flags, and `imeOptions`.
-2. Whether one tap invokes `LIMEService.onKey()` once or twice.
-3. Whether LIME calls `InputConnection.commitText()` once or twice.
-4. Whether LINE renders one `commitText()` call twice, or whether duplication happens earlier in LIME.
-5. What differs in dispatch/composition/commit traces between the reproducing Chinese-keyboard path and the non-reproducing English-keyboard path.
-
-Do not log the user's actual LINE ID or surrounding field contents.
-
-## Current Source Findings
-
-`LIMEService.initOnStartInput()` classifies password, visible-password, email, and web-email text variations as forced-English fields. In that mode prediction is disabled and the email-style keyboard is selected.
-
-For an ordinary software-key tap in English-only mode, `handleCharacter()` reaches a single direct call:
-
-```java
-ic.commitText(String.valueOf((char) primaryCode), 1);
+```
+onStartInput inputType=0x90  class=0x0 (TYPE_NULL)  variation=0x90 (VISIBLE_PASSWORD)  imeOptions=SEARCH
 ```
 
-Source inspection therefore does not establish an unconditional double-commit in the normal English soft-key path. If the affected LINE field reaches that path and `onKey()` is called once, LIME should issue one commit for `j`.
+It declares a **VISIBLE_PASSWORD variation with a null input class** (`0x90`) instead of the well-formed `0x91` (`TYPE_CLASS_TEXT | VISIBLE_PASSWORD`).
 
-Issue #74 changed URL and search fields from forced English handling to normal text handling. That change is relevant chronology, but it is not yet evidence for this defect because LINE's exact field variation is unknown and the current forced-English helper still handles password/email variations separately.
+`LIMEService.initOnStartInput()` classifies forced-English fields (password / visible-password / web-password / email / web-email, via `isForcedEnglishTextVariation`) inside `case TYPE_CLASS_TEXT`. Because this field's class is `TYPE_NULL`, the switch skips the TEXT case and falls through to `default:` → `mEnglishOnly = false`, Chinese IM keyboard, prediction on. A Latin letter is a root key of essentially every Chinese IM (`acceptsIntoComposing` returns true), so the key takes the **composing path** and is placed in a composing region (`setComposingText`) instead of being committed. The host editor then duplicates the composed character, producing `jj`.
 
-## Root-Cause Assessment
+The trace captures LIME's side of the mechanism:
 
-Root cause is not yet confirmed. The failure must first be isolated to one boundary:
+- Chinese keyboard: each tap logs exactly one `onKey` and one `handleCharacter COMPOSE setComposingText` — LIME dispatches once and composes once. There is **no** LIME-side double dispatch and **no** double commit.
+- English keyboard: each tap logs `handleCharacter ENGLISH commitText` — an atomic commit, no composing region — and does not duplicate.
 
-- duplicate key dispatch before `handleCharacter()`
-- duplicate LIME `InputConnection` calls
-- a composing/commit transition caused by the field restarting input
-- host-editor handling that duplicates a single LIME commit
+The only per-tap difference between the two keyboards is **compose (`setComposingText`) vs commit (`commitText`)**. LINE is a closed app, so its editor's internal duplication of the composing region was not directly instrumented; that step is inferred — but it is the sole remaining variable (LIME emits one character either way), and the fix confirms it: forcing the commit path removes the `jj`. The duplication is therefore tied to the composing region, which only the Chinese keyboard creates.
 
-A source-only fix based on the field name or an assumed Android variation would be speculative and could regress password, email, URL, search, or normal text fields.
+### Hypotheses refuted by the trace
 
-## Proposed Solution
+- **`TYPE_TEXT_VARIATION_URI` / issue #74** — the field is `0x90` (VISIBLE_PASSWORD), not URI (`0x10`). #74 (which moved URI fields out of forced-English) is unrelated to this field.
+- **Double key dispatch (onKeyDown + onKey, key repeat)** — exactly one `onKey` per soft tap.
+- **LIME-internal double commit / auto-commit** — the composing branch commits nothing per tap; the auto-commit path is gated to numeric/array pads.
 
-No production change should be selected until the device trace identifies the failing boundary.
+## Fix
 
-After capturing the reproduced runtime boundary:
+Add `LIMEService.effectiveInputClass(int inputType)`: a field whose input class is `TYPE_NULL` **and** whose variation is a forced-English text variation (password / visible-password / web-password / email / web-email) is reinterpreted as `TYPE_CLASS_TEXT`, so the existing commit-only handling applies. Every other input type is returned unchanged, so ordinary Chinese text fields still compose. `initOnStartInput()` switches on `effectiveInputClass(attribute.inputType)` instead of the raw class.
 
-1. Add the smallest RED regression test using the captured `EditorInfo` flags and the real affected LIME key path.
-2. Make one focused correction at the proven duplicate-dispatch, composition, or commit boundary.
-3. Preserve one-tap/one-character behavior in password, email, URL/search, and ordinary text fields.
-4. Keep logs and tests free of user identifiers and entered LINE IDs.
+This does not introduce new behavior: LIME already forces English (commit-only, no composing) for these same variations when the class is `TYPE_CLASS_TEXT`. The fix only extends that existing policy to the malformed null-class shape LINE sends.
 
-## Follow-up Questions
+The duplication is a host-editor reaction to the composing region, which LIME cannot change on LINE's side. Suppressing the composing region (commit-only) is therefore the only LIME-side remedy, and it is the correct default for an alphanumeric ID/search field — the same behavior as the English keyboard, which already works.
 
-- Does every Latin letter duplicate, or only `j`?
-- Can a second app and input-field purpose be identified if the symptom recurs?
-- Does another keyboard enter one character correctly in the same field?
+## Test coverage
 
-## Verification Plan
+`test_200_NullClassForcedEnglishVariationResolvesToText` in `LIMEServiceTest`:
+
+- `effectiveInputClass(0x90)` resolves to `TYPE_CLASS_TEXT` — RED against the pre-fix code (`expected:<1> but was:<0>`), GREEN with the fix.
+- The rest of the forced-English set (password/email) with null class also resolves to text.
+- Well-formed fields (`TYPE_CLASS_TEXT | VISIBLE_PASSWORD`, plain text, number) are returned unchanged — the fix must not over-force.
+- A true null field (no forced-English variation) stays null, so ordinary Chinese composing is preserved.
+
+## Verification
+
+- `effectiveInputClass` unit test: RED→GREEN on a Pixel 9 Pro API 37 emulator and the Samsung `SM-A1760`.
+- On-device behavioral confirmation on the Samsung: the reproducing field (`inputType=0x90`) now takes `handleCharacter ENGLISH commitText`, and the `jj` duplication is gone; the ID field commits Latin directly like the English keyboard.
+
+## Scope and limits
+
+- The fix keys on the **variation**, so it resolves fields shaped like LINE's (a forced-English variation with a null class). If another app duplicates in a plain **normal-text** field (variation NORMAL), that composing is legitimate for Chinese and is out of scope here — a separate investigation, consistent with the reporter's unidentified second context.
+- Behavior note: in the forced-English field a user can still tap `中` to switch to Chinese; because forced-English leaves `mPredictionOn=false`, that yields a candidates-only (no inline composing) state. This is optional polish, not the reported bug.
+
+## Platform impact
 
 ### Android
 
-1. Preserve the confirmed physical Samsung reproduction and record its model/Android version when available.
-2. Repeat on `ASUS_AI2202` if available to compare the original environment.
-3. Capture privacy-safe `EditorInfo`, key-dispatch count, and `InputConnection` call count on the reproduced path.
-4. Add a failing automated test that proves one key tap currently produces two insertions at the isolated boundary.
-5. Verify the focused test turns GREEN after the correction.
-6. Run the relevant Android unit and instrumentation suites.
-7. Runtime-check the confirmed Chinese-keyboard path, the non-reproducing English-keyboard path, and password, email, URL/search, and ordinary text fields.
-8. If a second app/field becomes identifiable, verify it against the same isolated boundary.
-9. Ask the original reporter to retest a publicly available build containing the fix before closing the issue.
+Confirmed affected and fixed as above. Delivery and reporter-visible confirmation remain pending because the public LIME 6.1.36 predates this change and requires a newer reporter-testable build.
 
 ### iOS
 
-No iOS impact is reported. The iOS keyboard extension uses a separate input path, so this Android-specific report does not establish an iOS defect. No iOS code change is planned unless independent iOS runtime evidence reproduces the same behavior.
+No iOS defect is reported. The iOS keyboard extension uses a separate input path, and no independent iOS reproduction exists. No iOS change is planned unless iOS runtime evidence reproduces the same behavior.
+
+## Verification plan
+
+Done:
+
+1. Captured the reproducing field's `EditorInfo` and dispatch/commit counts on the Samsung `SM-A1760`.
+2. Added `effectiveInputClass` and the RED→GREEN regression; ran it on the Pixel 9 Pro API 37 emulator and the Samsung.
+3. Confirmed on-device that the field now commits Latin (no composing) and the duplication is gone.
+
+Pending:
+
+4. Deliver a newer reporter-testable Android build containing the fix.
+5. Ask the original reporter to retest the exact `j` → single-`j` behavior in LINE Add Friends → ID search on that build before closing the issue.
+6. If the unidentified second app/field becomes reproducible, capture its `EditorInfo` and evaluate whether it is the same null-class shape or a separate normal-text composing case.
