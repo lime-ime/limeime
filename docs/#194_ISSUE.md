@@ -2,7 +2,7 @@
 
 ## Current status
 
-Confirmed shared-data archive-generation defect. GitHub issue #194 is open, labeled `bug`, `enhancement`, and `Usability`, and assigned to `jrywu`.
+Source fixed by merged PR #195. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. Reporter verification still requires a newer build containing the corrected archive.
 
 The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Do not request reporter retest until a usable build contains the fix.
 
@@ -46,7 +46,7 @@ The screenshot visually shows a landscape Android keyboard, but the reporter did
 | 2026-06-03 | #91 changed sorting-disabled duplicate candidates to follow source insertion/`_id` order | Reporter verified direct `.cin` order in Android 6.1.16 on 2026-06-05. |
 | 2026-06-17 / 6.1.21 | #112 rebuilt/replaced the downloadable table as `hahacj.limedb` for the June table and Lime end keys | This post-#91 rebuild produced the malformed IDs/content later exposed by #194. |
 | 6.1.21–6.1.36 | Every release tag carrying `hahacj.limedb` contains byte-identical archive content | The table was not rebuilt again before #194; 6.1.36 still carries the 6.1.21 artifact. |
-| 2026-07-23 / PR #195 | Rebuilt from the final `20260723_082459` source with deterministic source-order IDs | Pending merge and platform delivery verification. |
+| 2026-07-25 / PR #195 | Rebuilt from the final `20260723_082459` source with deterministic source-order IDs; final head `b18963a87e029429cc617be9c9edd9fa73d6679b` merged as `722dcbf095fe2f8da2c00923bfe1eca467446ad0` | Source fixed; platform delivery and reporter verification remain pending. |
 
 Therefore, the regression is specifically tied to the **#112 database rebuild after #91**, not to a later query-code regression between 6.1.21 and 6.1.36.
 
@@ -145,9 +145,13 @@ iOS downloads the same corrected archive and already uses `_id ASC` when sorting
 - Android unit tests and Android-test compilation: passed.
 - Ponytail review removed speculative platform SQL/tests and aligned the archive with the existing `code` index and DEFLATE conventions.
 - Claude Code review found one stale catalog-size blocker from an intermediate snapshot; both catalogs now match the final 508,390-byte archive at 496 KB. CI correctly retains semantic archive validation rather than cross-toolchain byte equality.
-- macOS/Xcode XCTest and device-tier runtime checks remain before merge/reporter retest.
+- The merged implementation/test tree is identical to the final reviewed PR head.
+- Post-merge Python 哈哈倉頡 and repository-wide archive-contract suites pass on the merge commit.
+- macOS/Xcode XCTest and device-tier runtime checks remain before iOS delivery/reporter retest.
 
 ## Release/retest gate
+
+The current public v6.1.36 release target `4060a46e585c9e46321953736c60335f40f7db94` predates PR #195 and does not contain this fix. Do not request a retest against v6.1.36.
 
 Before asking the reporter to verify:
 
