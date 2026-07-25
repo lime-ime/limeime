@@ -1491,6 +1491,32 @@ final class KeyboardViewControllerTest: XCTestCase {
                 + "false falls through to handleCharacter(44) and inserts the comma a second time")
     }
 
+    /// Behavioral end-to-end: drive the real onKey() handler for the declared-root/no-candidate
+    /// case and assert the composing buffer holds exactly one appended root ("v,"), not "v,,".
+    /// Pre-fix, commitComposingWithAppendedEndkey returned false, onKey fell through to
+    /// handleCharacter(44), and the comma was appended a second time; the fix consumes the key once
+    /// and refreshes the strip. This exercises the actual input path, not just the source shape.
+    @MainActor
+    func testDeclaredPunctuationRootDrivesSingleAppendAndClearsStrip() {
+        let controller = KeyboardViewController()
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        controller._testConfigureDeclaredEndkeyPath(
+            imkeys: "abcdefghijklmnopqrstuvwxyz,",
+            limeendkey: ",",
+            composing: "v",
+            candidateBar: bar)
+
+        controller._testDriveKey(44)   // ','
+
+        XCTAssertEqual(controller._testComposing, "v,",
+            "declared root must be appended exactly once; \"v,,\" means onKey fell through to "
+                + "handleCharacter and double-inserted the punctuation (Android #198 parity)")
+        XCTAssertEqual(controller._testCandidateCount, 0,
+            "the unresolved combined code must leave no stale candidates in the strip (Android #206 parity)")
+        XCTAssertFalse(controller._testHasCandidatesShown,
+            "the pre-append candidate strip must not remain shown after an unresolved declared root")
+    }
+
     /// Android #198 parity (RED until fixed): the appended declared root must be consumed even when
     /// the combined code has no candidate, instead of returning the unresolved result and letting the
     /// caller double-insert via handleCharacter().

@@ -6190,3 +6190,41 @@ final class EmojiPanelView: UIView, UITextFieldDelegate, UIScrollViewDelegate {
         return true
     }
 }
+
+#if DEBUG
+// Test-only seam for behavioral end-key tests. Swift `private` is visible to same-file
+// extensions, so this reaches the input path without widening production visibility.
+// Used by KeyboardViewControllerTest to drive the declared punctuation-root path (docs/#196)
+// and assert there is no double-insert and the candidate strip is reconciled.
+extension KeyboardViewController {
+    /// Configure a table that declares the punctuation as a literal root, with no candidate for
+    /// the combined code (searchServer nil), then leave the controller ready to receive one key.
+    func _testConfigureDeclaredEndkeyPath(imkeys: String,
+                                          limeendkey: String,
+                                          composing: String,
+                                          candidateBar bar: CandidateBarView) {
+        activeIM = "lime_test_endkey"        // didSet clears imConfigCache — populate it AFTER
+        imConfigCache["imkeys"] = imkeys
+        imConfigCache["limeendkey"] = limeendkey
+        currentImKeys = imkeys
+        mComposing = composing
+        composingLength = composing.count
+        selectedCandidate = nil
+        mCandidateList = []
+        hasCandidatesShown = false
+        candidateBar = bar
+        searchServer = nil                   // no candidate for the combined code
+        mPredictionOn = false                // updateCandidates() → clearSuggestions() (no async DB)
+        mEnglishOnly = false
+        autoChineseSymbol = false            // keep clearSuggestions on its plain-clear branch
+        isShiftOn = false
+    }
+
+    /// Drive the real key handler for one primary code.
+    func _testDriveKey(_ primaryCode: Int) { onKey(primaryCode: primaryCode) }
+
+    var _testComposing: String { mComposing }
+    var _testCandidateCount: Int { mCandidateList.count }
+    var _testHasCandidatesShown: Bool { hasCandidatesShown }
+}
+#endif
