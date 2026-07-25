@@ -81,7 +81,11 @@ Confirmed affected. The reporter tested Android 6.1.36, and the Android source p
 
 ### iOS
 
-Not confirmed affected. iOS separates ordinary punctuation acceptance (`KeyboardViewController.isKeyInImkeys`, which accepts comma/period globally) from end-key root detection (`LimeEndkeyPolicy.isKeyInImkeys`, which checks literal `imkeys` membership). Its end-key dispatcher already uses the literal policy helper, so the Android conflation is not present in the inspected iOS source. No iOS production change is proposed.
+The original routing conflation is not present. iOS separates ordinary punctuation acceptance (`KeyboardViewController.isKeyInImkeys`, which accepts comma/period globally) from end-key root detection (`LimeEndkeyPolicy.isKeyInImkeys`, which checks literal `imkeys` membership). Its end-key dispatcher already uses the literal policy helper, so the reporter's alphabetic-`imkeys` configuration routes correctly and commits `好，`.
+
+However, the follow-up hardening was missing on the declared-root path (a table that lists the punctuation literally in `imkeys` and as a Lime end key). iOS `commitComposingWithAppendedEndkey()` returned `commitResolvedEndkeyComposing()` directly, so an unresolved combined code returned `false`; `handleLimeEndkeyCommit()` then propagated that `false` and the caller (`if handleLimeEndkeyCommit(code) { … }; handleCharacter(code)`) re-processed the key, double-inserting the punctuation the append had already inserted, and never refreshed the candidate strip. This is the iOS parallel of the Android `#198` (consume-once) and `#206` (refresh strip) fixes.
+
+Android-parity tests in `KeyboardViewControllerTest` confirmed the gap on the booted iPhone 17 Pro Max simulator: a behavioral test shows the declared root is re-accepted into composing (the double-insert mechanism), and two source-parity tests failed RED against the pre-fix source. The iOS correction mirrors Android — consume the appended root once and call `updateCandidates()` when nothing commits — after which the parity tests pass GREEN and the existing end-key routing/policy tests continue to pass. Reporter/device retest of a newer build remains required before closing #196.
 
 ## Follow-up questions
 

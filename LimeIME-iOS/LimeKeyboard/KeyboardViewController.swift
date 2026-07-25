@@ -2210,7 +2210,14 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     private func commitComposingWithAppendedEndkey(_ primaryCode: Int) -> Bool {
         guard appendEndkeyToComposing(primaryCode) else { return false }
-        return commitResolvedEndkeyComposing()
+        // The declared root was already appended. Consume this key even when the combined code
+        // has no candidate; returning false would fall through to handleCharacter() and insert the
+        // same punctuation a second time. When nothing commits, refresh the candidate strip so it
+        // reflects the combined code instead of continuing to represent the pre-append code.
+        if !commitResolvedEndkeyComposing() {
+            updateCandidates()
+        }
+        return true
     }
 
     private func commitCurrentEndkeyComposing() -> Bool {
