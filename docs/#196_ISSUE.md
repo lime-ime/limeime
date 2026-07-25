@@ -7,9 +7,9 @@
 - Reporter: `ejmoog`
 - Reported version: Android 6.1.36
 - Related completed scope: #95 / #96 introduced opt-in Lime end-key behavior and was verified on Android 6.1.16.
-- Fix: PR #198, final head `74df302bfc7968450c5389f89d75ec9759d2ba6a`, merged as `a96dcef659aa20796f6cab2edefe091de24823de`.
+- Fixes: PR #198, final head `74df302bfc7968450c5389f89d75ec9759d2ba6a`, merged as `a96dcef659aa20796f6cab2edefe091de24823de`; follow-up PR #206, final head `ebb2280170023574be9e2f51685909aef440bed7`, merged as `7ccc47a821e2e6bfe1c68189b875769e2cd75117`.
 - Distribution boundary: the current GitHub Release remains v6.1.36 at `4060a46e585c9e46321953736c60335f40f7db94`, which predates the fixing merge. Its live Android asset is `LIMEHD2026-6.1.36.apk` (7,114,460 bytes, SHA-256 `995462d0ffb61b8b4910efa9096b86bce4ecd39177ce47a5bf0b7918b666898e`). No reporter-testable release containing this fix exists yet.
-- Review boundary: compact merged-tree review confirmed that the reporter's absent-root route uses the new literal `imkeys` check, but the adjacent unresolved declared-root route still consumes the key after changing `mComposing` without refreshing candidates when the combined code has no mapping. That can leave editor composition at `v,` while the candidate strip still represents `v`; the merged regression sets `mPredictionOn=false` and checks only `mComposing`, so it did not cover this stale-state path. This release blocker (and the related stale candidate-selection exposure) was corrected in the #206 follow-up below and must ship before distributing the change.
+- Review boundary: compact review of PR #198 found an adjacent unresolved declared-root stale-state path. PR #206 corrected that Android path, the corresponding iOS consume/refresh path, and the stale candidate-selection exposure on both platforms. Its final head is byte-identical to the merged tree and must be included in the next reporter-testable builds.
 
 ## Problem statement
 
@@ -68,7 +68,7 @@ A second review found that the strip refresh alone was insufficient on Android: 
 
 An independent review of the corrected head found the same class of exposure on iOS, contrary to an initial assumption that iOS needed no production change. iOS `resolveEndkeySelectedCandidate()` returns nil on the empty combined-code query without touching the model, and when `mPredictionOn` is true `updateCandidates()` dispatches an asynchronous DB query and only reconciles state through `clearSuggestions()` on the main-thread completion. During that async window the pre-append `selectedCandidate`/`mCandidateList`/`hasCandidatesShown == true` survive, and a soft selection key (Space/Enter/arrows, all gated on `hasCandidatesShown`) reaches `pickHighlightedCandidate()` → `commitTyped()` and could commit the stale candidate while the buffer holds `v,`. iOS `commitComposingWithAppendedEndkey()` now performs the same synchronous reset before `updateCandidates()`. iOS selection is by explicit `Mapping` (no index-into-`mCandidateList`), so no list-index path exists. A behavioral iOS test drives the real `mPredictionOn = true` async path through a `#if DEBUG` same-file seam with a `SpyLimeDB`-backed `SearchServer` returning no results and asserts synchronously that the stale selection is already dropped; it fails RED against the pre-correction code and passes GREEN with the synchronous reset. Sibling methods (`commitFreshEndkeyOrRaw`, `commitCurrentEndkeyComposing`) clear the composing buffer on their no-commit paths and carry no equivalent stale-selection risk. The "combined code has candidates but none end-key-committable" sub-case is preserved because `updateCandidates()` re-queries and re-shows them; this is established by code review (two independent passes traced it) rather than a dedicated regression, since asserting the async re-query timing deterministically at unit level is impractical.
 
-Verified on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator: production and test sources compile; each new regression fails RED against the pre-correction code and passes GREEN with it; and the adjacent declared-root and punctuation end-key regressions continue to pass. Reporter/device retest of a newer build remains required before closing #196.
+Verified on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator: production and test sources compile; each new regression fails RED against the pre-correction code and passes GREEN with it; and the adjacent declared-root and punctuation end-key regressions continue to pass. Issue #196 remains maintainer-closed. A newer build and reporter confirmation are separate post-merge release follow-up, not PR acceptance requirements.
 
 ## Implemented source solution
 
@@ -77,7 +77,7 @@ Verified on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator: p
 - Use that declared-root check only in Android end-key routing.
 - Keep append-to-code behavior for tables that explicitly declare the end key as a root, and consume the already-appended key even when the combined code has no immediate candidate so outer routing cannot append it again.
 - Keep tables without Lime end-key metadata unchanged.
-- Follow up the merged unresolved declared-root branch so one append also refreshes editor/candidate state instead of leaving stale candidates.
+- Refresh editor/candidate state after an unresolved declared-root append and synchronously clear stale selection state on Android and iOS.
 
 ## Platform impact analysis
 
@@ -91,7 +91,7 @@ The original routing conflation is not present. iOS separates ordinary punctuati
 
 However, the follow-up hardening was missing on the declared-root path (a table that lists the punctuation literally in `imkeys` and as a Lime end key). iOS `commitComposingWithAppendedEndkey()` returned `commitResolvedEndkeyComposing()` directly, so an unresolved combined code returned `false`; `handleLimeEndkeyCommit()` then propagated that `false` and the caller (`if handleLimeEndkeyCommit(code) { … }; handleCharacter(code)`) re-processed the key, double-inserting the punctuation the append had already inserted, and never refreshed the candidate strip. This is the iOS parallel of the Android `#198` (consume-once) and `#206` (refresh strip) fixes.
 
-Behavioral tests in `KeyboardViewControllerTest` confirmed the gap on the booted iPhone 17 Pro Max simulator, driving the real `onKey()` handler through a `#if DEBUG` same-file test seam (no production visibility widening). One test asserts the composing buffer holds exactly one appended root: it fails RED against the pre-fix source with `mComposing == "v,,"` (the caller fell through to `handleCharacter` and double-inserted) and passes GREEN with the fix at `"v,"`. A second test drives the real `mPredictionOn = true` async path with a `SpyLimeDB`-backed `SearchServer` returning no results and asserts synchronously that the stale selection is already dropped (RED without the synchronous reset, GREEN with it). The iOS correction mirrors Android — consume the appended root once, synchronously drop the stale selection, and call `updateCandidates()` when nothing commits — after which these tests pass GREEN and the existing end-key routing/policy tests continue to pass. Reporter/device retest of a newer build remains required before closing #196.
+Behavioral tests in `KeyboardViewControllerTest` confirmed the gap on the booted iPhone 17 Pro Max simulator, driving the real `onKey()` handler through a `#if DEBUG` same-file test seam (no production visibility widening). One test asserts the composing buffer holds exactly one appended root: it fails RED against the pre-fix source with `mComposing == "v,,"` (the caller fell through to `handleCharacter` and double-inserted) and passes GREEN with the fix at `"v,"`. A second test drives the real `mPredictionOn = true` async path with a `SpyLimeDB`-backed `SearchServer` returning no results and asserts synchronously that the stale selection is already dropped (RED without the synchronous reset, GREEN with it). The iOS correction mirrors Android — consume the appended root once, synchronously drop the stale selection, and call `updateCandidates()` when nothing commits — after which these tests pass GREEN and the existing end-key routing/policy tests continue to pass. A newer iOS build and device validation remain post-merge release QA.
 
 ## Follow-up questions
 
@@ -104,9 +104,9 @@ Done (#206 follow-up):
 1. Added focused regressions proving an unresolved declared punctuation root consumes the key once, refreshes the strip, and drops the stale candidate selection, and corrected the stale-state path.
 2. Ran the new focused Android instrumentation tests (unresolved declared-root, stale-selection, and adjacent declared-root paths) on a Pixel 9 Pro API 37 emulator — RED against the pre-fix code, GREEN with it.
 3. Ran the iOS end-key behavioral and routing/policy tests on the iPhone 17 Pro Max simulator — RED/GREEN confirmed.
-4. Production and Android-test compilation, plus merged-tree Android unit tests and lint, passed at merge `a96dcef659aa20796f6cab2edefe091de24823de` and the #206 head.
+4. Production and Android-test compilation, Android unit tests, and lint passed again on exact merge `7ccc47a821e2e6bfe1c68189b875769e2cd75117`. The final PR head `ebb2280170023574be9e2f51685909aef440bed7` is byte-identical to that merged tree.
 
-Pending (before closing #196):
+Post-merge release QA (issue #196 remains maintainer-closed):
 
 5. Interactive device/emulator check: configure a table with alphabetic `imkeys` and `limeendkey=,.`, then confirm `v` followed by `,` commits `好，` without leaving punctuation composing, and that an explicitly declared punctuation root keeps exactly one appended root with matching editor and candidate state.
 6. Confirm a table without `limeendkey` retains ordinary comma/period composition behavior.
