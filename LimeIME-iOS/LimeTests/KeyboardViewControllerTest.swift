@@ -1464,32 +1464,12 @@ final class KeyboardViewControllerTest: XCTestCase {
 
     // MARK: - #196 follow-up: declared punctuation-root end key parity with Android
     //
-    // Android LIMEService.commitComposingWithAppendedEndkey() was hardened in two steps on the
-    // declared-root path (a table that lists the punctuation literally in imkeys and as a Lime
-    // end key), for the case where the appended combined code (e.g. "v," after "v") has no
-    // committable candidate:
-    //   #198 — consume the key once (return true) so onKey() cannot fall through to
-    //          handleCharacter() and append the same punctuation a second time.
-    //   #206 — call updateCandidates() when nothing commits, so the candidate strip reflects the
-    //          combined code instead of the pre-append code.
-    // iOS commitComposingWithAppendedEndkey() still `return commitResolvedEndkeyComposing()`
-    // directly: a false return propagates out of handleLimeEndkeyCommit(), and the caller
-    // (`if handleLimeEndkeyCommit(code) { ... }; handleCharacter(code)`) then re-processes the
-    // key. The two source-parity tests below encode the Android contract and are RED until iOS
-    // adopts the same consume-and-refresh handling.
-
-    /// Behavioral: with the punctuation re-accepted into composing, the caller's fall-through to
-    /// handleCharacter() re-inserts it — the double-insert Android #198 removed. Passes today and
-    /// documents the mechanism the parity fix must close.
-    @MainActor
-    func testDeclaredPunctuationRootIsReAcceptedIntoComposingEnablingDoubleInsert() {
-        let controller = KeyboardViewController()
-        controller.currentImKeys = "abcdefghijklmnopqrstuvwxyz,"
-        XCTAssertTrue(
-            controller.acceptsIntoComposing(code: 44, hasSymbol: false, hasNumber: false, isPhonetic: false),
-            "comma is re-accepted into composing, so an unresolved declared-root append that returns "
-                + "false falls through to handleCharacter(44) and inserts the comma a second time")
-    }
+    // On the declared-root path (a table that lists the punctuation literally in imkeys and as a
+    // Lime end key), when the appended combined code (e.g. "v," after "v") has no committable
+    // candidate, iOS must — like Android — consume the key once (no double-insert via the
+    // handleCharacter() fall-through), refresh the candidate strip, and synchronously drop the stale
+    // pre-append selection. The behavioral tests below drive the real onKey() handler through a
+    // #if DEBUG same-file seam to prove each of those.
 
     /// Behavioral end-to-end: drive the real onKey() handler for the declared-root/no-candidate
     /// case and assert the composing buffer holds exactly one appended root ("v,"), not "v,,".
@@ -1554,46 +1534,6 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(controller._testCandidateCount, 0)
         XCTAssertFalse(controller._testHasCandidatesShown,
             "hasCandidatesShown gates soft Space/Enter/arrow selection; it must be false synchronously")
-    }
-
-    /// Android #198 parity (RED until fixed): the appended declared root must be consumed even when
-    /// the combined code has no candidate, instead of returning the unresolved result and letting the
-    /// caller double-insert via handleCharacter().
-    func testCommitComposingWithAppendedEndkeyConsumesUnresolvedDeclaredRootForAndroidParity() throws {
-        let body = try commitComposingWithAppendedEndkeyBody()
-        XCTAssertFalse(
-            body.contains("return commitResolvedEndkeyComposing()"),
-            "iOS returns the unresolved commit result directly; a false return falls through to "
-                + "handleCharacter(code) and double-inserts the declared root (Android #198 parity gap)")
-        XCTAssertTrue(
-            body.contains("return true"),
-            "iOS must consume the appended declared root once, even when the combined code is unresolved")
-    }
-
-    /// Android #206 parity (RED until fixed): when nothing commits, the candidate strip must be
-    /// refreshed to the combined code so it does not keep representing the pre-append code.
-    func testCommitComposingWithAppendedEndkeyRefreshesCandidateStripWhenUnresolvedForAndroidParity() throws {
-        let body = try commitComposingWithAppendedEndkeyBody()
-        XCTAssertTrue(
-            body.contains("updateCandidates()"),
-            "iOS leaves mCandidateList/selectedCandidate/hasCandidatesShown representing the pre-append "
-                + "code on an unresolved declared root; it must call updateCandidates() (Android #206 parity gap)")
-    }
-
-    /// Returns the source body of `commitComposingWithAppendedEndkey(_:)` (signature → next method).
-    private func commitComposingWithAppendedEndkeyBody() throws -> String {
-        let source = try String(
-            contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
-            encoding: .utf8
-        )
-        let signature = "private func commitComposingWithAppendedEndkey(_ primaryCode: Int) -> Bool {"
-        guard let start = source.range(of: signature) else {
-            XCTFail("commitComposingWithAppendedEndkey(_:) not found; end-key routing changed")
-            return ""
-        }
-        let rest = source[start.upperBound...]
-        let end = rest.range(of: "\n    private func ") ?? rest.range(of: "\n    func ")
-        return end != nil ? String(rest[..<end!.lowerBound]) : String(rest)
     }
 
     func testSettingsGroupedSurfacesMatchSetupTabColors() throws {
