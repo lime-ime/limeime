@@ -9,11 +9,24 @@ env:
 jobs:
   release:
     name: Create Release
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify downloadable database integrity
+        run: |
+          BASE_REF="$(git describe --tags --abbrev=0 HEAD^)"
+          python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"
+          python3 scripts/test_hahacj_limedb.py
 
       - name: Read version from build.gradle
         id: version
