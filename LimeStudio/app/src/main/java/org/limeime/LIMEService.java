@@ -2425,9 +2425,17 @@ public class LIMEService extends InputMethodService
         // handleCharacter() and append the same punctuation a second time.
         if (!commitResolvedEndkeyComposing()) {
             // Nothing was committed, so the appended root stays in the composing buffer
-            // awaiting further input. Refresh the candidate strip for the combined code;
-            // otherwise mCandidateView/mCandidateList/selectedCandidate keep representing
-            // the pre-append code while the editor already shows the appended root.
+            // awaiting further input. Drop any stale pre-append selection first: a physical
+            // selection key reads mCandidateList/selectedCandidate (gated on hasCandidatesShown)
+            // and could otherwise commit the pre-append candidate while the buffer holds the
+            // appended root. clearSuggestions()/hideCandidateView() only refresh the view, not
+            // this model state, so reset it here, then refresh the strip for the combined code.
+            selectedCandidate = null;
+            if (mCandidateList != null) {
+                mCandidateList.clear();
+            }
+            hasMappingList = false;
+            hasCandidatesShown = false;
             updateCandidates();
         }
         return true;

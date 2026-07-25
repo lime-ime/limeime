@@ -2212,9 +2212,18 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         guard appendEndkeyToComposing(primaryCode) else { return false }
         // The declared root was already appended. Consume this key even when the combined code
         // has no candidate; returning false would fall through to handleCharacter() and insert the
-        // same punctuation a second time. When nothing commits, refresh the candidate strip so it
-        // reflects the combined code instead of continuing to represent the pre-append code.
+        // same punctuation a second time.
         if !commitResolvedEndkeyComposing() {
+            // Synchronously drop the stale pre-append selection. updateCandidates() only reconciles
+            // this state on its async DB-query completion when mPredictionOn is true, so until then a
+            // soft selection key (Space/Enter/arrows, gated on hasCandidatesShown) could commit the
+            // pre-append candidate while the buffer holds the appended root. Reset here, then refresh
+            // the strip for the combined code.
+            selectedCandidate = nil
+            mCandidateList = []
+            hasCandidatesShown = false
+            hasChineseSymbolCandidatesShown = false
+            isShowingRelatedPhrases = false
             updateCandidates()
         }
         return true
@@ -6202,19 +6211,32 @@ extension KeyboardViewController {
     func _testConfigureDeclaredEndkeyPath(imkeys: String,
                                           limeendkey: String,
                                           composing: String,
-                                          candidateBar bar: CandidateBarView) {
+                                          candidateBar bar: CandidateBarView,
+                                          preloadStaleWord: String? = nil,
+                                          predictionOn: Bool = false,
+                                          searchServer injectedSearchServer: SearchServer? = nil) {
         activeIM = "lime_test_endkey"        // didSet clears imConfigCache — populate it AFTER
         imConfigCache["imkeys"] = imkeys
         imConfigCache["limeendkey"] = limeendkey
         currentImKeys = imkeys
         mComposing = composing
         composingLength = composing.count
-        selectedCandidate = nil
-        mCandidateList = []
-        hasCandidatesShown = false
+        if let word = preloadStaleWord {
+            // Seed the pre-append selection for `composing`, as a tapped/selected candidate leaves it.
+            let stale = Mapping(id: 1, code: composing, word: word, score: 0, baseScore: 0)
+            mCandidateList = [stale]
+            selectedCandidate = stale
+            hasCandidatesShown = true
+        } else {
+            selectedCandidate = nil
+            mCandidateList = []
+            hasCandidatesShown = false
+        }
         candidateBar = bar
-        searchServer = nil                   // no candidate for the combined code
-        mPredictionOn = false                // updateCandidates() → clearSuggestions() (no async DB)
+        // With a searchServer + predictionOn, updateCandidates() takes the real async DB path; with
+        // neither it short-circuits to a synchronous clearSuggestions().
+        searchServer = injectedSearchServer
+        mPredictionOn = predictionOn
         mEnglishOnly = false
         autoChineseSymbol = false            // keep clearSuggestions on its plain-clear branch
         isShiftOn = false
@@ -6226,5 +6248,6 @@ extension KeyboardViewController {
     var _testComposing: String { mComposing }
     var _testCandidateCount: Int { mCandidateList.count }
     var _testHasCandidatesShown: Bool { hasCandidatesShown }
+    var _testSelectedCandidateWord: String? { selectedCandidate?.word }
 }
 #endif
