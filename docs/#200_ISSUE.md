@@ -3,7 +3,7 @@
 ## Live issue state
 
 - Issue: https://github.com/lime-ime/limeime/issues/200
-- Status: issue remains open; PR #207 merged the Android source fix as `f57cca9ca36a845a76b2074ab2e68c2f05461abe` from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`. The fix is delivered in verified GitHub Release APK v6.1.37; original-reporter confirmation remains pending outside this issue.
+- Status: issue remains open; PR #207 merged the Android source fix as `f57cca9ca36a845a76b2074ab2e68c2f05461abe` from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`. The fix is delivered in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`; original-reporter confirmation remains pending outside this issue.
 - Reporter: physical Samsung reproduction by the maintainer; original reporter on `ASUS_AI2202`.
 - Reported version: Android LIME 6.1.36, LINE 26.11.0.
 

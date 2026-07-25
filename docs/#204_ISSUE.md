@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/204
 - Labels: `bug`, `Usability`
-- Status: root-caused by code inspection; the layout fix is delivered for Android in verified GitHub Release APK v6.1.37, and the targeted Android retest request is https://github.com/lime-ime/limeime/issues/204#issuecomment-5079729548. Android reporter confirmation and separate iOS diagnosis/delivery remain pending.
+- Status: root-caused by code inspection; the layout fix is delivered for Android in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`, and the targeted Android retest request is https://github.com/lime-ime/limeime/issues/204#issuecomment-5079729548. iOS v6.1.37 build 27 is `VALID`, `APP_STORE_ELIGIBLE`, and submitted with state `WAITING_FOR_REVIEW`. Android reporter confirmation, iOS public rollout, and separate diagnosis of the supplementary iOS report remain pending.
 - Reporters: `01disney` (Android, Taishin Bank transfer-amount field); `SmithCCho` (supplementary iOS report on 6.1.36).
 - Reported version: iOS LIME 6.1.36 for the supplementary report; the Android report does not name a version.
 

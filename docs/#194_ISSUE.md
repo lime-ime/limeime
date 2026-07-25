@@ -2,9 +2,9 @@
 
 ## Current status
 
-Source fixed by merged PR #195 and delivered for Android in verified GitHub Release APK v6.1.37. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. The targeted Android retest request is https://github.com/lime-ime/limeime/issues/194#issuecomment-5079729445. Reporter confirmation and separately verified iOS delivery remain pending.
+Source fixed by merged PR #195 and delivered for Android in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. The targeted Android retest request is https://github.com/lime-ime/limeime/issues/194#issuecomment-5079729445. iOS v6.1.37 build 27 passed all required Xcode Cloud actions, is `VALID` and `APP_STORE_ELIGIBLE`, and is submitted with state `WAITING_FOR_REVIEW`. Reporter confirmation and iOS public rollout remain pending.
 
-The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Do not request reporter retest until a usable build contains the fix.
+The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Android v6.1.37 contains the fix; reporter retesting still requires removing and re-downloading 哈哈倉頡 first.
 
 Issue: https://github.com/lime-ime/limeime/issues/194
 
