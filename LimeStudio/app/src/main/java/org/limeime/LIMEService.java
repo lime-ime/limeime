@@ -2436,6 +2436,7 @@ public class LIMEService extends InputMethodService
             }
             hasMappingList = false;
             hasCandidatesShown = false;
+            hasChineseSymbolCandidatesShown = false;
             updateCandidates();
         }
         return true;

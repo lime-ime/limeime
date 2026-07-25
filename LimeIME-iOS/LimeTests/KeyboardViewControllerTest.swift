@@ -1517,29 +1517,11 @@ final class KeyboardViewControllerTest: XCTestCase {
             "the pre-append candidate strip must not remain shown after an unresolved declared root")
     }
 
-    /// Behavioral: preload the pre-append selection for "v" and drive the real onKey() handler.
-    /// The unresolved combined code must drop the stale selection model (not just the visible strip)
-    /// so it cannot be committed while the buffer holds the appended root.
-    @MainActor
-    func testDeclaredPunctuationRootWithoutCombinedCandidateClearsStaleSelection() {
-        let controller = KeyboardViewController()
-        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
-        controller._testConfigureDeclaredEndkeyPath(
-            imkeys: "abcdefghijklmnopqrstuvwxyz,",
-            limeendkey: ",",
-            composing: "v",
-            candidateBar: bar,
-            preloadStaleWord: "好")
-
-        controller._testDriveKey(44)   // ','
-
-        XCTAssertEqual(controller._testComposing, "v,")
-        XCTAssertNil(controller._testSelectedCandidateWord,
-            "the pre-append selection \"好\" must be dropped, not left committable while composing \"v,\"")
-        XCTAssertEqual(controller._testCandidateCount, 0,
-            "the stale candidate list must be cleared for the unresolved combined code")
-        XCTAssertFalse(controller._testHasCandidatesShown)
-    }
+    // Note: the stale-selection drop is proven by the mPredictionOn=true test below. A
+    // mPredictionOn=false variant is intentionally omitted: with no searchServer,
+    // updateCandidates() short-circuits to a synchronous clearSuggestions() that already nils
+    // selectedCandidate / empties mCandidateList, so such a test would pass with or without the
+    // explicit reset (not RED-proving). The real Chinese-IME path is mPredictionOn=true.
 
     /// Behavioral, real async path: with mPredictionOn=true and a searchServer, updateCandidates()
     /// dispatches an async DB query and only reconciles state on completion — so the stale selection
