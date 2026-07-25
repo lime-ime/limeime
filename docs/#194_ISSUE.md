@@ -2,7 +2,7 @@
 
 ## Current status
 
-Source fixed by merged PR #195. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. Reporter verification still requires a newer build containing the corrected archive.
+Source fixed by merged PR #195 and delivered for Android in verified GitHub Release APK v6.1.37. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. The targeted Android retest request is https://github.com/lime-ime/limeime/issues/194#issuecomment-5079729445. Reporter confirmation and separately verified iOS delivery remain pending.
 
 The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Do not request reporter retest until a usable build contains the fix.
 
@@ -151,7 +151,7 @@ iOS downloads the same corrected archive and already uses `_id ASC` when sorting
 
 ## Release/retest gate
 
-The current public v6.1.36 release target `4060a46e585c9e46321953736c60335f40f7db94` predates PR #195 and does not contain this fix. Do not request a retest against v6.1.36.
+GitHub Release v6.1.37 targets `d4e8840e9a7080a7980036284952f50ef6ccf3d7` and contains PR #195. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`). The reporter was asked to remove and re-download 哈哈倉頡, disable selection sorting, and verify `j → 都, 十`. Do not infer iOS App Store delivery from the GitHub release.
 
 Before asking the reporter to verify:
 

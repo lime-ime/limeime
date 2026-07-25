@@ -8,8 +8,8 @@
 - Reported version: Android 6.1.36
 - Related completed scope: #95 / #96 introduced opt-in Lime end-key behavior and was verified on Android 6.1.16.
 - Fixes: PR #198, final head `74df302bfc7968450c5389f89d75ec9759d2ba6a`, merged as `a96dcef659aa20796f6cab2edefe091de24823de`; follow-up PR #206, final head `ebb2280170023574be9e2f51685909aef440bed7`, merged as `7ccc47a821e2e6bfe1c68189b875769e2cd75117`.
-- Distribution boundary: the current GitHub Release remains v6.1.36 at `4060a46e585c9e46321953736c60335f40f7db94`, which predates the fixing merge. Its live Android asset is `LIMEHD2026-6.1.36.apk` (7,114,460 bytes, SHA-256 `995462d0ffb61b8b4910efa9096b86bce4ecd39177ce47a5bf0b7918b666898e`). No reporter-testable release containing this fix exists yet.
-- Review boundary: compact review of PR #198 found an adjacent unresolved declared-root stale-state path. PR #206 corrected that Android path, the corresponding iOS consume/refresh path, and the stale candidate-selection exposure on both platforms. Its final head is byte-identical to the merged tree and must be included in the next reporter-testable builds.
+- Distribution boundary: GitHub Release v6.1.37 at `d4e8840e9a7080a7980036284952f50ef6ccf3d7` contains both fixing merges. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`). The targeted reporter retest request is https://github.com/lime-ime/limeime/issues/196#issuecomment-5079729489. Reporter confirmation and separately verified iOS delivery remain pending.
+- Review boundary: compact review of PR #198 found an adjacent unresolved declared-root stale-state path. PR #206 corrected that Android path, the corresponding iOS consume/refresh path, and the stale candidate-selection exposure on both platforms. Its final head is byte-identical to the merged tree and is included in Android v6.1.37; separately verified iOS delivery remains pending.
 
 ## Problem statement
 
@@ -83,7 +83,7 @@ Verified on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator: p
 
 ### Android
 
-Confirmed affected. The reporter tested Android 6.1.36, and the Android source path reproduces the routing error. The Android-only source fix merged as `a96dcef659aa20796f6cab2edefe091de24823de`. The adjacent declared-root stale-candidate blocker was subsequently corrected in the #206 follow-up and verified on a Pixel 9 Pro API 37 emulator; delivery and reporter-visible confirmation remain pending because the public v6.1.36 predates these changes and requires a newer reporter-testable build.
+Confirmed affected. The reporter tested Android 6.1.36, and the Android source path reproduces the routing error. The Android-only source fix merged as `a96dcef659aa20796f6cab2edefe091de24823de`. The adjacent declared-root stale-candidate blocker was subsequently corrected in the #206 follow-up and verified on a Pixel 9 Pro API 37 emulator. Both fixes are delivered in the verified v6.1.37 GitHub testing APK; reporter confirmation remains pending.
 
 ### iOS
 
@@ -95,7 +95,7 @@ Behavioral tests in `KeyboardViewControllerTest` confirmed the gap on the booted
 
 ## Follow-up questions
 
-No additional reporter information is required. The maintainer closed the issue when PR #198 merged. The merged declared-root stale-candidate blocker was corrected in the #206 follow-up and its connected/runtime instrumentation run on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator. Do not post a retest request until a newer reporter-testable Android build contains the corrected source; then request confirmation of the exact `v` then `,` → `好，` behavior.
+No additional reporter information is required. The maintainer closed the issue when PR #198 merged. The merged declared-root stale-candidate blocker was corrected in the #206 follow-up and its connected/runtime instrumentation run on a Pixel 9 Pro API 37 emulator and the iPhone 17 Pro Max simulator. Verified Android v6.1.37 now contains the corrected source, and the reporter was asked to confirm the exact `v` then `,` → `好，` behavior while also checking that stale candidates do not remain.
 
 ## Verification plan
 
@@ -110,4 +110,4 @@ Post-merge release QA (issue #196 remains maintainer-closed):
 
 5. Interactive device/emulator check: configure a table with alphabetic `imkeys` and `limeendkey=,.`, then confirm `v` followed by `,` commits `好，` without leaving punctuation composing, and that an explicitly declared punctuation root keeps exactly one appended root with matching editor and candidate state.
 6. Confirm a table without `limeendkey` retains ordinary comma/period composition behavior.
-7. Ask the reporter to retest only after a newer Android build containing the corrected source is available. The issue remains closed by explicit maintainer action until that boundary exists.
+7. Reporter retest was requested against verified Android v6.1.37 at https://github.com/lime-ime/limeime/issues/196#issuecomment-5079729489. Preserve the maintainer-closed issue state while awaiting confirmation.

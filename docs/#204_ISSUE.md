@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/204
 - Labels: `bug`, `Usability`
-- Status: root-caused by code inspection; layout fix implemented on both platforms (branch `fix/204-phone-number-decimal-key`), reporter retest pending.
+- Status: root-caused by code inspection; the layout fix is delivered for Android in verified GitHub Release APK v6.1.37, and the targeted Android retest request is https://github.com/lime-ime/limeime/issues/204#issuecomment-5079729548. Android reporter confirmation and separate iOS diagnosis/delivery remain pending.
 - Reporters: `01disney` (Android, Taishin Bank transfer-amount field); `SmithCCho` (supplementary iOS report on 6.1.36).
 - Reported version: iOS LIME 6.1.36 for the supplementary report; the Android report does not name a version.
 
@@ -79,7 +79,7 @@ Gap: there is no dedicated regression test asserting `phone_number`'s key set, s
 
 - Both layout files parse; parity verified as above (2026-07-26).
 - Maintainer confirmed on 2026-07-26 that the updated layout renders correctly on iOS.
-- Android on-device confirmation on the Samsung `SM-A1760` and reporter retest in the Taishin app are pending a rebuilt, reporter-testable build.
+- The rebuilt v6.1.37 GitHub testing APK is verified and contains the layout change. Android on-device confirmation on the Samsung `SM-A1760` and reporter retest in the Taishin app remain pending.
 
 ## Scope and limits
 
@@ -91,7 +91,7 @@ Gap: there is no dedicated regression test asserting `phone_number`'s key set, s
 
 ### Android
 
-Confirmed affected by code inspection and fixed as above. Delivery and reporter confirmation are pending a newer reporter-testable build.
+Confirmed affected by code inspection and fixed as above. The corrected layout is delivered in the verified v6.1.37 GitHub testing APK; Android reporter confirmation remains pending.
 
 ### iOS
 
@@ -114,6 +114,6 @@ Done:
 Pending:
 
 6. Rebuild and confirm on the Samsung `SM-A1760` that the amount field now offers a tappable `.` and that long press still yields `(` / `)`.
-7. Deliver a reporter-testable build and ask `01disney` to retest the Taishin transfer-amount field.
+7. Delivered verified Android v6.1.37 and asked `01disney` to retest the Taishin transfer-amount field at https://github.com/lime-ime/limeime/issues/204#issuecomment-5079729548.
 8. Obtain `SmithCCho`'s field/app details to identify which iOS layout lost its `.` long press on 6.1.36, and handle that separately.
 9. Decide whether to add the `number_decimal` layout split described under Scope and limits, and a `phone_number` parity regression test.
