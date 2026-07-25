@@ -19,7 +19,7 @@ The reporter also recalled the same symptom in another infrequently used app or 
 - Maintainer: independently reproduced the same symptom on a physical Samsung `SM-A1760`.
 - The Samsung reproduction was used to capture the runtime `EditorInfo`/dispatch trace below.
 
-## Root cause (confirmed by on-device trace)
+## Root cause (LIME side confirmed by on-device trace; host duplication inferred)
 
 A privacy-safe trace (field type + dispatch/commit counts, no field contents) was captured on the Samsung `SM-A1760` while typing one Latin key into the reproducing field.
 
@@ -31,14 +31,14 @@ onStartInput inputType=0x90  class=0x0 (TYPE_NULL)  variation=0x90 (VISIBLE_PASS
 
 It declares a **VISIBLE_PASSWORD variation with a null input class** (`0x90`) instead of the well-formed `0x91` (`TYPE_CLASS_TEXT | VISIBLE_PASSWORD`).
 
-`LIMEService.initOnStartInput()` classifies forced-English fields (password / visible-password / web-password / email / web-email, via `isForcedEnglishTextVariation`) inside `case TYPE_CLASS_TEXT`. Because this field's class is `TYPE_NULL`, the switch skips the TEXT case and falls through to `default:` → `mEnglishOnly = false`, Chinese IM keyboard, prediction on. A Latin letter is a root key of essentially every Chinese IM (`acceptsIntoComposing` returns true), so the key takes the **composing path** and is placed in a composing region (`setComposingText`) instead of being committed. LINE's editor then duplicates the composed character, producing `jj`.
+`LIMEService.initOnStartInput()` classifies forced-English fields (password / visible-password / web-password / email / web-email, via `isForcedEnglishTextVariation`) inside `case TYPE_CLASS_TEXT`. Because this field's class is `TYPE_NULL`, the switch skips the TEXT case and falls through to `default:` → `mEnglishOnly = false`, Chinese IM keyboard, prediction on. A Latin letter is a root key of essentially every Chinese IM (`acceptsIntoComposing` returns true), so the key takes the **composing path** and is placed in a composing region (`setComposingText`) instead of being committed. The host editor then duplicates the composed character, producing `jj`.
 
-The trace confirms the mechanism precisely:
+The trace captures LIME's side of the mechanism:
 
 - Chinese keyboard: each tap logs exactly one `onKey` and one `handleCharacter COMPOSE setComposingText` — LIME dispatches once and composes once. There is **no** LIME-side double dispatch and **no** double commit.
 - English keyboard: each tap logs `handleCharacter ENGLISH commitText` — an atomic commit, no composing region — and does not duplicate.
 
-The only per-tap difference between the two keyboards is **compose (`setComposingText`) vs commit (`commitText`)**. The duplication is entirely tied to the composing region, which only the Chinese keyboard creates; LINE's editor mishandles that region for this field.
+The only per-tap difference between the two keyboards is **compose (`setComposingText`) vs commit (`commitText`)**. LINE is a closed app, so its editor's internal duplication of the composing region was not directly instrumented; that step is inferred — but it is the sole remaining variable (LIME emits one character either way), and the fix confirms it: forcing the commit path removes the `jj`. The duplication is therefore tied to the composing region, which only the Chinese keyboard creates.
 
 ### Hypotheses refuted by the trace
 

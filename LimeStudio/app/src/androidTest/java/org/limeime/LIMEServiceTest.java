@@ -12480,11 +12480,16 @@ public class LIMEServiceTest {
                 EditorInfo.TYPE_CLASS_TEXT,
                 LIMEService.effectiveInputClass(nullClassVisiblePassword));
 
-        // The same rule covers the rest of the forced-English (password + email) set with null class.
+        // The same rule covers the whole forced-English set (all password + email variations) with
+        // null class.
         assertEquals(EditorInfo.TYPE_CLASS_TEXT,
                 LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_PASSWORD));
         assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD));
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
                 LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_EMAIL_ADDRESS));
+        assertEquals(EditorInfo.TYPE_CLASS_TEXT,
+                LIMEService.effectiveInputClass(EditorInfo.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS));
 
         // Well-formed fields are returned unchanged — the fix must not over-force.
         assertEquals("Well-formed visible-password stays text",
@@ -12497,6 +12502,14 @@ public class LIMEServiceTest {
         assertEquals("Number field unchanged",
                 EditorInfo.TYPE_CLASS_NUMBER,
                 LIMEService.effectiveInputClass(EditorInfo.TYPE_CLASS_NUMBER));
+
+        // Negative case: the reroute is gated on class==NULL, not on the variation bits. A non-null
+        // class (e.g. NUMBER) whose variation bits happen to coincide with a text forced-English
+        // variation must NOT be reinterpreted (number variations share the 0xff0 bits with text).
+        assertEquals("Number field with password-like variation bits stays number",
+                EditorInfo.TYPE_CLASS_NUMBER,
+                LIMEService.effectiveInputClass(
+                        EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD));
 
         // A true null field (no forced-English variation) must stay null so ordinary Chinese
         // composing is preserved — this is what keeps the fix from disabling composing everywhere.
