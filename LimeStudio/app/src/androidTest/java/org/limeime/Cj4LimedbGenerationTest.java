@@ -11,7 +11,9 @@ import android.database.sqlite.SQLiteDatabase;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.preference.PreferenceManager;
 
+import org.limeime.data.Mapping;
 import org.limeime.global.LIME;
 import org.limeime.global.LIMEProgressListener;
 import org.limeime.ui.controller.ManageImController;
@@ -20,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,6 +33,50 @@ public class Cj4LimedbGenerationTest {
     private static final String INPUT_FILENAME = "cj4_haha_20260523_162540.lime";
     private static final String OUTPUT_FILENAME = "cj4.limedb";
     private static final int EXPECTED_RECORD_COUNT = 33021;
+    private static final String ISSUE_194_ARCHIVE = "hahacj.limedb";
+    private static final int ISSUE_194_RECORD_COUNT = 33044;
+
+    @Test
+    public void importIssue194ArchivePreservesReportedCandidateOrder() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        File externalDir = context.getExternalFilesDir(null);
+        assertNotNull("External files directory should be available", externalDir);
+
+        File archive = new File(externalDir, ISSUE_194_ARCHIVE);
+        assumeTrue("Push " + ISSUE_194_ARCHIVE + " to " + externalDir.getAbsolutePath()
+                + " before running this local archive test", archive.exists());
+
+        DBServer dbServer = DBServer.getInstance(context);
+        dbServer.importZippedDb(archive, LIME.DB_TABLE_CJ4);
+
+        SearchServer searchServer = new SearchServer(context);
+        searchServer.setTableName(LIME.DB_TABLE_CJ4, false, false);
+        boolean oldSort = PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("learning_switch", true);
+        try {
+            PreferenceManager.getDefaultSharedPreferences(context)
+                    .edit().putBoolean("learning_switch", false).commit();
+
+            ManageImController manageController = new ManageImController(searchServer);
+            assertEquals("issue #194 archive record count", ISSUE_194_RECORD_COUNT,
+                    manageController.countRecords(LIME.DB_TABLE_CJ4));
+
+            List<Mapping> mappings = searchServer.getMappingByCode("j", true, true);
+            assertNotNull("j candidates should be returned", mappings);
+            List<String> exactWords = new java.util.ArrayList<>();
+            for (Mapping mapping : mappings) {
+                if ("j".equals(mapping.getCode()) && !"j".equals(mapping.getWord())) {
+                    exactWords.add(mapping.getWord());
+                }
+            }
+            assertTrue("j should return at least two exact candidates", exactWords.size() >= 2);
+            assertEquals("都", exactWords.get(0));
+            assertEquals("十", exactWords.get(1));
+        } finally {
+            PreferenceManager.getDefaultSharedPreferences(context)
+                    .edit().putBoolean("learning_switch", oldSort).commit();
+        }
+    }
 
     @Test
     public void generateCj4LimedbFromPreparedLimeFile() throws Exception {

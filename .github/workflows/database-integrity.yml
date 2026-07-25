@@ -1,0 +1,46 @@
+name: Database Integrity
+
+on:
+  pull_request:
+    paths:
+      - "Database/**"
+      - "scripts/build_*db.py"
+      - "scripts/test_*db.py"
+      - "scripts/test_limedb_order.py"
+      - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
+      - ".github/workflows/database-integrity.yml"
+      - ".github/workflows/new_release.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "Database/**"
+      - "scripts/build_*db.py"
+      - "scripts/test_*db.py"
+      - "scripts/test_limedb_order.py"
+      - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
+      - ".github/workflows/database-integrity.yml"
+      - ".github/workflows/new_release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  limedb-order:
+    name: All downloadable-table order contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify all .limedb order contracts
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+        run: python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"
+      - name: Verify 哈哈倉頡 deterministic rebuild
+        run: python3 scripts/test_hahacj_limedb.py
