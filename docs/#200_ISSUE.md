@@ -3,7 +3,7 @@
 ## Live issue state
 
 - Issue: https://github.com/lime-ime/limeime/issues/200
-- Status: root-caused on-device and fixed in PR #207 (branch `fix/200-null-class-forced-english`); reporter retest on a release build pending.
+- Status: issue remains open; PR #207 merged the Android source fix as `f57cca9ca36a845a76b2074ab2e68c2f05461abe` from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`. Reporter retest on a newer release build remains pending.
 - Reporter: physical Samsung reproduction by the maintainer; original reporter on `ASUS_AI2202`.
 - Reported version: Android LIME 6.1.36, LINE 26.11.0.
 
@@ -67,6 +67,7 @@ The duplication is a host-editor reaction to the composing region, which LIME ca
 
 - `effectiveInputClass` unit test: RED→GREEN on a Pixel 9 Pro API 37 emulator and the Samsung `SM-A1760`.
 - On-device behavioral confirmation on the Samsung: the reproducing field (`inputType=0x90`) now takes `handleCharacter ENGLISH commitText`, and the `jj` duplication is gone; the ID field commits Latin directly like the English keyboard.
+- PR #207 merged with the tested implementation and regression unchanged from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`.
 
 ## Scope and limits
 
@@ -77,7 +78,7 @@ The duplication is a host-editor reaction to the composing region, which LIME ca
 
 ### Android
 
-Confirmed affected and fixed as above. Delivery and reporter-visible confirmation remain pending because the public LIME 6.1.36 predates this change and requires a newer reporter-testable build.
+Confirmed affected and source-fixed as above. The current public GitHub release remains v6.1.36 at `4060a46e585c9e46321953736c60335f40f7db94`, which is an ancestor of the PR #207 merge and therefore does not contain the fix. Delivery and reporter-visible confirmation require a newer reporter-testable build.
 
 ### iOS
 
@@ -90,9 +91,10 @@ Done:
 1. Captured the reproducing field's `EditorInfo` and dispatch/commit counts on the Samsung `SM-A1760`.
 2. Added `effectiveInputClass` and the RED→GREEN regression; ran it on the Pixel 9 Pro API 37 emulator and the Samsung.
 3. Confirmed on-device that the field now commits Latin (no composing) and the duplication is gone.
+4. Merged PR #207 and verified that the public v6.1.36 release predates the merge.
 
 Pending:
 
-4. Deliver a newer reporter-testable Android build containing the fix.
-5. Ask the original reporter to retest the exact `j` → single-`j` behavior in LINE Add Friends → ID search on that build before closing the issue.
-6. If the unidentified second app/field becomes reproducible, capture its `EditorInfo` and evaluate whether it is the same null-class shape or a separate normal-text composing case.
+5. Deliver a newer reporter-testable Android build containing the fix.
+6. Ask the original reporter to retest the exact `j` → single-`j` behavior in LINE Add Friends → ID search on that build before closing the issue.
+7. If the unidentified second app/field becomes reproducible, capture its `EditorInfo` and evaluate whether it is the same null-class shape or a separate normal-text composing case.
