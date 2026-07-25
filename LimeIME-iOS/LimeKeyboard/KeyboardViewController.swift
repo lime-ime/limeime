@@ -2210,7 +2210,23 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
 
     private func commitComposingWithAppendedEndkey(_ primaryCode: Int) -> Bool {
         guard appendEndkeyToComposing(primaryCode) else { return false }
-        return commitResolvedEndkeyComposing()
+        // The declared root was already appended. Consume this key even when the combined code
+        // has no candidate; returning false would fall through to handleCharacter() and insert the
+        // same punctuation a second time.
+        if !commitResolvedEndkeyComposing() {
+            // Synchronously drop the stale pre-append selection. updateCandidates() only reconciles
+            // this state on its async DB-query completion when mPredictionOn is true, so until then a
+            // soft selection key (Space/Enter/arrows, gated on hasCandidatesShown) could commit the
+            // pre-append candidate while the buffer holds the appended root. Reset here, then refresh
+            // the strip for the combined code.
+            selectedCandidate = nil
+            mCandidateList = []
+            hasCandidatesShown = false
+            hasChineseSymbolCandidatesShown = false
+            isShowingRelatedPhrases = false
+            updateCandidates()
+        }
+        return true
     }
 
     private func commitCurrentEndkeyComposing() -> Bool {
@@ -6183,3 +6199,55 @@ final class EmojiPanelView: UIView, UITextFieldDelegate, UIScrollViewDelegate {
         return true
     }
 }
+
+#if DEBUG
+// Test-only seam for behavioral end-key tests. Swift `private` is visible to same-file
+// extensions, so this reaches the input path without widening production visibility.
+// Used by KeyboardViewControllerTest to drive the declared punctuation-root path (docs/#196)
+// and assert there is no double-insert and the candidate strip is reconciled.
+extension KeyboardViewController {
+    /// Configure a table that declares the punctuation as a literal root, with no candidate for
+    /// the combined code (searchServer nil), then leave the controller ready to receive one key.
+    func _testConfigureDeclaredEndkeyPath(imkeys: String,
+                                          limeendkey: String,
+                                          composing: String,
+                                          candidateBar bar: CandidateBarView,
+                                          preloadStaleWord: String? = nil,
+                                          predictionOn: Bool = false,
+                                          searchServer injectedSearchServer: SearchServer? = nil) {
+        activeIM = "lime_test_endkey"        // didSet clears imConfigCache — populate it AFTER
+        imConfigCache["imkeys"] = imkeys
+        imConfigCache["limeendkey"] = limeendkey
+        currentImKeys = imkeys
+        mComposing = composing
+        composingLength = composing.count
+        if let word = preloadStaleWord {
+            // Seed the pre-append selection for `composing`, as a tapped/selected candidate leaves it.
+            let stale = Mapping(id: 1, code: composing, word: word, score: 0, baseScore: 0)
+            mCandidateList = [stale]
+            selectedCandidate = stale
+            hasCandidatesShown = true
+        } else {
+            selectedCandidate = nil
+            mCandidateList = []
+            hasCandidatesShown = false
+        }
+        candidateBar = bar
+        // With a searchServer + predictionOn, updateCandidates() takes the real async DB path; with
+        // neither it short-circuits to a synchronous clearSuggestions().
+        searchServer = injectedSearchServer
+        mPredictionOn = predictionOn
+        mEnglishOnly = false
+        autoChineseSymbol = false            // keep clearSuggestions on its plain-clear branch
+        isShiftOn = false
+    }
+
+    /// Drive the real key handler for one primary code.
+    func _testDriveKey(_ primaryCode: Int) { onKey(primaryCode: primaryCode) }
+
+    var _testComposing: String { mComposing }
+    var _testCandidateCount: Int { mCandidateList.count }
+    var _testHasCandidatesShown: Bool { hasCandidatesShown }
+    var _testSelectedCandidateWord: String? { selectedCandidate?.word }
+}
+#endif
