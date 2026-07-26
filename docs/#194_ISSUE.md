@@ -2,9 +2,9 @@
 
 ## Current status
 
-Source fixed by merged PR #195 and delivered for Android in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`. GitHub issue #194 was automatically closed when the PR merged; it remains labeled `bug`, `enhancement`, and `Usability` and assigned to `jrywu`. The targeted Android retest request is https://github.com/lime-ime/limeime/issues/194#issuecomment-5079729445. iOS v6.1.37 build 27 passed all required Xcode Cloud actions, is `VALID` and `APP_STORE_ELIGIBLE`, and is submitted with state `WAITING_FOR_REVIEW`. Reporter confirmation and iOS public rollout remain pending.
+Resolved for Android. Source was fixed by merged PR #195 and delivered in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`. After the targeted retest request https://github.com/lime-ime/limeime/issues/194#issuecomment-5079729445, the reporter confirmed the Android GitHub APK fix at https://github.com/lime-ime/limeime/issues/194#issuecomment-5081294546. The issue remains closed as completed with labels `bug`, `enhancement`, and `Usability` and assignee `jrywu`. The closing acknowledgement is https://github.com/lime-ime/limeime/issues/194#issuecomment-5081297874.
 
-The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database must be rebuilt from that exact source. Android v6.1.37 contains the fix; reporter retesting still requires removing and re-downloading 哈哈倉頡 first.
+The ordering defect and the reporter's final 20260723 table update stay in one scope because the corrected downloadable database was rebuilt from that exact source. iOS v6.1.37 build 27 passed all required Xcode Cloud actions, is `VALID` and `APP_STORE_ELIGIBLE`, and is submitted with state `WAITING_FOR_REVIEW`; iOS public rollout and device-tier release QA remain pending.
 
 Issue: https://github.com/lime-ime/limeime/issues/194
 
@@ -46,7 +46,7 @@ The screenshot visually shows a landscape Android keyboard, but the reporter did
 | 2026-06-03 | #91 changed sorting-disabled duplicate candidates to follow source insertion/`_id` order | Reporter verified direct `.cin` order in Android 6.1.16 on 2026-06-05. |
 | 2026-06-17 / 6.1.21 | #112 rebuilt/replaced the downloadable table as `hahacj.limedb` for the June table and Lime end keys | This post-#91 rebuild produced the malformed IDs/content later exposed by #194. |
 | 6.1.21–6.1.36 | Every release tag carrying `hahacj.limedb` contains byte-identical archive content | The table was not rebuilt again before #194; 6.1.36 still carries the 6.1.21 artifact. |
-| 2026-07-25 / PR #195 | Rebuilt from the final `20260723_082459` source with deterministic source-order IDs; final head `b18963a87e029429cc617be9c9edd9fa73d6679b` merged as `722dcbf095fe2f8da2c00923bfe1eca467446ad0` | Source fixed; platform delivery and reporter verification remain pending. |
+| 2026-07-25 / PR #195 | Rebuilt from the final `20260723_082459` source with deterministic source-order IDs; final head `b18963a87e029429cc617be9c9edd9fa73d6679b` merged as `722dcbf095fe2f8da2c00923bfe1eca467446ad0` | Source fixed and delivered in Android v6.1.37; the reporter confirmed the GitHub APK fix. iOS release QA remains separate. |
 
 Therefore, the regression is specifically tied to the **#112 database rebuild after #91**, not to a later query-code regression between 6.1.21 and 6.1.36.
 
@@ -147,16 +147,15 @@ iOS downloads the same corrected archive and already uses `_id ASC` when sorting
 - Claude Code review found one stale catalog-size blocker from an intermediate snapshot; both catalogs now match the final 508,390-byte archive at 496 KB. CI correctly retains semantic archive validation rather than cross-toolchain byte equality.
 - The merged implementation/test tree is identical to the final reviewed PR head.
 - Post-merge Python 哈哈倉頡 and repository-wide archive-contract suites pass on the merge commit.
-- macOS/Xcode XCTest and device-tier runtime checks remain before iOS delivery/reporter retest.
+- The reporter confirmed Android GitHub APK v6.1.37 fixed the reported ordering after the requested remove/re-download flow.
+- iOS device-tier runtime checks and public rollout remain pending release QA.
 
-## Release/retest gate
+## Release and retest result
 
-GitHub Release v6.1.37 targets `d4e8840e9a7080a7980036284952f50ef6ccf3d7` and contains PR #195. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`). The reporter was asked to remove and re-download 哈哈倉頡, disable selection sorting, and verify `j → 都, 十`. Do not infer iOS App Store delivery from the GitHub release.
+GitHub Release v6.1.37 targets `d4e8840e9a7080a7980036284952f50ef6ccf3d7` and contains PR #195. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`). The targeted request asked the reporter to remove and re-download 哈哈倉頡, disable selection sorting, and verify `j → 都, 十`; the reporter then confirmed the issue was resolved. This confirmation covers the Android GitHub APK path only and does not establish iOS App Store delivery or device-tier behavior.
 
-Before asking the reporter to verify:
+Remaining release QA is separate from the completed reporter watch:
 
-1. Produce a usable Android and/or iOS build containing the corrected archive.
-2. On a clean install, download 哈哈倉頡 and verify `j → 都, 十` with sorting disabled.
-3. On an existing installation, remove/re-download 哈哈倉頡, then repeat the same check.
-4. Verify sorting-enabled learning still promotes selected candidates from the zero-score baseline.
-5. State the required re-download step in the public retest request.
+1. After iOS public rollout, verify the corrected archive on iPhone, full iPad, and narrow iPad.
+2. For existing iOS installations, remove and re-download 哈哈倉頡 before checking sorting-disabled `j → 都, 十`.
+3. Verify sorting-enabled learning still promotes selected candidates from the zero-score baseline.
