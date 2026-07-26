@@ -4,9 +4,9 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/204
 - Labels: `bug`, `Usability`
-- Status: Android remains unresolved after a negative reporter retest. The verified GitHub Release APK v6.1.37 contains the layout change, but `01disney` reports at https://github.com/lime-ime/limeime/issues/204#issuecomment-5079905249 that the Taishin transfer-amount field still shows the phone-style pad and cannot enter a decimal point on Android 16 / Xiaomi Poco F6 Pro after installing that APK. The layout-only diagnosis is therefore incomplete for the reporter-visible path. iOS v6.1.37 build 27 is `VALID`, `APP_STORE_ELIGIBLE`, and submitted with state `WAITING_FOR_REVIEW`; separate diagnosis of the supplementary iOS report remains pending.
+- Status: Closed as completed after Android reporter confirmation. After initially reporting a failed v6.1.37 retest, `01disney` clarified at https://github.com/lime-ime/limeime/issues/204#issuecomment-5084922049 that Taishin's TWD field intentionally accepts integers only, while USD and other foreign-currency fields can enter a decimal point. The project account acknowledged that result at https://github.com/lime-ime/limeime/issues/204#issuecomment-5084926319 and closed the issue as completed. This confirms the reported Android workflow only. The supplementary iOS 6.1.36 report remains separately unverified.
 - Reporters: `01disney` (Android, Taishin Bank transfer-amount field); `SmithCCho` (supplementary iOS report on 6.1.36).
-- Reported versions: Android GitHub test APK v6.1.37 for the negative retest; iOS LIME 6.1.36 for the supplementary report.
+- Reported versions: Android GitHub test APK v6.1.37 for the reporter-confirmed workflow; iOS LIME 6.1.36 for the supplementary report.
 
 ## Problem statement
 
@@ -16,7 +16,7 @@ Tapping the transfer-amount field in the Taishin Bank app brings up LIME's telep
 
 ## Reproduction
 
-- Android: Taishin Bank app → transfer → amount field, with LIME active. The original report includes screenshots comparing LIME's pad against LINE's numeric keyboard. The v6.1.37 negative retest was performed on Android 16 / Xiaomi Poco F6 Pro after the reporter downloaded and installed the GitHub test APK; the reporter added two screenshots and says the decimal point remains unavailable. Because the GitHub test package can coexist with the store package, the exact active LIME instance is not yet established.
+- Android: Taishin Bank app → transfer → amount field, with LIME active. The original report includes screenshots comparing LIME's pad against LINE's numeric keyboard. The v6.1.37 retest was performed on Android 16 / Xiaomi Poco F6 Pro after the reporter downloaded and installed the GitHub test APK. The reporter first interpreted the TWD field's lack of a decimal point as a failed retest, then clarified that TWD is integer-only and that USD and other foreign-currency fields can enter a decimal point.
 - iOS 6.1.36: reported against the field circled in the reporter's screenshot; neither tap nor long press yields `.`.
 - A field-type matrix for manual testing is published at
   https://lime-ime.github.io/limeime/keyboard-type-field-test.html (source: `docs/keyboard-type-field-test.html`,
@@ -24,7 +24,7 @@ Tapping the transfer-amount field in the Taishin Bank app brings up LIME's telep
 
 ## Root-cause analysis
 
-The initial source diagnosis established two defects: **which** layout a numeric field gets, and **what** that layout contained. The v6.1.37 reporter retest shows that correcting the second defect did not repair the exact Taishin path, so this is evidence about the source but no longer a complete production root cause.
+The source diagnosis established two concerns: **which** layout a numeric field gets, and **what** that layout contained. v6.1.37 corrected the directly tappable punctuation problem. The reporter's later clarification shows that the apparent failed Taishin path was caused by comparing an integer-only TWD field with decimal-capable foreign-currency fields, not by failure of the shipped layout change.
 
 ### 1. Number fields and phone fields resolve to the same layout
 
@@ -47,9 +47,9 @@ So a bank amount field (`TYPE_CLASS_NUMBER`) and a telephone field (`TYPE_CLASS_
 
 The iOS long-press regression on 6.1.36 was **not** separately root-caused. The layout change promotes `.` to a first-class tappable key on `phone_number`, but that does not explain the long-press regression or prove that the supplementary iOS report uses this layout. Keep its diagnosis separate.
 
-## Attempted fix
+## Shipped fix
 
-The shipped v6.1.37 change rebalanced `phone_number` so the two characters an amount field needs are direct keys, while the two characters a telephone field needs survive as long-press alternates with visible hints. This change is present in the verified artifact, but the reporter-visible Android contract still fails.
+The shipped v6.1.37 change rebalanced `phone_number` so the two characters an amount field needs are direct keys, while the two characters a telephone field needs survive as long-press alternates with visible hints. The reporter confirmed that decimal entry works in Taishin's USD and other foreign-currency transfer fields. The TWD field remains integer-only by the bank's design.
 
 | Row/position | Before | After | Long press |
 | --- | --- | --- | --- |
@@ -80,11 +80,11 @@ Gap: there is no dedicated regression test asserting `phone_number`'s key set, s
 - Both layout files parse; parity verified as above (2026-07-26).
 - Maintainer confirmed on 2026-07-26 that the updated layout renders correctly on iOS.
 - The rebuilt v6.1.37 GitHub testing APK is verified and contains the layout change.
-- Reporter retest failed on Android 16 / Xiaomi Poco F6 Pro: after installing v6.1.37, the Taishin transfer-amount field still shows the phone-style pad and still cannot enter a decimal point. Runtime evidence therefore outranks the earlier layout-only completion claim.
+- Reporter initially reported the Android v6.1.37 retest as failed, then clarified that Taishin's TWD field is integer-only and confirmed that USD and other foreign-currency fields can enter a decimal point. This confirms the reporter-visible Android workflow on the tested device and APK.
 
 ## Scope and limits
 
-- **The shipped change is a layout-level remedy, not the routing fix.** `phone_number` still serves both `TYPE_CLASS_PHONE` and `TYPE_CLASS_NUMBER`, so a bank amount field still shows `*`, `#`, `+` and `/` — dial-pad characters with no meaning in an amount. The structural direction remains to split the layouts: keep `phone_number` for `TYPE_CLASS_PHONE` / `.phonePad`, and add a numeric layout for `TYPE_CLASS_NUMBER` / `.numberPad` / `.decimalPad`. Before implementing that direction, runtime tracing must establish the Taishin field's exact `inputType`, the active LIME package, and the selected layout; the negative retest does not by itself prove which boundary failed.
+- **The shipped change is a layout-level remedy, not a routing split.** `phone_number` still serves both `TYPE_CLASS_PHONE` and `TYPE_CLASS_NUMBER`, so a bank amount field can still show `*`, `#`, `+` and `/`. Splitting telephone and numeric layouts remains a possible future product/engineering improvement, but the reporter confirmation does not establish a remaining Android defect requiring that work.
 - The `,` key is new to this pad; `(` and `)` moved from tap to long press. Neither character is lost, but users who tapped the parens on a telephone field must now long-press them.
 - The iOS 6.1.36 long-press regression reported by `SmithCCho` is worked around rather than explained. If his field is not numeric-typed (see Platform impact), the layout he is looking at is not `phone_number` and his specific report is untouched by this fix — that needs his field/app details to resolve.
 
@@ -92,7 +92,7 @@ Gap: there is no dedicated regression test asserting `phone_number`'s key set, s
 
 ### Android
 
-Confirmed affected by code inspection, but not fixed on the reporter-visible path. The corrected `phone_number` resource is delivered in the verified v6.1.37 GitHub testing APK, yet the reporter's Android 16 / Xiaomi Poco F6 Pro retest still cannot enter a decimal point in Taishin Bank. Keep Android open and return to runtime/root-cause investigation.
+The corrected `phone_number` resource is delivered in the verified v6.1.37 GitHub testing APK. On Android 16 / Xiaomi Poco F6 Pro, the reporter confirmed that Taishin's USD and other foreign-currency transfer fields can enter a decimal point and clarified that the TWD field intentionally accepts integers only. Android reporter verification is complete.
 
 ### iOS
 
@@ -112,9 +112,11 @@ Done:
 4. Ran the existing layout test suites (18 tests, passing).
 5. Confirmed the updated layout renders on iOS.
 
-Pending:
+Reporter verification:
 
-6. Establish which installed LIME package was active during the v6.1.37 retest; the GitHub test package `net.toload.main.hd2026` can coexist with the store package `org.limeime`.
-7. On the exact Taishin transfer-amount path, capture the editor `inputType`, runtime-selected mode/layout, and rendered key resource. Compare those values with a controlled numeric/decimal field and phone field.
-8. Add a behavioral RED regression through the real Android field-routing path, not only a resource/parity assertion. Implement the smallest correction at the proven boundary, then verify the exact reporter-visible path before requesting another retest.
-9. Obtain `SmithCCho`'s field/app details to identify which iOS layout lost its `.` long press on 6.1.36, and handle that separately.
+6. `01disney` confirmed decimal entry in Taishin's USD and other foreign-currency transfer fields on Android v6.1.37 and clarified that the TWD field is integer-only.
+
+Future internal checks, not active Android reporter watches:
+
+7. Add a dedicated parity/behavior contract for the `phone_number` decimal and comma keys if this layout is changed again.
+8. Obtain `SmithCCho`'s field/app details before separately diagnosing the supplementary iOS 6.1.36 long-press report.
