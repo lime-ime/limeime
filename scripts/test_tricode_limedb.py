@@ -27,6 +27,7 @@ ANDROID_CATALOG = (
     / "LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java"
 )
 IOS_CATALOG = ROOT / "LimeIME-iOS/LimeSettings/IMCatalog.swift"
+LICENSE_PATH = ROOT / "LICENSE.md"
 SOURCE_SHA256 = "e04e98f48c7b4d9265b81ded11bacbb1e75771c093e04c66697058b935925e88"
 
 
@@ -203,6 +204,15 @@ class TricodeWorkflowTest(unittest.TestCase):
         catalog = IOS_CATALOG.read_text(encoding="utf-8")
         self.assertIn('name: "三碼 v.20260727.1"', catalog)
         self.assertIn("recordCount: 15_934, compressedKB: 256", catalog)
+
+    def test_license_attribution_is_version_independent(self):
+        tricode_row = next(
+            line
+            for line in LICENSE_PATH.read_text(encoding="utf-8").splitlines()
+            if "三碼輸入法 table (`tricode`)" in line
+        )
+        self.assertIn("https://3code-type.github.io/", tricode_row)
+        self.assertNotRegex(tricode_row, r"\bv\.\d{8}\.\d+\b")
 
     def test_pr_and_release_workflows_run_tricode_gate(self):
         command = "python3 scripts/test_tricode_limedb.py"
