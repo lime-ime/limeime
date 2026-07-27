@@ -36,15 +36,20 @@ Important limits on this diagnosis:
 - The shared connection already has a 5-second SQLite busy timeout. Merely adding the same pragma again is not yet an evidence-based fix.
 - Existing tests exercise the editor harvest only without a competing cold-database writer, so they cannot distinguish immediate failure, timeout exhaustion, retry behavior, or recovery after the lock is released.
 
-## Proposed solution
+## Implemented issue branch slice
 
-1. Add a focused failing test that holds a real write transaction open on the live cold database while the editor refresh begins, then releases it within a bounded interval.
-2. Make the harvest tolerate transient `SQLITE_BUSY` at the transaction boundary. Prefer a bounded retry of the complete attach/diff/write transaction, with short backoff and an overall deadline compatible with the editor request TTL and Settings-side poll timeout. Do not retry arbitrary schema, I/O, or data-integrity failures.
-3. Ensure every failed attempt cleans up its temporary table and attached schema before retrying. A retry must start with a fresh valid transaction/connection state.
-4. Preserve the fail-safe read-only result for persistent lock contention, but allow a later refresh attempt without requiring the user to terminate the app. At minimum, reopening the editor must start a fresh request. If practical, provide an explicit retry path from the failed state.
-5. Keep the existing `(pword, cword)` dirty-key semantics and cold/hot ownership model unchanged.
+The issue-specific branch now contains the first implementation slice:
 
-The smallest implementation should be selected only after the lock-contention test establishes whether GRDB/SQLite's configured busy timeout waits as expected and where the busy error escapes.
+1. Real GRDB/XCTest coverage holds a second connection's immediate write transaction on live cold `lime.db`, then covers transient release, bounded persistent failure, and a successful new request after release.
+2. `harvestEditorRefresh` retries only GRDB errors whose primary SQLite result is `SQLITE_BUSY` or `SQLITE_LOCKED`; schema, I/O, and integrity failures still escape immediately.
+3. Each attempt creates a fresh hot connection and repeats the complete attach/diff/write transaction. A failed attempt is rolled back and its connection is closed before retry.
+4. Attempts may start for 3 seconds and use a 500 ms per-attempt busy timeout. Conservatively allowing two timeout-bearing lock points in the final attempt, this caps the retry path near 4 seconds and leaves scheduling/receipt headroom inside the Settings-side 10-second poll and 30-second request TTL.
+5. Persistent contention still emits a failed receipt and preserves the fail-safe read-only result. A later request can recover on the same databases after the lock is released.
+6. Android and the existing `(pword, cword)` dirty-key semantics remain unchanged.
+
+A direct SQLite runtime experiment on the Linux development host reproduced the key lock behavior independently: after one connection began an immediate write, a second connection first read and then attempted to delete from the same database with a 5-second timeout; the read-to-write promotion returned `database is locked` immediately (`0.000s`). This validates why repeating the existing 5-second pragma is not sufficient and why the complete transaction must be retried.
+
+Xcode is unavailable on the Linux host, so the new XCTest cases have not yet produced executable RED/GREEN results. `scripts/test_issue_209_ios_editor_refresh_retry.py` provides a Linux source-contract gate only; Xcode/Xcode Cloud remains required for Swift compilation and behavioral proof.
 
 ## Follow-up questions
 

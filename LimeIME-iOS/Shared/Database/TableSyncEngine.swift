@@ -213,9 +213,58 @@ final class TableSyncEngine {
         }
     }
 
+    /// Issue #209: absorb TRANSIENT cold-side write contention by retrying the WHOLE attempt.
+    ///
+    /// `harvestEditorRefreshAttempt` reads the attached cold database (table probe + dirty-key
+    /// scan) before it writes it, so the cold write is a read→write promotion. SQLite
+    /// deliberately does NOT invoke the busy handler for that promotion — it returns
+    /// SQLITE_BUSY immediately to break a possible deadlock — so the connection's
+    /// `busy_timeout = 5000` never applies to it, and a Settings-side write lock held for even
+    /// a few milliseconds fails the entire refresh. Re-running the pragma would change nothing;
+    /// only re-running the transaction can succeed.
+    ///
+    /// Each retry uses a fresh connection so rollback/close releases all transaction, temp-table,
+    /// and attached-database state before the next attempt.
+    ///
+    /// Budget: attempts may start for 3 seconds and each uses a short 500 ms busy timeout for
+    /// lock points where SQLite DOES invoke the busy handler. Even allowing two timeout-bearing
+    /// lock points in the final attempt, the path ends within roughly 4 seconds, leaving
+    /// scheduling and receipt-delivery headroom inside the Settings-side 10-second poll, and
+    /// remaining far inside the 30-second request TTL.
+    ///
+    /// Only SQLITE_BUSY / SQLITE_LOCKED are retried. Schema, I/O and data-integrity failures
+    /// still fail on the first attempt.
+    private static let editorRefreshBusyRetryWindow: TimeInterval = 3
+    private static let editorRefreshBusyRetryBackoff: TimeInterval = 0.15
+    private static let editorRefreshAttemptBusyTimeoutMilliseconds = 500
+
     private func harvestEditorRefresh(table: String, into coldDatabaseURL: URL) throws {
+        let retryDeadline = Date().addingTimeInterval(Self.editorRefreshBusyRetryWindow)
+        while true {
+            do {
+                return try harvestEditorRefreshAttempt(table: table, into: coldDatabaseURL)
+            } catch let error as DatabaseError where Self.isTransientLockError(error) {
+                let remaining = retryDeadline.timeIntervalSinceNow
+                guard remaining > 0 else {
+                    throw error
+                }
+                Thread.sleep(forTimeInterval: min(Self.editorRefreshBusyRetryBackoff, remaining))
+            }
+        }
+    }
+
+    private static func isTransientLockError(_ error: DatabaseError) -> Bool {
+        // `primaryResultCode` also matches the extended codes (SQLITE_BUSY_SNAPSHOT,
+        // SQLITE_LOCKED_SHAREDCACHE, …) and is idempotent on an already-primary code.
+        let code = error.resultCode.primaryResultCode
+        return code == .SQLITE_BUSY || code == .SQLITE_LOCKED
+    }
+
+    private func harvestEditorRefreshAttempt(table: String, into coldDatabaseURL: URL) throws {
         let keyColumns = Self.editorRefreshKeyColumns(for: table)
-        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        let connection = try SyncDatabaseConnection(
+            databaseURL: hotDatabaseURL,
+            busyTimeoutMilliseconds: Self.editorRefreshAttemptBusyTimeoutMilliseconds)
         try connection.write { db in
             try db.execute(sql: "ATTACH DATABASE ? AS cold_editor",
                            arguments: [coldDatabaseURL.path])
@@ -288,6 +337,7 @@ final class TableSyncEngine {
                 """)
         }
     }
+
 
     private func writeEditorRefreshReceipt(for request: EditorRefreshRequest,
                                            status: EditorRefreshReceipt.Status,
