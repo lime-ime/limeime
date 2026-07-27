@@ -44,3 +44,5 @@ jobs:
         run: python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"
       - name: Verify 哈哈倉頡 deterministic rebuild
         run: python3 scripts/test_hahacj_limedb.py
+      - name: Verify 三碼 deterministic rebuild
+        run: python3 scripts/test_tricode_limedb.py
