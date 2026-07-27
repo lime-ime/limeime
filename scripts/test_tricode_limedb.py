@@ -22,6 +22,11 @@ BUILDER_PATH = ROOT / "scripts" / "build_tricode_db.py"
 ORDER_GATE_PATH = ROOT / "scripts" / "test_limedb_order.py"
 PR_WORKFLOW = ROOT / ".github" / "workflows" / "database-integrity.yml"
 RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "new_release.yml"
+ANDROID_CATALOG = (
+    ROOT
+    / "LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java"
+)
+IOS_CATALOG = ROOT / "LimeIME-iOS/LimeSettings/IMCatalog.swift"
 SOURCE_SHA256 = "e04e98f48c7b4d9265b81ded11bacbb1e75771c093e04c66697058b935925e88"
 
 
@@ -176,6 +181,29 @@ class TricodeBuildTest(unittest.TestCase):
 
 
 class TricodeWorkflowTest(unittest.TestCase):
+    def test_android_catalog_matches_committed_archive(self):
+        catalog = ANDROID_CATALOG.read_text(encoding="utf-8")
+        self.assertIn(
+            'new CloudVariant("三碼 v.20260727.1", "15,934", "256 KB",',
+            catalog,
+        )
+
+    def test_catalog_changes_trigger_database_integrity(self):
+        workflow = PR_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            '"LimeStudio/app/src/main/java/org/limeime/ui/view/ImInstallFragment.java"',
+            workflow,
+        )
+        self.assertIn(
+            '"LimeIME-iOS/LimeSettings/IMCatalog.swift"',
+            workflow,
+        )
+
+    def test_ios_catalog_matches_committed_archive(self):
+        catalog = IOS_CATALOG.read_text(encoding="utf-8")
+        self.assertIn('name: "三碼 v.20260727.1"', catalog)
+        self.assertIn("recordCount: 15_934, compressedKB: 256", catalog)
+
     def test_pr_and_release_workflows_run_tricode_gate(self):
         command = "python3 scripts/test_tricode_limedb.py"
         self.assertIn(command, PR_WORKFLOW.read_text(encoding="utf-8"))
