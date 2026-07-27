@@ -34,6 +34,13 @@ if (keystorePropsFile.exists()) {
     hasReleaseSigning = keystoreProps['storeFile'] && keystoreProps['storePassword'] != 'CHANGE_ME'
 }
 
+def tricodeAndroidTestAssetsDir = layout.buildDirectory.dir("generated/androidTestAssets/tricode").get().asFile
+def stageTricodeAndroidTestAsset = tasks.register("stageTricodeAndroidTestAsset", Copy) {
+    // LimeStudio is the Gradle root; the downloadable databases live in ../Database.
+    from(rootProject.file("../Database/tricode.limedb"))
+    into(tricodeAndroidTestAssetsDir)
+}
+
 android {
     namespace = 'org.limeime'
     signingConfigs {
@@ -118,6 +125,9 @@ android {
             java {
                 srcDirs = ['src/androidTest/java']
             }
+            assets {
+                srcDir tricodeAndroidTestAssetsDir
+            }
             manifest {
                 srcFile 'src/androidTest/AndroidManifest.xml'
             }
@@ -161,6 +171,9 @@ tasks.register("archiveReleaseApk", Copy) {
 }
 
 afterEvaluate {
+    tasks.named("mergeDebugAndroidTestAssets").configure {
+        dependsOn(stageTricodeAndroidTestAsset)
+    }
     tasks.named("preserveReleaseApks").configure {
         dependsOn("packageRelease")
     }
