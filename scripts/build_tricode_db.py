@@ -2,8 +2,8 @@
 # build_tricode_db.py
 #
 # Build Database/tricode.limedb -- the downloadable-IM cloud asset for 三碼輸入法
-# (3code / "tricode"), issue #159. Parses the upstream .cin table (local copy
-# .claude/txt/3code.cin, downloaded from https://3code-type.github.io/3code.cin)
+# (3code / "tricode"), issue #159. Parses the reviewed upstream .cin table
+# committed under Database/ (downloaded from https://3code-type.github.io/3code.cin)
 # into the modern .limedb container format documented in docs/LIMEDB_SPEC.md: a
 # `custom` mapping table plus an `im` metadata-property-rows table, zipped as a
 # single inner `tricode.db`. Model file: Database/hahacj.limedb (inner cj4.db).
@@ -26,7 +26,7 @@
 #   python3 scripts/build_tricode_db.py --date "2026-07-20 00:00:00 +0800"
 #
 # Optional overrides (defaults match the repo layout):
-#   --cin PATH             input .cin (default .claude/txt/3code.cin)
+#   --cin PATH             input .cin (default Database/tricode-20260727.1.cin)
 #   --out PATH              output .limedb (default Database/tricode.limedb)
 #   --hanconvert-db PATH    basescore source (default
 #                           LimeStudio/app/src/main/res/raw/hanconvertv2.db)
@@ -34,6 +34,7 @@
 #                           header comment ("#版本：v.<version>")
 
 import argparse
+import datetime
 import os
 import re
 import sqlite3
@@ -231,19 +232,31 @@ def build_inner_db(db_path, cin_data, basescores, date_str, version):
     return len(rows)
 
 
-def zip_limedb(db_path, out_path, inner_name):
+def zip_limedb(db_path, out_path, inner_name, date_str):
     out_dir = os.path.dirname(out_path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
     if os.path.exists(out_path):
         os.remove(out_path)
-    with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.write(db_path, arcname=inner_name)
+
+    archive_time = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S %z")
+    info = zipfile.ZipInfo(inner_name, date_time=archive_time.timetuple()[:6])
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    with open(db_path, "rb") as source:
+        database_bytes = source.read()
+    with zipfile.ZipFile(out_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(info, database_bytes)
 
 
 def main():
     ap = argparse.ArgumentParser(description="Build Database/tricode.limedb from 3code.cin")
-    ap.add_argument("--cin", default=".claude/txt/3code.cin", help="input .cin path")
+    ap.add_argument(
+        "--cin",
+        default="Database/tricode-20260727.1.cin",
+        help="input .cin path",
+    )
     ap.add_argument("--out", default="Database/tricode.limedb", help="output .limedb path")
     ap.add_argument(
         "--hanconvert-db",
@@ -282,7 +295,7 @@ def main():
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_db = os.path.join(tmpdir, "tricode.db")
         count = build_inner_db(tmp_db, cin_data, basescores, args.date, version)
-        zip_limedb(tmp_db, args.out, "tricode.db")
+        zip_limedb(tmp_db, args.out, "tricode.db", args.date)
 
     size_kb = os.path.getsize(args.out) / 1024.0
     log(f"wrote {args.out} ({count} rows, {size_kb:.1f} KB compressed)")

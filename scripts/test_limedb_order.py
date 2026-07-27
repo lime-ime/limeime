@@ -62,6 +62,17 @@ def parse_cin(path: Path) -> list[tuple[str, str]]:
     return rows
 
 
+def parse_tricode_cin(path: Path) -> list[tuple[str, str]]:
+    rows: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for code, word in parse_cin(path):
+        row = (code.strip().lower(), word.strip())
+        if row not in seen:
+            seen.add(row)
+            rows.append(row)
+    return rows
+
+
 def parse_lime_text_v2(path: Path) -> list[tuple[str, str]]:
     rows: list[tuple[str, str]] = []
     in_chardef = False
@@ -92,6 +103,8 @@ def parse_lime_text_v2(path: Path) -> list[tuple[str, str]]:
 def parse_source(path: Path, source_format: str) -> list[tuple[str, str]]:
     if source_format == "cin":
         return parse_cin(path)
+    if source_format == "tricode-cin":
+        return parse_tricode_cin(path)
     if source_format == "lime-text-v2":
         return parse_lime_text_v2(path)
     raise ContractError(f"Unsupported source format: {source_format}")

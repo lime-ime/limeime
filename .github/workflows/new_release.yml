@@ -27,6 +27,7 @@ jobs:
           BASE_REF="$(git describe --tags --abbrev=0 HEAD^)"
           python3 scripts/test_limedb_order.py --all --base-ref "$BASE_REF"
           python3 scripts/test_hahacj_limedb.py
+          python3 scripts/test_tricode_limedb.py
 
       - name: Read version from build.gradle
         id: version
