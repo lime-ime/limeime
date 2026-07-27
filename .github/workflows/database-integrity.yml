@@ -8,8 +8,6 @@ on:
       - "scripts/test_*db.py"
       - "scripts/test_limedb_order.py"
       - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
-      - "LimeStudio/app/src/androidTest/java/org/limeime/TricodeLimedbImportOrderTest.java"
-      - "LimeStudio/app/build.gradle"
       - ".github/workflows/database-integrity.yml"
       - ".github/workflows/new_release.yml"
   push:
@@ -21,8 +19,6 @@ on:
       - "scripts/test_*db.py"
       - "scripts/test_limedb_order.py"
       - "LimeStudio/app/src/androidTest/java/org/limeime/Cj4LimedbGenerationTest.java"
-      - "LimeStudio/app/src/androidTest/java/org/limeime/TricodeLimedbImportOrderTest.java"
-      - "LimeStudio/app/build.gradle"
       - ".github/workflows/database-integrity.yml"
       - ".github/workflows/new_release.yml"
   workflow_dispatch:

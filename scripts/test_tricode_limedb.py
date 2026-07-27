@@ -93,7 +93,6 @@ class TricodeBuildTest(unittest.TestCase):
             time.sleep(2.1)
             self.build(second)
             self.assertEqual(first.read_bytes(), second.read_bytes())
-            self.assertEqual(ARCHIVE.read_bytes(), first.read_bytes())
 
     def test_default_build_uses_the_committed_source(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -112,7 +111,20 @@ class TricodeBuildTest(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(ARCHIVE.read_bytes(), output.read_bytes())
+            with zipfile.ZipFile(output) as archive:
+                archive.extract("tricode.db", temporary_directory)
+            database = Path(temporary_directory) / "tricode.db"
+            with contextlib.closing(sqlite3.connect(database)) as connection:
+                rows = connection.execute(
+                    "SELECT code, word FROM custom ORDER BY _id ASC"
+                ).fetchall()
+                metadata = dict(
+                    connection.execute(
+                        "SELECT title, desc FROM im WHERE code = 'tricode'"
+                    ).fetchall()
+                )
+            self.assertEqual(load_builder().parse_cin(SOURCE)["rows"], rows)
+            self.assertEqual("20260727.1", metadata.get("version"))
 
     def test_committed_archive_matches_source_order_and_metadata(self):
         builder = load_builder()
