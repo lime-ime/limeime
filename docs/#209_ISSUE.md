@@ -49,7 +49,7 @@ The issue-specific branch now contains the first implementation slice:
 
 A direct SQLite runtime experiment on the Linux development host reproduced the key lock behavior independently: after one connection began an immediate write, a second connection first read and then attempted to delete from the same database with a 5-second timeout; the read-to-write promotion returned `database is locked` immediately (`0.000s`). This validates why repeating the existing 5-second pragma is not sufficient and why the complete transaction must be retried.
 
-Xcode is unavailable on the Linux host, so the new XCTest cases have not yet produced executable RED/GREEN results. `scripts/test_issue_209_ios_editor_refresh_retry.py` provides a Linux source-contract gate only; Xcode/Xcode Cloud remains required for Swift compilation and behavioral proof.
+The XCTest cases produced an executable RED/GREEN result in Xcode Cloud. Against the pre-fix source, the competing-writer test returned a failed editor-refresh receipt containing `SQLite error 5: database is locked`, left cold `related` unchanged, and completed in milliseconds instead of retrying. Against the issue-branch implementation, the full required iOS test and archive actions passed: transient contention completed successfully, persistent contention failed within the bounded window without partial writes, and a later request recovered after release. `scripts/test_issue_209_ios_editor_refresh_retry.py` remains a fast Linux source-contract gate, not a substitute for that behavioral proof.
 
 ## Follow-up questions
 
@@ -59,22 +59,22 @@ Xcode is unavailable on the Linux host, so the new XCTest cases have not yet pro
 - Does reopening Related-Phrase Management currently recover once the lock is gone, or does persisted connection/request state keep the editor read-only?
 - Is an in-screen retry control needed, or is automatic bounded retry plus clean recovery on reopen sufficient?
 
-## Verification plan
+## Verification
 
 ### Automated
 
-1. Add an iOS test that opens the live cold database on a second connection, begins a write transaction, starts a `related` editor refresh, releases the lock before the deadline, and verifies:
+1. An iOS test opens the live cold database on a second connection, begins a write transaction, starts a `related` editor refresh, releases the lock before the deadline, and verifies:
    - the refresh waits/retries and returns a `.done` receipt,
    - the learned/new `related` rows are present in cold,
    - no stale attachment or temporary table prevents the next refresh.
-2. Add a persistent-lock test that verifies bounded failure, a `.failed` receipt with no partial row changes, and cleanup of the request/transaction state.
-3. After releasing the persistent lock, issue a new refresh and verify successful recovery without recreating either database.
-4. Keep the existing tests green:
+2. A persistent-lock test verifies bounded failure, a `.failed` receipt with no partial row changes, and cleanup of the request/transaction state.
+3. After releasing the persistent lock, a new refresh verifies successful recovery without recreating either database.
+4. Existing coverage remains green, including:
    - `testEditorRefreshHarvestsRelatedRowsByParentChildKey`
    - `testEditorRefreshHarvestsNewAndScoreChangedRowsIntoLiveCold`
    - `testEditorRefreshThenCloseReconcileRoundTripsLearningAndAppEdits`
    - controller receipt-matching and timeout cleanup tests.
-5. Run the relevant XCTest target on an iOS simulator or Xcode Cloud. A compile-only result is not runtime proof.
+5. The required iOS XCTest and archive actions pass on the exact issue-branch implementation. This is simulator/CI behavioral proof; affected-device runtime confirmation remains separate.
 
 ### Runtime
 
