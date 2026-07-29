@@ -23,6 +23,7 @@
 
 import Foundation
 import Combine
+import Darwin
 
 enum SyncPaths {
     static func coldDB(_ base: URL) -> URL {
@@ -73,8 +74,67 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("editor.refresh.receipt.json")
     }
 
+    static func editorRefreshLock(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("editor.refresh.lock")
+    }
+
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
+    }
+}
+
+/// Cross-process ownership for the editor-refresh hand-off (#209).
+///
+/// Request and receipt files are messages, not locks. Settings holds this advisory lock while
+/// it closes/reopens cold and publishes/cleans the request. The keyboard holds it from
+/// re-reading the request through commit, DETACH, explicit close and terminal receipt. Thus a
+/// Settings timeout cannot reopen cold under an in-flight harvest, and a keyboard that starts
+/// late cannot consume a request Settings already cancelled.
+final class EditorRefreshFileLock: @unchecked Sendable {
+    private let descriptor: Int32
+    private let stateLock = NSLock()
+    private var ownsLock = false
+
+    init(baseURL: URL) throws {
+        let directory = SyncPaths.outboxDir(baseURL)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        descriptor = Darwin.open(SyncPaths.editorRefreshLock(baseURL).path,
+                                 O_CREAT | O_RDWR,
+                                 mode_t(S_IRUSR | S_IWUSR))
+        guard descriptor >= 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        try lock()
+    }
+
+    deinit {
+        try? unlock()
+        Darwin.close(descriptor)
+    }
+
+    /// This wait is deliberately unbounded. Once the keyboard owns the hand-off, reopening cold
+    /// on a UI deadline would recreate #209. iOS resumes the embedded keyboard with the host app;
+    /// process termination also releases flock automatically.
+    func lock() throws {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard !ownsLock else { return }
+        while Darwin.flock(descriptor, LOCK_EX) != 0 {
+            guard errno == EINTR else {
+                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            }
+        }
+        ownsLock = true
+    }
+
+    func unlock() throws {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        guard ownsLock else { return }
+        guard Darwin.flock(descriptor, LOCK_UN) == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+        }
+        ownsLock = false
     }
 }
 

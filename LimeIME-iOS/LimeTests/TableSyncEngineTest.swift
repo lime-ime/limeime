@@ -199,6 +199,35 @@ final class TableSyncEngineTest: XCTestCase {
         _ = try SyncMetaStore(databaseURL: url)
     }
 
+    /// Issue #209: holds a REAL write transaction on the live cold database from a second
+    /// connection until `release()` is called, then rolls back — so the holder itself leaves
+    /// the cold rows untouched. Settings no longer contends here (it closes cold for the
+    /// whole handshake), so this now stands in for a FOREIGN lock owner.
+    private func coldWriteLockHolder(at coldDatabaseURL: URL)
+    throws -> (acquired: XCTestExpectation, released: XCTestExpectation, release: () -> Void) {
+        let acquired = expectation(description: "cold write lock acquired")
+        let released = expectation(description: "cold write lock released")
+        let queue = try DatabaseQueue(path: coldDatabaseURL.path)
+        let releaseSignal = DispatchSemaphore(value: 0)
+        let release: () -> Void = { releaseSignal.signal() }
+        DispatchQueue.global(qos: .userInitiated).async {
+            try? queue.writeWithoutTransaction { db in
+                try db.inTransaction(.immediate) {
+                    // A real uncommitted change: the write lock is held for the whole body.
+                    try db.execute(sql: """
+                        INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)
+                        """, arguments: ["鎖", "住", 1])
+                    acquired.fulfill()
+                    releaseSignal.wait()
+                    return .rollback
+                }
+            }
+            try? queue.close()
+            released.fulfill()
+        }
+        return (acquired, released, release)
+    }
+
     private func relatedRows(in dbURL: URL) throws -> [String] {
         let queue = try DatabaseQueue(path: dbURL.path)
         defer { try? queue.close() }
@@ -1017,6 +1046,171 @@ final class TableSyncEngineTest: XCTestCase {
 
         XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
         XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
+    }
+
+    /// Issue #209 lifecycle: the keyboard must have COMMITTED the hot→cold transaction,
+    /// DETACHed cold and CLOSED its connection before the `.done` receipt exists. The
+    /// receipt is what lets Settings reopen cold and unlock editing, so anything still
+    /// held at that instant races the Settings-side reopen.
+    ///
+    /// Observed with real SQLite, at the moment the receipt appears:
+    ///   * cold's `-wal` sidecar is gone → no connection in this process holds cold open,
+    ///   * another connection can take an IMMEDIATE write transaction on cold at once.
+    ///
+    /// (Pre-fix the `DETACH` was issued inside GRDB's write transaction, where SQLite
+    /// rejects it with "database cold_editor is locked"; `try?` swallowed that, so release
+    /// depended on the connection being deallocated rather than on an explicit close.)
+    func testEditorRefreshDetachesAndClosesColdBeforeWritingDoneReceipt() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
+        try makeRelatedDatabase(at: hot,
+                                rows: [
+                                    ("你", "好", 8),
+                                    ("天", "氣", 2),
+                                ])
+        // Production opens every live database in WAL, which is what makes the -wal
+        // sidecar a truthful "someone still holds this database open" signal.
+        let walSetup = try DatabaseQueue(path: liveCold.path)
+        try walSetup.writeWithoutTransaction { db in
+            try db.execute(sql: "PRAGMA journal_mode = WAL")
+        }
+        try walSetup.close()
+        try writeEditorRefreshRequest(appGroup: appGroup,
+                                      table: "related",
+                                      requestUUID: "related-release-before-receipt")
+
+        final class ReceiptEvidence: @unchecked Sendable {
+            var sawReceipt = false
+            var coldWalPresent = true
+            var coldWriteError: String?
+        }
+        let evidence = ReceiptEvidence()
+        let observed = expectation(description: "receipt observed")
+        let receiptPath = SyncPaths.editorRefreshReceipt(appGroup).path
+        let walPath = liveCold.path + "-wal"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let deadline = Date().addingTimeInterval(10)
+            while Date() < deadline {
+                guard FileManager.default.fileExists(atPath: receiptPath) else {
+                    Thread.sleep(forTimeInterval: 0.001)
+                    continue
+                }
+                evidence.sawReceipt = true
+                evidence.coldWalPresent = FileManager.default.fileExists(atPath: walPath)
+                do {
+                    let probe = try DatabaseQueue(path: liveCold.path)
+                    try probe.writeWithoutTransaction { db in
+                        try db.inTransaction(.immediate) { .rollback }
+                    }
+                    try probe.close()
+                } catch {
+                    evidence.coldWriteError = "\(error)"
+                }
+                break
+            }
+            observed.fulfill()
+        }
+
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+        wait(for: [observed], timeout: 15)
+
+        XCTAssertTrue(evidence.sawReceipt, "the harvest must publish a receipt")
+        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
+        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
+        XCTAssertFalse(evidence.coldWalPresent,
+                       "cold must be detached and closed before the done receipt is written")
+        XCTAssertNil(evidence.coldWriteError,
+                     "cold must be immediately writable when the receipt lands")
+    }
+
+    /// Issue #209: persistent contention must still fail — bounded, cleanly, and without
+    /// partially rewriting cold. The fail-safe read-only result is preserved on purpose.
+    func testEditorRefreshFailsBoundedUnderPersistentColdWriteLock() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
+        try makeRelatedDatabase(at: hot,
+                                rows: [
+                                    ("你", "好", 8),
+                                    ("天", "氣", 2),
+                                ])
+        try writeEditorRefreshRequest(appGroup: appGroup,
+                                      table: "related",
+                                      requestUUID: "related-persistent-lock")
+
+        let holder = try coldWriteLockHolder(at: liveCold)
+        defer { holder.release() }
+        wait(for: [holder.acquired], timeout: 5)
+
+        let started = Date()
+        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
+        let elapsed = Date().timeIntervalSince(started)
+
+        let receipt = try editorRefreshReceipt(appGroup: appGroup)
+        XCTAssertEqual(receipt.status, .failed)
+        XCTAssertTrue(receipt.error?.contains("locked") == true,
+                      "the failure must report the real lock cause, got \(receipt.error ?? "nil")")
+        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|1"],
+                       "a failed harvest must leave cold exactly as it was")
+        // Narrow defensive bound: Settings quiesces its own cold access, so a lock here can
+        // only come from outside this handshake. One attempt with a short busy timeout must
+        // still fail well inside the Settings-side 10s poll instead of exhausting it.
+        XCTAssertLessThan(elapsed, 5,
+                          "persistent contention must fail inside the Settings-side 10s poll")
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: SyncPaths.editorRefreshRequest(appGroup).path),
+                       "the consumed request must not linger after a failed refresh")
+
+        holder.release()
+        wait(for: [holder.released], timeout: 5)
+    }
+
+    /// Issue #209: after the lock owner goes away, the NEXT request must succeed on the same
+    /// databases — no stale attach/temp state, no app restart, no database recreation.
+    func testEditorRefreshRecoversOnNextRequestAfterColdWriteLockReleased() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
+        try makeRelatedDatabase(at: hot,
+                                rows: [
+                                    ("你", "好", 8),
+                                    ("天", "氣", 2),
+                                ])
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+
+        try writeEditorRefreshRequest(appGroup: appGroup,
+                                      table: "related",
+                                      requestUUID: "related-recovery-1")
+        let holder = try coldWriteLockHolder(at: liveCold)
+        defer { holder.release() }
+        wait(for: [holder.acquired], timeout: 5)
+        try engine.scanAndApply()
+        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .failed)
+
+        holder.release()
+        wait(for: [holder.released], timeout: 5)
+
+        try writeEditorRefreshRequest(appGroup: appGroup,
+                                      table: "related",
+                                      requestUUID: "related-recovery-2")
+        try engine.scanAndApply()
+
+        let receipt = try editorRefreshReceipt(appGroup: appGroup)
+        XCTAssertEqual(receipt.status, .done,
+                       "reopening the editor must recover once the lock is gone "
+                       + "(error: \(receipt.error ?? "nil"))")
+        XCTAssertEqual(receipt.requestUUID, "related-recovery-2")
+        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
     }
 
     func testCloseReconcileAppliesColdAddEditAndDeleteToHot() throws {

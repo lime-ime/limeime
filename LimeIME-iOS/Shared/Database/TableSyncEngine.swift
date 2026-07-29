@@ -187,6 +187,12 @@ final class TableSyncEngine {
     private func processEditorRefreshRequestIfNeeded() throws {
         let requestURL = SyncPaths.editorRefreshRequest(appGroupBaseURL)
         guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
+
+        // Re-read and validate only AFTER taking cross-process ownership. Settings may have
+        // timed out, removed the request and reopened cold while this keyboard was waiting.
+        let ownership = try EditorRefreshFileLock(baseURL: appGroupBaseURL)
+        defer { withExtendedLifetime(ownership) {} }
+        guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
         defer { try? FileManager.default.removeItem(at: requestURL) }
 
         let request = try JSONDecoder().decode(EditorRefreshRequest.self,
@@ -202,6 +208,9 @@ final class TableSyncEngine {
             guard FileManager.default.fileExists(atPath: liveColdURL.path) else {
                 throw TableSyncEngineError.liveColdMissing
             }
+            // #209: harvestEditorRefresh returns only after the hot→cold transaction
+            // committed, cold was detached, and the connection was closed. Ownership remains
+            // held through the terminal receipt; Settings must reacquire it before reopening.
             try harvestEditorRefresh(table: request.table, into: liveColdURL)
             try writeEditorRefreshReceipt(for: request, status: .done, error: nil)
             postSyncSignal(.importDone)
@@ -213,17 +222,72 @@ final class TableSyncEngine {
         }
     }
 
-    private func harvestEditorRefresh(table: String, into coldDatabaseURL: URL) throws {
-        let keyColumns = Self.editorRefreshKeyColumns(for: table)
-        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
-        try connection.write { db in
-            try db.execute(sql: "ATTACH DATABASE ? AS cold_editor",
-                           arguments: [coldDatabaseURL.path])
-            defer {
-                try? db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
-                try? db.execute(sql: "DETACH DATABASE cold_editor")
-            }
+    /// Issue #209: the cold side of this handshake has an explicit lifecycle.
+    ///
+    /// Settings closes its own cold connection before the request becomes visible and only
+    /// reopens it after the receipt, so this harvest is the ONLY cold accessor while it runs.
+    /// Its job is to hand cold back provably free:
+    ///
+    ///   1. ATTACH cold OUTSIDE the transaction,
+    ///   2. run the whole diff + write in ONE hot write transaction (atomic per database),
+    ///   3. DETACH cold AFTER the commit — SQLite rejects `DETACH` inside a transaction
+    ///      ("database cold_editor is locked"), which the previous `defer { try? … }` inside
+    ///      GRDB's `write` swallowed, leaving cold attached until deallocation,
+    ///   4. CLOSE the connection explicitly,
+    ///
+    /// and only then does the caller write the `.done` receipt that unlocks Settings.
+    ///
+    /// Settings-side cold contention is prevented by the ownership hand-off. Keep the normal
+    /// 5-second busy timeout for independent hot-side keyboard writes (learning/commit); the
+    /// Settings ownership lock means a UI poll timeout still cannot reopen cold mid-harvest.
+    private static let editorRefreshBusyTimeoutMilliseconds = 5_000
 
+    private func harvestEditorRefresh(table: String, into coldDatabaseURL: URL) throws {
+        let connection = try SyncDatabaseConnection(
+            databaseURL: hotDatabaseURL,
+            busyTimeoutMilliseconds: Self.editorRefreshBusyTimeoutMilliseconds)
+        do {
+            try connection.writeWithoutTransaction { db in
+                try db.execute(sql: "ATTACH DATABASE ? AS cold_editor",
+                               arguments: [coldDatabaseURL.path])
+            }
+        } catch {
+            try? connection.close()
+            throw error
+        }
+
+        do {
+            try harvestEditorRefreshTransaction(table: table, on: connection)
+        } catch {
+            try? releaseColdEditor(on: connection)
+            try? connection.close()
+            throw error
+        }
+
+        // A failed release means cold cannot be PROVEN free, so the request fails even
+        // though the commit landed: Settings stays fail-safe read-only rather than
+        // reopening cold against state this process may still hold.
+        do {
+            try releaseColdEditor(on: connection)
+        } catch {
+            try? connection.close()
+            throw error
+        }
+        try connection.close()
+    }
+
+    /// Post-commit cleanup: both statements must run OUTSIDE the write transaction.
+    private func releaseColdEditor(on connection: SyncDatabaseConnection) throws {
+        try connection.writeWithoutTransaction { db in
+            try db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
+            try db.execute(sql: "DETACH DATABASE cold_editor")
+        }
+    }
+
+    private func harvestEditorRefreshTransaction(table: String,
+                                                 on connection: SyncDatabaseConnection) throws {
+        let keyColumns = Self.editorRefreshKeyColumns(for: table)
+        try connection.write { db in
             guard try Self.tableExists(table, in: db),
                   try Self.tableExists(table, schema: "cold_editor", in: db)
             else {
@@ -288,6 +352,7 @@ final class TableSyncEngine {
                 """)
         }
     }
+
 
     private func writeEditorRefreshReceipt(for request: EditorRefreshRequest,
                                            status: EditorRefreshReceipt.Status,

@@ -260,6 +260,16 @@ final class SetupImController: BaseController {
                                        pollInterval: editorRefreshPollInterval)
     }
 
+    /// Issue #209: the Settings side of the cold hand-off.
+    ///
+    /// The keyboard harvests hot→cold by ATTACHing the app's live cold `lime.db` from its
+    /// own process. If this app still holds that file open, the keyboard's write fails with
+    /// `SQLite error 5: database is locked` and the editor falls back to read-only. So cold
+    /// is closed BEFORE the request becomes visible, stays closed for the whole
+    /// request→receipt window, and is reopened (rebound to what the keyboard committed)
+    /// before this function returns — on success, failure and timeout alike. Callers keep
+    /// editing locked until then; `RelatedListView` / `RecordListView` also hold their first
+    /// cold load until this returns.
     func refreshTableFromKeyboard(stem: String,
                                   baseURL: URL,
                                   timeout: TimeInterval,
@@ -270,20 +280,90 @@ final class SetupImController: BaseController {
         let request = EditorRefreshRequest(requestUUID: requestUUID,
                                            table: stem,
                                            expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
+        let server = self.dbServer
+        var ownership: EditorRefreshFileLock
+        do {
+            // Acquire ownership before closing cold. The same cross-process lock prevents a
+            // late keyboard from starting while Settings cancels/reopens after a timeout.
+            ownership = try await Task.detached(priority: .userInitiated) {
+                try EditorRefreshFileLock(baseURL: baseURL)
+            }.value
+            try await Task.detached(priority: .userInitiated) {
+                try server.suspendColdAccess()
+            }.value
+        } catch {
+            return .failure(error)
+        }
+
         do {
             try? FileManager.default.removeItem(at: receiptURL)
             try atomicWrite(try JSONEncoder().encode(request), to: requestURL)
             postSyncSignal(.tablesUpdated)
+            try ownership.unlock()
+        } catch {
+            try? FileManager.default.removeItem(at: requestURL)
+            try? FileManager.default.removeItem(at: receiptURL)
+            do {
+                try await Task.detached(priority: .userInitiated) {
+                    try server.resumeColdAccess()
+                }.value
+            } catch {
+                return .failure(error)
+            }
+            return .failure(error)
+        }
+
+        var outcome: Result<Void, Error>
+        do {
             try await waitForEditorRefreshReceipt(at: receiptURL,
                                                   requestUUID: requestUUID,
                                                   timeout: timeout,
                                                   pollInterval: pollInterval)
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            return .success(())
+            outcome = .success(())
         } catch {
+            outcome = .failure(error)
+        }
+
+        do {
+            // This may outlive the UI poll timeout, intentionally: if the keyboard already
+            // owns the harvest, reopening cold must wait for its commit/close/receipt.
+            do {
+                let currentOwnership = ownership
+                try await Task.detached(priority: .userInitiated) {
+                    try currentOwnership.lock()
+                }.value
+            } catch {
+                // Initial acquisition already proved this App-Group path supports flock. If
+                // this descriptor became unusable, reacquire with a fresh descriptor rather
+                // than reopening cold without ownership.
+                ownership = try await Task.detached(priority: .userInitiated) {
+                    try EditorRefreshFileLock(baseURL: baseURL)
+                }.value
+            }
+
+            // A terminal receipt may have landed while a timed-out waiter was blocked on
+            // ownership. Accept that matching result instead of reporting a false timeout.
+            if let receipt = matchingEditorRefreshReceipt(at: receiptURL,
+                                                           requestUUID: requestUUID) {
+                switch receipt.status {
+                case .done:
+                    outcome = .success(())
+                case .failed:
+                    outcome = .failure(SetupImControllerError.editorRefreshFailed(receipt.error))
+                }
+            }
+
             try? FileManager.default.removeItem(at: requestURL)
             try? FileManager.default.removeItem(at: receiptURL)
+            try await Task.detached(priority: .userInitiated) {
+                try server.resumeColdAccess()
+            }.value
+            try ownership.unlock()
+            return outcome
+        } catch {
+            // Never report success when ownership/reopen failed. `ownership` releases its
+            // descriptor in deinit; cold access remains fail-safe unavailable if reopen failed.
+            try? ownership.unlock()
             return .failure(error)
         }
     }
@@ -459,6 +539,7 @@ private func requestKeyboardBackup(server: DBServer) throws -> URL {
 }
 
 private func publishRestoredCold(server: DBServer) throws {
+    try server.requireColdAccessAvailable()
     let liveURL = server.liveDatabaseURL()
     _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
     try ColdPublisher(liveColdDatabaseURL: liveURL,
