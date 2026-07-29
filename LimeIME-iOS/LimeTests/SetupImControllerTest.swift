@@ -889,7 +889,7 @@ final class SetupImControllerTest: XCTestCase {
             // The keyboard's harvest: a real IMMEDIATE write on cold from another connection.
             do {
                 let keyboard = try DatabaseQueue(path: dbURL.path)
-                try keyboard.writeWithoutTransaction { db in
+                try await keyboard.writeWithoutTransaction { db in
                     try db.inTransaction(.immediate) {
                         try db.execute(sql: """
                             INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)
@@ -996,7 +996,7 @@ final class SetupImControllerTest: XCTestCase {
                 // Hold ownership beyond the Settings-side poll timeout.
                 try? await Task.sleep(nanoseconds: 250_000_000)
                 let keyboard = try DatabaseQueue(path: dbURL.path)
-                try keyboard.write { db in
+                try await keyboard.write { db in
                     try db.execute(sql: """
                         INSERT INTO related (pword, cword, score) VALUES ('測209', '乙', 2)
                         """)
