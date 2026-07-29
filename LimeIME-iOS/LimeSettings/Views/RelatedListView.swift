@@ -186,13 +186,10 @@ struct RelatedListView: View {
                     .disabled(!canEdit)
                 }
             }
-            .onAppear {
-                refreshHotSnapshotIfNeeded()
-                loadPhrases()
-            }
+            .onAppear { beginEditorSession() }
             .onChange(of: manageRelatedController.refreshToken) { _ in resetAndLoad() }
             .onChange(of: relayActiveState.editingCapability) { _ in
-                refreshHotSnapshotIfNeeded()
+                beginEditorSession()
             }
             .onChange(of: scenePhase) { _ in
                 if scenePhase == .background {
@@ -256,8 +253,16 @@ struct RelatedListView: View {
         return canEdit ? "checkmark.circle" : "lock"
     }
 
-    private func refreshHotSnapshotIfNeeded() {
-        guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }
+    /// Issue #209: the editor's single entry point. The hot→cold harvest requires the app to
+    /// CLOSE its cold database for the whole handshake (`refreshTableFromKeyboard`), so the
+    /// first cold load must not run beside it — it would either race the keyboard's write or
+    /// read a quiesced database. Load once the handshake resolved and cold is reopened, on
+    /// the success AND the read-only failure path.
+    private func beginEditorSession() {
+        guard !didAttemptHotRefresh else { return }
+        // Do not load cold while waiting for the relay gate: that detached load could still
+        // be running when a capability change starts the harvest. Match RecordListView and
+        // summon the keyboard first; failure still reopens cold and then loads read-only.
         didAttemptHotRefresh = true
         isRefreshingHotSnapshot = true
         statusMessage = ""
@@ -270,11 +275,11 @@ struct RelatedListView: View {
             switch result {
             case .success:
                 statusMessage = ""
-                loadPhrases()
             case .failure(let error):
                 hotRefreshFailed = true
                 statusMessage = "即時資料更新失敗：\(error.localizedDescription)"
             }
+            loadPhrases()
         }
     }
 

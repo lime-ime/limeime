@@ -198,12 +198,9 @@ struct RecordListView: View {
                 .disabled(!canEdit)
             }
         }
-        .onAppear {
-            refreshHotSnapshotIfNeeded()
-            loadRecords()
-        }
+        .onAppear { beginEditorSession() }
         .onChange(of: relayActiveState.editingCapability) { _ in
-            refreshHotSnapshotIfNeeded()
+            beginEditorSession()
         }
         .onChange(of: scenePhase) { _ in
             if scenePhase == .background {
@@ -278,12 +275,17 @@ struct RecordListView: View {
         return canEdit ? "checkmark.circle" : "lock"
     }
 
-    private func refreshHotSnapshotIfNeeded() {
+    /// Issue #209: the editor's single entry point. `refreshTableFromKeyboard` CLOSES the
+    /// app's cold database for the whole handshake so the keyboard can write it, so the
+    /// first cold load must wait for the handshake to resolve and cold to reopen — on the
+    /// success AND the read-only failure path.
+    private func beginEditorSession() {
         // Do NOT gate on relayEditingCapability == .live here: that state is only
         // established once the keyboard relays, which needs the probe below to summon
         // it — a chicken-and-egg that would leave the editor permanently read-only.
-        // Always summon + attempt the harvest; if LIME isn't the active keyboard it
-        // simply times out → read-only.
+        // Summon first, then allow the complete request window for the relay/receipt. A cold
+        // keyboard may report `.live` after the short probe delay; do not consume the one-shot
+        // attempt based on that advisory state.
         guard !didAttemptHotRefresh else { return }
         didAttemptHotRefresh = true
         isRefreshingHotSnapshot = true
@@ -301,11 +303,11 @@ struct RecordListView: View {
             switch result {
             case .success:
                 statusMessage = ""
-                loadRecords()
             case .failure:
                 hotRefreshFailed = true
                 statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
             }
+            loadRecords()
         }
     }
 
