@@ -84,6 +84,14 @@ final class EditorRefreshViewSourceTest: XCTestCase {
         // `.live` (chicken-and-egg: `.live` needs the keyboard summoned first). Editing still
         // gates on `.live` via `canEdit` below.
         XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
+        // Issue #209: the initial cold load must NOT run beside the harvest handshake —
+        // Settings closes cold for the whole request→receipt window, so a concurrent load
+        // would either race the keyboard's write or read a quiesced database.
+        XCTAssertTrue(source.contains(".onAppear { beginEditorSession() }"))
+        let afterHandshake = try XCTUnwrap(
+            source.components(separatedBy: "await setupController.refreshTableFromKeyboard").last)
+        XCTAssertTrue(afterHandshake.contains("loadRecords()"),
+                      "cold is loaded only after the handshake resolved and cold reopened")
         XCTAssertTrue(source.contains("probeFocused = true"))
         XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
         XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
@@ -99,7 +107,14 @@ final class EditorRefreshViewSourceTest: XCTestCase {
                                 encoding: .utf8)
 
         XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
+        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
+        // Issue #209: same serialized order as RecordListView — no cold load beside the
+        // harvest handshake.
+        XCTAssertTrue(source.contains(".onAppear { beginEditorSession() }"))
+        let afterHandshake = try XCTUnwrap(
+            source.components(separatedBy: "await setupController.refreshTableFromKeyboard").last)
+        XCTAssertTrue(afterHandshake.contains("loadPhrases()"),
+                      "cold is loaded only after the handshake resolved and cold reopened")
         XCTAssertTrue(source.contains("@FocusState private var probeFocused: Bool"))
         XCTAssertTrue(source.contains("probeFocused = true"))
         XCTAssertTrue(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))

@@ -26,6 +26,7 @@ import GRDB
 
 final class SyncDatabaseConnection {
     private let queue: DatabaseQueue
+    private var isClosed = false
 
     init(databaseURL: URL, busyTimeoutMilliseconds: Int = 5_000) throws {
         try FileManager.default.createDirectory(at: databaseURL.deletingLastPathComponent(),
@@ -38,7 +39,17 @@ final class SyncDatabaseConnection {
     }
 
     deinit {
-        try? queue.close()
+        try? close()
+    }
+
+    /// Issue #209: release every lock and attachment this connection owns at a point the
+    /// caller chooses, instead of whenever the last reference happens to be dropped. The
+    /// cross-process editor-refresh handshake must be able to prove cold is free BEFORE it
+    /// publishes a receipt. Idempotent — `deinit` closes too.
+    func close() throws {
+        guard !isClosed else { return }
+        try queue.close()
+        isClosed = true
     }
 
     func read<T>(_ body: (Database) throws -> T) throws -> T {

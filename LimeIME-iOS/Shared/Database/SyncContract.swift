@@ -23,6 +23,7 @@
 
 import Foundation
 import Combine
+import Darwin
 
 enum SyncPaths {
     static func coldDB(_ base: URL) -> URL {
@@ -73,8 +74,215 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("editor.refresh.receipt.json")
     }
 
+    static func editorRefreshLock(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("editor.refresh.lock")
+    }
+
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
+    }
+}
+
+/// Cross-process ownership for the editor-refresh hand-off (#209).
+///
+/// Request and receipt files are messages, not locks. Settings holds this advisory lock while
+/// it closes/reopens cold and publishes/cleans the request. The keyboard holds it from
+/// re-reading the request through commit, DETACH, explicit close and terminal receipt. Thus a
+/// Settings timeout cannot reopen cold under an in-flight harvest, and a keyboard that starts
+/// late cannot consume a request Settings already cancelled.
+struct EditorRefreshLockHandle: Sendable {
+    private static let defaultAcquisitionTimeout: TimeInterval = 30
+    private let lockAction: @Sendable (TimeInterval) throws -> Void
+    private let unlockAction: @Sendable () throws -> Void
+
+    init(lock: @escaping @Sendable (TimeInterval) throws -> Void,
+         unlock: @escaping @Sendable () throws -> Void) {
+        lockAction = lock
+        unlockAction = unlock
+    }
+
+    init(lock: @escaping @Sendable () throws -> Void,
+         unlock: @escaping @Sendable () throws -> Void) {
+        lockAction = { _ in try lock() }
+        unlockAction = unlock
+    }
+
+    func lock() throws { try lockAction(Self.defaultAcquisitionTimeout) }
+    func lock(timeout: TimeInterval) throws { try lockAction(timeout) }
+    func lockAsync(timeout: TimeInterval) async throws {
+        try await EditorRefreshLockExecutor.run {
+            try lockAction(timeout)
+        }
+    }
+    func unlock() throws { try unlockAction() }
+}
+
+private enum EditorRefreshLockExecutor {
+    private static let queue = DispatchQueue(label: "org.limeime.editor-refresh-lock",
+                                             qos: .userInitiated)
+
+    static func run(_ operation: @escaping @Sendable () throws -> Void) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            queue.async {
+                do {
+                    try operation()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+final class EditorRefreshSessionGate: @unchecked Sendable {
+    static let shared = EditorRefreshSessionGate()
+
+    private let stateLock = NSLock()
+    private var isHeld = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func acquire() async {
+        await withCheckedContinuation { continuation in
+            stateLock.lock()
+            if isHeld {
+                waiters.append(continuation)
+                stateLock.unlock()
+            } else {
+                isHeld = true
+                stateLock.unlock()
+                continuation.resume()
+            }
+        }
+    }
+
+    func release() {
+        stateLock.lock()
+        let next = waiters.isEmpty ? nil : waiters.removeFirst()
+        if next == nil { isHeld = false }
+        stateLock.unlock()
+        next?.resume()
+    }
+}
+
+enum EditorRefreshLockError: Error {
+    case timedOut
+}
+
+final class EditorRefreshFileLock: @unchecked Sendable {
+    private static let defaultAcquisitionTimeout: TimeInterval = 30
+
+    private final class SharedDescriptor: @unchecked Sendable {
+        let descriptor: Int32
+        let localOwnership = DispatchSemaphore(value: 1)
+
+        init(path: String) throws {
+            descriptor = Darwin.open(path,
+                                     O_CREAT | O_RDWR | O_CLOEXEC,
+                                     mode_t(S_IRUSR | S_IWUSR))
+            guard descriptor >= 0 else {
+                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            }
+        }
+
+        deinit {
+            Darwin.close(descriptor)
+        }
+
+        func applyFlock(_ operation: Int32) -> (result: Int32, error: Int32) {
+            let result = flock(descriptor, operation)
+            return (result, result == 0 ? 0 : errno)
+        }
+    }
+
+    private static let registryLock = NSLock()
+    private static var sharedByPath: [String: SharedDescriptor] = [:]
+
+    private let shared: SharedDescriptor
+    private let stateLock = NSLock()
+    private var ownsLock = false
+
+    static func shared(baseURL: URL) throws -> EditorRefreshFileLock {
+        let directory = SyncPaths.outboxDir(baseURL)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let path = SyncPaths.editorRefreshLock(baseURL).standardizedFileURL.path
+        registryLock.lock()
+        defer { registryLock.unlock() }
+        let descriptor: SharedDescriptor
+        if let existing = sharedByPath[path] {
+            descriptor = existing
+        } else {
+            descriptor = try SharedDescriptor(path: path)
+            sharedByPath[path] = descriptor
+        }
+        return EditorRefreshFileLock(shared: descriptor)
+    }
+
+    private init(shared: SharedDescriptor) {
+        self.shared = shared
+    }
+
+    deinit {
+        try? unlock()
+    }
+
+    func lock() throws {
+        try lock(timeout: Self.defaultAcquisitionTimeout)
+    }
+
+    func lock(timeout: TimeInterval) throws {
+        stateLock.lock()
+        let alreadyOwned = ownsLock
+        stateLock.unlock()
+        guard !alreadyOwned else { return }
+
+        let clampedTimeout = max(0, timeout)
+        let deadline = Date().addingTimeInterval(clampedTimeout)
+        guard shared.localOwnership.wait(timeout: .now() + clampedTimeout) == .success else {
+            throw EditorRefreshLockError.timedOut
+        }
+        var acquired = false
+        defer {
+            if !acquired {
+                shared.localOwnership.signal()
+            }
+        }
+
+        var attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        while attempt.result != 0 {
+            if attempt.error == EINTR {
+                attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+                continue
+            }
+            guard attempt.error == EWOULDBLOCK || attempt.error == EAGAIN else {
+                throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+            }
+            guard Date() < deadline else {
+                throw EditorRefreshLockError.timedOut
+            }
+            Thread.sleep(forTimeInterval: 0.05)
+            attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        }
+        stateLock.lock()
+        ownsLock = true
+        stateLock.unlock()
+        acquired = true
+    }
+
+    func unlock() throws {
+        stateLock.lock()
+        guard ownsLock else {
+            stateLock.unlock()
+            return
+        }
+        let attempt = shared.applyFlock(LOCK_UN)
+        guard attempt.result == 0 else {
+            stateLock.unlock()
+            throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+        }
+        ownsLock = false
+        stateLock.unlock()
+        shared.localOwnership.signal()
     }
 }
 
