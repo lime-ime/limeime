@@ -49,7 +49,7 @@ class MockSetupImView: SetupImView {
 
 /// Models two-process ownership inside one XCTest process. POSIX record locks are intentionally
 /// process-scoped, so opening the real lock twice in XCTest cannot represent Settings vs keyboard.
-final class TestEditorRefreshLock: EditorRefreshLocking, @unchecked Sendable {
+final class TestEditorRefreshLock: @unchecked Sendable {
     private let condition = NSCondition()
     private var isLocked = false
 
@@ -1004,7 +1004,10 @@ final class SetupImControllerTest: XCTestCase {
             dbServer: server,
             prefs: makePrefs(),
             progress: LimeIME.ProgressManager(),
-            editorRefreshLockFactory: { _ in handoffLock }
+            editorRefreshLockFactory: { _ in
+                EditorRefreshLockHandle(lock: { try handoffLock.lock() },
+                                        unlock: { try handoffLock.unlock() })
+            }
         )
 
         final class Evidence: @unchecked Sendable {

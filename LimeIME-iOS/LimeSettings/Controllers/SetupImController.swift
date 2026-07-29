@@ -39,14 +39,16 @@ final class SetupImController: BaseController {
     // MARK: - Dependencies
 
     private let progress: ProgressManager
-    private let editorRefreshLockFactory: @Sendable (URL) throws -> any EditorRefreshLocking
+    private let editorRefreshLockFactory: @Sendable (URL) throws -> EditorRefreshLockHandle
 
     // MARK: - Init
 
     init(dbServer: DBServer = .shared, prefs: LIMEPreferenceManager = .shared,
          progress: ProgressManager,
-         editorRefreshLockFactory: @escaping @Sendable (URL) throws -> any EditorRefreshLocking = {
-             try EditorRefreshFileLock(baseURL: $0)
+         editorRefreshLockFactory: @escaping @Sendable (URL) throws -> EditorRefreshLockHandle = {
+             let ownership = try EditorRefreshFileLock(baseURL: $0)
+             return EditorRefreshLockHandle(lock: { try ownership.lock() },
+                                            unlock: { try ownership.unlock() })
          }) {
         self.progress = progress
         self.editorRefreshLockFactory = editorRefreshLockFactory
@@ -286,7 +288,7 @@ final class SetupImController: BaseController {
                                            table: stem,
                                            expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
         let server = self.dbServer
-        var ownership: any EditorRefreshLocking
+        var ownership: EditorRefreshLockHandle
         let lockFactory = editorRefreshLockFactory
         do {
             // Acquire ownership before closing cold. The same cross-process lock prevents a
