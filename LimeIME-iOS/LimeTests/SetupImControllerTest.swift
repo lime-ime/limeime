@@ -47,6 +47,27 @@ class MockSetupImView: SetupImView {
     func refreshImList() { refreshCount += 1 }
 }
 
+/// Models two-process ownership inside one XCTest process. POSIX record locks are intentionally
+/// process-scoped, so opening the real lock twice in XCTest cannot represent Settings vs keyboard.
+final class TestEditorRefreshLock: @unchecked Sendable {
+    private let condition = NSCondition()
+    private var isLocked = false
+
+    func lock() throws {
+        condition.lock()
+        while isLocked { condition.wait() }
+        isLocked = true
+        condition.unlock()
+    }
+
+    func unlock() throws {
+        condition.lock()
+        isLocked = false
+        condition.broadcast()
+        condition.unlock()
+    }
+}
+
 // MARK: - SetupImControllerTest
 
 final class SetupImControllerTest: XCTestCase {
@@ -844,6 +865,200 @@ final class SetupImControllerTest: XCTestCase {
             XCTFail("Expected editor refresh to time out without a receipt")
         }
         XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(root).path))
+    }
+
+    /// Issue #209: the Settings side of the lifecycle. Before the request file becomes
+    /// visible to the keyboard, Settings must have CLOSED its own cold connection; it must
+    /// stay closed for the whole request→receipt window; and it must be reopened before
+    /// `refreshTableFromKeyboard` returns, so the caller can unlock editing safely.
+    ///
+    /// Proof is SQLite's own `-wal` sidecar plus a real competing write: while Settings is
+    /// quiesced the responder (standing in for the keyboard's harvest) must be able to take
+    /// an IMMEDIATE write transaction on cold without hitting `database is locked`.
+    func testRefreshTableFromKeyboardQuiescesColdUntilTheReceiptLands() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = LimeIME.DBServer(_testDatabaseDirectory: databaseDir)
+        let dbURL = databaseDir.appendingPathComponent("lime.db")
+
+        let marker = "測209"
+        _ = server.addRecord("related", ["pword": marker, "cword": "甲", "score": 1])
+        XCTAssertTrue(server._testHasOpenColdDatasource,
+                      "the Settings-side cold connection is open before the handshake")
+
+        let controller = await LimeIME.SetupImController(
+            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+        )
+
+        final class HandshakeEvidence: @unchecked Sendable {
+            var coldDatasourcePresentAtRequest = true
+            var harvestError: String?
+        }
+        let evidence = HandshakeEvidence()
+
+        let responder = Task {
+            guard let request = await waitForEditorRefreshRequest(at: root) else { return }
+            evidence.coldDatasourcePresentAtRequest = server._testHasOpenColdDatasource
+            // The keyboard's harvest: a real IMMEDIATE write on cold from another connection.
+            do {
+                let keyboard = try DatabaseQueue(path: dbURL.path)
+                try await keyboard.writeWithoutTransaction { db in
+                    try db.inTransaction(.immediate) {
+                        try db.execute(sql: """
+                            INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)
+                            """, arguments: [marker, "乙", 2])
+                        return .commit
+                    }
+                }
+                try keyboard.close()
+            } catch {
+                evidence.harvestError = "\(error)"
+            }
+            let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
+                                               table: request.table,
+                                               status: .done,
+                                               error: nil,
+                                               at: Date().timeIntervalSince1970)
+            try? atomicWrite(try JSONEncoder().encode(receipt),
+                             to: SyncPaths.editorRefreshReceipt(root))
+            postSyncSignal(SyncSignal.importDone)
+        }
+
+        let result = await controller.refreshTableFromKeyboard(stem: "related",
+                                                               baseURL: root,
+                                                               timeout: 5,
+                                                               pollInterval: 0.01)
+        await responder.value
+
+        if case .failure(let error) = result {
+            XCTFail("Expected the quiesced handshake to succeed, got \(error)")
+        }
+        XCTAssertFalse(evidence.coldDatasourcePresentAtRequest,
+                       "Settings must close cold BEFORE the request is visible to the keyboard")
+        XCTAssertNil(evidence.harvestError,
+                     "a quiesced cold database must accept the keyboard's write")
+        XCTAssertFalse(server.isColdAccessSuspended,
+                       "cold access must be restored before the call returns")
+        XCTAssertEqual(server.countRelatedForManagement(marker), 2,
+                       "the reopened connection must see the harvested row")
+    }
+
+    /// Issue #209: the timeout path must restore cold too — otherwise the editor stays
+    /// read-only AND the app keeps a closed database for the rest of the session.
+    func testRefreshTableFromKeyboardReopensColdAfterTimeout() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = LimeIME.DBServer(_testDatabaseDirectory: databaseDir)
+        let marker = "測209"
+        _ = server.addRecord("related", ["pword": marker, "cword": "甲", "score": 1])
+        let controller = await LimeIME.SetupImController(
+            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.refreshTableFromKeyboard(stem: "related",
+                                                               baseURL: root,
+                                                               timeout: 0.05,
+                                                               pollInterval: 0.01)
+
+        if case .success = result {
+            XCTFail("Expected editor refresh to time out without a receipt")
+        }
+        XCTAssertFalse(server.isColdAccessSuspended,
+                       "a timed-out handshake must still reopen cold before returning")
+        XCTAssertEqual(server.countRelatedForManagement(marker), 1,
+                       "the reopened connection must serve read-only browsing")
+    }
+
+    /// Issue #209: if the UI poll expires after the keyboard has taken ownership, Settings
+    /// must wait for that in-flight harvest to close cold and publish its terminal receipt;
+    /// it must not reopen cold at the nominal timeout boundary.
+    func testRefreshTimeoutWaitsForInFlightKeyboardOwnershipBeforeReopening() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = LimeIME.DBServer(_testDatabaseDirectory: databaseDir)
+        let dbURL = databaseDir.appendingPathComponent("lime.db")
+        _ = server.addRecord("related", ["pword": "測209", "cword": "甲", "score": 1])
+        let handoffLock = TestEditorRefreshLock()
+        let controller = await LimeIME.SetupImController(
+            dbServer: server,
+            prefs: makePrefs(),
+            progress: LimeIME.ProgressManager(),
+            editorRefreshLockFactory: { _ in
+                LimeIME.EditorRefreshLockHandle(lock: { try handoffLock.lock() },
+                                                unlock: { try handoffLock.unlock() })
+            }
+        )
+
+        final class Evidence: @unchecked Sendable {
+            var acquired = false
+            var error: String?
+        }
+        let evidence = Evidence()
+        let responder = Task {
+            guard let request = await waitForEditorRefreshRequest(at: root) else { return }
+            do {
+                try handoffLock.lock()
+                evidence.acquired = true
+                // Hold ownership beyond the Settings-side poll timeout.
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                let keyboard = try DatabaseQueue(path: dbURL.path)
+                try await keyboard.write { db in
+                    try db.execute(sql: """
+                        INSERT INTO related (pword, cword, score) VALUES ('測209', '乙', 2)
+                        """)
+                }
+                try keyboard.close()
+                let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
+                                                   table: request.table,
+                                                   status: .done,
+                                                   error: nil,
+                                                   at: Date().timeIntervalSince1970)
+                try atomicWrite(try JSONEncoder().encode(receipt),
+                                to: SyncPaths.editorRefreshReceipt(root))
+                try handoffLock.unlock()
+            } catch {
+                evidence.error = "\(error)"
+            }
+        }
+
+        let started = Date()
+        let result = await controller.refreshTableFromKeyboard(stem: "related",
+                                                               baseURL: root,
+                                                               timeout: 0.1,
+                                                               pollInterval: 0.01)
+        let elapsed = Date().timeIntervalSince(started)
+        await responder.value
+
+        XCTAssertTrue(evidence.acquired, "the keyboard stand-in must own the hand-off")
+        XCTAssertNil(evidence.error)
+        XCTAssertGreaterThan(elapsed, 0.2,
+                             "Settings must not reopen cold at the nominal poll timeout")
+        if case .failure(let error) = result {
+            XCTFail("A matching terminal receipt under ownership should succeed: \(error)")
+        }
+        XCTAssertFalse(server.isColdAccessSuspended)
+        XCTAssertEqual(server.countRelatedForManagement("測209"), 2)
     }
 
     // MARK: - backupDB

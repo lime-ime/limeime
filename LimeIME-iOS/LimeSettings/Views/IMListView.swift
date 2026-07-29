@@ -104,6 +104,9 @@ struct IMListView: View {
                 if pendingLimeExternalImportURL != nil { showInstallScreenForExternalImport() }
             }
             .onChange(of: manageImController.refreshToken) { _ in loadIMs() }
+            .onReceive(NotificationCenter.default.publisher(for: .limeColdDatabaseAccessResumed)) { _ in
+                loadIMs()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .limeExternalImport)) { _ in
                 showInstallScreenForExternalImport()
             }
