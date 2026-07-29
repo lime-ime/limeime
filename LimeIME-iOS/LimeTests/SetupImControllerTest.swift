@@ -1005,8 +1005,8 @@ final class SetupImControllerTest: XCTestCase {
             prefs: makePrefs(),
             progress: LimeIME.ProgressManager(),
             editorRefreshLockFactory: { _ in
-                EditorRefreshLockHandle(lock: { try handoffLock.lock() },
-                                        unlock: { try handoffLock.unlock() })
+                LimeIME.EditorRefreshLockHandle(lock: { try handoffLock.lock() },
+                                                unlock: { try handoffLock.unlock() })
             }
         )
 
