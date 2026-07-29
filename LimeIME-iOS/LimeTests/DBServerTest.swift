@@ -27,6 +27,7 @@
 // Target: >= 65 tests with real assertions, <= 10 SKIPPED stubs.
 
 import XCTest
+import GRDB
 import ZIPFoundation
 @testable import LimeIME
 
@@ -220,6 +221,59 @@ final class DBServerTest: XCTestCase {
                 .getMappingByCode("aa", isSoftKeyboard: true, getAllRecords: true)
                 .contains { $0.code == "aa" && $0.word == "候選" },
             "Keyboard runtime should query candidates from the adopted 6.1.27 legacy lime.db")
+    }
+
+    /// Issue #209: before Settings asks the keyboard to harvest hot→cold, it must
+    /// QUIESCE and CLOSE its own cold connection — an open connection is what races the
+    /// keyboard's attached cold write and produces `SQLite error 5: database is locked`.
+    ///
+    /// The observable proof uses SharedDatabase's test-only cached-handle state. WAL sidecar
+    /// lifetime is not a connection-lifetime contract and may outlive a closed queue.
+    func testSuspendColdAccessClosesTheLiveConnectionUntilResumed() throws {
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = DBServer(_testDatabaseDirectory: databaseDir)
+        let dbURL = databaseDir.appendingPathComponent("lime.db")
+
+        let marker = "測209"
+        XCTAssertNotNil(server.makeSearchServer(), "the live connection should open")
+        _ = server.addRecord("related", ["pword": marker, "cword": "甲", "score": 1])
+        XCTAssertEqual(server.countRelatedForManagement(marker), 1)
+        XCTAssertTrue(server._testHasOpenColdDatasource)
+        XCTAssertFalse(server.isColdAccessSuspended)
+
+        try server.suspendColdAccess()
+
+        XCTAssertTrue(server.isColdAccessSuspended)
+        XCTAssertThrowsError(try server.suspendColdAccess()) { error in
+            guard case DBServerError.coldAccessAlreadySuspended = error else {
+                return XCTFail("Expected coldAccessAlreadySuspended, got \(error)")
+            }
+        }
+        XCTAssertFalse(server._testHasOpenColdDatasource,
+                       "suspension must CLOSE the connection, not merely flag it")
+        XCTAssertEqual(server.countRelatedForManagement(marker), 0,
+                       "a suspended cold database must answer without opening")
+        XCTAssertFalse(server._testHasOpenColdDatasource,
+                       "a read during suspension must not re-open the database")
+
+        // Stand in for the keyboard's harvest: another connection writes cold while the
+        // Settings process holds no connection at all.
+        let keyboard = try DatabaseQueue(path: dbURL.path)
+        try keyboard.write { db in
+            try db.execute(sql: "INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)",
+                           arguments: [marker, "乙", 2])
+        }
+        try keyboard.close()
+
+        try server.resumeColdAccess()
+
+        XCTAssertFalse(server.isColdAccessSuspended)
+        XCTAssertEqual(server.countRelatedForManagement(marker), 2,
+                       "resuming must rebind to the on-disk file and see the harvest")
     }
 
     func testDBServerGetInstanceWithoutContext() {
