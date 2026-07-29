@@ -265,7 +265,7 @@ class EditorRefreshLifecycleContract(unittest.TestCase):
                         "keyboard must acquire ownership, re-read the request, harvest, then "
                         "publish the terminal receipt")
         self.assertIn("final class EditorRefreshFileLock", self.contract)
-        self.assertIn("Darwin.flock(descriptor, LOCK_EX)", self.contract)
+        self.assertIn("Darwin.fcntl(descriptor, F_SETLKW", self.contract)
 
     def test_settings_reopens_cold_before_returning_after_a_request(self):
         body = swift_body(self.setup,

@@ -114,12 +114,17 @@ final class EditorRefreshFileLock: @unchecked Sendable {
 
     /// This wait is deliberately unbounded. Once the keyboard owns the hand-off, reopening cold
     /// on a UI deadline would recreate #209. iOS resumes the embedded keyboard with the host app;
-    /// process termination also releases flock automatically.
+    /// process termination also releases the POSIX record lock automatically.
     func lock() throws {
         stateLock.lock()
         defer { stateLock.unlock() }
         guard !ownsLock else { return }
-        while Darwin.flock(descriptor, LOCK_EX) != 0 {
+        var fileLock = Darwin.flock()
+        fileLock.l_type = Int16(F_WRLCK)
+        fileLock.l_whence = Int16(SEEK_SET)
+        fileLock.l_start = 0
+        fileLock.l_len = 0
+        while Darwin.fcntl(descriptor, F_SETLKW, &fileLock) != 0 {
             guard errno == EINTR else {
                 throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
             }
@@ -131,7 +136,12 @@ final class EditorRefreshFileLock: @unchecked Sendable {
         stateLock.lock()
         defer { stateLock.unlock() }
         guard ownsLock else { return }
-        guard Darwin.flock(descriptor, LOCK_UN) == 0 else {
+        var fileLock = Darwin.flock()
+        fileLock.l_type = Int16(F_UNLCK)
+        fileLock.l_whence = Int16(SEEK_SET)
+        fileLock.l_start = 0
+        fileLock.l_len = 0
+        guard Darwin.fcntl(descriptor, F_SETLK, &fileLock) == 0 else {
             throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
         }
         ownsLock = false
