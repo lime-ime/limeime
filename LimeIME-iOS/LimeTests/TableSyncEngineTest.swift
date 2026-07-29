@@ -1072,26 +1072,19 @@ final class TableSyncEngineTest: XCTestCase {
                                     ("你", "好", 8),
                                     ("天", "氣", 2),
                                 ])
-        // Production opens every live database in WAL, which is what makes the -wal
-        // sidecar a truthful "someone still holds this database open" signal.
-        let walSetup = try DatabaseQueue(path: liveCold.path)
-        try walSetup.writeWithoutTransaction { db in
-            try db.execute(sql: "PRAGMA journal_mode = WAL")
-        }
-        try walSetup.close()
+
         try writeEditorRefreshRequest(appGroup: appGroup,
                                       table: "related",
                                       requestUUID: "related-release-before-receipt")
 
         final class ReceiptEvidence: @unchecked Sendable {
             var sawReceipt = false
-            var coldWalPresent = true
             var coldWriteError: String?
         }
         let evidence = ReceiptEvidence()
         let observed = expectation(description: "receipt observed")
         let receiptPath = SyncPaths.editorRefreshReceipt(appGroup).path
-        let walPath = liveCold.path + "-wal"
+
         DispatchQueue.global(qos: .userInitiated).async {
             let deadline = Date().addingTimeInterval(10)
             while Date() < deadline {
@@ -1100,7 +1093,6 @@ final class TableSyncEngineTest: XCTestCase {
                     continue
                 }
                 evidence.sawReceipt = true
-                evidence.coldWalPresent = FileManager.default.fileExists(atPath: walPath)
                 do {
                     let probe = try DatabaseQueue(path: liveCold.path)
                     try probe.writeWithoutTransaction { db in
@@ -1121,8 +1113,6 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertTrue(evidence.sawReceipt, "the harvest must publish a receipt")
         XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
         XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
-        XCTAssertFalse(evidence.coldWalPresent,
-                       "cold must be detached and closed before the done receipt is written")
         XCTAssertNil(evidence.coldWriteError,
                      "cold must be immediately writable when the receipt lands")
     }

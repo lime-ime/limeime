@@ -47,6 +47,27 @@ class MockSetupImView: SetupImView {
     func refreshImList() { refreshCount += 1 }
 }
 
+/// Models two-process ownership inside one XCTest process. POSIX record locks are intentionally
+/// process-scoped, so opening the real lock twice in XCTest cannot represent Settings vs keyboard.
+final class TestEditorRefreshLock: EditorRefreshLocking, @unchecked Sendable {
+    private let condition = NSCondition()
+    private var isLocked = false
+
+    func lock() throws {
+        condition.lock()
+        while isLocked { condition.wait() }
+        isLocked = true
+        condition.unlock()
+    }
+
+    func unlock() throws {
+        condition.lock()
+        isLocked = false
+        condition.broadcast()
+        condition.unlock()
+    }
+}
+
 // MARK: - SetupImControllerTest
 
 final class SetupImControllerTest: XCTestCase {
@@ -866,10 +887,10 @@ final class SetupImControllerTest: XCTestCase {
 
         let server = LimeIME.DBServer(_testDatabaseDirectory: databaseDir)
         let dbURL = databaseDir.appendingPathComponent("lime.db")
-        let walURL = URL(fileURLWithPath: dbURL.path + "-wal")
+
         let marker = "測209"
         _ = server.addRecord("related", ["pword": marker, "cword": "甲", "score": 1])
-        XCTAssertTrue(FileManager.default.fileExists(atPath: walURL.path),
+        XCTAssertTrue(server._testHasOpenColdDatasource,
                       "the Settings-side cold connection is open before the handshake")
 
         let controller = await LimeIME.SetupImController(
@@ -877,15 +898,14 @@ final class SetupImControllerTest: XCTestCase {
         )
 
         final class HandshakeEvidence: @unchecked Sendable {
-            var coldWalPresentAtRequest = true
+            var coldDatasourcePresentAtRequest = true
             var harvestError: String?
         }
         let evidence = HandshakeEvidence()
 
         let responder = Task {
             guard let request = await waitForEditorRefreshRequest(at: root) else { return }
-            evidence.coldWalPresentAtRequest =
-                FileManager.default.fileExists(atPath: walURL.path)
+            evidence.coldDatasourcePresentAtRequest = server._testHasOpenColdDatasource
             // The keyboard's harvest: a real IMMEDIATE write on cold from another connection.
             do {
                 let keyboard = try DatabaseQueue(path: dbURL.path)
@@ -920,7 +940,7 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected the quiesced handshake to succeed, got \(error)")
         }
-        XCTAssertFalse(evidence.coldWalPresentAtRequest,
+        XCTAssertFalse(evidence.coldDatasourcePresentAtRequest,
                        "Settings must close cold BEFORE the request is visible to the keyboard")
         XCTAssertNil(evidence.harvestError,
                      "a quiesced cold database must accept the keyboard's write")
@@ -979,8 +999,12 @@ final class SetupImControllerTest: XCTestCase {
         let server = LimeIME.DBServer(_testDatabaseDirectory: databaseDir)
         let dbURL = databaseDir.appendingPathComponent("lime.db")
         _ = server.addRecord("related", ["pword": "測209", "cword": "甲", "score": 1])
+        let handoffLock = TestEditorRefreshLock()
         let controller = await LimeIME.SetupImController(
-            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+            dbServer: server,
+            prefs: makePrefs(),
+            progress: LimeIME.ProgressManager(),
+            editorRefreshLockFactory: { _ in handoffLock }
         )
 
         final class Evidence: @unchecked Sendable {
@@ -991,7 +1015,7 @@ final class SetupImControllerTest: XCTestCase {
         let responder = Task {
             guard let request = await waitForEditorRefreshRequest(at: root) else { return }
             do {
-                let ownership = try EditorRefreshFileLock(baseURL: root)
+                try handoffLock.lock()
                 evidence.acquired = true
                 // Hold ownership beyond the Settings-side poll timeout.
                 try? await Task.sleep(nanoseconds: 250_000_000)
@@ -1009,7 +1033,7 @@ final class SetupImControllerTest: XCTestCase {
                                                    at: Date().timeIntervalSince1970)
                 try atomicWrite(try JSONEncoder().encode(receipt),
                                 to: SyncPaths.editorRefreshReceipt(root))
-                try ownership.unlock()
+                try handoffLock.unlock()
             } catch {
                 evidence.error = "\(error)"
             }

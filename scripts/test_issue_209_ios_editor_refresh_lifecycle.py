@@ -245,12 +245,12 @@ class EditorRefreshLifecycleContract(unittest.TestCase):
         setup = swift_body(self.setup,
                            "func refreshTableFromKeyboard(stem: String,\n"
                            "                                  baseURL: URL,")
-        acquire = setup.find("EditorRefreshFileLock(baseURL: baseURL)")
+        acquire = setup.find("lockFactory(baseURL)")
         publish = setup.find("atomicWrite(try JSONEncoder().encode(request)")
         release_for_keyboard = setup.find("ownership.unlock()", publish)
         wait = setup.find("waitForEditorRefreshReceipt")
         reacquire = setup.find("currentOwnership.lock()", wait)
-        fallback_reacquire = setup.find("EditorRefreshFileLock(baseURL: baseURL)", reacquire)
+        fallback_reacquire = setup.find("lockFactory(baseURL)", reacquire)
         resume = setup.find("resumeColdAccess()", fallback_reacquire)
         self.assertTrue(0 <= acquire < publish < release_for_keyboard < wait < reacquire < fallback_reacquire < resume,
                         "Settings must own close/publish, release for harvest, then reacquire "

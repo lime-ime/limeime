@@ -90,7 +90,12 @@ enum SyncPaths {
 /// re-reading the request through commit, DETACH, explicit close and terminal receipt. Thus a
 /// Settings timeout cannot reopen cold under an in-flight harvest, and a keyboard that starts
 /// late cannot consume a request Settings already cancelled.
-final class EditorRefreshFileLock: @unchecked Sendable {
+protocol EditorRefreshLocking: AnyObject, Sendable {
+    func lock() throws
+    func unlock() throws
+}
+
+final class EditorRefreshFileLock: EditorRefreshLocking, @unchecked Sendable {
     private let descriptor: Int32
     private let stateLock = NSLock()
     private var ownsLock = false

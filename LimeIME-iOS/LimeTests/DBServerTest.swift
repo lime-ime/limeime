@@ -227,10 +227,8 @@ final class DBServerTest: XCTestCase {
     /// QUIESCE and CLOSE its own cold connection — an open connection is what races the
     /// keyboard's attached cold write and produces `SQLite error 5: database is locked`.
     ///
-    /// The observable proof is SQLite's own: the `-wal`/`-shm` sidecars exist while the
-    /// process holds the database open and are removed when the last connection closes.
-    /// While suspended, no read may re-open (and so re-create) them, and resuming must
-    /// rebind to the on-disk file so writes another process made meanwhile are visible.
+    /// The observable proof uses SharedDatabase's test-only cached-handle state. WAL sidecar
+    /// lifetime is not a connection-lifetime contract and may outlive a closed queue.
     func testSuspendColdAccessClosesTheLiveConnectionUntilResumed() throws {
         let databaseDir = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -239,23 +237,22 @@ final class DBServerTest: XCTestCase {
 
         let server = DBServer(_testDatabaseDirectory: databaseDir)
         let dbURL = databaseDir.appendingPathComponent("lime.db")
-        let walURL = URL(fileURLWithPath: dbURL.path + "-wal")
+
         let marker = "測209"
         XCTAssertNotNil(server.makeSearchServer(), "the live connection should open")
         _ = server.addRecord("related", ["pword": marker, "cword": "甲", "score": 1])
         XCTAssertEqual(server.countRelatedForManagement(marker), 1)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: walURL.path),
-                      "an open WAL connection keeps a -wal sidecar")
+        XCTAssertTrue(server._testHasOpenColdDatasource)
         XCTAssertFalse(server.isColdAccessSuspended)
 
         try server.suspendColdAccess()
 
         XCTAssertTrue(server.isColdAccessSuspended)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: walURL.path),
+        XCTAssertFalse(server._testHasOpenColdDatasource,
                        "suspension must CLOSE the connection, not merely flag it")
         XCTAssertEqual(server.countRelatedForManagement(marker), 0,
                        "a suspended cold database must answer without opening")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: walURL.path),
+        XCTAssertFalse(server._testHasOpenColdDatasource,
                        "a read during suspension must not re-open the database")
 
         // Stand in for the keyboard's harvest: another connection writes cold while the

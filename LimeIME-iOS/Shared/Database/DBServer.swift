@@ -86,6 +86,12 @@ final class SharedDatabase {
         return suspensionCount > 0
     }
 
+    var hasCachedDatasource: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cachedDatasource != nil
+    }
+
     /// Issue #209: close this process's connection and keep it closed, so another process
     /// can take the write locks it needs (the keyboard's attached hot→cold harvest).
     /// Balanced by `resumeLiveAccess()`.
@@ -395,6 +401,7 @@ final class DBServer {
     func resumeColdAccess() throws { try database.resumeLiveAccess() }
 
     var isColdAccessSuspended: Bool { database.isAccessSuspended }
+    var _testHasOpenColdDatasource: Bool { database.hasCachedDatasource }
 
     func requireColdAccessAvailable() throws {
         guard !database.isAccessSuspended else {

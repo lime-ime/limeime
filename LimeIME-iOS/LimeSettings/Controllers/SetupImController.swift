@@ -39,12 +39,17 @@ final class SetupImController: BaseController {
     // MARK: - Dependencies
 
     private let progress: ProgressManager
+    private let editorRefreshLockFactory: @Sendable (URL) throws -> any EditorRefreshLocking
 
     // MARK: - Init
 
     init(dbServer: DBServer = .shared, prefs: LIMEPreferenceManager = .shared,
-         progress: ProgressManager) {
+         progress: ProgressManager,
+         editorRefreshLockFactory: @escaping @Sendable (URL) throws -> any EditorRefreshLocking = {
+             try EditorRefreshFileLock(baseURL: $0)
+         }) {
         self.progress = progress
+        self.editorRefreshLockFactory = editorRefreshLockFactory
         super.init(dbServer: dbServer, prefs: prefs)
     }
 
@@ -281,12 +286,13 @@ final class SetupImController: BaseController {
                                            table: stem,
                                            expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
         let server = self.dbServer
-        var ownership: EditorRefreshFileLock
+        var ownership: any EditorRefreshLocking
+        let lockFactory = editorRefreshLockFactory
         do {
             // Acquire ownership before closing cold. The same cross-process lock prevents a
             // late keyboard from starting while Settings cancels/reopens after a timeout.
             ownership = try await Task.detached(priority: .userInitiated) {
-                try EditorRefreshFileLock(baseURL: baseURL)
+                try lockFactory(baseURL)
             }.value
             try await Task.detached(priority: .userInitiated) {
                 try server.suspendColdAccess()
@@ -337,7 +343,7 @@ final class SetupImController: BaseController {
                 // this descriptor became unusable, reacquire with a fresh descriptor rather
                 // than reopening cold without ownership.
                 ownership = try await Task.detached(priority: .userInitiated) {
-                    try EditorRefreshFileLock(baseURL: baseURL)
+                    try lockFactory(baseURL)
                 }.value
             }
 
