@@ -8,7 +8,7 @@
 - Assignee: `jrywu`
 - Reporter: maintainer project account `limeimetw`, based on a private support-mail report. The private screenshots are intentionally not reproduced here.
 - Reported environment: LIME 6.1.37 on iOS 26.6 RC.
-- Rechecked 2026-07-30: the issue remains open with no public comments. Closed retry-only PR #210 and superseded handoff PRs #214–#218 remain in history. Draft PR #219 still publishes the pre-review5 final-v4 tree and must be replaced or updated before it represents the final analysis recorded here.
+- Rechecked 2026-07-30: the issue remains open with no public comments. Closed retry-only PR #210 and superseded handoff PRs #214–#219 remain in history. Replacement draft PR #220 publishes the final-v6 tree recorded here.
 
 ## Problem statement
 
