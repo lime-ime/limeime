@@ -31,6 +31,36 @@ import Foundation
 import GRDB
 import ZIPFoundation
 
+final class EditorRefreshSessionGate: @unchecked Sendable {
+    static let shared = EditorRefreshSessionGate()
+
+    private let stateLock = NSLock()
+    private var isHeld = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func acquire() async {
+        await withCheckedContinuation { continuation in
+            stateLock.lock()
+            if isHeld {
+                waiters.append(continuation)
+                stateLock.unlock()
+            } else {
+                isHeld = true
+                stateLock.unlock()
+                continuation.resume()
+            }
+        }
+    }
+
+    func release() {
+        stateLock.lock()
+        let next = waiters.isEmpty ? nil : waiters.removeFirst()
+        if next == nil { isHeld = false }
+        stateLock.unlock()
+        next?.resume()
+    }
+}
+
 // MARK: - SetupImController
 
 @MainActor
@@ -39,12 +69,22 @@ final class SetupImController: BaseController {
     // MARK: - Dependencies
 
     private let progress: ProgressManager
+    private let editorRefreshLockFactory: @Sendable (URL) throws -> EditorRefreshLockHandle
+    private let editorRefreshSessionGate: EditorRefreshSessionGate
 
     // MARK: - Init
 
     init(dbServer: DBServer = .shared, prefs: LIMEPreferenceManager = .shared,
-         progress: ProgressManager) {
+         progress: ProgressManager,
+         editorRefreshSessionGate: EditorRefreshSessionGate = .shared,
+         editorRefreshLockFactory: @escaping @Sendable (URL) throws -> EditorRefreshLockHandle = {
+             let ownership = try EditorRefreshFileLock.shared(baseURL: $0)
+             return EditorRefreshLockHandle(lock: { try ownership.lock() },
+                                            unlock: { try ownership.unlock() })
+         }) {
         self.progress = progress
+        self.editorRefreshSessionGate = editorRefreshSessionGate
+        self.editorRefreshLockFactory = editorRefreshLockFactory
         super.init(dbServer: dbServer, prefs: prefs)
     }
 
@@ -260,30 +300,115 @@ final class SetupImController: BaseController {
                                        pollInterval: editorRefreshPollInterval)
     }
 
+    /// Issue #209: the Settings side of the cold hand-off.
+    ///
+    /// The keyboard harvests hot→cold by ATTACHing the app's live cold `lime.db` from its
+    /// own process. If this app still holds that file open, the keyboard's write fails with
+    /// `SQLite error 5: database is locked` and the editor falls back to read-only. So cold
+    /// is closed BEFORE the request becomes visible, stays closed for the whole
+    /// request→receipt window, and is reopened (rebound to what the keyboard committed)
+    /// before this function returns — on success, failure and timeout alike. Callers keep
+    /// editing locked until then; `RelatedListView` / `RecordListView` also hold their first
+    /// cold load until this returns.
     func refreshTableFromKeyboard(stem: String,
                                   baseURL: URL,
                                   timeout: TimeInterval,
                                   pollInterval: TimeInterval) async -> Result<Void, Error> {
+        await editorRefreshSessionGate.acquire()
+        defer { editorRefreshSessionGate.release() }
+
         let requestURL = SyncPaths.editorRefreshRequest(baseURL)
         let receiptURL = SyncPaths.editorRefreshReceipt(baseURL)
         let requestUUID = UUID().uuidString
         let request = EditorRefreshRequest(requestUUID: requestUUID,
                                            table: stem,
                                            expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
+        let server = self.dbServer
+        var ownership: EditorRefreshLockHandle
+        let lockFactory = editorRefreshLockFactory
+        do {
+            // Acquire ownership before closing cold. The same cross-process lock prevents a
+            // late keyboard from starting while Settings cancels/reopens after a timeout.
+            ownership = try await Task.detached(priority: .userInitiated) {
+                try lockFactory(baseURL)
+            }.value
+            try await Task.detached(priority: .userInitiated) {
+                try ownership.lock()
+            }.value
+            try await Task.detached(priority: .userInitiated) {
+                try server.suspendColdAccess()
+            }.value
+        } catch {
+            return .failure(error)
+        }
+
         do {
             try? FileManager.default.removeItem(at: receiptURL)
             try atomicWrite(try JSONEncoder().encode(request), to: requestURL)
             postSyncSignal(.tablesUpdated)
+            try ownership.unlock()
+        } catch {
+            try? FileManager.default.removeItem(at: requestURL)
+            try? FileManager.default.removeItem(at: receiptURL)
+            try? ownership.unlock()
+            do {
+                try await Task.detached(priority: .userInitiated) {
+                    try server.resumeColdAccess()
+                }.value
+            } catch {
+                return .failure(error)
+            }
+            return .failure(error)
+        }
+
+        var outcome: Result<Void, Error>
+        do {
             try await waitForEditorRefreshReceipt(at: receiptURL,
                                                   requestUUID: requestUUID,
                                                   timeout: timeout,
                                                   pollInterval: pollInterval)
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            return .success(())
+            outcome = .success(())
         } catch {
+            outcome = .failure(error)
+        }
+
+        do {
+            // This may outlive the UI poll timeout, intentionally: if the keyboard already
+            // owns the harvest, reopening cold must wait for its commit/close/receipt.
+            let currentOwnership = ownership
+            try await Task.detached(priority: .userInitiated) {
+                try currentOwnership.lock()
+            }.value
+
+            // A terminal receipt may have landed while a timed-out waiter was blocked on
+            // ownership. Accept that matching result instead of reporting a false timeout.
+            if let receipt = matchingEditorRefreshReceipt(at: receiptURL,
+                                                           requestUUID: requestUUID) {
+                switch receipt.status {
+                case .done:
+                    outcome = .success(())
+                case .failed:
+                    outcome = .failure(SetupImControllerError.editorRefreshFailed(receipt.error))
+                }
+            }
+
             try? FileManager.default.removeItem(at: requestURL)
             try? FileManager.default.removeItem(at: receiptURL)
+            try await Task.detached(priority: .userInitiated) {
+                try server.resumeColdAccess()
+            }.value
+            try ownership.unlock()
+            return outcome
+        } catch {
+            // A bounded ownership failure keeps the editor read-only, but must not leave every
+            // Settings cold reader empty until process restart. Cancel the request and restore
+            // cold access best-effort before returning the original handoff error.
+            try? FileManager.default.removeItem(at: requestURL)
+            try? FileManager.default.removeItem(at: receiptURL)
+            try? ownership.unlock()
+            _ = try? await Task.detached(priority: .userInitiated) {
+                try server.resumeColdAccess()
+            }.value
             return .failure(error)
         }
     }
@@ -459,6 +584,7 @@ private func requestKeyboardBackup(server: DBServer) throws -> URL {
 }
 
 private func publishRestoredCold(server: DBServer) throws {
+    try server.requireColdAccessAvailable()
     let liveURL = server.liveDatabaseURL()
     _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
     try ColdPublisher(liveColdDatabaseURL: liveURL,
