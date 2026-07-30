@@ -8,7 +8,7 @@
 - Assignee: `jrywu`
 - Reporter: maintainer project account `limeimetw`, based on a private support-mail report. The private screenshots are intentionally not reproduced here.
 - Reported environment: LIME 6.1.37 on iOS 26.6 RC.
-- Rechecked 2026-07-30: the issue remains open with no public comments. Closed retry-only PR #210 and superseded handoff PRs #214–#219 remain in history. Replacement draft PR #220 publishes the final-v6 tree recorded here.
+- Rechecked 2026-07-30: the issue remains open with no public comments. Closed retry-only PR #210 and superseded handoff PRs #214–#220 remain in history. Replacement draft PR #221 publishes the final-v7 tree recorded here.
 
 ## Problem statement
 
@@ -44,12 +44,12 @@ Still not established: which Settings-side operation held the lock on the report
 
 The invariant: **Settings hands the cold file over before asking for the harvest; the keyboard hands it back provably free; only then may editing unlock.**
 
-1. `DBServer.suspendColdAccess()` / `resumeColdAccess()` / `isColdAccessSuspended` close the process-local cold connection and keep it closed — `SharedDatabase.current()` returns `nil` while suspended, so no caller can lazily re-open it. Direct cold publishers also reject or skip work while suspended.
+1. `DBServer.suspendColdAccess()` / `resumeColdAccess()` / `isColdAccessSuspended` close the process-local cold connection and keep it closed — `SharedDatabase.current()` returns `nil` while suspension is pending or complete, so no caller can lazily re-open it. Process-local operation leases reject new publishers, drain active publishers with a bounded deadline, and reject datasource installation throughout the close window.
 2. `EditorRefreshFileLock` uses bounded, descriptor-owned POSIX `flock` on an App-Group lock file as the cross-process ownership boundary. Each process keeps one descriptor per lock path and also serializes its local handles, so closing another descriptor cannot silently release ownership and same-process callers cannot overlap a lock hold. Settings owns close/request publication and later cancellation/reopen; the keyboard owns request re-validation, harvest, close and terminal receipt.
-3. `SetupImController.refreshTableFromKeyboard` uses a process-wide async single-flight gate across the complete handshake, so Related and normal IM editors cannot replace each other's request/receipt files while the cross-process lock is handed to the keyboard. It suspends cold BEFORE publishing the request and resumes it before every return; failure keeps editing read-only.
+3. `SetupImController.refreshTableFromKeyboard` uses a process-wide async single-flight gate across the complete handshake, so Related and normal IM editors cannot replace each other's request/receipt files while the cross-process lock is handed to the keyboard. It suspends cold BEFORE publishing the request and reopens only after regaining ownership. If ownership cannot be recovered, Settings stays fail-closed; the next lock-owning editor attempt safely recovers that state before beginning a fresh handshake.
 4. `TableSyncEngine.harvestEditorRefresh` now ATTACHes cold outside the transaction, runs the whole diff/write in one hot write transaction, DETACHes outside the transaction, and closes the connection explicitly (`SyncDatabaseConnection.close()`, idempotent) — every error path closes too. Only then does `processEditorRefreshRequestIfNeeded` write the `.done` receipt while still holding ownership. A failed release fails the request rather than reporting done.
 5. `RelatedListView` / `RecordListView` expose one entry point, `beginEditorSession()`; `onAppear` no longer launches a cold load beside the handshake. They summon the keyboard and allow the complete request window instead of consuming the one-shot attempt on an early advisory relay state. The first cold load runs only after the handshake and reopen. `isRefreshingHotSnapshot` still gates `canEdit`.
-6. The closed retry-only proposal is not carried forward: `editorRefreshBusyRetryWindow`, `editorRefreshBusyRetryBackoff`, `editorRefreshAttemptBusyTimeoutMilliseconds`, `isTransientLockError`, `harvestEditorRefreshAttempt`, `testEditorRefreshRetriesThroughTransientColdWriteLock`, and `scripts/test_issue_209_ios_editor_refresh_retry.py` are absent. The normal 5-second busy timeout remains for independent hot-side learning/commit writes. Normal Settings reopening waits for ownership; after the shared request deadline, failure recovery may reopen cold best-effort rather than leave all Settings readers empty until restart.
+6. The closed retry-only proposal is not carried forward: `editorRefreshBusyRetryWindow`, `editorRefreshBusyRetryBackoff`, `editorRefreshAttemptBusyTimeoutMilliseconds`, `isTransientLockError`, `harvestEditorRefreshAttempt`, `testEditorRefreshRetriesThroughTransientColdWriteLock`, and `scripts/test_issue_209_ios_editor_refresh_retry.py` are absent. The normal 5-second busy timeout remains for independent hot-side learning/commit writes. Normal Settings reopening waits for ownership; deadline failure does not reopen cold without ownership.
 7. Android and the existing `(pword, cword)` dirty-key semantics remain unchanged.
 
 ## Verification
@@ -63,19 +63,13 @@ The invariant: **Settings hands the cold file over before asking for the harvest
 
 ### Xcode Cloud
 
-The review4, review5, and final review6 code were each validated on their exact pushed SHA:
-
-- Run 42, SHA `b4e490f02260127943efdfd0d42ee978254c1db0`: iOS tests passed; iOS archive passed; no required failures; production workflow restored.
-- Run 43, SHA `45803f715400c78e3399df1390bb8e657b5a2594`: iOS tests passed; iOS archive passed; no required failures; production workflow restored.
-- Run 44, SHA `7d407ab04bc2552e56f396e3f9afecb1419be67e`: iOS tests passed; iOS archive passed; no required failures; production workflow restored.
-
-Run 44 validates the final review6 production and native-test tree. The rebuilt one-commit final-v6 tree is byte-identical to `7d407ab04bc2552e56f396e3f9afecb1419be67e` outside `docs/#209_ISSUE.md` and `docs/BACKLOG.md`, which record the completed validation.
+Run 50, exact source SHA `f2798d69a46ced0c6332460c6206a79081cdd622`: iOS tests passed; iOS archive passed; no required failures; production workflow restored. This is the production and native-test tree published by draft PR #221; later commits are documentation-only.
 
 Native coverage includes real same-process lock contention, controller-propagated initial/reacquisition timeout budgets, Related-versus-normal editor single-flight, cold suspension/reopen, ownership-reacquisition recovery, bounded persistent SQLite contention, hot→cold harvest and post-receipt cold writability. Native executable assertions use direct datasource state and real database access; WAL-sidecar removal is asserted separately by the Linux SQLite gate.
 
 ### Review gate
 
-- Final strict review6 gate: zero unresolved correctness, compile, test-quality, maintenance, or documentation findings before Run 44.
+- Final strict review7 gate: zero unresolved correctness, compile, concurrency-state, or test-determinism findings before Run 50.
 
 ### Runtime (not started)
 
