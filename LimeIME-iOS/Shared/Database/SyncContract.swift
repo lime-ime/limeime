@@ -88,9 +88,8 @@ enum SyncPaths {
 /// Request and receipt files are messages, not locks. Settings holds this advisory lock while
 /// it closes/reopens cold and publishes/cleans the request. The keyboard holds it from
 /// re-reading the request through commit, DETACH, explicit close and terminal receipt. Normal
-/// Settings reopening therefore waits for ownership; after the shared deadline, failure recovery
-/// may reopen cold best-effort so Settings readers do not remain empty until process restart. A
-/// keyboard that starts late cannot consume a request Settings already cancelled.
+/// Settings reopening therefore waits for ownership. If ownership cannot be recovered by the
+/// shared deadline, Settings stays fail-closed until a later lock-owning retry safely recovers it.
 struct EditorRefreshLockHandle: Sendable {
     private let lockAction: @Sendable (TimeInterval) throws -> Void
     private let unlockAction: @Sendable () throws -> Void
@@ -102,14 +101,14 @@ struct EditorRefreshLockHandle: Sendable {
     }
 
     func lockAsync(timeout: TimeInterval) async throws {
-        try await EditorRefreshLockExecutor.run {
+        try await runEditorRefreshBlocking {
             try lockAction(timeout)
         }
     }
     func unlock() throws { try unlockAction() }
 }
 
-private enum EditorRefreshLockExecutor {
+private enum EditorRefreshBlockingExecutor {
     private static let queue = DispatchQueue(label: "org.limeime.editor-refresh-lock",
                                              qos: .userInitiated,
                                              attributes: .concurrent)
@@ -126,6 +125,10 @@ private enum EditorRefreshLockExecutor {
             }
         }
     }
+}
+
+func runEditorRefreshBlocking(_ operation: @escaping @Sendable () throws -> Void) async throws {
+    try await EditorRefreshBlockingExecutor.run(operation)
 }
 
 final class EditorRefreshSessionGate: @unchecked Sendable {

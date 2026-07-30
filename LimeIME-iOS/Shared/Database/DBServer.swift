@@ -49,7 +49,12 @@ final class SharedDatabase {
     // Issue #209: true while the keyboard owns the hot→cold editor harvest. The separate
     // cross-process file lock serializes handshakes before this process-local gate changes.
     private var accessSuspended = false
-    private let lock = NSLock()
+    private var suspensionPending = false
+    // Independent cold publishers use their own SQLite connections, so closing the cached
+    // LimeDB is not enough. Suspension first blocks new publishers and drains any publisher
+    // that already entered before releasing cold to the keyboard process.
+    private var activeIndependentAccesses = 0
+    private let lock = NSCondition()
 
     init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
         self.dataDirOverride = dataDirOverride
@@ -73,7 +78,7 @@ final class SharedDatabase {
         // #209: while suspended this process must not hold — or lazily re-acquire — a
         // connection. Callers degrade to "no data" for the handshake window; the editor
         // views hold their first load until the handshake resolved.
-        if accessSuspended { return nil }
+        if accessSuspended || suspensionPending { return nil }
         if cachedDatasource == nil {
             cachedDatasource = openDatasource()
         }
@@ -83,7 +88,7 @@ final class SharedDatabase {
     var isAccessSuspended: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return accessSuspended
+        return accessSuspended || suspensionPending
     }
 
 #if DEBUG
@@ -92,18 +97,33 @@ final class SharedDatabase {
         defer { lock.unlock() }
         return cachedDatasource != nil
     }
+
+    var independentAccessCount: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return activeIndependentAccesses
+    }
 #endif
 
     /// Issue #209: close this process's connection and keep it closed, so another process
     /// can take the write locks it needs (the keyboard's attached hot→cold harvest).
     /// Balanced by `resumeLiveAccess()`.
-    func suspendLiveAccess() throws {
+    func suspendLiveAccess(timeout: TimeInterval) throws {
         lock.lock()
-        guard !accessSuspended else {
+        guard !accessSuspended && !suspensionPending else {
             lock.unlock()
             throw DBServerError.coldAccessAlreadySuspended
         }
-        accessSuspended = true
+        suspensionPending = true
+        let deadline = Date().addingTimeInterval(timeout)
+        while activeIndependentAccesses > 0 {
+            guard lock.wait(until: deadline) else {
+                suspensionPending = false
+                lock.broadcast()
+                lock.unlock()
+                throw DBServerError.coldAccessDrainTimedOut
+            }
+        }
         let datasource = cachedDatasource
         lock.unlock()
 
@@ -111,6 +131,9 @@ final class SharedDatabase {
             try datasource?.closeForReplacement()
             lock.lock()
             cachedDatasource = nil
+            accessSuspended = true
+            suspensionPending = false
+            lock.broadcast()
             lock.unlock()
         } catch {
             lock.lock()
@@ -118,6 +141,8 @@ final class SharedDatabase {
             // Never hand that same object back through current(); the next access reopens.
             cachedDatasource = nil
             accessSuspended = false
+            suspensionPending = false
+            lock.broadcast()
             lock.unlock()
             notifyAccessResumed()
             throw error
@@ -126,8 +151,15 @@ final class SharedDatabase {
 
     /// Reopen against the file as it is NOW: the other process may have rewritten it, so
     /// this rebinds rather than restoring the old handle.
-    func resumeLiveAccess() throws {
+    func resumeLiveAccess(timeout: TimeInterval = 2) throws {
         lock.lock()
+        let deadline = Date().addingTimeInterval(timeout)
+        while suspensionPending {
+            guard lock.wait(until: deadline) else {
+                lock.unlock()
+                throw DBServerError.coldAccessDrainTimedOut
+            }
+        }
         guard accessSuspended else {
             lock.unlock()
             return
@@ -144,8 +176,36 @@ final class SharedDatabase {
         lock.lock()
         cachedDatasource = reopened
         accessSuspended = false
+        lock.broadcast()
         lock.unlock()
         notifyAccessResumed()
+    }
+
+    /// Runs work performed through a SQLite connection independent of `cachedDatasource`.
+    /// The operation lease makes the suspended check and the complete SQLite action atomic
+    /// with respect to `suspendLiveAccess()`, closing the check-then-open race from #209.
+    func withLiveAccessOperation<T>(_ operation: (LimeDB?) throws -> T) throws -> T {
+        lock.lock()
+        guard !accessSuspended && !suspensionPending else {
+            lock.unlock()
+            throw DBServerError.coldAccessAlreadySuspended
+        }
+        if cachedDatasource == nil {
+            cachedDatasource = openDatasource()
+        }
+        let datasource = cachedDatasource
+        activeIndependentAccesses += 1
+        lock.unlock()
+
+        defer {
+            lock.lock()
+            activeIndependentAccesses -= 1
+            if activeIndependentAccesses == 0 {
+                lock.broadcast()
+            }
+            lock.unlock()
+        }
+        return try operation(datasource)
     }
 
     private func notifyAccessResumed() {
@@ -398,13 +458,16 @@ final class DBServer {
     // `SQLite error 5: database is locked` and left the editor read-only.
     // Only the Settings side calls these; the keyboard never suspends its hot database.
 
-    func suspendColdAccess() throws { try database.suspendLiveAccess() }
+    func suspendColdAccess(timeout: TimeInterval = 2) throws {
+        try database.suspendLiveAccess(timeout: timeout)
+    }
 
     func resumeColdAccess() throws { try database.resumeLiveAccess() }
 
     var isColdAccessSuspended: Bool { database.isAccessSuspended }
 #if DEBUG
     var _testHasOpenColdDatasource: Bool { database.hasCachedDatasource }
+    var _testIndependentColdAccessCount: Int { database.independentAccessCount }
 #endif
 
     func requireColdAccessAvailable() throws {
@@ -448,12 +511,14 @@ final class DBServer {
 
     func markTableChangedAndPublish(_ table: String) throws {
         guard !table.isEmpty else { return }
-        try requireColdAccessAvailable()
-        let liveURL = liveDatabaseURL()
-        try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
-        try ColdPublisher(liveColdDatabaseURL: liveURL,
-                          appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-        publishImJson()
+        try database.withLiveAccessOperation { datasource in
+            guard let datasource else { throw DBServerError.datasourceUnavailable }
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
     }
 
     /// §1.5: (re)publish cold's `im` table as `im.json` (rows + grouped configs) by atomic
@@ -462,8 +527,12 @@ final class DBServer {
     func publishImJson() {
         guard let ds = datasource else { return }
         let liveURL = liveDatabaseURL()
+        publishImJson(from: ds, liveURL: liveURL)
+    }
+
+    private func publishImJson(from datasource: LimeDB, liveURL: URL) {
         let gen = (try? SyncMetaStore(databaseURL: liveURL).generation()) ?? 0
-        ImJsonPublisher.publish(from: ds, generation: gen,
+        ImJsonPublisher.publish(from: datasource, generation: gen,
                                 to: SyncPaths.imJSON(liveURL.deletingLastPathComponent()))
     }
 
@@ -473,12 +542,15 @@ final class DBServer {
     /// returns true, and the runtime rebuild re-reads the fresh `im.json`. Replaces the removed
     /// `im` inbox writes and the wholesale hot mirror.
     // ponytail: publish per edit; debounce to screen-exit if VACUUM churn bites
-    private func publishColdMetadataOnly() {
-        guard !database.isAccessSuspended else { return }
-        let liveURL = liveDatabaseURL()
-        try? ColdPublisher(liveColdDatabaseURL: liveURL,
-                           appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-        publishImJson()
+    private func mutateAndPublishColdMetadata(_ mutation: (LimeDB) -> Void) {
+        try? database.withLiveAccessOperation { datasource in
+            guard let datasource else { throw DBServerError.datasourceUnavailable }
+            mutation(datasource)
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            defer { publishImJson(from: datasource, liveURL: liveURL) }
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+        }
     }
 
     func writeIMLifecycleRecord(table: String,
@@ -1302,8 +1374,9 @@ final class DBServer {
     }
 
     func setImConfig(_ imCode: String, _ field: String, _ value: String) {
-        datasource?.setImConfig(imCode, field, value)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.setImConfig(imCode, field, value)
+        }
     }
 
     /// LIME DB 105 IM-load-time fallback: backfills `imkeys`/`imkeynames` for a single
@@ -1316,8 +1389,9 @@ final class DBServer {
     }
 
     func updateIMEnabled(imName: String, enabled: Bool) {
-        datasource?.updateIMEnabled(imName: imName, enabled: enabled)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.updateIMEnabled(imName: imName, enabled: enabled)
+        }
     }
 
     func updateIMSortOrder(id: Int64, sortOrder: Int) throws {
@@ -1330,8 +1404,9 @@ final class DBServer {
     }
 
     func setImConfigKeyboard(_ imCode: String, _ keyboard: KeyboardConfig) {
-        datasource?.setImConfigKeyboard(imCode, keyboard)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.setImConfigKeyboard(imCode, keyboard)
+        }
     }
 
     // MARK: - Record CRUD Proxies
@@ -1542,6 +1617,7 @@ final class DBServer {
 enum DBServerError: Error {
     case datasourceUnavailable
     case coldAccessAlreadySuspended
+    case coldAccessDrainTimedOut
     case bundledDatabaseMissing
     case archiveCreationFailed
     case fileNotFound(String)
@@ -1561,6 +1637,8 @@ extension DBServerError: LocalizedError {
             return "資料庫尚未開啟"
         case .coldAccessAlreadySuspended:
             return "資料庫存取已暫停"
+        case .coldAccessDrainTimedOut:
+            return "等待資料庫作業結束逾時"
         case .bundledDatabaseMissing:
             return "找不到預設資料庫"
         case .archiveCreationFailed:

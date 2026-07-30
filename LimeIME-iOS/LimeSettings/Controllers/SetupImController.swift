@@ -48,7 +48,9 @@ final class SetupImController: BaseController {
     init(dbServer: DBServer = .shared, prefs: LIMEPreferenceManager = .shared,
          progress: ProgressManager,
          editorRefreshSessionGate: EditorRefreshSessionGate = .shared,
-         editorRefreshRequestWriter: @escaping @Sendable (Data, URL) throws -> Void = atomicWrite,
+         editorRefreshRequestWriter: @escaping @Sendable (Data, URL) throws -> Void = { data, url in
+             try atomicWrite(data, to: url)
+         },
          editorRefreshLockFactory: @escaping @Sendable (URL) throws -> EditorRefreshLockHandle = {
              let ownership = try EditorRefreshFileLock.shared(baseURL: $0)
              return EditorRefreshLockHandle(lock: { try ownership.lock(timeout: $0) },
@@ -279,10 +281,10 @@ final class SetupImController: BaseController {
     /// own process. If this app still holds that file open, the keyboard's write fails with
     /// `SQLite error 5: database is locked` and the editor falls back to read-only. So cold
     /// is closed BEFORE the request becomes visible, stays closed for the whole
-    /// request→receipt window, and is reopened (rebound to what the keyboard committed)
-    /// before this function returns — on success, failure and timeout alike. Callers keep
-    /// editing locked until then; `RelatedListView` / `RecordListView` also hold their first
-    /// cold load until this returns.
+    /// request→receipt window, and is reopened only after Settings reacquires ownership and
+    /// harvests the receipt. If ownership cannot be recovered, this process stays fail-closed
+    /// instead of racing a keyboard that may still be writing cold. Callers keep editing locked
+    /// while cold is unavailable.
     func refreshTableFromKeyboard(stem: String,
                                   baseURL: URL,
                                   timeout: TimeInterval,
@@ -298,6 +300,7 @@ final class SetupImController: BaseController {
                                            expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
         let server = self.dbServer
         let ownership: EditorRefreshLockHandle
+        var ownsRefreshLock = false
         let lockFactory = editorRefreshLockFactory
         do {
             ownership = try lockFactory(baseURL)
@@ -308,11 +311,21 @@ final class SetupImController: BaseController {
             // Acquire ownership before closing cold. The dedicated lock queue keeps the bounded
             // blocking wait off Swift's cooperative executor.
             try await ownership.lockAsync(timeout: editorRefreshInitialLockTimeout)
-            try await Task.detached(priority: .userInitiated) {
-                try server.suspendColdAccess()
-            }.value
+            ownsRefreshLock = true
+            try await runEditorRefreshBlocking {
+                // A prior timed-out handoff deliberately left cold fail-closed. Once this retry
+                // owns the cross-process lock, it is safe to recover that state before starting
+                // a fresh balanced suspension.
+                if server.isColdAccessSuspended {
+                    try server.resumeColdAccess()
+                }
+                try server.suspendColdAccess(timeout: editorRefreshInitialLockTimeout)
+            }
         } catch {
-            try? ownership.unlock()
+            if ownsRefreshLock {
+                try? ownership.unlock()
+                ownsRefreshLock = false
+            }
             return .failure(error)
         }
 
@@ -320,15 +333,19 @@ final class SetupImController: BaseController {
             try? FileManager.default.removeItem(at: receiptURL)
             try editorRefreshRequestWriter(try JSONEncoder().encode(request), requestURL)
             try ownership.unlock()
+            ownsRefreshLock = false
             postSyncSignal(.tablesUpdated)
         } catch {
             let publicationError = error
             try? FileManager.default.removeItem(at: requestURL)
             try? FileManager.default.removeItem(at: receiptURL)
-            _ = try? await Task.detached(priority: .userInitiated) {
+            _ = try? await runEditorRefreshBlocking {
                 try server.resumeColdAccess()
-            }.value
-            try? ownership.unlock()
+            }
+            if ownsRefreshLock {
+                try? ownership.unlock()
+                ownsRefreshLock = false
+            }
             return .failure(publicationError)
         }
 
@@ -349,6 +366,7 @@ final class SetupImController: BaseController {
             let remainingRequestLifetime = max(0,
                                                request.expiresAt - Date().timeIntervalSince1970)
             try await ownership.lockAsync(timeout: remainingRequestLifetime)
+            ownsRefreshLock = true
 
             // A terminal receipt may have landed while a timed-out waiter was blocked on
             // ownership. Accept that matching result instead of reporting a false timeout.
@@ -364,24 +382,23 @@ final class SetupImController: BaseController {
 
             try? FileManager.default.removeItem(at: requestURL)
             try? FileManager.default.removeItem(at: receiptURL)
-            try await Task.detached(priority: .userInitiated) {
+            try await runEditorRefreshBlocking {
                 try server.resumeColdAccess()
-            }.value
+            }
             // The harvest and cold reopen already completed. File-lock unlock reports only
             // after clearing process-local state, so a defensive LOCK_UN error must not discard
             // the successful receipt and force an otherwise healthy editor back to read-only.
             try? ownership.unlock()
+            ownsRefreshLock = false
             return outcome
         } catch {
-            // A bounded ownership failure keeps the editor read-only, but must not leave every
-            // Settings cold reader empty until process restart. Cancel the request and restore
-            // cold access best-effort before returning the original handoff error.
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            try? ownership.unlock()
-            _ = try? await Task.detached(priority: .userInitiated) {
-                try server.resumeColdAccess()
-            }.value
+            // Reopening cold is safe only after ownership was recovered. If reopening itself
+            // failed, release that ownership explicitly. If acquisition failed, leave the
+            // request and cold suspension intact: the keyboard may still be writing cold.
+            if ownsRefreshLock {
+                try? ownership.unlock()
+                ownsRefreshLock = false
+            }
             return .failure(error)
         }
     }

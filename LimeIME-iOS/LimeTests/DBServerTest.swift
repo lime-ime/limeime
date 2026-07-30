@@ -43,6 +43,40 @@ private enum LIME {
     static let DB_COLUMN_ID       = "_id"
 }
 
+private final class ThreadSafeFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedValue = false
+
+    func set() {
+        lock.lock()
+        storedValue = true
+        lock.unlock()
+    }
+
+    var value: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedValue
+    }
+}
+
+private final class ThreadSafeError: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedError: Error?
+
+    func set(_ error: Error) {
+        lock.lock()
+        storedError = error
+        lock.unlock()
+    }
+
+    var value: Error? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedError
+    }
+}
+
 // MARK: - DBServerTest
 final class DBServerTest: XCTestCase {
 
@@ -274,6 +308,83 @@ final class DBServerTest: XCTestCase {
         XCTAssertFalse(server.isColdAccessSuspended)
         XCTAssertEqual(server.countRelatedForManagement(marker), 2,
                        "resuming must rebind to the on-disk file and see the harvest")
+    }
+
+    func testSuspendColdAccessDrainsIndependentPublisherBeforeClosing() async throws {
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let server = DBServer(_testDatabaseDirectory: databaseDir)
+        let dbURL = databaseDir.appendingPathComponent("lime.db")
+        _ = server.addRecord("related", ["pword": "gate", "cword": "甲", "score": 1])
+
+        let blocker = try DatabaseQueue(path: dbURL.path)
+        let blockerStarted = DispatchSemaphore(value: 0)
+        let releaseBlocker = DispatchSemaphore(value: 0)
+        let blockerFinished = DispatchSemaphore(value: 0)
+        let blockerError = ThreadSafeError()
+        defer { releaseBlocker.signal() }
+        Thread.detachNewThread {
+            defer { blockerFinished.signal() }
+            do {
+                try blocker.write { db in
+                    try db.execute(sql: "UPDATE related SET score = score WHERE pword = ?",
+                                   arguments: ["gate"])
+                    blockerStarted.signal()
+                    releaseBlocker.wait()
+                }
+            } catch {
+                blockerError.set(error)
+            }
+        }
+        XCTAssertEqual(blockerStarted.wait(timeout: .now() + 2), .success)
+
+        let publisherDone = DispatchSemaphore(value: 0)
+        let publisherError = ThreadSafeError()
+        Thread.detachNewThread {
+            defer { publisherDone.signal() }
+            do {
+                try server.markTableChangedAndPublish("related")
+            } catch {
+                publisherError.set(error)
+            }
+        }
+        let publisherDeadline = Date().addingTimeInterval(2)
+        while server._testIndependentColdAccessCount == 0 && Date() < publisherDeadline {
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(server._testIndependentColdAccessCount, 1,
+                       "publisher must enter the operation lease before suspension starts")
+
+        let suspensionFinished = ThreadSafeFlag()
+        let suspensionDone = DispatchSemaphore(value: 0)
+        let suspensionError = ThreadSafeError()
+        Thread.detachNewThread {
+            defer { suspensionDone.signal() }
+            do {
+                try server.suspendColdAccess(timeout: 10)
+                suspensionFinished.set()
+            } catch {
+                suspensionError.set(error)
+            }
+        }
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        XCTAssertFalse(suspensionFinished.value,
+                       "suspension must drain a publisher that already entered cold access")
+
+        releaseBlocker.signal()
+        XCTAssertEqual(publisherDone.wait(timeout: .now() + 10), .success)
+        XCTAssertNil(publisherError.value)
+        XCTAssertEqual(blockerFinished.wait(timeout: .now() + 2), .success)
+        XCTAssertNil(blockerError.value)
+        XCTAssertEqual(suspensionDone.wait(timeout: .now() + 2), .success)
+        XCTAssertNil(suspensionError.value)
+
+        XCTAssertTrue(server.isColdAccessSuspended)
+        try server.resumeColdAccess()
     }
 
     func testDBServerGetInstanceWithoutContext() {

@@ -111,7 +111,7 @@ final class FailingReacquireEditorRefreshLock: @unchecked Sendable {
         defer { lockState.unlock() }
         timeouts.append(timeout)
         acquisitionCount += 1
-        guard acquisitionCount == 1 else {
+        guard acquisitionCount != 2 else {
             throw TestEditorRefreshLockError.scriptedReacquireFailure
         }
         isLocked = true
@@ -1286,7 +1286,7 @@ final class SetupImControllerTest: XCTestCase {
                        "the reopened connection must serve read-only browsing")
     }
 
-    func testRefreshTableFromKeyboardReopensColdAfterOwnershipReacquireFails() async throws {
+    func testRefreshTableFromKeyboardDoesNotReopenColdWithoutOwnership() async throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -1318,15 +1318,32 @@ final class SetupImControllerTest: XCTestCase {
         if case .success = result {
             XCTFail("Expected scripted ownership reacquisition to fail")
         }
-        XCTAssertFalse(server.isColdAccessSuspended,
-                       "reacquisition failure must not leave cold suspended")
-        XCTAssertEqual(server.countRelatedForManagement(marker), 1,
-                       "Settings must reopen cold for read-only browsing before returning")
+        XCTAssertTrue(server.isColdAccessSuspended,
+                      "Settings must never reopen cold after failing to reacquire ownership")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: SyncPaths.editorRefreshRequest(root).path),
+            "Settings must not remove the keyboard request without ownership")
+        XCTAssertEqual(server.countRelatedForManagement(marker), 0,
+                       "cold readers must remain quiesced until ownership is recovered or the app restarts")
         let timeouts = scriptedLock.recordedTimeouts()
         XCTAssertEqual(timeouts.count, 2)
         XCTAssertEqual(timeouts[0], 2, accuracy: 0.01)
         XCTAssertGreaterThan(timeouts[1], 0)
         XCTAssertLessThan(timeouts[1], 30)
+
+        let retry = await controller.refreshTableFromKeyboard(stem: "related",
+                                                              baseURL: root,
+                                                              timeout: 0.01,
+                                                              pollInterval: 0.005)
+        if case .success = retry {
+            XCTFail("Expected retry without a keyboard receipt to report timeout")
+        }
+        XCTAssertFalse(server.isColdAccessSuspended,
+                       "a later lock-owning retry must recover the prior fail-closed state")
+        XCTAssertEqual(server.countRelatedForManagement(marker), 1)
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: SyncPaths.editorRefreshRequest(root).path))
+        XCTAssertEqual(scriptedLock.recordedTimeouts().count, 4)
     }
 
     /// Issue #209: if the UI poll expires after the keyboard has taken ownership, Settings
