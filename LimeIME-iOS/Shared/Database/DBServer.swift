@@ -216,7 +216,7 @@ final class SharedDatabase {
 
     func setCurrent(_ datasource: LimeDB?) {
         lock.lock()
-        guard !accessSuspended || datasource == nil else {
+        guard (!accessSuspended && !suspensionPending) || datasource == nil else {
             lock.unlock()
             try? datasource?.closeForReplacement()
             return
@@ -227,6 +227,10 @@ final class SharedDatabase {
 
     func closeCurrentForReplacement() {
         lock.lock()
+        guard !suspensionPending else {
+            lock.unlock()
+            return
+        }
         let datasource = cachedDatasource
         lock.unlock()
         do {
