@@ -7,15 +7,58 @@
 - Classification: confirmed iOS database-concurrency/usability defect
 - Current pull request: draft PR #221, https://github.com/lime-ime/limeime/pull/221
 - PR #221 branch: `fix/209-ios-db-handoff-final-v7`
-- PR #221 source SHA validated by Xcode Cloud Run 50: `f2798d69a46ced0c6332460c6206a79081cdd622`
-- PR #221 current head: `2fda5c3ed74538189cbaf218827498b66d7d3822` (documentation-only commit after the source SHA)
-- Last source commit: 2026-07-30 10:51 +08:00
-- Last PR update: 2026-07-30 11:20 +08:00
+- Last fully native-validated source: `f2798d69a46ced0c6332460c6206a79081cdd622` (Xcode Cloud Run 50)
+- Published PR head before this handover: `2fda5c3ed74538189cbaf218827498b66d7d3822`
+- Handover documentation commit: `fffb60db` (`docs(ios): record complete issue 209 investigation history`)
+- Unvalidated partial source commit: `613d1b0e` (`fix(ios): generalize scoped cold access lease`)
+- Last source commit: 2026-08-01 09:25 +08:00
 - Reconciled: 2026-08-01
 
 **PR #221 is not technically merge-ready.** It fixes the original editor handoff collision, but its process-wide cold-database suspension contract is incomplete. Ordinary cached-database operations can escape the lease, a retained Settings `SearchServer` can fall back to a stale datasource, mutation and publication can be split, and several errors are still swallowed or converted into apparent UI success.
 
-No source implementation for these remaining defects was made between 2026-07-30 and this 2026-08-01 rewrite.
+No source implementation for these remaining defects was made between 2026-07-30 and the initial 2026-08-01 rewrite. One bounded partial lease slice was then implemented as `613d1b0e`; it is recorded below and does not complete the remaining contract.
+
+## Maintainer handover
+
+This document and draft PR #221 are now a handover, not a completion claim. Jeremy directed that no further fix be attempted in this work session.
+
+### Completed in the handover branch
+
+1. **Complete history and defect record — `fffb60db`**
+   - rewrote this document to record all nine draft PRs, discarded designs, test and review evidence, remaining defects, and inactivity;
+   - corrected the prior implication that Run 50 proved complete Settings cold ownership;
+   - retained the privacy boundary around the originating support report.
+2. **Partial scoped-lease foundation — `613d1b0e`**
+   - renamed publisher-specific `activeIndependentAccesses` to general `activeAccesses`;
+   - replaced optional `withLiveAccessOperation` with a concrete `withLiveAccess` closure;
+   - made unavailable datasource opening throw before incrementing the active count;
+   - made suspension drain the generalized count;
+   - updated the two existing explicit lease call sites;
+   - added a deterministic semaphore-based XCTest for draining an entered scoped operation;
+   - added one narrow Linux source-contract guard.
+3. **Local verification of the partial slice**
+   - the new Linux contract test was observed failing before production changes;
+   - the focused test passed after the change;
+   - the complete lifecycle script passed 10/10;
+   - Python compilation and `git diff --check` passed.
+
+### Explicitly not completed
+
+- Native compilation or XCTest execution of `613d1b0e` was not performed.
+- No Xcode Cloud run validates `613d1b0e` or the final handover head.
+- Ordinary Settings calls through `database.current()` were not migrated to `withLiveAccess`.
+- The stale Settings `SearchServer` fallback was not removed.
+- Record, related, metadata, sort, clear, import, register, and restore operations were not converted into atomic mutation-plus-publication leases.
+- `try?` and sentinel-success/error-loss paths were not removed.
+- Controller and UI failure propagation and optimistic-state rollback were not implemented.
+- The deterministic cross-screen suspension matrix was not implemented.
+- The complete Settings live-cold call-site ownership audit was not completed.
+- Affected-device runtime validation was not performed.
+- PR #221 must remain draft and must not be merged in this state.
+
+### Recommended next maintainer action
+
+Treat `613d1b0e` as an unvalidated foundation, not an accepted fix. Review or revert it before continuing. Then implement the remaining sequence in this document using native RED/GREEN coverage, complete the call-site inventory, and run one exact-final-SHA Xcode Cloud test/archive gate. Do not rely on Run 50 for any source after `f2798d69`.
 
 ## Origin and privacy boundary
 
@@ -97,7 +140,7 @@ Nine draft PRs were created. Eight were closed unmerged and replaced. This churn
 | #218 | 2026-07-29 14:10 / 14:57 | `fix/209-ios-db-handoff-final-v3` / `f74c4f8e...` | Exposed initial/reacquisition budgets to native tests, released before signaling the keyboard, used a concurrent blocking bridge, and removed timeout-erasing convenience APIs. | Review still found defensive unlock-state, malformed-request, cancellation-polling, and test-quality/error-path gaps. |
 | #219 | 2026-07-29 14:57 / 23:45 | `fix/209-ios-db-handoff-final-v4` / `7174d38d...` | Cleared local ownership state even if `LOCK_UN` reported failure, isolated malformed requests, avoided cancellation-driven polling spins, and expanded native/error-path coverage. | The next strict review round found broad/brittle source-text tests and smaller production/error-path issues: receipt queue priority, lock-factory failure aborting unrelated sync, unmatched failure signaling for malformed requests, false failure after final unlock reporting, and test descriptor contamination. Work continued on unpublished review branches before a clean final-v6 replacement. |
 | #220 | 2026-07-29 23:45 / 2026-07-30 03:20 | `fix/209-ios-db-handoff-final-v6` / `8fea4b33...` | Clean one-pass replacement after review5/review6. Reduced the Python gate to real behavior plus durable anti-resurrection checks, fixed the review findings, coordinated independent cold publishers/mutations, and preserved fail-closed ownership recovery. | Replaced by #221 after further source changes added datasource-install rejection and final-v7 validation/docs. |
-| #221 | 2026-07-30 02:48 / still open | `fix/209-ios-db-handoff-final-v7` / `2fda5c3e...` | Current serialized handoff with publisher drain, fail-closed recovery, datasource-install rejection, focused lifecycle tests, and Xcode Cloud Run 50. | A later complete Settings call-site audit found broader unimplemented lease, stale-datasource, atomic-publication, error-propagation, and UI-consistency defects. The PR remains draft. |
+| #221 | 2026-07-30 02:48 / still open | `fix/209-ios-db-handoff-final-v7`; handover adds `fffb60db` and `613d1b0e` | Serialized handoff with publisher drain, fail-closed recovery, datasource-install rejection, focused lifecycle tests, and Xcode Cloud Run 50; the handover adds complete documentation and a partial generalized lease foundation. | A later complete Settings call-site audit found broader unimplemented lease, stale-datasource, atomic-publication, error-propagation, and UI-consistency defects. The partial handover source is not native-validated. The PR remains draft and must not merge. |
 
 ### Unpublished validation branches and review rounds
 
@@ -302,6 +345,8 @@ Limitations:
 - Affected-device Related-Phrase Management runtime confirmation has not been completed.
 - GitHub reports no checks attached directly to the current PR head.
 
+After Run 50, handover commit `613d1b0e` changed source and tests. Its local Linux gate passed 10/10, but it has no native compile, XCTest, archive, runtime, or exact-SHA Cloud evidence. Therefore Run 50 must not be presented as validating the handover tree.
+
 ## Rejected approaches and lessons
 
 1. **Retry-only mitigation:** rejected because it tolerates but does not remove the ownership race.
@@ -320,11 +365,13 @@ Limitations:
 - Issue opened: 2026-07-27 07:28 +08:00.
 - Nine draft PRs were created: #210 and #214–#221.
 - Eight were closed unmerged and replaced.
-- PR #221 received no source update after 2026-07-30 10:51 +08:00.
+- PR #221 received no source update between 2026-07-30 10:51 +08:00 and the partial local lease commit at 2026-08-01 09:25 +08:00.
 - After the full remaining-defect plan was written, implementation did not continue for approximately two days.
 - On 2026-08-01 a local validation branch, `fix/209-complete-cold-ownership-validation-v8`, was created from PR #221 and a Codex Task-1 worker was started.
 - The worker was stopped immediately, before any production/test edit, when Jeremy directed that this issue document be rewritten first.
 - The Codex start/stop produced no tracked source change and no GitHub change.
+- Hermes then implemented the bounded Task-1 lease slice directly and committed it as `613d1b0e`.
+- Jeremy subsequently ended further fix work and requested this final handover plus PR publication.
 
 ## Platform impact
 
