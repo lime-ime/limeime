@@ -1,6 +1,6 @@
 ﻿# iOS Cold/Hot DB Re-Architecture 2 Implementation Plan
 
-**Status: accepted 2026-08-01 (maintainer: Jeremy Wu). Design frozen; implementation not started.**
+**Status: accepted 2026-08-01; implemented 2026-08-02 on branch `ios-db-rearch2` (all task gates green — see the campaign plan flight log). Device measurements and Xcode Cloud run remain maintainer residuals.**
 Successor to the shipped [IOS_DB_COLD_HOT.md](IOS_DB_COLD_HOT.md) §1.4 editor sync and the
 issue #209 ownership machinery. Deferred side effort: [DB_DEDUPE.md](DB_DEDUPE.md).
 
@@ -612,7 +612,7 @@ seeded assets. Duplicate cleanup is a separate, unscheduled effort — [DB_DEDUP
 - Produces: hot-role learning tracking and `postFinishInput(completion:)` whose completion follows all submitted session learning.
 
 - [x] **Step 1: Add failing tests.** Cover atomic row+outbox commit, rollback on outbox failure, version increment on relearn, all three learning entry points, exclusion of bulk imports and legacy `word IS NULL` / `cword IS NULL` sentinels, atomic `<table>_user` restore plus outbox upsert, and completion after the prior mapping-score write plus related/LD writes. Assert the serialized `learningQueue` produces the same learning results the previous concurrent dispatch produced (the §4.5 behavior change is ordering only).
-- [ ] **Step 2: Run the two focused XCTest classes; confirm failure.**
+- [x] **Step 2: Run the two focused XCTest classes; confirm failure.**
 
 ```bash
 xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:LimeTests/LimeDBTest -only-testing:LimeTests/SearchServerTest
