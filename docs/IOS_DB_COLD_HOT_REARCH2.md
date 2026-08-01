@@ -683,18 +683,18 @@ git commit -m "feat(ios): record atomic cold intent"
 - Consumes: hot outbox and cold fences.
 - Produces: `scanAndApply(hasFullAccess:)`, `flushPendingLearning(hasFullAccess:)`, and keyboard-only `KeyboardFlushLock`.
 
-- [ ] **Step 1: Add failing interleave tests.** Include unrelated delete plus missed learning, same-key delete, learning after applied delete, clear then later add, delete-with-learning-backup plus reinstall in one snapshot, preserved-row restore plus outbox delivery, stale outbox version, cold commit before crash, two simulated keyboard processes flushing one key, restore before a stale dismissal flush, and epoch replacement between batch read and cold write. Both epoch races must write and acknowledge nothing from the old lineage.
-- [ ] **Step 2: Add duplicate-tolerance and recovery tests.** Duplicate fixture: cold holds two rows for one key — a flush score update converges both and inserts nothing; a fence `delete` removes both from hot. Recovery: flush learning into live cold, acknowledge it, delete/corrupt hot before any app edit, rebuild, and assert the learned row remains; also assert the rebuilt hot starts with empty outbox, captured applied epoch/generation/revisions, and `legacy_transition_done = 1`, then applies a later editor fence normally.
-- [ ] **Step 3: Implement revision-ordered §3.3 lifecycle handling around table-fence-first reconcile and fail closed on a marked unfenced revision gap.** Reuse `<table>_user`; restored keys must journal outbox state atomically. Remove normal wholesale replacement of editor tables.
-- [ ] **Step 4: Refactor the existing `flock` code into keyboard-only `KeyboardFlushLock` and implement the bounded cold-first flush in §4.4** with keyed `WHERE` updates, `NOT EXISTS` inserts, and marker-plus-epoch validation inside the cold transaction. Use `NSLog` for typed retryable failures; do not add a logging subsystem.
-- [ ] **Step 5: Rebuild a missing/corrupt hot DB from live cold only when Full Access permits it, initializing all applied lineage/revision/transition metadata exactly as §4.6 specifies.**
-- [ ] **Step 6: Run `TableSyncEngineTest` and `SyncContractTest`; expected result is PASS.**
+- [x] **Step 1: Add failing interleave tests.** Include unrelated delete plus missed learning, same-key delete, learning after applied delete, clear then later add, delete-with-learning-backup plus reinstall in one snapshot, preserved-row restore plus outbox delivery, stale outbox version, cold commit before crash, two simulated keyboard processes flushing one key, restore before a stale dismissal flush, and epoch replacement between batch read and cold write. Both epoch races must write and acknowledge nothing from the old lineage.
+- [x] **Step 2: Add duplicate-tolerance and recovery tests.** Duplicate fixture: cold holds two rows for one key — a flush score update converges both and inserts nothing; a fence `delete` removes both from hot. Recovery: flush learning into live cold, acknowledge it, delete/corrupt hot before any app edit, rebuild, and assert the learned row remains; also assert the rebuilt hot starts with empty outbox, captured applied epoch/generation/revisions, and `legacy_transition_done = 1`, then applies a later editor fence normally.
+- [x] **Step 3: Implement revision-ordered §3.3 lifecycle handling around table-fence-first reconcile and fail closed on a marked unfenced revision gap.** Reuse `<table>_user`; restored keys must journal outbox state atomically. Remove normal wholesale replacement of editor tables.
+- [x] **Step 4: Refactor the existing `flock` code into keyboard-only `KeyboardFlushLock` and implement the bounded cold-first flush in §4.4** with keyed `WHERE` updates, `NOT EXISTS` inserts, and marker-plus-epoch validation inside the cold transaction. Use `NSLog` for typed retryable failures; do not add a logging subsystem.
+- [x] **Step 5: Rebuild a missing/corrupt hot DB from live cold only when Full Access permits it, initializing all applied lineage/revision/transition metadata exactly as §4.6 specifies.**
+- [x] **Step 6: Run `TableSyncEngineTest` and `SyncContractTest`; expected result is PASS.**
 
 ```bash
 xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:LimeTests/TableSyncEngineTest -only-testing:LimeTests/SyncContractTest
 ```
 
-- [ ] **Step 7: Commit.**
+- [x] **Step 7: Commit.**
 
 ```bash
 git add LimeIME-iOS/Shared/Database/TableSyncEngine.swift LimeIME-iOS/Shared/Database/SyncContract.swift LimeIME-iOS/Shared/Database/ColdPublisher.swift LimeIME-iOS/LimeTests/TableSyncEngineTest.swift LimeIME-iOS/LimeTests/SyncContractTest.swift

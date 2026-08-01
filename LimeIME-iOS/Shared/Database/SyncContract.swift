@@ -78,6 +78,10 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("editor.refresh.lock")
     }
 
+    static func keyboardFlushLock(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("keyboard.flush.lock")
+    }
+
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
     }
@@ -232,7 +236,10 @@ final class EditorRefreshFileLock: @unchecked Sendable {
     }
 
     deinit {
-        try? unlock()
+        do {
+            try unlock()
+        } catch {
+        }
     }
 
     func lock(timeout: TimeInterval) throws {
@@ -272,6 +279,126 @@ final class EditorRefreshFileLock: @unchecked Sendable {
         ownsLock = true
         stateLock.unlock()
         acquired = true
+    }
+
+    func unlock() throws {
+        stateLock.lock()
+        guard ownsLock else {
+            stateLock.unlock()
+            return
+        }
+        let attempt = shared.applyFlock(LOCK_UN)
+        ownsLock = false
+        stateLock.unlock()
+        shared.localOwnership.signal()
+        guard attempt.result == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+        }
+    }
+}
+
+final class KeyboardFlushLock: @unchecked Sendable {
+    private final class SharedDescriptor: @unchecked Sendable {
+        let descriptor: Int32
+        let localOwnership = DispatchSemaphore(value: 1)
+
+        init(path: String) throws {
+            descriptor = Darwin.open(path,
+                                     O_CREAT | O_RDWR | O_CLOEXEC,
+                                     mode_t(S_IRUSR | S_IWUSR))
+            guard descriptor >= 0 else {
+                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            }
+        }
+
+        deinit {
+            Darwin.close(descriptor)
+        }
+
+        func applyFlock(_ operation: Int32) -> (result: Int32, error: Int32) {
+            let result = flock(descriptor, operation)
+            return (result, result == 0 ? 0 : errno)
+        }
+    }
+
+    private static let registryLock = NSLock()
+    private static var sharedByPath: [String: SharedDescriptor] = [:]
+
+    private let shared: SharedDescriptor
+    private let stateLock = NSLock()
+    private var ownsLock = false
+
+    static func shared(baseURL: URL) throws -> KeyboardFlushLock {
+        let directory = SyncPaths.outboxDir(baseURL)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let path = SyncPaths.keyboardFlushLock(baseURL).standardizedFileURL.path
+        registryLock.lock()
+        defer { registryLock.unlock() }
+        let descriptor: SharedDescriptor
+        if let existing = sharedByPath[path] {
+            descriptor = existing
+        } else {
+            descriptor = try SharedDescriptor(path: path)
+            sharedByPath[path] = descriptor
+        }
+        return KeyboardFlushLock(shared: descriptor)
+    }
+
+#if DEBUG
+    static func _testResetSharedDescriptors() {
+        registryLock.lock()
+        sharedByPath.removeAll()
+        registryLock.unlock()
+    }
+#endif
+
+    private init(shared: SharedDescriptor) {
+        self.shared = shared
+    }
+
+    deinit {
+        do {
+            try unlock()
+        } catch {
+        }
+    }
+
+    func lock(timeout: TimeInterval) throws -> Bool {
+        stateLock.lock()
+        let alreadyOwned = ownsLock
+        stateLock.unlock()
+        guard !alreadyOwned else { return true }
+
+        let clampedTimeout = max(0, timeout)
+        guard shared.localOwnership.wait(timeout: .now() + clampedTimeout) == .success else {
+            return false
+        }
+        var acquired = false
+        defer {
+            if !acquired {
+                shared.localOwnership.signal()
+            }
+        }
+
+        let deadline = Date().addingTimeInterval(clampedTimeout)
+        var attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        while attempt.result != 0 {
+            if attempt.error == EINTR {
+                attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+                continue
+            }
+            guard attempt.error == EWOULDBLOCK || attempt.error == EAGAIN else {
+                throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+            }
+            guard Date() < deadline else { return false }
+            Thread.sleep(forTimeInterval: 0.01)
+            attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        }
+        stateLock.lock()
+        ownsLock = true
+        stateLock.unlock()
+        acquired = true
+        return true
     }
 
     func unlock() throws {
