@@ -297,4 +297,5 @@ the Final Gate. Loop until green. No other stop conditions.
 
 | Iter | Commit | Result / notes |
 | --- | --- | --- |
-| I0 | c007ed24 | Baseline GREEN: first native validation of v7 head — 1134 passed / 9 skipped / 0 failed (1049s). 613d1b0e compiles+passes, no revert needed. Deviations: .claude/** is gitignored (gate script + audit dump stay local-only); destination needs OS=18.6 pin (iPhone 16 sim absent on OS 26.5). |
+| I0 | 693eb397 | Baseline GREEN: first native validation of v7 head — 1134 passed / 9 skipped / 0 failed (1049s). 613d1b0e compiles+passes, no revert needed. Deviations: .claude/** is gitignored (gate script + audit dump stay local-only); destination needs OS=18.6 pin (iPhone 16 sim absent on OS 26.5). |
+| I1 | (this) | Task 1 GREEN. Codex r1 wrote RED tests, honestly blocked (sandbox can't run xcodebuild) → workflow split: Codex codes, orchestrator builds. RED observed (missing postFinishInput(completion:)); Codex r2 implemented §3.1+§4.1+§4.5; orchestrator fixed one test type error (LimeRecord.id is String). Focused GREEN + full suite GREEN. G5 findings: none; Codex additionally removed two pre-existing try? swallows and fixed relatedScore cache poisoning on rollback. |

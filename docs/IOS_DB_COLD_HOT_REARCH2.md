@@ -611,17 +611,17 @@ seeded assets. Duplicate cleanup is a separate, unscheduled effort — [DB_DEDUP
 
 - Produces: hot-role learning tracking and `postFinishInput(completion:)` whose completion follows all submitted session learning.
 
-- [ ] **Step 1: Add failing tests.** Cover atomic row+outbox commit, rollback on outbox failure, version increment on relearn, all three learning entry points, exclusion of bulk imports and legacy `word IS NULL` / `cword IS NULL` sentinels, atomic `<table>_user` restore plus outbox upsert, and completion after the prior mapping-score write plus related/LD writes. Assert the serialized `learningQueue` produces the same learning results the previous concurrent dispatch produced (the §4.5 behavior change is ordering only).
+- [x] **Step 1: Add failing tests.** Cover atomic row+outbox commit, rollback on outbox failure, version increment on relearn, all three learning entry points, exclusion of bulk imports and legacy `word IS NULL` / `cword IS NULL` sentinels, atomic `<table>_user` restore plus outbox upsert, and completion after the prior mapping-score write plus related/LD writes. Assert the serialized `learningQueue` produces the same learning results the previous concurrent dispatch produced (the §4.5 behavior change is ordering only).
 - [ ] **Step 2: Run the two focused XCTest classes; confirm failure.**
 
 ```bash
 xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:LimeTests/LimeDBTest -only-testing:LimeTests/SearchServerTest
 ```
 
-- [ ] **Step 3: Add `learn_outbox` and hot-role tracking inside existing `LimeDB` transactions.** Do not add post-commit callbacks. `user_version` stays 105.
-- [ ] **Step 4: Move the existing asynchronous learning work onto one private serial `learningQueue` and add the generic completion shown in §4.5.**
-- [ ] **Step 5: Rerun the focused tests; expected result is PASS.**
-- [ ] **Step 6: Commit.**
+- [x] **Step 3: Add `learn_outbox` and hot-role tracking inside existing `LimeDB` transactions.** Do not add post-commit callbacks. `user_version` stays 105.
+- [x] **Step 4: Move the existing asynchronous learning work onto one private serial `learningQueue` and add the generic completion shown in §4.5.**
+- [x] **Step 5: Rerun the focused tests; expected result is PASS.**
+- [x] **Step 6: Commit.**
 
 ```bash
 git add LimeIME-iOS/Shared/Database/LimeDB.swift LimeIME-iOS/Shared/Database/LimeDBProtocol.swift LimeIME-iOS/Shared/Search/SearchServer.swift LimeIME-iOS/LimeTests/LimeDBTest.swift LimeIME-iOS/LimeTests/SearchServerTest.swift

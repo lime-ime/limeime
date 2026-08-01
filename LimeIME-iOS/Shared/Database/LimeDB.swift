@@ -56,6 +56,7 @@ final class LimeDB {
     // MARK: - GRDB connection
     private let dbQueue: DatabaseQueue
     private let databasePath: String
+    private let tracksHotLearning: Bool
 
     // MARK: - State (mirroring Android's instance fields)
     private var currentTableName: String = "custom"
@@ -171,8 +172,9 @@ final class LimeDB {
     // MARK: - Initializer
 
     /// Opens (or creates) lime.db at the given path.
-    init(path: String) throws {
+    init(path: String, tracksHotLearning: Bool = false) throws {
         databasePath = path
+        self.tracksHotLearning = tracksHotLearning
         var config = Configuration()
         config.prepareDatabase { db in
             try db.execute(sql: "PRAGMA journal_mode = WAL")
@@ -547,6 +549,43 @@ final class LimeDB {
         return (try? dbQueue.read { db in
             try Int.fetchOne(db, sql: "SELECT EXISTS(SELECT 1 FROM \(name) LIMIT 1)") ?? 0
         }) ?? 0 > 0
+    }
+
+    private func ensureLearnOutbox(_ db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS learn_outbox (
+                tbl          TEXT    NOT NULL,
+                k1           TEXT    NOT NULL,
+                k2           TEXT    NOT NULL,
+                observed_rev INTEGER NOT NULL,
+                version      INTEGER NOT NULL,
+                PRIMARY KEY (tbl, k1, k2)
+            ) WITHOUT ROWID
+            """)
+    }
+
+    private func appliedRevision(for table: String, db: Database) throws -> Int {
+        let hasMeta = try Int.fetchOne(db, sql: """
+            SELECT COUNT(*) FROM sqlite_master
+            WHERE type = 'table' AND name = 'sync_meta'
+            """) ?? 0
+        guard hasMeta > 0 else { return 0 }
+        let raw = try String.fetchOne(db, sql: "SELECT value FROM sync_meta WHERE key = ?",
+                                      arguments: ["rev:\(table)"])
+        return raw.flatMap(Int.init) ?? 0
+    }
+
+    private func journalHotLearning(_ db: Database, table: String, k1: String, k2: String) throws {
+        guard tracksHotLearning, !k1.isEmpty, !k2.isEmpty else { return }
+        try ensureLearnOutbox(db)
+        let revision = try appliedRevision(for: table, db: db)
+        try db.execute(sql: """
+            INSERT INTO learn_outbox(tbl, k1, k2, observed_rev, version)
+            VALUES (?, ?, ?, ?, 1)
+            ON CONFLICT(tbl, k1, k2) DO UPDATE SET
+                observed_rev = excluded.observed_rev,
+                version = learn_outbox.version + 1
+            """, arguments: [table, k1, k2, revision])
     }
 
     // MARK: - Core CRUD (mirrors Android's countRecords / addRecord / updateRecord / deleteRecord)
@@ -1025,6 +1064,7 @@ final class LimeDB {
     @discardableResult
     func addOrUpdateRelatedPhraseRecord(_ pword: String, _ cword: String?) -> Int {
         guard !checkDBConnection() else { return -1 }
+        guard !pword.isEmpty else { return -1 }
         // Android line 1086: bail only when cword is non-null AND learning is disabled.
         if !learnRelatedWords && cword != nil { return -1 }
         // Android lines 1089-1103: strip Chinese symbols from cword (not pword) when learning is on.
@@ -1039,28 +1079,33 @@ final class LimeDB {
             }
         }
         var score = 1
-        try? dbQueue.write { db in
-            let munit = try isRelatedPhraseExist(pword, effectiveCword, db: db)
-            if let m = munit {
-                let rowId = m.id
-                let cached = relatedScore[rowId]
-                score = (cached ?? m.score) + 1
-                relatedScore[rowId] = score
-                try db.execute(sql: "UPDATE related SET score = ? WHERE _id = ?",
-                               arguments: [score, rowId])
-            } else {
-                try db.execute(
-                    sql: "INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)",
-                    arguments: [pword, effectiveCword, score])
+        var relatedScoreUpdate: (rowId: Int64, score: Int)?
+        do {
+            try dbQueue.write { db in
+                let munit = try isRelatedPhraseExist(pword, effectiveCword, db: db)
+                if let m = munit {
+                    let rowId = m.id
+                    let cached = relatedScore[rowId]
+                    score = (cached ?? m.score) + 1
+                    try db.execute(sql: "UPDATE related SET score = ? WHERE _id = ?",
+                                   arguments: [score, rowId])
+                    relatedScoreUpdate = (rowId, score)
+                } else {
+                    try db.execute(
+                        sql: "INSERT INTO related (pword, cword, score) VALUES (?, ?, ?)",
+                        arguments: [pword, effectiveCword, score])
+                }
+                if let cword = effectiveCword, !cword.isEmpty {
+                    try journalHotLearning(db, table: "related", k1: pword, k2: cword)
+                }
             }
+        } catch {
+            return -1
+        }
+        if let update = relatedScoreUpdate {
+            relatedScore[update.rowId] = update.score
         }
         return score
-    }
-
-    /// Learn a pword→cword phrase (throws variant for SearchServer).
-    @discardableResult
-    func learnRelatedPhrase(parentWord: String, childWord: String) throws -> Int {
-        return addOrUpdateRelatedPhraseRecord(parentWord, childWord)
     }
 
     // MARK: - Score Update
@@ -1085,9 +1130,16 @@ final class LimeDB {
 
     /// Direct score update by record ID (for SearchServer).
     func updateScore(id: Int64, score: Int, tableName: String) throws {
+        guard isValidTableName(tableName) else { throw LimeDBError.invalidTableName(tableName) }
         try dbQueue.write { db in
+            guard let row = try Row.fetchOne(db,
+                sql: "SELECT code, word FROM \(tableName) WHERE _id = ? LIMIT 1",
+                arguments: [id]) else { return }
+            guard let code = row.optString("code"), !code.isEmpty,
+                  let word = row.optString("word"), !word.isEmpty else { return }
             try db.execute(sql: "UPDATE \(tableName) SET score = ? WHERE _id = ?",
                            arguments: [score, id])
+            try journalHotLearning(db, table: tableName, k1: code, k2: word)
         }
     }
 
@@ -1103,35 +1155,50 @@ final class LimeDB {
         guard !checkDBConnection() else { return }
         guard !code.isEmpty, !word.isEmpty else { return }
         guard isValidTableName(table) else { return }
-        try? dbQueue.write { db in
-            let existing = try Row.fetchOne(db,
-                sql: "SELECT _id, score FROM \(table) WHERE code = ? AND word = ?",
-                arguments: [code, word])
-            if let ex = existing {
-                let newScore = score == -1 ? ((ex["score"] as Int? ?? 0) + 1) : score
-                try db.execute(sql: "UPDATE \(table) SET score = ? WHERE _id = ?",
-                               arguments: [newScore, ex["_id"] as Int64? ?? 0])
-            } else {
-                let insertScore = score == -1 ? 1 : score
-                if table == "phonetic" {
-                    let noToneCode = code.replacingOccurrences(of: "[ 3467]",
-                        with: "", options: .regularExpression)
-                    try db.execute(
-                        sql: "INSERT INTO \(table) (code, word, score, basescore, code3r) VALUES (?,?,?,0,?)",
-                        arguments: [code, word, insertScore, noToneCode])
-                } else {
-                    try db.execute(
-                        sql: "INSERT INTO \(table) (code, word, score, basescore) VALUES (?,?,?,0)",
-                        arguments: [code, word, insertScore])
-                }
+        do {
+            try dbQueue.write { db in
+                try addOrUpdateMappingRecord(table, code, word, score, db: db)
+                try journalHotLearning(db, table: table, k1: code, k2: word)
             }
+        } catch {
+            return
         }
     }
 
     /// Throws variant for SearchServer (LD phrase learning).
     func addOrUpdateMappingRecord(code: String, word: String, tableName: String) throws {
-        guard isValidTableName(tableName) else { return }
-        addOrUpdateMappingRecord(tableName, code, word, -1)
+        guard !checkDBConnection() else { return }
+        guard !code.isEmpty, !word.isEmpty else { return }
+        guard isValidTableName(tableName) else { throw LimeDBError.invalidTableName(tableName) }
+        try dbQueue.write { db in
+            try addOrUpdateMappingRecord(tableName, code, word, -1, db: db)
+            try journalHotLearning(db, table: tableName, k1: code, k2: word)
+        }
+    }
+
+    private func addOrUpdateMappingRecord(_ table: String, _ code: String, _ word: String,
+                                          _ score: Int, db: Database) throws {
+        let existing = try Row.fetchOne(db,
+            sql: "SELECT _id, score FROM \(table) WHERE code = ? AND word = ?",
+            arguments: [code, word])
+        if let ex = existing {
+            let newScore = score == -1 ? ((ex["score"] as Int? ?? 0) + 1) : score
+            try db.execute(sql: "UPDATE \(table) SET score = ? WHERE _id = ?",
+                           arguments: [newScore, ex["_id"] as Int64? ?? 0])
+        } else {
+            let insertScore = score == -1 ? 1 : score
+            if table == "phonetic" {
+                let noToneCode = code.replacingOccurrences(of: "[ 3467]",
+                    with: "", options: .regularExpression)
+                try db.execute(
+                    sql: "INSERT INTO \(table) (code, word, score, basescore, code3r) VALUES (?,?,?,0,?)",
+                    arguments: [code, word, insertScore, noToneCode])
+            } else {
+                try db.execute(
+                    sql: "INSERT INTO \(table) (code, word, score, basescore) VALUES (?,?,?,0)",
+                    arguments: [code, word, insertScore])
+            }
+        }
     }
 
     // MARK: - IM Config (setImConfig / getImConfig / removeImConfig / resetImConfig)
@@ -1664,14 +1731,25 @@ final class LimeDB {
         guard !table.isEmpty, isValidTableName(table) else { return 0 }
         let backupTable = table + "_user"
         guard tableExists(backupTable) else { return 0 }
-        let records = getRecordList(backupTable, nil, searchByCode: false, 0, 0)
-        var restored = 0
-        for r in records {
-            guard !r.code.isEmpty, !r.word.isEmpty else { continue }
-            addOrUpdateMappingRecord(table, r.code, r.word, r.score)
-            restored += 1
+        do {
+            return try dbQueue.write { db in
+                let records = try Row.fetchAll(db, sql: """
+                    SELECT code, word, score FROM \(backupTable)
+                    WHERE code IS NOT NULL AND code <> ''
+                      AND word IS NOT NULL AND word <> ''
+                    """)
+                for row in records {
+                    let code = row.optString("code") ?? ""
+                    let word = row.optString("word") ?? ""
+                    let score = row.optInt("score") ?? 0
+                    try addOrUpdateMappingRecord(table, code, word, score, db: db)
+                    try journalHotLearning(db, table: table, k1: code, k2: word)
+                }
+                return records.count
+            }
+        } catch {
+            return 0
         }
-        return restored
     }
 
     func getBackupTableRecords(_ backupTableName: String) -> [[String: Any]]? {
