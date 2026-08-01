@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 IOS = ROOT / "LimeIME-iOS"
 ENGINE = IOS / "Shared/Database/TableSyncEngine.swift"
 SYNC_CONTRACT = IOS / "Shared/Database/SyncContract.swift"
+DB_SERVER = IOS / "Shared/Database/DBServer.swift"
 ENGINE_TESTS = IOS / "LimeTests/TableSyncEngineTest.swift"
 RETIRED_RETRY_GATE = ROOT / "scripts/test_issue_209_ios_editor_refresh_retry.py"
 
@@ -183,7 +184,18 @@ class DurableEditorRefreshRemovalContract(unittest.TestCase):
     def setUpClass(cls):
         cls.engine = ENGINE.read_text(encoding="utf-8")
         cls.contract = SYNC_CONTRACT.read_text(encoding="utf-8")
+        cls.db_server = DB_SERVER.read_text(encoding="utf-8")
         cls.engine_tests = ENGINE_TESTS.read_text(encoding="utf-8")
+
+    def test_shared_database_uses_one_concrete_scoped_access_lease(self):
+        shared_database = swift_body(self.db_server, "final class SharedDatabase")
+        self.assertIn("private var activeAccesses = 0", shared_database)
+        self.assertIn(
+            "func withLiveAccess<T>(_ operation: (LimeDB) throws -> T) throws -> T",
+            shared_database,
+        )
+        self.assertNotIn("activeIndependentAccesses", shared_database)
+        self.assertNotIn("func withLiveAccessOperation", shared_database)
 
     def test_cross_process_lock_wait_is_bounded(self):
         file_lock = swift_body(self.contract, "final class EditorRefreshFileLock")

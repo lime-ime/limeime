@@ -50,10 +50,9 @@ final class SharedDatabase {
     // cross-process file lock serializes handshakes before this process-local gate changes.
     private var accessSuspended = false
     private var suspensionPending = false
-    // Independent cold publishers use their own SQLite connections, so closing the cached
-    // LimeDB is not enough. Suspension first blocks new publishers and drains any publisher
-    // that already entered before releasing cold to the keyboard process.
-    private var activeIndependentAccesses = 0
+    // Every scoped cold operation must finish before suspension closes the live datasource.
+    // New scoped operations are rejected as soon as suspension becomes pending.
+    private var activeAccesses = 0
     private let lock = NSCondition()
 
     init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
@@ -98,10 +97,10 @@ final class SharedDatabase {
         return cachedDatasource != nil
     }
 
-    var independentAccessCount: Int {
+    var activeAccessCount: Int {
         lock.lock()
         defer { lock.unlock() }
-        return activeIndependentAccesses
+        return activeAccesses
     }
 #endif
 
@@ -116,7 +115,7 @@ final class SharedDatabase {
         }
         suspensionPending = true
         let deadline = Date().addingTimeInterval(timeout)
-        while activeIndependentAccesses > 0 {
+        while activeAccesses > 0 {
             guard lock.wait(until: deadline) else {
                 suspensionPending = false
                 lock.broadcast()
@@ -181,10 +180,9 @@ final class SharedDatabase {
         notifyAccessResumed()
     }
 
-    /// Runs work performed through a SQLite connection independent of `cachedDatasource`.
-    /// The operation lease makes the suspended check and the complete SQLite action atomic
-    /// with respect to `suspendLiveAccess()`, closing the check-then-open race from #209.
-    func withLiveAccessOperation<T>(_ operation: (LimeDB?) throws -> T) throws -> T {
+    /// Runs one complete cold-database operation under a scoped access lease. Suspension
+    /// blocks new leases and drains every entered lease before closing the datasource.
+    func withLiveAccess<T>(_ operation: (LimeDB) throws -> T) throws -> T {
         lock.lock()
         guard !accessSuspended && !suspensionPending else {
             lock.unlock()
@@ -193,14 +191,17 @@ final class SharedDatabase {
         if cachedDatasource == nil {
             cachedDatasource = openDatasource()
         }
-        let datasource = cachedDatasource
-        activeIndependentAccesses += 1
+        guard let datasource = cachedDatasource else {
+            lock.unlock()
+            throw DBServerError.datasourceUnavailable
+        }
+        activeAccesses += 1
         lock.unlock()
 
         defer {
             lock.lock()
-            activeIndependentAccesses -= 1
-            if activeIndependentAccesses == 0 {
+            activeAccesses -= 1
+            if activeAccesses == 0 {
                 lock.broadcast()
             }
             lock.unlock()
@@ -471,7 +472,7 @@ final class DBServer {
     var isColdAccessSuspended: Bool { database.isAccessSuspended }
 #if DEBUG
     var _testHasOpenColdDatasource: Bool { database.hasCachedDatasource }
-    var _testIndependentColdAccessCount: Int { database.independentAccessCount }
+    var _testActiveColdAccessCount: Int { database.activeAccessCount }
 #endif
 
     func requireColdAccessAvailable() throws {
@@ -515,8 +516,7 @@ final class DBServer {
 
     func markTableChangedAndPublish(_ table: String) throws {
         guard !table.isEmpty else { return }
-        try database.withLiveAccessOperation { datasource in
-            guard let datasource else { throw DBServerError.datasourceUnavailable }
+        try database.withLiveAccess { datasource in
             let liveURL = URL(fileURLWithPath: datasource.dbPath())
             try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
             try ColdPublisher(liveColdDatabaseURL: liveURL,
@@ -547,8 +547,7 @@ final class DBServer {
     /// `im` inbox writes and the wholesale hot mirror.
     // ponytail: publish per edit; debounce to screen-exit if VACUUM churn bites
     private func mutateAndPublishColdMetadata(_ mutation: (LimeDB) -> Void) {
-        try? database.withLiveAccessOperation { datasource in
-            guard let datasource else { throw DBServerError.datasourceUnavailable }
+        try? database.withLiveAccess { datasource in
             mutation(datasource)
             let liveURL = URL(fileURLWithPath: datasource.dbPath())
             defer { publishImJson(from: datasource, liveURL: liveURL) }

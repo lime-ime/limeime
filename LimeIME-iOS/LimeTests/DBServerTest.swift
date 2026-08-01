@@ -352,10 +352,10 @@ final class DBServerTest: XCTestCase {
             }
         }
         let publisherDeadline = Date().addingTimeInterval(2)
-        while server._testIndependentColdAccessCount == 0 && Date() < publisherDeadline {
+        while server._testActiveColdAccessCount == 0 && Date() < publisherDeadline {
             try await Task.sleep(nanoseconds: 10_000_000)
         }
-        XCTAssertEqual(server._testIndependentColdAccessCount, 1,
+        XCTAssertEqual(server._testActiveColdAccessCount, 1,
                        "publisher must enter the operation lease before suspension starts")
 
         let suspensionFinished = ThreadSafeFlag()
@@ -385,6 +385,59 @@ final class DBServerTest: XCTestCase {
 
         XCTAssertTrue(server.isColdAccessSuspended)
         try server.resumeColdAccess()
+    }
+
+    func testSuspendLiveAccessDrainsOrdinaryScopedOperationBeforeClosing() throws {
+        let databaseDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: databaseDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: databaseDir) }
+
+        let database = SharedDatabase(dataDirOverride: databaseDir)
+        let operationEntered = DispatchSemaphore(value: 0)
+        let releaseOperation = DispatchSemaphore(value: 0)
+        let operationDone = DispatchSemaphore(value: 0)
+        let operationError = ThreadSafeError()
+        defer { releaseOperation.signal() }
+
+        Thread.detachNewThread {
+            defer { operationDone.signal() }
+            do {
+                try database.withLiveAccess { datasource in
+                    _ = datasource.dbPath()
+                    operationEntered.signal()
+                    releaseOperation.wait()
+                }
+            } catch {
+                operationError.set(error)
+            }
+        }
+
+        XCTAssertEqual(operationEntered.wait(timeout: .now() + 2), .success)
+        XCTAssertEqual(database.activeAccessCount, 1)
+
+        let suspensionDone = DispatchSemaphore(value: 0)
+        let suspensionError = ThreadSafeError()
+        Thread.detachNewThread {
+            defer { suspensionDone.signal() }
+            do {
+                try database.suspendLiveAccess(timeout: 2)
+            } catch {
+                suspensionError.set(error)
+            }
+        }
+
+        XCTAssertEqual(suspensionDone.wait(timeout: .now() + 0.1), .timedOut,
+                       "suspension must wait for an ordinary scoped operation")
+        releaseOperation.signal()
+
+        XCTAssertEqual(operationDone.wait(timeout: .now() + 2), .success)
+        XCTAssertNil(operationError.value)
+        XCTAssertEqual(suspensionDone.wait(timeout: .now() + 2), .success)
+        XCTAssertNil(suspensionError.value)
+        XCTAssertTrue(database.isAccessSuspended)
+        XCTAssertEqual(database.activeAccessCount, 0)
+        try database.resumeLiveAccess()
     }
 
     func testDBServerGetInstanceWithoutContext() {
