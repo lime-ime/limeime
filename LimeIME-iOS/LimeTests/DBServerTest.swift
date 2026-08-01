@@ -118,6 +118,28 @@ final class DBServerTest: XCTestCase {
         try SyncMetaStore(databaseURL: URL(fileURLWithPath: db.dbPath()))
     }
 
+    private func markEditorFenceProtocolReady(_ db: LimeDB) throws {
+        let dbURL = URL(fileURLWithPath: db.dbPath())
+        let connection = try SyncDatabaseConnection(databaseURL: dbURL)
+        try connection.write { database in
+            try database.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """)
+            try database.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES ('editor_fence_protocol', '1')
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """)
+        }
+
+        let snapshot = SyncPaths.coldDB(dbURL.deletingLastPathComponent())
+        try connection.writeWithoutTransaction { database in
+            try database.execute(sql: "VACUUM INTO ?", arguments: [snapshot.path])
+        }
+    }
+
     private func tableExists(_ table: String, in db: LimeDB) throws -> Bool {
         let queue = try DatabaseQueue(path: db.dbPath())
         defer { try? queue.close() }
@@ -254,6 +276,7 @@ final class DBServerTest: XCTestCase {
     func testPublishPendingEditorChangesPublishesOneSnapshotForSeveralEdits() throws {
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
+        try markEditorFenceProtocolReady(db)
         let meta = try syncMeta(for: db)
 
         _ = try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
@@ -805,15 +828,16 @@ final class DBServerTest: XCTestCase {
         XCTAssertEqual(server.getImConfig(LIME.DB_TABLE_CUSTOM, "version"), "Edited Version")
     }
 
-    func testRegisterIMBumpsRevisionAndPublishes() throws {
+    func testRegisterIMPublishesMetadataWithoutTableRevision() throws {
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
+        let table = "i3_custom"
 
-        try server.registerIM(imName: "i3_custom", tableName: LIME.DB_TABLE_CUSTOM,
+        try server.registerIM(imName: table, tableName: table,
                               label: "I3 Custom", keyboardId: "lime")
 
         let meta = try syncMeta(for: db)
-        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try meta.revision(forTable: table), 0)
         XCTAssertEqual(try meta.generation(), 1)
     }
 
@@ -926,6 +950,7 @@ final class DBServerTest: XCTestCase {
         try "i3\t同步\n".write(to: txtURL, atomically: true, encoding: .utf8)
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
+        try markEditorFenceProtocolReady(db)
 
         try server.importTxtFile(at: txtURL.path, tableName: LIME.DB_TABLE_CUSTOM, progress: nil)
 

@@ -140,6 +140,22 @@ final class KeyboardViewControllerTest: XCTestCase {
                        "triggerSyncScan must not call prepareKeyboardRuntimeDatabase — it reseeds the shared query table")
     }
 
+    func testDismissFlushRunsAfterPostFinishInputCompletion() throws {
+        let source = try String(contentsOf: projectFileURL("LimeKeyboard/KeyboardViewController.swift"),
+                                encoding: .utf8)
+        let disappearStart = try XCTUnwrap(source.range(of: "override func viewWillDisappear"))
+        let disappearEnd = try XCTUnwrap(source.range(of: "#if DEBUG", range: disappearStart.upperBound..<source.endIndex))
+        let body = String(source[disappearStart.lowerBound..<disappearEnd.lowerBound])
+
+        let finishRange = try XCTUnwrap(body.range(of: "postFinishInput"))
+        let flushRange = try XCTUnwrap(body.range(of: "flushPendingLearning"))
+        XCTAssertLessThan(finishRange.lowerBound, flushRange.lowerBound,
+                          "dismiss must queue the best-effort flush only after postFinishInput's learning completion")
+        XCTAssertTrue(body.contains("let currentHasFullAccess = hasFullAccess"),
+                      "Full Access must be captured on the main thread before the async dismissal work")
+        XCTAssertTrue(body.contains("flushPendingLearning(hasFullAccess: currentHasFullAccess)"))
+    }
+
     func testIPhoneEnglishJsonLayoutsHaveChineseSwitchOnBottomRow() throws {
         for layoutID in ["lime_english", "lime_english_number"] {
             let layout = try loadKeyboardLayoutFixture(layoutID)

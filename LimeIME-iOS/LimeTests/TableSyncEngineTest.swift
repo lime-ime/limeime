@@ -468,6 +468,89 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
+    private func replaceCustomRows(_ rows: [(code: String, word: String, score: Int)],
+                                   revision: Int,
+                                   in dbURL: URL) throws {
+        try editCustomRows(in: dbURL) { db in
+            try ensureTask3SyncTables(in: db)
+            try db.execute(sql: "DELETE FROM custom")
+            for row in rows {
+                try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                               arguments: [row.code, row.word, row.score])
+            }
+            try db.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES ('rev:custom', ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """, arguments: [String(revision)])
+        }
+    }
+
+    private func tableFenceRows(in dbURL: URL) throws -> [String] {
+        let queue = try DatabaseQueue(path: dbURL.path)
+        defer { try? queue.close() }
+        return try queue.read { db in
+            guard try db.tableExists("editor_table_fence") else { return [] }
+            return try Row.fetchAll(db, sql: """
+                SELECT tbl, action, revision
+                FROM editor_table_fence
+                ORDER BY tbl
+                """).map {
+                    "\($0["tbl"] as String? ?? "")|\($0["action"] as String? ?? "")|\($0["revision"] as Int? ?? 0)"
+                }
+        }
+    }
+
+    private func protocolMarker(in dbURL: URL) throws -> String? {
+        try metaValue("editor_fence_protocol", in: dbURL)
+    }
+
+    private func runOldStateBaselineFixture(name: String,
+                                            snapshotRows: [(code: String, word: String, score: Int)],
+                                            liveRows: [(code: String, word: String, score: Int)],
+                                            liveRevision: Int,
+                                            expectedFenceRevision: Int,
+                                            expectedHotRows: [String],
+                                            keyboardFirst: Bool) throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        let hot = root.appendingPathComponent("hot/lime.db")
+
+        try makeDatabase(at: liveCold,
+                         rows: snapshotRows,
+                         generation: 1,
+                         revisions: ["custom": 1])
+        let liveDB = try LimeDB(path: liveCold.path)
+        try publish(liveCold, appGroup: appGroup)
+        try FileManager.default.createDirectory(at: hot.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        try FileManager.default.copyItem(at: coldSnapshot, to: hot)
+        let snapshotGeneration = try SyncMetaStore(databaseURL: coldSnapshot).generation()
+        try SyncMetaStore(databaseURL: hot).setAppliedGeneration(snapshotGeneration)
+        try replaceCustomRows(liveRows, revision: liveRevision, in: liveCold)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        if keyboardFirst {
+            _ = try engine.scanAndApply(hasFullAccess: false)
+            XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1", name)
+        }
+
+        try DBServer(_testDatasource: liveDB).publishPendingEditorChanges()
+
+        let expectedFence = ["custom|replace|\(expectedFenceRevision)"]
+        XCTAssertEqual(try tableFenceRows(in: liveCold), expectedFence, name)
+        XCTAssertEqual(try tableFenceRows(in: coldSnapshot), expectedFence, name)
+
+        _ = try engine.scanAndApply(hasFullAccess: false)
+
+        XCTAssertEqual(try customRows(in: hot), expectedHotRows, name)
+        XCTAssertEqual(try SyncMetaStore(databaseURL: hot).revision(forTable: "custom"),
+                       expectedFenceRevision,
+                       name)
+    }
+
     private func makeIMDatabase(at url: URL,
                                 rows: [[String: String?]] = [],
                                 epoch: String = "epoch-a",
@@ -1128,6 +1211,7 @@ final class TableSyncEngineTest: XCTestCase {
         let hotMeta = try SyncMetaStore(databaseURL: hot)
         try hotMeta.setValue("epoch-a", forKey: SyncMetaStore.epochUUIDKey)
         try hotMeta.setAppliedGeneration(4)
+        try writeMeta("legacy_transition_done", "1", in: hot)
         try SyncDatabaseConnection(databaseURL: cold).writeWithoutTransaction { db in
             try db.execute(sql: "VACUUM INTO ?", arguments: [SyncPaths.coldDB(appGroup).path])
         }
@@ -2146,4 +2230,356 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customRows(in: hot),
                        ["base|基|0", "hotonly|熱|4", "learned|學|8"])
         XCTAssertFalse(try tableExists("custom_user", in: hot))    }
+
+    func testScopedBaselineDetectsSameRevisionDuplicateMultiplicityDrift() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        try FileManager.default.createDirectory(at: appGroup, withIntermediateDirectories: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let db = try LimeDB(path: liveCold.path)
+        let meta = try SyncMetaStore(databaseURL: liveCold)
+        try meta.setValue("1", forKey: "rev:custom")
+        _ = db.addRecord("custom", ["code": "dup", "word": "重", "score": 4])
+        try ColdPublisher(liveColdDatabaseURL: liveCold, appGroupBaseURL: appGroup).publish()
+
+        let legacyInbox = SyncPaths.imLifecycleInbox(appGroup)
+        try FileManager.default.createDirectory(at: legacyInbox.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        try Data("[]".utf8).write(to: legacyInbox)
+        _ = db.addRecord("custom", ["code": "dup", "word": "重", "score": 4])
+
+        try DBServer(_testDatasource: db).publishPendingEditorChanges()
+
+        XCTAssertEqual(try protocolMarker(in: liveCold), "1")
+        XCTAssertEqual(try protocolMarker(in: SyncPaths.coldDB(appGroup)), "1")
+        XCTAssertEqual(try tableFenceRows(in: liveCold), ["custom|replace|2"],
+                       "EXCEPT-style content checks collapse duplicates; the baseline must preserve multiplicity")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: legacyInbox.path),
+                       "the unversioned lifecycle inbox is ignored and removed only after marked publication")
+    }
+
+    func testFreshInstallBaselineMarksProtocolWithoutFences() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        try FileManager.default.createDirectory(at: appGroup, withIntermediateDirectories: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let db = try LimeDB(path: liveCold.path)
+
+        try DBServer(_testDatasource: db).publishPendingEditorChanges()
+
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        XCTAssertEqual(try protocolMarker(in: liveCold), "1")
+        XCTAssertEqual(try protocolMarker(in: coldSnapshot), "1")
+        XCTAssertEqual(try tableFenceRows(in: liveCold), [])
+        XCTAssertEqual(try tableFenceRows(in: coldSnapshot), [])
+    }
+
+    func testLegacyTransitionSeedsGaplessHotLearningAndFlushWaitsForBaselineMarker() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: liveCold,
+                         rows: [("same", "同", 0)],
+                         revisions: ["custom": 1])
+        let liveDB = try LimeDB(path: liveCold.path)
+        try publish(liveCold, appGroup: appGroup)
+        try makeDatabase(at: hot,
+                         rows: [("same", "同", 8)],
+                         revisions: ["custom": 1])
+        try SyncMetaStore(databaseURL: hot).setAppliedGeneration(1)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        _ = try engine.scanAndApply(hasFullAccess: false)
+
+        XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
+        XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1")
+
+        _ = try engine.flushPendingLearning(hasFullAccess: true)
+        XCTAssertEqual(try customRows(in: liveCold), ["same|同|0"])
+        XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"],
+                       "pre-marker delivery must write and acknowledge nothing")
+
+        try DBServer(_testDatasource: liveDB).publishPendingEditorChanges()
+        XCTAssertEqual(try tableFenceRows(in: liveCold), [])
+        _ = try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try customRows(in: liveCold), ["same|同|8"])
+        XCTAssertEqual(try outboxRows(in: hot), [])
+    }
+
+    func testLegacyTransitionUsesWholesaleCopyOnceForUnfencedRevisionGap() throws {
+        func run(appFirst: Bool) throws {
+            let root = try tempDir()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+            let liveCold = appGroup.appendingPathComponent("lime.db")
+            let hot = root.appendingPathComponent("hot/lime.db")
+            try makeDatabase(at: liveCold,
+                             rows: [("cold", "冷", 2)],
+                             generation: 1,
+                             revisions: ["custom": 2])
+            try publish(liveCold, appGroup: appGroup)
+            try makeDatabase(at: hot,
+                             rows: [("hot", "熱", 9)],
+                             revisions: ["custom": 1])
+            try SyncMetaStore(databaseURL: hot).setAppliedGeneration(1)
+
+            if appFirst {
+                try DBServer(_testDatasource: LimeDB(path: liveCold.path)).publishPendingEditorChanges()
+                XCTAssertEqual(try protocolMarker(in: SyncPaths.coldDB(appGroup)), "1")
+            }
+
+            _ = try TableSyncEngine(appGroupBaseURL: appGroup,
+                                    hotDatabaseURL: hot).scanAndApply(hasFullAccess: false)
+
+            XCTAssertEqual(try customRows(in: hot), ["cold|冷|2"])
+            XCTAssertEqual(try SyncMetaStore(databaseURL: hot).revision(forTable: "custom"), 2)
+            XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1")
+        }
+
+        try run(appFirst: false)
+        try run(appFirst: true)
+    }
+
+    func testRevisionAheadLegacyMutationIsFencedInBothUpgradeOrders() throws {
+        for keyboardFirst in [false, true] {
+            try runOldStateBaselineFixture(name: "revision-ahead \(keyboardFirst)",
+                                           snapshotRows: [("base", "基", 1)],
+                                           liveRows: [("base", "基", 1), ("ahead", "前", 5)],
+                                           liveRevision: 2,
+                                           expectedFenceRevision: 3,
+                                           expectedHotRows: ["ahead|前|5", "base|基|1"],
+                                           keyboardFirst: keyboardFirst)
+        }
+    }
+
+    func testSameRevisionLegacyContentDriftIsFencedInBothUpgradeOrders() throws {
+        let fixtures: [(String,
+                        [(code: String, word: String, score: Int)],
+                        [(code: String, word: String, score: Int)],
+                        [String])] = [
+            ("add", [("base", "基", 1)], [("add", "加", 4), ("base", "基", 1)], ["add|加|4", "base|基|1"]),
+            ("update", [("same", "同", 1)], [("same", "同", 9)], ["same|同|9"]),
+            ("rename", [("old", "舊", 1)], [("new", "新", 1)], ["new|新|1"]),
+            ("delete", [("gone", "刪", 1), ("keep", "留", 2)], [("keep", "留", 2)], ["keep|留|2"]),
+            ("clear", [("gone", "刪", 1), ("also", "也", 2)], [], []),
+        ]
+
+        for (name, snapshotRows, liveRows, expectedRows) in fixtures {
+            for keyboardFirst in [false, true] {
+                try runOldStateBaselineFixture(name: "\(name) \(keyboardFirst)",
+                                               snapshotRows: snapshotRows,
+                                               liveRows: liveRows,
+                                               liveRevision: 1,
+                                               expectedFenceRevision: 2,
+                                               expectedHotRows: expectedRows,
+                                               keyboardFirst: keyboardFirst)
+            }
+        }
+    }
+
+    func testHarvestedLearningInLiveColdSurvivesBaselineFence() throws {
+        for keyboardFirst in [false, true] {
+            try runOldStateBaselineFixture(name: "harvested learning \(keyboardFirst)",
+                                           snapshotRows: [("base", "基", 0)],
+                                           liveRows: [("base", "基", 0), ("learned", "學", 8)],
+                                           liveRevision: 1,
+                                           expectedFenceRevision: 2,
+                                           expectedHotRows: ["base|基|0", "learned|學|8"],
+                                           keyboardFirst: keyboardFirst)
+        }
+    }
+
+    func testUnversionedLegacyLifecycleFileIsIgnoredAndRemovedAfterMarkedPublication() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        try makeDatabase(at: liveCold,
+                         rows: [("keep", "留", 1)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try makeDatabase(at: coldSnapshot,
+                         rows: [("keep", "留", 1)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try writeLifecycleRecords(appGroup: appGroup, [
+            ["table": "custom", "action": "delete", "preserveLearning": true]
+        ])
+
+        try DBServer(_testDatasource: LimeDB(path: liveCold.path)).publishPendingEditorChanges()
+
+        XCTAssertEqual(try customRows(in: liveCold), ["keep|留|1"])
+        XCTAssertEqual(try customRows(in: coldSnapshot), ["keep|留|1"])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: lifecycleInboxURL(appGroup).path))
+    }
+
+    func testFullAccessOffUpgradeRetainsSeededLearning() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: liveCold,
+                         rows: [("same", "同", 0)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try publish(liveCold, appGroup: appGroup)
+        try makeDatabase(at: hot,
+                         rows: [("same", "同", 8)],
+                         revisions: ["custom": 1])
+        try SyncMetaStore(databaseURL: hot).setAppliedGeneration(1)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup,
+                                hotDatabaseURL: hot).scanAndApply(hasFullAccess: false)
+
+        XCTAssertEqual(try customRows(in: liveCold), ["same|同|0"])
+        XCTAssertEqual(try customRows(in: hot), ["same|同|8"])
+        XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
+        XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1")
+    }
+
+    func testScopedBaselineComparisonFailureLeavesProtocolUnmarked() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        try makeDatabase(at: liveCold,
+                         rows: [("same", "同", 1)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try makeDatabase(at: coldSnapshot,
+                         rows: [("same", "同", 1)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try editCustomRows(in: liveCold) { db in
+            try db.execute(sql: "ALTER TABLE custom ADD COLUMN legacy_extra TEXT")
+        }
+
+        XCTAssertThrowsError(try DBServer(_testDatasource: LimeDB(path: liveCold.path)).publishPendingEditorChanges())
+
+        XCTAssertNil(try protocolMarker(in: liveCold))
+        XCTAssertNil(try protocolMarker(in: coldSnapshot))
+    }
+
+    func testInterruptedBaselinePublicationRepublishesMarkedSnapshot() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        try makeDatabase(at: liveCold,
+                         rows: [("live", "新", 2)],
+                         generation: 1,
+                         revisions: ["custom": 2])
+        try makeDatabase(at: coldSnapshot,
+                         rows: [("old", "舊", 1)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try writeMeta("editor_fence_protocol", "1", in: liveCold)
+        try writeTableFence(in: liveCold, action: "replace", revision: 2)
+
+        try DBServer(_testDatasource: LimeDB(path: liveCold.path)).publishPendingEditorChanges()
+
+        XCTAssertEqual(try protocolMarker(in: coldSnapshot), "1")
+        XCTAssertEqual(try tableFenceRows(in: coldSnapshot), ["custom|replace|2"])
+        XCTAssertEqual(try customRows(in: coldSnapshot), ["live|新|2"])
+    }
+
+    func testInterruptedKeyboardTransitionRerunsIdempotently() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: liveCold,
+                         rows: [("same", "同", 0)],
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try publish(liveCold, appGroup: appGroup)
+        try makeDatabase(at: hot,
+                         rows: [("same", "同", 8)],
+                         revisions: ["custom": 1])
+        try SyncMetaStore(databaseURL: hot).setAppliedGeneration(1)
+        try upsertOutbox(in: hot, code: "same", word: "同", observedRevision: 1)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup,
+                                hotDatabaseURL: hot).scanAndApply(hasFullAccess: false)
+
+        XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
+        XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1")
+    }
+
+    func testVersionSkippingRestoreReplacesHotAndCompletesTransition() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let coldSnapshot = SyncPaths.coldDB(appGroup)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: coldSnapshot,
+                         rows: [("restore", "還", 5)],
+                         epoch: "restored-epoch",
+                         generation: 7,
+                         revisions: ["custom": 4])
+        try makeDatabase(at: hot,
+                         rows: [("old", "舊", 1)],
+                         epoch: "old-epoch",
+                         generation: 1,
+                         revisions: ["custom": 1])
+        try writeMeta("legacy_transition_done", "1", in: hot)
+        try upsertOutbox(in: hot, code: "old", word: "舊", observedRevision: 1)
+
+        _ = try TableSyncEngine(appGroupBaseURL: appGroup,
+                                hotDatabaseURL: hot,
+                                dbServer: DBServer(_testDatabaseDirectory: hot.deletingLastPathComponent()))
+            .scanAndApply(hasFullAccess: true)
+
+        XCTAssertEqual(try customRows(in: hot), ["restore|還|5"])
+        XCTAssertEqual(try outboxRows(in: hot), [])
+        XCTAssertEqual(try metaValue(SyncMetaStore.appliedEpochKey, in: hot), "restored-epoch")
+        XCTAssertEqual(try metaValue("legacy_transition_done", in: hot), "1")
+    }
+
+    func testGaplessLearningConvergesInAppFirstAndKeyboardFirstUpgradeOrders() throws {
+        func run(keyboardFirst: Bool) throws -> [String] {
+            let root = try tempDir()
+            let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+            try FileManager.default.createDirectory(at: appGroup, withIntermediateDirectories: true)
+            let liveCold = appGroup.appendingPathComponent("lime.db")
+            let hot = root.appendingPathComponent("hot/lime.db")
+            let liveDB = try LimeDB(path: liveCold.path)
+            try SyncMetaStore(databaseURL: liveCold).setValue("1", forKey: "rev:custom")
+            _ = liveDB.addRecord("custom", ["code": "same", "word": "同", "score": 0])
+            try ColdPublisher(liveColdDatabaseURL: liveCold, appGroupBaseURL: appGroup).publish()
+            try makeDatabase(at: hot,
+                             rows: [("same", "同", 8)],
+                             revisions: ["custom": 1])
+            try SyncMetaStore(databaseURL: hot).setAppliedGeneration(1)
+
+            let server = DBServer(_testDatasource: liveDB)
+            let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+            if keyboardFirst {
+                _ = try engine.scanAndApply(hasFullAccess: false)
+                XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
+                try server.publishPendingEditorChanges()
+            } else {
+                try server.publishPendingEditorChanges()
+                _ = try engine.scanAndApply(hasFullAccess: false)
+                XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
+            }
+            _ = try engine.flushPendingLearning(hasFullAccess: true)
+            let rows = try customRows(in: liveCold)
+            try? FileManager.default.removeItem(at: root)
+            return rows
+        }
+
+        XCTAssertEqual(try run(keyboardFirst: false), ["same|同|8"])
+        XCTAssertEqual(try run(keyboardFirst: true), ["same|同|8"])
+    }
 }

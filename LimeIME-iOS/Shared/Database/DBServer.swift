@@ -531,9 +531,27 @@ final class DBServer {
         guard !table.isEmpty else { return }
         try database.withLiveAccess { datasource in
             let liveURL = URL(fileURLWithPath: datasource.dbPath())
-            try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
+            _ = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+            try connection.write { db in
+                try Self.ensureColdIntentTables(in: db)
+                let revision = (try Self.revision(for: table, in: db)) + 1
+                try Self.upsertMeta("rev:\(table)", value: String(revision), in: db)
+                if try Self.editorManagedTables(in: db).contains(table) {
+                    try db.execute(sql: """
+                        INSERT INTO editor_table_fence(tbl, action, revision)
+                        VALUES (?, 'replace', ?)
+                        ON CONFLICT(tbl) DO UPDATE SET
+                            action = excluded.action,
+                            revision = excluded.revision
+                        """, arguments: [table, revision])
+                    try db.execute(sql: "DELETE FROM editor_fence WHERE tbl = ? AND revision <= ?",
+                                   arguments: [table, revision])
+                }
+            }
             try ColdPublisher(liveColdDatabaseURL: liveURL,
                               appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
             publishImJson(from: datasource, liveURL: liveURL)
         }
     }
@@ -558,10 +576,321 @@ final class DBServer {
         try database.withLiveAccess { datasource in
             let liveURL = URL(fileURLWithPath: datasource.dbPath())
             let snapshotURL = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
-            guard try datasource.hasPendingEditorChanges(comparedToSnapshot: snapshotURL) else { return }
+            let baselineChanged = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            let hasPending = try datasource.hasPendingEditorChanges(comparedToSnapshot: snapshotURL)
+            guard baselineChanged || hasPending else { return }
             try ColdPublisher(liveColdDatabaseURL: liveURL,
                               appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
             publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    func publishColdSnapshot() throws {
+        try database.withLiveAccess { datasource in
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            _ = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    @discardableResult
+    private func applyEditorFenceBaselineIfNeeded(liveURL: URL) throws -> Bool {
+        let snapshotURL = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+        if try Self.protocolMarker(in: liveURL) {
+            return !(try Self.protocolMarker(in: snapshotURL))
+        }
+
+        guard FileManager.default.fileExists(atPath: snapshotURL.path) else {
+            let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+            try connection.write { db in
+                try Self.ensureColdIntentTables(in: db)
+                try Self.upsertMeta("editor_fence_protocol", value: "1", in: db)
+            }
+            return true
+        }
+
+        let comparisons = try Self.compareEditorTables(liveURL: liveURL, snapshotURL: snapshotURL)
+        let needsReplace = comparisons.filter(\.needsReplace)
+        let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+        try connection.write { db in
+            try Self.ensureColdIntentTables(in: db)
+            for comparison in comparisons {
+                let currentRevision = try Self.revision(for: comparison.table, in: db)
+                if currentRevision != comparison.liveRevision,
+                   !(try Self.hasFence(table: comparison.table, revision: currentRevision, in: db)) {
+                    throw DBServerError.retryableEditorBaseline("revision changed without a fence: \(comparison.table)")
+                }
+            }
+            for comparison in needsReplace {
+                let currentRevision = try Self.revision(for: comparison.table, in: db)
+                let revision = max(currentRevision, comparison.publishedRevision) + 1
+                try Self.upsertMeta("rev:\(comparison.table)", value: String(revision), in: db)
+                try db.execute(sql: """
+                    INSERT INTO editor_table_fence(tbl, action, revision)
+                    VALUES (?, 'replace', ?)
+                    ON CONFLICT(tbl) DO UPDATE SET
+                        action = excluded.action,
+                        revision = excluded.revision
+                    """, arguments: [comparison.table, revision])
+                try db.execute(sql: "DELETE FROM editor_fence WHERE tbl = ? AND revision <= ?",
+                               arguments: [comparison.table, revision])
+            }
+            try Self.upsertMeta("editor_fence_protocol", value: "1", in: db)
+        }
+        return true
+    }
+
+    private struct EditorBaselineComparison {
+        let table: String
+        let liveRevision: Int
+        let publishedRevision: Int
+        let needsReplace: Bool
+    }
+
+    private static func compareEditorTables(liveURL: URL,
+                                            snapshotURL: URL) throws -> [EditorBaselineComparison] {
+        let liveQueue = try readOnlyQueue(liveURL)
+        defer { closeQueue(liveQueue, label: liveURL.path) }
+        let snapshotExists = FileManager.default.fileExists(atPath: snapshotURL.path)
+        let snapshotQueue = snapshotExists ? try readOnlyQueue(snapshotURL) : nil
+        defer {
+            if let snapshotQueue {
+                closeQueue(snapshotQueue, label: snapshotURL.path)
+            }
+        }
+
+        let liveState = try liveQueue.read { db in
+            try BaselineReadState(tables: editorManagedTables(in: db),
+                                  revisions: revisionMap(in: db))
+        }
+        let snapshotState = try snapshotQueue?.read { db in
+            try BaselineReadState(tables: editorManagedTables(in: db),
+                                  revisions: revisionMap(in: db))
+        } ?? BaselineReadState(tables: [], revisions: [:])
+        let tables = liveState.tables.union(snapshotState.tables).sorted()
+
+        return try tables.map { table in
+            let liveRevision = liveState.revisions[table] ?? 0
+            let publishedRevision = snapshotState.revisions[table] ?? 0
+            let needsReplace: Bool
+            if !liveState.tables.contains(table) || !snapshotState.tables.contains(table) {
+                needsReplace = true
+            } else {
+                let liveColumns = try liveQueue.read { db in try comparableColumns(table: table, in: db) }
+                let snapshotColumns = try snapshotQueue!.read { db in try comparableColumns(table: table, in: db) }
+                guard liveColumns == snapshotColumns else {
+                    throw DBServerError.retryableEditorBaseline("schema mismatch: \(table)")
+                }
+                let liveRows = try liveQueue.read { db in try contentMultiset(table: table, columns: liveColumns, in: db) }
+                let snapshotRows = try snapshotQueue!.read { db in try contentMultiset(table: table, columns: snapshotColumns, in: db) }
+                needsReplace = liveRevision > publishedRevision || liveRows != snapshotRows
+            }
+            return EditorBaselineComparison(table: table,
+                                            liveRevision: liveRevision,
+                                            publishedRevision: publishedRevision,
+                                            needsReplace: needsReplace)
+        }
+    }
+
+    private struct BaselineReadState {
+        let tables: Set<String>
+        let revisions: [String: Int]
+    }
+
+    private static func readOnlyQueue(_ url: URL) throws -> DatabaseQueue {
+        var config = Configuration()
+        config.readonly = true
+        return try DatabaseQueue(path: url.path, configuration: config)
+    }
+
+    private static func closeQueue(_ queue: DatabaseQueue, label: String) {
+        do {
+            try queue.close()
+        } catch {
+            NSLog("DBServer close failed for \(label): \(error)")
+        }
+    }
+
+    private static func editorManagedTables(in db: Database) throws -> Set<String> {
+        let names = try String.fetchAll(db, sql: """
+            SELECT name FROM sqlite_master
+            WHERE type = 'table'
+            """)
+        var result = Set<String>()
+        for table in names where isSafeEditorTableName(table) {
+            let columns = Set(try tableColumns(table: table, in: db))
+            if table == "related" {
+                if columns.contains("pword"), columns.contains("cword") {
+                    result.insert(table)
+                }
+            } else if columns.contains("code"), columns.contains("word") {
+                result.insert(table)
+            }
+        }
+        return result
+    }
+
+    private static func comparableColumns(table: String, in db: Database) throws -> [String] {
+        try tableColumns(table: table, in: db)
+            .filter { $0 != "_id" }
+            .sorted()
+    }
+
+    private static func contentMultiset(table: String,
+                                        columns: [String],
+                                        in db: Database) throws -> [String] {
+        guard !columns.isEmpty else {
+            let count = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(quotedIdentifier(table))") ?? 0
+            return ["rows|\(count)"]
+        }
+        let expressions = columns.map { column -> String in
+            let q = quotedIdentifier(column)
+            return "CASE WHEN \(q) IS NULL THEN 'NULL' ELSE typeof(\(q)) || ':' || quote(\(q)) END"
+        }
+        let rowKey = expressions.joined(separator: " || char(31) || ")
+        let group = columns.map(quotedIdentifier).joined(separator: ", ")
+        return try Row.fetchAll(db, sql: """
+            SELECT \(rowKey) AS logical_row, COUNT(*) AS multiplicity
+            FROM \(quotedIdentifier(table))
+            GROUP BY \(group)
+            ORDER BY logical_row, multiplicity
+            """).map {
+                "\($0["logical_row"] as String? ?? "")|\($0["multiplicity"] as Int? ?? 0)"
+            }
+    }
+
+    private static func tableColumns(table: String, in db: Database) throws -> [String] {
+        try Row.fetchAll(db, sql: "PRAGMA table_info(\(quotedIdentifier(table)))")
+            .compactMap { $0["name"] as String? }
+    }
+
+    private static func revisionMap(in db: Database) throws -> [String: Int] {
+        guard try tableExists("sync_meta", in: db) else { return [:] }
+        var result: [String: Int] = [:]
+        for row in try Row.fetchAll(db, sql: "SELECT key, value FROM sync_meta WHERE key LIKE 'rev:%'") {
+            guard let key = row["key"] as String?,
+                  let raw = row["value"] as String?,
+                  let revision = Int(raw) else { continue }
+            result[String(key.dropFirst(4))] = revision
+        }
+        return result
+    }
+
+    private static func protocolMarker(in url: URL) throws -> Bool {
+        guard FileManager.default.fileExists(atPath: url.path) else { return false }
+        let queue = try readOnlyQueue(url)
+        defer { closeQueue(queue, label: url.path) }
+        return try queue.read { db in
+            guard try tableExists("sync_meta", in: db) else { return false }
+            return try String.fetchOne(db,
+                                       sql: "SELECT value FROM sync_meta WHERE key = 'editor_fence_protocol'") == "1"
+        }
+    }
+
+    private static func hasFence(table: String, revision: Int, in db: Database) throws -> Bool {
+        if try tableExists("editor_table_fence", in: db),
+           try Int.fetchOne(db, sql: """
+                SELECT 1 FROM editor_table_fence
+                WHERE tbl = ? AND revision = ?
+                """, arguments: [table, revision]) != nil {
+            return true
+        }
+        guard try tableExists("editor_fence", in: db) else { return false }
+        return try Int.fetchOne(db, sql: """
+            SELECT 1 FROM editor_fence
+            WHERE tbl = ? AND revision = ?
+            LIMIT 1
+            """, arguments: [table, revision]) != nil
+    }
+
+    private static func revision(for table: String, in db: Database) throws -> Int {
+        guard try tableExists("sync_meta", in: db) else { return 0 }
+        let raw = try String.fetchOne(db,
+                                      sql: "SELECT value FROM sync_meta WHERE key = ?",
+                                      arguments: ["rev:\(table)"])
+        return raw.flatMap(Int.init) ?? 0
+    }
+
+    private static func ensureColdIntentTables(in db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_fence (
+                tbl      TEXT    NOT NULL,
+                k1       TEXT    NOT NULL,
+                k2       TEXT    NOT NULL,
+                action   TEXT    NOT NULL CHECK (action IN ('upsert', 'delete')),
+                revision INTEGER NOT NULL,
+                PRIMARY KEY (tbl, k1, k2)
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_table_fence (
+                tbl      TEXT PRIMARY KEY,
+                action   TEXT    NOT NULL CHECK (action IN ('clear', 'replace')),
+                revision INTEGER NOT NULL
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS im_lifecycle_intent (
+                tbl               TEXT    NOT NULL,
+                revision          INTEGER NOT NULL,
+                action            TEXT    NOT NULL CHECK (action IN ('install', 'delete')),
+                preserve_learning INTEGER NOT NULL CHECK (preserve_learning IN (0, 1)),
+                PRIMARY KEY (tbl, revision)
+            ) WITHOUT ROWID
+            """)
+    }
+
+    private static func tableExists(_ table: String, in db: Database) throws -> Bool {
+        try (Int.fetchOne(db,
+                          sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                          arguments: [table]) ?? 0) > 0
+    }
+
+    private static func upsertMeta(_ key: String, value: String, in db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO sync_meta(key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """, arguments: [key, value])
+    }
+
+    private static func quotedIdentifier(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    private static func isSafeEditorTableName(_ table: String) -> Bool {
+        guard ![
+            "im", "keyboard", "sync_meta", "learn_outbox", "editor_fence",
+            "editor_table_fence", "im_lifecycle_intent",
+        ].contains(table), !table.hasPrefix("sqlite_") else {
+            return false
+        }
+        return table.range(of: #"^[A-Za-z][A-Za-z0-9_]*$"#,
+                           options: .regularExpression) != nil
+    }
+
+    private func removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: URL) {
+        for url in [
+            SyncPaths.editorRefreshRequest(baseURL),
+            SyncPaths.editorRefreshReceipt(baseURL),
+            SyncPaths.imLifecycleInbox(baseURL),
+        ] {
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                NSLog("DBServer: failed to remove obsolete editor artifact %@: %@",
+                      url.path, error.localizedDescription)
+            }
         }
     }
 
@@ -1650,10 +1979,9 @@ final class DBServer {
     func registerIM(imName: String, tableName: String, label: String, keyboardId: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.registerIM(imName: imName, tableName: tableName, label: label, keyboardId: keyboardId)
-        // §1.5: the new `im` row reaches the keyboard via `im.json`; markTableChangedAndPublish
-        // publishes cold (generation bump → keyboard rebuild) AND republishes `im.json` with the
-        // new row. No mirror, no inbox.
-        try markTableChangedAndPublish(tableName)
+        // §1.5: `im` registration is metadata. Table contents, fences, lifecycle intents, and
+        // revisions are owned by performTableLifecycleMutation.
+        try publishColdSnapshot()
     }
 
     func seedCustomIM() throws {
@@ -1716,6 +2044,7 @@ enum DBServerError: Error {
     case duplicateLogicalKey(String)
     case recordNotFound(String)
     case invalidStagingDatabase(String)
+    case retryableEditorBaseline(String)
 }
 
 extension DBServerError: LocalizedError {
@@ -1755,6 +2084,8 @@ extension DBServerError: LocalizedError {
             return "找不到資料"
         case .invalidStagingDatabase:
             return "匯入檔格式不正確"
+        case .retryableEditorBaseline(let message):
+            return "同步基準建立失敗：\(message)"
         }
     }
 }

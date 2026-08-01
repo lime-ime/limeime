@@ -158,12 +158,13 @@ final class TableSyncEngine {
         let hotEpoch = try hotMeta.epochUUID()
         let appliedGeneration = try hotMeta.appliedGeneration()
         let epochApplied = coldEpoch == appliedEpoch || coldEpoch == hotEpoch
+        let transitioned = epochApplied ? try runLegacyTransitionIfNeeded(from: coldSnapshotURL) : false
 
         if epochApplied, coldGeneration == appliedGeneration {
             if hasFullAccess {
                 _ = try flushPendingLearning(hasFullAccess: true)
             }
-            return rebuiltHot
+            return rebuiltHot || transitioned
         }
 
         if !epochApplied {
@@ -596,6 +597,62 @@ final class TableSyncEngine {
                         to: SyncPaths.editorRefreshReceipt(appGroupBaseURL))
     }
 
+    private func runLegacyTransitionIfNeeded(from coldSnapshotURL: URL) throws -> Bool {
+        guard try !hotLegacyTransitionDone() else { return false }
+        let coldState = try readColdSyncState(from: coldSnapshotURL)
+        let coldRevisions = coldState.revisions
+        let hotRevisions = try revisions(in: hotDatabaseURL)
+        let tables = Set(coldRevisions.keys).union(hotRevisions.keys).sorted()
+        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        try connection.writeWithoutTransaction { db in
+            try db.execute(sql: "ATTACH DATABASE ? AS cold_snapshot",
+                           arguments: [coldSnapshotURL.path])
+        }
+        defer {
+            do {
+                try connection.writeWithoutTransaction { db in
+                    try db.execute(sql: "DETACH DATABASE cold_snapshot")
+                }
+            } catch {
+                NSLog("TableSyncEngine: legacy transition detach failed: %@", error.localizedDescription)
+            }
+        }
+
+        var changedHotData = false
+        try connection.write { db in
+            try Self.ensureSyncMeta(in: db)
+            for table in tables where Self.isSafeTableName(table) {
+                guard try Self.isEditorManagedTransitionTable(table, in: db) else { continue }
+                let hotRevision = hotRevisions[table] ?? 0
+                let coldRevision = coldRevisions[table] ?? 0
+                if Self.hasTransitionFence(table: table,
+                                           hotRevision: hotRevision,
+                                           coldRevision: coldRevision,
+                                           state: coldState) {
+                    continue
+                }
+                if coldRevision != hotRevision {
+                    if coldRevisions[table] != nil,
+                       try Self.tableExists(table, schema: "cold_snapshot", in: db) {
+                        try Self.copy(table, fromSchema: "cold_snapshot", in: db)
+                        try Self.upsertMeta("rev:\(table)", value: String(coldRevision), in: db)
+                    } else {
+                        try Self.drop(table, in: db)
+                        try Self.deleteMeta("rev:\(table)", in: db)
+                    }
+                    try Self.deleteOutbox(table: table, in: db)
+                    changedHotData = true
+                } else {
+                    try Self.seedLegacyLearningDiff(table: table,
+                                                    observedRevision: hotRevision,
+                                                    in: db)
+                }
+            }
+            try Self.upsertMeta("legacy_transition_done", value: "1", in: db)
+        }
+        return changedHotData
+    }
+
     private func applyIncremental(from coldSnapshotURL: URL) throws {
         let coldState = try readColdSyncState(from: coldSnapshotURL)
         let coldRevisions = coldState.revisions
@@ -821,9 +878,56 @@ final class TableSyncEngine {
     private func hotLegacyTransitionDone() throws -> Bool {
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
         return try connection.read { db in
-            try String.fetchOne(db,
-                                sql: "SELECT value FROM sync_meta WHERE key = 'legacy_transition_done'") == "1"
+            guard try Self.tableExists("sync_meta", in: db) else { return false }
+            return try String.fetchOne(db,
+                                       sql: "SELECT value FROM sync_meta WHERE key = 'legacy_transition_done'") == "1"
         }
+    }
+
+    private static func ensureSyncMeta(in db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+    }
+
+    private static func hasTransitionFence(table: String,
+                                           hotRevision: Int,
+                                           coldRevision: Int,
+                                           state: ColdSyncState) -> Bool {
+        if let tableFence = state.tableFences[table],
+           tableFence.revision > hotRevision,
+           tableFence.revision <= coldRevision {
+            return true
+        }
+        if (state.rowFences[table] ?? []).contains(where: {
+            $0.revision > hotRevision && $0.revision <= coldRevision
+        }) {
+            return true
+        }
+        return (state.lifecycleIntents[table] ?? []).contains {
+            $0.revision > hotRevision && $0.revision <= coldRevision
+        }
+    }
+
+    private static func isEditorManagedTransitionTable(_ table: String, in db: Database) throws -> Bool {
+        if table == "related" {
+            return try tableHasColumns(table, ["pword", "cword"], schema: nil, in: db)
+                || tableHasColumns(table, ["pword", "cword"], schema: "cold_snapshot", in: db)
+        }
+        return try tableHasColumns(table, ["code", "word"], schema: nil, in: db)
+            || tableHasColumns(table, ["code", "word"], schema: "cold_snapshot", in: db)
+    }
+
+    private static func tableHasColumns(_ table: String,
+                                        _ required: [String],
+                                        schema: String?,
+                                        in db: Database) throws -> Bool {
+        guard try tableExists(table, schema: schema, in: db) else { return false }
+        let existing = Set(try columns(in: table, schema: schema, db: db))
+        return required.allSatisfy { existing.contains($0) }
     }
 
     private static func keyColumns(for table: String) -> (k1: String, k2: String) {
@@ -851,6 +955,11 @@ final class TableSyncEngine {
             DELETE FROM learn_outbox
             WHERE tbl = ? AND k1 = ? AND k2 = ?
             """, arguments: [table, k1, k2])
+    }
+
+    private static func deleteOutbox(table: String, in db: Database) throws {
+        guard try tableExists("learn_outbox", in: db) else { return }
+        try db.execute(sql: "DELETE FROM learn_outbox WHERE tbl = ?", arguments: [table])
     }
 
     private static func clearOutbox(table: String, beforeRevision revision: Int, in db: Database) throws {
@@ -987,6 +1096,66 @@ final class TableSyncEngine {
             ON CONFLICT(tbl, k1, k2) DO UPDATE SET
                 observed_rev = excluded.observed_rev,
                 version = learn_outbox.version + 1
+            """, arguments: [table, k1, k2, observedRevision])
+    }
+
+    private static func seedLegacyLearningDiff(table: String,
+                                               observedRevision: Int,
+                                               in db: Database) throws {
+        guard try tableExists(table, in: db) else { return }
+        try ensureLearnOutbox(in: db)
+        let key = keyColumns(for: table)
+        let hotTable = quotedIdentifier(table)
+        let coldTable = "cold_snapshot.\(quotedIdentifier(table))"
+        let hotK1 = "hot.\(quotedIdentifier(key.k1))"
+        let hotK2 = "hot.\(quotedIdentifier(key.k2))"
+        let coldK1 = "cold.\(quotedIdentifier(key.k1))"
+        let coldK2 = "cold.\(quotedIdentifier(key.k2))"
+        let hotScore = "IFNULL(hot.\(quotedIdentifier("score")), 0)"
+        let coldScore = "IFNULL(cold.\(quotedIdentifier("score")), 0)"
+        let rows: [Row]
+        if try tableExists(table, schema: "cold_snapshot", in: db) {
+            rows = try Row.fetchAll(db, sql: """
+                SELECT \(hotK1) AS k1, \(hotK2) AS k2
+                FROM \(hotTable) hot
+                LEFT JOIN \(coldTable) cold
+                  ON \(coldK1) = \(hotK1)
+                 AND \(coldK2) = \(hotK2)
+                 AND \(coldK2) IS NOT NULL
+                WHERE \(hotK1) IS NOT NULL AND \(hotK1) <> ''
+                  AND \(hotK2) IS NOT NULL AND \(hotK2) <> ''
+                  AND (cold.rowid IS NULL OR \(coldScore) <> \(hotScore))
+                GROUP BY \(hotK1), \(hotK2)
+                """)
+        } else {
+            rows = try Row.fetchAll(db, sql: """
+                SELECT \(quotedIdentifier(key.k1)) AS k1, \(quotedIdentifier(key.k2)) AS k2
+                FROM \(hotTable)
+                WHERE \(quotedIdentifier(key.k1)) IS NOT NULL AND \(quotedIdentifier(key.k1)) <> ''
+                  AND \(quotedIdentifier(key.k2)) IS NOT NULL AND \(quotedIdentifier(key.k2)) <> ''
+                GROUP BY \(quotedIdentifier(key.k1)), \(quotedIdentifier(key.k2))
+                """)
+        }
+        for row in rows {
+            guard let k1 = row["k1"] as String?,
+                  let k2 = row["k2"] as String?,
+                  !k1.isEmpty,
+                  !k2.isEmpty else { continue }
+            try seedOutbox(table: table, k1: k1, k2: k2,
+                           observedRevision: observedRevision, in: db)
+        }
+    }
+
+    private static func seedOutbox(table: String,
+                                   k1: String,
+                                   k2: String,
+                                   observedRevision: Int,
+                                   in db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO learn_outbox(tbl, k1, k2, observed_rev, version)
+            VALUES (?, ?, ?, ?, 1)
+            ON CONFLICT(tbl, k1, k2) DO UPDATE SET
+                observed_rev = excluded.observed_rev
             """, arguments: [table, k1, k2, observedRevision])
     }
 

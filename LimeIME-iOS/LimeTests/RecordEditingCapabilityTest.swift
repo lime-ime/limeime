@@ -26,7 +26,7 @@ import XCTest
 @testable import LimeIME
 
 final class RecordEditingCapabilityTest: XCTestCase {
-    func testReadOnlyUnlessFAStateConfirmedOn() {
+    func testRelayCapabilityRemainsAStatusSignal() {
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .unknown), .readOnly)
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOff), .readOnly)
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOn), .readOnly)
@@ -75,59 +75,44 @@ final class RelayActiveStateTest: XCTestCase {
 }
 
 final class EditorRefreshViewSourceTest: XCTestCase {
-    func testRecordEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
+    func testRecordEditorLoadsColdImmediatelyWithoutProbeRefreshOrRelayGate() throws {
         let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RecordListView.swift"),
                                 encoding: .utf8)
 
-        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        // RecordListView summons a probe and ALWAYS attempts the harvest — it does NOT gate on
-        // `.live` (chicken-and-egg: `.live` needs the keyboard summoned first). Editing still
-        // gates on `.live` via `canEdit` below.
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
-        // Issue #209: the initial cold load must NOT run beside the harvest handshake —
-        // Settings closes cold for the whole request→receipt window, so a concurrent load
-        // would either race the keyboard's write or read a quiesced database.
-        XCTAssertTrue(source.contains(".onAppear { beginEditorSession() }"))
-        let afterHandshake = try XCTUnwrap(
-            source.components(separatedBy: "await setupController.refreshTableFromKeyboard").last)
-        XCTAssertTrue(afterHandshake.contains("loadRecords()"),
-                      "cold is loaded only after the handshake resolved and cold reopened")
-        XCTAssertTrue(source.contains("probeFocused = true"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
-        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
-        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
-        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
+        XCTAssertFalse(source.contains("relayActiveState.editingCapability"))
+        XCTAssertFalse(source.contains("refreshTableFromKeyboard"))
+        XCTAssertFalse(source.contains("probeFocused"))
+        XCTAssertFalse(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
+        XCTAssertTrue(source.contains(".onAppear { loadRecords() }"))
+        XCTAssertTrue(source.contains("private var canEdit: Bool { true }"))
+        XCTAssertTrue(source.contains("Text(record.score.description)"))
         XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
         XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+        XCTAssertTrue(source.contains("setupController.publishEditorChanges(stem: tableName)"))
     }
 
-    func testRelatedEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
+    func testRelatedEditorLoadsColdImmediatelyWithoutProbeRefreshOrRelayGate() throws {
         let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RelatedListView.swift"),
                                 encoding: .utf8)
 
-        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
-        // Issue #209: same serialized order as RecordListView — no cold load beside the
-        // harvest handshake.
-        XCTAssertTrue(source.contains(".onAppear { beginEditorSession() }"))
-        let afterHandshake = try XCTUnwrap(
-            source.components(separatedBy: "await setupController.refreshTableFromKeyboard").last)
-        XCTAssertTrue(afterHandshake.contains("loadPhrases()"),
-                      "cold is loaded only after the handshake resolved and cold reopened")
-        XCTAssertTrue(source.contains("@FocusState private var probeFocused: Bool"))
-        XCTAssertTrue(source.contains("probeFocused = true"))
-        XCTAssertTrue(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
-        XCTAssertTrue(source.contains("probeFocused = false"))
-        XCTAssertTrue(source.contains("case .failure(let error):"))
-        XCTAssertTrue(source.contains("error.localizedDescription"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
-        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
-        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
-        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
+        XCTAssertFalse(source.contains("relayActiveState.editingCapability"))
+        XCTAssertFalse(source.contains("refreshTableFromKeyboard"))
+        XCTAssertFalse(source.contains("probeFocused"))
+        XCTAssertFalse(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
+        XCTAssertTrue(source.contains(".onAppear { loadPhrases() }"))
+        XCTAssertTrue(source.contains("private var canEdit: Bool { true }"))
+        XCTAssertTrue(source.contains("Text(phrase.score.description)"))
         XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
         XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+        XCTAssertTrue(source.contains("setupController.publishEditorChanges(stem: \"related\")"))
+    }
+
+    func testSettingsBackgroundPublishesPendingEditorChanges() throws {
+        let source = try String(contentsOf: projectFileURL("LimeSettings/AppDelegate.swift"),
+                                encoding: .utf8)
+
+        XCTAssertTrue(source.contains("applicationDidEnterBackground"))
+        XCTAssertTrue(source.contains("DBServer.shared.publishPendingEditorChanges()"))
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {

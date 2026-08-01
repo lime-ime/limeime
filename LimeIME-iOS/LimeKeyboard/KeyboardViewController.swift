@@ -554,8 +554,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         hideComposingPopup()
         teardownKeyPreview()
         // postFinishInput() snapshots scorelist + ldPhraseListArray and dispatches to background
-        // internally — no outer async wrapper needed.
-        searchServer?.postFinishInput()
+        // internally. The dismiss flush is only a best-effort fast path, queued after that
+        // completion so every learning write submitted by this session is visible first.
+        let currentHasFullAccess = hasFullAccess
+        guard let searchServer else {
+            flushPendingLearningOnDismiss(hasFullAccess: currentHasFullAccess)
+            return
+        }
+        searchServer.postFinishInput { [weak self] in
+            self?.flushPendingLearningOnDismiss(hasFullAccess: currentHasFullAccess)
+        }
+    }
+
+    private func flushPendingLearningOnDismiss(hasFullAccess currentHasFullAccess: Bool) {
+        syncQueue.async {
+            do {
+                _ = try TableSyncEngine(locator: .production())
+                    .flushPendingLearning(hasFullAccess: currentHasFullAccess)
+            } catch {
+                NSLog("KeyboardViewController: dismiss learning flush failed: %@", error.localizedDescription)
+            }
+        }
     }
 
 #if DEBUG
