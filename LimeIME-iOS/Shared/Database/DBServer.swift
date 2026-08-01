@@ -46,14 +46,7 @@ final class SharedDatabase {
     // ponytail: plain var, advisory only — a torn/stale read at worst costs one extra
     // (harmless) reopen; correctness comes from reopenFromDisk rebinding to the file.
     private var openedInode: Int?
-    // Issue #209: true while the keyboard owns the hot→cold editor harvest. The separate
-    // cross-process file lock serializes handshakes before this process-local gate changes.
-    private var accessSuspended = false
-    private var suspensionPending = false
-    // Every scoped cold operation must finish before suspension closes the live datasource.
-    // New scoped operations are rejected as soon as suspension becomes pending.
-    private var activeAccesses = 0
-    private let lock = NSCondition()
+    private let lock = NSLock()
 
     init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
         self.dataDirOverride = dataDirOverride
@@ -74,20 +67,10 @@ final class SharedDatabase {
     func current() -> LimeDB? {
         lock.lock()
         defer { lock.unlock() }
-        // #209: while suspended this process must not hold — or lazily re-acquire — a
-        // connection. Callers degrade to "no data" for the handshake window; the editor
-        // views hold their first load until the handshake resolved.
-        if accessSuspended || suspensionPending { return nil }
         if cachedDatasource == nil {
             cachedDatasource = openDatasource()
         }
         return cachedDatasource
-    }
-
-    var isAccessSuspended: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return accessSuspended || suspensionPending
     }
 
 #if DEBUG
@@ -96,142 +79,23 @@ final class SharedDatabase {
         defer { lock.unlock() }
         return cachedDatasource != nil
     }
-
-    var activeAccessCount: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return activeAccesses
-    }
 #endif
 
-    /// Issue #209: close this process's connection and keep it closed, so another process
-    /// can take the write locks it needs (the keyboard's attached hot→cold harvest).
-    /// Balanced by `resumeLiveAccess()`.
-    func suspendLiveAccess(timeout: TimeInterval) throws {
-        lock.lock()
-        guard !accessSuspended && !suspensionPending else {
-            lock.unlock()
-            throw DBServerError.coldAccessAlreadySuspended
-        }
-        suspensionPending = true
-        let deadline = Date().addingTimeInterval(timeout)
-        while activeAccesses > 0 {
-            guard lock.wait(until: deadline) else {
-                suspensionPending = false
-                lock.broadcast()
-                lock.unlock()
-                throw DBServerError.coldAccessDrainTimedOut
-            }
-        }
-        let datasource = cachedDatasource
-        lock.unlock()
-
-        do {
-            try datasource?.closeForReplacement()
-            lock.lock()
-            cachedDatasource = nil
-            accessSuspended = true
-            suspensionPending = false
-            lock.broadcast()
-            lock.unlock()
-        } catch {
-            lock.lock()
-            // `DatabaseQueue.close()` may leave a failed/partially closed queue unusable.
-            // Never hand that same object back through current(); the next access reopens.
-            cachedDatasource = nil
-            accessSuspended = false
-            suspensionPending = false
-            lock.broadcast()
-            lock.unlock()
-            notifyAccessResumed()
-            throw error
-        }
-    }
-
-    /// Reopen against the file as it is NOW: the other process may have rewritten it, so
-    /// this rebinds rather than restoring the old handle.
-    func resumeLiveAccess(timeout: TimeInterval = 2) throws {
-        lock.lock()
-        let deadline = Date().addingTimeInterval(timeout)
-        while suspensionPending {
-            guard lock.wait(until: deadline) else {
-                lock.unlock()
-                throw DBServerError.coldAccessDrainTimedOut
-            }
-        }
-        guard accessSuspended else {
-            lock.unlock()
-            return
-        }
-        lock.unlock()
-
-        guard let reopened = openDatasource() else {
-            lock.lock()
-            accessSuspended = false
-            lock.unlock()
-            notifyAccessResumed()
-            throw DBServerError.datasourceUnavailable
-        }
-        lock.lock()
-        cachedDatasource = reopened
-        accessSuspended = false
-        lock.broadcast()
-        lock.unlock()
-        notifyAccessResumed()
-    }
-
-    /// Runs one complete cold-database operation under a scoped access lease. Suspension
-    /// blocks new leases and drains every entered lease before closing the datasource.
     func withLiveAccess<T>(_ operation: (LimeDB) throws -> T) throws -> T {
-        lock.lock()
-        guard !accessSuspended && !suspensionPending else {
-            lock.unlock()
-            throw DBServerError.coldAccessAlreadySuspended
-        }
-        if cachedDatasource == nil {
-            cachedDatasource = openDatasource()
-        }
-        guard let datasource = cachedDatasource else {
-            lock.unlock()
+        guard let datasource = current() else {
             throw DBServerError.datasourceUnavailable
-        }
-        activeAccesses += 1
-        lock.unlock()
-
-        defer {
-            lock.lock()
-            activeAccesses -= 1
-            if activeAccesses == 0 {
-                lock.broadcast()
-            }
-            lock.unlock()
         }
         return try operation(datasource)
     }
 
-    private func notifyAccessResumed() {
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .limeColdDatabaseAccessResumed, object: nil)
-        }
-    }
-
     func setCurrent(_ datasource: LimeDB?) {
         lock.lock()
-        guard (!accessSuspended && !suspensionPending) || datasource == nil else {
-            lock.unlock()
-            try? datasource?.closeForReplacement()
-            return
-        }
         cachedDatasource = datasource
         lock.unlock()
     }
 
     func closeCurrentForReplacement() {
         lock.lock()
-        guard !suspensionPending else {
-            lock.unlock()
-            return
-        }
         let datasource = cachedDatasource
         lock.unlock()
         do {
@@ -242,7 +106,6 @@ final class SharedDatabase {
     }
 
     func reopenFromDisk() {
-        guard !isAccessSuspended else { return }
         closeCurrentForReplacement()
         setCurrent(nil)
         setCurrent(openDatasource())
@@ -468,34 +331,11 @@ final class DBServer {
         database.fileReplacedSinceOpen()
     }
 
-    // MARK: - Cold access hand-off (#209)
-    // The Settings app owns the live cold database. Before it asks the keyboard extension
-    // to harvest hot→cold into that same file, it must hand the file over: close its own
-    // connection, keep it closed for the whole request→receipt window, then rebind to
-    // whatever the keyboard committed. An open Settings-side connection is what produced
-    // `SQLite error 5: database is locked` and left the editor read-only.
-    // Only the Settings side calls these; the keyboard never suspends its hot database.
-
-    func suspendColdAccess(timeout: TimeInterval = 2) throws {
-        try database.suspendLiveAccess(timeout: timeout)
-    }
-
-    func resumeColdAccess() throws { try database.resumeLiveAccess() }
-
-    var isColdAccessSuspended: Bool { database.isAccessSuspended }
 #if DEBUG
     var _testHasOpenColdDatasource: Bool { database.hasCachedDatasource }
-    var _testActiveColdAccessCount: Int { database.activeAccessCount }
 #endif
 
-    func requireColdAccessAvailable() throws {
-        guard !database.isAccessSuspended else {
-            throw DBServerError.datasourceUnavailable
-        }
-    }
-
     func replaceDatabaseFromSnapshot(_ snapshotURL: URL) throws {
-        try requireColdAccessAvailable()
         let fm = FileManager.default
         guard fm.fileExists(atPath: snapshotURL.path) else {
             throw DBServerError.fileNotFound(snapshotURL.path)
@@ -880,9 +720,9 @@ final class DBServer {
 
     private func removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: URL) {
         for url in [
-            SyncPaths.editorRefreshRequest(baseURL),
-            SyncPaths.editorRefreshReceipt(baseURL),
-            SyncPaths.imLifecycleInbox(baseURL),
+            baseURL.appendingPathComponent("outbox/editor.refresh.request.json"),
+            baseURL.appendingPathComponent("outbox/editor.refresh.receipt.json"),
+            baseURL.appendingPathComponent("inbox/lifecycle.json"),
         ] {
             guard FileManager.default.fileExists(atPath: url.path) else { continue }
             do {
@@ -922,33 +762,6 @@ final class DBServer {
             defer { publishImJson(from: datasource, liveURL: liveURL) }
             try ColdPublisher(liveColdDatabaseURL: liveURL,
                               appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-        }
-    }
-
-    func writeIMLifecycleRecord(table: String,
-                                action: IMLifecycleRecord.Action,
-                                preserveLearning: Bool,
-                                postSignal shouldPost: Bool = true) throws {
-        guard !table.isEmpty else { return }
-        let record = IMLifecycleRecord(table: table,
-                                       action: action,
-                                       preserveLearning: preserveLearning)
-        try appendIMLifecycle([record], postSignal: shouldPost)
-    }
-
-    private func appendIMLifecycle(_ records: [IMLifecycleRecord], postSignal shouldPost: Bool) throws {
-        guard !records.isEmpty else { return }
-        let url = SyncPaths.imLifecycleInbox(liveDatabaseURL().deletingLastPathComponent())
-        let existing: [IMLifecycleRecord]
-        if let data = try? Data(contentsOf: url),
-           let decoded = try? JSONDecoder().decode([IMLifecycleRecord].self, from: data) {
-            existing = decoded
-        } else {
-            existing = []
-        }
-        try atomicWrite(try JSONEncoder().encode(existing + records), to: url)
-        if shouldPost {
-            postSyncSignal(.tablesUpdated)
         }
     }
 
@@ -2028,8 +1841,6 @@ final class DBServer {
 // MARK: - DBServerError
 enum DBServerError: Error {
     case datasourceUnavailable
-    case coldAccessAlreadySuspended
-    case coldAccessDrainTimedOut
     case bundledDatabaseMissing
     case archiveCreationFailed
     case fileNotFound(String)
@@ -2052,10 +1863,6 @@ extension DBServerError: LocalizedError {
         switch self {
         case .datasourceUnavailable:
             return "資料庫尚未開啟"
-        case .coldAccessAlreadySuspended:
-            return "資料庫存取已暫停"
-        case .coldAccessDrainTimedOut:
-            return "等待資料庫作業結束逾時"
         case .bundledDatabaseMissing:
             return "找不到預設資料庫"
         case .archiveCreationFailed:

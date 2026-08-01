@@ -11,8 +11,8 @@ keyboard-owned preferences — live in the companion doc
 **[IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)**. This doc is the **database** layer; that one is the
 **communication** layer beneath it.
 
-> §1 is the current architecture design. §2 retains the original table-sync-only
-> spec verbatim.
+> §1 and §2 describe the current rearch2 implementation. Older editor-entry
+> ownership/probe/receipt notes are retained only in issue history.
 
 ---
 
@@ -125,10 +125,10 @@ non-matching epoch and is re-applied on the next scan: the compare is **idempote
 self-healing**, so no `PRAGMA integrity_check` is needed (that would only guard against disk
 bit-rot, orthogonal to this design).
 
-#### Freeze-safe: no LimeDB modification
+#### Historical note: original `sync_meta` layering
 
-`sync_meta` is added **without touching `LimeDB.swift`**, because master LimeDB
-already ships the two prerequisites:
+The original `sync_meta` layer could be added **without touching `LimeDB.swift`**,
+because master LimeDB already shipped the two prerequisites:
 
 - **WAL** — `PRAGMA journal_mode = WAL` ([LimeDB.swift:144](../LimeIME-iOS/Shared/Database/LimeDB.swift#L144)) is
   multi-connection and multi-process safe, so the sync layer's own `DatabaseQueue` to
@@ -136,24 +136,22 @@ already ships the two prerequisites:
 - **close + reopen** — `closeForReplacement()` / `openDBConnection()` let the full
   replace swap the hot file and reopen with **existing** methods.
 
-So the sync connection creates `sync_meta` with `CREATE TABLE IF NOT EXISTS`; LimeDB
-never sees it (it touches only its own tables + `user_version`) and never drops it.
-The table rides **in the file** but sits **outside the LimeDB class's concern** — the
-§2 "own connection, invisible to LimeDB" contract, achievable *because* of WAL +
-close/reopen. The lone thing that would force a LimeDB change — an epoch bump atomic
-in the **same transaction** as a LimeDB data write — is never needed: restore is a
-whole-file swap (atomic by rename), and the epoch rides **inside** the swapped file, so it
-is applied atomically with the data — no post-swap stamp.
+The sync connection still creates additive sync tables with
+`CREATE TABLE IF NOT EXISTS`; portable `user_version` stays outside this layer and
+`sync_meta` is still never added to migrations. Rearch2 later added bounded
+`LimeDB` entry points for atomic data+outbox/fence transactions, but the metadata
+table remains sync-owned and versionless. Whole-file restore remains an atomic
+rename, with the epoch riding inside the swapped file.
 
 #### Portable Android ↔ iOS: the schema does **not** change
 
 The DB is portable between Android and iOS, and the portable version — LimeDB
-`user_version` — is **lock-step at 104** on both (iOS `CURRENT_DB_VERSION = 104`,
-Android `LimeDB.java DATABASE_VERSION = 104`). `sync_meta` must never move it:
+`user_version` — is **lock-step at 105** on both (iOS `CURRENT_DB_VERSION = 105`,
+Android `LimeDB.java DATABASE_VERSION = 105`). `sync_meta` must never move it:
 
 - It is **additive and sync-layer-owned**, created with `CREATE TABLE IF NOT EXISTS`,
   **never bumps `user_version`**, and is **never** added to `migrate()` / `onUpgrade`.
-  Both platforms stay at 104.
+  Both platforms stay at 105.
 - Android's `LimeDB.java` never creates or queries it, and its `onUpgrade` fires only
   on a **version increase** — which never happens — so an iOS DB carrying `sync_meta`
   opens cleanly on Android (extra table ignored), and an Android DB without it opens
@@ -164,7 +162,7 @@ Android `LimeDB.java DATABASE_VERSION = 104`). `sync_meta` must never move it:
 
 **Rule:** `sync_meta` is platform-local sync state parked in a **non-versioned side
 table** neither platform's migration ever sees — exactly what keeps the portable
-schema frozen at 104 while iOS layers cold/hot on top.
+schema frozen at 105 while iOS layers cold/hot on top.
 
 ### 1.1 Backup — app-initiated, keyboard-produced, **requires Full Access ON**
 
@@ -311,91 +309,77 @@ flows through the §1.4 hot → cold table-editor sync.
 
 ### 1.4 Table editor sync (DB operation, not JSON)
 
-When the table editor opens with Full Access on and LIME the active keyboard,
-Settings must show the keyboard's **latest** rows — real scores *and* any
-newly-learned rows — before allowing edits. Cold can lag hot, so a **hot → cold
-refresh of the requested table** runs first.
+Cold is authoritative for row existence and explicit editor values. Hot is
+authoritative only for keyboard learning that cold has not acknowledged. The old
+editor-entry ownership path is removed: no cold suspension, no request/receipt
+files, no hidden keyboard probe, no fixed probe delay, and no attached hot→cold
+harvest. Record and related editors open live cold immediately and stay editable
+whenever cold opens; Full Access affects delivery status only.
 
-**This is a database operation, not the old JSON learned-score diff.** The
-abandoned path serialized `score != 0` rows to `learned-scores.json`, parsed them
-back, and applied per-row `UPDATE … WHERE code=? AND word=?`. That is slow
-(file I/O + per-row statements) and *scores-only* — it cannot reflect rows the
-keyboard learned.
+**Logical identity.** Mapping rows sync by `(code, word)` and related rows by
+`(pword, cword)`, never by `_id`. Keyed updates and deletes address every matching
+duplicate row, inserts use `NOT EXISTS`, and legacy `word IS NULL` / `cword IS NULL`
+sentinel rows never become row-level sync keys.
 
-**Access matrix — why this is keyboard-side.** The **app** can open **cold only**
-(App Group); it has **no access to hot** (the keyboard's private container). The
-**keyboard**, with **FA on**, can open **both** — hot (its own container, always)
-and cold (App Group). So the hot → cold copy **runs entirely on the keyboard
-side**; the app can only request it and read the result. **FA on is required** —
-with FA off (or LIME not active) the editor stays read-only (§2 UI state).
+**Durable state.** iOS creates additive sync tables with
+`CREATE TABLE IF NOT EXISTS`; they never enter `migrate()` and never bump
+`user_version` (105):
 
-Flow:
+- `learn_outbox` in hot stores pending learned keys with `observed_rev` and
+  monotonic `version`.
+- `editor_fence` and `editor_table_fence` in cold store latest app row/table
+  intent at a table revision.
+- `im_lifecycle_intent` in cold stores revisioned install/delete lifecycle intent.
+- `sync_meta.editor_fence_protocol = 1` marks the upgraded fence/outbox protocol.
 
-1. **App — request + show the syncing UI.** On editor entry (FA-on + LIME-active)
-   the app posts a refresh request for table `t` (outbox request + doorbell) and
-   enters the **syncing state for the whole duration of the keyboard-side copy**:
-   `clock.arrow.circlepath` icon, `同步中...` text, gray skeleton rows, and
-   add / edit / delete / tap all disabled (§2 "UI State"). It cannot do the copy
-   itself — no access to hot — so it just waits.
-2. **Keyboard — the delta copy (FA ON, both DBs open).** The keyboard already has
-   **hot** open; with FA on it **attaches cold** (App Group) onto that same
-   connection and, in **one transaction**, upserts only the rows that differ.
-   Because the keyboard is **add/update-only**, "differ" is exactly *new* or
-   *score-changed*, recovered with one `LEFT JOIN`: new rows are unmatched
-   (`cold.code IS NULL`), learned rows have a moved score
-   (`cold.score <> hot.score`) — `INSERT OR REPLACE` those into `cold.t` by
-   `(code, word)`. It then detaches cold and posts `import.done` / `import.failed`.
-3. **Result — cold matches hot** for the requested table: new learned rows added,
-   changed scores updated, unchanged rows left untouched (not rewritten), and no
-   deletions to reconcile (the keyboard never deletes).
-4. **App — reload + unlock.** On `import.done` the app **leaves the syncing
-   state**, reloads the table from cold, and enables editing (success text
-   `完整取用已開啟，碼表編輯功能已啓用。`). On `import.failed` or a timeout it stays
-   **read-only** with the guidance state, never the editor.
-5. **During editing — just edit cold.** Every add / edit / delete lands in cold's
-   table `t` normally. **No edit log, no per-edit publish, no op tracking** — the
-   state of cold *is* the record.
-6. **On editor close — bump the rev and ring the bell.** The app bumps table `t`'s
-   `rev` and posts `org.limeime.tables.updated`. That is all the app does; it names
-   *which* table changed, not *how*.
-7. **Keyboard reconciles `t` by state diff (FA on).** Seeing `t`'s rev move, the
-   keyboard attaches cold and, matching by **logical key** (`code, word` /
-   `pword, cword`, never `_id` — the copy reassigns rowids), makes **hot's `t` match
-   cold's `t`** in one transaction — insert cold-only rows, update changed rows,
-   **delete hot-only rows** — then records `t`'s new `rev` as applied so a later cold
-   reconcile never reverts it. The delete is unambiguous here (see the strategy
-   below), so `t`'s edits (including deletions) land with **no op log to replay**.
-   Idempotent, so a crash-then-retry is safe.
+**Keyboard learning (hot → outbox).** Mapping score updates, learned mappings, and
+learned related phrases validate nonempty keys, mutate hot, read the applied cold
+revision, and upsert `learn_outbox` in the same hot transaction. Bulk imports do not
+produce outbox rows. If outbox recording fails, the hot learning mutation rolls back.
+`SearchServer.postFinishInput(completion:)` runs after the serialized learning queue,
+so dismissal can schedule a flush after all submitted session learning is durable.
 
-**Strategy — both directions are a pure state diff; no tracking either way.**
+**Editor edits (cold → fences).** `DBServer.performEditorMutation(_:)` is the record
+and related editor mutation entry point. It validates the request, resolves old keys
+when the UI addressed a row by `_id`, writes cold rows, increments that table's
+revision, and writes row/table fences in one cold transaction. Editor close and
+Settings background call `publishPendingEditorChanges()` once; publication failure
+does not roll back the saved cold edit/fence.
 
-- **Entry (hot → cold): harvest the delta from state.** The app never saw the
-  keyboard's learning, but it doesn't need to — with both DBs attached, one
-  `LEFT JOIN` yields it: new rows are unmatched, learned rows have a moved score, and
-  add/update-only means there are **no deletions to detect**.
-- **Close (cold → hot): a state diff too — because entry re-mirrored first.** Every
-  session *starts* by syncing cold from hot (entry), so cold begins as an exact
-  mirror of hot, and the keyboard is **not learning into hot while the app editor is
-  open** — a keyboard extension only runs as some app's active input view, and the
-  editor drops to read-only the moment the app backgrounds (exactly when hot *could*
-  start moving). So at close `hot(now) == hot(@entry) == cold(@entry)`, and
-  `diff(cold, hot)` is **exactly the app's edits**: a hot-only row means the app
-  **deleted** it, never that the keyboard learned it. The delete-vs-learn ambiguity
-  that once justified an op log **only exists if hot mutates mid-session — and it
-  doesn't.**
+**Lifecycle edits.** `DBServer.performTableLifecycleMutation(_:)` installs,
+replaces, or deletes IM tables from a validated staging database and commits table
+data, `im_lifecycle_intent`, revision, and table fence atomically. Restore remains
+the separate epoch replacement workflow.
 
-So: **pure state diff both ways, no edit log, no op replay.** The per-table `rev`
-scopes the close reconcile to the edited table, so it never touches unharvested
-learning elsewhere.
+**Cold → hot reconcile.** On keyboard appearance, `TableSyncEngine.scanAndApply`:
 
-**Ceiling (`// ponytail:`).** The one residual interleave — open editor → edit →
-background the app → type in another app so LIME learns into hot → return → close —
-is closed cheaply by **commit-on-background**: flush the cold → hot reconcile when the
-app backgrounds, so no pending edits straddle a keyboard-learning window. Add a
-tracked op log **only** if device traces later show this edge bites.
+1. processes restore/epoch replacement;
+2. reads the published marker, revisions, fences, and lifecycle intents;
+3. applies lifecycle intents in revision order around table-fence-first reconcile;
+4. applies row fences newer than the table fence; and
+5. commits hot applied epoch/generation/revisions only after data, lifecycle work,
+   and any restored outbox state succeed together.
 
-The sync boundary stays in `DBServer` **on the keyboard side**. No `SearchServer`
-callback, no dirty hook in IM / learning logic (see §2 "Hard Boundary").
+A marked cold revision advance without a matching row or table fence is an invariant
+violation after the one-time legacy transition; the keyboard fails closed and leaves
+its applied revision unchanged.
+
+**Hot → cold flush.** Dismissal is a fast path and appearance is the retry path. A
+keyboard process takes `KeyboardFlushLock` for each bounded delivery batch, reads
+outbox key/version/current hot row plus hot's applied epoch in one snapshot, then
+opens live cold in a normal write transaction. Inside that transaction it re-checks
+the protocol marker and epoch, rejects obsolete learning behind newer fences, and
+otherwise updates every matching cold duplicate row or inserts a new learned key
+behind the `NOT EXISTS` guard. Cold commits before hot acknowledgements; hot removes
+only captured versions, so a concurrent relearn remains pending.
+
+**Upgrade.** The first upgraded app run performs the scoped baseline before publishing
+a marked snapshot: compare live cold to the last published snapshot exactly, write
+`replace` fences only for revision-ahead or content-different tables, set the marker,
+publish, then remove obsolete request/receipt/probe/lifecycle-inbox artifacts. The
+first upgraded keyboard lineage runs the one-time transition: fenced/gap tables use
+the documented cold-wins path, while gapless hot-only learning is seeded into
+`learn_outbox` and delivered after cold carries the marker.
 
 ### 1.5 IM metadata (`im` table) — published as `im.json`; the keyboard reads the file, never syncs it
 
@@ -431,13 +415,13 @@ an IM's Chinese name), and the keyboard only ever reads the committed file.
 ```
 
 - `schemaVersion` — the JSON shape version; bumped only if the field set changes. **Independent
-  of the DB `user_version` (104)** — `im.json` is iOS-local transport, never portable payload.
+  of the DB `user_version` (105)** — `im.json` is iOS-local transport, never portable payload.
 - `generation` — cold's publish counter (§1.0.3) at write time, so a reader can tell whether
   `im.json` is paired with the content that has synced into hot (the picker gate below).
 - `im` — every non-emoji `im` row, columns verbatim. The emoji `im` version row is **excluded**
   — it stays with the emoji data (§1.3).
 
-**Keyboard read — a narrow reader, `LimeDB.swift` frozen.** The keyboard's `im` reads are served
+**Keyboard read — a narrow reader.** The keyboard's `im` reads are served
 by a **tiny reader, not a full-protocol decorator**. `ImConfigReading` is a **narrow 3-method
 protocol** — `getImConfig`, `getImConfigList`, `getAllImConfigs` — that `LimeDB` already satisfies
 (`extension LimeDB: ImConfigReading {}`, retroactive, no `LimeDB` change). `ImJsonLimeDB:
@@ -456,13 +440,13 @@ still calls LimeDB-only methods like `updateIMEnabled`), and **`LimeDBProtocol` 
 `getAllImConfigs` is **not** added to it.
 
 The keyboard's runtime `im` reads (imkeys / endkey / layout) went through `SearchServer.getImConfig`.
-`SearchServer` keeps the real hot `LimeDB` (§2.2, **unchanged** — not wrapped), so those **three
+`SearchServer` keeps the real hot `LimeDB` (**not wrapped**), so those **three
 call sites in `KeyboardViewController` are rerouted to `DBServer.getImConfig`** instead, which hits
 the reader. `SearchServer`'s own internal `getImConfigList` calls are Settings-only (never reached
 on the keyboard), so hot's `im` going stale there is harmless.
 
-Result: **`LimeDB.swift` and `SearchServer.swift` stay byte-for-byte frozen (§2.2)**, and hot's
-`im` table is **never read on the keyboard side** (and never written — the mirror is gone).
+Result: hot's `im` table is **never read on the keyboard side** (and never written — the mirror is gone).
+Rearch2's bounded `LimeDB` and `SearchServer` changes are listed in §2.
 
 > **Why override all three, not just `getImConfigList`.** `getAllImConfigs` lives on the concrete
 > `LimeDB` and **self-calls `getImConfigList(nil,nil)` internally** — a call a frozen `final` class
@@ -520,8 +504,9 @@ storage — the backup captures the freshest learning and survives until restore
 2. **Keyboard** reconciles `t` cold → hot (a full copy for a new table) — reads cold,
    writes hot, so it runs **FA-off** like the rest of the sync path.
 3. **If restore-on-import is ON and `checkBackupTable(t)`** (hot has `t_user`), run
-   `restoreUserRecords(t)` on hot, then `dropBackupTable(t)`. The restored scores reach
-   cold on the next editor-entry harvest (§1.4). Off / no backup → base scores.
+   `restoreUserRecords(t)` on hot, then `dropBackupTable(t)`. The restored keys are
+   journaled to `learn_outbox` and reach cold through the normal flush (§1.4). Off /
+   no backup → base scores.
 
 **2. Delete a table** — back-up-learned opt-in (true / false):
 
@@ -542,12 +527,11 @@ hot-side `<table>_user` mechanism — no new stash, no App Group learned-data fi
 exist). Delete and import are `DBServer` / controller operations that bump `rev` and
 ring the bell, like every other §2.5 app-side change.
 
-**The `rev` apply-gate (DB-content half).** A lifecycle record is applied **only when its
-table's `rev` moves** — once hot's `rev` matches cold's the table is skipped, so a lingering
-record is **never re-applied** (this is why a restore-to-default then reinstall cannot
-resurrect a wiped IM's learning). That gate is the only lifecycle-specific piece; **delivery
-and cleanup are the shared FA-off-safe inbox transport** ([IOS_FULL_ACCESS.md](IOS_FULL_ACCESS.md)) —
-the keyboard reads, never deletes, and the app GCs on the next probe.
+**The `rev` apply-gate (DB-content half).** A lifecycle intent is applied **only when its
+table's `rev` moves** — once hot's `rev` matches cold's the table is skipped, so stale
+intent is **never re-applied** (this is why a restore-to-default then reinstall cannot
+resurrect a wiped IM's learning). Lifecycle delivery is the revisioned
+`im_lifecycle_intent` cold table (§1.4), not the removed unversioned App Group inbox.
 
 ### 1.7 Keyboard runtime: the query table follows the active IM
 
@@ -562,8 +546,7 @@ ran `db.setTableName` wins**, and the invariant the runtime must hold is:
 
 **The bug this closes.** `prepareKeyboardRuntimeDatabase` builds a `SearchServer` and
 seeds it to the **first activated IM** (`firstNick`); `SearchServer.setTableName` also
-sets the shared `LimeDB.currentTableName` (the two files stay frozen — §2.2 — so this
-coupling is a given). `triggerSyncScan` used to call `prepareKeyboardRuntimeDatabase()`
+sets the shared `LimeDB.currentTableName`. `triggerSyncScan` used to call `prepareKeyboardRuntimeDatabase()`
 on **every** keyboard appearance purely for DB-readiness and discard the result — but the
 shared-table side effect stuck. Restore a DB with `cj4, dayi, phonetic`, type in **Dayi**,
 dismiss, re-open: the layout stays Dayi (driven by `activeIM`) while candidates come from
@@ -591,8 +574,8 @@ against the **freshly-activated list**:
 The reconcile keys off the **live `activeIM`** (in-memory, authoritative), not the cold
 `keyboard_list` pref; the pref is read **only** on cold start, when no IM is active yet,
 to restore the last-used IM. The fix lives in `DBServer` (the readiness/rebuild split) and
-the keyboard-side `setupDatabase` reconcile — **`SearchServer.swift` / `LimeDB.swift` stay
-frozen (§2.2).**
+the keyboard-side `setupDatabase` reconcile; the candidate query itself stays outside
+the sync contract (§2).
 
 ### 1.8 Cross-process reopen — the probe and Safari are different keyboard processes
 
@@ -621,87 +604,65 @@ notices on its next appearance) and is the reason "restore → switch to Safari"
 
 ## 2. Scope and Boundary
 
-§1 is the design; **this is the contract every part of it obeys** — what the cold/hot
-layer may touch, and what it may not. Cold/hot is **DB maintenance**; it must stay
-outside IM query and learning logic.
+§1 is the design; **this is the contract every part of it obeys**. The old absolute
+freeze on `LimeDB.swift`, `LimeDBProtocol.swift`, and `SearchServer.swift` is
+superseded by the accepted rearch2 design. Those files are no longer forbidden, but
+their changes stay bounded to atomic learning journaling, editor/lifecycle mutation
+transactions, and serialized learning completion. Candidate query behavior, relay/FA
+detection, Android, seeded assets, and portable schema version remain out of scope.
 
 ### 2.1 What the cold/hot layer owns
 
-The layer lives **only** in these files, plus the App Group relay files (§1.0.2):
+The layer lives in these iOS files, plus the App Group relay files (§1.0.2):
 
 | File | Responsibility |
 | --- | --- |
-| `DBServer.swift` | orchestration + the boundary API the app/keyboard call; `publishImJson()` (app) and `imConfigSource` — the keyboard-side `im.json` reader (§1.5) |
-| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) + the `sync_meta` stamp (epoch / generation) |
-| `TableSyncEngine.swift` | cold → hot import, epoch / generation / per-table rev, the §1.4 editor state diff, the **§1.3 version-gated emoji mirror** (the `im` table is **not** synced — §1.5 publishes `im.json`) |
-| `SyncContract.swift` | App Group paths (incl. `im.json`), inbox / outbox shapes, Darwin signal names; **and the `im.json` layer** — codec, the `ImConfigReading` reader (`ImJsonLimeDB`), and `ImJsonPublisher` (§1.5) |
-
-Everything the design needs — `sync_meta` (epoch / generation / per-table rev), the
-§1.4 editor state diff (both directions), the §1.5 `im.json` publish + reader, the §1.3 emoji
-mirror, backup / restore, emoji seed / upgrade orchestration — is owned here. This layer opens its
-**own** GRDB connection(s) to the hot and cold DB files (WAL makes that safe alongside
-LimeDB's queue; §1.0.3) and sets its own `busy_timeout`; it does **not** borrow the
-keyboard's live `LimeDB` connection, and it creates `sync_meta` **invisibly to
-LimeDB**.
-
-### 2.2 Frozen files — do NOT modify
-
-**`LimeDB.swift` and `SearchServer.swift` are frozen at HEAD.** The sync layer adds
-nothing to them:
-
-- **`SearchServer.swift`** — the IM query + learning engine. **No** `scoreDidChange`,
-  **no** dirty callback, **no** learning-queue change, **no** `syncMode` overloads. It
-  keeps learning into hot exactly as today and is **oblivious to sync**.
-- **`LimeDB.swift`** — the primitive DB-access layer. **No** `sync_rev` / `ledger` /
-  `epoch` methods, **no** rev-bump inside `addRecord` / `updateRecord` / `deleteRecord`.
-  It stays a plain CRUD + query + learning-write layer. The `sync_meta` table lives in
-  the DB *file* but is created and used **only by the sync layer's own WAL connection**
-  (§1.0.3) — LimeDB has no `sync_meta` code and **never bumps `user_version`** for it,
-  so the portable Android / iOS schema stays lock-step at **104**.
-- Off-limits paths: candidate search, score learning, related / LD / runtime-phrase
-  learning, emoji query.
-
-If a task appears to need a change in either file, that is a **red flag** — stop and
-justify it against §2.4 before touching them.
+| `LimeDB.swift` / `LimeDBProtocol.swift` | atomic hot learning + outbox writes; atomic cold editor/lifecycle mutations; additive sync tables created with `CREATE TABLE IF NOT EXISTS`; no `user_version` bump |
+| `SearchServer.swift` | one private serial learning queue and `postFinishInput(completion:)` ordering only; no candidate-query or learning-decision change |
+| `DBServer.swift` | app-side editor/lifecycle entry points, scoped baseline, publication, restore/epoch orchestration, `im.json` publication |
+| `ColdPublisher.swift` | cold snapshot (`VACUUM INTO`) and `sync_meta` generation/epoch publication |
+| `TableSyncEngine.swift` | epoch restore, cold fences/lifecycle reconcile, hot learning flush, hot rebuild, legacy transition |
+| `SyncContract.swift` | App Group paths, Darwin signal names, fence/outbox/lifecycle contracts, `KeyboardFlushLock`, `im.json` codec/reader/publisher, relay/FA types |
+| Settings controllers/views | route record/related edits through `DBServer` and publish on exit/background without a keyboard entry gate |
 
 ### 2.3 The rule
 
-`SearchServer` keeps learning into hot normally. The sync layer must **observe and copy
-DB state after the fact** — it must never add a callback or dirty hook inside IM logic.
-**The boundary is `DBServer`.** Change is discovered from **DB state** and
-**DBServer / controller-level `rev` bumps** — never by instrumenting the learning paths.
+Every synchronization state change is a database transaction on the database that owns
+that state:
+
+- keyboard learning writes hot row + `learn_outbox` together;
+- app editor mutations write cold row/table data + revision + fence together;
+- table lifecycle mutations write cold table data + lifecycle intent + revision + fence
+  together;
+- learning flush validates marker and epoch inside the cold transaction, commits cold
+  first, then acknowledges captured hot versions.
+
+No silent hot-only learning, no cold edit without fence, no wall-clock conflict
+resolution, no `_id` sync identity, and no new `try?` swallowing on changed write paths.
 
 ### 2.4 Why no hooks are needed (the invariants that make the boundary free)
 
-The sync stays outside IM logic *because* the data model is constrained — all three are
-verified in code:
+The sync stays bounded because authority is split:
 
-- **Keyboard is add/update-only** — hot's changes are recoverable by a state diff
-  (§1.4 entry `LEFT JOIN`), so hot → cold needs no rev-hook in the learning path.
-- **All deletes are app-editor-originated**, and entry re-mirrors cold from hot each
-  session (hot frozen while the editor is open), so cold → hot is a plain **state
-  diff** — a hot-only row is unambiguously an app delete. No op log, no `LimeDB` hook.
-- **The `im` table is app-write-only** (§1.5) — the keyboard never writes it; its metadata is
-  published as `im.json` and read through a narrow `ImConfigReading` reader (`DBServer.imConfigSource`),
-  so no `LimeDB` hook.
-- **Emoji is app-authoritative** (§1.3) — the keyboard never reseeds it; it rides a
-  version-gated one-way cold → hot mirror, so no `LimeDB` hook.
-
-This is *why* the reverted (HEAD) `LimeDB` / `SearchServer` are sufficient: the sync
-never needed their cooperation.
+- Cold owns row existence, explicit editor values, table lifecycle, and `im` metadata.
+- Hot owns unacknowledged learning only.
+- Fences reject stale learning by observed revision, not by arrival time.
+- Table fences are the only normal path that clears unfenced hot-only rows.
+- Restore/epoch replacement intentionally discards old-lineage pending learning, and the
+  epoch check prevents delivery into the restored cold DB.
 
 ### 2.5 Where rev / generation bumps live
 
-- App-side table-changing operations — install, import, delete, restore, editor-save —
-  are **orchestrated by `DBServer` / its controllers**, which bump the per-table rev and
-  `generation` **there** (after calling the frozen `LimeDB` CRUD), then publish cold.
-  Never inside `LimeDB` itself.
+- App-side table-changing operations — install, import, delete, editor mutation — are
+  orchestrated by `DBServer` / its controllers and bump the per-table revision inside
+  the same cold transaction as the data/fence/lifecycle intent.
+- Restore is epoch replacement, not an editor/lifecycle mutation.
 - **`im` has no inbox and no `seq`** — it is published as `im.json` (§1.5). An IM meta edit
   rewrites cold's `im`, **`publish()`es** (a generation bump, debounced to the edit's commit
   event), and re-writes `im.json`; the keyboard reads the file fresh. Nothing to bump or GC for
   metadata.
-- Keyboard learning bumps nothing; it reaches cold only via the §1.4 editor-entry state
-  diff.
+- Keyboard learning bumps no app revision; it reaches cold only via `learn_outbox`
+  flush (§1.4).
 
 ### 2.6 Non-goals
 
@@ -709,18 +670,19 @@ never needed their cooperation.
   generation / per-table rev live in the in-DB `sync_meta` table (§1.0.3), never a file.
   (`im.json` (§1.5) is a different thing: the app-authoritative `im` *table* published as a plain
   file the keyboard reads — IM metadata, not sync bookkeeping.)
-- No `SearchServer` dirty notification or callback.
-- No learning-path instrumentation.
+- No editor refresh request/receipt files, cold suspension/resume, hidden keyboard probe,
+  fixed probe delay, attached hot→cold harvest writer, or refresh-failure read-only
+  editor state.
+- No `SearchServer` dirty notification or callback beyond the existing completion barrier.
 - No candidate-query changes.
-- No keyboard writes into cold outside the §1.4 sync operation.
-- No `sync_rev` / epoch / ledger logic inside `LimeDB` or `SearchServer`.
-- **No editor op-log or ledger state machine** — close is a state diff; `sync_meta`
-  is epoch + generation + per-table rev + the `applied_emoji_version` gate only (§1.0.3, §1.4) —
-  not a per-record ledger.
+- No Apple active-keyboard API / `UITextInputMode` KVC.
+- No Android source change, seeded-asset change, unique-index creation, or duplicate cleanup.
+- No wall-clock merge heuristic, per-keystroke cold write, or editor wait for the keyboard.
 - **No `im` inbox / cursor / GC**, and **no hot `im` mirror** — `im` is published as `im.json`
   and read via the `ImConfigReading` reader (§1.5), so the seq-cursor delivery apparatus and the
-  wholesale mirror are both gone. (The prefs and IM-lifecycle inboxes are unrelated and stay —
-  see IOS_FULL_ACCESS.md.)
-- **No `user_version` bump for `sync_meta`** — the portable schema stays at 104.
+  wholesale mirror are both gone.
+- **No `user_version` bump for sync tables** — the portable schema stays at 105.
+- No fence/lifecycle GC protocol in this PR; row counts and file growth are tracked in
+  `docs/BACKLOG.md` until device data justifies it.
 
 UI states, the editor flow, and the delta strategy live in §1.4 — not duplicated here.

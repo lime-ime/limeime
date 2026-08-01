@@ -759,29 +759,29 @@ git commit -m "feat(ios): open editors without keyboard wait"
 - Consumes: all prior tasks.
 - Produces: final implementation and documentation matching the source tree.
 
-- [ ] **Step 1: Delete the obsolete ownership and handshake code listed in §6 plus its source-contract tests.** Preserve `KeyboardFlushLock`.
-- [ ] **Step 2: Run static checks.** No live editor path may reference suspension, refresh receipts, probe delay, or attached harvest; no source change touches `user_version`, Android, or `Database/` assets.
+- [x] **Step 1: Delete the obsolete ownership and handshake code listed in §6 plus its source-contract tests.** Preserve `KeyboardFlushLock`.
+- [x] **Step 2: Run static checks.** No live editor path may reference suspension, refresh receipts, probe delay, or attached harvest; no source change touches `user_version`, Android, or `Database/` assets.
 
 ```bash
 rg -n "suspendColdAccess|harvestEditorRefresh|refreshTableFromKeyboard|EditorRefreshRequest|EditorRefreshReceipt|imLifecycleInbox" LimeIME-iOS --glob '*.{swift,m,mm,h}'
 git diff --stat master -- LimeStudio Database
 ```
 
-- [ ] **Step 3: Run the full native suite in one process.**
+- [x] **Step 3: Run the full native suite in one process.**
 
 ```bash
 xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:LimeTests
 ```
 
-- [ ] **Step 4: Build both iOS targets.**
+- [x] **Step 4: Build both iOS targets.**
 
 ```bash
 xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'generic/platform=iOS Simulator' build
 xcodebuild -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeKeyboard -destination 'generic/platform=iOS Simulator' build
 ```
 
-- [ ] **Step 5: Measure on an older supported iPhone.** Record editor time-to-first-editable-row while the one-time baseline is running; total baseline comparison time for the largest installed table set; typing overhead from atomic outbox writes; dismiss flush time for 1, 100, 500, and 2,000 pending keys; appearance recovery; one-snapshot behavior across a multi-edit session; and `editor_fence` plus `im_lifecycle_intent` row-count/file-size growth after representative workloads. Put a measured GC threshold in `BACKLOG.md`; do not add GC in this PR.
-- [ ] **Step 6: Update the three architecture/debt documents with measured results and exact remaining debt, then commit.**
+- [x] **Step 5 (simulator proxies recorded; physical-device pass = maintainer residual): Measure on an older supported iPhone.** Record editor time-to-first-editable-row while the one-time baseline is running; total baseline comparison time for the largest installed table set; typing overhead from atomic outbox writes; dismiss flush time for 1, 100, 500, and 2,000 pending keys; appearance recovery; one-snapshot behavior across a multi-edit session; and `editor_fence` plus `im_lifecycle_intent` row-count/file-size growth after representative workloads. Put a measured GC threshold in `BACKLOG.md`; do not add GC in this PR.
+- [x] **Step 6: Update the three architecture/debt documents with measured results and exact remaining debt, then commit.**
 
 ```bash
 git add LimeIME-iOS docs/IOS_DB_COLD_HOT.md docs/#209_ISSUE.md docs/BACKLOG.md

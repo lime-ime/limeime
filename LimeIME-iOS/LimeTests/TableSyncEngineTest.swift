@@ -28,25 +28,7 @@ import XCTest
 @testable import LimeIME
 
 final class TableSyncEngineTest: XCTestCase {
-    private final class SignalRecorder: @unchecked Sendable {
-        private let lock = NSLock()
-        private var values: [SyncSignal] = []
-
-        func append(_ signal: SyncSignal) {
-            lock.lock()
-            values.append(signal)
-            lock.unlock()
-        }
-
-        func snapshot() -> [SyncSignal] {
-            lock.lock()
-            defer { lock.unlock() }
-            return values
-        }
-    }
-
     override func tearDown() {
-        EditorRefreshFileLock._testResetSharedDescriptors()
         KeyboardFlushLock._testResetSharedDescriptors()
         super.tearDown()
     }
@@ -169,27 +151,12 @@ final class TableSyncEngineTest: XCTestCase {
         try queue.write(body)
     }
 
-    private func writeEditorRefreshRequest(appGroup: URL,
-                                           table: String,
-                                           requestUUID: String = UUID().uuidString) throws {
-        let request = EditorRefreshRequest(requestUUID: requestUUID,
-                                           table: table,
-                                           expiresAt: Date().addingTimeInterval(60).timeIntervalSince1970)
-        try atomicWrite(try JSONEncoder().encode(request),
-                        to: SyncPaths.editorRefreshRequest(appGroup))
-    }
-
     private func writeExportRequest(appGroup: URL,
                                     requestUUID: String = UUID().uuidString) throws {
         let request = ExportRequest(requestUUID: requestUUID,
                                     expiresAt: Date().addingTimeInterval(60).timeIntervalSince1970)
         try atomicWrite(try JSONEncoder().encode(request),
                         to: SyncPaths.exportRequest(appGroup))
-    }
-
-    private func editorRefreshReceipt(appGroup: URL) throws -> EditorRefreshReceipt {
-        let data = try Data(contentsOf: SyncPaths.editorRefreshReceipt(appGroup))
-        return try JSONDecoder().decode(EditorRefreshReceipt.self, from: data)
     }
 
     private func exportReceipt(appGroup: URL) throws -> ExportReceipt {
@@ -636,9 +603,8 @@ final class TableSyncEngineTest: XCTestCase {
         }
     }
 
-    /// Faithful device install: importDatabaseFile (importFromAttachedDB publish:false +
-    /// lifecycle .install + markTableChangedAndPublish) then registerIM (im row + im inbox
-    /// + publish). Mirrors IMStoreView.importDownloaded.
+    /// Faithful device install: importDatabaseFile (staged lifecycle replace + publish) then
+    /// registerIM (im row + im.json publish). Mirrors IMStoreView.importDownloaded.
     private func installIMRealPath(server: DBServer,
                                    appGroup: URL,
                                    tableName: String,
@@ -649,10 +615,7 @@ final class TableSyncEngineTest: XCTestCase {
         let src = appGroup.appendingPathComponent("dl-\(tableName).limedb")
         try makeCloudSourceDB(at: src, rows: contentRows)
         defer { try? FileManager.default.removeItem(at: src) }
-        try server.importFromAttachedDB(sourcePath: src.path, tableName: tableName, publish: false)
-        try server.writeIMLifecycleRecord(table: tableName, action: .install,
-                                          preserveLearning: false, postSignal: false)
-        try server.markTableChangedAndPublish(tableName)
+        try server.importFromAttachedDB(sourcePath: src.path, tableName: tableName, publish: true)
         try server.registerIM(imName: imName, tableName: tableName,
                               label: label, keyboardId: keyboardId)
     }
@@ -1289,347 +1252,6 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.exportRequest(appGroup).path))
     }
 
-    func testEditorRefreshHarvestsNewAndScoreChangedRowsIntoLiveCold() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeDatabase(at: liveCold,
-                         rows: [
-                            ("changed", "分", 1),
-                            ("same", "同", 2),
-                         ])
-        try makeDatabase(at: hot,
-                         rows: [
-                            ("changed", "分", 9),
-                            ("learned", "學", 5),
-                            ("same", "同", 2),
-                         ])
-        let unchangedID = try customRowID(code: "same", word: "同", in: liveCold)
-        try writeEditorRefreshRequest(appGroup: appGroup, table: "custom", requestUUID: "refresh-1")
-
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
-
-        XCTAssertEqual(try customRows(in: liveCold),
-                       ["changed|分|9", "learned|學|5", "same|同|2"])
-        XCTAssertEqual(try customRowID(code: "same", word: "同", in: liveCold), unchangedID)
-        let receipt = try editorRefreshReceipt(appGroup: appGroup)
-        XCTAssertEqual(receipt.requestUUID, "refresh-1")
-        XCTAssertEqual(receipt.status, .done)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(appGroup).path))
-    }
-
-    func testEditorRefreshOwnershipTimeoutDoesNotAbortColdToHotScan() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let coldSnapshot = SyncPaths.coldDB(appGroup)
-        let hot = root.appendingPathComponent("hot/lime.db")
-
-        try makeDatabase(at: liveCold, rows: [("live", "即時", 1)])
-        try makeDatabase(at: coldSnapshot,
-                         rows: [("cold", "冷", 7)],
-                         epoch: "epoch-a",
-                         generation: 2,
-                         revisions: ["custom": 2])
-        try makeDatabase(at: hot,
-                         rows: [("old", "舊", 1)],
-                         epoch: "epoch-a",
-                         generation: 1,
-                         revisions: ["custom": 1])
-        let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
-        try hotMeta.setAppliedGeneration(1)
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "custom",
-                                      requestUUID: "deferred-refresh")
-
-        let blocker = try EditorRefreshFileLock.shared(baseURL: appGroup)
-        try blocker.lock(timeout: 1)
-        defer { try? blocker.unlock() }
-
-        let applied = try TableSyncEngine(appGroupBaseURL: appGroup,
-                                          hotDatabaseURL: hot,
-                                          editorRefreshLockTimeout: 0.05).scanAndApply()
-
-        XCTAssertTrue(applied, "editor ownership contention must not abort unrelated cold→hot sync")
-        XCTAssertEqual(try customWords(in: hot), ["冷"])
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(appGroup).path),
-                      "deferred editor request must survive for the next scan")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshReceipt(appGroup).path),
-                       "temporary ownership contention must not publish a terminal failure")
-    }
-
-    func testEditorRefreshLockFactoryFailureDoesNotAbortColdToHotScan() throws {
-        enum FactoryFailure: Error { case unavailable }
-
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let coldSnapshot = SyncPaths.coldDB(appGroup)
-        let hot = root.appendingPathComponent("hot/lime.db")
-
-        try makeDatabase(at: liveCold, rows: [("live", "即時", 1)])
-        try makeDatabase(at: coldSnapshot,
-                         rows: [("cold", "冷", 7)],
-                         epoch: "epoch-a",
-                         generation: 2,
-                         revisions: ["custom": 2])
-        try makeDatabase(at: hot,
-                         rows: [("old", "舊", 1)],
-                         epoch: "epoch-a",
-                         generation: 1,
-                         revisions: ["custom": 1])
-        let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
-        try hotMeta.setAppliedGeneration(1)
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "custom",
-                                      requestUUID: "factory-failure")
-
-        let applied = try TableSyncEngine(
-            appGroupBaseURL: appGroup,
-            hotDatabaseURL: hot,
-            editorRefreshLockFactory: { _ in throw FactoryFailure.unavailable }
-        ).scanAndApply()
-
-        XCTAssertTrue(applied, "lock construction failure must not abort unrelated cold→hot sync")
-        XCTAssertEqual(try customWords(in: hot), ["冷"])
-        XCTAssertTrue(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(appGroup).path),
-                      "a request deferred before ownership must survive for a later scan")
-    }
-
-    func testMalformedEditorRefreshRequestDoesNotAbortColdToHotScan() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let coldSnapshot = SyncPaths.coldDB(appGroup)
-        let hot = root.appendingPathComponent("hot/lime.db")
-
-        try makeDatabase(at: liveCold, rows: [("live", "即時", 1)])
-        try makeDatabase(at: coldSnapshot,
-                         rows: [("cold", "冷", 7)],
-                         epoch: "epoch-a",
-                         generation: 2,
-                         revisions: ["custom": 2])
-        try makeDatabase(at: hot,
-                         rows: [("old", "舊", 1)],
-                         epoch: "epoch-a",
-                         generation: 1,
-                         revisions: ["custom": 1])
-        let hotMeta = try SyncMetaStore(databaseURL: hot)
-        try hotMeta.setAppliedEpoch("epoch-a")
-        try hotMeta.setAppliedGeneration(1)
-
-        let requestURL = SyncPaths.editorRefreshRequest(appGroup)
-        try FileManager.default.createDirectory(at: requestURL.deletingLastPathComponent(),
-                                                withIntermediateDirectories: true)
-        try Data("{truncated".utf8).write(to: requestURL)
-
-        let signals = SignalRecorder()
-        let applied = try TableSyncEngine(appGroupBaseURL: appGroup,
-                                          hotDatabaseURL: hot,
-                                          editorRefreshSignalPoster: signals.append).scanAndApply()
-
-        XCTAssertTrue(applied, "a malformed editor request must not abort unrelated cold→hot sync")
-        XCTAssertEqual(try customWords(in: hot), ["冷"])
-        XCTAssertFalse(FileManager.default.fileExists(atPath: requestURL.path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshReceipt(appGroup).path),
-                       "an undecodable request has no trustworthy UUID for a matching receipt")
-        XCTAssertTrue(signals.snapshot().isEmpty,
-                      "an undecodable request must not signal failure without a matching receipt")
-    }
-
-    func testEditorRefreshHarvestsRelatedRowsByParentChildKey() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeRelatedDatabase(at: liveCold,
-                                rows: [("你", "好", 1)])
-        try makeRelatedDatabase(at: hot,
-                                rows: [
-                                    ("你", "好", 8),
-                                    ("天", "氣", 2),
-                                ])
-        try writeEditorRefreshRequest(appGroup: appGroup, table: "related", requestUUID: "related-1")
-
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
-
-        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
-        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
-    }
-
-    /// Issue #209 lifecycle: the keyboard must have COMMITTED the hot→cold transaction,
-    /// DETACHed cold and CLOSED its connection before the `.done` receipt exists. The
-    /// receipt is what lets Settings reopen cold and unlock editing, so anything still
-    /// held at that instant races the Settings-side reopen.
-    ///
-    /// Proven with real SQLite at the moment the receipt appears: another connection can take
-    /// an IMMEDIATE write transaction on cold at once. The Linux SQLite gate separately pins
-    /// WAL-sidecar removal when the final connection closes.
-    ///
-    /// (Pre-fix the `DETACH` was issued inside GRDB's write transaction, where SQLite
-    /// rejects it with "database cold_editor is locked"; `try?` swallowed that, so release
-    /// depended on the connection being deallocated rather than on an explicit close.)
-    func testEditorRefreshDetachesAndClosesColdBeforeWritingDoneReceipt() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
-        try makeRelatedDatabase(at: hot,
-                                rows: [
-                                    ("你", "好", 8),
-                                    ("天", "氣", 2),
-                                ])
-
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "related",
-                                      requestUUID: "related-release-before-receipt")
-
-        final class ReceiptEvidence: @unchecked Sendable {
-            var sawReceipt = false
-            var coldWriteError: String?
-        }
-        let evidence = ReceiptEvidence()
-        let observed = expectation(description: "receipt observed")
-        let receiptPath = SyncPaths.editorRefreshReceipt(appGroup).path
-
-        DispatchQueue.global(qos: .userInitiated).async {
-            let deadline = Date().addingTimeInterval(10)
-            while Date() < deadline {
-                guard FileManager.default.fileExists(atPath: receiptPath) else {
-                    Thread.sleep(forTimeInterval: 0.001)
-                    continue
-                }
-                evidence.sawReceipt = true
-                do {
-                    let probe = try DatabaseQueue(path: liveCold.path)
-                    try probe.writeWithoutTransaction { db in
-                        try db.inTransaction(.immediate) { .rollback }
-                    }
-                    try probe.close()
-                } catch {
-                    evidence.coldWriteError = "\(error)"
-                }
-                break
-            }
-            observed.fulfill()
-        }
-
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
-        wait(for: [observed], timeout: 15)
-
-        XCTAssertTrue(evidence.sawReceipt, "the harvest must publish a receipt")
-        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .done)
-        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
-        XCTAssertNil(evidence.coldWriteError,
-                     "cold must be immediately writable when the receipt lands")
-    }
-
-    /// Issue #209: persistent contention must still fail — bounded, cleanly, and without
-    /// partially rewriting cold. The fail-safe read-only result is preserved on purpose.
-    func testEditorRefreshFailsBoundedUnderPersistentColdWriteLock() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
-        try makeRelatedDatabase(at: hot,
-                                rows: [
-                                    ("你", "好", 8),
-                                    ("天", "氣", 2),
-                                ])
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "related",
-                                      requestUUID: "related-persistent-lock")
-
-        let holder = try coldWriteLockHolder(at: liveCold)
-        var holderReleased = false
-        defer {
-            if !holderReleased { holder.release() }
-        }
-        wait(for: [holder.acquired], timeout: 5)
-
-        let started = Date()
-        try TableSyncEngine(appGroupBaseURL: appGroup,
-                            hotDatabaseURL: hot,
-                            editorRefreshBusyTimeoutMilliseconds: 200).scanAndApply()
-        let elapsed = Date().timeIntervalSince(started)
-
-        let receipt = try editorRefreshReceipt(appGroup: appGroup)
-        XCTAssertEqual(receipt.status, .failed)
-        XCTAssertTrue(receipt.error?.contains("locked") == true,
-                      "the failure must report the real lock cause, got \(receipt.error ?? "nil")")
-        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|1"],
-                       "a failed harvest must leave cold exactly as it was")
-        // Narrow defensive bound: Settings quiesces its own cold access, so a lock here can
-        // only come from outside this handshake. One attempt with a short busy timeout must
-        // still fail well inside the Settings-side 10s poll instead of exhausting it.
-        XCTAssertLessThan(elapsed, 1,
-                          "persistent contention must fail inside the Settings-side 10s poll")
-        XCTAssertFalse(FileManager.default.fileExists(
-            atPath: SyncPaths.editorRefreshRequest(appGroup).path),
-                       "the consumed request must not linger after a failed refresh")
-
-        holder.release()
-        holderReleased = true
-        wait(for: [holder.released], timeout: 5)
-    }
-
-    /// Issue #209: after the lock owner goes away, the NEXT request must succeed on the same
-    /// databases — no stale attach/temp state, no app restart, no database recreation.
-    func testEditorRefreshRecoversOnNextRequestAfterColdWriteLockReleased() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeRelatedDatabase(at: liveCold, rows: [("你", "好", 1)])
-        try makeRelatedDatabase(at: hot,
-                                rows: [
-                                    ("你", "好", 8),
-                                    ("天", "氣", 2),
-                                ])
-        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
-
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "related",
-                                      requestUUID: "related-recovery-1")
-        let holder = try coldWriteLockHolder(at: liveCold)
-        var holderReleased = false
-        defer {
-            if !holderReleased { holder.release() }
-        }
-        wait(for: [holder.acquired], timeout: 5)
-        try engine.scanAndApply()
-        XCTAssertEqual(try editorRefreshReceipt(appGroup: appGroup).status, .failed)
-
-        holder.release()
-        holderReleased = true
-        wait(for: [holder.released], timeout: 5)
-
-        try writeEditorRefreshRequest(appGroup: appGroup,
-                                      table: "related",
-                                      requestUUID: "related-recovery-2")
-        try engine.scanAndApply()
-
-        let receipt = try editorRefreshReceipt(appGroup: appGroup)
-        XCTAssertEqual(receipt.status, .done,
-                       "reopening the editor must recover once the lock is gone "
-                       + "(error: \(receipt.error ?? "nil"))")
-        XCTAssertEqual(receipt.requestUUID, "related-recovery-2")
-        XCTAssertEqual(try relatedRows(in: liveCold), ["你|好|8", "天|氣|2"])
-    }
-
     func testFencedDeleteKeepsUnrelatedLearningPendingAndSameKeyDeleteWins() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -2078,43 +1700,6 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customRows(in: hot), ["add|加|4", "edit|改|7", "keep|留|3"])
     }
 
-    func testEditorRefreshThenCloseReconcileRoundTripsLearningAndAppEdits() throws {
-        let root = try tempDir()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
-        let liveCold = appGroup.appendingPathComponent("lime.db")
-        let hot = root.appendingPathComponent("hot/lime.db")
-        try makeDatabase(at: liveCold,
-                         rows: [
-                            ("delete", "刪", 1),
-                            ("edit", "改", 2),
-                         ])
-        try makeDatabase(at: hot,
-                         rows: [
-                            ("delete", "刪", 1),
-                            ("edit", "改", 2),
-                            ("learned", "學", 9),
-                         ])
-        try writeEditorRefreshRequest(appGroup: appGroup, table: "custom")
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
-        XCTAssertEqual(try customRows(in: liveCold),
-                       ["delete|刪|1", "edit|改|2", "learned|學|9"])
-
-        try editCustomRows(in: liveCold) { db in
-            try db.execute(sql: "DELETE FROM custom WHERE code = ?", arguments: ["delete"])
-            try db.execute(sql: "UPDATE custom SET score = ? WHERE code = ?", arguments: [6, "edit"])
-            try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
-                           arguments: ["app", "編", 4])
-        }
-        _ = try SyncMetaStore(databaseURL: liveCold).bumpRevision(forTable: "custom")
-        try publish(liveCold, appGroup: appGroup)
-
-        try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot).scanAndApply()
-
-        XCTAssertEqual(try customRows(in: hot),
-                       ["app|編|4", "edit|改|6", "learned|學|9"])
-    }
-
     func testLifecycleDeleteWithBackupCreatesHotUserTableBeforeClearing() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -2243,7 +1828,7 @@ final class TableSyncEngineTest: XCTestCase {
         _ = db.addRecord("custom", ["code": "dup", "word": "重", "score": 4])
         try ColdPublisher(liveColdDatabaseURL: liveCold, appGroupBaseURL: appGroup).publish()
 
-        let legacyInbox = SyncPaths.imLifecycleInbox(appGroup)
+        let legacyInbox = appGroup.appendingPathComponent("inbox/lifecycle.json")
         try FileManager.default.createDirectory(at: legacyInbox.deletingLastPathComponent(),
                                                 withIntermediateDirectories: true)
         try Data("[]".utf8).write(to: legacyInbox)

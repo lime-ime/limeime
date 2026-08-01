@@ -39,27 +39,12 @@ final class SetupImController: BaseController {
     // MARK: - Dependencies
 
     private let progress: ProgressManager
-    private let editorRefreshLockFactory: @Sendable (URL) throws -> EditorRefreshLockHandle
-    private let editorRefreshRequestWriter: @Sendable (Data, URL) throws -> Void
-    private let editorRefreshSessionGate: EditorRefreshSessionGate
 
     // MARK: - Init
 
     init(dbServer: DBServer = .shared, prefs: LIMEPreferenceManager = .shared,
-         progress: ProgressManager,
-         editorRefreshSessionGate: EditorRefreshSessionGate = .shared,
-         editorRefreshRequestWriter: @escaping @Sendable (Data, URL) throws -> Void = { data, url in
-             try atomicWrite(data, to: url)
-         },
-         editorRefreshLockFactory: @escaping @Sendable (URL) throws -> EditorRefreshLockHandle = {
-             let ownership = try EditorRefreshFileLock.shared(baseURL: $0)
-             return EditorRefreshLockHandle(lock: { try ownership.lock(timeout: $0) },
-                                            unlock: { try ownership.unlock() })
-         }) {
+         progress: ProgressManager) {
         self.progress = progress
-        self.editorRefreshSessionGate = editorRefreshSessionGate
-        self.editorRefreshRequestWriter = editorRefreshRequestWriter
-        self.editorRefreshLockFactory = editorRefreshLockFactory
         super.init(dbServer: dbServer, prefs: prefs)
     }
 
@@ -262,141 +247,6 @@ final class SetupImController: BaseController {
     }
 #endif
 
-    func refreshTableFromKeyboard(stem: String) async -> Result<Void, Error> {
-        await refreshTableFromKeyboard(stem: stem,
-                                       baseURL: appGroupBaseURL(),
-                                       timeout: editorRefreshPollTimeout,
-                                       pollInterval: editorRefreshPollInterval)
-    }
-
-    /// Issue #209: the Settings side of the cold hand-off.
-    ///
-    /// The keyboard harvests hot→cold by ATTACHing the app's live cold `lime.db` from its
-    /// own process. If this app still holds that file open, the keyboard's write fails with
-    /// `SQLite error 5: database is locked` and the editor falls back to read-only. So cold
-    /// is closed BEFORE the request becomes visible, stays closed for the whole
-    /// request→receipt window, and is reopened only after Settings reacquires ownership and
-    /// harvests the receipt. If ownership cannot be recovered, this process stays fail-closed
-    /// instead of racing a keyboard that may still be writing cold. Callers keep editing locked
-    /// while cold is unavailable.
-    func refreshTableFromKeyboard(stem: String,
-                                  baseURL: URL,
-                                  timeout: TimeInterval,
-                                  pollInterval: TimeInterval) async -> Result<Void, Error> {
-        await editorRefreshSessionGate.acquire()
-        defer { editorRefreshSessionGate.release() }
-
-        let requestURL = SyncPaths.editorRefreshRequest(baseURL)
-        let receiptURL = SyncPaths.editorRefreshReceipt(baseURL)
-        let requestUUID = UUID().uuidString
-        let request = EditorRefreshRequest(requestUUID: requestUUID,
-                                           table: stem,
-                                           expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
-        let server = self.dbServer
-        let ownership: EditorRefreshLockHandle
-        var ownsRefreshLock = false
-        let lockFactory = editorRefreshLockFactory
-        do {
-            ownership = try lockFactory(baseURL)
-        } catch {
-            return .failure(error)
-        }
-        do {
-            // Acquire ownership before closing cold. The dedicated lock queue keeps the bounded
-            // blocking wait off Swift's cooperative executor.
-            try await ownership.lockAsync(timeout: editorRefreshInitialLockTimeout)
-            ownsRefreshLock = true
-            try await runEditorRefreshBlocking {
-                // A prior timed-out handoff deliberately left cold fail-closed. Once this retry
-                // owns the cross-process lock, it is safe to recover that state before starting
-                // a fresh balanced suspension.
-                if server.isColdAccessSuspended {
-                    try server.resumeColdAccess()
-                }
-                try server.suspendColdAccess(timeout: editorRefreshInitialLockTimeout)
-            }
-        } catch {
-            if ownsRefreshLock {
-                try? ownership.unlock()
-                ownsRefreshLock = false
-            }
-            return .failure(error)
-        }
-
-        do {
-            try? FileManager.default.removeItem(at: receiptURL)
-            try editorRefreshRequestWriter(try JSONEncoder().encode(request), requestURL)
-            try ownership.unlock()
-            ownsRefreshLock = false
-            postSyncSignal(.tablesUpdated)
-        } catch {
-            let publicationError = error
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            _ = try? await runEditorRefreshBlocking {
-                try server.resumeColdAccess()
-            }
-            if ownsRefreshLock {
-                try? ownership.unlock()
-                ownsRefreshLock = false
-            }
-            return .failure(publicationError)
-        }
-
-        var outcome: Result<Void, Error>
-        do {
-            try await waitForEditorRefreshReceipt(at: receiptURL,
-                                                  requestUUID: requestUUID,
-                                                  timeout: timeout,
-                                                  pollInterval: pollInterval)
-            outcome = .success(())
-        } catch {
-            outcome = .failure(error)
-        }
-
-        do {
-            // Share the request's original deadline: the UI poll and ownership reacquisition
-            // together cannot extend the closed-cold window beyond the request TTL.
-            let remainingRequestLifetime = max(0,
-                                               request.expiresAt - Date().timeIntervalSince1970)
-            try await ownership.lockAsync(timeout: remainingRequestLifetime)
-            ownsRefreshLock = true
-
-            // A terminal receipt may have landed while a timed-out waiter was blocked on
-            // ownership. Accept that matching result instead of reporting a false timeout.
-            if let receipt = matchingEditorRefreshReceipt(at: receiptURL,
-                                                           requestUUID: requestUUID) {
-                switch receipt.status {
-                case .done:
-                    outcome = .success(())
-                case .failed:
-                    outcome = .failure(SetupImControllerError.editorRefreshFailed(receipt.error))
-                }
-            }
-
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            try await runEditorRefreshBlocking {
-                try server.resumeColdAccess()
-            }
-            // The harvest and cold reopen already completed. File-lock unlock reports only
-            // after clearing process-local state, so a defensive LOCK_UN error must not discard
-            // the successful receipt and force an otherwise healthy editor back to read-only.
-            try? ownership.unlock()
-            ownsRefreshLock = false
-            return outcome
-        } catch {
-            // Reopening cold is safe only after ownership was recovered. If reopening itself
-            // failed, release that ownership explicitly. If acquisition failed, leave the
-            // request and cold suspension intact: the keyboard may still be writing cold.
-            if ownsRefreshLock {
-                try? ownership.unlock()
-                ownsRefreshLock = false
-            }
-            return .failure(error)
-        }
-    }
-
     func publishEditorChanges(stem _: String) async -> Result<Void, Error> {
         let server = self.dbServer
         return await Task.detached(priority: .userInitiated) {
@@ -500,8 +350,6 @@ final class SetupImController: BaseController {
 
 enum SetupImControllerError: Error {
     case backupTimedOut
-    case editorRefreshTimedOut
-    case editorRefreshFailed(String?)
     case restoreSchemaTooNew(Int)
 }
 
@@ -510,10 +358,6 @@ extension SetupImControllerError: LocalizedError {
         switch self {
         case .backupTimedOut:
             return "備份逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
-        case .editorRefreshTimedOut:
-            return "同步逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
-        case .editorRefreshFailed(let message):
-            return message ?? "同步失敗，請稍後再試"
         case .restoreSchemaTooNew:
             return "請先更新 LIME"
         }
@@ -531,11 +375,6 @@ private let backupRequestTTL: TimeInterval = 120
 // ponytail: fixed poll window; replace with receipt notification only if Darwin/file polling proves flaky.
 private let backupReceiptPollTimeout: TimeInterval = 15
 private let backupReceiptPollInterval: TimeInterval = 0.25
-// ponytail: editor refresh is a foreground entry gate; make configurable only if device traces exceed this.
-private let editorRefreshRequestTTL: TimeInterval = 30
-private let editorRefreshInitialLockTimeout: TimeInterval = 2
-private let editorRefreshPollTimeout: TimeInterval = 10
-private let editorRefreshPollInterval: TimeInterval = 0.1
 private let maxRestoreExtractTotalBytes: UInt64 = 500 * 1024 * 1024
 private let maxRestoreExtractEntries = 10_000
 private let maxRestoreCompressionRatio = 100.0
@@ -569,7 +408,6 @@ private func requestKeyboardBackup(server: DBServer) throws -> URL {
 }
 
 private func publishRestoredCold(server: DBServer) throws {
-    try server.requireColdAccessAvailable()
     let liveURL = server.liveDatabaseURL()
     _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
     try server.publishColdSnapshot()
@@ -625,51 +463,6 @@ private func matchingReceipt(at url: URL, requestUUID: String) -> ExportReceipt?
 private func snapshotIsFresh(at url: URL, since requestedAt: TimeInterval) -> Bool {
     guard let identity = FileIdentity(url: url) else { return false }
     return identity.mtime >= requestedAt - 1
-}
-
-private func waitForEditorRefreshReceipt(at url: URL,
-                                         requestUUID: String,
-                                         timeout: TimeInterval,
-                                         pollInterval: TimeInterval) async throws {
-    let doneObserver = SyncSignalObserver(signal: .importDone) {}
-    let failedObserver = SyncSignalObserver(signal: .importFailed) {}
-    defer {
-        withExtendedLifetime(doneObserver) {}
-        withExtendedLifetime(failedObserver) {}
-    }
-
-    let deadline = Date().addingTimeInterval(timeout)
-    while Date() <= deadline {
-        if let receipt = matchingEditorRefreshReceipt(at: url, requestUUID: requestUUID) {
-            switch receipt.status {
-            case .done:
-                return
-            case .failed:
-                throw SetupImControllerError.editorRefreshFailed(receipt.error)
-            }
-        }
-        await editorRefreshDelayIgnoringCancellation(max(0.001, pollInterval))
-    }
-    throw SetupImControllerError.editorRefreshTimedOut
-}
-
-private func editorRefreshDelayIgnoringCancellation(_ interval: TimeInterval) async {
-    await withCheckedContinuation { continuation in
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + interval) {
-            continuation.resume()
-        }
-    }
-}
-
-private func matchingEditorRefreshReceipt(at url: URL,
-                                          requestUUID: String) -> EditorRefreshReceipt? {
-    guard let data = try? Data(contentsOf: url),
-          let receipt = try? JSONDecoder().decode(EditorRefreshReceipt.self, from: data),
-          receipt.requestUUID == requestUUID
-    else {
-        return nil
-    }
-    return receipt
 }
 
 private func buildBackupArchive(server: DBServer, snapshotURL: URL) throws -> URL {

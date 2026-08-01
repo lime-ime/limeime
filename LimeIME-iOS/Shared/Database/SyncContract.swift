@@ -39,10 +39,6 @@ enum SyncPaths {
         base.appendingPathComponent("inbox", isDirectory: true)
     }
 
-    static func imLifecycleInbox(_ base: URL) -> URL {
-        inboxDir(base).appendingPathComponent("lifecycle.json")
-    }
-
     /// §1.8 two-writer hamburger prefs: the app→keyboard one-time channel. The app writes
     /// the changed field(s) here on a Preferences-tab change; the keyboard drains + clears
     /// it on appearance and applies it to its own (hot) store.
@@ -66,234 +62,12 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("receipt.json")
     }
 
-    static func editorRefreshRequest(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("editor.refresh.request.json")
-    }
-
-    static func editorRefreshReceipt(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("editor.refresh.receipt.json")
-    }
-
-    static func editorRefreshLock(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("editor.refresh.lock")
-    }
-
     static func keyboardFlushLock(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("keyboard.flush.lock")
     }
 
     static func heartbeat(_ base: URL) -> URL {
         outboxDir(base).appendingPathComponent("heartbeat.json")
-    }
-}
-
-/// Cross-process ownership for the editor-refresh hand-off (#209).
-///
-/// Request and receipt files are messages, not locks. Settings holds this advisory lock while
-/// it closes/reopens cold and publishes/cleans the request. The keyboard holds it from
-/// re-reading the request through commit, DETACH, explicit close and terminal receipt. Normal
-/// Settings reopening therefore waits for ownership. If ownership cannot be recovered by the
-/// shared deadline, Settings stays fail-closed until a later lock-owning retry safely recovers it.
-struct EditorRefreshLockHandle: Sendable {
-    private let lockAction: @Sendable (TimeInterval) throws -> Void
-    private let unlockAction: @Sendable () throws -> Void
-
-    init(lock: @escaping @Sendable (TimeInterval) throws -> Void,
-         unlock: @escaping @Sendable () throws -> Void) {
-        lockAction = lock
-        unlockAction = unlock
-    }
-
-    func lockAsync(timeout: TimeInterval) async throws {
-        try await runEditorRefreshBlocking {
-            try lockAction(timeout)
-        }
-    }
-    func unlock() throws { try unlockAction() }
-}
-
-private enum EditorRefreshBlockingExecutor {
-    private static let queue = DispatchQueue(label: "org.limeime.editor-refresh-lock",
-                                             qos: .userInitiated,
-                                             attributes: .concurrent)
-
-    static func run(_ operation: @escaping @Sendable () throws -> Void) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            queue.async {
-                do {
-                    try operation()
-                    continuation.resume()
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
-
-func runEditorRefreshBlocking(_ operation: @escaping @Sendable () throws -> Void) async throws {
-    try await EditorRefreshBlockingExecutor.run(operation)
-}
-
-final class EditorRefreshSessionGate: @unchecked Sendable {
-    static let shared = EditorRefreshSessionGate()
-
-    private let stateLock = NSLock()
-    private var isHeld = false
-    private var waiters: [CheckedContinuation<Void, Never>] = []
-
-    // Cancellation intentionally does not remove a queued waiter. Once admitted, that task runs
-    // the complete bounded handshake even if its UI disappeared; this can keep cold suspended for
-    // the poll window, but guarantees cleanup and gate release instead of abandoning published
-    // cross-process state.
-    func acquire() async {
-        await withCheckedContinuation { continuation in
-            stateLock.lock()
-            if isHeld {
-                waiters.append(continuation)
-                stateLock.unlock()
-            } else {
-                isHeld = true
-                stateLock.unlock()
-                continuation.resume()
-            }
-        }
-    }
-
-    func release() {
-        stateLock.lock()
-        let next = waiters.isEmpty ? nil : waiters.removeFirst()
-        if next == nil { isHeld = false }
-        stateLock.unlock()
-        next?.resume()
-    }
-}
-
-enum EditorRefreshLockError: Error {
-    case timedOut
-}
-
-final class EditorRefreshFileLock: @unchecked Sendable {
-    private final class SharedDescriptor: @unchecked Sendable {
-        let descriptor: Int32
-        let localOwnership = DispatchSemaphore(value: 1)
-
-        init(path: String) throws {
-            descriptor = Darwin.open(path,
-                                     O_CREAT | O_RDWR | O_CLOEXEC,
-                                     mode_t(S_IRUSR | S_IWUSR))
-            guard descriptor >= 0 else {
-                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-            }
-        }
-
-        deinit {
-            Darwin.close(descriptor)
-        }
-
-        func applyFlock(_ operation: Int32) -> (result: Int32, error: Int32) {
-            let result = flock(descriptor, operation)
-            return (result, result == 0 ? 0 : errno)
-        }
-    }
-
-    private static let registryLock = NSLock()
-    private static var sharedByPath: [String: SharedDescriptor] = [:]
-
-    private let shared: SharedDescriptor
-    private let stateLock = NSLock()
-    private var ownsLock = false
-
-    static func shared(baseURL: URL) throws -> EditorRefreshFileLock {
-        let directory = SyncPaths.outboxDir(baseURL)
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let path = SyncPaths.editorRefreshLock(baseURL).standardizedFileURL.path
-        registryLock.lock()
-        defer { registryLock.unlock() }
-        let descriptor: SharedDescriptor
-        if let existing = sharedByPath[path] {
-            descriptor = existing
-        } else {
-            descriptor = try SharedDescriptor(path: path)
-            sharedByPath[path] = descriptor
-        }
-        return EditorRefreshFileLock(shared: descriptor)
-    }
-
-#if DEBUG
-    /// XCTest creates many temporary App-Group paths in one process. Production uses one path
-    /// and deliberately keeps its descriptor for process lifetime; tests may clear dead paths
-    /// between cases after all local handles have gone out of scope.
-    static func _testResetSharedDescriptors() {
-        registryLock.lock()
-        sharedByPath.removeAll()
-        registryLock.unlock()
-    }
-#endif
-
-    private init(shared: SharedDescriptor) {
-        self.shared = shared
-    }
-
-    deinit {
-        do {
-            try unlock()
-        } catch {
-        }
-    }
-
-    func lock(timeout: TimeInterval) throws {
-        stateLock.lock()
-        let alreadyOwned = ownsLock
-        stateLock.unlock()
-        guard !alreadyOwned else { return }
-
-        let clampedTimeout = max(0, timeout)
-        let deadline = Date().addingTimeInterval(clampedTimeout)
-        guard shared.localOwnership.wait(timeout: .now() + clampedTimeout) == .success else {
-            throw EditorRefreshLockError.timedOut
-        }
-        var acquired = false
-        defer {
-            if !acquired {
-                shared.localOwnership.signal()
-            }
-        }
-
-        var attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
-        while attempt.result != 0 {
-            if attempt.error == EINTR {
-                attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
-                continue
-            }
-            guard attempt.error == EWOULDBLOCK || attempt.error == EAGAIN else {
-                throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
-            }
-            guard Date() < deadline else {
-                throw EditorRefreshLockError.timedOut
-            }
-            Thread.sleep(forTimeInterval: 0.05)
-            attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
-        }
-        stateLock.lock()
-        ownsLock = true
-        stateLock.unlock()
-        acquired = true
-    }
-
-    func unlock() throws {
-        stateLock.lock()
-        guard ownsLock else {
-            stateLock.unlock()
-            return
-        }
-        let attempt = shared.applyFlock(LOCK_UN)
-        ownsLock = false
-        stateLock.unlock()
-        shared.localOwnership.signal()
-        guard attempt.result == 0 else {
-            throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
-        }
     }
 }
 
@@ -465,22 +239,9 @@ enum TableLifecycleMutation {
     }
 }
 
-struct IMLifecycleRecord: Codable, Equatable {
-    enum Action: String, Codable {
-        case delete
-        case install
-    }
-
-    var table: String
-    var action: Action
-    var preserveLearning: Bool
-}
-
 enum SyncSignal: String {
     case tablesUpdated = "org.limeime.tables.updated"
     case outboxUpdated = "org.limeime.outbox.updated"
-    case importDone = "org.limeime.import.done"
-    case importFailed = "org.limeime.import.failed"
     case faOn = "org.limeime.fa.on"
     case faOff = "org.limeime.fa.off"
     /// Keyboard → app: a cold→hot scan just finished (hot is synced). Name-only (Darwin
@@ -831,25 +592,6 @@ struct ExportRequest: Codable, Equatable {
 struct ExportReceipt: Codable, Equatable {
     var requestUUID: String
     var epochUUID: String
-    var at: TimeInterval
-}
-
-struct EditorRefreshRequest: Codable, Equatable {
-    var requestUUID: String
-    var table: String
-    var expiresAt: TimeInterval
-}
-
-struct EditorRefreshReceipt: Codable, Equatable {
-    enum Status: String, Codable {
-        case done
-        case failed
-    }
-
-    var requestUUID: String
-    var table: String
-    var status: Status
-    var error: String?
     var at: TimeInterval
 }
 

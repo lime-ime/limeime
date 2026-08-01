@@ -74,39 +74,7 @@ final class RelayActiveStateTest: XCTestCase {
     }
 }
 
-final class EditorRefreshViewSourceTest: XCTestCase {
-    func testRecordEditorLoadsColdImmediatelyWithoutProbeRefreshOrRelayGate() throws {
-        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RecordListView.swift"),
-                                encoding: .utf8)
-
-        XCTAssertFalse(source.contains("relayActiveState.editingCapability"))
-        XCTAssertFalse(source.contains("refreshTableFromKeyboard"))
-        XCTAssertFalse(source.contains("probeFocused"))
-        XCTAssertFalse(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
-        XCTAssertTrue(source.contains(".onAppear { loadRecords() }"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { true }"))
-        XCTAssertTrue(source.contains("Text(record.score.description)"))
-        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
-        XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("setupController.publishEditorChanges(stem: tableName)"))
-    }
-
-    func testRelatedEditorLoadsColdImmediatelyWithoutProbeRefreshOrRelayGate() throws {
-        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RelatedListView.swift"),
-                                encoding: .utf8)
-
-        XCTAssertFalse(source.contains("relayActiveState.editingCapability"))
-        XCTAssertFalse(source.contains("refreshTableFromKeyboard"))
-        XCTAssertFalse(source.contains("probeFocused"))
-        XCTAssertFalse(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
-        XCTAssertTrue(source.contains(".onAppear { loadPhrases() }"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { true }"))
-        XCTAssertTrue(source.contains("Text(phrase.score.description)"))
-        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
-        XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("setupController.publishEditorChanges(stem: \"related\")"))
-    }
-
+final class EditorPublishSourceTest: XCTestCase {
     func testSettingsBackgroundPublishesPendingEditorChanges() throws {
         let source = try String(contentsOf: projectFileURL("LimeSettings/AppDelegate.swift"),
                                 encoding: .utf8)
@@ -116,8 +84,6 @@ final class EditorRefreshViewSourceTest: XCTestCase {
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {
-        // Prefer the copy bundled into the test target — on Xcode Cloud the source
-        // checkout is absent at test runtime, so #filePath resolves to a missing path.
         if let bundled = Bundle(for: type(of: self)).resourceURL?.appendingPathComponent(relativePath),
            FileManager.default.fileExists(atPath: bundled.path) {
             return bundled

@@ -399,3 +399,26 @@ PR #221 can be reported technically ready only when all are true:
 - one exact-final-SHA Xcode Cloud test and archive run succeeds;
 - this document, `docs/BACKLOG.md`, and PR #221 describe the same exact tree without overclaiming;
 - PR remains unmerged until Jeremy explicitly reviews and merges it.
+
+## 2026-08-02 — Superseded by iOS editor-sync re-architecture 2
+
+The ownership-handoff architecture documented above is superseded by the accepted
+`docs/IOS_DB_COLD_HOT_REARCH2.md` design. The rearch2 implementation deletes the
+Settings cold-suspension/read-drain gate, editor refresh request/receipt polling,
+editor refresh file/session locks, keyboard-side ATTACH harvest, and the read-only
+editor state that depended on refresh failure.
+
+Preserved behavior: backup export request/receipt for the backup workflow, restore
+epoch replacement, generation publication, `KeyboardFlushLock`, relay/Full-Access
+state types, and the revisioned cold-table lifecycle path through
+`im_lifecycle_intent`.
+
+Current invariant: Settings editors open live cold immediately; editor and lifecycle
+mutations commit cold data plus fence/lifecycle revision atomically; keyboard
+learning commits hot data plus `learn_outbox` atomically; dismissal/appearance
+flush validates marker and epoch inside the cold transaction and acknowledges by
+outbox version.
+
+Residual validation belongs to the rearch2 campaign, not to the deleted #209
+handoff. The orchestrator/native final gates and maintainer physical-device pass
+remain the source of final exact-SHA evidence.

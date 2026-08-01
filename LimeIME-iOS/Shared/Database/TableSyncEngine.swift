@@ -23,16 +23,11 @@
 
 import Foundation
 import GRDB
-import Darwin
 
 final class TableSyncEngine {
     private let appGroupBaseURL: URL
     private let hotDatabaseURL: URL
     private let dbServer: DBServer
-    private let editorRefreshBusyTimeoutMilliseconds: Int
-    private let editorRefreshLockTimeout: TimeInterval
-    private let editorRefreshLockFactory: (URL) throws -> EditorRefreshFileLock
-    private let editorRefreshSignalPoster: (SyncSignal) -> Void
     private let beforeColdFlushWriteForTest: (() throws -> Void)?
     private let afterColdFlushCommitForTest: (() throws -> Void)?
     private let beforeHotRebuildInstallForTest: (() throws -> Void)?
@@ -85,22 +80,12 @@ final class TableSyncEngine {
     init(appGroupBaseURL: URL,
          hotDatabaseURL: URL,
          dbServer: DBServer = .shared,
-         editorRefreshBusyTimeoutMilliseconds: Int = 5_000,
-         editorRefreshLockTimeout: TimeInterval = 2,
-         editorRefreshLockFactory: @escaping (URL) throws -> EditorRefreshFileLock = {
-             try EditorRefreshFileLock.shared(baseURL: $0)
-         },
-         editorRefreshSignalPoster: @escaping (SyncSignal) -> Void = postSyncSignal,
          beforeColdFlushWriteForTest: (() throws -> Void)? = nil,
          afterColdFlushCommitForTest: (() throws -> Void)? = nil,
          beforeHotRebuildInstallForTest: (() throws -> Void)? = nil) {
         self.appGroupBaseURL = appGroupBaseURL
         self.hotDatabaseURL = hotDatabaseURL
         self.dbServer = dbServer
-        self.editorRefreshBusyTimeoutMilliseconds = editorRefreshBusyTimeoutMilliseconds
-        self.editorRefreshLockTimeout = editorRefreshLockTimeout
-        self.editorRefreshLockFactory = editorRefreshLockFactory
-        self.editorRefreshSignalPoster = editorRefreshSignalPoster
         self.beforeColdFlushWriteForTest = beforeColdFlushWriteForTest
         self.afterColdFlushCommitForTest = afterColdFlushCommitForTest
         self.beforeHotRebuildInstallForTest = beforeHotRebuildInstallForTest
@@ -121,7 +106,6 @@ final class TableSyncEngine {
     func scanAndApply(hasFullAccess: Bool = true) throws -> Bool {
         if hasFullAccess {
             try processBackupExportRequestIfNeeded()
-            try processEditorRefreshRequestIfNeeded()
         }
 
         let rebuiltHot = try ensureHotDatabaseUsable(hasFullAccess: hasFullAccess)
@@ -396,205 +380,6 @@ final class TableSyncEngine {
         for (key, value) in hot.dictionaryRepresentation() where key.hasSuffix("_im_reverselookup") {
             cold.set(value, forKey: key)
         }
-    }
-
-    private func processEditorRefreshRequestIfNeeded() throws {
-        let requestURL = SyncPaths.editorRefreshRequest(appGroupBaseURL)
-        guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
-
-        // Re-read and validate only AFTER taking cross-process ownership. Settings may have
-        // timed out, removed the request and reopened cold while this keyboard was waiting.
-        let ownership: EditorRefreshFileLock
-        do {
-            ownership = try editorRefreshLockFactory(appGroupBaseURL)
-            try ownership.lock(timeout: editorRefreshLockTimeout)
-        } catch EditorRefreshLockError.timedOut {
-            return
-        } catch {
-            // A lock-file open failure defers this request to the next scan rather than
-            // aborting unrelated cold→hot synchronization, but remains visible in device logs.
-            NSLog("TableSyncEngine: deferring editor refresh because ownership is unavailable: %@",
-                  error.localizedDescription)
-            return
-        }
-        defer { try? ownership.unlock() }
-        guard FileManager.default.fileExists(atPath: requestURL.path) else { return }
-        defer { try? FileManager.default.removeItem(at: requestURL) }
-
-        var request: EditorRefreshRequest?
-        do {
-            let decodedRequest = try JSONDecoder().decode(EditorRefreshRequest.self,
-                                                          from: Data(contentsOf: requestURL))
-            request = decodedRequest
-            guard decodedRequest.expiresAt >= Date().timeIntervalSince1970 else {
-                throw TableSyncEngineError.editorRefreshExpired
-            }
-            guard Self.isSafeTableName(decodedRequest.table) else {
-                throw TableSyncEngineError.unsafeTableName(decodedRequest.table)
-            }
-            let liveColdURL = appGroupBaseURL.appendingPathComponent(SyncDatabaseLocator.databaseName)
-            guard FileManager.default.fileExists(atPath: liveColdURL.path) else {
-                throw TableSyncEngineError.liveColdMissing
-            }
-            // #209: harvestEditorRefresh returns only after the hot→cold transaction
-            // committed, cold was detached, and the connection was closed. Ownership remains
-            // held through the terminal receipt; Settings must reacquire it before reopening.
-            try harvestEditorRefresh(table: decodedRequest.table, into: liveColdURL)
-            try writeEditorRefreshReceipt(for: decodedRequest, status: .done, error: nil)
-            editorRefreshSignalPoster(.importDone)
-        } catch {
-            if let request {
-                try? writeEditorRefreshReceipt(for: request,
-                                               status: .failed,
-                                               error: error.localizedDescription)
-                editorRefreshSignalPoster(.importFailed)
-            } else {
-                NSLog("TableSyncEngine: discarding malformed editor refresh request: %@",
-                      error.localizedDescription)
-            }
-        }
-    }
-
-    /// Issue #209: the cold side of this handshake has an explicit lifecycle.
-    ///
-    /// Settings closes its own cold connection before the request becomes visible and only
-    /// reopens it after the receipt, so this harvest is the ONLY cold accessor while it runs.
-    /// Its job is to hand cold back provably free:
-    ///
-    ///   1. ATTACH cold OUTSIDE the transaction,
-    ///   2. run the whole diff + write in ONE hot write transaction (atomic per database),
-    ///   3. DETACH cold AFTER the commit — SQLite rejects `DETACH` inside a transaction
-    ///      ("database cold_editor is locked"), which the previous `defer { try? … }` inside
-    ///      GRDB's `write` swallowed, leaving cold attached until deallocation,
-    ///   4. CLOSE the connection explicitly,
-    ///
-    /// and only then does the caller write the `.done` receipt that unlocks Settings.
-    ///
-    /// Settings-side cold contention is prevented by the ownership hand-off. Keep the normal
-    /// 5-second busy timeout for independent hot-side keyboard writes (learning/commit). Normal
-    /// Settings reopening waits for ownership. After the shared deadline, failure recovery
-    /// may reopen cold best-effort rather than leaving every Settings reader empty until restart.
-    private func harvestEditorRefresh(table: String, into coldDatabaseURL: URL) throws {
-        let connection = try SyncDatabaseConnection(
-            databaseURL: hotDatabaseURL,
-            busyTimeoutMilliseconds: editorRefreshBusyTimeoutMilliseconds)
-        do {
-            try connection.writeWithoutTransaction { db in
-                try db.execute(sql: "ATTACH DATABASE ? AS cold_editor",
-                               arguments: [coldDatabaseURL.path])
-            }
-        } catch {
-            try? connection.close()
-            throw error
-        }
-
-        do {
-            try harvestEditorRefreshTransaction(table: table, on: connection)
-        } catch {
-            try? releaseColdEditor(on: connection)
-            try? connection.close()
-            throw error
-        }
-
-        // A failed release means cold cannot be PROVEN free, so the request fails even
-        // though the commit landed: Settings stays fail-safe read-only rather than
-        // reopening cold against state this process may still hold.
-        do {
-            try releaseColdEditor(on: connection)
-        } catch {
-            try? connection.close()
-            throw error
-        }
-        try connection.close()
-    }
-
-    /// Post-commit cleanup: both statements must run OUTSIDE the write transaction.
-    private func releaseColdEditor(on connection: SyncDatabaseConnection) throws {
-        try connection.writeWithoutTransaction { db in
-            try db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
-            try db.execute(sql: "DETACH DATABASE cold_editor")
-        }
-    }
-
-    private func harvestEditorRefreshTransaction(table: String,
-                                                 on connection: SyncDatabaseConnection) throws {
-        let keyColumns = Self.editorRefreshKeyColumns(for: table)
-        try connection.write { db in
-            guard try Self.tableExists(table, in: db),
-                  try Self.tableExists(table, schema: "cold_editor", in: db)
-            else {
-                throw TableSyncEngineError.tableMissing(table)
-            }
-
-            let hotColumns = Set(try Self.columns(in: table, schema: nil, db: db))
-            let coldColumns = try Self.columns(in: table, schema: "cold_editor", db: db)
-            guard keyColumns.allSatisfy({ hotColumns.contains($0) && coldColumns.contains($0) }),
-                  hotColumns.contains("score"),
-                  coldColumns.contains("score")
-            else {
-                throw TableSyncEngineError.unsupportedEditorTable(table)
-            }
-
-            let copyColumns = coldColumns.filter { $0 != "_id" && hotColumns.contains($0) }
-            guard !copyColumns.isEmpty else { return }
-
-            let tableName = Self.quotedIdentifier(table)
-            let keyList = keyColumns.map(Self.quotedIdentifier).joined(separator: ", ")
-            let keyDefinitions = keyColumns
-                .map { "\(Self.quotedIdentifier($0)) TEXT" }
-                .joined(separator: ", ")
-            let hotColdJoin = keyColumns
-                .map { "cold.\(Self.quotedIdentifier($0)) IS hot.\(Self.quotedIdentifier($0))" }
-                .joined(separator: " AND ")
-            let dirtyHotJoin = keyColumns
-                .map { "hot.\(Self.quotedIdentifier($0)) IS dirty.\(Self.quotedIdentifier($0))" }
-                .joined(separator: " AND ")
-            let dirtyColdJoin = keyColumns
-                .map { "cold.\(Self.quotedIdentifier($0)) IS dirty.\(Self.quotedIdentifier($0))" }
-                .joined(separator: " AND ")
-            let columnList = copyColumns.map(Self.quotedIdentifier).joined(separator: ", ")
-            let hotColumnList = copyColumns
-                .map { "hot.\(Self.quotedIdentifier($0))" }
-                .joined(separator: ", ")
-            let firstKey = Self.quotedIdentifier(keyColumns[0])
-
-            try db.execute(sql: "DROP TABLE IF EXISTS temp.editor_refresh_dirty_keys")
-            try db.execute(sql: "CREATE TEMP TABLE editor_refresh_dirty_keys (\(keyDefinitions))")
-            try db.execute(sql: """
-                INSERT INTO temp.editor_refresh_dirty_keys (\(keyList))
-                SELECT \(keyColumns.map { "hot.\(Self.quotedIdentifier($0))" }.joined(separator: ", "))
-                FROM main.\(tableName) hot
-                LEFT JOIN cold_editor.\(tableName) cold ON \(hotColdJoin)
-                WHERE cold.\(firstKey) IS NULL
-                   OR IFNULL(cold.\(Self.quotedIdentifier("score")), 0) <> IFNULL(hot.\(Self.quotedIdentifier("score")), 0)
-                """)
-            try db.execute(sql: """
-                DELETE FROM cold_editor.\(tableName)
-                WHERE rowid IN (
-                    SELECT cold.rowid
-                    FROM cold_editor.\(tableName) cold
-                    JOIN temp.editor_refresh_dirty_keys dirty ON \(dirtyColdJoin)
-                )
-                """)
-            try db.execute(sql: """
-                INSERT INTO cold_editor.\(tableName) (\(columnList))
-                SELECT \(hotColumnList)
-                FROM main.\(tableName) hot
-                JOIN temp.editor_refresh_dirty_keys dirty ON \(dirtyHotJoin)
-                """)
-        }
-    }
-
-    private func writeEditorRefreshReceipt(for request: EditorRefreshRequest,
-                                           status: EditorRefreshReceipt.Status,
-                                           error: String?) throws {
-        let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
-                                           table: request.table,
-                                           status: status,
-                                           error: error,
-                                           at: Date().timeIntervalSince1970)
-        try atomicWrite(try JSONEncoder().encode(receipt),
-                        to: SyncPaths.editorRefreshReceipt(appGroupBaseURL))
     }
 
     private func runLegacyTransitionIfNeeded(from coldSnapshotURL: URL) throws -> Bool {
@@ -1159,25 +944,6 @@ final class TableSyncEngine {
             """, arguments: [table, k1, k2, observedRevision])
     }
 
-    private func applyDeleteLifecycle(_ records: [IMLifecycleRecord], for table: String) throws {
-        for record in records where record.action == .delete {
-            let db = try LimeDB(path: hotDatabaseURL.path)
-            if record.preserveLearning {
-                db.backupUserRecords(table)
-            }
-            db.clearTable(table)
-        }
-    }
-
-    private func applyInstallLifecycle(_ records: [IMLifecycleRecord], for table: String) throws {
-        for record in records where record.action == .install && record.preserveLearning {
-            let db = try LimeDB(path: hotDatabaseURL.path)
-            guard db.checkBackupTable(table) else { continue }
-            _ = db.restoreUserRecords(table)
-            _ = db.dropBackupTable(table)
-        }
-    }
-
     @discardableResult
     func flushPendingLearning(hasFullAccess: Bool = true) throws -> Bool {
         guard hasFullAccess else { return false }
@@ -1466,36 +1232,18 @@ final class TableSyncEngine {
                            options: .regularExpression) != nil
     }
 
-    private static func editorRefreshKeyColumns(for table: String) -> [String] {
-        table == "related" ? ["pword", "cword"] : ["code", "word"]
-    }
 }
 
 private enum TableSyncEngineError: LocalizedError {
-    case editorRefreshExpired
     case hotRebuildEpochChanged
-    case liveColdMissing
     case markedUnfencedRevisionGap(String)
-    case tableMissing(String)
-    case unsupportedEditorTable(String)
-    case unsafeTableName(String)
 
     var errorDescription: String? {
         switch self {
-        case .editorRefreshExpired:
-            return "Editor refresh request expired"
         case .hotRebuildEpochChanged:
             return "Hot rebuild epoch changed before install"
-        case .liveColdMissing:
-            return "Live cold database is missing"
         case .markedUnfencedRevisionGap(let table):
             return "Marked cold revision advanced without a fence for table: \(table)"
-        case .tableMissing(let table):
-            return "Editor refresh table is missing: \(table)"
-        case .unsupportedEditorTable(let table):
-            return "Editor refresh table has unsupported columns: \(table)"
-        case .unsafeTableName(let table):
-            return "Unsafe editor refresh table name: \(table)"
         }
     }
 }
