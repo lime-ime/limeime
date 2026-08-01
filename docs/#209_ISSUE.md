@@ -1,97 +1,354 @@
-# Issue #209 Analysis: iOS Related-Phrase Editor Becomes Read-Only After a Locked-Database Refresh
+# Issue #209: Complete Investigation and Implementation Record
 
-## Live issue state
+## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/209
-- Status: Open
-- Labels: `bug`, `Usability`
-- Assignee: `jrywu`
-- Reporter: maintainer project account `limeimetw`, based on a private support-mail report. The private screenshots are intentionally not reproduced here.
-- Reported environment: LIME 6.1.37 on iOS 26.6 RC.
-- Rechecked 2026-07-30: the issue remains open with no public comments. Closed retry-only PR #210 and superseded handoff PRs #214–#220 remain in history. Replacement draft PR #221 publishes the final-v7 tree recorded here.
+- State: **open**
+- Classification: confirmed iOS database-concurrency/usability defect
+- Current pull request: draft PR #221, https://github.com/lime-ime/limeime/pull/221
+- PR #221 branch: `fix/209-ios-db-handoff-final-v7`
+- PR #221 source SHA validated by Xcode Cloud Run 50: `f2798d69a46ced0c6332460c6206a79081cdd622`
+- PR #221 current head: `2fda5c3ed74538189cbaf218827498b66d7d3822` (documentation-only commit after the source SHA)
+- Last source commit: 2026-07-30 10:51 +08:00
+- Last PR update: 2026-07-30 11:20 +08:00
+- Reconciled: 2026-08-01
 
-## Problem statement
+**PR #221 is not technically merge-ready.** It fixes the original editor handoff collision, but its process-wide cold-database suspension contract is incomplete. Ordinary cached-database operations can escape the lease, a retained Settings `SearchServer` can fall back to a stale datasource, mutation and publication can be split, and several errors are still swallowed or converted into apparent UI success.
 
-Opening iOS **Related-Phrase Management** starts the editor-refresh handshake that copies current keyboard-side `related` rows from the hot database into the Settings app's live cold database. In the reported path, the keyboard-side harvest fails with `SQLite error 5: database is locked`. The refresh may then time out, and `RelatedListView` deliberately changes to read-only mode. The user can search the cold data but cannot edit or delete the unwanted related phrase.
+No source implementation for these remaining defects was made between 2026-07-30 and this 2026-08-01 rewrite.
 
-This is a confirmed iOS usability defect at the database-concurrency boundary. The locked-database error is direct runtime evidence.
+## Origin and privacy boundary
 
-## Root cause: an unserialized cold-database lifecycle
+Issue #209 was created on 2026-07-27 after a private support report supplied direct evidence that iOS Related-Phrase Management could fail its keyboard-to-Settings refresh with `SQLite error 5: database is locked`, leaving the screen read-only so the unwanted related phrase could not be edited or deleted.
 
-The Settings app and the keyboard extension are separate processes that both open the SAME file — the app's live cold `lime.db`. The handshake had no hand-off: the app never released that file, and the keyboard never provably released it back. Three source-level lifecycle gaps were present on the `master` baseline `dc6ac0cfe23cef4177d3b7f672542c29b73b2d7a`:
+The reported environment was LIME 6.1.37 on iOS 26.6 RC. Private mail identity and screenshots are intentionally excluded from this repository document.
 
-1. **Settings kept cold open, and actively read it, during the handshake.** `RelatedListView.onAppear` / `RecordListView.onAppear` called `refreshHotSnapshotIfNeeded()` and `loadPhrases()` / `loadRecords()` in the same body, unordered. The load path (`ManageRelatedController.loadRelated` → `DBServer.searchRelatedForManagement` → `SharedDatabase.current()`) opens the cold connection when it is not already open, and opening is itself a write: `LimeDB.init` runs `PRAGMA journal_mode = WAL`, `migrate()`, `ensureCurrentDatabase()`, and `SharedDatabase.openDatasource` may run `repairKeyboardCatalogIfNeeded`. `SharedDatabase.cachedDatasource` was released only by the restore/full-replace paths, so the app also held the file open for the whole session.
-2. **The keyboard's `DETACH` was a silent no-op.** `harvestEditorRefresh` issued `DETACH DATABASE cold_editor` from a `defer` INSIDE GRDB's write transaction and swallowed the error with `try?`. The codebase already documented this failure mode for `applyIncremental` (`TableSyncEngine.swift`, "a DETACH issued inside GRDB's write transaction fails silently"). Release therefore depended on the connection being deallocated, not on an explicit close.
-3. **The `.done` receipt did not prove release, and Settings never rebound.** The receipt is what lets Settings unlock editing, but nothing ordered it after a proven release; and the success path only re-ran the loader — it never reopened the connection against the file the keyboard had just rewritten.
+The issue was created from the maintainer project account, assigned to `jrywu`, and labeled `bug` and `Usability`. It remains open with no public comments.
 
-### Measured SQLite behavior (executable, this repository)
+## Reporter-visible failure
 
-`scripts/test_issue_209_ios_editor_refresh_lifecycle.py` reproduces the semantics with real SQLite (3.53, Linux host, no Swift, no mocks), while one connection holds an open write on cold and another runs the harvest with cold ATTACHed:
+Opening iOS **Related-Phrase Management** starts an editor-refresh handshake:
 
-| Lock point | Result | Consequence |
+1. Settings publishes a request.
+2. The keyboard extension opens its hot database and attaches Settings' live cold `lime.db`.
+3. Current keyboard-side `related` rows are harvested into cold.
+4. The keyboard publishes a terminal receipt.
+5. Settings reloads cold and allows editing only after successful refresh.
+
+In the reported path, the keyboard's write to attached cold failed with SQLite error 5. The refresh timed out or returned failure, and `RelatedListView` deliberately remained read-only.
+
+This is iOS-specific. Android does not use the keyboard-extension/App-Group hot-to-cold handoff implemented by `TableSyncEngine.harvestEditorRefresh`.
+
+## Reproduction and original root cause
+
+### Native RED reproduction
+
+A real GRDB/XCTest reproduced the failure before the first proposed fix:
+
+1. Open cold `lime.db` from another connection.
+2. Hold an immediate cold write transaction.
+3. Run the keyboard-to-Settings `related` harvest.
+
+Observed:
+
+- terminal receipt: `.failed`;
+- error: `SQLite error 5: database is locked`;
+- failure while writing attached `cold_editor.related`;
+- cold rows unchanged;
+- failure in approximately 0.003 seconds despite the existing five-second busy timeout.
+
+### Executable SQLite investigation
+
+`scripts/test_issue_209_ios_editor_refresh_lifecycle.py` records the relevant SQLite and POSIX-lock semantics with real SQLite on Linux:
+
+| Boundary | Observed behavior | Consequence |
 | --- | --- | --- |
-| `BEGIN IMMEDIATE` with cold attached | still blocked after more than 0.5s of a 1.0s timeout | one attempt can consume a substantial part of the Settings-side poll budget |
-| read→write promotion inside the transaction | fails in less than 0.1s | the busy handler does not wait out the configured timeout once the connection holds a lock on another attached database, so increasing `busy_timeout` does not solve this race |
-| plain writer, nothing attached (control) | honours the busy timeout | why re-applying `PRAGMA busy_timeout` never fixed this |
-| `DETACH` inside a transaction | `database cold_editor is locked`, cold stays attached | the swallowed error in gap 2 |
-| last connection closes | `-wal` / `-shm` removed | observable SQLite behavior pinned by the Linux gate; native lifecycle tests instead use direct datasource state and real competing writes |
+| `BEGIN IMMEDIATE` while another cold writer exists | can consume a substantial part of the caller's deadline | retries reduce the Settings receipt budget |
+| attached-database read-to-write promotion | can fail immediately despite `busy_timeout` | increasing timeout does not remove the race |
+| `DETACH` inside the GRDB transaction | fails with `database cold_editor is locked` | swallowing the error does not prove release |
+| final SQLite connection close | releases sidecar/locking state | explicit connection lifecycle matters |
+| descriptor-owned `flock` | excludes a second process until explicit release | suitable cross-process ownership primitive |
 
-Both harvest lock points fail while any Settings-side cold write is open. Retrying them is strictly worse than not racing them: the first burns the budget per attempt, while the second does not wait out the configured timeout. Closed PR #210 proposed a retry-only mitigation; the final branch deliberately does not carry that proposal forward and serializes the lifecycle instead.
+### Root cause on the original baseline
 
-Still not established: which Settings-side operation held the lock on the reporter's device, and for how long. The fix removes the whole class of Settings-side contention rather than attributing the single reporter-visible owner.
+The defect was not merely “SQLite needs a retry.” Settings and the keyboard extension used the same cold database without a complete ownership transfer:
 
-## Implemented lifecycle fix
+1. Settings retained or lazily reopened cold during the handshake.
+2. The Settings views could begin cold loading beside the refresh request.
+3. Opening `LimeDB` can itself write configuration/migration state.
+4. The keyboard attempted `DETACH` inside a transaction and discarded failure with `try?`.
+5. A `.done` receipt did not prove the keyboard had detached and closed cold.
+6. Settings did not require cross-process ownership before reopening cold.
+7. Related and normal table editors shared request/receipt files without complete same-process serialization.
 
-The invariant: **Settings hands the cold file over before asking for the harvest; the keyboard hands it back provably free; only then may editing unlock.**
+The final-v7 source removes the original collision path, but the later full-call-site audit proved that the new process-wide suspension gate is incomplete.
 
-1. `DBServer.suspendColdAccess()` / `resumeColdAccess()` / `isColdAccessSuspended` close the process-local cold connection and keep it closed — `SharedDatabase.current()` returns `nil` while suspension is pending or complete, so no caller can lazily re-open it. Process-local operation leases reject new publishers, drain active publishers with a bounded deadline, and reject datasource installation throughout the close window.
-2. `EditorRefreshFileLock` uses bounded, descriptor-owned POSIX `flock` on an App-Group lock file as the cross-process ownership boundary. Each process keeps one descriptor per lock path and also serializes its local handles, so closing another descriptor cannot silently release ownership and same-process callers cannot overlap a lock hold. Settings owns close/request publication and later cancellation/reopen; the keyboard owns request re-validation, harvest, close and terminal receipt.
-3. `SetupImController.refreshTableFromKeyboard` uses a process-wide async single-flight gate across the complete handshake, so Related and normal IM editors cannot replace each other's request/receipt files while the cross-process lock is handed to the keyboard. It suspends cold BEFORE publishing the request and reopens only after regaining ownership. If ownership cannot be recovered, Settings stays fail-closed; the next lock-owning editor attempt safely recovers that state before beginning a fresh handshake.
-4. `TableSyncEngine.harvestEditorRefresh` now ATTACHes cold outside the transaction, runs the whole diff/write in one hot write transaction, DETACHes outside the transaction, and closes the connection explicitly (`SyncDatabaseConnection.close()`, idempotent) — every error path closes too. Only then does `processEditorRefreshRequestIfNeeded` write the `.done` receipt while still holding ownership. A failed release fails the request rather than reporting done.
-5. `RelatedListView` / `RecordListView` expose one entry point, `beginEditorSession()`; `onAppear` no longer launches a cold load beside the handshake. They summon the keyboard and allow the complete request window instead of consuming the one-shot attempt on an early advisory relay state. The first cold load runs only after the handshake and reopen. `isRefreshingHotSnapshot` still gates `canEdit`.
-6. The closed retry-only proposal is not carried forward: `editorRefreshBusyRetryWindow`, `editorRefreshBusyRetryBackoff`, `editorRefreshAttemptBusyTimeoutMilliseconds`, `isTransientLockError`, `harvestEditorRefreshAttempt`, `testEditorRefreshRetriesThroughTransientColdWriteLock`, and `scripts/test_issue_209_ios_editor_refresh_retry.py` are absent. The normal 5-second busy timeout remains for independent hot-side learning/commit writes. Normal Settings reopening waits for ownership; deadline failure does not reopen cold without ownership.
-7. Android and the existing `(pword, cword)` dirty-key semantics remain unchanged.
+## Complete PR and branch history
 
-## Verification
+Nine draft PRs were created. Eight were closed unmerged and replaced. This churn is part of the defect history and must not be hidden.
 
-### Executed locally
+| PR | Created / closed (UTC) | Branch / final head | What it attempted | Why it was not the final fix |
+| --- | --- | --- | --- | --- |
+| #210 | 2026-07-27 00:02 / 2026-07-29 06:51 | `fix/209-ios-related-db-lock` / `9659a497...` | Retry only `SQLITE_BUSY`/`SQLITE_LOCKED`, with a fresh connection per attempt and an approximately four-second retry window. Added transient-lock, persistent-lock, and later-recovery tests. | It tolerated contention but preserved the ownership race. The measured read-to-write promotion can fail immediately, and repeated attempts consume the receipt budget. Closed when the fix moved to lifecycle ownership. |
+| #214 | 2026-07-29 06:51 / 06:58 | `fix/209-ios-db-handoff` / `c7c94f2e...` | First full Settings/keyboard cold-database ownership handoff: suspend/close, request, keyboard harvest, explicit release, receipt, reopen. | Closed almost immediately to recreate the same tree with clean review history as #215. |
+| #215 | 2026-07-29 06:58 / 12:20 | `fix/209-ios-db-handoff-clean` / `8e42e4e...` | Clean replacement for #214. | Review found that `fcntl` record locks were process-owned rather than descriptor-owned. Same-process handles could bypass exclusion, closing another descriptor could release ownership, ownership recovery had an unbounded wait, and a double reacquisition failure could leave cold disabled. |
+| #216 | 2026-07-29 12:20 / 13:30 | `fix/209-ios-db-handoff-final` / `080fe943...` | Switched to descriptor-owned `flock`, added local serialization, bounded acquisition, one process-wide Settings editor handshake, and Related/normal editor coverage. | Later review found additional contention/deadline and sync-scan behavior that was not yet represented. |
+| #217 | 2026-07-29 13:30 / 14:10 | `fix/209-ios-db-handoff-final-v2` / `5df3e52d...` | Deferred editor refresh under brief keyboard lock contention while allowing unrelated cold-to-hot sync to continue; used the remaining request TTL for reacquisition; added notifications after suspension reopened. | Timeout propagation, release-before-signal ordering, queue concurrency, and test-double behavior still needed tightening. |
+| #218 | 2026-07-29 14:10 / 14:57 | `fix/209-ios-db-handoff-final-v3` / `f74c4f8e...` | Exposed initial/reacquisition budgets to native tests, released before signaling the keyboard, used a concurrent blocking bridge, and removed timeout-erasing convenience APIs. | Review still found defensive unlock-state, malformed-request, cancellation-polling, and test-quality/error-path gaps. |
+| #219 | 2026-07-29 14:57 / 23:45 | `fix/209-ios-db-handoff-final-v4` / `7174d38d...` | Cleared local ownership state even if `LOCK_UN` reported failure, isolated malformed requests, avoided cancellation-driven polling spins, and expanded native/error-path coverage. | The next strict review round found broad/brittle source-text tests and smaller production/error-path issues: receipt queue priority, lock-factory failure aborting unrelated sync, unmatched failure signaling for malformed requests, false failure after final unlock reporting, and test descriptor contamination. Work continued on unpublished review branches before a clean final-v6 replacement. |
+| #220 | 2026-07-29 23:45 / 2026-07-30 03:20 | `fix/209-ios-db-handoff-final-v6` / `8fea4b33...` | Clean one-pass replacement after review5/review6. Reduced the Python gate to real behavior plus durable anti-resurrection checks, fixed the review findings, coordinated independent cold publishers/mutations, and preserved fail-closed ownership recovery. | Replaced by #221 after further source changes added datasource-install rejection and final-v7 validation/docs. |
+| #221 | 2026-07-30 02:48 / still open | `fix/209-ios-db-handoff-final-v7` / `2fda5c3e...` | Current serialized handoff with publisher drain, fail-closed recovery, datasource-install rejection, focused lifecycle tests, and Xcode Cloud Run 50. | A later complete Settings call-site audit found broader unimplemented lease, stale-datasource, atomic-publication, error-propagation, and UI-consistency defects. The PR remains draft. |
 
-- `python3 scripts/test_issue_209_ios_editor_refresh_lifecycle.py` — 9 tests, `OK`. Five execute real SQLite behavior, one spawns a separate process to verify descriptor-owned `flock` contention and release, and three narrowly prevent resurrection of the retired retry workaround or unbounded convenience lock APIs. Lifecycle and ordering behavior is covered by native XCTest rather than broad Swift source-text assertions.
-- Related Python suites passed: `test_limedb_order.py --all`, `test_build_emoji_db.py`, `test_custom_im_keyboard_ios.py`, `test_hahacj_limedb.py`, `test_ipad_language_mode_key.py`, `test_number_symbol_layout_ios.py`, `test_phonetic_layout_ios.py`, and `test_tricode_limedb.py`.
-- `python3 -m py_compile scripts/*.py` — clean.
-- `git diff --check` — clean.
+### Unpublished validation branches and review rounds
 
-### Xcode Cloud
+The published PR sequence understates the internal iteration. Between #219 and #220, additional local/review branches were used to respond to strict findings. Significant results included:
 
-Run 50, exact source SHA `f2798d69a46ced0c6332460c6206a79081cdd622`: iOS tests passed; iOS archive passed; no required failures; production workflow restored. This is the production and native-test tree published by draft PR #221; later commits are documentation-only.
+- reducing a 40-test broad Swift source-text gate to five real SQLite behavior tests plus durable anti-resurrection checks;
+- changing receipt polling to the intended queue priority;
+- preventing lock-factory failure from aborting unrelated synchronization;
+- preventing malformed requests from emitting an unmatched import-failure signal;
+- preventing a defensive final unlock error from converting a completed refresh into false failure;
+- adding native-test reset for process-lifetime lock descriptors;
+- checking exact timeout budgets and release-before-signal ordering;
+- running repeated strict code and documentation reviews;
+- rebuilding clean replacement branches instead of force-updating published PRs.
 
-Native coverage includes real same-process lock contention, controller-propagated initial/reacquisition timeout budgets, Related-versus-normal editor single-flight, cold suspension/reopen, ownership-reacquisition recovery, bounded persistent SQLite contention, hot→cold harvest and post-receipt cold writability. Native executable assertions use direct datasource state and real database access; WAL-sidecar removal is asserted separately by the Linux SQLite gate.
+This iterative review found real defects, but repeatedly replacing the public PR instead of completing one bounded architecture caused avoidable churn.
 
-### Review gate
+## What current PR #221 actually fixes
 
-- Final strict review7 gate: zero unresolved correctness, compile, concurrency-state, or test-determinism findings before Run 50.
+The source at `f2798d69a46ced0c6332460c6206a79081cdd622` materially fixes the original editor handoff:
 
-### Runtime (not started)
+1. `EditorRefreshFileLock` uses bounded descriptor-owned `flock` with process-local handle serialization.
+2. A process-wide async gate permits only one Settings editor handshake at a time.
+3. Settings acquires ownership, blocks new tracked cold publishers, drains active tracked publishers, suspends and closes cached cold, publishes the request, releases ownership, and then signals the keyboard.
+4. The keyboard acquires ownership, revalidates the request, attaches cold outside the write transaction, performs the harvest transaction, detaches outside the transaction, explicitly closes the connection, and publishes the terminal receipt only after release is established.
+5. Settings reacquires ownership before cleanup or cold reopen.
+6. Failed reacquisition remains fail-closed instead of reopening cold under keyboard ownership; a later ownership-holding editor attempt can recover.
+7. Datasource installation is rejected while suspension is pending or active.
+8. Related and normal table editors share the serialized handshake and do not start their initial cold load beside it.
+9. The retry-only workaround from #210 is absent.
+10. Android and related-word dirty-key semantics are unchanged.
 
-1. Reproduce on iOS with Full Access enabled and LIME selected, using the Related-Phrase Management path.
-2. Verify the editor becomes writable without a timeout or app restart, and that the list is populated only after the sync indicator clears.
-3. Search, edit, add, and delete related phrases after refresh, then leave/background the editor and verify the changes reconcile back to the keyboard.
-4. Verify a foreign persistent lock fails within a bounded time with clear state, and that reopening the editor recovers.
-5. Start a keyboard sync scan, publish the editor-refresh request only after that scan has passed its editor-refresh step, and verify a follow-up scan still consumes the surviving request instead of leaving Settings to time out read-only. This covers the pre-existing `syncScanInProgress` signal-coalescing risk that the deferred-contention path also relies on.
-6. Repeat on iPhone, full iPad, and narrow iPad presentations because the database path is shared but editor lifecycle and keyboard presentation differ.
+These are valid and tested changes. They are not sufficient to claim complete process-wide cold ownership.
 
-## Follow-up questions
+## Confirmed defects still present in PR #221
 
-- Which Settings-side connection and operation held the cold write lock on the reporter's device? The fix removes Settings-side contention as a class, so this is now diagnostic curiosity rather than a blocker.
-- While cold is suspended, `SharedDatabase.current()` returns `nil`, so any OTHER screen that reads cold during the handshake window renders empty rather than blocking. The two editors are serialized; audit whether any other concurrently visible surface reads cold during an editor refresh.
-- Is an in-screen retry control needed, or is clean recovery on reopen sufficient?
+### 1. Ordinary cached-datasource operations escape the lease
+
+`SharedDatabase.current()` checks `accessSuspended` and `suspensionPending` while holding its condition, returns a `LimeDB`, and then releases the condition. The caller performs SQLite work after the ownership check has ended.
+
+`SharedDatabase.suspendLiveAccess()` drains only `activeIndependentAccesses`, which covers the explicit `withLiveAccessOperation` publisher path. It does not count ordinary reads and writes performed through a datasource returned by `current()`.
+
+Consequences:
+
+- suspension can close `cachedDatasource` while an ordinary read/write still uses it;
+- “all Settings-side cold access is drained” is not true;
+- the new handoff can trade the original lock collision for stale/closed queue failures.
+
+### 2. A retained Settings `SearchServer` bypasses suspension
+
+`DBServer.makeSearchServer()` captures an initial datasource and supplies:
+
+```swift
+database.current() ?? initialDatasource
+```
+
+During suspension, `database.current()` intentionally returns `nil`, so an existing `SearchServer` falls back to the stale object that suspension is closing or has closed.
+
+Related/record management code retains or recreates this facade and can therefore operate outside the intended fail-closed gate.
+
+### 3. Mutation and publication are split across ownership windows
+
+Management operations can mutate through `SearchServer` or another unleased DB facade and only afterward call `markTableChangedAndPublish()` under `withLiveAccessOperation`.
+
+Suspension can begin between the mutation and publication. The local database change may commit while revision/generation and `im.json` publication are rejected.
+
+Affected categories include:
+
+- mapping add/update/delete;
+- related phrase add/update/delete/clear;
+- table clear;
+- import/register/restore paths;
+- metadata and sort operations with separate publication behavior.
+
+### 4. Metadata suspension errors are swallowed
+
+`mutateAndPublishColdMetadata` uses `try? database.withLiveAccessOperation`.
+
+If suspension rejects the lease, the error disappears. These methods cannot report failure:
+
+- `setImConfig`;
+- `updateIMEnabled`;
+- `setImConfigKeyboard`.
+
+`updateIMSortOrder` is also caught by callers and does not share one complete metadata-publication contract.
+
+Controllers and views can then perform success-only side effects even though persistence was discarded:
+
+- synchronize activated-IM preferences;
+- mark keyboard caches dirty;
+- invalidate and reload lists;
+- save keyboard preferences;
+- dismiss a picker/detail view;
+- return `.success(())`;
+- keep optimistic toggle/order state.
+
+This is a concrete operation-loss defect, not a theoretical cleanup item.
+
+### 5. Sentinel returns convert suspension into fake data or fake success
+
+Several DBServer APIs translate unavailable cold into `[]`, `0`, `-1`, `false`, or a no-op. Callers cannot distinguish:
+
+- a valid empty result;
+- validation failure;
+- temporary suspension;
+- an unavailable or stale datasource.
+
+A screen can replace real displayed state with empty data or continue as though an operation succeeded.
+
+### 6. Direct Settings paths do not share one contract
+
+`IMInstallView`, `IMStoreView`, `IMDetailView`, `SetupImController`, management controllers, and compatibility/protocol methods contain low-level database calls, `try?`, premature completion/dismissal, or optimistic side effects.
+
+Fixing only the metadata helper would leave equivalent loss and race paths in import, install, clear, register, restore, record, and related operations.
+
+### 7. Tests do not cover the complete process-wide invariant
+
+Current tests prove the handoff mechanics, tracked publisher drain, fail-closed reacquisition, and hot-to-cold harvest. They do not prove that:
+
+- an ordinary cached read or write is drained before close;
+- a pre-existing Settings `SearchServer` cannot use stale cold during suspension;
+- every mutation category is rejected without persistence or UI side effects;
+- mutation plus revision/generation/publication cannot be split by suspension;
+- every direct Settings call site propagates typed failure;
+- displayed data is preserved rather than replaced with sentinel emptiness.
+
+## Required invariant for completion
+
+For Settings:
+
+> Every operation that opens, reads, mutates, snapshots, publishes, replaces, imports, exports, backs up, or restores live cold must hold one scoped `SharedDatabase` access lease for its complete database lifetime. Suspension blocks new leases, drains all existing leases, closes cold, and keeps it closed until cross-process ownership is safely recovered. No Settings `LimeDB` reference may escape a lease, and no caller may translate lease rejection into success.
+
+For user mutations:
+
+> Database mutation, revision/generation update, cold publication, and `im.json` publication execute in one lease. Preference, cache, navigation, callback, and optimistic UI side effects happen only after success. Lease rejection is visible and leaves persisted and optimistic state unchanged.
+
+## Remaining implementation sequence
+
+The remaining work is bounded to this invariant; it is not permission to create another theoretical redesign.
+
+1. **Generalize the scoped lease.** Count every scoped cold operation, make suspension drain all of them, reject leases while pending/suspended, and never report an unavailable datasource as a successful lease.
+2. **Remove stale Settings ownership.** Eliminate the `database.current() ?? initialDatasource` fallback for Settings management. Keep the keyboard's stable hot-runtime datasource path separate.
+3. **Create throwing atomic operations.** Put each mutation, revision/generation update, cold publication, and `im.json` publication inside one lease.
+4. **Propagate typed failures.** Remove `try?` and sentinel-success behavior for affected Settings operations.
+5. **Correct UI ordering.** Do not update preferences/cache/navigation/optimistic state before persistence succeeds; preserve displayed data during temporary suspension.
+6. **Add a deterministic cross-screen matrix.** Hold cold suspended, attempt each mutation category, and assert no database/revision/publication/UI side effect. Resume and assert representative retries succeed.
+7. **Audit every Settings live-cold call site once.** Record operation, lease API, error propagation, UI result, and behavioral test.
+8. **Run one final exact-SHA gate.** Only after local review is clean: native iOS tests plus archive, then truthful docs and PR body reconciliation.
+
+No new replacement PR is required. PR #221 remains the public draft; implementation can be validated locally before any approved public update.
+
+## Verification ledger
+
+### PR #210 retry candidate
+
+- Native RED reproduced exact SQLite error 5 and unchanged cold rows.
+- Transient-lock, persistent-lock, and later-recovery native tests were added.
+- Linux retry source-contract gate: 4/4 passed.
+- Python compile and `git diff --check`: passed.
+- Exact-head Xcode Cloud iOS tests and archive: passed.
+- Result: technically coherent retry mitigation, rejected because it did not remove the ownership race.
+
+### Ownership-handoff iterations (#214–#220)
+
+Across the iterations, executed evidence included:
+
+- real SQLite attached-database contention;
+- same-process lock contention;
+- separate-process descriptor-owned `flock` exclusion;
+- Related-versus-normal editor single-flight;
+- controller-propagated initial and reacquisition timeout budgets;
+- release-before-signal ordering;
+- bounded persistent lock failure;
+- fail-closed reacquisition and later recovery;
+- malformed request handling;
+- cancellation polling behavior;
+- explicit ATTACH/transaction/DETACH/close ordering;
+- terminal receipt ordering;
+- post-receipt cold writability;
+- repeated iOS native-test and archive runs;
+- repeated independent code/documentation review rounds.
+
+Several intermediate PR bodies said “ready,” “no blockers,” or “zero unresolved findings.” Those were accurate only for the narrower tree and review scope at that moment. Later review proved additional architectural gaps. They are not evidence that PR #221's complete Settings ownership contract is correct.
+
+### Current PR #221
+
+Executed for source SHA `f2798d69a46ced0c6332460c6206a79081cdd622`:
+
+- focused lifecycle gate: 9 tests passed;
+- related Python suites passed;
+- `python3 -m py_compile scripts/*.py`: passed;
+- `git diff --check`: passed;
+- Xcode Cloud Run 50 iOS tests: passed;
+- Xcode Cloud Run 50 iOS archive: passed;
+- production Xcode Cloud workflow configuration restored and verified.
+
+Limitations:
+
+- Run 50 proves the handoff source and native tests that existed at that SHA.
+- It does not prove the unimplemented complete-lease invariant.
+- The current PR head adds documentation only after the validated source SHA.
+- Affected-device Related-Phrase Management runtime confirmation has not been completed.
+- GitHub reports no checks attached directly to the current PR head.
+
+## Rejected approaches and lessons
+
+1. **Retry-only mitigation:** rejected because it tolerates but does not remove the ownership race.
+2. **Process-owned `fcntl` locking:** rejected because same-process descriptors do not provide the required ownership semantics and descriptor close can release process ownership.
+3. **Unbounded ownership recovery:** rejected because a suspended extension could disable cold access indefinitely.
+4. **Reopen after failed reacquisition:** rejected because it violates fail-closed ownership and can recreate the original collision.
+5. **Broad Swift source-text tests:** reduced because they pinned comments/formatting/implementation fragments rather than native behavior.
+6. **Tracking only independent publishers:** incomplete because ordinary cached-datasource operations dominate Settings and can outlive the ownership check.
+7. **Returning stale fallback datasources:** invalid during suspension because it defeats the gate.
+8. **Splitting mutation and publication:** invalid because cold can change without matching revision/generation/publication.
+9. **Swallowing lease rejection:** invalid because UI success can be reported for discarded persistence.
+10. **Repeated clean replacement PRs during active review:** created excessive churn. Further work must finish the bounded invariant before another public-state change.
+
+## Activity accountability
+
+- Issue opened: 2026-07-27 07:28 +08:00.
+- Nine draft PRs were created: #210 and #214–#221.
+- Eight were closed unmerged and replaced.
+- PR #221 received no source update after 2026-07-30 10:51 +08:00.
+- After the full remaining-defect plan was written, implementation did not continue for approximately two days.
+- On 2026-08-01 a local validation branch, `fix/209-complete-cold-ownership-validation-v8`, was created from PR #221 and a Codex Task-1 worker was started.
+- The worker was stopped immediately, before any production/test edit, when Jeremy directed that this issue document be rewritten first.
+- The Codex start/stop produced no tracked source change and no GitHub change.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected. The reported failure occurs in the iOS-only cold/hot editor-refresh architecture. The lifecycle fix is in the shared harvest path plus the shared Settings handshake, so it covers every iOS table editor that uses the handshake; the reporter-visible confirmation remains specifically about `related`.
+Confirmed affected. The defect and current work are in the iOS Settings/keyboard-extension hot/cold architecture. The handoff code is shared by Related and normal table editors; the original reporter-visible failure is specifically Related-Phrase Management.
 
 ### Android
 
-No corresponding Android defect is established. Android does not use the iOS keyboard-extension/App-Group cold/hot handshake or `TableSyncEngine.harvestEditorRefresh`. Its related-phrase management has separate database and refresh behavior. Android remains unchanged.
+No corresponding defect is established. Android does not use this App-Group keyboard-extension handoff. Android source remains out of scope.
+
+## Completion criteria
+
+PR #221 can be reported technically ready only when all are true:
+
+- no Settings live-cold `LimeDB` escapes a scoped lease;
+- suspension drains ordinary and independent cold operations;
+- no stale Settings `SearchServer` fallback exists;
+- every user mutation and its sync publication share one lease;
+- suspension and publication failures reach controllers and views;
+- no preference, cache, callback, navigation, or optimistic state advances on failure;
+- deterministic tests cover each mutation category during suspension and representative success after resume;
+- existing editor-handoff tests remain green;
+- one final strict review has no unresolved in-scope finding;
+- one exact-final-SHA Xcode Cloud test and archive run succeeds;
+- this document, `docs/BACKLOG.md`, and PR #221 describe the same exact tree without overclaiming;
+- PR remains unmerged until Jeremy explicitly reviews and merges it.
