@@ -76,17 +76,14 @@ final class SetupImController: BaseController {
                 try server.importTxtFile(at: url.path,
                                          tableName: tableName,
                                          publish: false,
+                                         preserveLearning: restoreLearning,
                                          progress: { count in
                     counter.value = count
                     Task { @MainActor in
                         view?.onProgress(50, status: "已匯入 \(count) 筆…")
                     }
                 })
-                try server.writeIMLifecycleRecord(table: tableName,
-                                                  action: .install,
-                                                  preserveLearning: restoreLearning,
-                                                  postSignal: false)
-                try server.markTableChangedAndPublish(tableName)
+                try server.publishPendingEditorChanges()
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onProgress(100, status: "文字檔匯入完成，共 \(counter.value) 筆")
@@ -113,14 +110,11 @@ final class SetupImController: BaseController {
                 try server.importTxtFile(at: url.path,
                                          tableName: tableName,
                                          publish: false,
+                                         preserveLearning: restoreLearning,
                                          progress: { count in
                     lastCount = count
                 })
-                try server.writeIMLifecycleRecord(table: tableName,
-                                                  action: .install,
-                                                  preserveLearning: restoreLearning,
-                                                  postSignal: false)
-                try server.markTableChangedAndPublish(tableName)
+                try server.publishPendingEditorChanges()
                 return .success(lastCount)
             } catch {
                 return .failure(error)
@@ -403,11 +397,11 @@ final class SetupImController: BaseController {
         }
     }
 
-    func publishEditorChanges(stem: String) async -> Result<Void, Error> {
+    func publishEditorChanges(stem _: String) async -> Result<Void, Error> {
         let server = self.dbServer
         return await Task.detached(priority: .userInitiated) {
             do {
-                try server.markTableChangedAndPublish(stem)
+                try server.publishPendingEditorChanges()
                 return .success(())
             } catch {
                 return .failure(error)
@@ -888,12 +882,10 @@ func importDatabaseFile(server: DBServer,
         }
     }
     try validateImportDatabaseSource(sourceURL, tableName: tableName)
-    try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName, publish: false)
-    try server.writeIMLifecycleRecord(table: tableName,
-                                      action: .install,
-                                      preserveLearning: restoreLearning,
-                                      postSignal: false)
-    try server.markTableChangedAndPublish(tableName)
+    try server.performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                                 stagingDatabaseURL: sourceURL,
+                                                                 preserveLearning: restoreLearning,
+                                                                 publishImmediately: true))
 }
 
 private func isZipArchive(at url: URL) -> Bool {

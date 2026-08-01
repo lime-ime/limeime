@@ -333,6 +333,7 @@ final class DBServer {
 
     private init(database: SharedDatabase) {
         self.database = database
+        schedulePendingEditorPublicationRecovery()
     }
 
     /// Test hook: inject a pre-opened LimeDB so tests can use isolated temp databases
@@ -346,6 +347,18 @@ final class DBServer {
     /// own open/reopen path.
     init(_testDatabaseDirectory dataDirURL: URL) {
         self.database = SharedDatabase(dataDirOverride: dataDirURL)
+    }
+
+    private func schedulePendingEditorPublicationRecovery() {
+        guard !SyncDatabaseLocator.isKeyboardExtension() else { return }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self else { return }
+            do {
+                try self.publishPendingEditorChanges()
+            } catch {
+                NSLog("DBServer pending editor publication recovery failed: \(error)")
+            }
+        }
     }
 
     // MARK: - Constants
@@ -519,6 +532,33 @@ final class DBServer {
         try database.withLiveAccess { datasource in
             let liveURL = URL(fileURLWithPath: datasource.dbPath())
             try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    @discardableResult
+    func performEditorMutation(_ mutation: EditorMutation) throws -> EditorMutationResult {
+        try database.withLiveAccess { datasource in
+            try datasource.performEditorMutation(mutation)
+        }
+    }
+
+    func performTableLifecycleMutation(_ mutation: TableLifecycleMutation) throws {
+        try database.withLiveAccess { datasource in
+            try datasource.performTableLifecycleMutation(mutation)
+        }
+        if mutation.publishImmediately {
+            try publishPendingEditorChanges()
+        }
+    }
+
+    func publishPendingEditorChanges() throws {
+        try database.withLiveAccess { datasource in
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            let snapshotURL = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+            guard try datasource.hasPendingEditorChanges(comparedToSnapshot: snapshotURL) else { return }
             try ColdPublisher(liveColdDatabaseURL: liveURL,
                               appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
             publishImJson(from: datasource, liveURL: liveURL)
@@ -1552,11 +1592,10 @@ final class DBServer {
     // MARK: - Import / Export Proxies
 
     func importFromAttachedDB(sourcePath: String, tableName: String, publish: Bool = true) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importFromAttachedDB(sourcePath: sourcePath, tableName: tableName)
-        if publish {
-            try markTableChangedAndPublish(tableName)
-        }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: URL(fileURLWithPath: sourcePath),
+                                                              preserveLearning: false,
+                                                              publishImmediately: publish))
     }
 
     @discardableResult
@@ -1571,12 +1610,14 @@ final class DBServer {
 
     func importTxtFile(at path: String, tableName: String,
                        publish: Bool = true,
+                       preserveLearning: Bool = false,
                        progress: ((Int) -> Void)?) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importTxtFile(at: path, tableName: tableName, progress: progress)
-        if publish {
-            try markTableChangedAndPublish(tableName)
-        }
+        let stagingURL = try stageTextImport(at: path, tableName: tableName, progress: progress)
+        defer { removeTemporaryItem(at: stagingURL.deletingLastPathComponent()) }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: stagingURL,
+                                                              preserveLearning: preserveLearning,
+                                                              publishImmediately: publish))
     }
 
     func exportDB(to destPath: String) throws {
@@ -1589,8 +1630,21 @@ final class DBServer {
     }
 
     func importFromZip(at zipURL: URL, tableName: String) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importFromZip(at: zipURL, tableName: tableName)
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lime-import-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { removeTemporaryItem(at: tempDir) }
+        let files = try unzipReturningFiles(source: zipURL, targetDir: tempDir)
+        guard let dbURL = files.first(where: {
+            let lower = $0.path.lowercased()
+            return lower.hasSuffix(".db") || lower.hasSuffix(".limedb")
+        }) else {
+            throw DBServerError.invalidStagingDatabase(tableName)
+        }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: dbURL,
+                                                              preserveLearning: false,
+                                                              publishImmediately: true))
     }
 
     func registerIM(imName: String, tableName: String, label: String, keyboardId: String) throws {
@@ -1605,6 +1659,33 @@ final class DBServer {
     func seedCustomIM() throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.seedCustomIM()
+    }
+
+    private func stageTextImport(at path: String,
+                                 tableName: String,
+                                 progress: ((Int) -> Void)?) throws -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lime-text-import-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let stagingURL = dir.appendingPathComponent("staging.db")
+        do {
+            let staging = try LimeDB(path: stagingURL.path)
+            try staging.importTxtFile(at: path, tableName: tableName, progress: progress)
+            try staging.closeForReplacement()
+            return stagingURL
+        } catch {
+            removeTemporaryItem(at: dir)
+            throw error
+        }
+    }
+
+    private func removeTemporaryItem(at url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            NSLog("DBServer temporary cleanup failed for \(url.path): \(error)")
+        }
     }
 
     private static func fileSizeBytes(at url: URL) -> Int64 {
@@ -1631,6 +1712,10 @@ enum DBServerError: Error {
     case unsafeZipEntry(String)       // SEC: zip-slip rejected entry path
     case zipBombDetected              // SEC: archive exceeded size/count/ratio cap
     case securityScopedAccessDenied   // SEC: couldn't start security-scoped resource
+    case invalidEditorMutation(String)
+    case duplicateLogicalKey(String)
+    case recordNotFound(String)
+    case invalidStagingDatabase(String)
 }
 
 extension DBServerError: LocalizedError {
@@ -1662,6 +1747,14 @@ extension DBServerError: LocalizedError {
             return "備份檔過大或壓縮格式異常"
         case .securityScopedAccessDenied:
             return "無法取得檔案存取權限"
+        case .invalidEditorMutation(let message):
+            return message
+        case .duplicateLogicalKey:
+            return "資料已存在"
+        case .recordNotFound:
+            return "找不到資料"
+        case .invalidStagingDatabase:
+            return "匯入檔格式不正確"
         }
     }
 }

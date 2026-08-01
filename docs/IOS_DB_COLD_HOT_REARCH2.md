@@ -651,17 +651,17 @@ git commit -m "feat(ios): journal keyboard learning atomically"
 - Produces: `performEditorMutation(_:) throws`, `performTableLifecycleMutation(_:) throws`, and
   `publishPendingEditorChanges() throws`.
 
-- [ ] **Step 1: Add failing atomicity tests.** Inject row, staging install/drop, §3.3 lifecycle-table insert, fence, revision, and publication failures. Assert record mutations and table lifecycle mutations each commit their data/fence/revision/lifecycle state together, UI changes only after success, and publication failure does not roll back live intent.
-- [ ] **Step 2: Add editor and importer fixtures.** Cover rename, clear-then-add, three-edits-one-publication, `.cin`, `.lime`, `.limedb`/`.zip`, install/replace/delete, and a crash before the final lifecycle transaction. The duplicate fixture remains tolerance-only: editor delete removes every matching row, editor update converges them, and editor add of an existing key is rejected by the `NOT EXISTS` check.
-- [ ] **Step 3: Implement the smallest editor and lifecycle mutation enums plus §3.3's additive cold table.** Route both record controllers through `performEditorMutation(_:)`; route every `SetupImController` import/install/replace/delete path through staging plus `performTableLifecycleMutation(_:)`. Remove every separate mutate/import-then-`markTableChangedAndPublish` sequence. Restore stays on the epoch workflow.
-- [ ] **Step 4: Publish record edits only on editor exit and Settings background; lifecycle operations may publish immediately after their atomic commit. Recover any live-revision-versus-snapshot gap on next launch.**
-- [ ] **Step 5: Run the five focused XCTest classes; expected result is PASS.**
+- [x] **Step 1: Add failing atomicity tests.** Inject row, staging install/drop, §3.3 lifecycle-table insert, fence, revision, and publication failures. Assert record mutations and table lifecycle mutations each commit their data/fence/revision/lifecycle state together, UI changes only after success, and publication failure does not roll back live intent.
+- [x] **Step 2: Add editor and importer fixtures.** Cover rename, clear-then-add, three-edits-one-publication, `.cin`, `.lime`, `.limedb`/`.zip`, install/replace/delete, and a crash before the final lifecycle transaction. The duplicate fixture remains tolerance-only: editor delete removes every matching row, editor update converges them, and editor add of an existing key is rejected by the `NOT EXISTS` check.
+- [x] **Step 3: Implement the smallest editor and lifecycle mutation enums plus §3.3's additive cold table.** Route both record controllers through `performEditorMutation(_:)`; route every `SetupImController` import/install/replace/delete path through staging plus `performTableLifecycleMutation(_:)`. Remove every separate mutate/import-then-`markTableChangedAndPublish` sequence. Restore stays on the epoch workflow.
+- [x] **Step 4: Publish record edits only on editor exit and Settings background; lifecycle operations may publish immediately after their atomic commit. Recover any live-revision-versus-snapshot gap on next launch.**
+- [x] **Step 5: Run the five focused XCTest classes; expected result is PASS.**
 
 ```bash
 xcodebuild test -project LimeIME-iOS/LimeIME.xcodeproj -scheme LimeIME -destination 'platform=iOS Simulator,name=iPhone 16' -only-testing:LimeTests/ManageImControllerTest -only-testing:LimeTests/ManageRelatedControllerTest -only-testing:LimeTests/SetupImControllerTest -only-testing:LimeTests/DBServerTest -only-testing:LimeTests/ColdPublisherTest
 ```
 
-- [ ] **Step 6: Commit.**
+- [x] **Step 6: Commit.**
 
 ```bash
 git add LimeIME-iOS/Shared/Database/DBServer.swift LimeIME-iOS/Shared/Database/LimeDB.swift LimeIME-iOS/Shared/Database/SyncContract.swift LimeIME-iOS/LimeSettings/Controllers/ManageImController.swift LimeIME-iOS/LimeSettings/Controllers/ManageRelatedController.swift LimeIME-iOS/LimeSettings/Controllers/SetupImController.swift LimeIME-iOS/LimeSettings/Views/RecordListView.swift LimeIME-iOS/LimeSettings/Views/RelatedListView.swift LimeIME-iOS/LimeTests/ManageImControllerTest.swift LimeIME-iOS/LimeTests/ManageRelatedControllerTest.swift LimeIME-iOS/LimeTests/SetupImControllerTest.swift LimeIME-iOS/LimeTests/DBServerTest.swift LimeIME-iOS/LimeTests/ColdPublisherTest.swift

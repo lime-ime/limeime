@@ -290,6 +290,54 @@ final class EditorRefreshFileLock: @unchecked Sendable {
     }
 }
 
+enum EditorFenceAction: String {
+    case upsert
+    case delete
+}
+
+enum EditorTableFenceAction: String {
+    case clear
+    case replace
+}
+
+enum IMTableLifecycleAction: String {
+    case install
+    case delete
+}
+
+enum EditorMutation {
+    case addMapping(table: String, code: String, word: String, score: Int)
+    case updateMapping(table: String, id: String, code: String, word: String, score: Int)
+    case deleteMapping(table: String, id: String)
+    case addRelated(parentWord: String, childWord: String, score: Int)
+    case updateRelated(id: Int64, parentWord: String, childWord: String, score: Int)
+    case deleteRelated(id: Int64)
+    case clearTable(String)
+}
+
+struct EditorMutationResult {
+    let rowID: Int64?
+    let affectedRows: Int
+}
+
+enum TableLifecycleMutation {
+    case replaceFromStaging(table: String,
+                            stagingDatabaseURL: URL,
+                            preserveLearning: Bool,
+                            publishImmediately: Bool)
+    case delete(table: String,
+                preserveLearning: Bool,
+                publishImmediately: Bool)
+
+    var publishImmediately: Bool {
+        switch self {
+        case let .replaceFromStaging(_, _, _, publishImmediately),
+             let .delete(_, _, publishImmediately):
+            return publishImmediately
+        }
+    }
+}
+
 struct IMLifecycleRecord: Codable, Equatable {
     enum Action: String, Codable {
         case delete

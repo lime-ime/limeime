@@ -656,6 +656,538 @@ final class LimeDB {
         }) ?? -1
     }
 
+    // MARK: - Atomic cold editor and lifecycle mutations
+
+    private struct StagedMappingRow {
+        let code: String
+        let word: String
+        let score: Int
+        let baseScore: Int
+        let code3r: String?
+    }
+
+    private struct StagedIMRow {
+        let title: String?
+        let desc: String?
+        let keyboard: String?
+        let disable: Int
+        let selkey: String
+        let endkey: String
+        let spacestyle: String
+    }
+
+    private struct StagedTablePayload {
+        let rows: [StagedMappingRow]
+        let imRows: [StagedIMRow]
+    }
+
+    func performEditorMutation(_ mutation: EditorMutation) throws -> EditorMutationResult {
+        guard !checkDBConnection() else { throw DBServerError.datasourceUnavailable }
+        return try dbQueue.write { db in
+            try ensureColdIntentTables(db)
+            switch mutation {
+            case let .addMapping(table, code, word, score):
+                return try addMapping(table: table, code: code, word: word, score: score, db: db)
+            case let .updateMapping(table, id, code, word, score):
+                return try updateMapping(table: table, id: id, code: code, word: word, score: score, db: db)
+            case let .deleteMapping(table, id):
+                return try deleteMapping(table: table, id: id, db: db)
+            case let .addRelated(parentWord, childWord, score):
+                return try addRelated(parentWord: parentWord, childWord: childWord, score: score, db: db)
+            case let .updateRelated(id, parentWord, childWord, score):
+                return try updateRelated(id: id, parentWord: parentWord, childWord: childWord, score: score, db: db)
+            case let .deleteRelated(id):
+                return try deleteRelated(id: id, db: db)
+            case let .clearTable(table):
+                return try clearEditorTable(table, db: db)
+            }
+        }
+    }
+
+    func performTableLifecycleMutation(_ mutation: TableLifecycleMutation) throws {
+        guard !checkDBConnection() else { throw DBServerError.datasourceUnavailable }
+        switch mutation {
+        case let .replaceFromStaging(table, stagingDatabaseURL, preserveLearning, _):
+            let payload = try readStagedTablePayload(stagingDatabaseURL, table: table)
+            try dbQueue.write { db in
+                try ensureColdIntentTables(db)
+                try replaceTableFromPayload(table: table,
+                                            payload: payload,
+                                            preserveLearning: preserveLearning,
+                                            db: db)
+            }
+        case let .delete(table, preserveLearning, _):
+            try dbQueue.write { db in
+                try ensureColdIntentTables(db)
+                try deleteLifecycleTable(table: table,
+                                         preserveLearning: preserveLearning,
+                                         db: db)
+            }
+        }
+    }
+
+    func hasPendingEditorChanges(comparedToSnapshot snapshotURL: URL) throws -> Bool {
+        let liveRevisions = try dbQueue.read { db in
+            try revisionMap(db)
+        }
+        guard !liveRevisions.isEmpty else { return false }
+        guard FileManager.default.fileExists(atPath: snapshotURL.path) else {
+            return liveRevisions.values.contains { $0 > 0 }
+        }
+        var config = Configuration()
+        config.readonly = true
+        let snapshotQueue = try DatabaseQueue(path: snapshotURL.path, configuration: config)
+        defer { closeQueue(snapshotQueue, label: snapshotURL.path) }
+        let snapshotRevisions = try snapshotQueue.read { db in
+            try revisionMap(db)
+        }
+        return liveRevisions.contains { table, revision in
+            revision > (snapshotRevisions[table] ?? 0)
+        }
+    }
+
+    private func addMapping(table: String, code: String, word: String, score: Int,
+                            db: Database) throws -> EditorMutationResult {
+        try validateMappingKey(table: table, code: code, word: word)
+        try ensureMappingTable(table, db: db)
+        guard try logicalMappingCount(table: table, code: code, word: word, db: db) == 0 else {
+            throw DBServerError.duplicateLogicalKey("\(code)|\(word)")
+        }
+        if table == "phonetic" {
+            let noTone = code.replacingOccurrences(of: "[3467 ]",
+                                                   with: "",
+                                                   options: .regularExpression)
+            try db.execute(sql: """
+                INSERT INTO \(table) (code, word, score, basescore, code3r)
+                VALUES (?, ?, ?, 0, ?)
+                """, arguments: [code, word, score, noTone])
+        } else {
+            try db.execute(sql: """
+                INSERT INTO \(table) (code, word, score, basescore)
+                VALUES (?, ?, ?, 0)
+                """, arguments: [code, word, score])
+        }
+        let rowID = db.lastInsertedRowID
+        let revision = try bumpTableRevision(table, db: db)
+        try writeRowFence(table: table, k1: code, k2: word, action: .upsert, revision: revision, db: db)
+        return EditorMutationResult(rowID: rowID, affectedRows: 1)
+    }
+
+    private func updateMapping(table: String, id: String, code: String, word: String, score: Int,
+                               db: Database) throws -> EditorMutationResult {
+        try validateMappingKey(table: table, code: code, word: word)
+        guard let rowID = Int64(id) else { throw DBServerError.invalidEditorMutation("invalid row id") }
+        try ensureMappingTable(table, db: db)
+        guard let old = try Row.fetchOne(db,
+                                         sql: "SELECT code, word FROM \(table) WHERE _id = ? AND word IS NOT NULL LIMIT 1",
+                                         arguments: [rowID]),
+              let oldCode = old["code"] as String?,
+              let oldWord = old["word"] as String?,
+              !oldCode.isEmpty,
+              !oldWord.isEmpty else {
+            throw DBServerError.recordNotFound(id)
+        }
+
+        let oldCount = try logicalMappingCount(table: table, code: oldCode, word: oldWord, db: db)
+        let sameKey = oldCode == code && oldWord == word
+        let newKeyVacant = try logicalMappingCount(table: table, code: code, word: word, db: db) == 0
+        if sameKey || newKeyVacant {
+            try db.execute(sql: """
+                UPDATE \(table)
+                SET code = ?, word = ?, score = ?
+                WHERE code = ? AND word = ? AND word IS NOT NULL
+                """, arguments: [code, word, score, oldCode, oldWord])
+        } else {
+            try db.execute(sql: "DELETE FROM \(table) WHERE code = ? AND word = ? AND word IS NOT NULL",
+                           arguments: [oldCode, oldWord])
+            try db.execute(sql: """
+                UPDATE \(table)
+                SET score = ?
+                WHERE code = ? AND word = ? AND word IS NOT NULL
+                """, arguments: [score, code, word])
+        }
+
+        let revision = try bumpTableRevision(table, db: db)
+        if !sameKey {
+            try writeRowFence(table: table, k1: oldCode, k2: oldWord, action: .delete, revision: revision, db: db)
+        }
+        try writeRowFence(table: table, k1: code, k2: word, action: .upsert, revision: revision, db: db)
+        return EditorMutationResult(rowID: rowID, affectedRows: max(oldCount, db.changesCount))
+    }
+
+    private func deleteMapping(table: String, id: String, db: Database) throws -> EditorMutationResult {
+        guard let rowID = Int64(id) else { throw DBServerError.invalidEditorMutation("invalid row id") }
+        guard isValidMappingEditorTable(table) else { throw LimeDBError.invalidTableName(table) }
+        guard let old = try Row.fetchOne(db,
+                                         sql: "SELECT code, word FROM \(table) WHERE _id = ? AND word IS NOT NULL LIMIT 1",
+                                         arguments: [rowID]),
+              let oldCode = old["code"] as String?,
+              let oldWord = old["word"] as String?,
+              !oldCode.isEmpty,
+              !oldWord.isEmpty else {
+            throw DBServerError.recordNotFound(id)
+        }
+        try db.execute(sql: "DELETE FROM \(table) WHERE code = ? AND word = ? AND word IS NOT NULL",
+                       arguments: [oldCode, oldWord])
+        let affected = db.changesCount
+        let revision = try bumpTableRevision(table, db: db)
+        try writeRowFence(table: table, k1: oldCode, k2: oldWord, action: .delete, revision: revision, db: db)
+        return EditorMutationResult(rowID: nil, affectedRows: affected)
+    }
+
+    private func addRelated(parentWord: String, childWord: String, score: Int,
+                            db: Database) throws -> EditorMutationResult {
+        try validateRelatedKey(parentWord: parentWord, childWord: childWord)
+        guard try logicalRelatedCount(parentWord: parentWord, childWord: childWord, db: db) == 0 else {
+            throw DBServerError.duplicateLogicalKey("\(parentWord)|\(childWord)")
+        }
+        try db.execute(sql: """
+            INSERT INTO related (pword, cword, basescore, score)
+            VALUES (?, ?, 0, ?)
+            """, arguments: [parentWord, childWord, score])
+        let rowID = db.lastInsertedRowID
+        let revision = try bumpTableRevision("related", db: db)
+        try writeRowFence(table: "related", k1: parentWord, k2: childWord,
+                          action: .upsert, revision: revision, db: db)
+        return EditorMutationResult(rowID: rowID, affectedRows: 1)
+    }
+
+    private func updateRelated(id: Int64, parentWord: String, childWord: String, score: Int,
+                               db: Database) throws -> EditorMutationResult {
+        try validateRelatedKey(parentWord: parentWord, childWord: childWord)
+        guard let old = try Row.fetchOne(db,
+                                         sql: "SELECT pword, cword FROM related WHERE _id = ? AND cword IS NOT NULL LIMIT 1",
+                                         arguments: [id]),
+              let oldParent = old["pword"] as String?,
+              let oldChild = old["cword"] as String?,
+              !oldParent.isEmpty,
+              !oldChild.isEmpty else {
+            throw DBServerError.recordNotFound("\(id)")
+        }
+        let oldCount = try logicalRelatedCount(parentWord: oldParent, childWord: oldChild, db: db)
+        let sameKey = oldParent == parentWord && oldChild == childWord
+        let newKeyVacant = try logicalRelatedCount(parentWord: parentWord, childWord: childWord, db: db) == 0
+        if sameKey || newKeyVacant {
+            try db.execute(sql: """
+                UPDATE related
+                SET pword = ?, cword = ?, score = ?
+                WHERE pword = ? AND cword = ? AND cword IS NOT NULL
+                """, arguments: [parentWord, childWord, score, oldParent, oldChild])
+        } else {
+            try db.execute(sql: "DELETE FROM related WHERE pword = ? AND cword = ? AND cword IS NOT NULL",
+                           arguments: [oldParent, oldChild])
+            try db.execute(sql: """
+                UPDATE related
+                SET score = ?
+                WHERE pword = ? AND cword = ? AND cword IS NOT NULL
+                """, arguments: [score, parentWord, childWord])
+        }
+        let revision = try bumpTableRevision("related", db: db)
+        if !sameKey {
+            try writeRowFence(table: "related", k1: oldParent, k2: oldChild,
+                              action: .delete, revision: revision, db: db)
+        }
+        try writeRowFence(table: "related", k1: parentWord, k2: childWord,
+                          action: .upsert, revision: revision, db: db)
+        return EditorMutationResult(rowID: id, affectedRows: max(oldCount, db.changesCount))
+    }
+
+    private func deleteRelated(id: Int64, db: Database) throws -> EditorMutationResult {
+        guard let old = try Row.fetchOne(db,
+                                         sql: "SELECT pword, cword FROM related WHERE _id = ? AND cword IS NOT NULL LIMIT 1",
+                                         arguments: [id]),
+              let oldParent = old["pword"] as String?,
+              let oldChild = old["cword"] as String?,
+              !oldParent.isEmpty,
+              !oldChild.isEmpty else {
+            throw DBServerError.recordNotFound("\(id)")
+        }
+        try db.execute(sql: "DELETE FROM related WHERE pword = ? AND cword = ? AND cword IS NOT NULL",
+                       arguments: [oldParent, oldChild])
+        let affected = db.changesCount
+        let revision = try bumpTableRevision("related", db: db)
+        try writeRowFence(table: "related", k1: oldParent, k2: oldChild,
+                          action: .delete, revision: revision, db: db)
+        return EditorMutationResult(rowID: nil, affectedRows: affected)
+    }
+
+    private func clearEditorTable(_ table: String, db: Database) throws -> EditorMutationResult {
+        guard isValidTableName(table), table != "im", table != "keyboard" else {
+            throw LimeDBError.invalidTableName(table)
+        }
+        try db.execute(sql: "DELETE FROM \(table)")
+        let affected = db.changesCount
+        let revision = try bumpTableRevision(table, db: db)
+        try writeTableFence(table: table, action: .clear, revision: revision, db: db)
+        try deleteSupersededRowFences(table: table, revision: revision, db: db)
+        return EditorMutationResult(rowID: nil, affectedRows: affected)
+    }
+
+    private func replaceTableFromPayload(table: String,
+                                         payload: StagedTablePayload,
+                                         preserveLearning: Bool,
+                                         db: Database) throws {
+        guard isValidMappingEditorTable(table) else { throw LimeDBError.invalidTableName(table) }
+        try ensureMappingTable(table, db: db)
+        try db.execute(sql: "DELETE FROM \(table)")
+        for row in payload.rows {
+            if table == "phonetic" {
+                let noTone = row.code3r ?? row.code.replacingOccurrences(of: "[3467 ]",
+                                                                          with: "",
+                                                                          options: .regularExpression)
+                try db.execute(sql: """
+                    INSERT INTO \(table) (code, word, score, basescore, code3r)
+                    VALUES (?, ?, ?, ?, ?)
+                    """, arguments: [row.code, row.word, row.score, row.baseScore, noTone])
+            } else {
+                try db.execute(sql: """
+                    INSERT INTO \(table) (code, word, score, basescore)
+                    VALUES (?, ?, ?, ?)
+                    """, arguments: [row.code, row.word, row.score, row.baseScore])
+            }
+        }
+        try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [table])
+        for row in payload.imRows {
+            try db.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, arguments: [
+                    table,
+                    row.title,
+                    row.desc,
+                    row.keyboard,
+                    row.disable,
+                    row.selkey,
+                    row.endkey,
+                    row.spacestyle,
+                ])
+        }
+        if payload.imRows.isEmpty {
+            try db.execute(sql: """
+                INSERT INTO im (code, title, desc)
+                VALUES (?, 'name', ?)
+                """, arguments: [table, defaultImFullName(table, fallback: table)])
+        }
+        let revision = try bumpTableRevision(table, db: db)
+        try writeLifecycleIntent(table: table, revision: revision,
+                                 action: .install, preserveLearning: preserveLearning, db: db)
+        try writeTableFence(table: table, action: .replace, revision: revision, db: db)
+        try deleteSupersededRowFences(table: table, revision: revision, db: db)
+    }
+
+    private func deleteLifecycleTable(table: String,
+                                      preserveLearning: Bool,
+                                      db: Database) throws {
+        guard isValidMappingEditorTable(table) else { throw LimeDBError.invalidTableName(table) }
+        try db.execute(sql: "DELETE FROM \(table)")
+        try db.execute(sql: "DELETE FROM im WHERE code = ?", arguments: [table])
+        let revision = try bumpTableRevision(table, db: db)
+        try writeLifecycleIntent(table: table, revision: revision,
+                                 action: .delete, preserveLearning: preserveLearning, db: db)
+        try writeTableFence(table: table, action: .clear, revision: revision, db: db)
+        try deleteSupersededRowFences(table: table, revision: revision, db: db)
+    }
+
+    private func readStagedTablePayload(_ url: URL, table: String) throws -> StagedTablePayload {
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw DBServerError.fileNotFound(url.path)
+        }
+        var config = Configuration()
+        config.readonly = true
+        let sourceQueue = try DatabaseQueue(path: url.path, configuration: config)
+        defer { closeQueue(sourceQueue, label: url.path) }
+        return try sourceQueue.read { db in
+            let sourceTable: String
+            if try db.tableExists("custom") {
+                sourceTable = "custom"
+            } else if try db.tableExists(table) {
+                sourceTable = table
+            } else {
+                throw DBServerError.invalidStagingDatabase(table)
+            }
+            let columns = try Row.fetchAll(db, sql: "PRAGMA table_info(\(sourceTable))")
+                .compactMap { $0["name"] as String? }
+            guard columns.contains("code"), columns.contains("word") else {
+                throw DBServerError.invalidStagingDatabase(table)
+            }
+            let scoreExpr = columns.contains("score") ? "COALESCE(score, 0)" : "0"
+            let baseScoreExpr = columns.contains("basescore") ? "COALESCE(basescore, 0)" : "0"
+            let code3rExpr = columns.contains("code3r") ? "code3r" : "NULL"
+            let rows = try Row.fetchAll(db, sql: """
+                SELECT code, word, \(scoreExpr) AS score, \(baseScoreExpr) AS basescore, \(code3rExpr) AS code3r
+                FROM \(sourceTable)
+                WHERE code IS NOT NULL AND code <> ''
+                  AND word IS NOT NULL AND word <> ''
+                """).map {
+                StagedMappingRow(code: $0["code"] as String? ?? "",
+                                 word: $0["word"] as String? ?? "",
+                                 score: $0["score"] as Int? ?? 0,
+                                 baseScore: $0["basescore"] as Int? ?? 0,
+                                 code3r: $0["code3r"] as String?)
+            }
+            guard !rows.isEmpty else { throw DBServerError.invalidStagingDatabase(table) }
+
+            let imRows: [StagedIMRow]
+            if try db.tableExists("im") {
+                imRows = try Row.fetchAll(db, sql: """
+                    SELECT title, desc, keyboard, disable, selkey, endkey, spacestyle
+                    FROM im
+                    WHERE code = ? OR code = 'custom'
+                    """, arguments: [table]).map {
+                    StagedIMRow(title: $0["title"] as String?,
+                                desc: $0["desc"] as String?,
+                                keyboard: $0["keyboard"] as String?,
+                                disable: $0["disable"] as Int? ?? 0,
+                                selkey: $0["selkey"] as String? ?? "",
+                                endkey: $0["endkey"] as String? ?? "",
+                                spacestyle: $0["spacestyle"] as String? ?? "")
+                }
+            } else {
+                imRows = []
+            }
+            return StagedTablePayload(rows: rows, imRows: imRows)
+        }
+    }
+
+    private func validateMappingKey(table: String, code: String, word: String) throws {
+        guard isValidMappingEditorTable(table) else { throw LimeDBError.invalidTableName(table) }
+        guard !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !word.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw DBServerError.invalidEditorMutation("empty mapping key")
+        }
+    }
+
+    private func validateRelatedKey(parentWord: String, childWord: String) throws {
+        guard !parentWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !childWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw DBServerError.invalidEditorMutation("empty related key")
+        }
+    }
+
+    private func isValidMappingEditorTable(_ table: String) -> Bool {
+        isValidTableName(table) && table != "related" && table != "im" && table != "keyboard"
+    }
+
+    private func logicalMappingCount(table: String, code: String, word: String, db: Database) throws -> Int {
+        try Int.fetchOne(db,
+                         sql: "SELECT COUNT(*) FROM \(table) WHERE code = ? AND word = ? AND word IS NOT NULL",
+                         arguments: [code, word]) ?? 0
+    }
+
+    private func logicalRelatedCount(parentWord: String, childWord: String, db: Database) throws -> Int {
+        try Int.fetchOne(db,
+                         sql: "SELECT COUNT(*) FROM related WHERE pword = ? AND cword = ? AND cword IS NOT NULL",
+                         arguments: [parentWord, childWord]) ?? 0
+    }
+
+    private func ensureColdIntentTables(_ db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_fence (
+                tbl      TEXT    NOT NULL,
+                k1       TEXT    NOT NULL,
+                k2       TEXT    NOT NULL,
+                action   TEXT    NOT NULL CHECK (action IN ('upsert', 'delete')),
+                revision INTEGER NOT NULL,
+                PRIMARY KEY (tbl, k1, k2)
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_table_fence (
+                tbl      TEXT PRIMARY KEY,
+                action   TEXT    NOT NULL CHECK (action IN ('clear', 'replace')),
+                revision INTEGER NOT NULL
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS im_lifecycle_intent (
+                tbl               TEXT    NOT NULL,
+                revision          INTEGER NOT NULL,
+                action            TEXT    NOT NULL CHECK (action IN ('install', 'delete')),
+                preserve_learning INTEGER NOT NULL CHECK (preserve_learning IN (0, 1)),
+                PRIMARY KEY (tbl, revision)
+            ) WITHOUT ROWID
+            """)
+    }
+
+    private func bumpTableRevision(_ table: String, db: Database) throws -> Int {
+        let key = "rev:\(table)"
+        let raw = try String.fetchOne(db, sql: "SELECT value FROM sync_meta WHERE key = ?",
+                                      arguments: [key])
+        let next = (raw.flatMap(Int.init) ?? 0) + 1
+        try db.execute(sql: """
+            INSERT INTO sync_meta(key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """, arguments: [key, String(next)])
+        return next
+    }
+
+    private func writeRowFence(table: String, k1: String, k2: String,
+                               action: EditorFenceAction, revision: Int,
+                               db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO editor_fence(tbl, k1, k2, action, revision)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(tbl, k1, k2) DO UPDATE SET
+                action = excluded.action,
+                revision = excluded.revision
+            """, arguments: [table, k1, k2, action.rawValue, revision])
+    }
+
+    private func writeTableFence(table: String, action: EditorTableFenceAction,
+                                 revision: Int, db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO editor_table_fence(tbl, action, revision)
+            VALUES (?, ?, ?)
+            ON CONFLICT(tbl) DO UPDATE SET
+                action = excluded.action,
+                revision = excluded.revision
+            """, arguments: [table, action.rawValue, revision])
+    }
+
+    private func writeLifecycleIntent(table: String, revision: Int,
+                                      action: IMTableLifecycleAction,
+                                      preserveLearning: Bool,
+                                      db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO im_lifecycle_intent(tbl, revision, action, preserve_learning)
+            VALUES (?, ?, ?, ?)
+            """, arguments: [table, revision, action.rawValue, preserveLearning ? 1 : 0])
+    }
+
+    private func deleteSupersededRowFences(table: String, revision: Int, db: Database) throws {
+        try db.execute(sql: "DELETE FROM editor_fence WHERE tbl = ? AND revision <= ?",
+                       arguments: [table, revision])
+    }
+
+    private func revisionMap(_ db: Database) throws -> [String: Int] {
+        let hasMeta = try (Int.fetchOne(db,
+                                        sql: "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'sync_meta'") ?? 0) > 0
+        guard hasMeta else { return [:] }
+        let rows = try Row.fetchAll(db, sql: "SELECT key, value FROM sync_meta WHERE key LIKE 'rev:%'")
+        var result: [String: Int] = [:]
+        for row in rows {
+            guard let key = row["key"] as String?,
+                  let value = row["value"] as String?,
+                  let revision = Int(value) else { continue }
+            result[String(key.dropFirst(4))] = revision
+        }
+        return result
+    }
+
+    private func closeQueue(_ queue: DatabaseQueue, label: String) {
+        do {
+            try queue.close()
+        } catch {
+            NSLog("LimeDB close failed for \(label): \(error)")
+        }
+    }
+
     // MARK: - Mapping Queries (spec §13 getMappingByCode)
 
     /// Full port of Android getMappingByCode(). Returns nil on DB error.
@@ -3454,17 +3986,24 @@ final class LimeDB {
             throw LimeDBError.invalidTableName(tableName)
         }
         try dbQueue.write { db in
-            try db.execute(sql: """
-                CREATE TABLE IF NOT EXISTS \(tableName) (
-                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                    code      TEXT,
-                    word      TEXT,
-                    score     INTEGER DEFAULT 0,
-                    basescore INTEGER DEFAULT 0,
-                    code3r    TEXT
-                )
-            """)
+            try ensureMappingTable(tableName, db: db)
         }
+    }
+
+    private func ensureMappingTable(_ tableName: String, db: Database) throws {
+        guard isValidTableName(tableName) else {
+            throw LimeDBError.invalidTableName(tableName)
+        }
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS \(tableName) (
+                _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                code      TEXT,
+                word      TEXT,
+                score     INTEGER DEFAULT 0,
+                basescore INTEGER DEFAULT 0,
+                code3r    TEXT
+            )
+        """)
     }
 
     // MARK: - Import: separate-connection copy (was ATTACH DATABASE)
