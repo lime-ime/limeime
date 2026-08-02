@@ -36,6 +36,7 @@ struct RelatedListView: View {
 
     @EnvironmentObject private var manageRelatedController: ManageRelatedController
     @EnvironmentObject private var setupController: SetupImController
+    @EnvironmentObject private var relayActiveState: RelayActiveState
     @Environment(\.scenePhase) private var scenePhase
 
     var isEmbedded: Bool = false
@@ -62,7 +63,9 @@ struct RelatedListView: View {
 
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
-    private var canEdit: Bool { true }
+    // Amendment A1: mutations require FA confirmed-on + LIME active (relay-resolved).
+    // Entry/viewing stays immediate; the capability flips reactively from relay state.
+    private var canEdit: Bool { relayActiveState.editingCapability == .live }
 
     var body: some View {
         if isEmbedded {
@@ -110,13 +113,17 @@ struct RelatedListView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text(phrase.childWord)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(phrase.score.description)
+                            Text(canEdit ? phrase.score.description : "—")
                                 .frame(width: 48, alignment: .trailing)
                                 .foregroundColor(.secondary)
                         }
                         .font(.body)
                         .contentShape(Rectangle())
                         .onTapGesture {
+                            guard canEdit else {
+                                statusMessage = unlockHint
+                                return
+                            }
                             editingPhrase = IdentifiableRelated(phrase: phrase)
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
@@ -214,12 +221,14 @@ struct RelatedListView: View {
         }
     }
 
+    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯關聯字庫（顯示實際分數）" }
+
     private var capabilityMessage: String {
-        "即時資料可編輯；鍵盤會在離開後套用變更。"
+        canEdit ? "即時資料可編輯；鍵盤會在離開後套用變更。" : unlockHint
     }
 
     private var capabilityIcon: String {
-        "checkmark.circle"
+        canEdit ? "checkmark.circle" : "lock"
     }
 
     private func publishEditorCloseIfNeeded() {

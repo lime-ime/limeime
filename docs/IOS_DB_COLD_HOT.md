@@ -313,8 +313,11 @@ Cold is authoritative for row existence and explicit editor values. Hot is
 authoritative only for keyboard learning that cold has not acknowledged. The old
 editor-entry ownership path is removed: no cold suspension, no request/receipt
 files, no hidden keyboard probe, no fixed probe delay, and no attached hot→cold
-harvest. Record and related editors open live cold immediately and stay editable
-whenever cold opens; Full Access affects delivery status only.
+harvest. Record and related editors open live cold immediately for viewing; mutations
+(add / edit / delete / clear) and learned-score display require the relay-resolved live
+capability — Full Access confirmed-on and LIME the active keyboard (rearch2 Amendment A1:
+a stale-score edit must not silently supersede undelivered learning). The capability flips
+reactively from the relay heartbeat; entry never waits on a probe or handshake.
 
 **Logical identity.** Mapping rows sync by `(code, word)` and related rows by
 `(pword, cword)`, never by `_id`. Keyed updates and deletes address every matching
