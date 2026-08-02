@@ -899,14 +899,20 @@ When a **related-DB import** runs (`pickerType == .relatedDb`), show a centred `
 
 Reached via NavigationLink from §5.2 ("瀏覽 / 編輯資料表").
 
-The editor status line is state-specific:
+The editor status line is state-specific. Since the cold/hot re-architecture
+([IOS_DB_COLD_HOT_REARCH2.md](IOS_DB_COLD_HOT_REARCH2.md) Amendments A1/A2), the editor
+opens and lists immediately in every state; the line reports the **mutation capability**
+(`RelayActiveState.editingCapability`): editing and real learned-score display unlock only
+when Full Access is confirmed on, LIME is the active keyboard, **and** the keyboard's
+learning outbox is relay-proven drained (`pend=0`). While locked, scores render as `—` and
+row tap / swipe-delete / add are disabled; the moment the capability flips to live the list
+reloads so the editable display is post-flush data.
 
-| State | Status / unlock hint |
-| --- | --- |
-| Full Access confirmed, LIME active | `"完整取用已開啟，碼表編輯功能已啓用。"` |
-| Full Access off, LIME active | `"開啟完整取用以顯示實際分數及啓用碼表編輯功能"` |
-| Full Access confirmed, LIME not active | `"將目前鍵盤切換為萊姆輸入法以顯示實際分數及開啓編輯功能"` |
-| Full Access missing/unknown, LIME not active/unknown | `"開啟完整取用並將鍵盤切換至萊姆輸入法以顯示實際分數及開啓編輯功能"` |
+| State | Icon | Status / unlock hint |
+| --- | --- | --- |
+| Live (FA on + LIME active + outbox drained) | `checkmark.circle` | `"即時資料可編輯；鍵盤會在離開後套用變更。"` |
+| FA on + LIME active, outbox still draining (A2) | `arrow.triangle.2.circlepath` | `"鍵盤資料同步中，完成後即可編輯…"` (the app re-probes the relay boundedly until `pend=0`) |
+| Any other state (FA off / not active / unknown) | `lock` | §6.1: `"開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）"`; §6.2: same with `編輯關聯字庫` |
 
 | iOS | Android |
 |---|---|
