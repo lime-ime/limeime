@@ -102,6 +102,50 @@ final class RelayActiveStateTest: XCTestCase {
     }
 }
 
+/// A1/A2 wiring that cannot be unit-instantiated (SwiftUI views, keyboard answer path,
+/// app re-probe) is pinned by source contract, mirroring EditorPublishSourceTest.
+final class EditorSyncGateSourceTest: XCTestCase {
+    func testKeyboardAnswerReportsPendingLearningCount() throws {
+        let source = try read("LimeKeyboard/KeyboardViewController.swift")
+        XCTAssertTrue(source.contains("pendingLearningCount()"))
+        XCTAssertTrue(source.contains("pendingSync: pendingSync"))
+    }
+
+    func testSettingsConsumesPendAndReprobesBoundedly() throws {
+        let source = try read("LimeSettings/LimeSettingsView.swift")
+        XCTAssertTrue(source.contains("markActive(fullAccess: payload.faOn, pendingSync: payload.pend)"))
+        XCTAssertTrue(source.contains("scheduleSyncPendingReprobeIfNeeded"))
+        XCTAssertTrue(source.contains("pendingSyncRetries < 3"))
+        XCTAssertTrue(source.contains("pendingSyncRetries = 0"))
+    }
+
+    func testEditorViewsGateMutationsAndReloadOnUnlock() throws {
+        for view in ["LimeSettings/Views/RecordListView.swift",
+                     "LimeSettings/Views/RelatedListView.swift"] {
+            let source = try read(view)
+            // A1: mutations bound to the live capability; viewing stays ungated.
+            XCTAssertTrue(source.contains("relayActiveState.editingCapability == .live"), view)
+            XCTAssertTrue(source.contains("guard canEdit else"), view)
+            XCTAssertTrue(source.contains(".disabled(!canEdit)"), view)
+            // A2: syncing state while pending; reload the moment editing unlocks.
+            XCTAssertTrue(source.contains("isSyncPending"), view)
+            XCTAssertTrue(source.contains(".onChange(of: canEdit)"), view)
+        }
+    }
+
+    private func read(_ relativePath: String) throws -> String {
+        if let bundled = Bundle(for: type(of: self)).resourceURL?.appendingPathComponent(relativePath),
+           FileManager.default.fileExists(atPath: bundled.path) {
+            return try String(contentsOf: bundled, encoding: .utf8)
+        }
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+}
+
 final class EditorPublishSourceTest: XCTestCase {
     func testSettingsBackgroundPublishesPendingEditorChanges() throws {
         let source = try String(contentsOf: projectFileURL("LimeSettings/AppDelegate.swift"),

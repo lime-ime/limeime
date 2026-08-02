@@ -1385,6 +1385,52 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try engine.pendingLearningCount(), 2)
     }
 
+    func testFlushDrainsPendingLearningCountToZero() throws {
+        // Amendment A2 convergence: after a successful FA-on flush the count the relay
+        // reports is 0, which is what unlocks editing.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        XCTAssertEqual(try engine.pendingLearningCount(), 1)
+
+        try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 0)
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [5])
+    }
+
+    func testFlushWithoutFullAccessLeavesPendingLearningCount() throws {
+        // Amendment A2 fail-safe: FA-off cannot drain, so the count stays non-zero and
+        // editing stays locked.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.flushPendingLearning(hasFullAccess: false)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 1)
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [0])
+    }
+
     func testFlushConvergesDuplicateColdRowsWithoutInserting() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

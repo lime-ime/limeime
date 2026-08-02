@@ -823,6 +823,26 @@ git commit -m "refactor(ios): remove editor refresh ownership path"
 | Restore occurs before or during an old-lineage flush | epoch mismatch writes and acknowledges nothing; replacement wins and old outbox is cleared |
 | `user_version`, Android source, `Database/` assets | byte-identical to master |
 
+### 7.1 Amendment acceptance matrix (A1/A2)
+
+The A1/A2 gate races cannot be staged on a physical device on demand, so every row is
+proven by a named test (unit tests for the capability/count/codec logic; source-contract
+tests, per the existing `EditorPublishSourceTest` pattern, for SwiftUI/keyboard wiring
+that cannot be unit-instantiated). All in `LimeTests`.
+
+| Case | Required result | Covering test |
+| --- | --- | --- |
+| A1: Full Access off or LIME not the active keyboard | entry/viewing immediate; mutations disabled; learned scores masked; unlock hint shown | `RelayActiveStateTest.testDefaultsToReadOnlyUntilActiveFullAccessAndDrainAreProven`, `RecordEditingCapabilityTest.testLiveEditingRequiresActiveConfirmedOnGate`, `EditorSyncGateSourceTest.testEditorViewsGateMutationsAndReloadOnUnlock` |
+| A1: forced-live UITest launch argument (simulator seam) | capability resolves live without device-only FA | `RecordEditingCapabilityTest.testForcedLiveEditingLaunchArgument` |
+| A2: relay answer reports `pend > 0` (outbox not drained) | editing stays read-only; editors show the syncing state; app re-probes with a bounded, reset-on-foreground budget | `RelayActiveStateTest.testLiveRequiresDrainedOutbox`, `EditorSyncGateSourceTest.testSettingsConsumesPendAndReprobesBoundedly`, `EditorSyncGateSourceTest.testEditorViewsGateMutationsAndReloadOnUnlock` |
+| A2: `pend` absent (pre-A2 payload) or `-1` (count failure) | read-only — editing never unlocks on an unproven drain | `RelayPayloadTest.testDecodeDefaultsPendingSyncToNilWhenAbsent`, `RelayActiveStateTest.testLiveRequiresDrainedOutbox` |
+| A2: `pend == 0` with active + FA | editing unlocks; both editors reload so the editable display is post-flush | `RelayActiveStateTest.testLiveRequiresDrainedOutbox`, `EditorSyncGateSourceTest.testEditorViewsGateMutationsAndReloadOnUnlock` |
+| A2: payload codec | `pend=` round-trips (0 / N / −1); field is additive — every pre-A2 field and assertion unchanged | `RelayPayloadTest.testEncodeDecodeRoundTripsPendingSyncCount` + the unchanged pre-A2 `RelayPayloadTest` assertions |
+| A2: `pendingLearningCount()` | reports outbox size; 0 when the table does not exist | `TableSyncEngineTest.testPendingLearningCountReportsOutboxSize` |
+| A2: FA-on flush | drains the outbox; count returns 0 (the unlock condition converges) | `TableSyncEngineTest.testFlushDrainsPendingLearningCountToZero` |
+| A2: FA-off flush attempt | cannot drain; count stays non-zero; cold unchanged (editing stays locked) | `TableSyncEngineTest.testFlushWithoutFullAccessLeavesPendingLearningCount` |
+| A2: keyboard answer path | relay answer includes the live count (`pendingSync:`) | `EditorSyncGateSourceTest.testKeyboardAnswerReportsPendingLearningCount` |
+
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows
 pass the device measurements with Full Access on and off.
