@@ -826,3 +826,33 @@ git commit -m "refactor(ios): remove editor refresh ownership path"
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows
 pass the device measurements with Full Access on and off.
+
+## Amendment A1 (2026-08-02) — editor mutation gate restored (maintainer decision)
+
+After on-device verification (WJIP17) confirmed immediate editor entry, the maintainer
+identified an accepted-risk case as unacceptable in practice: with learning pending
+(FA off, or LIME not the active keyboard), the editor displays last-flushed scores; a user
+editing a score from that stale display silently supersedes newer undelivered learning
+(§2.2 "editor value wins"). Decision: restore the original mutation gate rather than a
+warn-on-save.
+
+**What changes (UI only):**
+
+- `RecordListView` / `RelatedListView` re-bind `canEdit` to
+  `RelayActiveState.editingCapability == .live` (Full Access confirmed-on **and** LIME the
+  active keyboard, resolved by the kept relay layer). Add / edit / delete / clear are
+  disabled and learned scores are masked (`—`) when not live, with the original unlock
+  hint text. `IMDetailView`'s existing `canClearRelated` gate becomes consistent again.
+
+**What deliberately does NOT return:**
+
+- No editor-entry probe wait, no request/receipt handshake, no cold suspension, no
+  read-only-on-timeout: entry and viewing remain immediate; the capability flips
+  reactively from the already-running relay heartbeat/probe state.
+- The sync protocol (§2–§5) is unchanged — fences, outbox, marker/epoch-gated flush, and
+  the §2.2 conflict rules still resolve any conflict that slips through; the gate only
+  reduces the frequency of stale-informed edits, it is not a correctness mechanism.
+
+**Supersedes** the "Full Access becomes delivery status only" wording in Task 4 Step 5 and
+the matching §7 rows ("Full Access is off → editor remains editable" becomes "editor
+remains viewable; mutations require live capability").
