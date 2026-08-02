@@ -799,9 +799,15 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             ?? RelayPrefState(hanConvert: hanConvertOption,
                               splitKeyboard: splitKeyboardMode,
                               updatedAt: 0)
+        // Amendment A2: report the undelivered outbox size; -1 on failure (fail-safe —
+        // the app never unlocks editing on an unproven drain). The appearance scan
+        // flushes the outbox concurrently; if this answers pend>0 mid-flush, the app
+        // re-probes after the scan and gets the drained count.
+        let pendingSync = (try? TableSyncEngine(locator: .production()).pendingLearningCount()) ?? -1
         textDocumentProxy.insertText(encodeRelayPayload(faOn: hasFullAccess,
                                                         ts: Date().timeIntervalSince1970,
-                                                        prefs: prefs))
+                                                        prefs: prefs,
+                                                        pendingSync: pendingSync))
         return true
     }
 

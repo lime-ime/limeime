@@ -315,9 +315,14 @@ editor-entry ownership path is removed: no cold suspension, no request/receipt
 files, no hidden keyboard probe, no fixed probe delay, and no attached hot→cold
 harvest. Record and related editors open live cold immediately for viewing; mutations
 (add / edit / delete / clear) and learned-score display require the relay-resolved live
-capability — Full Access confirmed-on and LIME the active keyboard (rearch2 Amendment A1:
-a stale-score edit must not silently supersede undelivered learning). The capability flips
-reactively from the relay heartbeat; entry never waits on a probe or handshake.
+capability — Full Access confirmed-on, LIME the active keyboard, **and** the keyboard's
+`learn_outbox` proven drained (rearch2 Amendments A1/A2: a stale-score edit must not
+silently supersede undelivered learning, and rejection alone is not enough because the
+edit decision was made on the stale display). The keyboard reports its outbox size in the
+relay answer (`pend=`); the app re-probes boundedly while it is non-zero and shows a
+syncing state, and the editors reload when the capability flips to live so the editable
+display is always post-flush. The capability flips reactively from the relay heartbeat;
+entry never waits on a probe or handshake.
 
 **Logical identity.** Mapping rows sync by `(code, word)` and related rows by
 `(pword, cword)`, never by `_id`. Keyed updates and deletes address every matching

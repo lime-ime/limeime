@@ -114,6 +114,10 @@ struct LimeSettingsView: View {
     @State private var rootFAPingAt: TimeInterval?
     @State private var rootRelayMode: ActiveKeyboardProbeMode = .automatic
     @State private var rootRelayFocused = false
+    // Amendment A2: bounded re-probes while the keyboard reports an undrained outbox
+    // (pend>0/-1). Each probe appearance re-runs the flush, so this converges; the cap
+    // keeps a never-draining outbox (epoch mismatch) from probing forever.
+    @State private var pendingSyncRetries = 0
 #if DEBUG
     @State private var didRunUITestRestore = false
     @State private var didPrepareRelayOnlyPrefs = false
@@ -196,6 +200,7 @@ struct LimeSettingsView: View {
             navManager.selectTab(1)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            pendingSyncRetries = 0   // A2: fresh foreground session, fresh re-probe budget
             triggerRootRelay()
         }
         .onReceive(NotificationCenter.default.publisher(for: .limeTriggerRelay)) { note in
@@ -283,7 +288,8 @@ struct LimeSettingsView: View {
 
     private func handleRootRelayTextChange() {
         guard let payload = decodeRelayPayload(rootRelayText) else { return }
-        relayActiveState.markActive(fullAccess: payload.faOn)
+        relayActiveState.markActive(fullAccess: payload.faOn, pendingSync: payload.pend)
+        scheduleSyncPendingReprobeIfNeeded(faOn: payload.faOn, pend: payload.pend)
         RelayPrefSync.apply(han: payload.han,
                             split: payload.split,
                             reverseLookupIM: payload.rlim,
@@ -310,6 +316,21 @@ struct LimeSettingsView: View {
                                                    "firedAt": rootRelayFiredAt ?? payload.ts,
                                                    "source": "root"])
         finishRootRelay()
+    }
+
+    /// Amendment A2: the answer raced the appearance flush and reported an undrained
+    /// outbox — re-probe (bounded) so the next answer carries the post-flush count.
+    private func scheduleSyncPendingReprobeIfNeeded(faOn: Bool, pend: Int?) {
+        guard faOn else { return }
+        if pend == 0 {
+            pendingSyncRetries = 0
+            return
+        }
+        guard pendingSyncRetries < 3 else { return }
+        pendingSyncRetries += 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            if relayActiveState.isSyncPending { triggerRootRelay() }
+        }
     }
 
     private func finishRootRelay() {

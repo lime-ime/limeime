@@ -58,19 +58,47 @@ final class RecordEditingCapabilityTest: XCTestCase {
 }
 
 final class RelayActiveStateTest: XCTestCase {
-    func testDefaultsToReadOnlyUntilActiveAndFullAccessAreProven() {
+    func testDefaultsToReadOnlyUntilActiveFullAccessAndDrainAreProven() {
         let state = RelayActiveState()
 
         XCTAssertEqual(state.editingCapability, .readOnly)
 
-        state.markActive(fullAccess: false)
+        state.markActive(fullAccess: false, pendingSync: 0)
         XCTAssertEqual(state.editingCapability, .readOnly)
 
-        state.markActive(fullAccess: true)
+        state.markActive(fullAccess: true, pendingSync: 0)
         XCTAssertEqual(state.editingCapability, .live)
 
         state.markNotActive()
         XCTAssertEqual(state.editingCapability, .readOnly)
+    }
+
+    // Amendment A2: live additionally requires a proven-drained outbox — pend must be
+    // exactly 0. Pending (>0), failed count (-1), and absent (nil) all stay read-only.
+    func testLiveRequiresDrainedOutbox() {
+        let state = RelayActiveState()
+
+        state.markActive(fullAccess: true, pendingSync: 5)
+        XCTAssertEqual(state.editingCapability, .readOnly)
+        XCTAssertTrue(state.isSyncPending)
+
+        state.markActive(fullAccess: true, pendingSync: -1)
+        XCTAssertEqual(state.editingCapability, .readOnly)
+        XCTAssertTrue(state.isSyncPending)
+
+        state.markActive(fullAccess: true)   // pend absent from payload
+        XCTAssertEqual(state.editingCapability, .readOnly)
+
+        state.markActive(fullAccess: true, pendingSync: 0)
+        XCTAssertEqual(state.editingCapability, .live)
+        XCTAssertFalse(state.isSyncPending)
+
+        // Not-active or FA-off never counts as "sync pending" — those show the unlock hint.
+        state.markActive(fullAccess: false, pendingSync: 5)
+        XCTAssertFalse(state.isSyncPending)
+        state.markNotActive()
+        XCTAssertFalse(state.isSyncPending)
+        XCTAssertNil(state.pendingSyncCount)
     }
 }
 

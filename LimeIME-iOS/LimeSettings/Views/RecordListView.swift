@@ -173,6 +173,14 @@ struct RecordListView: View {
             }
         }
         .onAppear { loadRecords() }
+        // Amendment A2: capability just flipped to live — the outbox is drained, so
+        // reload to guarantee the editable display is post-flush data.
+        .onChange(of: canEdit) { nowEditable in
+            if nowEditable {
+                statusMessage = ""
+                loadRecords()
+            }
+        }
         .onChange(of: scenePhase) { _ in
             if scenePhase == .background {
                 publishEditorCloseIfNeeded()
@@ -236,14 +244,21 @@ struct RecordListView: View {
         }
     }
 
-    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）" }
+    // Amendment A2: while the keyboard is active + FA but its outbox hasn't proven
+    // drained, editing stays locked with a syncing message instead of the unlock hint.
+    private var unlockHint: String {
+        relayActiveState.isSyncPending
+            ? "鍵盤資料同步中，完成後即可編輯…"
+            : "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）"
+    }
 
     private var capabilityMessage: String {
         canEdit ? "即時資料可編輯；鍵盤會在離開後套用變更。" : unlockHint
     }
 
     private var capabilityIcon: String {
-        canEdit ? "checkmark.circle" : "lock"
+        if canEdit { return "checkmark.circle" }
+        return relayActiveState.isSyncPending ? "arrow.triangle.2.circlepath" : "lock"
     }
 
     private func publishEditorCloseIfNeeded() {

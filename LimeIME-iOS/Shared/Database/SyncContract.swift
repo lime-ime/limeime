@@ -477,8 +477,12 @@ enum RelayPrefSync {
     }
 }
 
-func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil,
+                        pendingSync: Int? = nil) -> String {
     var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+    // Amendment A2: undelivered learn_outbox rows at answer time; -1 = count failed
+    // (never claims drained). Editing unlocks only on pend=0.
+    if let pendingSync { payload += ";pend=\(pendingSync)" }
     if let prefs {
         payload += ";han=\(prefs.hanConvert)"
         if prefs.geometryProfile != "phone" {
@@ -497,7 +501,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, phonePortraitMode: Int?, phoneLandscapeSplit: Bool?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, phonePortraitMode: Int?, phoneLandscapeSplit: Bool?, pts: TimeInterval?, rlim: String?, rlval: String?, pend: Int?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -524,6 +528,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
+    var pend: Int?
     // Reverse-lookup IM/value are alphanumeric strings; truncate any concatenated
     // duplicate payload (defensive — the single-probe capture prevents duplicates).
     func stripJunk(_ s: Substring) -> String {
@@ -559,6 +564,9 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             if let parsed = Double(digits), parsed.isFinite {
                 pts = parsed
             }
+        case "pend":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            pend = Int(digits)
         case "rlim":
             let v = stripJunk(value); if !v.isEmpty { rlim = v }
         case "rlval":
@@ -567,7 +575,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, phonePortraitMode: phonePortraitMode, phoneLandscapeSplit: phoneLandscapeSplit, pts: pts, rlim: rlim, rlval: rlval)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, phonePortraitMode: phonePortraitMode, phoneLandscapeSplit: phoneLandscapeSplit, pts: pts, rlim: rlim, rlval: rlval, pend: pend)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
@@ -724,21 +732,35 @@ enum RecordEditingCapability: Equatable {
 final class RelayActiveState: ObservableObject {
     @Published var isActive: Bool? = nil
     @Published var hasFullAccess: Bool? = nil
+    /// Amendment A2: keyboard-reported undelivered `learn_outbox` rows (`pend=`) at relay
+    /// answer time. nil = unknown (old payload / not yet answered); -1 = count failed.
+    @Published var pendingSyncCount: Int? = nil
 
-    /// Fail-safe: live only when BOTH are positively true; anything else (nil/false) is read-only.
+    /// Fail-safe: live only when active + FA are positively true AND the outbox is proven
+    /// drained (pend == 0); anything else (nil/false/pending) is read-only.
     var editingCapability: RecordEditingCapability {
         if RecordEditingCapability.forceLiveEditingEnabled() { return .live }
-        return (isActive == true && hasFullAccess == true) ? .live : .readOnly
+        return (isActive == true && hasFullAccess == true && pendingSyncCount == 0)
+            ? .live : .readOnly
     }
 
-    func markActive(fullAccess: Bool) {
+    /// Active + FA but the outbox hasn't proven drained — the editors show a syncing
+    /// message instead of the generic unlock hint, and the root relay re-probes.
+    var isSyncPending: Bool {
+        !RecordEditingCapability.forceLiveEditingEnabled()
+            && isActive == true && hasFullAccess == true && pendingSyncCount != 0
+    }
+
+    func markActive(fullAccess: Bool, pendingSync: Int? = nil) {
         isActive = true
         hasFullAccess = fullAccess
+        pendingSyncCount = pendingSync
     }
 
     func markNotActive(fullAccess: Bool = false) {
         isActive = false
         hasFullAccess = fullAccess
+        pendingSyncCount = nil
     }
 }
 

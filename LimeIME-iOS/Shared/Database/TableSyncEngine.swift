@@ -996,6 +996,16 @@ final class TableSyncEngine {
         return true
     }
 
+    /// Amendment A2: undelivered learning rows, reported to the app in the relay answer
+    /// (`pend=`) so editing unlocks only on a proven-drained outbox.
+    func pendingLearningCount() throws -> Int {
+        let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        return try connection.read { db in
+            guard try Self.tableExists("learn_outbox", in: db) else { return 0 }
+            return try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM learn_outbox") ?? 0
+        }
+    }
+
     private func capturePendingLearning() throws -> (appliedEpoch: String?, items: [LearningItem]) {
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
         return try connection.read { db in

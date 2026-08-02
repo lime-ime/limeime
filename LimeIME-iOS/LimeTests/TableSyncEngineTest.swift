@@ -1368,6 +1368,23 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try outboxRows(in: hot), [])
     }
 
+    func testPendingLearningCountReportsOutboxSize() throws {
+        // Amendment A2: the count rides the relay answer (pend=) and gates editing.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: hot, rows: [("a", "甲", 1)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        XCTAssertEqual(try engine.pendingLearningCount(), 0)
+
+        try upsertOutbox(in: hot, code: "a", word: "甲", observedRevision: 1)
+        try upsertOutbox(in: hot, code: "b", word: "乙", observedRevision: 1)
+        XCTAssertEqual(try engine.pendingLearningCount(), 2)
+    }
+
     func testFlushConvergesDuplicateColdRowsWithoutInserting() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

@@ -856,3 +856,47 @@ warn-on-save.
 **Supersedes** the "Full Access becomes delivery status only" wording in Task 4 Step 5 and
 the matching §7 rows ("Full Access is off → editor remains editable" becomes "editor
 remains viewable; mutations require live capability").
+
+## Amendment A2 (2026-08-02) — editing additionally gated on a drained outbox (maintainer decision)
+
+A1 closed the FA-off / not-active stale-edit window, but left a residual one: the relay
+answer (the unlock evidence) and the appearance flush both run when the keyboard loads for
+the probe, yet are **not sequenced** — with a long outbox the answer can arrive before the
+flush finishes, unlocking editing while undelivered learning still exists. §2.2 then
+resolves any collision deterministically (fence wins, stale item rejected + acknowledged),
+but the user made that edit while looking at a stale score. Maintainer decision: rejection
+is not good enough — editing must never unlock while stale data can exist.
+
+**Rule:** `canEdit ⇔ FA confirmed-on ∧ LIME active ∧ learn_outbox empty (relay-proven)`.
+With the outbox drained at unlock time, every score on screen is fully delivered; the §2.2
+rejection branch becomes practically unreachable (only the editor's own search-field
+learning during the same seconds can still race, which is irreducible and harmless).
+
+**Mechanism (additive relay field, no handshake resurrection):**
+
+1. **Keyboard** — `TableSyncEngine.pendingLearningCount()`: `COUNT(*)` of `learn_outbox`
+   (0 when the table doesn't exist). `answerRelayRequestIfNeeded` includes it in the
+   payload as `pend=N`; a count failure reports `-1` (fail-safe: never claims drained).
+   The appearance scan (`scanAndApply`) already flushes the whole outbox in one
+   transaction FA-on, so the normal answer is `pend=0`.
+2. **Payload codec** — `encodeRelayPayload` gains optional `pendingSync`; `decodeRelayPayload`
+   gains optional `pend`. Additive: absent field decodes to `nil`; all existing fields and
+   assertions unchanged.
+3. **App** — `RelayActiveState` stores `pendingSyncCount`; `editingCapability == .live` now
+   additionally requires `pendingSyncCount == 0` (nil = unknown = read-only, fail-safe).
+   `isSyncPending` distinguishes "active + FA but still draining" so the editors show
+   a syncing message instead of the generic unlock hint.
+4. **Retry** — if an answer reports `pend > 0`, `LimeSettingsView` re-triggers the root
+   relay after a short delay (bounded attempts per foreground session, counter reset on
+   `didBecomeActive` and on a drained answer): each probe appearance re-runs the flush, so
+   the gate converges to unlocked as the outbox drains. If it never drains (epoch
+   mismatch, lock contention), editing stays locked — the fail-safe direction.
+5. **Editors** — on capability flip to `.live`, both list views reload, so the unlocked
+   display is always post-flush data.
+
+**Scope widening (recorded per plan invariants):** this amendment authorizes exactly three
+Amber touches that A1's invariant list forbade — the relay payload codec
+(`encodeRelayPayload`/`decodeRelayPayload`, one additive optional field), `RelayActiveState`
+(one stored field + capability rule), and `LimeSettingsView` (consume `pend`, bounded
+re-trigger). The relay token, probe flow, FA resolution, and Setup-tab active detection are
+unchanged — the answer is never delayed or withheld, so detection timing is untouched.
