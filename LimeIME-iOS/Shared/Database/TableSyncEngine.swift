@@ -479,6 +479,11 @@ final class TableSyncEngine {
                 try connection.write { db in
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
+                    // A5: the dropped table's pending learning is undeliverable — clear
+                    // it in the same transaction. capturePendingLearning skips rows whose
+                    // table is gone while pendingLearningCount still counts them, so a
+                    // leftover row would keep the A2 gate locked forever.
+                    try Self.deleteOutbox(table: table, in: db)
                 }
                 continue
             }
@@ -488,6 +493,7 @@ final class TableSyncEngine {
                 guard try Self.tableExists(table, schema: "cold_snapshot", in: db) else {
                     try Self.drop(table, in: db)
                     try Self.deleteMeta("rev:\(table)", in: db)
+                    try Self.deleteOutbox(table: table, in: db)   // A5, as above
                     return
                 }
                 try Self.copy(table, fromSchema: "cold_snapshot", in: db)
@@ -956,6 +962,21 @@ final class TableSyncEngine {
             do {
                 try lock.unlock()
             } catch {
+            }
+        }
+
+        // A5 sweep: rows referencing tables that no longer exist in hot are permanently
+        // undeliverable (capture skips them; only the count sees them). The pre-fix
+        // unmarked-drop path left such orphans behind on real devices — remove them here,
+        // under the flush lock, so the relay-reported pend converges to 0.
+        let orphanSweepConnection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
+        try orphanSweepConnection.write { db in
+            guard try Self.tableExists("learn_outbox", in: db) else { return }
+            for table in try String.fetchAll(db, sql: "SELECT DISTINCT tbl FROM learn_outbox") {
+                guard try Self.tableExists(table, in: db) else {
+                    try Self.deleteOutbox(table: table, in: db)
+                    continue
+                }
             }
         }
 

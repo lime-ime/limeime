@@ -846,6 +846,8 @@ that cannot be unit-instantiated). All in `LimeTests`.
 | A3: app (cold-role) datasource through the same open path | never creates or populates `learn_outbox` | `DBServerTest.testAppRoleRuntimeDoesNotCreateLearnOutbox` |
 | A4: install-only lineage (cold has no `epoch_uuid`; hot has bootstrap `epoch_uuid`, no `applied_epoch`) with pending outbox | flush delivers and drains — its epoch guard applies §4.3's exact convergence rule (nil == nil converged), never `applied ?? hotEpoch` | `TableSyncEngineTest.testInstallOnlyLineageFlushDeliversWithNilColdEpoch` |
 | A4: cold restored to a new (non-nil) epoch while hot still holds install-only state | flush writes and acknowledges nothing until the scan applies the new lineage | `TableSyncEngineTest.testRestoredColdEpochStillRejectsInstallOnlyOutbox` |
+| A5: unmarked snapshot removes a table that has pending outbox rows (keyboard-first mixed-version upgrade) | the incremental drop clears that table's outbox rows in the same transaction — no permanently-pending orphans inflating `pend` | `TableSyncEngineTest.testUnmarkedSnapshotTableRemovalClearsPendingOutbox` |
+| A5: orphaned outbox rows already present (device ran the pre-fix drop path) | the flush sweeps rows referencing nonexistent hot tables while delivering valid items; `pend` converges to 0 | `TableSyncEngineTest.testFlushSweepsOrphanedOutboxRowsFromMissingTables` |
 
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows

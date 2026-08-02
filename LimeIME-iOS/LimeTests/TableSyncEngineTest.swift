@@ -1431,6 +1431,60 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [0])
     }
 
+    func testUnmarkedSnapshotTableRemovalClearsPendingOutbox() throws {
+        // PR #223 A5 blocker: keyboard-first mixed-version upgrade — new keyboard, old
+        // (unmarked) app. The old app deletes an IM, so the published snapshot loses the
+        // table and its rev. The unmarked incremental drop must clear that table's
+        // pending outbox rows in the same transaction: capturePendingLearning skips rows
+        // whose hot table is gone while pendingLearningCount still counts them, so a
+        // leftover row is permanently undeliverable and locks the A2 gate forever.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, epoch: "epoch-a", generation: 2,
+                         includeCustomTable: false)              // table + rev removed
+        try makeDatabase(at: hot, rows: [("aa", "甲", 5)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try writeMeta("legacy_transition_done", "1", in: hot)
+        try upsertOutbox(in: hot, code: "aa", word: "甲", observedRevision: 1)
+        try publish(cold, appGroup: appGroup)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.scanAndApply(hasFullAccess: false)   // FA-off: proves the drop-site
+                                                        // cleanup, not the flush sweep
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 0,
+                       "a dropped table's pending learning must be cleared with the drop")
+    }
+
+    func testFlushSweepsOrphanedOutboxRowsFromMissingTables() throws {
+        // A5 sweep: devices that already ran the pre-fix drop path still carry orphaned
+        // outbox rows for tables that no longer exist. The flush removes them (they can
+        // never deliver or acknowledge) while still delivering valid pending items.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+        try upsertOutbox(in: hot, table: "ghost", code: "aa", word: "甲",
+                         observedRevision: 1)           // orphan from the pre-fix path
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 0,
+                       "orphaned rows must be swept and valid rows delivered")
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [5])
+    }
+
     func testInstallOnlyLineageFlushDeliversWithNilColdEpoch() throws {
         // PR #223 A4 blocker: fresh install — cold was never restored so it has NO
         // epoch_uuid; hot carries its random bootstrap epoch_uuid and NO applied_epoch
