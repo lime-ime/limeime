@@ -844,6 +844,8 @@ that cannot be unit-instantiated). All in `LimeTests`.
 | A2: keyboard answer path | relay answer includes the live count (`pendingSync:`) | `EditorSyncGateSourceTest.testKeyboardAnswerReportsPendingLearningCount` |
 | A3: production keyboard datasource opens (initial, reopen, backup/restore rebinds) | carry the hot role — learning driven through the production `DBServer` → `SearchServer` seam journals `learn_outbox` (PR #223 merge-review blocker: fixture-only flags had masked that no production open passed `tracksHotLearning`) | `DBServerTest.testKeyboardRoleRuntimeJournalsLearningThroughProductionSeam` |
 | A3: app (cold-role) datasource through the same open path | never creates or populates `learn_outbox` | `DBServerTest.testAppRoleRuntimeDoesNotCreateLearnOutbox` |
+| A4: install-only lineage (cold has no `epoch_uuid`; hot has bootstrap `epoch_uuid`, no `applied_epoch`) with pending outbox | flush delivers and drains — its epoch guard applies §4.3's exact convergence rule (nil == nil converged), never `applied ?? hotEpoch` | `TableSyncEngineTest.testInstallOnlyLineageFlushDeliversWithNilColdEpoch` |
+| A4: cold restored to a new (non-nil) epoch while hot still holds install-only state | flush writes and acknowledges nothing until the scan applies the new lineage | `TableSyncEngineTest.testRestoredColdEpochStillRejectsInstallOnlyOutbox` |
 
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows

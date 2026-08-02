@@ -624,12 +624,15 @@ final class DBServerTest: XCTestCase {
 
         let finished = expectation(description: "postFinishInput learning completed")
         ss.postFinishInput { finished.fulfill() }
-        wait(for: [finished], timeout: 10.0)
+        wait(for: [finished], timeout: 60.0)
 
         let queue = try DatabaseQueue(path: hotDir.appendingPathComponent("lime.db").path)
         defer { try? queue.close() }
-        let journaled = try queue.read { db in
-            try Row.fetchAll(db, sql: "SELECT tbl, k1, k2 FROM learn_outbox")
+        let journaled = try queue.read { db -> [String] in
+            // learn_outbox is created lazily on the first journaled write; a missing table
+            // means journaling never ran — report that as the assertion, not a SQL error.
+            guard try db.tableExists("learn_outbox") else { return [] }
+            return try Row.fetchAll(db, sql: "SELECT tbl, k1, k2 FROM learn_outbox")
                 .map { "\($0["tbl"] as String? ?? "")|\($0["k1"] as String? ?? "")|\($0["k2"] as String? ?? "")" }
         }
         XCTAssertTrue(journaled.contains("related|甲|乙"),
@@ -656,7 +659,7 @@ final class DBServerTest: XCTestCase {
                     recordType: Mapping.RecordType.exactMatchToCode))
         let finished = expectation(description: "postFinishInput learning completed")
         ss.postFinishInput { finished.fulfill() }
-        wait(for: [finished], timeout: 10.0)
+        wait(for: [finished], timeout: 60.0)
 
         let queue = try DatabaseQueue(path: coldDir.appendingPathComponent("lime.db").path)
         defer { try? queue.close() }

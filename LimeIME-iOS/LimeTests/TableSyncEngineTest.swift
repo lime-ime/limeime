@@ -1431,6 +1431,57 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [0])
     }
 
+    func testInstallOnlyLineageFlushDeliversWithNilColdEpoch() throws {
+        // PR #223 A4 blocker: fresh install — cold was never restored so it has NO
+        // epoch_uuid; hot carries its random bootstrap epoch_uuid and NO applied_epoch
+        // (scanAndApply §4.3 removes the marker for a nil-epoch lineage and treats
+        // nil == nil as converged). The flush must mirror that convergence rule; the old
+        // `appliedEpochMarker ?? hotEpoch` fallback compared cold(nil) != hot(bootstrap)
+        // and rejected every flush forever — outbox never drained, editing stayed locked.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)],
+                         revisions: ["custom": 1])                       // epoch: nil
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "bootstrap-uuid",
+                         revisions: ["custom": 1])                        // no applied_epoch
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 0,
+                       "install-only lineage must drain — nil cold epoch converges per §4.3")
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [5])
+    }
+
+    func testRestoredColdEpochStillRejectsInstallOnlyOutbox() throws {
+        // Inverse guard for the A4 fix: cold restored to a NEW lineage (non-nil epoch)
+        // while hot still holds install-only state — the flush must keep writing and
+        // acknowledging nothing until scanAndApply applies the new lineage.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-restored",
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "bootstrap-uuid",
+                         revisions: ["custom": 1])
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 1,
+                       "a different cold lineage must not accept or acknowledge the old outbox")
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [0])
+    }
+
     func testFlushConvergesDuplicateColdRowsWithoutInserting() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
@@ -1607,7 +1658,12 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customRows(in: cold), ["same|同|1"])
         XCTAssertEqual(try outboxRows(in: hot), ["custom|same|同|1|1"])
 
+        // Genuine stale lineage: hot never applied cold's current epoch — BOTH its own
+        // identity and its applied stamp are the old lineage. (A4: the previous fixture
+        // left hot.epoch_uuid == cold's epoch with only a stale applied stamp — that is
+        // §4.3's converged interrupted-restore-stamp fast-path, which correctly DELIVERS.)
         try markProtocolReady(cold: cold, hot: hot)
+        try writeMeta(SyncMetaStore.epochUUIDKey, "old-epoch", in: hot)
         try writeMeta(SyncMetaStore.appliedEpochKey, "old-epoch", in: hot)
         try TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
             .flushPendingLearning(hasFullAccess: true)

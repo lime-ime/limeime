@@ -972,7 +972,16 @@ final class TableSyncEngine {
                 let coldEpoch = try String.fetchOne(db,
                                                     sql: "SELECT value FROM sync_meta WHERE key = ?",
                                                     arguments: [SyncMetaStore.epochUUIDKey])
-                guard marker, coldEpoch == snapshot.appliedEpoch else {
+                // Mirror scanAndApply's convergence rule exactly (§4.3): applied_epoch
+                // records the applied cold epoch and is deliberately ABSENT for an
+                // install-only (nil-epoch) cold — nil == nil is a match, NOT a mismatch.
+                // hot.epoch_uuid covers a completed restore copy whose applied_epoch stamp
+                // was interrupted (the whole-file swap self-marks hot with cold's epoch).
+                // The old `appliedEpoch ?? hotEpoch` collapse compared cold(nil) against
+                // hot's random bootstrap UUID and rejected every install-only flush forever.
+                let epochApplied = coldEpoch == snapshot.appliedEpoch
+                    || coldEpoch == snapshot.hotEpoch
+                guard marker, epochApplied else {
                     throw FlushAbort.markerOrEpochRejected
                 }
 
@@ -1006,18 +1015,20 @@ final class TableSyncEngine {
         }
     }
 
-    private func capturePendingLearning() throws -> (appliedEpoch: String?, items: [LearningItem]) {
+    private func capturePendingLearning() throws -> (appliedEpoch: String?, hotEpoch: String?, items: [LearningItem]) {
         let connection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
         return try connection.read { db in
-            let appliedEpochMarker = try String.fetchOne(db,
-                                                         sql: "SELECT value FROM sync_meta WHERE key = ?",
-                                                         arguments: [SyncMetaStore.appliedEpochKey])
+            // Both values are captured RAW — the flush's cold-transaction guard applies
+            // scanAndApply's two-term convergence rule. Collapsing them here with
+            // `appliedEpoch ?? hotEpoch` loses the install-only nil-lineage case (A4).
+            let appliedEpoch = try String.fetchOne(db,
+                                                   sql: "SELECT value FROM sync_meta WHERE key = ?",
+                                                   arguments: [SyncMetaStore.appliedEpochKey])
             let hotEpoch = try String.fetchOne(db,
                                                sql: "SELECT value FROM sync_meta WHERE key = ?",
                                                arguments: [SyncMetaStore.epochUUIDKey])
-            let appliedEpoch = appliedEpochMarker ?? hotEpoch
             guard try Self.tableExists("learn_outbox", in: db) else {
-                return (appliedEpoch, [])
+                return (appliedEpoch, hotEpoch, [])
             }
             let outbox = try Row.fetchAll(db, sql: """
                 SELECT tbl, k1, k2, observed_rev, version
@@ -1057,7 +1068,7 @@ final class TableSyncEngine {
                                           code3r: hotRow["code3r"] as String?,
                                           isRelated: table == "related"))
             }
-            return (appliedEpoch, items)
+            return (appliedEpoch, hotEpoch, items)
         }
     }
 
