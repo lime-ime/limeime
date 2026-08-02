@@ -497,6 +497,10 @@ final class TableSyncEngine {
                     return
                 }
                 try Self.copy(table, fromSchema: "cold_snapshot", in: db)
+                // A6: the wholesale copy can remove a hot-only learned row while its
+                // outbox entry survives — clear uncapturable entries in the same
+                // transaction (same rationale as the A5 drop-site cleanup above).
+                try Self.deleteUncapturableOutbox(table: table, in: db)
                 try Self.upsertMeta("rev:\(table)", value: String(coldRevision), in: db)
             }
         }
@@ -753,6 +757,28 @@ final class TableSyncEngine {
         try db.execute(sql: "DELETE FROM learn_outbox WHERE tbl = ?", arguments: [table])
     }
 
+    /// A5/A6: delete outbox entries that can never be captured — unsafe table name,
+    /// missing hot table, or a logical key with no matching hot row (capture's exact
+    /// skip conditions). Capture skips them while pendingLearningCount counts them, so
+    /// a stranded entry would keep the relay-reported pend above zero forever.
+    private static func deleteUncapturableOutbox(table: String, in db: Database) throws {
+        guard try tableExists("learn_outbox", in: db) else { return }
+        guard isSafeTableName(table), try tableExists(table, in: db) else {
+            try deleteOutbox(table: table, in: db)
+            return
+        }
+        let key = keyColumns(for: table)
+        try db.execute(sql: """
+            DELETE FROM learn_outbox
+            WHERE tbl = ? AND NOT EXISTS (
+                SELECT 1 FROM \(quotedIdentifier(table)) t
+                WHERE t.\(quotedIdentifier(key.k1)) = learn_outbox.k1
+                  AND t.\(quotedIdentifier(key.k2)) = learn_outbox.k2
+                  AND t.\(quotedIdentifier(key.k2)) IS NOT NULL
+            )
+            """, arguments: [table])
+    }
+
     private static func clearOutbox(table: String, beforeRevision revision: Int, in db: Database) throws {
         guard try tableExists("learn_outbox", in: db) else { return }
         try db.execute(sql: """
@@ -965,18 +991,17 @@ final class TableSyncEngine {
             }
         }
 
-        // A5 sweep: rows referencing tables that no longer exist in hot are permanently
-        // undeliverable (capture skips them; only the count sees them). The pre-fix
-        // unmarked-drop path left such orphans behind on real devices — remove them here,
-        // under the flush lock, so the relay-reported pend converges to 0.
+        // A5/A6 pre-capture sweep (§4.4): entries that can never be captured — unsafe or
+        // missing table, or a logical key with no surviving hot row (the pre-fix unmarked
+        // drop/copy paths left both kinds behind on real devices) — are undeliverable by
+        // definition and only inflate the relay-reported pend. One hot write transaction
+        // under the flush lock, so it cannot race a learning write (row + entry commit
+        // together).
         let orphanSweepConnection = try SyncDatabaseConnection(databaseURL: hotDatabaseURL)
         try orphanSweepConnection.write { db in
             guard try Self.tableExists("learn_outbox", in: db) else { return }
             for table in try String.fetchAll(db, sql: "SELECT DISTINCT tbl FROM learn_outbox") {
-                guard try Self.tableExists(table, in: db) else {
-                    try Self.deleteOutbox(table: table, in: db)
-                    continue
-                }
+                try Self.deleteUncapturableOutbox(table: table, in: db)
             }
         }
 

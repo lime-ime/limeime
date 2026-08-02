@@ -1485,6 +1485,60 @@ final class TableSyncEngineTest: XCTestCase {
         XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [5])
     }
 
+    func testUnmarkedCopyClearsOutboxRowsWithoutSurvivingHotRow() throws {
+        // PR #223 A6 blocker: the unmarked incremental COPY branch wholesale-replaces the
+        // hot table with the snapshot's contents. A hot-only learned row disappears while
+        // its learn_outbox entry remains — capture skips a missing logical row, the A5
+        // sweep only handled a missing TABLE, and pendingLearningCount counts the entry,
+        // so pend stayed > 0 and the A2 gate locked forever (keyboard-first mixed-version).
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-a",
+                         generation: 2, revisions: ["custom": 2])   // no ("aa", "甲")
+        try makeDatabase(at: hot, rows: [("base", "基", 0), ("aa", "甲", 5)],
+                         epoch: "epoch-a", revisions: ["custom": 1])
+        try writeMeta("legacy_transition_done", "1", in: hot)
+        try upsertOutbox(in: hot, code: "aa", word: "甲", observedRevision: 1)
+        try publish(cold, appGroup: appGroup)
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.scanAndApply(hasFullAccess: false)   // FA-off: proves the copy-site
+                                                        // cleanup, not the flush sweep
+
+        XCTAssertEqual(try customRows(in: hot), ["base|基|0"],
+                       "unmarked copy replaces the hot table with the snapshot's contents")
+        XCTAssertEqual(try engine.pendingLearningCount(), 0,
+                       "an outbox entry whose learned row was replaced away must not linger")
+    }
+
+    func testFlushSweepsOutboxEntriesWithMissingHotRows() throws {
+        // A6 sweep: entries stranded by the pre-fix copy path (table exists, logical row
+        // gone) are uncapturable garbage — swept while valid entries still deliver.
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let appGroup = root.appendingPathComponent("app-group", isDirectory: true)
+        let cold = appGroup.appendingPathComponent("lime.db")
+        let hot = root.appendingPathComponent("hot/lime.db")
+        try makeDatabase(at: cold, rows: [("base", "基", 0)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try makeDatabase(at: hot, rows: [("base", "基", 5)], epoch: "epoch-a",
+                         revisions: ["custom": 1])
+        try markProtocolReady(cold: cold, hot: hot)
+        try upsertOutbox(in: hot, code: "base", word: "基", observedRevision: 1)
+        try upsertOutbox(in: hot, code: "gone", word: "無", observedRevision: 1)
+                                                        // stranded: no matching hot row
+
+        let engine = TableSyncEngine(appGroupBaseURL: appGroup, hotDatabaseURL: hot)
+        try engine.flushPendingLearning(hasFullAccess: true)
+
+        XCTAssertEqual(try engine.pendingLearningCount(), 0,
+                       "row-missing entries must be swept and valid entries delivered")
+        XCTAssertEqual(try customScores(in: cold, code: "base", word: "基"), [5])
+    }
+
     func testInstallOnlyLineageFlushDeliversWithNilColdEpoch() throws {
         // PR #223 A4 blocker: fresh install — cold was never restored so it has NO
         // epoch_uuid; hot carries its random bootstrap epoch_uuid and NO applied_epoch

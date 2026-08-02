@@ -336,6 +336,17 @@ the editor: the background baseline starts on the app's first upgraded launch, b
 and mutate live rows while it runs. Only outbox delivery and marked snapshot publication wait.
 Seeding and learning remain hot-only writes and are never marker-gated.
 
+**Pre-capture sweep (A5/A6).** Under the flush lock, before capturing, the flush deletes
+outbox entries that can never be captured: entries whose table name is unsafe, whose hot
+table no longer exists, or whose logical key has no matching hot row (a legacy wholesale
+copy, unmarked drop, or same-revision `replace` can remove a learned row while its outbox
+entry survives). Capture skips exactly these entries while `pendingLearningCount` counts
+every raw row, so without the sweep a stranded entry would keep the relay-reported `pend`
+above zero and the Amendment-A2 editor gate locked forever. The sweep runs in one hot
+write transaction, so it cannot race a learning write (row + outbox entry commit
+together); the unmarked drop and copy branches also perform the same cleanup atomically
+at their own transaction, making the sweep a catch-all for state left by older builds.
+
 For each bounded batch:
 
 1. Acquire `KeyboardFlushLock`; if unavailable, return and let the other flusher or next appearance
@@ -848,6 +859,8 @@ that cannot be unit-instantiated). All in `LimeTests`.
 | A4: cold restored to a new (non-nil) epoch while hot still holds install-only state | flush writes and acknowledges nothing until the scan applies the new lineage | `TableSyncEngineTest.testRestoredColdEpochStillRejectsInstallOnlyOutbox` |
 | A5: unmarked snapshot removes a table that has pending outbox rows (keyboard-first mixed-version upgrade) | the incremental drop clears that table's outbox rows in the same transaction — no permanently-pending orphans inflating `pend` | `TableSyncEngineTest.testUnmarkedSnapshotTableRemovalClearsPendingOutbox` |
 | A5: orphaned outbox rows already present (device ran the pre-fix drop path) | the flush sweeps rows referencing nonexistent hot tables while delivering valid items; `pend` converges to 0 | `TableSyncEngineTest.testFlushSweepsOrphanedOutboxRowsFromMissingTables` |
+| A6: unmarked snapshot copy replaces a table holding a hot-only learned row (keyboard-first mixed-version upgrade) | the copy clears outbox entries whose logical row did not survive, in the same transaction — no stranded row-level entries inflating `pend` | `TableSyncEngineTest.testUnmarkedCopyClearsOutboxRowsWithoutSurvivingHotRow` |
+| A6: stranded row-level entries already present (table exists, learned row gone) | the pre-capture flush sweep removes them while valid entries still deliver; `pend` converges to 0 | `TableSyncEngineTest.testFlushSweepsOutboxEntriesWithMissingHotRows` |
 
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows
