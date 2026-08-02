@@ -842,6 +842,8 @@ that cannot be unit-instantiated). All in `LimeTests`.
 | A2: FA-on flush | drains the outbox; count returns 0 (the unlock condition converges) | `TableSyncEngineTest.testFlushDrainsPendingLearningCountToZero` |
 | A2: FA-off flush attempt | cannot drain; count stays non-zero; cold unchanged (editing stays locked) | `TableSyncEngineTest.testFlushWithoutFullAccessLeavesPendingLearningCount` |
 | A2: keyboard answer path | relay answer includes the live count (`pendingSync:`) | `EditorSyncGateSourceTest.testKeyboardAnswerReportsPendingLearningCount` |
+| A3: production keyboard datasource opens (initial, reopen, backup/restore rebinds) | carry the hot role — learning driven through the production `DBServer` → `SearchServer` seam journals `learn_outbox` (PR #223 merge-review blocker: fixture-only flags had masked that no production open passed `tracksHotLearning`) | `DBServerTest.testKeyboardRoleRuntimeJournalsLearningThroughProductionSeam` |
+| A3: app (cold-role) datasource through the same open path | never creates or populates `learn_outbox` | `DBServerTest.testAppRoleRuntimeDoesNotCreateLearnOutbox` |
 
 This proposal is not implemented until all task gates pass at one exact source SHA. Issue #209
 remains open until the old editor ownership path is removed and both Record and Related editor flows

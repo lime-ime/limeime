@@ -597,6 +597,73 @@ final class DBServerTest: XCTestCase {
             "Keyboard runtime should query candidates from the adopted 6.1.27 legacy lime.db")
     }
 
+    func testKeyboardRoleRuntimeJournalsLearningThroughProductionSeam() throws {
+        // PR #223 merge blocker regression: production keyboard datasources are opened by
+        // SharedDatabase.openDatasource() / prepareKeyboardRuntimeDatabase(), NOT by
+        // directly constructed LimeDB fixtures — and those opens must carry the hot role
+        // (tracksHotLearning), or normal keyboard learning silently never populates
+        // learn_outbox and cold never receives it while the A2 gate reads pend=0.
+        let hotDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: hotDir) }
+
+        let server = DBServer(_testDatabaseDirectory: hotDir, tracksHotLearning: true)
+        let context = try server.prepareKeyboardRuntimeDatabase()
+        let ss = context.searchServer
+
+        // Drive learning the way the keyboard does: commit two candidates, then the
+        // dismiss path (postFinishInput) performs the related-phrase learning write.
+        ss.candidateSuggestion = true
+        let first = Mapping(id: 0, code: "aa", word: "甲", score: 0, baseScore: 0,
+                            recordType: Mapping.RecordType.exactMatchToCode)
+        let second = Mapping(id: 0, code: "bb", word: "乙", score: 0, baseScore: 0,
+                             recordType: Mapping.RecordType.exactMatchToCode)
+        ss.learnRelatedPhraseAndUpdateScore(first)
+        ss.learnRelatedPhraseAndUpdateScore(second)
+
+        let finished = expectation(description: "postFinishInput learning completed")
+        ss.postFinishInput { finished.fulfill() }
+        wait(for: [finished], timeout: 10.0)
+
+        let queue = try DatabaseQueue(path: hotDir.appendingPathComponent("lime.db").path)
+        defer { try? queue.close() }
+        let journaled = try queue.read { db in
+            try Row.fetchAll(db, sql: "SELECT tbl, k1, k2 FROM learn_outbox")
+                .map { "\($0["tbl"] as String? ?? "")|\($0["k1"] as String? ?? "")|\($0["k2"] as String? ?? "")" }
+        }
+        XCTAssertTrue(journaled.contains("related|甲|乙"),
+                      "keyboard-role learning through the production DBServer→SearchServer seam must journal learn_outbox; got \(journaled)")
+    }
+
+    func testAppRoleRuntimeDoesNotCreateLearnOutbox() throws {
+        // The inverse guard: the app's cold datasource (default role) must not create or
+        // populate learn_outbox through the same production open path.
+        let coldDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: coldDir) }
+
+        let server = DBServer(_testDatabaseDirectory: coldDir)
+        let context = try server.prepareKeyboardRuntimeDatabase()
+        let ss = context.searchServer
+        ss.candidateSuggestion = true
+        ss.learnRelatedPhraseAndUpdateScore(
+            Mapping(id: 0, code: "aa", word: "甲", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode))
+        ss.learnRelatedPhraseAndUpdateScore(
+            Mapping(id: 0, code: "bb", word: "乙", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode))
+        let finished = expectation(description: "postFinishInput learning completed")
+        ss.postFinishInput { finished.fulfill() }
+        wait(for: [finished], timeout: 10.0)
+
+        let queue = try DatabaseQueue(path: coldDir.appendingPathComponent("lime.db").path)
+        defer { try? queue.close() }
+        let outboxExists = try queue.read { db in try db.tableExists("learn_outbox") }
+        XCTAssertFalse(outboxExists, "cold-role datasource must not create learn_outbox")
+    }
+
     func testDBServerGetInstanceWithoutContext() {
         // On iOS there is only one access path: DBServer.shared.
         let s1 = DBServer.shared

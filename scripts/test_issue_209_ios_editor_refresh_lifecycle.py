@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Durable Linux gate for issue #209's iOS editor-refresh lifecycle.
 
-Five SQLite tests execute the database semantics behind the hot→cold handoff, one
-subprocess test exercises descriptor-owned cross-process ``flock``, and three narrow
-source guards prevent resurrection of the retired retry workaround or unbounded lock
-APIs. Detailed lifecycle behavior belongs in XCTest and runs in Xcode Cloud.
+Five SQLite tests document the attached-harvest semantics that motivated the rearch2
+replacement (docs/IOS_DB_COLD_HOT_REARCH2.md), one subprocess test exercises
+descriptor-owned cross-process ``flock``, and four narrow source guards pin the
+rearch2 surfaces: keyboard-only bounded KeyboardFlushLock, hot-role learning journal
+wiring, and permanent removal of every retired #209 ownership surface. Detailed
+lifecycle behavior belongs in XCTest and runs in Xcode Cloud.
 """
 import fcntl
 import multiprocessing
@@ -178,7 +180,14 @@ class ColdHarvestSQLiteBehaviour(unittest.TestCase):
 
 
 class DurableEditorRefreshRemovalContract(unittest.TestCase):
-    """Narrow guards against resurrecting retired unsafe surfaces."""
+    """Narrow guards for the rearch2 replacement surfaces.
+
+    The re-architecture (docs/IOS_DB_COLD_HOT_REARCH2.md) deleted the ownership
+    machinery this class previously pinned (EditorRefreshFileLock, SharedDatabase
+    suspension/lease counters). The guards now pin its replacements: the keyboard-only
+    bounded KeyboardFlushLock, the hot-role learning journal wiring, and the permanent
+    removal of every retired #209 surface.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -187,38 +196,52 @@ class DurableEditorRefreshRemovalContract(unittest.TestCase):
         cls.db_server = DB_SERVER.read_text(encoding="utf-8")
         cls.engine_tests = ENGINE_TESTS.read_text(encoding="utf-8")
 
-    def test_shared_database_uses_one_concrete_scoped_access_lease(self):
+    def test_shared_database_has_no_lease_counters_and_journals_hot_learning(self):
         shared_database = swift_body(self.db_server, "final class SharedDatabase")
-        self.assertIn("private var activeAccesses = 0", shared_database)
         self.assertIn(
             "func withLiveAccess<T>(_ operation: (LimeDB) throws -> T) throws -> T",
             shared_database,
         )
-        self.assertNotIn("activeIndependentAccesses", shared_database)
-        self.assertNotIn("func withLiveAccessOperation", shared_database)
+        # The suspension/lease machinery must stay deleted.
+        self.assertNotIn("activeAccesses", shared_database)
+        self.assertNotIn("suspendColdAccess", self.db_server)
+        # PR #223 merge blocker guard: every live-datasource open must carry the role
+        # flag, or keyboard learning silently never reaches learn_outbox/cold.
+        self.assertIn("let tracksHotLearning: Bool", shared_database)
+        self.assertIn("tracksHotLearning: tracksHotLearning", shared_database)
+        self.assertIn("makeLimeDB(path: dbURL.path)", self.db_server)
+        self.assertNotIn("datasource = try? LimeDB(path:", self.db_server)
 
-    def test_cross_process_lock_wait_is_bounded(self):
-        file_lock = swift_body(self.contract, "final class EditorRefreshFileLock")
-        self.assertIn("throw EditorRefreshLockError.timedOut", file_lock)
-        self.assertIn("flock(", file_lock)
-        self.assertNotIn("F_SETLKW", file_lock)
+    def test_cross_process_flush_lock_wait_is_bounded(self):
+        flush_lock = swift_body(self.contract, "final class KeyboardFlushLock")
+        self.assertIn("flock(", flush_lock)
+        self.assertIn("LOCK_NB", flush_lock)
+        self.assertNotIn("F_SETLKW", flush_lock)
 
-    def test_file_lock_has_no_unbounded_convenience_surface(self):
-        file_lock = swift_body(self.contract, "final class EditorRefreshFileLock")
-        declarations = re.findall(r"\bfunc\s+lock\s*\((.*?)\)\s*throws", file_lock, re.DOTALL)
+    def test_flush_lock_has_no_unbounded_convenience_surface(self):
+        flush_lock = swift_body(self.contract, "final class KeyboardFlushLock")
+        declarations = re.findall(r"\bfunc\s+lock\s*\((.*?)\)\s*throws", flush_lock, re.DOTALL)
         self.assertTrue(declarations, "the bounded explicit lock API disappeared")
         for parameters in declarations:
             self.assertIn("TimeInterval", parameters)
             self.assertNotIn("=", parameters, "lock acquisition must not have a default timeout")
-        self.assertNotIn("defaultAcquisitionTimeout", file_lock)
+        self.assertNotIn("defaultAcquisitionTimeout", flush_lock)
 
-    def test_the_retry_workaround_is_removed(self):
+    def test_the_retired_209_surfaces_stay_removed(self):
         for symbol in ("editorRefreshBusyRetryWindow",
                        "editorRefreshBusyRetryBackoff",
                        "editorRefreshAttemptBusyTimeoutMilliseconds",
                        "isTransientLockError",
                        "harvestEditorRefreshAttempt"):
             self.assertNotIn(symbol, self.engine)
+        for symbol in ("EditorRefreshFileLock",
+                       "EditorRefreshRequest",
+                       "EditorRefreshReceipt",
+                       "harvestEditorRefresh",
+                       "refreshTableFromKeyboard"):
+            self.assertNotIn(symbol, self.engine)
+            self.assertNotIn(symbol, self.contract)
+            self.assertNotIn(symbol, self.db_server)
         self.assertNotIn("testEditorRefreshRetriesThroughTransientColdWriteLock",
                          self.engine_tests)
         self.assertFalse(RETIRED_RETRY_GATE.exists())

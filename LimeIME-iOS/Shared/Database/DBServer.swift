@@ -39,6 +39,12 @@ final class SharedDatabase {
 
     private static let databaseName = "lime.db"
     private let dataDirOverride: URL?
+    /// The keyboard's live DB is HOT: every learning write must journal to `learn_outbox`
+    /// in the same transaction (§3.1/§4.1), so the keyboard role opens LimeDB with
+    /// `tracksHotLearning`. The app's live DB is COLD and must NOT create/journal the
+    /// outbox. Derived from the bundle; injectable so tests can exercise the keyboard
+    /// role through this production open path.
+    let tracksHotLearning: Bool
     private var cachedDatasource: LimeDB?
     // st_ino the cached datasource is bound to, recorded at open. If another process
     // replaces lime.db (full-replace = move → new inode), this lets a warm process
@@ -48,9 +54,17 @@ final class SharedDatabase {
     private var openedInode: Int?
     private let lock = NSLock()
 
-    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
+    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil,
+         tracksHotLearning: Bool = SyncDatabaseLocator.isKeyboardExtension()) {
         self.dataDirOverride = dataDirOverride
         self.cachedDatasource = datasource
+        self.tracksHotLearning = tracksHotLearning
+    }
+
+    /// The single LimeDB constructor for live-datasource opens (initial, reopen, and
+    /// backup/restore rebinds) — the role flag must never be dropped on any of them.
+    func makeLimeDB(path: String) throws -> LimeDB {
+        try LimeDB(path: path, tracksHotLearning: tracksHotLearning)
     }
 
     var dataDirURL: URL {
@@ -149,7 +163,7 @@ final class SharedDatabase {
             print("[DBServer] openDatasource: database bootstrap failed: \(error)")
             return nil
         }
-        guard let db = try? LimeDB(path: dbURL.path) else { return nil }
+        guard let db = try? makeLimeDB(path: dbURL.path) else { return nil }
         if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
             db.repairKeyboardCatalogIfNeeded(from: bundledURL)
         }
@@ -207,9 +221,11 @@ final class DBServer {
     }
 
     /// Test hook: use an isolated database directory while exercising DBServer's
-    /// own open/reopen path.
-    init(_testDatabaseDirectory dataDirURL: URL) {
-        self.database = SharedDatabase(dataDirOverride: dataDirURL)
+    /// own open/reopen path. `tracksHotLearning: true` simulates the keyboard role
+    /// (production derives it from the bundle) through the production open path.
+    init(_testDatabaseDirectory dataDirURL: URL, tracksHotLearning: Bool = false) {
+        self.database = SharedDatabase(dataDirOverride: dataDirURL,
+                                       tracksHotLearning: tracksHotLearning)
     }
 
     private func schedulePendingEditorPublicationRecovery() {
@@ -923,7 +939,7 @@ final class DBServer {
             // IM list reads return empty and reinstall fails until the app is
             // relaunched. Mirror restoreDatabase()'s rebuild pattern.
             datasource = nil
-            datasource = try? LimeDB(path: livePath)
+            datasource = try? database.makeLimeDB(path: livePath)
             datasource?.unHoldDBConnection()
             try? FileManager.default.removeItem(at: fileSharedPrefsBackup)
             try? FileManager.default.removeItem(at: filePreferenceManifest)
@@ -1063,7 +1079,7 @@ final class DBServer {
             }
             // Step 4: open a fresh datasource on the restored (or original) file.
             print("[DBServer] restore defer: reopening at \(dbURL.path), exists=\(FileManager.default.fileExists(atPath: dbURL.path)), restoreSucceeded=\(restoreSucceeded)")
-            datasource = try? LimeDB(path: dbURL.path)
+            datasource = try? database.makeLimeDB(path: dbURL.path)
             ds.unHoldDBConnection()
             if restoreSucceeded {
                 if FileManager.default.fileExists(atPath: preferenceManifest.path),
@@ -1174,7 +1190,7 @@ final class DBServer {
                 }
             }
             print("[DBServer] restoreBundledDatabase defer: reopening at \(dbURL.path), restoreSucceeded=\(restoreSucceeded)")
-            datasource = try? LimeDB(path: dbURL.path)
+            datasource = try? database.makeLimeDB(path: dbURL.path)
             ds.unHoldDBConnection()
             if restoreSucceeded {
                 datasource?.checkAndUpdateRelatedTable()
