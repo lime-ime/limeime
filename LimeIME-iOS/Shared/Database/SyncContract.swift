@@ -23,6 +23,7 @@
 
 import Foundation
 import Combine
+import Darwin
 
 enum SyncPaths {
     static func coldDB(_ base: URL) -> URL {
@@ -36,10 +37,6 @@ enum SyncPaths {
 
     static func inboxDir(_ base: URL) -> URL {
         base.appendingPathComponent("inbox", isDirectory: true)
-    }
-
-    static func imLifecycleInbox(_ base: URL) -> URL {
-        inboxDir(base).appendingPathComponent("lifecycle.json")
     }
 
     /// §1.8 two-writer hamburger prefs: the app→keyboard one-time channel. The app writes
@@ -65,12 +62,8 @@ enum SyncPaths {
         outboxDir(base).appendingPathComponent("receipt.json")
     }
 
-    static func editorRefreshRequest(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("editor.refresh.request.json")
-    }
-
-    static func editorRefreshReceipt(_ base: URL) -> URL {
-        outboxDir(base).appendingPathComponent("editor.refresh.receipt.json")
+    static func keyboardFlushLock(_ base: URL) -> URL {
+        outboxDir(base).appendingPathComponent("keyboard.flush.lock")
     }
 
     static func heartbeat(_ base: URL) -> URL {
@@ -78,22 +71,177 @@ enum SyncPaths {
     }
 }
 
-struct IMLifecycleRecord: Codable, Equatable {
-    enum Action: String, Codable {
-        case delete
-        case install
+final class KeyboardFlushLock: @unchecked Sendable {
+    private final class SharedDescriptor: @unchecked Sendable {
+        let descriptor: Int32
+        let localOwnership = DispatchSemaphore(value: 1)
+
+        init(path: String) throws {
+            descriptor = Darwin.open(path,
+                                     O_CREAT | O_RDWR | O_CLOEXEC,
+                                     mode_t(S_IRUSR | S_IWUSR))
+            guard descriptor >= 0 else {
+                throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
+            }
+        }
+
+        deinit {
+            Darwin.close(descriptor)
+        }
+
+        func applyFlock(_ operation: Int32) -> (result: Int32, error: Int32) {
+            let result = flock(descriptor, operation)
+            return (result, result == 0 ? 0 : errno)
+        }
     }
 
-    var table: String
-    var action: Action
-    var preserveLearning: Bool
+    private static let registryLock = NSLock()
+    private static var sharedByPath: [String: SharedDescriptor] = [:]
+
+    private let shared: SharedDescriptor
+    private let stateLock = NSLock()
+    private var ownsLock = false
+
+    static func shared(baseURL: URL) throws -> KeyboardFlushLock {
+        let directory = SyncPaths.outboxDir(baseURL)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let path = SyncPaths.keyboardFlushLock(baseURL).standardizedFileURL.path
+        registryLock.lock()
+        defer { registryLock.unlock() }
+        let descriptor: SharedDescriptor
+        if let existing = sharedByPath[path] {
+            descriptor = existing
+        } else {
+            descriptor = try SharedDescriptor(path: path)
+            sharedByPath[path] = descriptor
+        }
+        return KeyboardFlushLock(shared: descriptor)
+    }
+
+#if DEBUG
+    static func _testResetSharedDescriptors() {
+        registryLock.lock()
+        sharedByPath.removeAll()
+        registryLock.unlock()
+    }
+#endif
+
+    private init(shared: SharedDescriptor) {
+        self.shared = shared
+    }
+
+    deinit {
+        do {
+            try unlock()
+        } catch {
+        }
+    }
+
+    func lock(timeout: TimeInterval) throws -> Bool {
+        stateLock.lock()
+        let alreadyOwned = ownsLock
+        stateLock.unlock()
+        guard !alreadyOwned else { return true }
+
+        let clampedTimeout = max(0, timeout)
+        guard shared.localOwnership.wait(timeout: .now() + clampedTimeout) == .success else {
+            return false
+        }
+        var acquired = false
+        defer {
+            if !acquired {
+                shared.localOwnership.signal()
+            }
+        }
+
+        let deadline = Date().addingTimeInterval(clampedTimeout)
+        var attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        while attempt.result != 0 {
+            if attempt.error == EINTR {
+                attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+                continue
+            }
+            guard attempt.error == EWOULDBLOCK || attempt.error == EAGAIN else {
+                throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+            }
+            guard Date() < deadline else { return false }
+            Thread.sleep(forTimeInterval: 0.01)
+            attempt = shared.applyFlock(LOCK_EX | LOCK_NB)
+        }
+        stateLock.lock()
+        ownsLock = true
+        stateLock.unlock()
+        acquired = true
+        return true
+    }
+
+    func unlock() throws {
+        stateLock.lock()
+        guard ownsLock else {
+            stateLock.unlock()
+            return
+        }
+        let attempt = shared.applyFlock(LOCK_UN)
+        ownsLock = false
+        stateLock.unlock()
+        shared.localOwnership.signal()
+        guard attempt.result == 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: attempt.error) ?? .EIO)
+        }
+    }
+}
+
+enum EditorFenceAction: String {
+    case upsert
+    case delete
+}
+
+enum EditorTableFenceAction: String {
+    case clear
+    case replace
+}
+
+enum IMTableLifecycleAction: String {
+    case install
+    case delete
+}
+
+enum EditorMutation {
+    case addMapping(table: String, code: String, word: String, score: Int)
+    case updateMapping(table: String, id: String, code: String, word: String, score: Int)
+    case deleteMapping(table: String, id: String)
+    case addRelated(parentWord: String, childWord: String, score: Int)
+    case updateRelated(id: Int64, parentWord: String, childWord: String, score: Int)
+    case deleteRelated(id: Int64)
+    case clearTable(String)
+}
+
+struct EditorMutationResult {
+    let rowID: Int64?
+    let affectedRows: Int
+}
+
+enum TableLifecycleMutation {
+    case replaceFromStaging(table: String,
+                            stagingDatabaseURL: URL,
+                            preserveLearning: Bool,
+                            publishImmediately: Bool)
+    case delete(table: String,
+                preserveLearning: Bool,
+                publishImmediately: Bool)
+
+    var publishImmediately: Bool {
+        switch self {
+        case let .replaceFromStaging(_, _, _, publishImmediately),
+             let .delete(_, _, publishImmediately):
+            return publishImmediately
+        }
+    }
 }
 
 enum SyncSignal: String {
     case tablesUpdated = "org.limeime.tables.updated"
     case outboxUpdated = "org.limeime.outbox.updated"
-    case importDone = "org.limeime.import.done"
-    case importFailed = "org.limeime.import.failed"
     case faOn = "org.limeime.fa.on"
     case faOff = "org.limeime.fa.off"
     /// Keyboard → app: a cold→hot scan just finished (hot is synced). Name-only (Darwin
@@ -329,8 +477,12 @@ enum RelayPrefSync {
     }
 }
 
-func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil) -> String {
+func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = nil,
+                        pendingSync: Int? = nil) -> String {
     var payload = "LIMERLY!v1;fa=\(faOn ? 1 : 0);ts=\(ts)"
+    // Amendment A2: undelivered learn_outbox rows at answer time; -1 = count failed
+    // (never claims drained). Editing unlocks only on pend=0.
+    if let pendingSync { payload += ";pend=\(pendingSync)" }
     if let prefs {
         payload += ";han=\(prefs.hanConvert)"
         if prefs.geometryProfile != "phone" {
@@ -349,7 +501,7 @@ func encodeRelayPayload(faOn: Bool, ts: TimeInterval, prefs: RelayPrefState? = n
     return payload
 }
 
-func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, phonePortraitMode: Int?, phoneLandscapeSplit: Bool?, pts: TimeInterval?, rlim: String?, rlval: String?)? {
+func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInterval, han: Int?, split: Int?, oneHand: Int?, numpadAnchor: Int?, phonePortraitMode: Int?, phoneLandscapeSplit: Bool?, pts: TimeInterval?, rlim: String?, rlval: String?, pend: Int?)? {
     let marker = "LIMERLY!v"
     guard let start = text.range(of: marker)?.lowerBound else { return nil }
     // Lenient: the original fa/ts fields remain mandatory; optional pref fields are
@@ -376,6 +528,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
     var pts: TimeInterval?
     var rlim: String?
     var rlval: String?
+    var pend: Int?
     // Reverse-lookup IM/value are alphanumeric strings; truncate any concatenated
     // duplicate payload (defensive — the single-probe capture prevents duplicates).
     func stripJunk(_ s: Substring) -> String {
@@ -411,6 +564,9 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             if let parsed = Double(digits), parsed.isFinite {
                 pts = parsed
             }
+        case "pend":
+            let digits = value.prefix { $0.isNumber || $0 == "-" }
+            pend = Int(digits)
         case "rlim":
             let v = stripJunk(value); if !v.isEmpty { rlim = v }
         case "rlval":
@@ -419,7 +575,7 @@ func decodeRelayPayload(_ text: String) -> (proto: Int, faOn: Bool, ts: TimeInte
             continue
         }
     }
-    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, phonePortraitMode: phonePortraitMode, phoneLandscapeSplit: phoneLandscapeSplit, pts: pts, rlim: rlim, rlval: rlval)
+    return (proto: proto, faOn: fa == 1, ts: ts, han: han, split: split, oneHand: oneHand, numpadAnchor: numpadAnchor, phonePortraitMode: phonePortraitMode, phoneLandscapeSplit: phoneLandscapeSplit, pts: pts, rlim: rlim, rlval: rlval, pend: pend)
 }
 
 func isRelayRequestContext(before: String?, after: String? = nil) -> Bool {
@@ -444,25 +600,6 @@ struct ExportRequest: Codable, Equatable {
 struct ExportReceipt: Codable, Equatable {
     var requestUUID: String
     var epochUUID: String
-    var at: TimeInterval
-}
-
-struct EditorRefreshRequest: Codable, Equatable {
-    var requestUUID: String
-    var table: String
-    var expiresAt: TimeInterval
-}
-
-struct EditorRefreshReceipt: Codable, Equatable {
-    enum Status: String, Codable {
-        case done
-        case failed
-    }
-
-    var requestUUID: String
-    var table: String
-    var status: Status
-    var error: String?
     var at: TimeInterval
 }
 
@@ -595,21 +732,35 @@ enum RecordEditingCapability: Equatable {
 final class RelayActiveState: ObservableObject {
     @Published var isActive: Bool? = nil
     @Published var hasFullAccess: Bool? = nil
+    /// Amendment A2: keyboard-reported undelivered `learn_outbox` rows (`pend=`) at relay
+    /// answer time. nil = unknown (old payload / not yet answered); -1 = count failed.
+    @Published var pendingSyncCount: Int? = nil
 
-    /// Fail-safe: live only when BOTH are positively true; anything else (nil/false) is read-only.
+    /// Fail-safe: live only when active + FA are positively true AND the outbox is proven
+    /// drained (pend == 0); anything else (nil/false/pending) is read-only.
     var editingCapability: RecordEditingCapability {
         if RecordEditingCapability.forceLiveEditingEnabled() { return .live }
-        return (isActive == true && hasFullAccess == true) ? .live : .readOnly
+        return (isActive == true && hasFullAccess == true && pendingSyncCount == 0)
+            ? .live : .readOnly
     }
 
-    func markActive(fullAccess: Bool) {
+    /// Active + FA but the outbox hasn't proven drained — the editors show a syncing
+    /// message instead of the generic unlock hint, and the root relay re-probes.
+    var isSyncPending: Bool {
+        !RecordEditingCapability.forceLiveEditingEnabled()
+            && isActive == true && hasFullAccess == true && pendingSyncCount != 0
+    }
+
+    func markActive(fullAccess: Bool, pendingSync: Int? = nil) {
         isActive = true
         hasFullAccess = fullAccess
+        pendingSyncCount = pendingSync
     }
 
     func markNotActive(fullAccess: Bool = false) {
         isActive = false
         hasFullAccess = fullAccess
+        pendingSyncCount = nil
     }
 }
 

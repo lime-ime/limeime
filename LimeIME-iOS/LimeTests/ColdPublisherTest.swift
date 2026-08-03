@@ -76,4 +76,20 @@ final class ColdPublisherTest: XCTestCase {
         XCTAssertEqual(try snapshotMeta.generation(), 1)
         XCTAssertEqual(try snapshotMeta.epochUUID(), "epoch-a")
     }
+
+    func testPublishReplacesExistingSnapshotFile() throws {
+        let appGroup = try tempDir()
+        defer { try? FileManager.default.removeItem(at: appGroup) }
+        let liveCold = appGroup.appendingPathComponent("lime.db")
+        let snapshotURL = SyncPaths.coldDB(appGroup)
+        try makeDatabase(at: snapshotURL, epoch: "old-snapshot")
+        try makeDatabase(at: liveCold, epoch: "new-live")
+
+        try ColdPublisher(liveColdDatabaseURL: liveCold,
+                          appGroupBaseURL: appGroup).publish()
+
+        let snapshotMeta = try SyncMetaStore(databaseURL: snapshotURL)
+        XCTAssertEqual(try snapshotMeta.generation(), 1)
+        XCTAssertEqual(try snapshotMeta.epochUUID(), "new-live")
+    }
 }

@@ -36,8 +36,24 @@ final class SyncContractTest: XCTestCase {
         XCTAssertEqual(SyncPaths.exportRequest(base).path, "/tmp/x/outbox/export.request.json")
         XCTAssertEqual(SyncPaths.backupSnapshot(base).path, "/tmp/x/outbox/backup.limedb")
         XCTAssertEqual(SyncPaths.receipt(base).path, "/tmp/x/outbox/receipt.json")
-        XCTAssertEqual(SyncPaths.editorRefreshRequest(base).path, "/tmp/x/outbox/editor.refresh.request.json")
-        XCTAssertEqual(SyncPaths.editorRefreshReceipt(base).path, "/tmp/x/outbox/editor.refresh.receipt.json")
+        XCTAssertEqual(SyncPaths.keyboardFlushLock(base).path, "/tmp/x/outbox/keyboard.flush.lock")
+    }
+
+    func testKeyboardFlushLockIsExclusiveAndReusable() throws {
+        let base = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("keyboard-flush-lock-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        KeyboardFlushLock._testResetSharedDescriptors()
+
+        let first = try KeyboardFlushLock.shared(baseURL: base)
+        let second = try KeyboardFlushLock.shared(baseURL: base)
+
+        XCTAssertTrue(try first.lock(timeout: 0))
+        XCTAssertFalse(try second.lock(timeout: 0),
+                       "a second warm keyboard process must not enter the same flush batch")
+        try first.unlock()
+        XCTAssertTrue(try second.lock(timeout: 0))
+        try second.unlock()
     }
 
     // §1.8: the app→kb pref inbox merges fields, bumps a seq, and is consumed one-time via
@@ -123,24 +139,6 @@ final class SyncContractTest: XCTestCase {
                                           pts: 100, to: defaults))
         XCTAssertEqual(defaults.integer(forKey: "phone_portrait_keyboard_mode"), 3)
         XCTAssertTrue(defaults.bool(forKey: "phone_landscape_split"))
-    }
-
-    func testEditorRefreshPayloadsRoundTrip() throws {
-        let request = EditorRefreshRequest(requestUUID: "req-1",
-                                           table: "custom",
-                                           expiresAt: 123)
-        let receipt = EditorRefreshReceipt(requestUUID: "req-1",
-                                           table: "custom",
-                                           status: .done,
-                                           error: nil,
-                                           at: 456)
-
-        XCTAssertEqual(try JSONDecoder().decode(EditorRefreshRequest.self,
-                                                from: JSONEncoder().encode(request)),
-                       request)
-        XCTAssertEqual(try JSONDecoder().decode(EditorRefreshReceipt.self,
-                                                from: JSONEncoder().encode(receipt)),
-                       receipt)
     }
 
     func testFileIdentity() throws {

@@ -87,6 +87,7 @@ final class SearchServer {
     private var ldPhraseList:      [Mapping]    = []   // current accumulating LD phrase
     private var ldPhraseListArray: [[Mapping]]  = []   // completed LD phrases pending write
     private let learnLock = NSLock()
+    private let learningQueue = DispatchQueue(label: "net.limeime.search.learning", qos: .utility)
 
     private var prefetchThread: Thread?
 
@@ -610,11 +611,7 @@ final class SearchServer {
         scorelistLock.unlock()
 
         let tableName = currentTableName
-        // .utility (not .background): the score update + cache re-warm is a
-        // user-initiated learning step that the next composition depends on,
-        // so it must not be starved. Mirrors Android's normal-priority learning
-        // thread and the emoji preload path's .utility QoS below.
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        learningQueue.async { [weak self] in
             guard let self = self else { return }
             // Score update
             if candidate.id > 0 {
@@ -976,7 +973,7 @@ final class SearchServer {
     // MARK: - Finish Input (spec §13 postFinishInput)
 
     /// Flush all pending learning when the text field loses focus.
-    func postFinishInput() {
+    func postFinishInput(completion: (() -> Void)? = nil) {
         scorelistLock.lock()
         let snapshot = scorelist
         scorelist.removeAll()
@@ -988,7 +985,8 @@ final class SearchServer {
         ldPhraseListArray = []
         learnLock.unlock()
 
-        DispatchQueue.global(qos: .background).async { [weak self] in
+        learningQueue.async { [weak self] in
+            defer { completion?() }
             guard let self = self else { return }
             // learnRelatedPhrase runs first — may call addLDPhrase for high-score RP pairs.
             // Mirrors Android postFinishInput ordering (SearchServer.java lines 1250–1259).

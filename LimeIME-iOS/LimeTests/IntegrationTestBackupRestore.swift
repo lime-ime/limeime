@@ -21,6 +21,7 @@
  *
  */
 
+import GRDB
 import XCTest
 @testable import LimeIME
 
@@ -41,6 +42,7 @@ final class IntegrationTestBackupRestore: XCTestCase {
 
     private var tempDir: URL!
     private var tempURL: URL!
+    private var hotURL: URL!
 
     override func setUp() {
         super.setUp()
@@ -48,6 +50,7 @@ final class IntegrationTestBackupRestore: XCTestCase {
             .appendingPathComponent(UUID().uuidString, isDirectory: true)
         try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         tempURL = tempDir.appendingPathComponent("lime.db")
+        hotURL = tempDir.appendingPathComponent("hot/lime.db")
     }
 
     override func tearDown() {
@@ -57,11 +60,15 @@ final class IntegrationTestBackupRestore: XCTestCase {
 
     @MainActor
     func testCloudIMInstallBackupAndRestoreLearningThroughSettingsImport() async throws {
-        let (db, controller) = try makeHarness()
+        let (db, controller, server) = try makeHarness()
 
         for fixture in cloudFixtures {
             let cloudZip = try cloudFixtureURL(fixture.fileName)
             try await importCloudIM(cloudZip, table: fixture.table, controller: controller)
+            try markProtocolReadyAndPublish(server: server)
+            try prepareHotDatabaseForMarkedReconcile(table: fixture.table)
+            let engine = TableSyncEngine(appGroupBaseURL: tempDir, hotDatabaseURL: hotURL)
+            try engine.scanAndApply(hasFullAccess: false)
             XCTAssertGreaterThan(db.countRecords(fixture.table, nil, nil),
                                  0,
                                  "\(fixture.table) cloud fixture should install records")
@@ -69,31 +76,35 @@ final class IntegrationTestBackupRestore: XCTestCase {
             let code = "ios_backup_pair_\(fixture.table)"
             let word1 = "備份對\(fixture.table)"
             let word2 = "還原對\(fixture.table)"
-            db.addOrUpdateMappingRecord(fixture.table, code, word1, 220)
-            db.addOrUpdateMappingRecord(fixture.table, code, word2, 210)
-            XCTAssertEqual(learnedScores(db, table: fixture.table, code: code),
+            let hotDB = try LimeIME.LimeDB(path: hotURL.path, tracksHotLearning: true)
+            hotDB.addOrUpdateMappingRecord(fixture.table, code, word1, 220)
+            hotDB.addOrUpdateMappingRecord(fixture.table, code, word2, 210)
+            XCTAssertEqual(learnedScores(hotDB, table: fixture.table, code: code),
                            [word1: 220, word2: 210])
 
-            db.backupUserRecords(fixture.table)
-            XCTAssertTrue(db.checkBackupTable(fixture.table),
-                          "\(fixture.table) should have a learned-record backup")
+            try server.performTableLifecycleMutation(.delete(table: fixture.table,
+                                                             preserveLearning: true,
+                                                             publishImmediately: true))
 
             try await importCloudIM(cloudZip,
                                     table: fixture.table,
                                     controller: controller,
                                     restoreLearning: true)
-            try forceHotLifecycleApply(table: fixture.table)
-            try TableSyncEngine(appGroupBaseURL: tempDir, hotDatabaseURL: tempURL).scanAndApply()
+            try engine.scanAndApply(hasFullAccess: false)
+            XCTAssertEqual(learnedScores(hotDB, table: fixture.table, code: code),
+                           [word1: 220, word2: 210],
+                           "\(fixture.table) learned scores should be restored into hot before flush")
+            try engine.flushPendingLearning(hasFullAccess: true)
 
             XCTAssertEqual(learnedScores(db, table: fixture.table, code: code),
                            [word1: 220, word2: 210],
-                           "\(fixture.table) learned scores should survive cloud re-import")
+                           "\(fixture.table) learned scores should survive via hot reconcile and flush")
         }
     }
 
     @MainActor
     func testCloudIMLimedbBackupClearAndRestoreWorkflow() async throws {
-        let (db, controller) = try makeHarness()
+        let (db, controller, _) = try makeHarness()
 
         for fixture in cloudFixtures {
             try await importCloudIM(try cloudFixtureURL(fixture.fileName),
@@ -123,7 +134,7 @@ final class IntegrationTestBackupRestore: XCTestCase {
     }
 
     @MainActor
-    private func makeHarness() throws -> (LimeIME.LimeDB, LimeIME.SetupImController) {
+    private func makeHarness() throws -> (LimeIME.LimeDB, LimeIME.SetupImController, LimeIME.DBServer) {
         let db = try LimeIME.LimeDB(path: tempURL.path)
         _ = db.openDBConnection(false)
         let server = LimeIME.DBServer(_testDatasource: db)
@@ -132,7 +143,7 @@ final class IntegrationTestBackupRestore: XCTestCase {
         let controller = LimeIME.SetupImController(dbServer: server,
                                                    prefs: prefs,
                                                    progress: LimeIME.ProgressManager())
-        return (db, controller)
+        return (db, controller, server)
     }
 
     @MainActor
@@ -156,8 +167,54 @@ final class IntegrationTestBackupRestore: XCTestCase {
         return scores
     }
 
-    private func forceHotLifecycleApply(table: String) throws {
-        try SyncMetaStore(databaseURL: tempURL).setValue("0", forKey: "rev:\(table)")
+    private func markProtocolReadyAndPublish(server: LimeIME.DBServer) throws {
+        let queue = try DatabaseQueue(path: tempURL.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """)
+            try db.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES ('epoch_uuid', 'epoch-a')
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """)
+            try db.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES ('editor_fence_protocol', '1')
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """)
+        }
+        try ColdPublisher(liveColdDatabaseURL: tempURL, appGroupBaseURL: tempDir).publish()
+        server.publishImJson()
+    }
+
+    private func prepareHotDatabaseForMarkedReconcile(table: String) throws {
+        try FileManager.default.createDirectory(at: hotURL.deletingLastPathComponent(),
+                                                withIntermediateDirectories: true)
+        _ = try LimeIME.LimeDB(path: hotURL.path, tracksHotLearning: true)
+        let queue = try DatabaseQueue(path: hotURL.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """)
+            for (key, value) in [
+                ("epoch_uuid", "epoch-a"),
+                ("applied_epoch", "epoch-a"),
+                ("legacy_transition_done", "1"),
+                ("rev:\(table)", "0"),
+            ] {
+                try db.execute(sql: """
+                    INSERT INTO sync_meta(key, value) VALUES (?, ?)
+                    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                    """, arguments: [key, value])
+            }
+        }
     }
 
     private func cloudFixtureURL(_ fileName: String) throws -> URL {

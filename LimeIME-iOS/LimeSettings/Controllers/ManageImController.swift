@@ -107,13 +107,13 @@ final class ManageImController: BaseController {
         guard !code.isEmpty, !word.isEmpty else {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
-        let ss = searchServer
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
-            guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
             do {
-                try server.markTableChangedAndPublish(table)
+                _ = try server.performEditorMutation(.addMapping(table: table,
+                                                                  code: code,
+                                                                  word: word,
+                                                                  score: score))
                 return .success(())
             } catch {
                 return .failure(error)
@@ -132,14 +132,17 @@ final class ManageImController: BaseController {
         guard !code.isEmpty, !word.isEmpty else {
             return .failure(ControllerError.validation("字根和文字不能為空"))
         }
-        let ss = searchServer
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
-                                            "_id = ?", [id]) ?? 0
-            guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
             do {
-                try server.markTableChangedAndPublish(table)
+                let result = try server.performEditorMutation(.updateMapping(table: table,
+                                                                             id: id,
+                                                                             code: code,
+                                                                             word: word,
+                                                                             score: score))
+                guard result.affectedRows > 0 else {
+                    return .failure(ControllerError.operation("更新失敗"))
+                }
                 return .success(())
             } catch {
                 return .failure(error)
@@ -154,13 +157,13 @@ final class ManageImController: BaseController {
     // MARK: - Delete record
 
     func deleteRecord(table: String, id: String) async -> Result<Void, Error> {
-        let ss = searchServer
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let affected = ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
-            guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
             do {
-                try server.markTableChangedAndPublish(table)
+                let result = try server.performEditorMutation(.deleteMapping(table: table, id: id))
+                guard result.affectedRows > 0 else {
+                    return .failure(ControllerError.operation("刪除失敗"))
+                }
                 return .success(())
             } catch {
                 return .failure(error)
@@ -296,15 +299,26 @@ final class ManageImController: BaseController {
         guard !code.isEmpty, !word.isEmpty else {
             view?.onError("字根和文字不能為空"); return
         }
-        let ss = searchServer
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let rowID = ss?.addRecord(table, ["code": code, "word": word, "score": score]) ?? -1
-            if rowID > 0 {
-                try? server.markTableChangedAndPublish(table)
+            let result: Result<Void, Error>
+            do {
+                _ = try server.performEditorMutation(.addMapping(table: table,
+                                                                 code: code,
+                                                                 word: word,
+                                                                 score: score))
+                ManageImController.markKeyboardCacheDirty()
+                result = .success(())
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                rowID > 0 ? view?.refreshRecordList() : view?.onError("新增失敗")
+                switch result {
+                case .success:
+                    view?.refreshRecordList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }
@@ -314,30 +328,57 @@ final class ManageImController: BaseController {
         guard !code.isEmpty, !word.isEmpty else {
             view?.onError("字根和文字不能為空"); return
         }
-        let ss = searchServer
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = ss?.updateRecord(table, ["code": code, "word": word, "score": score],
-                                            "_id = ?", [id]) ?? 0
-            if affected > 0 {
-                try? server.markTableChangedAndPublish(table)
+            let result: Result<Void, Error>
+            do {
+                let mutation = try server.performEditorMutation(.updateMapping(table: table,
+                                                                               id: id,
+                                                                               code: code,
+                                                                               word: word,
+                                                                               score: score))
+                if mutation.affectedRows > 0 {
+                    ManageImController.markKeyboardCacheDirty()
+                    result = .success(())
+                } else {
+                    result = .failure(ControllerError.operation("更新失敗"))
+                }
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                affected > 0 ? view?.refreshRecordList() : view?.onError("更新失敗")
+                switch result {
+                case .success:
+                    view?.refreshRecordList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }
 
     func deleteRecord(table: String, id: String, view: (any ManageImView)?) {
-        let ss = searchServer
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = ss?.deleteRecord(table, "_id = ?", [id]) ?? 0
-            if affected > 0 {
-                try? server.markTableChangedAndPublish(table)
+            let result: Result<Void, Error>
+            do {
+                let mutation = try server.performEditorMutation(.deleteMapping(table: table, id: id))
+                if mutation.affectedRows > 0 {
+                    ManageImController.markKeyboardCacheDirty()
+                    result = .success(())
+                } else {
+                    result = .failure(ControllerError.operation("刪除失敗"))
+                }
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                affected > 0 ? view?.refreshRecordList() : view?.onError("刪除失敗")
+                switch result {
+                case .success:
+                    view?.refreshRecordList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }
@@ -384,26 +425,20 @@ final class ManageImController: BaseController {
     /// followed by syncIMActivatedState() to rebuild keyboard_state.
     /// keyboard_list (active IM) is intentionally left unchanged — matches Android behaviour.
     func clearTable(tableNick: String, backupLearning: Bool = false) async -> Result<Void, Error> {
-        let ss = searchServer
         let server = self.dbServer
         let localPrefs = self.prefs
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            ss?.clearTable(tableNick)
-            await MainActor.run { localPrefs.syncIMActivatedState(dbServer: server) }
             do {
-                try server.writeIMLifecycleRecord(table: tableNick,
-                                                  action: .delete,
-                                                  preserveLearning: backupLearning,
-                                                  postSignal: false)
-                // §1.5: no `im` inbox — the `im` row deletion rides the mirror on the
-                // generation bump from markTableChangedAndPublish below (rev + publish).
-                try server.markTableChangedAndPublish(tableNick)
+                try server.performTableLifecycleMutation(.delete(table: tableNick,
+                                                                 preserveLearning: backupLearning,
+                                                                 publishImmediately: true))
                 return .success(())
             } catch {
                 return .failure(error)
             }
         }.value
         if case .success = result {
+            localPrefs.syncIMActivatedState(dbServer: server)
             ManageImController.markKeyboardCacheDirty()
             invalidate()
         }

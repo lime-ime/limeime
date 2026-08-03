@@ -46,6 +46,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ].forEach { try? fm.removeItem(at: $0) }
     }
 
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        let task = application.beginBackgroundTask(withName: "publish-editor-changes")
+        DispatchQueue.global(qos: .utility).async {
+            defer { application.endBackgroundTask(task) }
+            do {
+                try DBServer.shared.publishPendingEditorChanges()
+            } catch {
+                NSLog("AppDelegate: pending editor publication failed: %@", error.localizedDescription)
+            }
+        }
+    }
+
     /// Test-only hook: when launched by the screenshot UITest with theme / IM launch
     /// arguments, write them into the real shared app-group defaults. The UITest runner
     /// itself cannot join the app group, so the host app (which is a group member) is the

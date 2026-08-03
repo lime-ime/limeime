@@ -68,12 +68,10 @@ final class ManageRelatedController: BaseController {
         }
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let rowID = server.addRecord("related",
-                                         ["pword": parentWord, "cword": childWord,
-                                          "basescore": 0, "score": score])
-            guard rowID > 0 else { return .failure(ControllerError.operation("新增失敗")) }
             do {
-                try server.markTableChangedAndPublish("related")
+                _ = try server.performEditorMutation(.addRelated(parentWord: parentWord,
+                                                                  childWord: childWord,
+                                                                  score: score))
                 ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
@@ -90,12 +88,14 @@ final class ManageRelatedController: BaseController {
         }
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let affected = server.updateRecord("related",
-                                               ["pword": parentWord, "cword": childWord, "score": score],
-                                               "_id = ?", ["\(id)"])
-            guard affected > 0 else { return .failure(ControllerError.operation("更新失敗")) }
             do {
-                try server.markTableChangedAndPublish("related")
+                let result = try server.performEditorMutation(.updateRelated(id: id,
+                                                                             parentWord: parentWord,
+                                                                             childWord: childWord,
+                                                                             score: score))
+                guard result.affectedRows > 0 else {
+                    return .failure(ControllerError.operation("更新失敗"))
+                }
                 ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
@@ -106,12 +106,10 @@ final class ManageRelatedController: BaseController {
     }
 
     func clearRelated() async -> Result<Void, Error> {
-        let ss = dbServer.makeSearchServer()
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            ss?.clearTable("related")
             do {
-                try server.markTableChangedAndPublish("related")
+                _ = try server.performEditorMutation(.clearTable("related"))
                 ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
@@ -127,10 +125,11 @@ final class ManageRelatedController: BaseController {
     func deleteRelated(id: Int64) async -> Result<Void, Error> {
         let server = self.dbServer
         let result: Result<Void, Error> = await Task.detached(priority: .userInitiated) {
-            let affected = server.deleteRecord("related", "_id = ?", ["\(id)"])
-            guard affected > 0 else { return .failure(ControllerError.operation("刪除失敗")) }
             do {
-                try server.markTableChangedAndPublish("related")
+                let result = try server.performEditorMutation(.deleteRelated(id: id))
+                guard result.affectedRows > 0 else {
+                    return .failure(ControllerError.operation("刪除失敗"))
+                }
                 ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
                 return .success(())
             } catch {
@@ -159,15 +158,23 @@ final class ManageRelatedController: BaseController {
         }
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let rowID = server.addRecord("related",
-                                        ["pword": parentWord, "cword": childWord,
-                                         "basescore": 0, "score": score])
-            if rowID > 0 {
-                try? server.markTableChangedAndPublish("related")
+            let result: Result<Void, Error>
+            do {
+                _ = try server.performEditorMutation(.addRelated(parentWord: parentWord,
+                                                                 childWord: childWord,
+                                                                 score: score))
                 ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
+                result = .success(())
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                rowID > 0 ? view?.refreshPhraseList() : view?.onError("新增失敗")
+                switch result {
+                case .success:
+                    view?.refreshPhraseList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }
@@ -179,15 +186,28 @@ final class ManageRelatedController: BaseController {
         }
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = server.updateRecord("related",
-                                               ["pword": parentWord, "cword": childWord, "score": score],
-                                               "_id = ?", ["\(id)"])
-            if affected > 0 {
-                try? server.markTableChangedAndPublish("related")
-                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
+            let result: Result<Void, Error>
+            do {
+                let mutation = try server.performEditorMutation(.updateRelated(id: id,
+                                                                               parentWord: parentWord,
+                                                                               childWord: childWord,
+                                                                               score: score))
+                if mutation.affectedRows > 0 {
+                    ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
+                    result = .success(())
+                } else {
+                    result = .failure(ControllerError.operation("更新失敗"))
+                }
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                affected > 0 ? view?.refreshPhraseList() : view?.onError("更新失敗")
+                switch result {
+                case .success:
+                    view?.refreshPhraseList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }
@@ -195,13 +215,25 @@ final class ManageRelatedController: BaseController {
     func deleteRelated(id: Int64, view: (any ManageRelatedView)?) {
         let server = self.dbServer
         Task.detached(priority: .userInitiated) {
-            let affected = server.deleteRecord("related", "_id = ?", ["\(id)"])
-            if affected > 0 {
-                try? server.markTableChangedAndPublish("related")
-                ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
+            let result: Result<Void, Error>
+            do {
+                let mutation = try server.performEditorMutation(.deleteRelated(id: id))
+                if mutation.affectedRows > 0 {
+                    ManageImController.markKeyboardCacheDirty()   // #161: flush keyboard relatedCache
+                    result = .success(())
+                } else {
+                    result = .failure(ControllerError.operation("刪除失敗"))
+                }
+            } catch {
+                result = .failure(error)
             }
             await MainActor.run {
-                affected > 0 ? view?.refreshPhraseList() : view?.onError("刪除失敗")
+                switch result {
+                case .success:
+                    view?.refreshPhraseList()
+                case .failure(let error):
+                    view?.onError(error.localizedDescription)
+                }
             }
         }
     }

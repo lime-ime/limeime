@@ -76,6 +76,68 @@ final class LimeDBTest: XCTestCase {
         return try LimeDB(path: tempURL.path)
     }
 
+    private func makeHotLimeDB() throws -> LimeDB {
+        return try LimeDB(path: tempURL.path, tracksHotLearning: true)
+    }
+
+    private struct LearnOutboxRow: Equatable {
+        let tbl: String
+        let k1: String
+        let k2: String
+        let observedRev: Int
+        let version: Int
+    }
+
+    private func withRawDB<T>(_ body: (Database) throws -> T) throws -> T {
+        let queue = try DatabaseQueue(path: tempURL.path)
+        return try queue.write(body)
+    }
+
+    private func setRevision(_ revision: Int, for table: String) throws {
+        try withRawDB { db in
+            try db.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """)
+            try db.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES (?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """, arguments: ["rev:\(table)", "\(revision)"])
+        }
+    }
+
+    private func learnOutboxExists() throws -> Bool {
+        try withRawDB { db in
+            try (Int.fetchOne(db, sql: """
+                SELECT COUNT(*) FROM sqlite_master
+                WHERE type = 'table' AND name = 'learn_outbox'
+                """) ?? 0) > 0
+        }
+    }
+
+    private func learnOutboxRows() throws -> [LearnOutboxRow] {
+        try withRawDB { db in
+            let exists = try (Int.fetchOne(db, sql: """
+                SELECT COUNT(*) FROM sqlite_master
+                WHERE type = 'table' AND name = 'learn_outbox'
+                """) ?? 0) > 0
+            guard exists else { return [] }
+            return try Row.fetchAll(db, sql: """
+                SELECT tbl, k1, k2, observed_rev, version
+                FROM learn_outbox
+                ORDER BY tbl, k1, k2
+                """).map {
+                    LearnOutboxRow(tbl: $0["tbl"],
+                                   k1: $0["k1"],
+                                   k2: $0["k2"],
+                                   observedRev: $0["observed_rev"],
+                                   version: $0["version"])
+                }
+        }
+    }
+
     // MARK: - 1. Initialization & Connection
 
     func testLimeDBInitialization() throws {
@@ -89,6 +151,171 @@ final class LimeDBTest: XCTestCase {
         XCTAssertTrue(db.openDBConnection(false))
         XCTAssertTrue(db.openDBConnection(false), "should reuse existing connection")
         XCTAssertTrue(db.openDBConnection(true), "force reload should succeed")
+    }
+
+    func testHotLearningTrackingIsOptIn() throws {
+        let cold = try makeLimeDB()
+        cold.addOrUpdateMappingRecord(LIME.DB_TABLE_CUSTOM, "cold_track", "冷", 1)
+        XCTAssertFalse(try learnOutboxExists(), "cold-role LimeDB must not create learn_outbox")
+
+        let hot = try makeHotLimeDB()
+        try setRevision(3, for: LIME.DB_TABLE_CUSTOM)
+        try hot.addOrUpdateMappingRecord(code: "hot_track", word: "熱", tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "hot_track",
+                           k2: "熱",
+                           observedRev: 3,
+                           version: 1)
+        ])
+    }
+
+    func testHotMappingLearningCommitsRowAndOutboxAtomically() throws {
+        let db = try makeHotLimeDB()
+        try setRevision(7, for: LIME.DB_TABLE_CUSTOM)
+
+        try db.addOrUpdateMappingRecord(code: "hot_atomic", word: "原子", tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_CUSTOM, "code = ? AND word = ?",
+                                       ["hot_atomic", "原子"]), 1)
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "hot_atomic",
+                           k2: "原子",
+                           observedRev: 7,
+                           version: 1)
+        ])
+    }
+
+    func testHotLearningDefaultsObservedRevisionToZeroWhenSyncMetaIsAbsent() throws {
+        let db = try makeHotLimeDB()
+
+        try db.addOrUpdateMappingRecord(code: "install_only", word: "初始", tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "install_only",
+                           k2: "初始",
+                           observedRev: 0,
+                           version: 1)
+        ])
+    }
+
+    func testHotMappingLearningRollsBackWhenOutboxUpsertFails() throws {
+        try withRawDB { db in
+            try db.execute(sql: "CREATE TABLE learn_outbox(tbl TEXT)")
+        }
+        let db = try makeHotLimeDB()
+
+        XCTAssertThrowsError(try db.addOrUpdateMappingRecord(code: "bad_outbox",
+                                                             word: "回滾",
+                                                             tableName: LIME.DB_TABLE_CUSTOM))
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_CUSTOM, "code = ? AND word = ?",
+                                       ["bad_outbox", "回滾"]), 0)
+    }
+
+    func testHotRelatedLearningReturnsErrorAndRollsBackWhenOutboxUpsertFails() throws {
+        try withRawDB { db in
+            try db.execute(sql: "CREATE TABLE learn_outbox(tbl TEXT)")
+        }
+        let db = try makeHotLimeDB()
+
+        XCTAssertEqual(db.addOrUpdateRelatedPhraseRecord("壞", "關聯"), -1)
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_RELATED, "pword = ? AND cword = ?",
+                                       ["壞", "關聯"]), 0)
+    }
+
+    func testHotLearningOutboxVersionIncrementsOnRelearn() throws {
+        let db = try makeHotLimeDB()
+        try setRevision(4, for: LIME.DB_TABLE_CUSTOM)
+
+        try db.addOrUpdateMappingRecord(code: "relearn", word: "重學", tableName: LIME.DB_TABLE_CUSTOM)
+        try db.addOrUpdateMappingRecord(code: "relearn", word: "重學", tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "relearn",
+                           k2: "重學",
+                           observedRev: 4,
+                           version: 2)
+        ])
+    }
+
+    func testHotLearningEntryPointsJournalScoreMappingAndRelatedKeys() throws {
+        let db = try makeHotLimeDB()
+        try setRevision(8, for: LIME.DB_TABLE_CUSTOM)
+        try setRevision(6, for: LIME.DB_TABLE_RELATED)
+        db.addOrUpdateMappingRecord(LIME.DB_TABLE_CUSTOM, "score_key", "分數", 2)
+        guard let scoreRow = db.getRecordList(LIME.DB_TABLE_CUSTOM, "score_key",
+                                              searchByCode: true, 1, 0).first else {
+            return XCTFail("seed row missing")
+        }
+
+        guard let scoreRowID = Int64(scoreRow.id) else { return XCTFail("seed row id not numeric") }
+        try db.updateScore(id: scoreRowID, score: 9, tableName: LIME.DB_TABLE_CUSTOM)
+        try db.addOrUpdateMappingRecord(code: "map_key", word: "映射", tableName: LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(db.addOrUpdateRelatedPhraseRecord("父", "子"), 1)
+
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "map_key",
+                           k2: "映射",
+                           observedRev: 8,
+                           version: 1),
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "score_key",
+                           k2: "分數",
+                           observedRev: 8,
+                           version: 2),
+            LearnOutboxRow(tbl: LIME.DB_TABLE_RELATED,
+                           k1: "父",
+                           k2: "子",
+                           observedRev: 6,
+                           version: 1)
+        ])
+    }
+
+    func testBulkImportsAndLegacySentinelsDoNotEnterLearnOutbox() throws {
+        let db = try makeHotLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".txt")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try "bulk\t匯入\t5\t0\n".write(to: importURL, atomically: true, encoding: .utf8)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+        let sentinelID = db.addRecord(LIME.DB_TABLE_CUSTOM, [
+            "code": "sentinel_code",
+            "word": nil,
+            "score": 0
+        ])
+        try db.updateScore(id: sentinelID, score: 10, tableName: LIME.DB_TABLE_CUSTOM)
+        _ = db.addOrUpdateRelatedPhraseRecord("sentinel_parent", nil)
+
+        XCTAssertEqual(db.countRecords(LIME.DB_TABLE_CUSTOM, "code = ? AND word = ?",
+                                       ["bulk", "匯入"]), 1)
+        XCTAssertEqual(try learnOutboxRows(), [])
+    }
+
+    func testRestoreUserRecordsJournalsRestoredKeysAtomically() throws {
+        let db = try makeLimeDB()
+        db.addOrUpdateMappingRecord(LIME.DB_TABLE_CUSTOM, "restore_key", "還原", 5)
+        db.backupUserRecords(LIME.DB_TABLE_CUSTOM)
+        db.clearTable(LIME.DB_TABLE_CUSTOM)
+
+        let hot = try LimeDB(path: tempURL.path, tracksHotLearning: true)
+        try setRevision(11, for: LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(hot.restoreUserRecords(LIME.DB_TABLE_CUSTOM), 1)
+
+        XCTAssertEqual(hot.countRecords(LIME.DB_TABLE_CUSTOM, "code = ? AND word = ?",
+                                        ["restore_key", "還原"]), 1)
+        XCTAssertEqual(try learnOutboxRows(), [
+            LearnOutboxRow(tbl: LIME.DB_TABLE_CUSTOM,
+                           k1: "restore_key",
+                           k2: "還原",
+                           observedRev: 11,
+                           version: 1)
+        ])
     }
 
     func testLimeDBDatabaseHold() throws {

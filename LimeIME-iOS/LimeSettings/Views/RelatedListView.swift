@@ -46,12 +46,7 @@ struct RelatedListView: View {
     @State private var page: Int = 0
     @State private var query: String = ""
     @State private var statusMessage = ""
-    @State private var isRefreshingHotSnapshot = false
-    @State private var didAttemptHotRefresh = false
-    @State private var hotRefreshFailed = false
     @State private var didPublishEditorClose = false
-    @State private var probeText = ""
-    @FocusState private var probeFocused: Bool
 
     @State private var loadTask: Task<Void, Never>?
     @State private var showAdd = false
@@ -68,12 +63,9 @@ struct RelatedListView: View {
 
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
-    private var relayEditingCapability: RecordEditingCapability { relayActiveState.editingCapability }
-    private var editingCapability: RecordEditingCapability {
-        hotRefreshFailed ? .readOnly : relayEditingCapability
-    }
-    private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }
-    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯關聯字庫（顯示實際分數）" }
+    // Amendment A1: mutations require FA confirmed-on + LIME active (relay-resolved).
+    // Entry/viewing stays immediate; the capability flips reactively from relay state.
+    private var canEdit: Bool { relayActiveState.editingCapability == .live }
 
     var body: some View {
         if isEmbedded {
@@ -121,7 +113,7 @@ struct RelatedListView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             Text(phrase.childWord)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(canEdit ? "\(phrase.score)" : "—")
+                            Text(canEdit ? phrase.score.description : "—")
                                 .frame(width: 48, alignment: .trailing)
                                 .foregroundColor(.secondary)
                         }
@@ -147,8 +139,6 @@ struct RelatedListView: View {
                     }
                 }
                 .listStyle(.plain)
-                .redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])
-                .disabled(isRefreshingHotSnapshot)
 
                 // Pagination bar
                 HStack {
@@ -165,15 +155,6 @@ struct RelatedListView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 .background(Color(.systemGroupedBackground))
-
-                TextField("", text: $probeText)
-                    .focused($probeFocused)
-                    .frame(width: SettingsMetrics.invisibleProbeSize,
-                           height: SettingsMetrics.invisibleProbeSize)
-                    .opacity(SettingsMetrics.invisibleProbeOpacity)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                    .accessibilityHidden(true)
             }
             .navigationTitle("關聯字管理")
             .toolbar {
@@ -186,14 +167,16 @@ struct RelatedListView: View {
                     .disabled(!canEdit)
                 }
             }
-            .onAppear {
-                refreshHotSnapshotIfNeeded()
-                loadPhrases()
+            .onAppear { loadPhrases() }
+            // Amendment A2: capability just flipped to live — the outbox is drained, so
+            // reload to guarantee the editable display is post-flush data.
+            .onChange(of: canEdit) { nowEditable in
+                if nowEditable {
+                    statusMessage = ""
+                    resetAndLoad()
+                }
             }
             .onChange(of: manageRelatedController.refreshToken) { _ in resetAndLoad() }
-            .onChange(of: relayActiveState.editingCapability) { _ in
-                refreshHotSnapshotIfNeeded()
-            }
             .onChange(of: scenePhase) { _ in
                 if scenePhase == .background {
                     publishEditorCloseIfNeeded()
@@ -246,42 +229,26 @@ struct RelatedListView: View {
         }
     }
 
+    // Amendment A2: while the keyboard is active + FA but its outbox hasn't proven
+    // drained, editing stays locked with a syncing message instead of the unlock hint.
+    private var unlockHint: String {
+        relayActiveState.isSyncPending
+            ? "鍵盤資料同步中，完成後即可編輯…"
+            : "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯關聯字庫（顯示實際分數）"
+    }
+
     private var capabilityMessage: String {
-        if isRefreshingHotSnapshot { return "同步中..." }
-        return canEdit ? "完整取用已開啟，關聯字編輯功能已啓用。" : unlockHint
+        canEdit ? "即時資料可編輯；鍵盤會在離開後套用變更。" : unlockHint
     }
 
     private var capabilityIcon: String {
-        if isRefreshingHotSnapshot { return "clock.arrow.circlepath" }
-        return canEdit ? "checkmark.circle" : "lock"
-    }
-
-    private func refreshHotSnapshotIfNeeded() {
-        guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }
-        didAttemptHotRefresh = true
-        isRefreshingHotSnapshot = true
-        statusMessage = ""
-        probeFocused = true
-        Task {
-            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
-            let result = await setupController.refreshTableFromKeyboard(stem: "related")
-            isRefreshingHotSnapshot = false
-            probeFocused = false
-            switch result {
-            case .success:
-                statusMessage = ""
-                loadPhrases()
-            case .failure(let error):
-                hotRefreshFailed = true
-                statusMessage = "即時資料更新失敗：\(error.localizedDescription)"
-            }
-        }
+        if canEdit { return "checkmark.circle" }
+        return relayActiveState.isSyncPending ? "arrow.triangle.2.circlepath" : "lock"
     }
 
     private func publishEditorCloseIfNeeded() {
-        guard didAttemptHotRefresh, !isRefreshingHotSnapshot, !didPublishEditorClose, !hotRefreshFailed else { return }
+        guard !didPublishEditorClose else { return }
         didPublishEditorClose = true
-        // ponytail: background publish closes the only editor/keyboard learning interleave.
         Task {
             _ = await setupController.publishEditorChanges(stem: "related")
         }
