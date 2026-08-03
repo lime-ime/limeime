@@ -3,24 +3,38 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/209
-- State: **open**
+- State: **closed / source fixed** by merged PR #223
 - Classification: confirmed iOS database-concurrency/usability defect
-- Current pull request: draft PR #221, https://github.com/lime-ime/limeime/pull/221
-- PR #221 branch: `fix/209-ios-db-handoff-final-v7`
-- Last fully native-validated source: `f2798d69a46ced0c6332460c6206a79081cdd622` (Xcode Cloud Run 50)
-- Published PR head before this handover: `2fda5c3ed74538189cbaf218827498b66d7d3822`
-- Handover documentation commit: `fffb60db` (`docs(ios): record complete issue 209 investigation history`)
-- Unvalidated partial source commit: `613d1b0e` (`fix(ios): generalize scoped cold access lease`)
-- Last source commit: 2026-08-01 09:25 +08:00
-- Reconciled: 2026-08-01
+- Accepted pull request: PR #223, https://github.com/lime-ime/limeime/pull/223
+- Final PR head: `6e4ad3203a4675ce10335a303a4de9c2a9f433f5`
+- Merge commit: `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`
+- Merged: 2026-08-03
+- Reconciled: 2026-08-03
 
-**PR #221 is not technically merge-ready.** It fixes the original editor handoff collision, but its process-wide cold-database suspension contract is incomplete. Ordinary cached-database operations can escape the lease, a retained Settings `SearchServer` can fall back to a stale datasource, mutation and publication can be split, and several errors are still swallowed or converted into apparent UI success.
+PR #223 replaces the discarded ownership-handoff design with the accepted cold/hot
+re-architecture 2. Settings editors now open cold immediately. Explicit editor and
+lifecycle mutations are revisioned in cold, while keyboard learning is journaled in
+hot and delivered to cold with marker, epoch, fence, and outbox acknowledgement
+guards. The obsolete suspension, refresh request/receipt, attached harvest, hidden
+probe, timeout, and read-only-on-refresh-failure machinery is deleted.
 
-No source implementation for these remaining defects was made between 2026-07-30 and the initial 2026-08-01 rewrite. One bounded partial lease slice was then implemented as `613d1b0e`; it is recorded below and does not complete the remaining contract.
+The final implementation/test tree is identical to reviewed head `a990f8794d2e028d53678cb5fb32d4e1a17ee4af`.
+The later final-head commits only merge unrelated `master` documentation changes.
+The required strictly read-only Claude Code review found no source blocker. The
+focused Linux lifecycle gate passed 10/10, Python compilation and `git diff --check`
+passed, and the maintainer confirmed the full native suite and physical-device A1/A2
+gating behavior. The exact-head Xcode Cloud run was unavailable because the monthly
+quota was exhausted; the maintainer explicitly waived that gate before approving and merging.
 
-## Maintainer handover
+The iOS 6.1.37 source candidate predates PR #223. Source acceptance is complete,
+but reporter-testable delivery and post-delivery verification remain release QA
+rather than prerequisites for accepting the merged source.
 
-This document and draft PR #221 are now a handover, not a completion claim. Jeremy directed that no further fix be attempted in this work session.
+## Superseded ownership-handoff record
+
+The following sections preserve the investigation and discarded PR #221 handover as
+historical context. Their incomplete lease design and recommended implementation work
+are superseded by PR #223 and must not be treated as current work.
 
 ### Completed in the handover branch
 
@@ -54,7 +68,7 @@ This document and draft PR #221 are now a handover, not a completion claim. Jere
 - The deterministic cross-screen suspension matrix was not implemented.
 - The complete Settings live-cold call-site ownership audit was not completed.
 - Affected-device runtime validation was not performed.
-- PR #221 must remain draft and must not be merged in this state.
+- At handover time, PR #221 had to remain draft and must not have been merged in that state.
 
 ### Recommended next maintainer action
 
@@ -66,11 +80,11 @@ Issue #209 was created on 2026-07-27 after a private support report supplied dir
 
 The reported environment was LIME 6.1.37 on iOS 26.6 RC. Private mail identity and screenshots are intentionally excluded from this repository document.
 
-The issue was created from the maintainer project account, assigned to `jrywu`, and labeled `bug` and `Usability`. It remains open with no public comments.
+The issue was created from the maintainer project account, assigned to `jrywu`, and labeled `bug` and `Usability`. It was automatically closed when PR #223 merged and has no public comments.
 
 ## Reporter-visible failure
 
-Opening iOS **Related-Phrase Management** starts an editor-refresh handshake:
+At the time of the report, opening iOS **Related-Phrase Management** started an editor-refresh handshake:
 
 1. Settings publishes a request.
 2. The keyboard extension opens its hot database and attaches Settings' live cold `lime.db`.
@@ -80,7 +94,7 @@ Opening iOS **Related-Phrase Management** starts an editor-refresh handshake:
 
 In the reported path, the keyboard's write to attached cold failed with SQLite error 5. The refresh timed out or returned failure, and `RelatedListView` deliberately remained read-only.
 
-This is iOS-specific. Android does not use the keyboard-extension/App-Group hot-to-cold handoff implemented by `TableSyncEngine.harvestEditorRefresh`.
+This was iOS-specific. Android did not use the keyboard-extension/App-Group hot-to-cold handoff then implemented by `TableSyncEngine.harvestEditorRefresh`.
 
 ## Reproduction and original root cause
 
@@ -124,11 +138,13 @@ The defect was not merely “SQLite needs a retry.” Settings and the keyboard 
 6. Settings did not require cross-process ownership before reopening cold.
 7. Related and normal table editors shared request/receipt files without complete same-process serialization.
 
-The final-v7 source removes the original collision path, but the later full-call-site audit proved that the new process-wide suspension gate is incomplete.
+The final-v7 source removed the original collision path, but the later full-call-site audit proved that its process-wide suspension gate was incomplete.
 
 ## Complete PR and branch history
 
-Nine draft PRs were created. Eight were closed unmerged and replaced. This churn is part of the defect history and must not be hidden.
+Nine ownership-handoff draft PRs were created and all nine eventually closed unmerged.
+Eight were replaced within that design sequence; PR #221 was superseded by rearch2
+PR #223. This churn is part of the defect history and must not be hidden.
 
 | PR | Created / closed (UTC) | Branch / final head | What it attempted | Why it was not the final fix |
 | --- | --- | --- | --- | --- |
@@ -140,7 +156,7 @@ Nine draft PRs were created. Eight were closed unmerged and replaced. This churn
 | #218 | 2026-07-29 14:10 / 14:57 | `fix/209-ios-db-handoff-final-v3` / `f74c4f8e...` | Exposed initial/reacquisition budgets to native tests, released before signaling the keyboard, used a concurrent blocking bridge, and removed timeout-erasing convenience APIs. | Review still found defensive unlock-state, malformed-request, cancellation-polling, and test-quality/error-path gaps. |
 | #219 | 2026-07-29 14:57 / 23:45 | `fix/209-ios-db-handoff-final-v4` / `7174d38d...` | Cleared local ownership state even if `LOCK_UN` reported failure, isolated malformed requests, avoided cancellation-driven polling spins, and expanded native/error-path coverage. | The next strict review round found broad/brittle source-text tests and smaller production/error-path issues: receipt queue priority, lock-factory failure aborting unrelated sync, unmatched failure signaling for malformed requests, false failure after final unlock reporting, and test descriptor contamination. Work continued on unpublished review branches before a clean final-v6 replacement. |
 | #220 | 2026-07-29 23:45 / 2026-07-30 03:20 | `fix/209-ios-db-handoff-final-v6` / `8fea4b33...` | Clean one-pass replacement after review5/review6. Reduced the Python gate to real behavior plus durable anti-resurrection checks, fixed the review findings, coordinated independent cold publishers/mutations, and preserved fail-closed ownership recovery. | Replaced by #221 after further source changes added datasource-install rejection and final-v7 validation/docs. |
-| #221 | 2026-07-30 02:48 / still open | `fix/209-ios-db-handoff-final-v7`; handover adds `fffb60db` and `613d1b0e` | Serialized handoff with publisher drain, fail-closed recovery, datasource-install rejection, focused lifecycle tests, and Xcode Cloud Run 50; the handover adds complete documentation and a partial generalized lease foundation. | A later complete Settings call-site audit found broader unimplemented lease, stale-datasource, atomic-publication, error-propagation, and UI-consistency defects. The partial handover source is not native-validated. The PR remains draft and must not merge. |
+| #221 | 2026-07-30 02:48 / closed unmerged 2026-08-02 | `fix/209-ios-db-handoff-final-v7`; handover adds `fffb60db` and `613d1b0e` | Serialized handoff with publisher drain, fail-closed recovery, datasource-install rejection, focused lifecycle tests, and Xcode Cloud Run 50; the handover adds complete documentation and a partial generalized lease foundation. | A later complete Settings call-site audit found broader unimplemented lease, stale-datasource, atomic-publication, error-propagation, and UI-consistency defects. The partial handover source was not native-validated. PR #221 closed unmerged when rearch2 PR #223 superseded it. |
 
 ### Unpublished validation branches and review rounds
 
@@ -158,7 +174,7 @@ The published PR sequence understates the internal iteration. Between #219 and #
 
 This iterative review found real defects, but repeatedly replacing the public PR instead of completing one bounded architecture caused avoidable churn.
 
-## What current PR #221 actually fixes
+## What discarded PR #221 actually fixed
 
 The source at `f2798d69a46ced0c6332460c6206a79081cdd622` materially fixes the original editor handoff:
 
@@ -175,7 +191,7 @@ The source at `f2798d69a46ced0c6332460c6206a79081cdd622` materially fixes the or
 
 These are valid and tested changes. They are not sufficient to claim complete process-wide cold ownership.
 
-## Confirmed defects still present in PR #221
+## Historical defects that remained in discarded PR #221
 
 ### 1. Ordinary cached-datasource operations escape the lease
 
@@ -258,7 +274,7 @@ Fixing only the metadata helper would leave equivalent loss and race paths in im
 
 ### 7. Tests do not cover the complete process-wide invariant
 
-Current tests prove the handoff mechanics, tracked publisher drain, fail-closed reacquisition, and hot-to-cold harvest. They do not prove that:
+PR #221's tests proved its handoff mechanics, tracked publisher drain, fail-closed reacquisition, and hot-to-cold harvest. They did not prove that:
 
 - an ordinary cached read or write is drained before close;
 - a pre-existing Settings `SearchServer` cannot use stale cold during suspension;
@@ -267,7 +283,7 @@ Current tests prove the handoff mechanics, tracked publisher drain, fail-closed 
 - every direct Settings call site propagates typed failure;
 - displayed data is preserved rather than replaced with sentinel emptiness.
 
-## Required invariant for completion
+## Superseded final-v7 completion invariant
 
 For Settings:
 
@@ -277,9 +293,10 @@ For user mutations:
 
 > Database mutation, revision/generation update, cold publication, and `im.json` publication execute in one lease. Preference, cache, navigation, callback, and optimistic UI side effects happen only after success. Lease rejection is visible and leaves persisted and optimistic state unchanged.
 
-## Remaining implementation sequence
+## Superseded final-v7 implementation sequence
 
-The remaining work is bounded to this invariant; it is not permission to create another theoretical redesign.
+This sequence records the gaps in discarded PR #221. PR #223 supersedes it with the
+accepted rearch2 design, so these steps are no longer an active implementation plan.
 
 1. **Generalize the scoped lease.** Count every scoped cold operation, make suspension drain all of them, reject leases while pending/suspended, and never report an unavailable datasource as a successful lease.
 2. **Remove stale Settings ownership.** Eliminate the `database.current() ?? initialDatasource` fallback for Settings management. Keep the keyboard's stable hot-runtime datasource path separate.
@@ -290,7 +307,8 @@ The remaining work is bounded to this invariant; it is not permission to create 
 7. **Audit every Settings live-cold call site once.** Record operation, lease API, error propagation, UI result, and behavioral test.
 8. **Run one final exact-SHA gate.** Only after local review is clean: native iOS tests plus archive, then truthful docs and PR body reconciliation.
 
-No new replacement PR is required. PR #221 remains the public draft; implementation can be validated locally before any approved public update.
+This historical instruction was retired when PR #221 closed unmerged and PR #223
+implemented the accepted replacement architecture.
 
 ## Verification ledger
 
@@ -325,7 +343,7 @@ Across the iterations, executed evidence included:
 
 Several intermediate PR bodies said “ready,” “no blockers,” or “zero unresolved findings.” Those were accurate only for the narrower tree and review scope at that moment. Later review proved additional architectural gaps. They are not evidence that PR #221's complete Settings ownership contract is correct.
 
-### Current PR #221
+### Discarded PR #221
 
 Executed for source SHA `f2798d69a46ced0c6332460c6206a79081cdd622`:
 
@@ -341,11 +359,23 @@ Limitations:
 
 - Run 50 proves the handoff source and native tests that existed at that SHA.
 - It does not prove the unimplemented complete-lease invariant.
-- The current PR head adds documentation only after the validated source SHA.
+- PR #221's final head added documentation only after the validated source SHA.
 - Affected-device Related-Phrase Management runtime confirmation has not been completed.
-- GitHub reports no checks attached directly to the current PR head.
+- GitHub reported no checks attached directly to PR #221's final head.
 
 After Run 50, handover commit `613d1b0e` changed source and tests. Its local Linux gate passed 10/10, but it has no native compile, XCTest, archive, runtime, or exact-SHA Cloud evidence. Therefore Run 50 must not be presented as validating the handover tree.
+
+### PR #223 (merged)
+
+- Reviewed implementation/test tree: `a990f8794d2e028d53678cb5fb32d4e1a17ee4af`.
+- Final PR head: `6e4ad3203a4675ce10335a303a4de9c2a9f433f5`; the intervening commits only merged unrelated `master` documentation and did not change the #209 implementation or tests.
+- Merge commit: `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`.
+- Required strictly read-only Claude Code review: no source blocker.
+- Focused Linux lifecycle gate at the reviewed implementation/test tree: 10/10 passed.
+- Python compilation and `git diff --check`: passed.
+- Maintainer-reported evidence for the same implementation/test tree: full native suite passed and physical-device A1/A2 gating behavior passed.
+- Exact-final-head Xcode Cloud test/archive: not run because the monthly quota was exhausted; the maintainer explicitly waived this gate before approving and merging.
+- GitHub checks attached to the final head: none.
 
 ## Rejected approaches and lessons
 
@@ -358,13 +388,13 @@ After Run 50, handover commit `613d1b0e` changed source and tests. Its local Lin
 7. **Returning stale fallback datasources:** invalid during suspension because it defeats the gate.
 8. **Splitting mutation and publication:** invalid because cold can change without matching revision/generation/publication.
 9. **Swallowing lease rejection:** invalid because UI success can be reported for discarded persistence.
-10. **Repeated clean replacement PRs during active review:** created excessive churn. Further work must finish the bounded invariant before another public-state change.
+10. **Repeated clean replacement PRs during active review:** created excessive churn. At that stage, further work needed to finish the bounded invariant before another public-state change.
 
 ## Activity accountability
 
 - Issue opened: 2026-07-27 07:28 +08:00.
-- Nine draft PRs were created: #210 and #214–#221.
-- Eight were closed unmerged and replaced.
+- Nine pre-rearch2 draft PRs were created: retry candidate #210 and ownership-handoff PRs #214–#221.
+- All nine closed unmerged. Eight were replaced within that design sequence, and PR #221 was superseded by rearch2 PR #223.
 - PR #221 received no source update between 2026-07-30 10:51 +08:00 and the partial local lease commit at 2026-08-01 09:25 +08:00.
 - After the full remaining-defect plan was written, implementation did not continue for approximately two days.
 - On 2026-08-01 a local validation branch, `fix/209-complete-cold-ownership-validation-v8`, was created from PR #221 and a Codex Task-1 worker was started.
@@ -372,35 +402,31 @@ After Run 50, handover commit `613d1b0e` changed source and tests. Its local Lin
 - The Codex start/stop produced no tracked source change and no GitHub change.
 - Hermes then implemented the bounded Task-1 lease slice directly and committed it as `613d1b0e`.
 - Jeremy subsequently ended further fix work and requested this final handover plus PR publication.
+- PR #221 closed unmerged on 2026-08-02 after the accepted rearch2 design superseded it.
+- PR #223 implemented rearch2 and merged on 2026-08-03 as `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected. The defect and current work are in the iOS Settings/keyboard-extension hot/cold architecture. The handoff code is shared by Related and normal table editors; the original reporter-visible failure is specifically Related-Phrase Management.
+Confirmed affected. The defect was in the iOS Settings/keyboard-extension hot/cold architecture. The deleted handoff code was shared by Related and normal table editors; the original reporter-visible failure was specifically Related-Phrase Management. The accepted rearch2 replacement remains iOS-only.
 
 ### Android
 
 No corresponding defect is established. Android does not use this App-Group keyboard-extension handoff. Android source remains out of scope.
 
-## Completion criteria
+## Completion and release-QA boundaries
 
-PR #221 can be reported technically ready only when all are true:
+- [x] Accepted rearch2 source merged through PR #223.
+- [x] Final PR head and merge commit verified live.
+- [x] Required strictly read-only Claude Code review found no source blocker.
+- [x] Focused lifecycle gate, Python compilation, and diff checks passed.
+- [x] Maintainer-reported native-suite and physical-device A1/A2 verification passed against the reviewed implementation/test tree.
+- Waived: the exact-head Xcode Cloud gate was not run because the monthly quota was exhausted.
+- [ ] Deliver a TestFlight/App Store build containing merge commit `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`.
+- [ ] Verify the original Related-Phrase Management path in that delivered build.
 
-- no Settings live-cold `LimeDB` escapes a scoped lease;
-- suspension drains ordinary and independent cold operations;
-- no stale Settings `SearchServer` fallback exists;
-- every user mutation and its sync publication share one lease;
-- suspension and publication failures reach controllers and views;
-- no preference, cache, callback, navigation, or optimistic state advances on failure;
-- deterministic tests cover each mutation category during suspension and representative success after resume;
-- existing editor-handoff tests remain green;
-- one final strict review has no unresolved in-scope finding;
-- one exact-final-SHA Xcode Cloud test and archive run succeeds;
-- this document, `docs/BACKLOG.md`, and PR #221 describe the same exact tree without overclaiming;
-- PR remains unmerged until Jeremy explicitly reviews and merges it.
-
-## 2026-08-02 — Superseded by iOS editor-sync re-architecture 2
+## 2026-08-02–03 — Superseded and merged as iOS editor-sync re-architecture 2
 
 The ownership-handoff architecture documented above is superseded by the accepted
 `docs/IOS_DB_COLD_HOT_REARCH2.md` design. The rearch2 implementation deletes the
@@ -419,6 +445,9 @@ learning commits hot data plus `learn_outbox` atomically; dismissal/appearance
 flush validates marker and epoch inside the cold transaction and acknowledges by
 outbox version.
 
-Residual validation belongs to the rearch2 campaign, not to the deleted #209
-handoff. The orchestrator/native final gates and maintainer physical-device pass
-remain the source of final exact-SHA evidence.
+Residual validation belongs to rearch2 release QA, not to the deleted #209 handoff.
+The source review and local checks are complete. The maintainer reported the native
+suite and physical-device A1/A2 pass against the reviewed implementation/test tree;
+the exact-final-head Xcode Cloud gate was waived rather than executed.
+The next boundary is a TestFlight/App Store build that contains PR #223, followed by
+verification of the original reporter-visible management path.
