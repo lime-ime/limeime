@@ -26,7 +26,7 @@ import XCTest
 @testable import LimeIME
 
 final class RecordEditingCapabilityTest: XCTestCase {
-    func testReadOnlyUnlessFAStateConfirmedOn() {
+    func testRelayCapabilityRemainsAStatusSignal() {
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .unknown), .readOnly)
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOff), .readOnly)
         XCTAssertEqual(RecordEditingCapability.resolve(faState: .confirmedOn), .readOnly)
@@ -58,66 +58,104 @@ final class RecordEditingCapabilityTest: XCTestCase {
 }
 
 final class RelayActiveStateTest: XCTestCase {
-    func testDefaultsToReadOnlyUntilActiveAndFullAccessAreProven() {
+    func testDefaultsToReadOnlyUntilActiveFullAccessAndDrainAreProven() {
         let state = RelayActiveState()
 
         XCTAssertEqual(state.editingCapability, .readOnly)
 
-        state.markActive(fullAccess: false)
+        state.markActive(fullAccess: false, pendingSync: 0)
         XCTAssertEqual(state.editingCapability, .readOnly)
 
-        state.markActive(fullAccess: true)
+        state.markActive(fullAccess: true, pendingSync: 0)
         XCTAssertEqual(state.editingCapability, .live)
 
         state.markNotActive()
         XCTAssertEqual(state.editingCapability, .readOnly)
     }
+
+    // Amendment A2: live additionally requires a proven-drained outbox — pend must be
+    // exactly 0. Pending (>0), failed count (-1), and absent (nil) all stay read-only.
+    func testLiveRequiresDrainedOutbox() {
+        let state = RelayActiveState()
+
+        state.markActive(fullAccess: true, pendingSync: 5)
+        XCTAssertEqual(state.editingCapability, .readOnly)
+        XCTAssertTrue(state.isSyncPending)
+
+        state.markActive(fullAccess: true, pendingSync: -1)
+        XCTAssertEqual(state.editingCapability, .readOnly)
+        XCTAssertTrue(state.isSyncPending)
+
+        state.markActive(fullAccess: true)   // pend absent from payload
+        XCTAssertEqual(state.editingCapability, .readOnly)
+
+        state.markActive(fullAccess: true, pendingSync: 0)
+        XCTAssertEqual(state.editingCapability, .live)
+        XCTAssertFalse(state.isSyncPending)
+
+        // Not-active or FA-off never counts as "sync pending" — those show the unlock hint.
+        state.markActive(fullAccess: false, pendingSync: 5)
+        XCTAssertFalse(state.isSyncPending)
+        state.markNotActive()
+        XCTAssertFalse(state.isSyncPending)
+        XCTAssertNil(state.pendingSyncCount)
+    }
 }
 
-final class EditorRefreshViewSourceTest: XCTestCase {
-    func testRecordEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
-        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RecordListView.swift"),
-                                encoding: .utf8)
-
-        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        // RecordListView summons a probe and ALWAYS attempts the harvest — it does NOT gate on
-        // `.live` (chicken-and-egg: `.live` needs the keyboard summoned first). Editing still
-        // gates on `.live` via `canEdit` below.
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh else { return }"))
-        XCTAssertTrue(source.contains("probeFocused = true"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
-        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
-        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
-        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
-        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
-        XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+/// A1/A2 wiring that cannot be unit-instantiated (SwiftUI views, keyboard answer path,
+/// app re-probe) is pinned by source contract, mirroring EditorPublishSourceTest.
+final class EditorSyncGateSourceTest: XCTestCase {
+    func testKeyboardAnswerReportsPendingLearningCount() throws {
+        let source = try read("LimeKeyboard/KeyboardViewController.swift")
+        XCTAssertTrue(source.contains("pendingLearningCount()"))
+        XCTAssertTrue(source.contains("pendingSync: pendingSync"))
     }
 
-    func testRelatedEditorOnlyHarvestsWhenRelayGateIsLiveAndUnlocksAfterRefresh() throws {
-        let source = try String(contentsOf: projectFileURL("LimeSettings/Views/RelatedListView.swift"),
+    func testSettingsConsumesPendAndReprobesBoundedly() throws {
+        let source = try read("LimeSettings/LimeSettingsView.swift")
+        XCTAssertTrue(source.contains("markActive(fullAccess: payload.faOn, pendingSync: payload.pend)"))
+        XCTAssertTrue(source.contains("scheduleSyncPendingReprobeIfNeeded"))
+        XCTAssertTrue(source.contains("pendingSyncRetries < 3"))
+        XCTAssertTrue(source.contains("pendingSyncRetries = 0"))
+    }
+
+    func testEditorViewsGateMutationsAndReloadOnUnlock() throws {
+        for view in ["LimeSettings/Views/RecordListView.swift",
+                     "LimeSettings/Views/RelatedListView.swift"] {
+            let source = try read(view)
+            // A1: mutations bound to the live capability; viewing stays ungated.
+            XCTAssertTrue(source.contains("relayActiveState.editingCapability == .live"), view)
+            XCTAssertTrue(source.contains("guard canEdit else"), view)
+            XCTAssertTrue(source.contains(".disabled(!canEdit)"), view)
+            // A2: syncing state while pending; reload the moment editing unlocks.
+            XCTAssertTrue(source.contains("isSyncPending"), view)
+            XCTAssertTrue(source.contains(".onChange(of: canEdit)"), view)
+        }
+    }
+
+    private func read(_ relativePath: String) throws -> String {
+        if let bundled = Bundle(for: type(of: self)).resourceURL?.appendingPathComponent(relativePath),
+           FileManager.default.fileExists(atPath: bundled.path) {
+            return try String(contentsOf: bundled, encoding: .utf8)
+        }
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent(relativePath)
+        return try String(contentsOf: url, encoding: .utf8)
+    }
+}
+
+final class EditorPublishSourceTest: XCTestCase {
+    func testSettingsBackgroundPublishesPendingEditorChanges() throws {
+        let source = try String(contentsOf: projectFileURL("LimeSettings/AppDelegate.swift"),
                                 encoding: .utf8)
 
-        XCTAssertTrue(source.contains("relayActiveState.editingCapability"))
-        XCTAssertTrue(source.contains("guard !didAttemptHotRefresh, relayEditingCapability == .live else { return }"))
-        XCTAssertTrue(source.contains("@FocusState private var probeFocused: Bool"))
-        XCTAssertTrue(source.contains("probeFocused = true"))
-        XCTAssertTrue(source.contains("FAStateResolver.activeProbeWaitNanoseconds"))
-        XCTAssertTrue(source.contains("probeFocused = false"))
-        XCTAssertTrue(source.contains("case .failure(let error):"))
-        XCTAssertTrue(source.contains("error.localizedDescription"))
-        XCTAssertTrue(source.contains("private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }"))
-        XCTAssertTrue(source.contains("systemImage: capabilityIcon"))
-        XCTAssertTrue(source.contains("if isRefreshingHotSnapshot { return \"同步中...\" }"))
-        XCTAssertTrue(source.contains(".redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])"))
-        XCTAssertTrue(source.contains(".onDisappear { publishEditorCloseIfNeeded() }"))
-        XCTAssertTrue(source.contains("scenePhase == .background"))
-        XCTAssertTrue(source.contains("// ponytail: background publish closes the only editor/keyboard learning interleave"))
+        XCTAssertTrue(source.contains("applicationDidEnterBackground"))
+        XCTAssertTrue(source.contains("DBServer.shared.publishPendingEditorChanges()"))
     }
 
     private func projectFileURL(_ relativePath: String) -> URL {
-        // Prefer the copy bundled into the test target — on Xcode Cloud the source
-        // checkout is absent at test runtime, so #filePath resolves to a missing path.
         if let bundled = Bundle(for: type(of: self)).resourceURL?.appendingPathComponent(relativePath),
            FileManager.default.fileExists(atPath: bundled.path) {
             return bundled

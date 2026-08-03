@@ -50,12 +50,24 @@ class MockSetupImView: SetupImView {
 // MARK: - SetupImControllerTest
 
 final class SetupImControllerTest: XCTestCase {
+    private var tempDirs: [URL] = []
+
+    override func tearDown() {
+        for dir in tempDirs {
+            try? FileManager.default.removeItem(at: dir)
+        }
+        tempDirs.removeAll()
+        super.tearDown()
+    }
 
     // MARK: - Helpers
 
     private func makeDB() throws -> (url: URL, db: LimeIME.LimeDB) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        tempDirs.append(dir)
+        let url = dir.appendingPathComponent("lime.db")
         let db = try LimeIME.LimeDB(path: url.path)
         _ = db.openDBConnection(false)
         return (url, db)
@@ -65,14 +77,14 @@ final class SetupImControllerTest: XCTestCase {
         try SyncMetaStore(databaseURL: url)
     }
 
-    private func lifecycleRecords(in baseURL: URL) throws -> [[String: Any]] {
-        let data = try Data(contentsOf: lifecycleInboxURL(in: baseURL))
-        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
-    }
-
-    private func lifecycleInboxURL(in baseURL: URL) -> URL {
-        baseURL.appendingPathComponent("inbox", isDirectory: true)
-            .appendingPathComponent("lifecycle.json")
+    private func lifecycleRecords(in db: LimeIME.LimeDB, table: String) throws -> [Row] {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Row.fetchAll(database,
+                             sql: "SELECT tbl, revision, action, preserve_learning FROM im_lifecycle_intent WHERE tbl = ? ORDER BY revision",
+                             arguments: [table])
+        }
     }
 
     private func makePrefs() -> LimeIME.LIMEPreferenceManager {
@@ -247,19 +259,6 @@ final class SetupImControllerTest: XCTestCase {
         }
     }
 
-    private func waitForEditorRefreshRequest(at baseURL: URL,
-                                             timeout: TimeInterval = 1) async -> EditorRefreshRequest? {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() <= deadline {
-            if let data = try? Data(contentsOf: SyncPaths.editorRefreshRequest(baseURL)),
-               let request = try? JSONDecoder().decode(EditorRefreshRequest.self, from: data) {
-                return request
-            }
-            try? await Task.sleep(nanoseconds: 10_000_000)
-        }
-        return nil
-    }
-
     // MARK: - importDBFile
 
     func testImportDBFileInvalidPathReportsError() async throws {
@@ -340,8 +339,6 @@ final class SetupImControllerTest: XCTestCase {
             dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
             progress: LimeIME.ProgressManager()
         )
-        try? FileManager.default.removeItem(at: lifecycleInboxURL(in: url.deletingLastPathComponent()))
-
         let result = await controller.importDBFile(url: zipped.zipURL,
                                                    tableName: "custom",
                                                    restoreLearning: true)
@@ -349,11 +346,11 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected zipped .limedb import to succeed, got \(error)")
         }
-        let records = try lifecycleRecords(in: url.deletingLastPathComponent())
+        let records = try lifecycleRecords(in: db, table: "custom")
         XCTAssertEqual(records.count, 1)
-        XCTAssertEqual(records[0]["table"] as? String, "custom")
+        XCTAssertEqual(records[0]["tbl"] as String?, "custom")
         XCTAssertEqual(records[0]["action"] as? String, "install")
-        XCTAssertEqual(records[0]["preserveLearning"] as? Bool, true)
+        XCTAssertEqual(records[0]["preserve_learning"] as Int?, 1)
     }
 
     func testAsyncImportDBFileImportsAndroidShapeZippedLimedb() async throws {
@@ -555,6 +552,39 @@ final class SetupImControllerTest: XCTestCase {
         if case .failure(let error) = result {
             XCTFail("Expected text import to succeed, got \(error)")
         }
+        let meta = try syncMeta(for: url)
+        XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
+        XCTAssertEqual(try meta.generation(), 1)
+    }
+
+    func testAsyncImportCinFileStagesAndPublishesLifecycleIntent() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+        try """
+        %chardef begin
+        ab 詞
+        %chardef end
+        """.write(to: importURL, atomically: true, encoding: .utf8)
+        let controller = await LimeIME.SetupImController(
+            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
+            progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: importURL,
+                                                    tableName: "custom",
+                                                    restoreLearning: true)
+
+        if case .failure(let error) = result {
+            XCTFail("Expected .cin import to succeed, got \(error)")
+        }
+        XCTAssertEqual(db.countRecords("custom", "code = ? AND word = ?", ["ab", "詞"]), 1)
+        let records = try lifecycleRecords(in: db, table: "custom")
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0]["action"] as? String, "install")
+        XCTAssertEqual(records[0]["preserve_learning"] as Int?, 1)
         let meta = try syncMeta(for: url)
         XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
         XCTAssertEqual(try meta.generation(), 1)
@@ -783,67 +813,6 @@ final class SetupImControllerTest: XCTestCase {
 
         let state = prefs.keyboardState
         XCTAssertNotNil(state)
-    }
-
-    // MARK: - editor refresh
-
-    func testRefreshTableFromKeyboardWaitsForMatchingDoneReceipt() async throws {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let (url, db) = try makeDB()
-        defer { try? FileManager.default.removeItem(at: url) }
-        let controller = await LimeIME.SetupImController(
-            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
-            progress: LimeIME.ProgressManager()
-        )
-        let responder = Task {
-            guard let request = await waitForEditorRefreshRequest(at: root) else { return }
-            let receipt = EditorRefreshReceipt(requestUUID: request.requestUUID,
-                                               table: request.table,
-                                               status: .done,
-                                               error: nil,
-                                               at: Date().timeIntervalSince1970)
-            try? atomicWrite(try JSONEncoder().encode(receipt),
-                             to: SyncPaths.editorRefreshReceipt(root))
-            postSyncSignal(SyncSignal.importDone)
-        }
-
-        let result = await controller.refreshTableFromKeyboard(stem: "custom",
-                                                               baseURL: root,
-                                                               timeout: 1,
-                                                               pollInterval: 0.01)
-        await responder.value
-
-        if case .failure(let error) = result {
-            XCTFail("Expected matching done receipt to succeed, got \(error)")
-        }
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(root).path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshReceipt(root).path))
-    }
-
-    func testRefreshTableFromKeyboardTimesOutAndRemovesRequest() async throws {
-        let root = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let (url, db) = try makeDB()
-        defer { try? FileManager.default.removeItem(at: url) }
-        let controller = await LimeIME.SetupImController(
-            dbServer: LimeIME.DBServer(_testDatasource: db), prefs: makePrefs(),
-            progress: LimeIME.ProgressManager()
-        )
-
-        let result = await controller.refreshTableFromKeyboard(stem: "custom",
-                                                               baseURL: root,
-                                                               timeout: 0.05,
-                                                               pollInterval: 0.01)
-
-        if case .success = result {
-            XCTFail("Expected editor refresh to time out without a receipt")
-        }
-        XCTAssertFalse(FileManager.default.fileExists(atPath: SyncPaths.editorRefreshRequest(root).path))
     }
 
     // MARK: - backupDB

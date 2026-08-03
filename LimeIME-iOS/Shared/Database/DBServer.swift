@@ -25,6 +25,11 @@ import Foundation
 import GRDB
 import ZIPFoundation
 
+extension Notification.Name {
+    static let limeColdDatabaseAccessResumed = Notification.Name(
+        "org.limeime.coldDatabaseAccessResumed")
+}
+
 // MARK: - SharedDatabase
 // Process-local owner for the live LimeDB handle. This mirrors Android's static
 // LimeDB.db shape: DBServer and SearchServer are different facades, but the open
@@ -34,6 +39,12 @@ final class SharedDatabase {
 
     private static let databaseName = "lime.db"
     private let dataDirOverride: URL?
+    /// The keyboard's live DB is HOT: every learning write must journal to `learn_outbox`
+    /// in the same transaction (§3.1/§4.1), so the keyboard role opens LimeDB with
+    /// `tracksHotLearning`. The app's live DB is COLD and must NOT create/journal the
+    /// outbox. Derived from the bundle; injectable so tests can exercise the keyboard
+    /// role through this production open path.
+    let tracksHotLearning: Bool
     private var cachedDatasource: LimeDB?
     // st_ino the cached datasource is bound to, recorded at open. If another process
     // replaces lime.db (full-replace = move → new inode), this lets a warm process
@@ -43,9 +54,17 @@ final class SharedDatabase {
     private var openedInode: Int?
     private let lock = NSLock()
 
-    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil) {
+    init(dataDirOverride: URL? = nil, datasource: LimeDB? = nil,
+         tracksHotLearning: Bool = SyncDatabaseLocator.isKeyboardExtension()) {
         self.dataDirOverride = dataDirOverride
         self.cachedDatasource = datasource
+        self.tracksHotLearning = tracksHotLearning
+    }
+
+    /// The single LimeDB constructor for live-datasource opens (initial, reopen, and
+    /// backup/restore rebinds) — the role flag must never be dropped on any of them.
+    func makeLimeDB(path: String) throws -> LimeDB {
+        try LimeDB(path: path, tracksHotLearning: tracksHotLearning)
     }
 
     var dataDirURL: URL {
@@ -66,6 +85,21 @@ final class SharedDatabase {
             cachedDatasource = openDatasource()
         }
         return cachedDatasource
+    }
+
+#if DEBUG
+    var hasCachedDatasource: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return cachedDatasource != nil
+    }
+#endif
+
+    func withLiveAccess<T>(_ operation: (LimeDB) throws -> T) throws -> T {
+        guard let datasource = current() else {
+            throw DBServerError.datasourceUnavailable
+        }
+        return try operation(datasource)
     }
 
     func setCurrent(_ datasource: LimeDB?) {
@@ -129,7 +163,7 @@ final class SharedDatabase {
             print("[DBServer] openDatasource: database bootstrap failed: \(error)")
             return nil
         }
-        guard let db = try? LimeDB(path: dbURL.path) else { return nil }
+        guard let db = try? makeLimeDB(path: dbURL.path) else { return nil }
         if let bundledURL = Bundle.main.url(forResource: "lime", withExtension: "db") {
             db.repairKeyboardCatalogIfNeeded(from: bundledURL)
         }
@@ -176,6 +210,7 @@ final class DBServer {
 
     private init(database: SharedDatabase) {
         self.database = database
+        schedulePendingEditorPublicationRecovery()
     }
 
     /// Test hook: inject a pre-opened LimeDB so tests can use isolated temp databases
@@ -186,9 +221,23 @@ final class DBServer {
     }
 
     /// Test hook: use an isolated database directory while exercising DBServer's
-    /// own open/reopen path.
-    init(_testDatabaseDirectory dataDirURL: URL) {
-        self.database = SharedDatabase(dataDirOverride: dataDirURL)
+    /// own open/reopen path. `tracksHotLearning: true` simulates the keyboard role
+    /// (production derives it from the bundle) through the production open path.
+    init(_testDatabaseDirectory dataDirURL: URL, tracksHotLearning: Bool = false) {
+        self.database = SharedDatabase(dataDirOverride: dataDirURL,
+                                       tracksHotLearning: tracksHotLearning)
+    }
+
+    private func schedulePendingEditorPublicationRecovery() {
+        guard !SyncDatabaseLocator.isKeyboardExtension() else { return }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self else { return }
+            do {
+                try self.publishPendingEditorChanges()
+            } catch {
+                NSLog("DBServer pending editor publication recovery failed: \(error)")
+            }
+        }
     }
 
     // MARK: - Constants
@@ -298,6 +347,10 @@ final class DBServer {
         database.fileReplacedSinceOpen()
     }
 
+#if DEBUG
+    var _testHasOpenColdDatasource: Bool { database.hasCachedDatasource }
+#endif
+
     func replaceDatabaseFromSnapshot(_ snapshotURL: URL) throws {
         let fm = FileManager.default
         guard fm.fileExists(atPath: snapshotURL.path) else {
@@ -332,11 +385,369 @@ final class DBServer {
 
     func markTableChangedAndPublish(_ table: String) throws {
         guard !table.isEmpty else { return }
-        let liveURL = liveDatabaseURL()
-        try SyncMetaStore(databaseURL: liveURL).bumpRevision(forTable: table)
-        try ColdPublisher(liveColdDatabaseURL: liveURL,
-                          appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-        publishImJson()
+        try database.withLiveAccess { datasource in
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            _ = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+            try connection.write { db in
+                try Self.ensureColdIntentTables(in: db)
+                let revision = (try Self.revision(for: table, in: db)) + 1
+                try Self.upsertMeta("rev:\(table)", value: String(revision), in: db)
+                if try Self.editorManagedTables(in: db).contains(table) {
+                    try db.execute(sql: """
+                        INSERT INTO editor_table_fence(tbl, action, revision)
+                        VALUES (?, 'replace', ?)
+                        ON CONFLICT(tbl) DO UPDATE SET
+                            action = excluded.action,
+                            revision = excluded.revision
+                        """, arguments: [table, revision])
+                    try db.execute(sql: "DELETE FROM editor_fence WHERE tbl = ? AND revision <= ?",
+                                   arguments: [table, revision])
+                }
+            }
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    @discardableResult
+    func performEditorMutation(_ mutation: EditorMutation) throws -> EditorMutationResult {
+        try database.withLiveAccess { datasource in
+            try datasource.performEditorMutation(mutation)
+        }
+    }
+
+    func performTableLifecycleMutation(_ mutation: TableLifecycleMutation) throws {
+        try database.withLiveAccess { datasource in
+            try datasource.performTableLifecycleMutation(mutation)
+        }
+        if mutation.publishImmediately {
+            try publishPendingEditorChanges()
+        }
+    }
+
+    func publishPendingEditorChanges() throws {
+        try database.withLiveAccess { datasource in
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            let snapshotURL = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+            let baselineChanged = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            let hasPending = try datasource.hasPendingEditorChanges(comparedToSnapshot: snapshotURL)
+            guard baselineChanged || hasPending else { return }
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    func publishColdSnapshot() throws {
+        try database.withLiveAccess { datasource in
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            _ = try applyEditorFenceBaselineIfNeeded(liveURL: liveURL)
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
+            removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: liveURL.deletingLastPathComponent())
+            publishImJson(from: datasource, liveURL: liveURL)
+        }
+    }
+
+    @discardableResult
+    private func applyEditorFenceBaselineIfNeeded(liveURL: URL) throws -> Bool {
+        let snapshotURL = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+        if try Self.protocolMarker(in: liveURL) {
+            return !(try Self.protocolMarker(in: snapshotURL))
+        }
+
+        guard FileManager.default.fileExists(atPath: snapshotURL.path) else {
+            let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+            try connection.write { db in
+                try Self.ensureColdIntentTables(in: db)
+                try Self.upsertMeta("editor_fence_protocol", value: "1", in: db)
+            }
+            return true
+        }
+
+        let comparisons = try Self.compareEditorTables(liveURL: liveURL, snapshotURL: snapshotURL)
+        let needsReplace = comparisons.filter(\.needsReplace)
+        let connection = try SyncDatabaseConnection(databaseURL: liveURL)
+        try connection.write { db in
+            try Self.ensureColdIntentTables(in: db)
+            for comparison in comparisons {
+                let currentRevision = try Self.revision(for: comparison.table, in: db)
+                if currentRevision != comparison.liveRevision,
+                   !(try Self.hasFence(table: comparison.table, revision: currentRevision, in: db)) {
+                    throw DBServerError.retryableEditorBaseline("revision changed without a fence: \(comparison.table)")
+                }
+            }
+            for comparison in needsReplace {
+                let currentRevision = try Self.revision(for: comparison.table, in: db)
+                let revision = max(currentRevision, comparison.publishedRevision) + 1
+                try Self.upsertMeta("rev:\(comparison.table)", value: String(revision), in: db)
+                try db.execute(sql: """
+                    INSERT INTO editor_table_fence(tbl, action, revision)
+                    VALUES (?, 'replace', ?)
+                    ON CONFLICT(tbl) DO UPDATE SET
+                        action = excluded.action,
+                        revision = excluded.revision
+                    """, arguments: [comparison.table, revision])
+                try db.execute(sql: "DELETE FROM editor_fence WHERE tbl = ? AND revision <= ?",
+                               arguments: [comparison.table, revision])
+            }
+            try Self.upsertMeta("editor_fence_protocol", value: "1", in: db)
+        }
+        return true
+    }
+
+    private struct EditorBaselineComparison {
+        let table: String
+        let liveRevision: Int
+        let publishedRevision: Int
+        let needsReplace: Bool
+    }
+
+    private static func compareEditorTables(liveURL: URL,
+                                            snapshotURL: URL) throws -> [EditorBaselineComparison] {
+        let liveQueue = try readOnlyQueue(liveURL)
+        defer { closeQueue(liveQueue, label: liveURL.path) }
+        let snapshotExists = FileManager.default.fileExists(atPath: snapshotURL.path)
+        let snapshotQueue = snapshotExists ? try readOnlyQueue(snapshotURL) : nil
+        defer {
+            if let snapshotQueue {
+                closeQueue(snapshotQueue, label: snapshotURL.path)
+            }
+        }
+
+        let liveState = try liveQueue.read { db in
+            try BaselineReadState(tables: editorManagedTables(in: db),
+                                  revisions: revisionMap(in: db))
+        }
+        let snapshotState = try snapshotQueue?.read { db in
+            try BaselineReadState(tables: editorManagedTables(in: db),
+                                  revisions: revisionMap(in: db))
+        } ?? BaselineReadState(tables: [], revisions: [:])
+        let tables = liveState.tables.union(snapshotState.tables).sorted()
+
+        return try tables.map { table in
+            let liveRevision = liveState.revisions[table] ?? 0
+            let publishedRevision = snapshotState.revisions[table] ?? 0
+            let needsReplace: Bool
+            if !liveState.tables.contains(table) || !snapshotState.tables.contains(table) {
+                needsReplace = true
+            } else {
+                let liveColumns = try liveQueue.read { db in try comparableColumns(table: table, in: db) }
+                let snapshotColumns = try snapshotQueue!.read { db in try comparableColumns(table: table, in: db) }
+                guard liveColumns == snapshotColumns else {
+                    throw DBServerError.retryableEditorBaseline("schema mismatch: \(table)")
+                }
+                let liveRows = try liveQueue.read { db in try contentMultiset(table: table, columns: liveColumns, in: db) }
+                let snapshotRows = try snapshotQueue!.read { db in try contentMultiset(table: table, columns: snapshotColumns, in: db) }
+                needsReplace = liveRevision > publishedRevision || liveRows != snapshotRows
+            }
+            return EditorBaselineComparison(table: table,
+                                            liveRevision: liveRevision,
+                                            publishedRevision: publishedRevision,
+                                            needsReplace: needsReplace)
+        }
+    }
+
+    private struct BaselineReadState {
+        let tables: Set<String>
+        let revisions: [String: Int]
+    }
+
+    private static func readOnlyQueue(_ url: URL) throws -> DatabaseQueue {
+        var config = Configuration()
+        config.readonly = true
+        return try DatabaseQueue(path: url.path, configuration: config)
+    }
+
+    private static func closeQueue(_ queue: DatabaseQueue, label: String) {
+        do {
+            try queue.close()
+        } catch {
+            NSLog("DBServer close failed for \(label): \(error)")
+        }
+    }
+
+    private static func editorManagedTables(in db: Database) throws -> Set<String> {
+        let names = try String.fetchAll(db, sql: """
+            SELECT name FROM sqlite_master
+            WHERE type = 'table'
+            """)
+        var result = Set<String>()
+        for table in names where isSafeEditorTableName(table) {
+            let columns = Set(try tableColumns(table: table, in: db))
+            if table == "related" {
+                if columns.contains("pword"), columns.contains("cword") {
+                    result.insert(table)
+                }
+            } else if columns.contains("code"), columns.contains("word") {
+                result.insert(table)
+            }
+        }
+        return result
+    }
+
+    private static func comparableColumns(table: String, in db: Database) throws -> [String] {
+        try tableColumns(table: table, in: db)
+            .filter { $0 != "_id" }
+            .sorted()
+    }
+
+    private static func contentMultiset(table: String,
+                                        columns: [String],
+                                        in db: Database) throws -> [String] {
+        guard !columns.isEmpty else {
+            let count = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(quotedIdentifier(table))") ?? 0
+            return ["rows|\(count)"]
+        }
+        let expressions = columns.map { column -> String in
+            let q = quotedIdentifier(column)
+            return "CASE WHEN \(q) IS NULL THEN 'NULL' ELSE typeof(\(q)) || ':' || quote(\(q)) END"
+        }
+        let rowKey = expressions.joined(separator: " || char(31) || ")
+        let group = columns.map(quotedIdentifier).joined(separator: ", ")
+        return try Row.fetchAll(db, sql: """
+            SELECT \(rowKey) AS logical_row, COUNT(*) AS multiplicity
+            FROM \(quotedIdentifier(table))
+            GROUP BY \(group)
+            ORDER BY logical_row, multiplicity
+            """).map {
+                "\($0["logical_row"] as String? ?? "")|\($0["multiplicity"] as Int? ?? 0)"
+            }
+    }
+
+    private static func tableColumns(table: String, in db: Database) throws -> [String] {
+        try Row.fetchAll(db, sql: "PRAGMA table_info(\(quotedIdentifier(table)))")
+            .compactMap { $0["name"] as String? }
+    }
+
+    private static func revisionMap(in db: Database) throws -> [String: Int] {
+        guard try tableExists("sync_meta", in: db) else { return [:] }
+        var result: [String: Int] = [:]
+        for row in try Row.fetchAll(db, sql: "SELECT key, value FROM sync_meta WHERE key LIKE 'rev:%'") {
+            guard let key = row["key"] as String?,
+                  let raw = row["value"] as String?,
+                  let revision = Int(raw) else { continue }
+            result[String(key.dropFirst(4))] = revision
+        }
+        return result
+    }
+
+    private static func protocolMarker(in url: URL) throws -> Bool {
+        guard FileManager.default.fileExists(atPath: url.path) else { return false }
+        let queue = try readOnlyQueue(url)
+        defer { closeQueue(queue, label: url.path) }
+        return try queue.read { db in
+            guard try tableExists("sync_meta", in: db) else { return false }
+            return try String.fetchOne(db,
+                                       sql: "SELECT value FROM sync_meta WHERE key = 'editor_fence_protocol'") == "1"
+        }
+    }
+
+    private static func hasFence(table: String, revision: Int, in db: Database) throws -> Bool {
+        if try tableExists("editor_table_fence", in: db),
+           try Int.fetchOne(db, sql: """
+                SELECT 1 FROM editor_table_fence
+                WHERE tbl = ? AND revision = ?
+                """, arguments: [table, revision]) != nil {
+            return true
+        }
+        guard try tableExists("editor_fence", in: db) else { return false }
+        return try Int.fetchOne(db, sql: """
+            SELECT 1 FROM editor_fence
+            WHERE tbl = ? AND revision = ?
+            LIMIT 1
+            """, arguments: [table, revision]) != nil
+    }
+
+    private static func revision(for table: String, in db: Database) throws -> Int {
+        guard try tableExists("sync_meta", in: db) else { return 0 }
+        let raw = try String.fetchOne(db,
+                                      sql: "SELECT value FROM sync_meta WHERE key = ?",
+                                      arguments: ["rev:\(table)"])
+        return raw.flatMap(Int.init) ?? 0
+    }
+
+    private static func ensureColdIntentTables(in db: Database) throws {
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS sync_meta (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_fence (
+                tbl      TEXT    NOT NULL,
+                k1       TEXT    NOT NULL,
+                k2       TEXT    NOT NULL,
+                action   TEXT    NOT NULL CHECK (action IN ('upsert', 'delete')),
+                revision INTEGER NOT NULL,
+                PRIMARY KEY (tbl, k1, k2)
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS editor_table_fence (
+                tbl      TEXT PRIMARY KEY,
+                action   TEXT    NOT NULL CHECK (action IN ('clear', 'replace')),
+                revision INTEGER NOT NULL
+            ) WITHOUT ROWID
+            """)
+        try db.execute(sql: """
+            CREATE TABLE IF NOT EXISTS im_lifecycle_intent (
+                tbl               TEXT    NOT NULL,
+                revision          INTEGER NOT NULL,
+                action            TEXT    NOT NULL CHECK (action IN ('install', 'delete')),
+                preserve_learning INTEGER NOT NULL CHECK (preserve_learning IN (0, 1)),
+                PRIMARY KEY (tbl, revision)
+            ) WITHOUT ROWID
+            """)
+    }
+
+    private static func tableExists(_ table: String, in db: Database) throws -> Bool {
+        try (Int.fetchOne(db,
+                          sql: "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+                          arguments: [table]) ?? 0) > 0
+    }
+
+    private static func upsertMeta(_ key: String, value: String, in db: Database) throws {
+        try db.execute(sql: """
+            INSERT INTO sync_meta(key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """, arguments: [key, value])
+    }
+
+    private static func quotedIdentifier(_ identifier: String) -> String {
+        "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
+    }
+
+    private static func isSafeEditorTableName(_ table: String) -> Bool {
+        guard ![
+            "im", "keyboard", "sync_meta", "learn_outbox", "editor_fence",
+            "editor_table_fence", "im_lifecycle_intent",
+        ].contains(table), !table.hasPrefix("sqlite_") else {
+            return false
+        }
+        return table.range(of: #"^[A-Za-z][A-Za-z0-9_]*$"#,
+                           options: .regularExpression) != nil
+    }
+
+    private func removeObsoleteEditorArtifactsAfterMarkedPublication(baseURL: URL) {
+        for url in [
+            baseURL.appendingPathComponent("outbox/editor.refresh.request.json"),
+            baseURL.appendingPathComponent("outbox/editor.refresh.receipt.json"),
+            baseURL.appendingPathComponent("inbox/lifecycle.json"),
+        ] {
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            do {
+                try FileManager.default.removeItem(at: url)
+            } catch {
+                NSLog("DBServer: failed to remove obsolete editor artifact %@: %@",
+                      url.path, error.localizedDescription)
+            }
+        }
     }
 
     /// §1.5: (re)publish cold's `im` table as `im.json` (rows + grouped configs) by atomic
@@ -345,8 +756,12 @@ final class DBServer {
     func publishImJson() {
         guard let ds = datasource else { return }
         let liveURL = liveDatabaseURL()
+        publishImJson(from: ds, liveURL: liveURL)
+    }
+
+    private func publishImJson(from datasource: LimeDB, liveURL: URL) {
         let gen = (try? SyncMetaStore(databaseURL: liveURL).generation()) ?? 0
-        ImJsonPublisher.publish(from: ds, generation: gen,
+        ImJsonPublisher.publish(from: datasource, generation: gen,
                                 to: SyncPaths.imJSON(liveURL.deletingLastPathComponent()))
     }
 
@@ -356,37 +771,13 @@ final class DBServer {
     /// returns true, and the runtime rebuild re-reads the fresh `im.json`. Replaces the removed
     /// `im` inbox writes and the wholesale hot mirror.
     // ponytail: publish per edit; debounce to screen-exit if VACUUM churn bites
-    private func publishColdMetadataOnly() {
-        let liveURL = liveDatabaseURL()
-        try? ColdPublisher(liveColdDatabaseURL: liveURL,
-                           appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-        publishImJson()
-    }
-
-    func writeIMLifecycleRecord(table: String,
-                                action: IMLifecycleRecord.Action,
-                                preserveLearning: Bool,
-                                postSignal shouldPost: Bool = true) throws {
-        guard !table.isEmpty else { return }
-        let record = IMLifecycleRecord(table: table,
-                                       action: action,
-                                       preserveLearning: preserveLearning)
-        try appendIMLifecycle([record], postSignal: shouldPost)
-    }
-
-    private func appendIMLifecycle(_ records: [IMLifecycleRecord], postSignal shouldPost: Bool) throws {
-        guard !records.isEmpty else { return }
-        let url = SyncPaths.imLifecycleInbox(liveDatabaseURL().deletingLastPathComponent())
-        let existing: [IMLifecycleRecord]
-        if let data = try? Data(contentsOf: url),
-           let decoded = try? JSONDecoder().decode([IMLifecycleRecord].self, from: data) {
-            existing = decoded
-        } else {
-            existing = []
-        }
-        try atomicWrite(try JSONEncoder().encode(existing + records), to: url)
-        if shouldPost {
-            postSyncSignal(.tablesUpdated)
+    private func mutateAndPublishColdMetadata(_ mutation: (LimeDB) -> Void) {
+        try? database.withLiveAccess { datasource in
+            mutation(datasource)
+            let liveURL = URL(fileURLWithPath: datasource.dbPath())
+            defer { publishImJson(from: datasource, liveURL: liveURL) }
+            try ColdPublisher(liveColdDatabaseURL: liveURL,
+                              appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
         }
     }
 
@@ -548,7 +939,7 @@ final class DBServer {
             // IM list reads return empty and reinstall fails until the app is
             // relaunched. Mirror restoreDatabase()'s rebuild pattern.
             datasource = nil
-            datasource = try? LimeDB(path: livePath)
+            datasource = try? database.makeLimeDB(path: livePath)
             datasource?.unHoldDBConnection()
             try? FileManager.default.removeItem(at: fileSharedPrefsBackup)
             try? FileManager.default.removeItem(at: filePreferenceManifest)
@@ -688,7 +1079,7 @@ final class DBServer {
             }
             // Step 4: open a fresh datasource on the restored (or original) file.
             print("[DBServer] restore defer: reopening at \(dbURL.path), exists=\(FileManager.default.fileExists(atPath: dbURL.path)), restoreSucceeded=\(restoreSucceeded)")
-            datasource = try? LimeDB(path: dbURL.path)
+            datasource = try? database.makeLimeDB(path: dbURL.path)
             ds.unHoldDBConnection()
             if restoreSucceeded {
                 if FileManager.default.fileExists(atPath: preferenceManifest.path),
@@ -799,7 +1190,7 @@ final class DBServer {
                 }
             }
             print("[DBServer] restoreBundledDatabase defer: reopening at \(dbURL.path), restoreSucceeded=\(restoreSucceeded)")
-            datasource = try? LimeDB(path: dbURL.path)
+            datasource = try? database.makeLimeDB(path: dbURL.path)
             ds.unHoldDBConnection()
             if restoreSucceeded {
                 datasource?.checkAndUpdateRelatedTable()
@@ -1184,8 +1575,9 @@ final class DBServer {
     }
 
     func setImConfig(_ imCode: String, _ field: String, _ value: String) {
-        datasource?.setImConfig(imCode, field, value)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.setImConfig(imCode, field, value)
+        }
     }
 
     /// LIME DB 105 IM-load-time fallback: backfills `imkeys`/`imkeynames` for a single
@@ -1198,8 +1590,9 @@ final class DBServer {
     }
 
     func updateIMEnabled(imName: String, enabled: Bool) {
-        datasource?.updateIMEnabled(imName: imName, enabled: enabled)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.updateIMEnabled(imName: imName, enabled: enabled)
+        }
     }
 
     func updateIMSortOrder(id: Int64, sortOrder: Int) throws {
@@ -1212,8 +1605,9 @@ final class DBServer {
     }
 
     func setImConfigKeyboard(_ imCode: String, _ keyboard: KeyboardConfig) {
-        datasource?.setImConfigKeyboard(imCode, keyboard)
-        publishColdMetadataOnly()
+        mutateAndPublishColdMetadata { datasource in
+            datasource.setImConfigKeyboard(imCode, keyboard)
+        }
     }
 
     // MARK: - Record CRUD Proxies
@@ -1356,11 +1750,10 @@ final class DBServer {
     // MARK: - Import / Export Proxies
 
     func importFromAttachedDB(sourcePath: String, tableName: String, publish: Bool = true) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importFromAttachedDB(sourcePath: sourcePath, tableName: tableName)
-        if publish {
-            try markTableChangedAndPublish(tableName)
-        }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: URL(fileURLWithPath: sourcePath),
+                                                              preserveLearning: false,
+                                                              publishImmediately: publish))
     }
 
     @discardableResult
@@ -1375,12 +1768,14 @@ final class DBServer {
 
     func importTxtFile(at path: String, tableName: String,
                        publish: Bool = true,
+                       preserveLearning: Bool = false,
                        progress: ((Int) -> Void)?) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importTxtFile(at: path, tableName: tableName, progress: progress)
-        if publish {
-            try markTableChangedAndPublish(tableName)
-        }
+        let stagingURL = try stageTextImport(at: path, tableName: tableName, progress: progress)
+        defer { removeTemporaryItem(at: stagingURL.deletingLastPathComponent()) }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: stagingURL,
+                                                              preserveLearning: preserveLearning,
+                                                              publishImmediately: publish))
     }
 
     func exportDB(to destPath: String) throws {
@@ -1393,22 +1788,61 @@ final class DBServer {
     }
 
     func importFromZip(at zipURL: URL, tableName: String) throws {
-        guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
-        try ds.importFromZip(at: zipURL, tableName: tableName)
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lime-import-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { removeTemporaryItem(at: tempDir) }
+        let files = try unzipReturningFiles(source: zipURL, targetDir: tempDir)
+        guard let dbURL = files.first(where: {
+            let lower = $0.path.lowercased()
+            return lower.hasSuffix(".db") || lower.hasSuffix(".limedb")
+        }) else {
+            throw DBServerError.invalidStagingDatabase(tableName)
+        }
+        try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                              stagingDatabaseURL: dbURL,
+                                                              preserveLearning: false,
+                                                              publishImmediately: true))
     }
 
     func registerIM(imName: String, tableName: String, label: String, keyboardId: String) throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.registerIM(imName: imName, tableName: tableName, label: label, keyboardId: keyboardId)
-        // §1.5: the new `im` row reaches the keyboard via `im.json`; markTableChangedAndPublish
-        // publishes cold (generation bump → keyboard rebuild) AND republishes `im.json` with the
-        // new row. No mirror, no inbox.
-        try markTableChangedAndPublish(tableName)
+        // §1.5: `im` registration is metadata. Table contents, fences, lifecycle intents, and
+        // revisions are owned by performTableLifecycleMutation.
+        try publishColdSnapshot()
     }
 
     func seedCustomIM() throws {
         guard let ds = datasource else { throw DBServerError.datasourceUnavailable }
         try ds.seedCustomIM()
+    }
+
+    private func stageTextImport(at path: String,
+                                 tableName: String,
+                                 progress: ((Int) -> Void)?) throws -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("lime-text-import-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let stagingURL = dir.appendingPathComponent("staging.db")
+        do {
+            let staging = try LimeDB(path: stagingURL.path)
+            try staging.importTxtFile(at: path, tableName: tableName, progress: progress)
+            try staging.closeForReplacement()
+            return stagingURL
+        } catch {
+            removeTemporaryItem(at: dir)
+            throw error
+        }
+    }
+
+    private func removeTemporaryItem(at url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        do {
+            try FileManager.default.removeItem(at: url)
+        } catch {
+            NSLog("DBServer temporary cleanup failed for \(url.path): \(error)")
+        }
     }
 
     private static func fileSizeBytes(at url: URL) -> Int64 {
@@ -1433,6 +1867,11 @@ enum DBServerError: Error {
     case unsafeZipEntry(String)       // SEC: zip-slip rejected entry path
     case zipBombDetected              // SEC: archive exceeded size/count/ratio cap
     case securityScopedAccessDenied   // SEC: couldn't start security-scoped resource
+    case invalidEditorMutation(String)
+    case duplicateLogicalKey(String)
+    case recordNotFound(String)
+    case invalidStagingDatabase(String)
+    case retryableEditorBaseline(String)
 }
 
 extension DBServerError: LocalizedError {
@@ -1460,6 +1899,16 @@ extension DBServerError: LocalizedError {
             return "備份檔過大或壓縮格式異常"
         case .securityScopedAccessDenied:
             return "無法取得檔案存取權限"
+        case .invalidEditorMutation(let message):
+            return message
+        case .duplicateLogicalKey:
+            return "資料已存在"
+        case .recordNotFound:
+            return "找不到資料"
+        case .invalidStagingDatabase:
+            return "匯入檔格式不正確"
+        case .retryableEditorBaseline(let message):
+            return "同步基準建立失敗：\(message)"
         }
     }
 }

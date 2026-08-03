@@ -101,32 +101,50 @@ freshly-learned rows straight into the **live cold** table, so the editor reads 
 included, not just scores. It needs **Full Access ON + LIME active** (the keyboard is the only writer
 of hot, and writing cold is a keyboard→App-Group write). See `IOS_DB_COLD_HOT.md` §1.4.
 
-### Entry — summon + harvest (`refreshHotSnapshotIfNeeded` → `refreshTableFromKeyboard`)
+### Entry — summon + harvest (`beginEditorSession` → `refreshTableFromKeyboard`)
 
-On editor appear the view **always attempts** the harvest — it does **not** gate on
-`editingCapability == .live`, because `.live` is only established after the keyboard relays and the
-relay needs the keyboard summoned first (a chicken-and-egg that would otherwise strand the editor
-read-only).
+On editor appear the view always starts one editor session. It summons the keyboard first, because
+`.live` can only be established after that relay, then allows the complete request/receipt window.
+It does not consume the one-shot attempt on an early advisory relay state from a slow cold launch.
 
 1. **Summon.** Focus a hidden probe `TextField` (`probeFocused`) so the LIME extension is actually
    running — it can only harvest hot while presented — and wait briefly for it to come up. The editor
    shows `同步中...` + `clock.arrow.circlepath` and grays the rows (`isRefreshingHotSnapshot`;
    `canEdit = !isRefreshingHotSnapshot && editingCapability == .live`).
-2. **Request.** Write `outbox/editor.refresh.request.json` `{requestUUID, table, expiresAt}`, ring
-   `tables.updated`, then **poll** for `outbox/editor.refresh.receipt.json` whose `requestUUID`
-   matches, up to `editorRefreshPollTimeout`.
-3. **Keyboard harvest (FA-on, presented).** `processEditorRefreshRequestIfNeeded` validates the TTL /
+2. **Single-flight, own, hand cold over, then request (#209).** A process-wide async gate first
+   serializes the complete Related/normal-IM handshake. Settings then takes the bounded,
+   descriptor-owned `EditorRefreshFileLock`, then
+   `suspendColdAccess()` — closing the process-local connection and keeping it closed, so nothing
+   can lazily re-open it — and only THEN writes `outbox/editor.refresh.request.json`
+   `{requestUUID, table, expiresAt}`, rings `tables.updated`, releases cross-process ownership
+   for the keyboard, and **polls** `outbox/editor.refresh.receipt.json` for the matching
+   `requestUUID`, up to `editorRefreshPollTimeout`. Any Settings-side cold access left open here
+   fails the harvest with
+   `SQLite error 5: database is locked`. The view therefore also holds its FIRST cold load until
+   this call returns.
+3. **Keyboard harvest (FA-on, presented).** Under the same cross-process ownership lock,
+   `processEditorRefreshRequestIfNeeded` re-reads the request and validates the TTL /
    safe table name / live-cold presence, then `harvestEditorRefresh` **ATTACHes the live cold DB** and,
    in one write, computes the **dirty keys** — hot rows whose key (`(code, word)`, or `(pword, cword)`
    for `related`) is **absent from cold** (a keyboard-added row) **or** whose `score` differs (learned)
    — into a temp table, then **DELETE + INSERT** exactly those rows into cold. Cold's table now matches
-   hot for the changed rows; everything else is untouched. It writes
-   `editor.refresh.receipt.json {requestUUID, table, status: done|failed, error, at}` and rings
-   `import.done` / `import.failed`.
-4. **Apply — no whole-table copy, no poll-forever.** On a `done` receipt the view **reloads cold** (now
-   current) and unlocks; on `failed` **or timeout** it sets `hotRefreshFailed` → read-only
-   (`即時資料更新逾時，已切換為唯讀`). Full Access **off** or LIME not active → the keyboard's App-Group
-   write is dropped / no keyboard answers → the poll times out → read-only. Nothing hangs.
+   hot for the changed rows; everything else is untouched. The ATTACH runs **before** that transaction
+   and the DETACH **after** it (SQLite rejects an in-transaction `DETACH`), then the connection is
+   **closed explicitly** — only then is
+   `editor.refresh.receipt.json {requestUUID, table, status: done|failed, error, at}` written and
+   `import.done` / `import.failed` rung, so the receipt means "cold is free" (#209). Ownership stays
+   with the keyboard through receipt publication and request cleanup.
+4. **Bounded reacquire, reopen, unlock.** `refreshTableFromKeyboard` reacquires cross-process ownership
+   before cancelling/cleaning the request and reopening cold (`resumeColdAccess()`, rebinding to
+   what the keyboard committed) before returning on **every**
+   path. On a `done` receipt the view unlocks; on `failed` **or timeout** it sets `hotRefreshFailed`
+   → read-only (`即時資料更新逾時，已切換為唯讀`). Either way it then loads cold — the reopened
+   connection serves both the live and the read-only display. If the UI poll expires while the
+   keyboard already owns an in-flight harvest, Settings waits only to the bounded ownership
+   deadline, then accepts any matching terminal receipt that landed meanwhile. A failure cancels
+   the request, restores cold access best-effort and leaves editing read-only. Full
+   Access **off** or LIME not active receives no terminal receipt, so the bounded request wait ends
+   read-only after cold is safely reopened.
 
 ### Edit — straight onto cold
 
@@ -151,11 +169,11 @@ covers only the per-table editor refresh.
 
 | Piece | Location |
 | --- | --- |
-| `EditorRefreshRequest {requestUUID, table, expiresAt}`, `EditorRefreshReceipt {…, status: done/failed}`, `SyncPaths.editorRefreshRequest` / `editorRefreshReceipt` (`outbox/editor.refresh.request.json` / `…receipt.json`), `RelayActiveState`, `RecordEditingCapability` | `Shared/Database/SyncContract.swift` |
+| `EditorRefreshRequest {requestUUID, table, expiresAt}`, `EditorRefreshReceipt {…, status: done/failed}`, request/receipt paths, cross-process `EditorRefreshFileLock`, `RelayActiveState`, `RecordEditingCapability` | `Shared/Database/SyncContract.swift` |
 | `refreshTableFromKeyboard(stem:)` (post request, poll for the matching `done` receipt), `publishEditorChanges(stem:)` (close) | `LimeSettings/Controllers/SetupImController.swift` |
 | `processEditorRefreshRequestIfNeeded`, `harvestEditorRefresh` (hot→cold dirty-key delta into live cold), `writeEditorRefreshReceipt`, `editorRefreshKeyColumns`; the cold→hot **close-reconcile** = the rev-gated `applyIncremental` copy | `Shared/Database/TableSyncEngine.swift` |
 | `markTableChangedAndPublish(stem:)` (bump `rev` + publish cold) | `Shared/Database/DBServer.swift` |
-| Editors — probe summon, `同步中`, `refreshHotSnapshotIfNeeded`, `publishEditorCloseIfNeeded`, `scenePhase == .background` commit, `@EnvironmentObject RelayActiveState` | `LimeSettings/Views/RecordListView.swift`, `RelatedListView.swift`, `IMDetailView.swift` |
+| Editors — probe summon, `同步中`, `beginEditorSession`, `publishEditorCloseIfNeeded`, `scenePhase == .background` commit, `@EnvironmentObject RelayActiveState` | `LimeSettings/Views/RecordListView.swift`, `RelatedListView.swift` |
 | Root relay → `markActive` / `markNotActive` | `LimeSettings/LimeSettingsView.swift` |
 
 Harvest keys: `(code, word)` for mapping tables, `(pword, cword)` for `related` (`editorRefreshKeyColumns`).
@@ -164,7 +182,7 @@ Harvest keys: `(code, word)` for mapping tables, `(pword, cword)` for `related` 
 
 | State | Editor |
 | --- | --- |
-| Full Access **off** (or LIME not active) | Read-only. Scores `—`, edits disabled, unlock hint. Harvest times out → read-only; no hang. |
+| Full Access **off** (or LIME not active) | No terminal receipt arrives; after the bounded wait cold reopens read-only. Scores `—`, edits disabled, unlock hint. |
 | Full Access **on**, LIME active | Summons LIME, harvests hot→cold (`同步中...`), then editable with real learned data (keyboard-added rows **and** scores). Edits publish back cold→hot on close/background. |
 | Harvest failed / timed out | Read-only (`即時資料更新逾時`); edits disabled until the editor is reopened. |
 

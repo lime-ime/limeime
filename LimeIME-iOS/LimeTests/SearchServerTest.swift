@@ -417,6 +417,48 @@ final class SearchServerTest: XCTestCase {
                       "RP-triggered addLDPhrase additions must be drained by second snapshot")
     }
 
+    func testPostFinishInputCompletionIsLearningBarrierAndKeepsLearningResults() throws {
+        let spy = SpyLimeDB()
+        spy.relatedPhraseScoreResult = 21
+        let ss = makeSearchServerWithSpy(spy, tableName: LIME.DB_TABLE_DAYI)
+        let first = Mapping(id: 1, code: "a", word: "蘋", score: 4, baseScore: 0,
+                            recordType: Mapping.RecordType.exactMatchToCode)
+        let second = Mapping(id: 2, code: "b", word: "果", score: 6, baseScore: 0,
+                             recordType: Mapping.RecordType.exactMatchToCode)
+        let eventLock = NSLock()
+        var events: [String] = []
+        func appendEvent(_ event: String) {
+            eventLock.lock()
+            events.append(event)
+            eventLock.unlock()
+        }
+        spy.onUpdateScore = { appendEvent("score") }
+        spy.onAddOrUpdateRelatedPhraseRecord = { appendEvent("related") }
+        spy.onAddOrUpdateMappingRecord = { appendEvent("ld") }
+        let finished = expectation(description: "postFinishInput completion")
+
+        ss.learnRelatedPhraseAndUpdateScore(first)
+        ss.learnRelatedPhraseAndUpdateScore(second)
+        ss.postFinishInput {
+            appendEvent("completion")
+            finished.fulfill()
+        }
+
+        wait(for: [finished], timeout: 10.0)
+        eventLock.lock()
+        let capturedEvents = events
+        eventLock.unlock()
+        XCTAssertEqual(capturedEvents, ["score", "score", "related", "ld", "completion"])
+        XCTAssertEqual(spy.updateScoreCallCount, 2)
+        XCTAssertEqual(spy.relatedPhraseRecordCallArgs.count, 1)
+        XCTAssertEqual(spy.relatedPhraseRecordCallArgs.first?.pword, "蘋")
+        XCTAssertEqual(spy.relatedPhraseRecordCallArgs.first?.cword, "果")
+        XCTAssertEqual(spy.mappingRecordCallArgs.count, 1)
+        XCTAssertEqual(spy.mappingRecordCallArgs.first?.tableName, LIME.DB_TABLE_DAYI)
+        XCTAssertEqual(spy.mappingRecordCallArgs.first?.code, "ab")
+        XCTAssertEqual(spy.mappingRecordCallArgs.first?.word, "蘋果")
+    }
+
     // MARK: - 3.3 Cache Utilities
 
     func test_3_3_1_1_initialCache_clears_caches() throws {
@@ -2873,6 +2915,7 @@ final class SpyLimeDB: LimeDBProtocol {
     var codeListResponse: String? = nil
     /// When true, getMappingByCode returns nil (simulates DB error).
     var throwOnGetMappingByCode: Bool = false
+    var relatedPhraseScoreResult: Int = 0
 
     // MARK: Spy state (protected by spyLock)
     private let spyLock = NSLock()
@@ -2880,12 +2923,16 @@ final class SpyLimeDB: LimeDBProtocol {
     private(set) var updateScoreCalled: Bool = false
     private(set) var updateScoreCallCount: Int = 0
     private(set) var addOrUpdateRelatedPhraseRecordCalled: Bool = false
+    private(set) var relatedPhraseRecordCallArgs: [(pword: String, cword: String?)] = []
     private(set) var addOrUpdateMappingRecordCallCount: Int = 0
+    private(set) var mappingRecordCallArgs: [(tableName: String, code: String, word: String)] = []
 
     /// Called each time getMappingByCode finishes — use with XCTestExpectation.
     var onGetMappingByCode: (() -> Void)? = nil
     /// Called each time updateScore finishes.
     var onUpdateScore: (() -> Void)? = nil
+    /// Called each time a related-phrase write is requested.
+    var onAddOrUpdateRelatedPhraseRecord: (() -> Void)? = nil
     /// Called each time an add/update mapping write is requested.
     var onAddOrUpdateMappingRecord: (() -> Void)? = nil
 
@@ -2897,7 +2944,9 @@ final class SpyLimeDB: LimeDBProtocol {
         updateScoreCalled = false
         updateScoreCallCount = 0
         addOrUpdateRelatedPhraseRecordCalled = false
+        relatedPhraseRecordCallArgs.removeAll()
         addOrUpdateMappingRecordCallCount = 0
+        mappingRecordCallArgs.removeAll()
         spyLock.unlock()
     }
 
@@ -2934,18 +2983,23 @@ final class SpyLimeDB: LimeDBProtocol {
     func addOrUpdateRelatedPhraseRecord(_ pword: String, _ cword: String?) -> Int {
         spyLock.lock()
         addOrUpdateRelatedPhraseRecordCalled = true
+        relatedPhraseRecordCallArgs.append((pword, cword))
+        let result = relatedPhraseScoreResult
         spyLock.unlock()
-        return 0
+        onAddOrUpdateRelatedPhraseRecord?()
+        return result
     }
     func addOrUpdateMappingRecord(code: String, word: String, tableName: String) throws {
         spyLock.lock()
         addOrUpdateMappingRecordCallCount += 1
+        mappingRecordCallArgs.append((tableName, code, word))
         spyLock.unlock()
         onAddOrUpdateMappingRecord?()
     }
     func addOrUpdateMappingRecord(_ table: String, _ code: String, _ word: String, _ score: Int) {
         spyLock.lock()
         addOrUpdateMappingRecordCallCount += 1
+        mappingRecordCallArgs.append((table, code, word))
         spyLock.unlock()
         onAddOrUpdateMappingRecord?()
     }

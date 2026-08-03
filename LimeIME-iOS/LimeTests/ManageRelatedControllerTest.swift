@@ -28,6 +28,7 @@
 // Uses a real LimeDB temp fixture and MockManageRelatedView.
 
 import XCTest
+import GRDB
 @testable import LimeIME
 
 // MARK: - MockManageRelatedView
@@ -48,12 +49,24 @@ class MockManageRelatedView: ManageRelatedView {
 // MARK: - ManageRelatedControllerTest
 
 final class ManageRelatedControllerTest: XCTestCase {
+    private var tempDirs: [URL] = []
+
+    override func tearDown() {
+        for dir in tempDirs {
+            try? FileManager.default.removeItem(at: dir)
+        }
+        tempDirs.removeAll()
+        super.tearDown()
+    }
 
     // MARK: - Helpers
 
     private func makeDB() throws -> (url: URL, db: LimeIME.LimeDB) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        tempDirs.append(dir)
+        let url = dir.appendingPathComponent("lime.db")
         let db = try LimeIME.LimeDB(path: url.path)
         _ = db.openDBConnection(false)
         return (url, db)
@@ -61,6 +74,14 @@ final class ManageRelatedControllerTest: XCTestCase {
 
     private func syncMeta(for url: URL) throws -> SyncMetaStore {
         try SyncMetaStore(databaseURL: url)
+    }
+
+    private func rowCount(in db: LimeIME.LimeDB, sql: String) throws -> Int {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Int.fetchOne(database, sql: sql) ?? 0
+        }
     }
 
     /// Poll until `condition` (evaluated on the main actor) holds or `timeout` elapses.
@@ -131,7 +152,8 @@ final class ManageRelatedControllerTest: XCTestCase {
     func testRelatedEditorSavesBumpRevisionAndPublish() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
-        let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageRelatedController(dbServer: server)
         let meta = try syncMeta(for: url)
 
         let add = await controller.addRelated(parentWord: "i3", childWord: "新增", score: 1)
@@ -141,7 +163,7 @@ final class ManageRelatedControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: "related"), 1)
-        XCTAssertEqual(try meta.generation(), 1)
+        XCTAssertEqual(try meta.generation(), 0)
 
         let update = await controller.updateRelated(id: first.id,
                                                     parentWord: "i3",
@@ -152,7 +174,7 @@ final class ManageRelatedControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: "related"), 2)
-        XCTAssertEqual(try meta.generation(), 2)
+        XCTAssertEqual(try meta.generation(), 0)
 
         let delete = await controller.deleteRelated(id: first.id)
         guard case .success = delete else {
@@ -160,7 +182,11 @@ final class ManageRelatedControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: "related"), 3)
-        XCTAssertEqual(try meta.generation(), 3)
+        XCTAssertEqual(try meta.generation(), 0)
+
+        try server.publishPendingEditorChanges()
+        XCTAssertEqual(try meta.generation(), 1,
+                       "related editor edits publish once when the editor exits or Settings backgrounds")
     }
 
     func testAddRelatedEmptyParentReportsError() async throws {
@@ -282,6 +308,29 @@ final class ManageRelatedControllerTest: XCTestCase {
 
         let after = db.getRelated(nil, 10, 0)
         XCTAssertFalse(after.contains { $0.parentWord == "刪" })
+    }
+
+    func testAddRelatedViewRefreshesOnlyAfterAtomicMutationSucceeds() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        try await queue.write { database in
+            try database.execute(sql: "CREATE TABLE editor_fence (tbl TEXT NOT NULL)")
+        }
+        let mock = await MockManageRelatedView()
+        let controller = await LimeIME.ManageRelatedController(dbServer: LimeIME.DBServer(_testDatasource: db))
+
+        await MainActor.run {
+            controller.addRelated(parentWord: "ui_fail", childWord: "不可見", view: mock)
+        }
+        await waitUntil { !mock.errors.isEmpty }
+
+        await MainActor.run {
+            XCTAssertEqual(mock.refreshCount, 0)
+            XCTAssertFalse(mock.errors.isEmpty)
+        }
+        XCTAssertEqual(try rowCount(in: db, sql: "SELECT COUNT(*) FROM related WHERE pword = 'ui_fail'"), 0)
     }
 
     // MARK: - Pagination

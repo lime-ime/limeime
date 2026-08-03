@@ -384,6 +384,9 @@ struct SetupTabView: View {
                 if hasFreshEvidence && activeThisSession { finishActiveProbe() }
             }
             .onChange(of: manageImController.refreshToken) { _ in refreshIMStatus() }
+            .onReceive(NotificationCenter.default.publisher(for: .limeColdDatabaseAccessResumed)) { _ in
+                refreshIMStatus()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .limeRelayPayloadReceived)) { note in
                 handleRelayPayloadNotification(note)
             }
