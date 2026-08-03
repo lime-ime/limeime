@@ -28,6 +28,7 @@
 // Uses a real LimeDB temp fixture and MockManageImView.
 
 import XCTest
+import GRDB
 @testable import LimeIME
 
 // MARK: - MockManageImView
@@ -52,12 +53,24 @@ class MockManageImView: ManageImView {
 final class ManageImControllerTest: XCTestCase {
 
     private let testTable = "custom"
+    private var tempDirs: [URL] = []
+
+    override func tearDown() {
+        for dir in tempDirs {
+            try? FileManager.default.removeItem(at: dir)
+        }
+        tempDirs.removeAll()
+        super.tearDown()
+    }
 
     // MARK: - Helpers
 
     private func makeDB() throws -> (url: URL, db: LimeIME.LimeDB) {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        tempDirs.append(dir)
+        let url = dir.appendingPathComponent("lime.db")
         let db = try LimeIME.LimeDB(path: url.path)
         _ = db.openDBConnection(false)
         return (url, db)
@@ -79,14 +92,22 @@ final class ManageImControllerTest: XCTestCase {
         try SyncMetaStore(databaseURL: url)
     }
 
-    private func lifecycleRecords(in baseURL: URL) throws -> [[String: Any]] {
-        let data = try Data(contentsOf: lifecycleInboxURL(in: baseURL))
-        return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [[String: Any]])
+    private func lifecycleRecords(in db: LimeIME.LimeDB, table: String) throws -> [Row] {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Row.fetchAll(database,
+                             sql: "SELECT tbl, revision, action, preserve_learning FROM im_lifecycle_intent WHERE tbl = ? ORDER BY revision",
+                             arguments: [table])
+        }
     }
 
-    private func lifecycleInboxURL(in baseURL: URL) -> URL {
-        baseURL.appendingPathComponent("inbox", isDirectory: true)
-            .appendingPathComponent("lifecycle.json")
+    private func rowCount(in db: LimeIME.LimeDB, sql: String) throws -> Int {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Int.fetchOne(database, sql: sql) ?? 0
+        }
     }
 
     // MARK: - loadRecords
@@ -132,7 +153,8 @@ final class ManageImControllerTest: XCTestCase {
     func testEditorSavesBumpRevisionAndPublish() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
-        let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.ManageImController(dbServer: server)
         let meta = try syncMeta(for: url)
 
         let add = await controller.addRecord(table: testTable, code: "i3", word: "æ°å¢", score: 1)
@@ -141,7 +163,7 @@ final class ManageImControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: testTable), 1)
-        XCTAssertEqual(try meta.generation(), 1)
+        XCTAssertEqual(try meta.generation(), 0)
 
         let record = try XCTUnwrap(db.getRecordList(testTable, "i3", searchByCode: true, 10, 0).first)
         let update = await controller.updateRecord(table: testTable, id: record.id,
@@ -151,7 +173,7 @@ final class ManageImControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: testTable), 2)
-        XCTAssertEqual(try meta.generation(), 2)
+        XCTAssertEqual(try meta.generation(), 0)
 
         let delete = await controller.deleteRecord(table: testTable, id: record.id)
         guard case .success = delete else {
@@ -159,7 +181,11 @@ final class ManageImControllerTest: XCTestCase {
             return
         }
         XCTAssertEqual(try meta.revision(forTable: testTable), 3)
-        XCTAssertEqual(try meta.generation(), 3)
+        XCTAssertEqual(try meta.generation(), 0)
+
+        try server.publishPendingEditorChanges()
+        XCTAssertEqual(try meta.generation(), 1,
+                       "record edits publish once when the editor exits or Settings backgrounds")
     }
 
     func testAddRecordEmptyCodeReportsError() async throws {
@@ -365,7 +391,6 @@ final class ManageImControllerTest: XCTestCase {
         db.addOrUpdateMappingRecord(testTable, "clear_i3", "æ¸é¤", 0)
         let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
         let meta = try syncMeta(for: url)
-        try? FileManager.default.removeItem(at: lifecycleInboxURL(in: url.deletingLastPathComponent()))
 
         let result = await controller.clearTable(tableNick: testTable, backupLearning: true)
 
@@ -375,11 +400,35 @@ final class ManageImControllerTest: XCTestCase {
         }
         XCTAssertEqual(try meta.revision(forTable: testTable), 1)
         XCTAssertEqual(try meta.generation(), 1)
-        let records = try lifecycleRecords(in: url.deletingLastPathComponent())
+        let records = try lifecycleRecords(in: db, table: testTable)
         XCTAssertEqual(records.count, 1)
-        XCTAssertEqual(records[0]["table"] as? String, testTable)
+        XCTAssertEqual(records[0]["tbl"] as String?, testTable)
         XCTAssertEqual(records[0]["action"] as? String, "delete")
-        XCTAssertEqual(records[0]["preserveLearning"] as? Bool, true)
+        XCTAssertEqual(records[0]["preserve_learning"] as Int?, 1)
+    }
+
+    func testAddRecordViewRefreshesOnlyAfterAtomicMutationSucceeds() async throws {
+        let (url, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: url) }
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        try await queue.write { database in
+            try database.execute(sql: "CREATE TABLE editor_fence (tbl TEXT NOT NULL)")
+        }
+        let mock = await MockManageImView()
+        let controller = await LimeIME.ManageImController(dbServer: LimeIME.DBServer(_testDatasource: db))
+
+        await MainActor.run {
+            controller.addRecord(table: testTable, code: "ui_fail", word: "不可見",
+                                 score: 1, view: mock)
+        }
+        await waitUntil { !mock.errors.isEmpty }
+
+        await MainActor.run {
+            XCTAssertEqual(mock.refreshCount, 0)
+            XCTAssertFalse(mock.errors.isEmpty)
+        }
+        XCTAssertEqual(try rowCount(in: db, sql: "SELECT COUNT(*) FROM custom WHERE code = 'ui_fail'"), 0)
     }
 
     // MARK: - Pagination

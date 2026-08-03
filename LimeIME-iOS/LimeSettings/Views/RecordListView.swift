@@ -48,17 +48,7 @@ struct RecordListView: View {
     @State private var query: String = ""
     @State private var searchByCode: Bool = true
     @State private var statusMessage = ""
-    @State private var isRefreshingHotSnapshot = false
-    @State private var didAttemptHotRefresh = false
-    @State private var hotRefreshFailed = false
     @State private var didPublishEditorClose = false
-    // Hidden probe field: focusing it summons the LimeIME keyboard so the extension
-    // process actually runs and can answer the hot→cold harvest. Same mechanism the
-    // DB backup uses. An iOS keyboard extension only executes while it is presented,
-    // so without this it is never on screen while this app is foreground and the
-    // harvest can never complete → editor stuck read-only.
-    @State private var probeText = ""
-    @FocusState private var probeFocused: Bool
 
     @State private var showAdd = false
     @State private var editingRecord: IdentifiableRecord?
@@ -75,12 +65,9 @@ struct RecordListView: View {
 
     private var totalPages: Int { max(1, (totalCount + pageSize - 1) / pageSize) }
     private var isLastPage: Bool { page >= totalPages - 1 }
-    private var relayEditingCapability: RecordEditingCapability { relayActiveState.editingCapability }
-    private var editingCapability: RecordEditingCapability {
-        hotRefreshFailed ? .readOnly : relayEditingCapability
-    }
-    private var canEdit: Bool { !isRefreshingHotSnapshot && editingCapability == .live }
-    private var unlockHint: String { "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）" }
+    // Amendment A1: mutations require FA confirmed-on + LIME active (relay-resolved).
+    // Entry/viewing stays immediate; the capability flips reactively from relay state.
+    private var canEdit: Bool { relayActiveState.editingCapability == .live }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -129,7 +116,7 @@ struct RecordListView: View {
                             .font(.system(.body, design: .monospaced))
                         Text(record.word)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(canEdit ? "\(record.score)" : "—")
+                        Text(canEdit ? record.score.description : "—")
                             .frame(width: 48, alignment: .trailing)
                             .foregroundColor(.secondary)
                     }
@@ -155,8 +142,6 @@ struct RecordListView: View {
                 }
             }
             .listStyle(.plain)
-            .redacted(reason: isRefreshingHotSnapshot ? .placeholder : [])
-            .disabled(isRefreshingHotSnapshot)
 
             // Pagination bar
             HStack {
@@ -173,17 +158,6 @@ struct RecordListView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
             .background(Color(.systemGroupedBackground))
-
-            // Invisible probe field that summons LimeIME for the hot→cold harvest
-            // (see the field's declaration). Mirrors DBManagerView's backup probe.
-            TextField("", text: $probeText)
-                .focused($probeFocused)
-                .frame(width: SettingsMetrics.invisibleProbeSize,
-                       height: SettingsMetrics.invisibleProbeSize)
-                .opacity(SettingsMetrics.invisibleProbeOpacity)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled(true)
-                .accessibilityHidden(true)
         }
         .onChange(of: query) { _ in resetAndLoad() }
         .onChange(of: searchByCode) { _ in resetAndLoad() }
@@ -198,12 +172,14 @@ struct RecordListView: View {
                 .disabled(!canEdit)
             }
         }
-        .onAppear {
-            refreshHotSnapshotIfNeeded()
-            loadRecords()
-        }
-        .onChange(of: relayActiveState.editingCapability) { _ in
-            refreshHotSnapshotIfNeeded()
+        .onAppear { loadRecords() }
+        // Amendment A2: capability just flipped to live — the outbox is drained, so
+        // reload to guarantee the editable display is post-flush data.
+        .onChange(of: canEdit) { nowEditable in
+            if nowEditable {
+                statusMessage = ""
+                loadRecords()
+            }
         }
         .onChange(of: scenePhase) { _ in
             if scenePhase == .background {
@@ -268,51 +244,26 @@ struct RecordListView: View {
         }
     }
 
+    // Amendment A2: while the keyboard is active + FA but its outbox hasn't proven
+    // drained, editing stays locked with a syncing message instead of the unlock hint.
+    private var unlockHint: String {
+        relayActiveState.isSyncPending
+            ? "鍵盤資料同步中，完成後即可編輯…"
+            : "開啟完整取用並將鍵盤切換至萊姆輸入法以編輯字根資料（顯示實際分數）"
+    }
+
     private var capabilityMessage: String {
-        if isRefreshingHotSnapshot { return "同步中..." }
-        return canEdit ? "完整取用已開啟，碼表編輯功能已啓用。" : unlockHint
+        canEdit ? "即時資料可編輯；鍵盤會在離開後套用變更。" : unlockHint
     }
 
     private var capabilityIcon: String {
-        if isRefreshingHotSnapshot { return "clock.arrow.circlepath" }
-        return canEdit ? "checkmark.circle" : "lock"
-    }
-
-    private func refreshHotSnapshotIfNeeded() {
-        // Do NOT gate on relayEditingCapability == .live here: that state is only
-        // established once the keyboard relays, which needs the probe below to summon
-        // it — a chicken-and-egg that would leave the editor permanently read-only.
-        // Always summon + attempt the harvest; if LIME isn't the active keyboard it
-        // simply times out → read-only.
-        guard !didAttemptHotRefresh else { return }
-        didAttemptHotRefresh = true
-        isRefreshingHotSnapshot = true
-        statusMessage = ""
-        // Summon LimeIME (hidden probe) so the extension is actually running when the
-        // harvest handshake fires — it can only harvest hot while presented. Keep it
-        // focused for the whole handshake; dismiss it when done (success or timeout).
-        probeFocused = true
-        Task {
-            // Give the summoned keyboard a moment to come up before the handshake.
-            try? await Task.sleep(nanoseconds: FAStateResolver.activeProbeWaitNanoseconds)
-            let result = await setupController.refreshTableFromKeyboard(stem: tableName)
-            isRefreshingHotSnapshot = false
-            probeFocused = false
-            switch result {
-            case .success:
-                statusMessage = ""
-                loadRecords()
-            case .failure:
-                hotRefreshFailed = true
-                statusMessage = "即時資料更新逾時，已切換為唯讀。\(unlockHint)"
-            }
-        }
+        if canEdit { return "checkmark.circle" }
+        return relayActiveState.isSyncPending ? "arrow.triangle.2.circlepath" : "lock"
     }
 
     private func publishEditorCloseIfNeeded() {
-        guard didAttemptHotRefresh, !isRefreshingHotSnapshot, !didPublishEditorClose, !hotRefreshFailed else { return }
+        guard !didPublishEditorClose else { return }
         didPublishEditorClose = true
-        // ponytail: background publish closes the only editor/keyboard learning interleave.
         Task {
             _ = await setupController.publishEditorChanges(stem: tableName)
         }

@@ -27,6 +27,7 @@
 // Target: >= 65 tests with real assertions, <= 10 SKIPPED stubs.
 
 import XCTest
+import GRDB
 import ZIPFoundation
 @testable import LimeIME
 
@@ -42,6 +43,23 @@ private enum LIME {
     static let DB_COLUMN_ID       = "_id"
 }
 
+private final class ThreadSafeError: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storedError: Error?
+
+    func set(_ error: Error) {
+        lock.lock()
+        storedError = error
+        lock.unlock()
+    }
+
+    var value: Error? {
+        lock.lock()
+        defer { lock.unlock() }
+        return storedError
+    }
+}
+
 // MARK: - DBServerTest
 final class DBServerTest: XCTestCase {
 
@@ -49,16 +67,22 @@ final class DBServerTest: XCTestCase {
     // DBServer.shared uses the real App Group path which is not accessible in
     // the test sandbox, so we inject a temp LimeDB via the _datasourceForTesting hook
     // for tests that require it.
+    private var tempDir: URL!
     private var tempURL: URL!
 
     override func setUp() {
         super.setUp()
-        tempURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent(UUID().uuidString + ".db")
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try! FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        tempDir = dir
+        tempURL = tempDir.appendingPathComponent("lime.db")
     }
 
     override func tearDown() {
-        try? FileManager.default.removeItem(at: tempURL)
+        try? FileManager.default.removeItem(at: tempDir)
+        tempDir = nil
+        tempURL = nil
         super.tearDown()
     }
 
@@ -77,6 +101,116 @@ final class DBServerTest: XCTestCase {
         try SyncMetaStore(databaseURL: URL(fileURLWithPath: db.dbPath()))
     }
 
+    private func markEditorFenceProtocolReady(_ db: LimeDB) throws {
+        let dbURL = URL(fileURLWithPath: db.dbPath())
+        let connection = try SyncDatabaseConnection(databaseURL: dbURL)
+        try connection.write { database in
+            try database.execute(sql: """
+                CREATE TABLE IF NOT EXISTS sync_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )
+                """)
+            try database.execute(sql: """
+                INSERT INTO sync_meta(key, value) VALUES ('editor_fence_protocol', '1')
+                ON CONFLICT(key) DO UPDATE SET value = excluded.value
+                """)
+        }
+
+        let snapshot = SyncPaths.coldDB(dbURL.deletingLastPathComponent())
+        try connection.writeWithoutTransaction { database in
+            try database.execute(sql: "VACUUM INTO ?", arguments: [snapshot.path])
+        }
+    }
+
+    private func tableExists(_ table: String, in db: LimeDB) throws -> Bool {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try (Int.fetchOne(database,
+                              sql: "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?",
+                              arguments: [table]) ?? 0) > 0
+        }
+    }
+
+    private func intValue(_ sql: String, in db: LimeDB, arguments: StatementArguments = []) throws -> Int {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Int.fetchOne(database, sql: sql, arguments: arguments) ?? 0
+        }
+    }
+
+    private func fenceRows(in db: LimeDB, table: String) throws -> [Row] {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Row.fetchAll(database,
+                             sql: "SELECT tbl, k1, k2, action, revision FROM editor_fence WHERE tbl = ? ORDER BY k1, k2, action",
+                             arguments: [table])
+        }
+    }
+
+    private func tableFenceRows(in db: LimeDB, table: String) throws -> [Row] {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Row.fetchAll(database,
+                             sql: "SELECT tbl, action, revision FROM editor_table_fence WHERE tbl = ?",
+                             arguments: [table])
+        }
+    }
+
+    private func lifecycleIntentRows(in db: LimeDB, table: String) throws -> [Row] {
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        return try queue.read { database in
+            try Row.fetchAll(database,
+                             sql: "SELECT tbl, revision, action, preserve_learning FROM im_lifecycle_intent WHERE tbl = ? ORDER BY revision",
+                             arguments: [table])
+        }
+    }
+
+    private func makeStagingDB(rows: [(code: String, word: String, score: Int)] = [("aa", "匯入", 9)]) throws -> URL {
+        let url = tempFile(".db")
+        let queue = try DatabaseQueue(path: url.path)
+        defer { try? queue.close() }
+        try queue.write { db in
+            try db.execute(sql: """
+                CREATE TABLE custom (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT,
+                    word TEXT,
+                    score INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0,
+                    code3r TEXT
+                )
+                """)
+            try db.execute(sql: """
+                CREATE TABLE im (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT,
+                    title TEXT,
+                    desc TEXT,
+                    keyboard TEXT,
+                    disable BOOLEAN,
+                    selkey TEXT,
+                    endkey TEXT,
+                    spacestyle TEXT
+                )
+                """)
+            for row in rows {
+                try db.execute(sql: "INSERT INTO custom (code, word, score) VALUES (?, ?, ?)",
+                               arguments: [row.code, row.word, row.score])
+            }
+            try db.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES ('custom', 'name', 'Staged Custom', 'limenum', 0, '', '', '')
+                """)
+        }
+        return url
+    }
+
     // Sync invariant (§2.4): keyboard learning must NOT bump sync_meta — the sync
     // layer has no learning hook. (Relocated from the frozen SearchServerTest.)
     func testKeyboardLearningDoesNotBumpSyncRevision() throws {
@@ -93,6 +227,247 @@ final class DBServerTest: XCTestCase {
         XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 0)
         XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_RELATED), 0)
         XCTAssertEqual(try meta.generation(), 0)
+    }
+
+    func testPerformEditorMutationCommitsRowFenceAndRevisionWithoutPublishing() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let meta = try syncMeta(for: db)
+
+        let result = try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                                  code: "aa",
+                                                                  word: "原子",
+                                                                  score: 7))
+
+        XCTAssertGreaterThan(result.rowID ?? 0, 0)
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try meta.generation(), 0)
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: SyncPaths.coldDB(tempURL.deletingLastPathComponent()).path),
+            "record edits must not publish a snapshot until editor exit/background")
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'aa' AND word = '原子' AND score = 7",
+                                    in: db), 1)
+
+        let fences = try fenceRows(in: db, table: LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(fences.count, 1)
+        XCTAssertEqual(fences[0]["action"] as String?, "upsert")
+        XCTAssertEqual(fences[0]["k1"] as String?, "aa")
+        XCTAssertEqual(fences[0]["k2"] as String?, "原子")
+        XCTAssertEqual(fences[0]["revision"] as Int?, 1)
+    }
+
+    func testPublishPendingEditorChangesPublishesOneSnapshotForSeveralEdits() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        try markEditorFenceProtocolReady(db)
+        let meta = try syncMeta(for: db)
+
+        _ = try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                         code: "a",
+                                                         word: "一",
+                                                         score: 1))
+        _ = try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                         code: "b",
+                                                         word: "二",
+                                                         score: 2))
+        _ = try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                         code: "c",
+                                                         word: "三",
+                                                         score: 3))
+
+        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 3)
+        XCTAssertEqual(try meta.generation(), 0)
+
+        try server.publishPendingEditorChanges()
+
+        XCTAssertEqual(try meta.generation(), 1)
+        let snapshot = SyncPaths.coldDB(tempURL.deletingLastPathComponent())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: snapshot.path))
+        XCTAssertEqual(try SyncMetaStore(databaseURL: snapshot).revision(forTable: LIME.DB_TABLE_CUSTOM), 3)
+        XCTAssertEqual(try SyncMetaStore(databaseURL: snapshot).generation(), 1)
+    }
+
+    func testClearThenAddKeepsTableFenceBeforeLaterRowFence() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        _ = db.addRecord("related", ["pword": "清", "cword": "掉", "score": 1])
+
+        _ = try server.performEditorMutation(.clearTable("related"))
+        _ = try server.performEditorMutation(.addRelated(parentWord: "後",
+                                                         childWord: "加",
+                                                         score: 2))
+
+        let meta = try syncMeta(for: db)
+        XCTAssertEqual(try meta.revision(forTable: "related"), 2)
+        XCTAssertEqual(try meta.generation(), 0)
+        let tableFence = try tableFenceRows(in: db, table: "related")
+        XCTAssertEqual(tableFence.count, 1)
+        XCTAssertEqual(tableFence[0]["action"] as String?, "clear")
+        XCTAssertEqual(tableFence[0]["revision"] as Int?, 1)
+        let rowFence = try fenceRows(in: db, table: "related")
+        XCTAssertEqual(rowFence.count, 1)
+        XCTAssertEqual(rowFence[0]["action"] as String?, "upsert")
+        XCTAssertEqual(rowFence[0]["k1"] as String?, "後")
+        XCTAssertEqual(rowFence[0]["k2"] as String?, "加")
+        XCTAssertEqual(rowFence[0]["revision"] as Int?, 2)
+    }
+
+    func testMappingEditorMutationByIDConvergesAndDeletesDuplicateLogicalRows() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let firstID = db.addRecord(LIME.DB_TABLE_CUSTOM, ["code": "dup", "word": "重", "score": 1])
+        _ = db.addRecord(LIME.DB_TABLE_CUSTOM, ["code": "dup", "word": "重", "score": 2])
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'dup' AND word = '重'",
+                                    in: db), 2)
+
+        _ = try server.performEditorMutation(.updateMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                            id: "\(firstID)",
+                                                            code: "dup2",
+                                                            word: "重改",
+                                                            score: 5))
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'dup' AND word = '重'",
+                                    in: db), 0)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'dup2' AND word = '重改' AND score = 5",
+                                    in: db), 2)
+        let renameFences = try fenceRows(in: db, table: LIME.DB_TABLE_CUSTOM)
+        XCTAssertTrue(renameFences.contains {
+            ($0["action"] as String?) == "delete"
+                && ($0["k1"] as String?) == "dup"
+                && ($0["k2"] as String?) == "重"
+        })
+        XCTAssertTrue(renameFences.contains {
+            ($0["action"] as String?) == "upsert"
+                && ($0["k1"] as String?) == "dup2"
+                && ($0["k2"] as String?) == "重改"
+        })
+
+        XCTAssertThrowsError(try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                                          code: "dup2",
+                                                                          word: "重改",
+                                                                          score: 9)))
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'dup2' AND word = '重改'",
+                                    in: db), 2,
+                       "add of an existing logical key must not create a third copy")
+
+        _ = try server.performEditorMutation(.deleteMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                            id: "\(firstID)"))
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'dup2' AND word = '重改'",
+                                    in: db), 0)
+        XCTAssertTrue(try fenceRows(in: db, table: LIME.DB_TABLE_CUSTOM).contains {
+            ($0["action"] as String?) == "delete"
+                && ($0["k1"] as String?) == "dup2"
+                && ($0["k2"] as String?) == "重改"
+        })
+    }
+
+    func testEditorMutationRollsBackRowWhenFenceInsertFails() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        try queue.write { database in
+            try database.execute(sql: "CREATE TABLE editor_fence (tbl TEXT NOT NULL)")
+        }
+
+        XCTAssertThrowsError(try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                                          code: "fail",
+                                                                          word: "不應存在",
+                                                                          score: 1)))
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'fail'",
+                                    in: db), 0)
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: LIME.DB_TABLE_CUSTOM), 0)
+    }
+
+    func testEditorMutationRollsBackRowWhenRevisionWriteFails() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        try queue.write { database in
+            try database.execute(sql: "CREATE TABLE sync_meta (key TEXT PRIMARY KEY)")
+        }
+
+        XCTAssertThrowsError(try server.performEditorMutation(.addMapping(table: LIME.DB_TABLE_CUSTOM,
+                                                                          code: "rev_fail",
+                                                                          word: "不應存在",
+                                                                          score: 1)))
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'rev_fail'",
+                                    in: db), 0)
+        XCTAssertFalse(try tableExists("editor_fence", in: db),
+                       "the fence table is created inside the transaction and must roll back too")
+    }
+
+    func testTableLifecycleMutationCommitsStagingRowsIntentFenceAndRevision() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB()
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+
+        try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
+                                                                     stagingDatabaseURL: stagingURL,
+                                                                     preserveLearning: true,
+                                                                     publishImmediately: false))
+
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'aa' AND word = '匯入' AND score = 9",
+                                    in: db), 1)
+        let lifecycle = try lifecycleIntentRows(in: db, table: LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(lifecycle.count, 1)
+        XCTAssertEqual(lifecycle[0]["revision"] as Int?, 1)
+        XCTAssertEqual(lifecycle[0]["action"] as String?, "install")
+        XCTAssertEqual(lifecycle[0]["preserve_learning"] as Int?, 1)
+
+        let tableFence = try tableFenceRows(in: db, table: LIME.DB_TABLE_CUSTOM)
+        XCTAssertEqual(tableFence.count, 1)
+        XCTAssertEqual(tableFence[0]["action"] as String?, "replace")
+        XCTAssertEqual(tableFence[0]["revision"] as Int?, 1)
+        XCTAssertTrue(try tableExists("im_lifecycle_intent", in: db))
+    }
+
+    func testTableLifecycleMutationRollsBackLiveRowsWhenIntentInsertFails() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        _ = db.addRecord(LIME.DB_TABLE_CUSTOM, ["code": "old", "word": "舊", "score": 1])
+        let stagingURL = try makeStagingDB(rows: [("new", "新", 2)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let queue = try DatabaseQueue(path: db.dbPath())
+        defer { try? queue.close() }
+        try queue.write { database in
+            try database.execute(sql: "CREATE TABLE im_lifecycle_intent (tbl TEXT NOT NULL)")
+        }
+
+        XCTAssertThrowsError(try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
+                                                                                          stagingDatabaseURL: stagingURL,
+                                                                                          preserveLearning: false,
+                                                                                          publishImmediately: false)))
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'old' AND word = '舊'",
+                                    in: db), 1)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'new'",
+                                    in: db), 0)
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: LIME.DB_TABLE_CUSTOM), 0)
+    }
+
+    func testLifecyclePublicationFailureLeavesCommittedIntentPending() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB()
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let blockingSnapshot = SyncPaths.coldDB(tempURL.deletingLastPathComponent())
+        try FileManager.default.createDirectory(at: blockingSnapshot, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: blockingSnapshot) }
+
+        XCTAssertThrowsError(try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
+                                                                                          stagingDatabaseURL: stagingURL,
+                                                                                          preserveLearning: false,
+                                                                                          publishImmediately: true)))
+
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'aa' AND word = '匯入'",
+                                    in: db), 1)
+        XCTAssertEqual(try lifecycleIntentRows(in: db, table: LIME.DB_TABLE_CUSTOM).count, 1)
+        XCTAssertEqual(try tableFenceRows(in: db, table: LIME.DB_TABLE_CUSTOM).count, 1)
     }
 
     // MARK: - Phase 1: Basic Singleton & State
@@ -222,6 +597,76 @@ final class DBServerTest: XCTestCase {
             "Keyboard runtime should query candidates from the adopted 6.1.27 legacy lime.db")
     }
 
+    func testKeyboardRoleRuntimeJournalsLearningThroughProductionSeam() throws {
+        // PR #223 merge blocker regression: production keyboard datasources are opened by
+        // SharedDatabase.openDatasource() / prepareKeyboardRuntimeDatabase(), NOT by
+        // directly constructed LimeDB fixtures — and those opens must carry the hot role
+        // (tracksHotLearning), or normal keyboard learning silently never populates
+        // learn_outbox and cold never receives it while the A2 gate reads pend=0.
+        let hotDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: hotDir) }
+
+        let server = DBServer(_testDatabaseDirectory: hotDir, tracksHotLearning: true)
+        let context = try server.prepareKeyboardRuntimeDatabase()
+        let ss = context.searchServer
+
+        // Drive learning the way the keyboard does: commit two candidates, then the
+        // dismiss path (postFinishInput) performs the related-phrase learning write.
+        ss.candidateSuggestion = true
+        let first = Mapping(id: 0, code: "aa", word: "甲", score: 0, baseScore: 0,
+                            recordType: Mapping.RecordType.exactMatchToCode)
+        let second = Mapping(id: 0, code: "bb", word: "乙", score: 0, baseScore: 0,
+                             recordType: Mapping.RecordType.exactMatchToCode)
+        ss.learnRelatedPhraseAndUpdateScore(first)
+        ss.learnRelatedPhraseAndUpdateScore(second)
+
+        let finished = expectation(description: "postFinishInput learning completed")
+        ss.postFinishInput { finished.fulfill() }
+        wait(for: [finished], timeout: 60.0)
+
+        let queue = try DatabaseQueue(path: hotDir.appendingPathComponent("lime.db").path)
+        defer { try? queue.close() }
+        let journaled = try queue.read { db -> [String] in
+            // learn_outbox is created lazily on the first journaled write; a missing table
+            // means journaling never ran — report that as the assertion, not a SQL error.
+            guard try db.tableExists("learn_outbox") else { return [] }
+            return try Row.fetchAll(db, sql: "SELECT tbl, k1, k2 FROM learn_outbox")
+                .map { "\($0["tbl"] as String? ?? "")|\($0["k1"] as String? ?? "")|\($0["k2"] as String? ?? "")" }
+        }
+        XCTAssertTrue(journaled.contains("related|甲|乙"),
+                      "keyboard-role learning through the production DBServer→SearchServer seam must journal learn_outbox; got \(journaled)")
+    }
+
+    func testAppRoleRuntimeDoesNotCreateLearnOutbox() throws {
+        // The inverse guard: the app's cold datasource (default role) must not create or
+        // populate learn_outbox through the same production open path.
+        let coldDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: coldDir) }
+
+        let server = DBServer(_testDatabaseDirectory: coldDir)
+        let context = try server.prepareKeyboardRuntimeDatabase()
+        let ss = context.searchServer
+        ss.candidateSuggestion = true
+        ss.learnRelatedPhraseAndUpdateScore(
+            Mapping(id: 0, code: "aa", word: "甲", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode))
+        ss.learnRelatedPhraseAndUpdateScore(
+            Mapping(id: 0, code: "bb", word: "乙", score: 0, baseScore: 0,
+                    recordType: Mapping.RecordType.exactMatchToCode))
+        let finished = expectation(description: "postFinishInput learning completed")
+        ss.postFinishInput { finished.fulfill() }
+        wait(for: [finished], timeout: 60.0)
+
+        let queue = try DatabaseQueue(path: coldDir.appendingPathComponent("lime.db").path)
+        defer { try? queue.close() }
+        let outboxExists = try queue.read { db in try db.tableExists("learn_outbox") }
+        XCTAssertFalse(outboxExists, "cold-role datasource must not create learn_outbox")
+    }
+
     func testDBServerGetInstanceWithoutContext() {
         // On iOS there is only one access path: DBServer.shared.
         let s1 = DBServer.shared
@@ -253,15 +698,16 @@ final class DBServerTest: XCTestCase {
         XCTAssertEqual(server.getImConfig(LIME.DB_TABLE_CUSTOM, "version"), "Edited Version")
     }
 
-    func testRegisterIMBumpsRevisionAndPublishes() throws {
+    func testRegisterIMPublishesMetadataWithoutTableRevision() throws {
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
+        let table = "i3_custom"
 
-        try server.registerIM(imName: "i3_custom", tableName: LIME.DB_TABLE_CUSTOM,
+        try server.registerIM(imName: table, tableName: table,
                               label: "I3 Custom", keyboardId: "lime")
 
         let meta = try syncMeta(for: db)
-        XCTAssertEqual(try meta.revision(forTable: LIME.DB_TABLE_CUSTOM), 1)
+        XCTAssertEqual(try meta.revision(forTable: table), 0)
         XCTAssertEqual(try meta.generation(), 1)
     }
 
@@ -374,6 +820,7 @@ final class DBServerTest: XCTestCase {
         try "i3\t同步\n".write(to: txtURL, atomically: true, encoding: .utf8)
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
+        try markEditorFenceProtocolReady(db)
 
         try server.importTxtFile(at: txtURL.path, tableName: LIME.DB_TABLE_CUSTOM, progress: nil)
 

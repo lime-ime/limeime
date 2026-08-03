@@ -61,17 +61,14 @@ final class SetupImController: BaseController {
                 try server.importTxtFile(at: url.path,
                                          tableName: tableName,
                                          publish: false,
+                                         preserveLearning: restoreLearning,
                                          progress: { count in
                     counter.value = count
                     Task { @MainActor in
                         view?.onProgress(50, status: "已匯入 \(count) 筆…")
                     }
                 })
-                try server.writeIMLifecycleRecord(table: tableName,
-                                                  action: .install,
-                                                  preserveLearning: restoreLearning,
-                                                  postSignal: false)
-                try server.markTableChangedAndPublish(tableName)
+                try server.publishPendingEditorChanges()
                 await MainActor.run {
                     self.progress.dismiss()
                     view?.onProgress(100, status: "文字檔匯入完成，共 \(counter.value) 筆")
@@ -98,14 +95,11 @@ final class SetupImController: BaseController {
                 try server.importTxtFile(at: url.path,
                                          tableName: tableName,
                                          publish: false,
+                                         preserveLearning: restoreLearning,
                                          progress: { count in
                     lastCount = count
                 })
-                try server.writeIMLifecycleRecord(table: tableName,
-                                                  action: .install,
-                                                  preserveLearning: restoreLearning,
-                                                  postSignal: false)
-                try server.markTableChangedAndPublish(tableName)
+                try server.publishPendingEditorChanges()
                 return .success(lastCount)
             } catch {
                 return .failure(error)
@@ -253,46 +247,11 @@ final class SetupImController: BaseController {
     }
 #endif
 
-    func refreshTableFromKeyboard(stem: String) async -> Result<Void, Error> {
-        await refreshTableFromKeyboard(stem: stem,
-                                       baseURL: appGroupBaseURL(),
-                                       timeout: editorRefreshPollTimeout,
-                                       pollInterval: editorRefreshPollInterval)
-    }
-
-    func refreshTableFromKeyboard(stem: String,
-                                  baseURL: URL,
-                                  timeout: TimeInterval,
-                                  pollInterval: TimeInterval) async -> Result<Void, Error> {
-        let requestURL = SyncPaths.editorRefreshRequest(baseURL)
-        let receiptURL = SyncPaths.editorRefreshReceipt(baseURL)
-        let requestUUID = UUID().uuidString
-        let request = EditorRefreshRequest(requestUUID: requestUUID,
-                                           table: stem,
-                                           expiresAt: Date().addingTimeInterval(editorRefreshRequestTTL).timeIntervalSince1970)
-        do {
-            try? FileManager.default.removeItem(at: receiptURL)
-            try atomicWrite(try JSONEncoder().encode(request), to: requestURL)
-            postSyncSignal(.tablesUpdated)
-            try await waitForEditorRefreshReceipt(at: receiptURL,
-                                                  requestUUID: requestUUID,
-                                                  timeout: timeout,
-                                                  pollInterval: pollInterval)
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            return .success(())
-        } catch {
-            try? FileManager.default.removeItem(at: requestURL)
-            try? FileManager.default.removeItem(at: receiptURL)
-            return .failure(error)
-        }
-    }
-
-    func publishEditorChanges(stem: String) async -> Result<Void, Error> {
+    func publishEditorChanges(stem _: String) async -> Result<Void, Error> {
         let server = self.dbServer
         return await Task.detached(priority: .userInitiated) {
             do {
-                try server.markTableChangedAndPublish(stem)
+                try server.publishPendingEditorChanges()
                 return .success(())
             } catch {
                 return .failure(error)
@@ -391,8 +350,6 @@ final class SetupImController: BaseController {
 
 enum SetupImControllerError: Error {
     case backupTimedOut
-    case editorRefreshTimedOut
-    case editorRefreshFailed(String?)
     case restoreSchemaTooNew(Int)
 }
 
@@ -401,10 +358,6 @@ extension SetupImControllerError: LocalizedError {
         switch self {
         case .backupTimedOut:
             return "備份逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
-        case .editorRefreshTimedOut:
-            return "同步逾時，請開啟完整取用權限並將鍵盤切換至萊姆輸入法後再試"
-        case .editorRefreshFailed(let message):
-            return message ?? "同步失敗，請稍後再試"
         case .restoreSchemaTooNew:
             return "請先更新 LIME"
         }
@@ -422,10 +375,6 @@ private let backupRequestTTL: TimeInterval = 120
 // ponytail: fixed poll window; replace with receipt notification only if Darwin/file polling proves flaky.
 private let backupReceiptPollTimeout: TimeInterval = 15
 private let backupReceiptPollInterval: TimeInterval = 0.25
-// ponytail: editor refresh is a foreground entry gate; make configurable only if device traces exceed this.
-private let editorRefreshRequestTTL: TimeInterval = 30
-private let editorRefreshPollTimeout: TimeInterval = 10
-private let editorRefreshPollInterval: TimeInterval = 0.1
 private let maxRestoreExtractTotalBytes: UInt64 = 500 * 1024 * 1024
 private let maxRestoreExtractEntries = 10_000
 private let maxRestoreCompressionRatio = 100.0
@@ -461,12 +410,9 @@ private func requestKeyboardBackup(server: DBServer) throws -> URL {
 private func publishRestoredCold(server: DBServer) throws {
     let liveURL = server.liveDatabaseURL()
     _ = try SyncMetaStore(databaseURL: liveURL).replaceEpochUUID()
-    try ColdPublisher(liveColdDatabaseURL: liveURL,
-                      appGroupBaseURL: liveURL.deletingLastPathComponent()).publish()
-    server.publishImJson()   // §1.5: republish im.json from the restored cold
-    // No inbox cleanup here: stale im records are skipped by the keyboard's own-container
-    // seq cursor (which survives the full-replace) and lifecycle records are rev-gated, so
-    // neither resurrects a wiped IM; the app GCs both via the relayed cursor (§1.5).
+    try server.publishColdSnapshot()
+    // publishColdSnapshot republishes im.json and removes the legacy unversioned lifecycle inbox
+    // only after the marked snapshot is visible.
 }
 
 private func requestKeyboardSnapshot(server: DBServer) throws -> URL {
@@ -517,44 +463,6 @@ private func matchingReceipt(at url: URL, requestUUID: String) -> ExportReceipt?
 private func snapshotIsFresh(at url: URL, since requestedAt: TimeInterval) -> Bool {
     guard let identity = FileIdentity(url: url) else { return false }
     return identity.mtime >= requestedAt - 1
-}
-
-private func waitForEditorRefreshReceipt(at url: URL,
-                                         requestUUID: String,
-                                         timeout: TimeInterval,
-                                         pollInterval: TimeInterval) async throws {
-    let doneObserver = SyncSignalObserver(signal: .importDone) {}
-    let failedObserver = SyncSignalObserver(signal: .importFailed) {}
-    defer {
-        withExtendedLifetime(doneObserver) {}
-        withExtendedLifetime(failedObserver) {}
-    }
-
-    let deadline = Date().addingTimeInterval(timeout)
-    while Date() <= deadline {
-        if let receipt = matchingEditorRefreshReceipt(at: url, requestUUID: requestUUID) {
-            switch receipt.status {
-            case .done:
-                return
-            case .failed:
-                throw SetupImControllerError.editorRefreshFailed(receipt.error)
-            }
-        }
-        let delay = UInt64(max(0.001, pollInterval) * 1_000_000_000)
-        try? await Task.sleep(nanoseconds: delay)
-    }
-    throw SetupImControllerError.editorRefreshTimedOut
-}
-
-private func matchingEditorRefreshReceipt(at url: URL,
-                                          requestUUID: String) -> EditorRefreshReceipt? {
-    guard let data = try? Data(contentsOf: url),
-          let receipt = try? JSONDecoder().decode(EditorRefreshReceipt.self, from: data),
-          receipt.requestUUID == requestUUID
-    else {
-        return nil
-    }
-    return receipt
 }
 
 private func buildBackupArchive(server: DBServer, snapshotURL: URL) throws -> URL {
@@ -764,12 +672,10 @@ func importDatabaseFile(server: DBServer,
         }
     }
     try validateImportDatabaseSource(sourceURL, tableName: tableName)
-    try server.importFromAttachedDB(sourcePath: sourceURL.path, tableName: tableName, publish: false)
-    try server.writeIMLifecycleRecord(table: tableName,
-                                      action: .install,
-                                      preserveLearning: restoreLearning,
-                                      postSignal: false)
-    try server.markTableChangedAndPublish(tableName)
+    try server.performTableLifecycleMutation(.replaceFromStaging(table: tableName,
+                                                                 stagingDatabaseURL: sourceURL,
+                                                                 preserveLearning: restoreLearning,
+                                                                 publishImmediately: true))
 }
 
 private func isZipArchive(at url: URL) -> Bool {

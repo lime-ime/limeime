@@ -107,6 +107,27 @@ final class RelayPayloadTest: XCTestCase {
         XCTAssertFalse(tabletPayload.contains(";pls="))
     }
 
+    func testEncodeDecodeRoundTripsPendingSyncCount() throws {
+        // Amendment A2: the keyboard reports its undelivered learn_outbox size so the
+        // app unlocks editing only on a proven-drained outbox.
+        let drained = LimeIME.encodeRelayPayload(faOn: true, ts: 1, pendingSync: 0)
+        XCTAssertEqual(try XCTUnwrap(LimeIME.decodeRelayPayload(drained)).pend, 0)
+
+        let pending = LimeIME.encodeRelayPayload(faOn: true, ts: 1, pendingSync: 7)
+        XCTAssertEqual(try XCTUnwrap(LimeIME.decodeRelayPayload(pending)).pend, 7)
+
+        let failed = LimeIME.encodeRelayPayload(faOn: true, ts: 1, pendingSync: -1)
+        XCTAssertEqual(try XCTUnwrap(LimeIME.decodeRelayPayload(failed)).pend, -1)
+    }
+
+    func testDecodeDefaultsPendingSyncToNilWhenAbsent() throws {
+        // A payload without pend= (older build) must decode to nil, never 0 — nil is
+        // "unknown" and keeps editing read-only (fail-safe).
+        let payload = LimeIME.encodeRelayPayload(faOn: true, ts: 1_234.5)
+        XCTAssertFalse(payload.contains(";pend="))
+        XCTAssertNil(try XCTUnwrap(LimeIME.decodeRelayPayload(payload)).pend)
+    }
+
     func testDecodeRejectsTokenAndGarbage() {
         XCTAssertNil(LimeIME.decodeRelayPayload(LimeIME.RelayToken.request))
         XCTAssertNil(LimeIME.decodeRelayPayload("not a relay"))
