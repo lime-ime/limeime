@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/176
 - Classification: iOS defect plus separate Android/iOS product requests
-- State: open. The iOS `自建` input-method path does not produce the expected 中文智慧組詞 candidate for `我也是`, while Android produces it from the same imported table. Track the iOS defect as `fix#176`. Keep the approved bundled-database work under `feat#176`, while the longer cross-commit context proposal remains unapproved product evaluation in the issue.
+- State: closed as completed by maintainer `jrywu` on 2026-08-02. The accepted iOS source correction is included in public App Store v6.1.37. The reporter has not confirmed the corrected behavior on that version, so this records maintainer closeout rather than reporter validation. Keep the approved bundled-database work under `feat#176`, while the longer cross-commit context proposal remains separate unapproved product evaluation.
 - Reporter environment: LIME 6.1.33. The original related-phrase examples use 行列 10.
 
 ## Separate product scope
@@ -24,16 +24,23 @@ The project account confirmed the platform comparison in comment `5029971309`:
 
 Runtime evidence therefore establishes an iOS-only defect. Earlier Android screenshots showed a result difference but did not establish an Android custom-table defect. Android is the behavioral oracle for this scope.
 
+## Source correction and delivery
+
+- Commit `34584daf66c520ac8d0e3823f105b31a55390e4c` bundles `hanconvertv2.db` for the iOS import path, reads Android-parity `TCSC.score` values for scoreless imports, and adds focused import/base-score regressions.
+- Follow-up commit `a15e40ac4fa2393ba5c2d57bdd5134d37788827b` makes field presence authoritative: an omitted `basescore` receives the Han frequency fallback, while an explicit `0` remains `0` for lossless `.lime` round trips.
+- Both commits are ancestors of release target `d4e8840e9a7080a7980036284952f50ef6ccf3d7`. App Store v6.1.37 became public on 2026-07-26 and its release notes include the custom-table import candidate-order improvement.
+- The commits record focused iOS tests and a full LimeTests run. Reporter-visible confirmation for `我也是` on v6.1.37 is absent. No public retest request was added after the maintainer closure.
+
 ## Platform impact
 
 ### iOS
 
-Confirmed affected. Source tracing identifies two concrete Android-parity failures in the iOS imported-table/search path:
+Confirmed affected in the reported v6.1.33 path. Source tracing identified one deterministic Android-parity failure and one separate cache-path risk in the iOS imported-table/search path:
 
 1. Scoreless text imports remain scoreless on iOS. `LimeDB.importTxtFile()` calls `getBaseScore(word)` when an imported `.cin`/`.lime` row omits `basescore` or supplies `0`, but the iOS `getBaseScore()` implementation always returns `0`. `SearchServer.makeRunTimeSuggestion()` then skips an exact seed whose `baseScore` is `0` and rejects a remaining mapping whose `baseScore` is below `2`. A normal scoreless custom text table therefore cannot seed or extend a smart-composition phrase on iOS.
 2. Mapping-cache hits bypass runtime state updates. Both the exact cache hit and the stage-1-to-stage-2 prefetch fallback return immediately from `SearchServer.getMappingByCode()` before `makeRunTimeSuggestion()` runs. `triggerPrefetch()` warms first-stroke results with `isPrefetch = true`; when the user later enters that stroke, the cached return can prevent `suggestionLoL` from being seeded even when the mappings carry valid positive base scores. The cache currently stores an already assembled candidate list, so it can also retain candidate output derived from stale runtime state.
 
-These failures are not specific branches for table name `custom`; they become visible there because imported text commonly lacks explicit base scores and custom-table activation prefetches its root keys. Built-in tables normally ship with populated `basescore` values, which avoids the deterministic import failure, while cache timing can make the second failure intermittent.
+Neither path is a `custom`-specific branch. Imported text commonly lacks explicit base scores, which made the first failure deterministic before the accepted correction. Custom-table activation can also prefetch root keys, but the issue evidence did not independently prove that the cache risk caused the reporter's run, and the maintainer closeout did not require that broader cache refactor.
 
 ### Android
 
@@ -56,35 +63,30 @@ The public issue does not include the reporter's source file or its score fields
 
 Android retrieves raw mappings from its cache and then invokes `makeRunTimeSuggestion(code, resultList)` for every non-prefetch user query. iOS instead returns cached assembled candidates before reaching its runtime-suggestion call. This violates the stateful algorithm's requirement to process each progressive input code and can independently suppress phrase construction after root-key prefetch.
 
-The two faults must be tested and corrected separately: adding base scores does not repair a prefetched first-stroke cache hit, and changing cache flow does not make zero-score imported rows eligible for phrase construction.
+The base-score failure was sufficient to explain scoreless imports and is the accepted fix boundary. The cache-path risk remains a separate hardening hypothesis unless a focused regression or runtime evidence proves it affects the reporter-visible path.
 
-## Proposed solution
+## Accepted solution and remaining hardening
 
-1. Create a redistribution-safe scoreless `.cin` fixture with three mappings, for example `i → 我`, `xal → 也`, and `jn → 是`. Add a RED iOS import/search test that verifies the imported rows and enters `i`, `ixal`, then `ixaljn` through the real `SearchServer` path.
-2. Give iOS the same base-frequency source used by Android. The narrowest parity fix is to bundle the existing approximately 269 KiB `hanconvertv2.db` resource, use `TCSC.score` for `LimeDB.getBaseScore()`, and retain `0` only when a word is absent. A generated equivalent is acceptable only if tests prove identical scores for the fixture and representative Traditional Chinese characters.
-3. Keep explicit imported scores authoritative. `.lime`/`.limedb` rows with a positive `basescore` must preserve it; only missing or zero values use the frequency fallback. Do not turn user-learning `score` into `basescore`.
-4. Refactor iOS mapping caching to cache raw database mappings rather than the final assembled candidate list. On every real user query, retrieve raw mappings from cache or DB, run `makeRunTimeSuggestion()`, and assemble the current echo/runtime/English candidates. Prefetch must warm only raw mappings and must not mutate runtime state.
-5. Add an explicit-score control and a warm-cache control. The scoreless fixture must pass after score seeding, and the positive-score fixture must produce the same phrase before and after first-stroke prefetch. Disabling `smart_chinese_input` must suppress the runtime phrase in both cases.
-6. Keep this iOS-only correction separate from cross-commit related-phrase context and bundled-related-database content. No Android product-code change is required.
+1. Completed: iOS now bundles the Android Han frequency database and seeds omitted import base scores from `TCSC.score`.
+2. Completed: focused tests cover known frequencies and scoreless custom-table imports.
+3. Completed in the follow-up: an explicitly present `basescore`, including `0`, is authoritative; only an omitted field receives the frequency fallback.
+4. Remaining optional hardening: test the warm-prefetch/cache path through the full `SearchServer` progression before deciding whether raw-mapping cache refactoring is needed. This was not established as the reporter-visible cause and is not part of the completed `fix#176` scope.
+5. Keep this iOS-only correction separate from cross-commit related-phrase context and bundled-related-database content. No Android product-code change is required.
 
-## Remaining evidence to capture
+## Remaining evidence
 
-- Record the reporter table's source format and the imported `code`, `word`, `score`, and `basescore` rows for `我`, `也`, and `是` if the table can be shared privately. This determines which of the two proven faults triggered the reported run; it is not required to reproduce the scoreless import defect.
-- Confirm the selected iOS frequency resource is packaged in the keyboard extension, not only the Settings host app, and remains available without Full Access.
-- Measure import cost and verify that score lookup is batched or prepared efficiently for large custom tables.
+- Reporter-visible confirmation for the original imported table on App Store v6.1.37 is not available.
+- The broader warm-prefetch/cache hypothesis remains unproven for this report and should not be treated as part of the completed fix without a focused regression.
 
-## Verification plan
+## Verification status and follow-up
 
-1. RED: a scoreless `.cin` import stores zero base scores and cannot produce the runtime phrase on current iOS.
-2. RED: a positive-score fixture produces the phrase on a cold query but loses it when the first stroke is served by prefetch/cache.
-3. Confirm the equivalent scoreless import and progressive query are GREEN on Android and record the imported scores as the parity oracle.
-4. GREEN: verify iOS imports the expected frequency scores and returns `我也是` on cold-cache and warm-cache paths.
-5. Verify explicit positive `basescore` values are preserved, unknown words retain a safe fallback, and `smart_chinese_input = false` suppresses composition.
-6. Verify ordinary exact candidates, ordering, two-stage expansion, repeated queries, backspace/restart state, LD, related lookup after commit, cache invalidation after learning, and mixed English input are unchanged.
-7. Re-run focused `LimeDB`, `SearchServer`, import, and custom-table tests plus the complete iOS test suite.
-8. Perform runtime checks on iPhone, full iPad, and narrow iPad, including a custom keyboard without Full Access.
-9. Keep the `feat#176` database work and the unapproved longer-context evaluation separate from defect completion and release QA.
+1. Historical RED contract: before `34584daf`, iOS `getBaseScore()` returned `0`, so a scoreless text import could not satisfy the smart-composition score gates.
+2. GREEN source coverage: focused tests now verify known Han frequencies and nonzero score seeding for a scoreless custom-table import.
+3. Follow-up source coverage verifies that omitted and explicitly present `basescore` fields remain distinct, including preservation of an explicit `0`.
+4. The full iOS test suite recorded by the follow-up commit passed. No equivalent reporter-visible `我也是` retest on App Store v6.1.37 is recorded.
+5. If the behavior is reported again, reproduce through the full `SearchServer` cold- and warm-cache paths before changing cache design, and verify `smart_chinese_input = false`, backspace/restart state, LD, related lookup after commit, learning invalidation, and mixed English input.
+6. Keep the `feat#176` database work and the unapproved longer-context evaluation separate from defect completion and any future hardening.
 
 ## Backlog decision
 
-Add `fix#176 iOS` for the confirmed custom-table smart-composition defect. Retain `feat#176 Android+iOS` only for the approved related-phrase database refresh. Keep the longer cross-commit context proposal out of the backlog until a maintainer confirms its product direction.
+Remove completed `fix#176 iOS` from the unresolved backlog after the accepted source correction shipped in App Store v6.1.37 and maintainer `jrywu` closed the issue. Retain `feat#176 Android+iOS` only for the separately approved related-phrase database refresh. Keep the longer cross-commit context proposal out of the backlog until a maintainer confirms its product direction.

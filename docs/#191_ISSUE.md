@@ -7,9 +7,9 @@
 - Reporter: `Poul9`
 - Android: reporter-confirmed working and used as the behavioral oracle
 - iOS: source fix merged to `master` in PR #192 as `9a50eb7509e937c2e2e51574ddcdc9d91b1369ee`
-- Delivery boundary: iOS v6.1.36 build 25 is `READY_FOR_SALE`, `VALID`, and publicly listed on the Taiwan App Store. The direct Taiwan storefront showed v6.1.36 on 2026-07-22 while Apple's Taiwan lookup endpoint was still briefly reporting v6.1.35.
-- Follow-up: issue #191 was reopened and the reporter was asked to retest public iOS v6.1.36 in https://github.com/lime-ime/limeime/issues/191#issuecomment-5042557276.
-- Pending: reporter confirmation, ETEN26 verification, and full/narrow iPad runtime verification
+- Delivery boundary: the fix merge is an ancestor of the iOS v6.1.37 release candidate, and v6.1.37 is publicly listed on the Taiwan App Store as of 2026-08-03.
+- Follow-up: the reporter was asked to retest public iOS v6.1.36 in https://github.com/lime-ime/limeime/issues/191#issuecomment-5042557276 but did not reply. Maintainer `jrywu` closed the issue as completed on 2026-08-02. The closure is maintainer direction, not reporter confirmation.
+- Remaining unverified coverage: reporter confirmation, ETEN26, and full/narrow iPad runtime verification. No active reporter watch or further public retest request remains after the maintainer closure.
 
 ## Problem statement
 
@@ -97,13 +97,13 @@ On iPhone, full iPad, and narrow iPad:
 3. Repeat the equivalent English/symbol checks for ETEN26 because the same routing branch was corrected.
 4. Switch away and back, then close/reopen the keyboard, and confirm each selection persists.
 
-The maintainer verified the corrected Hsu English face on iPhone on first show and after dismiss/reopen. Public iOS v6.1.36 now contains the fix, and the reporter has been asked to verify the same first-show and dismiss/reopen paths. Full and narrow iPad checks remain pending.
+The maintainer verified the corrected Hsu English face on iPhone on first show and after dismiss/reopen. Public iOS v6.1.36 contained the fix, and the reporter was asked to verify the same first-show and dismiss/reopen paths but did not reply. The fix is also included in public iOS v6.1.37. Maintainer `jrywu` closed the issue as completed on 2026-08-02, so no further public retest request is pending. ETEN26 and full/narrow iPad checks remain unverified.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed. iOS v6.1.36 build 25 is public on the Taiwan App Store and the community issue is open pending reporter confirmation. Both iPad layout tiers remain pending runtime verification.
+Confirmed affected by the reporter and by direct source inspection. The routing fix is iOS-only and is merged to `master`. Maintainer iPhone verification passed. The fix shipped in public iOS v6.1.36 and remains included in public iOS v6.1.37. Maintainer `jrywu` closed the community issue as completed on 2026-08-02 without a reporter reply. Both iPad layout tiers remain unverified, but they are no longer tracked as active issue follow-up after that closure.
 
 ### Android
 

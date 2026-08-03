@@ -1,13 +1,13 @@
 # Issue #169 — Integrated phone portrait keyboard model (no width gate)
 
-Status: Open pending reporter/device confirmation for the v6.1.35 portrait-split key-label
-regression. PR #188 merged the source fix as
+Status: Closed as completed by maintainer `jrywu` on 2026-08-02 after delivery and maintainer
+runtime verification of the v6.1.35 portrait-split key-label regression. The reporter did not retest
+this second regression, and no additional public retest request was posted before the explicit
+maintainer closure. PR #188 merged the source fix as
 `d18edf9543c601fd64d086386d4c609f364e5dee` from final head
 `0966b0dfb657e9c7d33e9a0abfd4feb7136c1454`. Android v6.1.36 is published through GitHub and
 Google Play and contains the merge. Signed-candidate runtime verification confirmed portrait split
-geometry and vertically stacked visible dual labels without edge clipping. The reporter previously
-tested through Google Play, so request a store update/retest rather than sending the separate GitHub
-APK link. The original v6.1.33
+geometry and vertically stacked visible dual labels without edge clipping. The original v6.1.33
 geometry-mode regression remains reporter-confirmed fixed in Google Play v6.1.34: portrait split
 rendered and mode switching showed no conflicting simultaneous modes. The confirmation is
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5017534231 and the closing
@@ -18,13 +18,13 @@ Android fix. Its verified GitHub testing-track APK is `LIMEHD2026-6.1.34.apk` (7
 SHA-256 `d16d7fde5d634d655148396c657e8ffab5f3868f434f705f9568855da4e3e84f`). The reporter confirmed the
 separate Google Play build, not this GitHub testing-track APK. The completed retest request was
 https://github.com/lime-ime/limeime/issues/169#issuecomment-5016727812.
-The iOS geometry changes are source-fixed and simulator-validated. iOS v6.1.36 build 25 passed the
-required Xcode Cloud actions and is submitted for App Store review, but public rollout and device
-verification remain separate. The v6.1.35 Android regression is tracked by the reopening and
-maintainer analysis at https://github.com/lime-ime/limeime/issues/169#issuecomment-5029109344.
-Last updated: 2026-07-22
+The iOS geometry changes are source-fixed and simulator-validated. iOS v6.1.36 is public on the
+Taiwan App Store, but device verification remains separate. The v6.1.35 Android regression is
+tracked by the reopening and maintainer analysis at
+https://github.com/lime-ime/limeime/issues/169#issuecomment-5029109344.
+Last updated: 2026-08-03
 
-## Android v6.1.35 regression — published fix, awaiting reporter retest
+## Android v6.1.35 regression — published fix, maintainer-closed
 
 ### Problem statement
 
@@ -58,7 +58,7 @@ placement.
 - Check whether portrait standard and one-hand geometry share the same wrong branch or whether the
   visible clipping is limited to split halves.
 
-### Verification and remaining gates
+### Verification and closure
 
 - Merged-tree unit coverage checks portrait stacking and the retained landscape fallbacks in
   `KeyLabelFitTest`.
@@ -69,14 +69,16 @@ placement.
 - Source merged: complete (`d18edf9543c601fd64d086386d4c609f364e5dee`).
 - Reporter-testable Android build containing the merge: published through GitHub and Google Play in
   v6.1.36. Signed-candidate portrait-split runtime verification passed.
-- Reporter/device confirmation: pending. Keep issue #169 open until this succeeds or a maintainer
-  explicitly directs otherwise.
+- Reporter/device confirmation for this second regression was not obtained. Maintainer `jrywu`
+  explicitly closed issue #169 as completed on 2026-08-02 after source delivery and maintainer
+  runtime verification, so no further reporter watch remains.
 
 ### Platform impact
 
 - **Android:** Confirmed affected in v6.1.35 by maintainer reproduction and source inspection. The
   regression is in Android `LIMEKeyboardBaseView` label placement. The source fix is published in
-  v6.1.36 through GitHub and Google Play; reporter/device confirmation remains pending.
+  v6.1.36 through GitHub and Google Play and passed maintainer runtime verification. The issue is
+  maintainer-closed without a reporter retest of this second regression.
 - **iOS:** No matching v6.1.35 regression is established. iOS uses a separate Swift rendering path and
   was not changed by Android commit `463dcd74`; retain iOS release QA for the broader phone-geometry
   work, but do not infer this Android label defect on iOS.

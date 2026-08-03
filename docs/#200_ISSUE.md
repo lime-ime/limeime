@@ -3,7 +3,7 @@
 ## Live issue state
 
 - Issue: https://github.com/lime-ime/limeime/issues/200
-- Status: issue remains open; PR #207 merged the Android source fix as `f57cca9ca36a845a76b2074ab2e68c2f05461abe` from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`. The fix is delivered in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`; original-reporter confirmation remains pending outside this issue.
+- Status: closed as completed by maintainer `jrywu` on 2026-08-02. PR #207 merged the Android source fix as `f57cca9ca36a845a76b2074ab2e68c2f05461abe` from final head `39f0e14ad99f34d8a7438180d2852db2b9366b7e`. The fix is delivered in verified GitHub Release APK v6.1.37 and Google Play production versionCode `202661370`.
 - Reporter: physical Samsung reproduction by the maintainer; original reporter on `ASUS_AI2202`.
 - Reported version: Android LIME 6.1.36, LINE 26.11.0.
 
@@ -78,7 +78,7 @@ The duplication is a host-editor reaction to the composing region, which LIME ca
 
 ### Android
 
-Confirmed affected and source-fixed as above. GitHub Release v6.1.37 targets `d4e8840e9a7080a7980036284952f50ef6ccf3d7` and contains PR #207. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`). This proves GitHub-channel delivery, not availability on any other distribution channel; the original reporter still needs the applicable-channel follow-up before issue closure.
+Confirmed affected and fixed as above. GitHub Release v6.1.37 targets `d4e8840e9a7080a7980036284952f50ef6ccf3d7` and contains PR #207. Its verified Android testing-channel asset is `LIMEHD2026-6.1.37.apk` (7,115,736 bytes, SHA-256 `bcef26f258ad92dc962194ece071cf29743a83e18b0d38365e74bb8c582fb1eb`), and Google Play production delivery is complete at versionCode `202661370`. Maintainer runtime verification established the reporter-visible fix, so the maintainer-created tracker is complete.
 
 ### iOS
 
@@ -92,9 +92,7 @@ Done:
 2. Added `effectiveInputClass` and the RED→GREEN regression; ran it on the Pixel 9 Pro API 37 emulator and the Samsung.
 3. Confirmed on-device that the field now commits Latin (no composing) and the duplication is gone.
 4. Merged PR #207 and verified that GitHub Release v6.1.37 contains the fix in the correctly identified testing-channel APK.
+5. Verified Google Play production delivery at versionCode `202661370`.
+6. Closed the maintainer-created issue as completed on 2026-08-02.
 
-Pending:
-
-5. Follow up with the original reporter using the applicable build only after availability on that reporter's installed distribution channel is independently verified; do not infer another channel's rollout from the GitHub release.
-6. Ask the original reporter to retest the exact `j` → single-`j` behavior in LINE Add Friends → ID search before closing the issue.
-7. If the unidentified second app/field becomes reproducible, capture its `EditorInfo` and evaluate whether it is the same null-class shape or a separate normal-text composing case.
+If the unidentified second app/field becomes reproducible, capture its `EditorInfo` and evaluate whether it is the same null-class shape or a separate normal-text composing case. Treat that evidence as a separate investigation rather than reopening this completed LINE-specific tracker automatically.

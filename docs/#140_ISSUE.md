@@ -8,9 +8,10 @@
   Cangjie layout is currently fixed (bottom row: comma / space / period / symbol-switch),
   with no `;` key and no layout-customization feature; the need was added to the authors'
   evaluation list.
-- Current state: reopened by `limeimetw` on 2026-07-02 after the original reporter asked
-  whether semicolon-key support can also apply to 「自建」 input methods. The scoped cj4
-  semicolon-key / imKeys-unification work already shipped in v6.1.27: source merged on
+- Current state: closed as completed by maintainer `jrywu` on 2026-08-02. The issue had been
+  reopened by `limeimetw` on 2026-07-02 after the original reporter asked whether semicolon-key
+  support can also apply to 「自建」 input methods. The scoped cj4 semicolon-key /
+  imKeys-unification work shipped in v6.1.27: source merged on
   `master` in merge commit `be156c4c15fd` after implementation commit `1004453b8682`, and
   GitHub Release / APK v6.1.27 is live as `LIMEHD2026-6.1.27.apk` (GitHub Contents blob SHA
   `297a2ffe40e5ab3a6361f9cae8cf301d40bd8292`, size 7410887 bytes, downloaded SHA-256
@@ -29,9 +30,17 @@
   https://github.com/lime-ime/limeime/issues/140#issuecomment-4862380175 saying the next
   direction is to replace the per-IM semicolon preference with explicit selectable Cangjie
   semicolon layouts (`cj_semi` and `cj_num_semi`) so self-built / custom tables can choose the
-  semicolon-capable layout. That follow-up is tracked as maintainer-created backlog issue #143
-  and `docs/BACKLOG.md` entry `feat#143`; #140 remains open for this follow-up context, but no
-  duplicate public reply or APK/TestFlight retest request is needed yet.
+  semicolon-capable layout. Maintainer-created follow-up #143 delivered the selectable
+  `cj_semi` and `cj_num_semi` layouts on both platforms in source commit `17f1b0aec570`, with
+  Android delivery in v6.1.28. The current official iOS v6.1.37 build comes from
+  `d4e8840e9a70`, which contains that commit. #143 is closed and `feat#143` has already been
+  removed from `docs/BACKLOG.md`.
+- Closure basis: this remains a community enhancement rather than a bug. The reporter did not
+  post a build-specific confirmation, but the maintainer explicitly closed #140 after the
+  scoped semicolon-layout work had shipped. Preserve that closure without posting another
+  public comment or retest request. Broader user-defined layout, longer-Space, and extra-symbol
+  feedback remains unconfirmed product feedback and is not implied to be implemented by this
+  closure.
 - Later product feedback in the same issue:
   - `awei1976` asked for broader keyboard customization, especially hiding or moving the
     keyboard-hide / `EN` keys to make Boshiamy Space wider.
