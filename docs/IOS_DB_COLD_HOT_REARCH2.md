@@ -868,7 +868,7 @@ pass the device measurements with Full Access on and off.
 
 ## Amendment A1 (2026-08-02) — editor mutation gate restored (maintainer decision)
 
-After on-device verification (WJIP17) confirmed immediate editor entry, the maintainer
+After on-device verification confirmed immediate editor entry, the maintainer
 identified an accepted-risk case as unacceptable in practice: with learning pending
 (FA off, or LIME not the active keyboard), the editor displays last-flushed scores; a user
 editing a score from that stale display silently supersedes newer undelivered learning
