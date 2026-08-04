@@ -4,7 +4,7 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/224
 - Classification: confirmed iOS bug
-- State: open, source-unfixed
+- State: fixed 2026-08-04 — device evidence captured, source corrected, unit + simulator + physical-device verified
 - Reported environment: Apple's Notes app on iOS
 - Scope: independent of the active LIME input method and keyboard layout
 
@@ -25,7 +25,7 @@ This is a keyboard-controller behavior rather than an input-table or layout-reso
 
 This heuristic cannot reliably represent a host editor's visual lines. A visual wrap has no newline, and a keyboard extension can receive limited, empty, or `nil` document context near a host boundary. The current `offset > 0` guard then makes an empty-context boundary a no-op. Even when context is available, a fixed ten-character fallback does not preserve the host editor's visual column or line geometry.
 
-The reporter-visible failure is confirmed. The exact Notes context returned at each failing cursor position still needs device instrumentation before choosing the final fallback. Do not treat the source-level empty-context path as the only established runtime cause until that evidence is captured.
+This analysis was confirmed by device instrumentation on 2026-08-04 — see **Device evidence** below for the contexts actually returned at each failing cursor position.
 
 ## Android comparison
 
@@ -45,37 +45,82 @@ The implementation must be driven by a failing behavioral test and device valida
 
 ## Follow-up questions / evidence
 
-- Does the failure occur across an explicit Return-created newline, a visually wrapped line, or both?
-- At the failing position, does Notes expose empty/`nil` proxy context, context truncated before the newline, or context containing the newline?
-- Does behavior differ at the start/end of a line versus the middle of a line?
-- Which iOS version and device class were used for the confirmed reproduction?
-- Does the same build reproduce in another multiline host such as Mail or a minimal `UITextView` probe app?
+All answered by the device run below.
 
-These questions refine implementation and verification. They do not block classification of the reported iOS behavior as a bug.
+- **Explicit newline, visual wrap, or both?** Both. Hard newlines are now crossed; visual wraps still are not, and cannot be — see *Known ceiling*.
+- **What context is exposed at the failing position?** Truncated before the newline in both directions: `before` stops at the line start, `after` is `nil` at the line end.
+- **Start/end of line vs middle?** Yes. From a line start, Up moved nothing at all; from a line end, Down moved nothing at all; mid-line, both stalled at the line's own edge.
+- **iOS version / device class?** Reproduced and fixed on iPhone 17 Pro, iOS 26.5, Xcode 26.6.
+- **Another multiline host?** Apple's Notes is not installed in the iOS simulator, so a controlled native `UITextView` probe was used instead. Safari was tried first and rejected: its WebKit content ignores synthesized taps, though Safari's own UIKit chrome accepts them.
 
-## Implementation blocker (2026-08-03)
+## Device evidence (2026-08-04, iPhone 17 Pro / iOS 26.5)
 
-The implementation worktree is hosted on Linux and has neither `xcodebuild` nor a
-Swift toolchain, iOS Simulator/device access, or an Apple Notes runtime. Therefore
-it cannot capture the privacy-preserving before/after context-length evidence
-required above or execute a meaningful XCTest RED/GREEN cycle. The source proves
-that empty or `nil` directional context reaches the `offset > 0` guard and becomes
-a no-op, but it does not prove whether Notes returns that state at the reported
-hard-newline boundary. An unconditional ±1 fallback would also be invoked at the
-true beginning/end of a document, because `UITextDocumentProxy` does not expose a
-way to distinguish those positions from unavailable/truncated context.
+The blocker recorded on 2026-08-03 (Linux worktree, no Xcode) is cleared. The
+measurements below were taken on a macOS runner with Xcode 26.6. Apple's Notes is
+not present in the iOS simulator, so the host was the controlled native
+`UITextView` probe this document already called for; Safari was rejected because
+its WebKit content does not accept synthesized taps. `moveByLine` was temporarily
+instrumented to log metadata only — direction, `nil`/length, newline presence —
+and never any user text.
 
-Stop before adding a regression test or production fallback until a macOS runner
-with Xcode and a Notes-capable simulator/device records, without logging text:
+Document under test: `AAAA\nBBBBBBBB\nCCCC` (hard newlines at 4 and 13, length 18).
 
-- direction and whether the context is `nil`, empty, or non-empty;
-- context length and whether a hard newline is present at the failing boundary;
-- whether a direct ±1 `adjustTextPosition` probe crosses that boundary; and
-- the same observations at the true beginning/end of the document.
+| caret | position | `documentContextBeforeInput` | `documentContextAfterInput` | old behavior |
+|---|---|---|---|---|
+| 18 | end of last line | `"CCCC"` (len 4, no `\n`) | `nil` | ↑ → 14, stops at this line's start |
+| 14 | start of a line | `"\n"` (len 1) | `"CCCC"` (len 4, no `\n`) | ↑ → **no movement at all** |
+| 13 | end of a *middle* line | `"BBBBBBBB"` (len 8, no `\n`) | `nil` | ↓ → **no movement at all** |
 
-Visual-wrap parity remains out of scope for any source-only fix because
-`UITextDocumentProxy` exposes neither host line geometry nor native vertical
-caret movement.
+Three facts follow, and together they fully explain the report:
+
+1. `documentContextBeforeInput` is **paragraph-limited** — it never reaches past the
+   start of the caret's own line. At a line start it is exactly `"\n"`.
+2. `documentContextAfterInput` is **`nil` at the end of any line**, including a line
+   with more document after it. End-of-line and end-of-document are indistinguishable.
+3. Therefore the old newline search could never find the boundary it needed. It
+   walked to the current line's edge and stopped, and the `offset > 0` guard turned
+   a line start into a total no-op.
+
+Two further behaviors were measured, and both shaped the fix:
+
+- `adjustTextPosition(byCharacterOffset:)` **ignores an out-of-range offset outright
+  rather than clamping it.** Pressing Right seven times from caret 13 walked to 18 and
+  then stopped dead — the two overshooting presses moved nothing. So a single
+  combined "to the line edge, plus one across the newline" offset is silently
+  discarded whenever it overshoots, which is exactly the first and last line.
+- **UIKit coalesces `adjustTextPosition` calls issued in the same run-loop turn.**
+  Splitting the move into two synchronous calls produced the identical dropped
+  result; the newline step only survives when deferred to a later turn.
+
+## Fix
+
+`CaretMovePolicy.lineEdgeOffset` (`Shared/Models/KeyLayout.swift`) returns the signed
+distance from the caret to the near edge of its own line, derived from the last/first
+newline in the proxy context so a host that returns more than one line behaves
+identically to a paragraph-limited one. `moveByLine` applies that offset, then defers
+a ±1 to the next run-loop turn to cross the newline. At the first and last line only
+the ±1 is out of range, so it alone is dropped and the caret settles on the document
+edge — which is what a native editor does.
+
+Runtime result, arrow keys tapped on the real keyboard (caret positions logged by the
+probe):
+
+- Repeated ↑ from the document end: 18 → 13 → 4 → 0, then no further movement.
+- Repeated ↓ from the document start: 0 → 5 → 14 → 18, then no further movement.
+
+Every press crosses exactly one hard line boundary, in both directions, and stops
+cleanly at both document ends.
+
+### Known ceiling
+
+The caret lands on the adjacent line's near edge rather than holding its column, and
+a visually wrapped line is still not a boundary. Both were confirmed on device: with
+`AAAA\n<50-char wrapping paragraph>\nCCCC`, ↑ from the middle of the wrapped paragraph
+jumped over the whole paragraph to the end of `AAAA` rather than moving up one visual
+line. Column preservation needs a settled re-read after the asynchronous
+`adjustTextPosition`, and visual-wrap parity needs host line geometry;
+`UITextDocumentProxy` exposes neither. Both remain out of scope, as this document
+already sanctioned.
 
 ## Verification plan
 
@@ -96,6 +141,32 @@ caret movement.
 - Confirm repeated Up/Down presses continue crossing more than one line boundary.
 - Confirm movement does not modify or commit composing text unexpectedly.
 - Run the relevant iOS unit/UI test suite and Xcode Cloud before treating the fix as complete.
+
+### Verification results (2026-08-04)
+
+Done:
+
+- `KeyboardViewControllerTest.testUpDownCaretOffsetsCrossHardLineBoundaries` covers
+  `nil`, empty, newline-only, truncated, and multi-line proxy contexts at line start,
+  line end, mid-line, and both document ends. The whole `LimeTests` target passes.
+- Runtime RED and GREEN both captured on the iPhone 17 Pro simulator / iOS 26.5 by
+  tapping the real arrow-key row, with hard newlines and with a visually wrapped
+  paragraph. Repeated presses cross successive boundaries in both directions.
+- Left/Right were exercised in the same session (Left ×5 and Right ×7 walked the caret
+  one character at a time and stopped at the document end) — unchanged, and their code
+  path was not touched.
+- Confirmed on a physical iPhone (iPhone 17 Pro Max, `iPhone18,2`): the maintainer
+  installed this build and verified Up/Down now cross line boundaries.
+
+Not done, and why:
+
+- **Multiple IMs and layouts** — only 注音 was active at runtime. `moveByLine` sits in
+  the shared key handler with no IM or layout branching, so the behavior is structurally
+  IM-independent; this was reasoned from the source, not measured per table.
+- **Composing-text interaction** — `moveByLine` only calls `adjustTextPosition` and
+  never touches the composing buffer, but a press during active composition was not
+  exercised on device.
+- **LimeUITests scheme and Xcode Cloud** — not run.
 
 ## Platform impact
 

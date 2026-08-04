@@ -647,6 +647,43 @@ final class KeyboardViewControllerTest: XCTestCase {
                                                             wasShiftAlreadyHeld: true))
     }
 
+    /// Issue #224. Fixtures are the proxy contexts actually observed on iOS 26.5 for
+    /// the document "AAAA\nBBBBBBBB\nCCCC" in a native UITextView — the context is
+    /// paragraph-limited, so every case below used to stop at the line edge (or, from
+    /// a line start, not move at all).
+    func testUpDownCaretOffsetsCrossHardLineBoundaries() {
+        // Caret 18, end of the last line: before "CCCC", after nil. Up walks back the
+        // 4-char column, then the caller's -1 crosses into the line above (13).
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: false, before: "CCCC", after: nil), -4)
+
+        // Caret 14, start of a line: the proxy hands back only the preceding newline,
+        // so the column is 0 and the crossing is entirely the caller's -1. This is the
+        // reporter's dead case — the old `offset > 0` guard made it a no-op.
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: false, before: "\n", after: "CCCC"), 0)
+
+        // Caret 13, end of a *middle* line: after is nil even though the document
+        // continues, so Down has to step across the newline blind.
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: true, before: "BBBBBBBB", after: nil), 0)
+
+        // Caret 14, start of the last line: Down reaches the line end (18) and the
+        // caller's +1 is then out of range and dropped — the caret stays at the
+        // document end instead of the whole move being cancelled.
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: true, before: "\n", after: "CCCC"), 4)
+
+        // Document start / end: no edge distance left, only the caller's ±1, which the
+        // host drops as out of range.
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: false, before: nil, after: "AAAA"), 0)
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: true, before: "CCCC", after: nil), 0)
+
+        // A host that returns more than one line of context must land identically.
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: false,
+                                                      before: "AAAA\nBBBBBBBB",
+                                                      after: "\nCCCC"), -8)
+        XCTAssertEqual(CaretMovePolicy.lineEdgeOffset(forward: true,
+                                                      before: "AAAA",
+                                                      after: "\nBBBBBBBB\nCCCC"), 0)
+    }
+
     func testEnglishAutoCapRecognizesNewlinesQuotesAndAbbreviations() {
         XCTAssertTrue(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "Hello.\n"))
         XCTAssertTrue(EnglishKeyboardPolicy.shouldAutoCapitalize(before: "She said \"Hello.\" "))

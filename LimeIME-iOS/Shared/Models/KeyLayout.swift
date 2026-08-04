@@ -590,6 +590,46 @@ enum ShiftHoldTouchPolicy {
     }
 }
 
+/// Up/Down caret movement for the arrow key row (issue #224).
+///
+/// Measured on iOS 26.5 against a native `UITextView`: `UITextDocumentProxy`
+/// context is *paragraph-limited*. `documentContextBeforeInput` never reaches
+/// past the start of the caret's own line (at a line start it is just `"\n"`),
+/// and `documentContextAfterInput` is `nil` at the end of a line — end-of-line
+/// and end-of-document are indistinguishable. So the old "find the newline in
+/// the context" search could never see the boundary it needed: it walked to the
+/// current line's edge and stopped, and from a line start it did nothing at all.
+///
+/// Instead, walk to the line edge and step one character further to cross the
+/// newline — but in a *later run-loop turn*, because an out-of-range offset is
+/// ignored outright rather than clamped, and UIKit coalesces adjustments issued in
+/// the same turn. Measured: combined into one turn, a move from the start of the
+/// last line overshoots the document end and the caret goes nowhere at all.
+enum CaretMovePolicy {
+    /// Signed distance from the caret to the near edge of its own line — the end of
+    /// the line when moving down, the start when moving up. 0 when already there.
+    /// The caller then steps ±1 separately to cross the newline.
+    static func lineEdgeOffset(forward: Bool, before: String?, after: String?) -> Int {
+        if forward {
+            let after = after ?? ""
+            return after.firstIndex(of: "\n")
+                .map { after.distance(from: after.startIndex, to: $0) } ?? after.count
+        }
+        let before = before ?? ""
+        // Distance back to the line start = the caret's column. Computed from the
+        // last newline rather than the whole length so a host that hands back more
+        // than one line of context behaves the same as a paragraph-limited one.
+        let column = before.lastIndex(of: "\n")
+            .map { before.distance(from: before.index(after: $0), to: before.endIndex) }
+            ?? before.count
+        return -column
+    }
+    // ponytail: crosses hard newlines only — the caret lands on the adjacent line's
+    // near edge rather than holding its column, and a visually wrapped line is not a
+    // boundary at all. Both need geometry (or a settled re-read after the async
+    // adjustTextPosition) that UITextDocumentProxy does not expose. See #224_ISSUE.md.
+}
+
 enum EnglishKeyboardPolicy {
     private static let closingPunctuation: Set<Character> = [
         "\"", "'", ")", "]", "}",

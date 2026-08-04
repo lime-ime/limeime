@@ -1992,28 +1992,20 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
         }
     }
 
-    /// Move the cursor approximately one line forward or backward using newline detection.
-    /// Falls back to ±10 characters when no newline is found in the proxy context.
+    /// Move the cursor one hard line forward or backward (issue #224).
     private func moveByLine(forward: Bool) {
-        if forward {
-            let after = textDocumentProxy.documentContextAfterInput ?? ""
-            let offset: Int
-            if let nl = after.firstIndex(of: "\n") {
-                offset = after.distance(from: after.startIndex, to: nl) + 1
-            } else {
-                offset = min(10, after.count)
-            }
-            if offset > 0 { textDocumentProxy.adjustTextPosition(byCharacterOffset: offset) }
-        } else {
-            let before = textDocumentProxy.documentContextBeforeInput ?? ""
-            let trimmed = before.hasSuffix("\n") ? String(before.dropLast()) : before
-            let offset: Int
-            if let nl = trimmed.lastIndex(of: "\n") {
-                offset = trimmed.distance(from: nl, to: trimmed.endIndex)
-            } else {
-                offset = min(10, trimmed.count)
-            }
-            if offset > 0 { textDocumentProxy.adjustTextPosition(byCharacterOffset: -offset) }
+        let toEdge = CaretMovePolicy.lineEdgeOffset(
+            forward: forward,
+            before: textDocumentProxy.documentContextBeforeInput,
+            after: textDocumentProxy.documentContextAfterInput)
+        if toEdge != 0 { textDocumentProxy.adjustTextPosition(byCharacterOffset: toEdge) }
+        // The newline step has to land in a *later* run-loop turn. UIKit coalesces
+        // adjustTextPosition calls made in the same turn, and an out-of-range total is
+        // dropped outright rather than clamped — so issuing it here would cancel the
+        // whole move on the first and last lines. Deferred, only the ±1 is dropped
+        // there, which is what a native editor does anyway (stop at the document edge).
+        DispatchQueue.main.async { [weak self] in
+            self?.textDocumentProxy.adjustTextPosition(byCharacterOffset: forward ? 1 : -1)
         }
     }
 
