@@ -2,7 +2,9 @@
 
 Public backlog for confirmed unresolved fixes and product work. Issue-specific investigation details stay in `docs/#NN_ISSUE.md`; completed, shipped, or closed scopes stay in their issue docs instead of here.
 
-Last reviewed: 2026-08-03
+Version-line policy: `6.0.x` is bug-fix-only. All product work (`feat#...`) targets `6.1.x` and must not be backported to `6.0.x`.
+
+Last reviewed: 2026-08-04
 
 ## Pending fixes
 - fix#224 iOS: Up/Down caret buttons cannot move across line boundaries in multiline editors. The shared iOS controller approximates vertical movement from limited `UITextDocumentProxy` context and can no-op at an empty/truncated boundary; unlike Android's host-handled DPAD path, it cannot reliably follow visual lines. Capture the Notes proxy boundary, add RED/GREEN behavioral coverage, implement a bounded cross-boundary strategy, and verify explicit newlines plus visual wraps on device. Android is not currently affected and needs no source change. See `docs/#224_ISSUE.md`.
@@ -18,6 +20,8 @@ Last reviewed: 2026-08-03
 - fix#161 iOS release QA: the reporter confirmed that Android GitHub APK v6.1.33 fixes escaped `pword` prefix search and immediate related-candidate refresh after manual add/update/delete, then confirmed that Android GitHub APK v6.1.34 correctly refreshes the filtered management list after deletion. Community issue #161 is closed. iOS source includes the corresponding management/runtime/cache-reset changes but still needs corrected-source XCTest/Xcode Cloud validation and verified TestFlight/App Store delivery. See `docs/#161_ISSUE.md`.
 
 ## Product work
+
+- feat#N07 Android (`6.1.x`): add contextual long-press mapping management to the candidate strip. Long-pressing the raw composing-code candidate, identified by `RECORD_COMPOSING_CODE` rather than assuming its position, should open the active input method's add-mapping sheet with the code prefilled and focus placed on the word/phrase field. Long-pressing a database-backed candidate from item 1 onward should open edit/delete actions for that exact persisted mapping, with its table, record ID, code, word, and score preserved and destructive deletion requiring confirmation. Keep ordinary taps selecting/committing candidates, preserve candidate scrolling/expansion and the existing Space tap/swipe/long-press behaviors, consume the release event after a handled long press so the candidate is not also committed, and provide haptic plus accessible action feedback. Do not expose edit/delete for runtime-built phrases, composing-code echoes, related phrases, English suggestions, punctuation, emoji, completion entries, or the has-more marker, and do not expose add-mapping outside an editable active IM table.
 
 - feat#N06 Android+iOS: add an `更新碼表` action to each eligible downloadable IM's details page so users can install the latest catalog table in one guided flow instead of manually deleting and reinstalling it. Reuse the existing remove-and-download pipeline, preserve/restore learned and user-added records according to the current backup-on-delete behavior, refresh runtime caches and metadata after replacement, and make installation atomic so a failed download/import leaves the current table usable. Show current and available table versions when catalog metadata permits, require confirmation that explains the replacement, report progress/errors with retry, and hide or disable the action for built-in/custom tables that have no catalog update source. Keep Android and iOS behavior and wording aligned. This is separate product work from `fix#194`; #194 still requires existing users to remove/re-download 哈哈倉頡 until this feature ships.
 
