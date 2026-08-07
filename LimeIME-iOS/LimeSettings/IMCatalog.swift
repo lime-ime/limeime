@@ -158,7 +158,7 @@ enum IMCatalog {
             description: "三碼輸入法，一字最多三碼",
             systemIcon: "textformat.alt",
             variants: [
-                .init(id: "tricode", name: "三碼 v.20260727.1", filename: "tricode.limedb", tableName: "tricode", imName: "tricode", label: "三碼", keyboardId: "limenumsym2", recordCount: 15_934, compressedKB: 256),
+                .init(id: "tricode", name: "三碼字元", filename: "tricode.limedb", tableName: "tricode", imName: "tricode", label: "三碼", keyboardId: "limenumsym2", recordCount: 23_299, compressedKB: 355),
             ]
         ),
         .init(

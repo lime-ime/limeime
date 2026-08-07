@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # build_tricode_db.py
 #
 # Build Database/tricode.limedb -- the downloadable-IM cloud asset for 三碼輸入法
@@ -26,7 +26,7 @@
 #   python3 scripts/build_tricode_db.py --date "2026-07-20 00:00:00 +0800"
 #
 # Optional overrides (defaults match the repo layout):
-#   --cin PATH             input .cin (default Database/tricode-20260727.1.cin)
+#   --cin PATH             input .cin (default Database/tricode-20260805.2.cin)
 #   --out PATH              output .limedb (default Database/tricode.limedb)
 #   --hanconvert-db PATH    basescore source (default
 #                           LimeStudio/app/src/main/res/raw/hanconvertv2.db)
@@ -57,8 +57,8 @@ def log(msg):
 def parse_cin(path):
     """Parse %selkey, %keyname begin/end, and %chardef begin/end from the cin.
 
-    Returns a dict: selkey (str), version (str or None, from the header
-    comment), keynames (list of (key, label) in file order), rows (list of
+    Returns a dict: selkey (str), version (str or None, from %version with
+    header-comment fallback), keynames (list of (key, label) in file order), rows (list of
     (code, word) deduped on exact tuple match, first-seen order preserved).
     """
     with open(path, encoding="utf-8") as f:
@@ -77,8 +77,12 @@ def parse_cin(path):
 
         if section is None:
             m = re.match(r"^#版本[：:]\s*v\.(\S+)", stripped)
-            if m:
+            if m and version is None:
                 version = m.group(1)
+            if stripped.startswith("%version"):
+                parts = stripped.split(maxsplit=1)
+                if len(parts) == 2:
+                    version = parts[1]
             if stripped.startswith("%selkey"):
                 parts = stripped.split()
                 if len(parts) >= 2:
@@ -254,7 +258,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build Database/tricode.limedb from 3code.cin")
     ap.add_argument(
         "--cin",
-        default="Database/tricode-20260727.1.cin",
+        default="Database/tricode-20260805.2.cin",
         help="input .cin path",
     )
     ap.add_argument("--out", default="Database/tricode.limedb", help="output .limedb path")
