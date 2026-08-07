@@ -92,6 +92,10 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     // active until the keyboard is dismissed and re-popped).
     private var lastSeenKeyboardType:  UIKeyboardType   = .default
     private var lastSeenReturnKeyType: UIReturnKeyType  = .default
+    /// #226: set when the user taps `中` inside an English-first field, so re-entering
+    /// that same field keeps Chinese instead of forcing English again. Cleared on any
+    /// field change in updateInputModeForCurrentField().
+    private var userSwitchedToChineseInField = false
 
     // MARK: - Multi-tap State (T9-style cycling through codes[])
     private var mMultiTapCodes:    [Int]        = []
@@ -875,15 +879,27 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
     }
 
     private func updateInputModeForCurrentField() {
-        // Map keyboard type → mEnglishOnly + mPredictionOn (spec §2 table)
-        switch textDocumentProxy.keyboardType ?? .default {
-        case .numberPad, .decimalPad, .asciiCapableNumberPad:
-            mEnglishOnly = true; mPredictionOn = true
-        case .phonePad:
-            mEnglishOnly = true; mPredictionOn = false
-        case .emailAddress:
-            mEnglishOnly = true; mPredictionOn = false
-        default:
+        // Map keyboard type → mEnglishOnly + mPredictionOn (spec §2 table).
+        // #226: the forced-English set lives ONLY in KeyboardTypePolicy. This switch
+        // used to duplicate it, so a fix applied to one copy left the other live and
+        // the policy test could pass while the keyboard stayed broken.
+        let keyboardType = textDocumentProxy.keyboardType ?? .default
+        // Moving to a different field discards the previous field's manual 中 switch.
+        // lastSeen* still hold the previous field here — they are updated later in
+        // initOnStartInput().
+        if keyboardType != lastSeenKeyboardType
+            || (textDocumentProxy.returnKeyType ?? .default) != lastSeenReturnKeyType {
+            userSwitchedToChineseInField = false
+        }
+        if KeyboardTypePolicy.isForcedEnglishKeyboardType(keyboardType) {
+            // #226: English-first, but a manual 中 switch survives re-entry to the
+            // same field. See KeyboardTypePolicy.forcesEnglish.
+            mEnglishOnly = KeyboardTypePolicy.forcesEnglish(
+                keyboardType: keyboardType,
+                userSwitchedToChineseInField: userSwitchedToChineseInField)
+            mPredictionOn = Self.predictionOnForField(keyboardType: keyboardType,
+                                                      isEnglishOnly: mEnglishOnly)
+        } else {
             // Restore persisted language mode if enabled (spec §15)
             if mPersistentLanguageMode {
                 mEnglishOnly = sharedDefaults?.bool(forKey: "persisted_english_mode") ?? false
@@ -892,6 +908,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             }
             mPredictionOn = true
         }
+    }
+
+    /// #226: prediction gates `updateCandidates()`. English-first address/phone fields
+    /// turn it off so English autocomplete isn't noise — but Chinese composing REQUIRES
+    /// the candidate pipeline: iOS simulates composing by inserting the raw letter
+    /// inline, so with prediction off the user sees bare Latin letters, no candidate
+    /// bar, and has nothing to commit. (Android tolerates prediction-off here because
+    /// `setComposingText` underlines the text in the host field independently of the
+    /// candidate view; iOS has no such affordance.)
+    static func predictionOnForField(keyboardType: UIKeyboardType,
+                                     isEnglishOnly: Bool) -> Bool {
+        guard isEnglishOnly else { return true }
+        return !(keyboardType == .phonePad || keyboardType == .emailAddress)
     }
 
     static func layoutIdForCurrentInputField(keyboardType: UIKeyboardType,
@@ -3482,6 +3511,19 @@ final class KeyboardViewController: UIInputViewController, UIInputViewAudioFeedb
             clearComposing(force: false)
         }
         mEnglishOnly = toEnglish
+        // #226: remember the user's manual language choice for this field so an
+        // English-first field (e.g. Outlook's .emailAddress recipient row) does not
+        // override it when the host re-inits. Must track BOTH directions: leaving it
+        // set after a switch back to English would flip the field to Chinese on the
+        // next re-init, against the user's last choice. Cleared on a genuine field
+        // change in updateInputModeForCurrentField().
+        userSwitchedToChineseInField = !toEnglish
+        if !toEnglish {
+            // An English-first field (.emailAddress/.phonePad) turned prediction off.
+            // Chinese composing cannot work without it — see
+            // updateInputModeForCurrentField() / predictionOnForField().
+            mPredictionOn = true
+        }
         // Persist language mode if setting is enabled (spec §15)
         if mPersistentLanguageMode {
             sharedDefaults?.set(toEnglish, forKey: "persisted_english_mode")

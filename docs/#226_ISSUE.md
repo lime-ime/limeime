@@ -1,10 +1,10 @@
-# Issue #226: iOS Outlook Recipient and Sender Fields Force English Input
+# Issue #226: iOS email fields lose Chinese composing after the 中 switch
 
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/226
-- State: open
-- Classification: plausible iOS keyboard-type routing defect
+- State: fixed, device-confirmed on iPhone
+- Classification: confirmed iOS defect, LIME-owned — prediction flag disabled the candidate pipeline in Chinese mode
 - Reported environment: LIME 6.1.37, iOS 26.6, Outlook 5.2629.0
 - Reporter-confirmed platform split: iOS affected; Android works normally
 
@@ -27,71 +27,91 @@ Expected result: the fields allow Chinese names to be entered with the selected 
 
 ## Evidence and source assessment
 
-The report is consistent across two Chinese input methods and is limited to iOS. The attached screenshot establishes the Outlook address-entry context, but it does not expose the host field's `UIKeyboardType` value.
+Outlook recipient and sender controls advertise `.emailAddress`, which LIME classified as forced-English.
 
-Current iOS source duplicates an explicit rule that classifies `.emailAddress` fields as English-only:
+Forcing English is **not** itself the defect, and the design intent is English-first. Android does the same thing, deliberately:
 
-- `LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`: the production `updateInputModeForCurrentField()` switch sets `mEnglishOnly = true` and disables prediction for `.emailAddress`.
-- `LimeIME-iOS/Shared/Models/KeyboardTypePolicy.swift`: a separate policy helper also classifies `.emailAddress` as forced English. The inspected production field-routing path does not call this helper.
-- `LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift`: the existing keyboard-type policy test exercises only the helper and explicitly expects `.emailAddress` to be forced English.
+- `LIMEService.isForcedEnglishTextVariation()` groups `TYPE_TEXT_VARIATION_EMAIL_ADDRESS` and `WEB_EMAIL_ADDRESS` with the three password variations.
+- `LIMEService` line ~1007 sets `mEnglishOnly = true`, `mPredictionOn = false`, and switches to `LIMEKeyboardSwitcher.MODE_EMAIL`.
+- The `MODE_EMAIL` row in `res/xml/lime_english.xml` carries `done`, **`中` (code -10)**, `@`, and a popular-domain key. English-first, with the Chinese IM one tap away.
 
-Outlook recipient and sender controls plausibly advertise `.emailAddress`, which would reproduce the reported behavior exactly. Runtime logging or an affected-device check is still needed to confirm the host trait and to avoid presenting this source match as device-proven root cause.
+Every iOS English layout carries the same `中` key (`LimeKeyCode.switchToIM` = -10) — verified across all twelve `lime_english*.json` variants plus `symbols1.json`. So the Chinese switch was present in the Outlook field all along, and `switchChiEng()` sets `mEnglishOnly = false` directly.
 
-## Existing test coverage and gap
+So the switch worked, and the reported failure was downstream of it. Device testing confirmed the sequence: the field opens in English (correct), `中` switches to the Chinese IM keyboard (correct), and then composing produces bare English letters.
 
-One focused policy test covers URL, search, default, email, numeric, decimal, ASCII-number, and phone keyboard types. It currently preserves the forced-English helper result for `.emailAddress`, but it does not execute the duplicated production switch or cover the prediction-disabled side effect.
+## Root cause
 
-The uncovered user contract is that an email-address-style field can also accept a localized contact display name. Existing coverage assumes that every `.emailAddress` field should enter English mode and therefore cannot detect the Outlook recipient/sender failure. English mode is not itself an ASCII-only input restriction.
+`.emailAddress` set `mPredictionOn = false` alongside `mEnglishOnly = true`, and **that survived the switch into Chinese**. `mPredictionOn` does far more than its name suggests on iOS — it guards `updateCandidates()`, the entire Chinese candidate pipeline.
 
-## Likely root cause
+The failure is invisible rather than obvious because iOS keyboard extensions have no `setComposingText`. LIME **simulates** composing by inserting the raw letter into the host field (`handleCharacter`, spec §12) and showing the composing popup plus candidate bar. With prediction off:
 
-The likely root cause is the unconditional `.emailAddress` case duplicated between the production iOS field-routing switch and its policy helper. It conflates two host uses of the same keyboard hint:
+- `handleCharacter` correctly took the Chinese branch, and `mComposing` accumulated correctly;
+- the raw Latin letter was inserted inline, as designed;
+- `updateCandidates()` returned immediately at its `guard mPredictionOn` — no candidate bar, no composing popup, nothing to commit.
 
-1. literal email-address entry, where an English-friendly layout is convenient; and
-2. recipient/sender contact-name entry, where Chinese input must remain available.
+The result is bare Latin letters accumulating in the field, which is indistinguishable from "still in English mode" — which is how the issue was reported. Composing was running the whole time; it just had no UI and no way to commit.
 
-A custom keyboard cannot reliably infer Outlook's semantic sub-purpose from `UIKeyboardType.emailAddress` alone. Forcing English therefore removes a capability that the host field legitimately needs.
+This was the shipped behaviour in 6.1.37. It affected `.phonePad` identically.
 
-## Proposed solution
+**Android parity trap.** Android sets `mPredictionOn = false` for the same variations and is fine, because `setComposingText()` underlines the composing text in the host field independently of the candidate view. iOS has no such affordance, so the same value is benign on one platform and fatal on the other. Copying the Android line here without accounting for that is precisely how this was reintroduced mid-investigation.
 
-Subject to affected-device confirmation, route `.emailAddress` through the normal persisted language-mode path instead of making it English-only. Users can still switch to the English layout when entering a literal address. The production routing switch and policy helper must be reconciled so tests cannot pass after changing only the unused helper while runtime behavior remains broken.
+**Secondary defect:** the forced-English set existed in two places, and the only test asserted against the copy the keyboard never called — so the helper could be corrected while runtime behaviour stayed broken, with the suite green.
 
-Add focused regression coverage that:
+**Tertiary defect:** `initOnStartInput()` re-runs `updateInputModeForCurrentField()` whenever the keyboard re-appears or the field's traits change, which unconditionally re-forced English. Outlook re-inits its recipient field after every committed chip. Not proven to have fired in this report, but it would discard the user's manual switch, so it is fixed alongside.
 
-- executes the production field-mode decision and verifies `.emailAddress` no longer forces English or disables prediction solely because of the host hint;
-- verifies `.emailAddress` resolves to the active Chinese layout when Chinese mode is active;
-- verifies the English layout remains available through the normal language switch;
-- preserves strict numeric and phone routing;
-- preserves the existing URL and search behavior.
+## Applied fix
 
-Because iOS exposes only the keyboard-type hint here, an Outlook-specific branch should not be introduced unless runtime evidence identifies an additional stable host signal.
+Design: **English-first, not English-only** — matching Android's `MODE_EMAIL`.
 
-## Follow-up questions
+`LimeIME-iOS/Shared/Models/KeyboardTypePolicy.swift`
 
-- On an affected device, what `textDocumentProxy.keyboardType` does Outlook expose for each field? The source match predicts `.emailAddress`.
-- Does the same behavior occur in Apple Mail or other mail apps' recipient fields?
-- Can the reporter switch to a Chinese LIME layout from the field and have it immediately return to English, or is the Chinese switch unavailable entirely?
+- `isForcedEnglishKeyboardType(...)` keeps `.emailAddress`; the set still mirrors Android's `isForcedEnglishTextVariation()`.
+- New `forcesEnglish(keyboardType:userSwitchedToChineseInField:)` — the host hint applies only until the user switches into Chinese inside that field.
 
-These questions refine scope but do not invalidate the plausible bug classification.
+`LimeIME-iOS/LimeKeyboard/KeyboardViewController.swift`
+
+- **New `predictionOnForField(keyboardType:isEnglishOnly:)` — the actual fix.** Prediction is off only while the field is *both* English-first *and* still in English; Chinese mode always keeps it on, because composing cannot work without the candidate pipeline. English autocomplete is still suppressed for English typing in address/phone fields, which is what the original `false` was for.
+- `switchChiEng(toEnglish: false)` sets `mPredictionOn = true` directly, so the `中` key works immediately rather than waiting for a re-init.
+- New `userSwitchedToChineseInField` flag, assigned `!toEnglish` in `switchChiEng` and cleared in `updateInputModeForCurrentField()` on any keyboard-type or return-key-type change (i.e. a genuinely different field). It tracks **both** directions deliberately: leaving it set after a switch back to English would flip the field to Chinese on the next re-init, against the user's last choice.
+- `updateInputModeForCurrentField()` no longer duplicates the forced-English set — it calls the policy helper.
+
+`LimeIME-iOS/LimeTests/KeyboardViewControllerTest.swift`
+
+- The existing policy test keeps its `.emailAddress` expectation and now documents that the helper is the production decision point rather than a parallel copy.
+- New `testForcedEnglishFieldKeepsManualChineseSwitch()` covers the English-first-then-switchable contract, that ordinary fields are unaffected, and that switching back to English clears the flag.
+- New `testChineseModeAlwaysKeepsPredictionInEnglishFirstField()` covers the root cause directly: prediction off for email/phone while in English, on for numeric, and on in Chinese mode regardless of field type.
+
+No change was needed in `layoutIdForCurrentInputField(...)`: it has no `.emailAddress` branch, so once `mEnglishOnly` is false the field resolves to `resolvedActiveLayoutId`, the active Chinese layout. Numeric, phone, URL and search routing are untouched.
+
+No Outlook-specific branch was introduced. The fix is keyed on the keyboard type alone.
+
+### Known gap versus the built-in keyboard
+
+iOS has no email-specific layout, so `@` and the popular-domain shortcuts that Android's `MODE_EMAIL` row provides are only on the symbols layer. Apple's keyboard puts `@` on the letters row for `.emailAddress` fields. This predates the issue and is unchanged by the fix; treat it as separate work if iOS/Android layout parity is wanted.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed by the reporter in Outlook 5.2629.0 with LIME 6.1.37 on iOS 26.6. Current iOS source plausibly forces the failure for every host field exposed as `.emailAddress`, so other mail/contact-address fields may also be affected. That broader scope remains inferred until runtime-tested.
+Fixed. `.phonePad` had the identical defect and is fixed by the same change: switching to Chinese in a phone field now restores the candidate pipeline too.
 
 ### Android
 
-The reporter explicitly confirms that Android works normally. Android does not use the iOS `UIKeyboardType` routing code, so no Android source change is currently indicated. Android should remain a regression-control platform only.
+Not affected, no change. The reporter confirms Android works normally, and Android's `MODE_EMAIL` row is the reference design for the English-first half of this behaviour. Do **not** port `predictionOnForField` to Android — Android's `mPredictionOn = false` is correct there because `setComposingText` provides composing feedback independently of the candidate view.
 
-## Verification plan
+## Verification
 
-1. On iOS, capture the keyboard and return-key traits for Outlook recipient and sender fields without exposing recipient data.
-2. Reproduce the failure on LIME 6.1.37 with Cangjie and Array.
-3. Add a focused test against the production field-mode decision that fails while `.emailAddress` forces English, rather than changing only the separate policy-helper assertion.
-4. Reconcile the duplicated routing policy, apply the smallest production change, and run the focused test plus the keyboard-type/layout resolver suite.
-5. On an affected iPhone, verify Chinese composition and candidate commit in Outlook recipient and sender fields.
-6. Verify English email-address entry remains available via the language switch.
-7. Check at least one ordinary email-address form, URL/search fields, numeric fields, and phone fields for regressions.
-8. Keep Android unchanged and use the reporter-confirmed Android behavior as the parity reference.
-9. Ask the reporter to retest only after a newer iOS build contains the relevant fix.
+Completed:
+
+- Full `LimeTests` unit suite, run locally — **PASS, 1183/1183 cases, 0 failures**
+- `testChineseModeAlwaysKeepsPredictionInEnglishFirstField()` — PASS (covers the root cause)
+- `testForcedEnglishFieldKeepsManualChineseSwitch()` — PASS
+- Physical iPhone, Outlook recipient field: opens in English, `中` switches to the Chinese IM, **Chinese composition and candidates work** — maintainer-confirmed
+
+Remaining, on device:
+
+1. Confirm the mode survives a committed recipient chip (host re-init path).
+2. Verify the same in the 寄件者 field, and with both Cangjie and Array.
+3. Spot-check an ordinary email form field, plus URL, search, numeric and phone fields, for regressions.
+4. Confirm switching back to English inside the field sticks (flag-clears-on-English path).
+4. Ask the reporter to retest after the fix ships in a build.

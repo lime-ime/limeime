@@ -23,7 +23,12 @@
 
 import UIKit
 
+/// Single source of truth for "this host field opens in English".
+/// `KeyboardViewController.updateInputModeForCurrentField()` is the only production
+/// caller — do not reintroduce a parallel switch there (#226).
 enum KeyboardTypePolicy {
+    /// Field types that open in English. Mirrors Android
+    /// `LIMEService.isForcedEnglishTextVariation()`.
     static func isForcedEnglishKeyboardType(_ keyboardType: UIKeyboardType) -> Bool {
         switch keyboardType {
         case .numberPad, .decimalPad, .asciiCapableNumberPad, .phonePad, .emailAddress:
@@ -31,5 +36,16 @@ enum KeyboardTypePolicy {
         default:
             return false
         }
+    }
+
+    /// English-*first*, not English-*only* (#226). The host hint picks the initial mode,
+    /// but the `中` key must still reach the Chinese IM — every English layout carries it,
+    /// matching Android's `MODE_EMAIL` row. Once the user switches to Chinese inside a
+    /// field, re-entering that same field must not snap them back: Outlook re-inits its
+    /// recipient field after every committed chip, which would otherwise force English
+    /// again on each name the user types.
+    static func forcesEnglish(keyboardType: UIKeyboardType,
+                              userSwitchedToChineseInField: Bool) -> Bool {
+        isForcedEnglishKeyboardType(keyboardType) && !userSwitchedToChineseInField
     }
 }

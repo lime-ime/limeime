@@ -57,6 +57,9 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(LimeKeyCode.emojiCategoryFlags.rawValue, -212)
     }
 
+    /// KeyboardTypePolicy is the production forced-English decision — since #226
+    /// `updateInputModeForCurrentField()` calls it instead of duplicating the set,
+    /// so these assertions now cover runtime behaviour rather than a dead helper.
     func testURLAndSearchKeyboardTypesUsePersistedLanguageModeRoute() {
         XCTAssertFalse(KeyboardTypePolicy.isForcedEnglishKeyboardType(.URL))
         XCTAssertFalse(KeyboardTypePolicy.isForcedEnglishKeyboardType(.webSearch))
@@ -67,6 +70,51 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(KeyboardTypePolicy.isForcedEnglishKeyboardType(.decimalPad))
         XCTAssertTrue(KeyboardTypePolicy.isForcedEnglishKeyboardType(.asciiCapableNumberPad))
         XCTAssertTrue(KeyboardTypePolicy.isForcedEnglishKeyboardType(.phonePad))
+    }
+
+    /// #226: English-first fields must stay switchable. Outlook re-inits its recipient
+    /// field after every committed chip; without the manual-switch flag that re-init
+    /// forces English again and Chinese names cannot be typed.
+    func testForcedEnglishFieldKeepsManualChineseSwitch() {
+        // Opens in English.
+        XCTAssertTrue(KeyboardTypePolicy.forcesEnglish(
+            keyboardType: .emailAddress, userSwitchedToChineseInField: false))
+
+        // After the user taps 中, re-entering the same field must not force English.
+        XCTAssertFalse(KeyboardTypePolicy.forcesEnglish(
+            keyboardType: .emailAddress, userSwitchedToChineseInField: true))
+        XCTAssertFalse(KeyboardTypePolicy.forcesEnglish(
+            keyboardType: .phonePad, userSwitchedToChineseInField: true))
+
+        // Ordinary fields are unaffected either way.
+        XCTAssertFalse(KeyboardTypePolicy.forcesEnglish(
+            keyboardType: .default, userSwitchedToChineseInField: false))
+
+        // Switching back to English clears the flag (switchChiEng assigns !toEnglish),
+        // so the field re-forces English rather than flipping to Chinese on re-init.
+        XCTAssertTrue(KeyboardTypePolicy.forcesEnglish(
+            keyboardType: .emailAddress, userSwitchedToChineseInField: false))
+    }
+
+    /// #226: prediction gates `updateCandidates()`, and iOS simulates composing by
+    /// inserting the raw letter inline — so Chinese mode with prediction off shows bare
+    /// Latin letters, no candidate bar, and nothing to commit. An English-first field
+    /// turns prediction off for English typing; switching into Chinese must turn it back on.
+    func testChineseModeAlwaysKeepsPredictionInEnglishFirstField() {
+        // English-first, still in English: prediction stays off for email/phone.
+        XCTAssertFalse(KeyboardViewController.predictionOnForField(
+            keyboardType: .emailAddress, isEnglishOnly: true))
+        XCTAssertFalse(KeyboardViewController.predictionOnForField(
+            keyboardType: .phonePad, isEnglishOnly: true))
+        // Numeric fields keep it even in English.
+        XCTAssertTrue(KeyboardViewController.predictionOnForField(
+            keyboardType: .numberPad, isEnglishOnly: true))
+
+        // Switched into Chinese — prediction must be on or composing is dead.
+        XCTAssertTrue(KeyboardViewController.predictionOnForField(
+            keyboardType: .emailAddress, isEnglishOnly: false))
+        XCTAssertTrue(KeyboardViewController.predictionOnForField(
+            keyboardType: .phonePad, isEnglishOnly: false))
     }
 
     func testEnglishLayoutHasChineseSwitchOnBottomRow() {
