@@ -3,10 +3,10 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/228
-- Classification: confirmed iOS/iPadOS source defect, physical-device verification pending
+- Classification: confirmed iOS/iPadOS source defect; fix confirmed on physical iPad and accepted by the maintainer
 - Affected layouts: Dayi English-face keyboard on full-width and narrow iPad
 - Android: not affected by the source defect
-- Reporter environment still unknown: LIME version, iPad model, iPadOS version, and host app/field
+- Delivery: accepted in PR #229 for merge to `master`
 
 ## Problem statement
 
@@ -23,7 +23,7 @@ Actual source behavior: both unshifted iPad Dayi English-face resources send ful
 3. Tap the semicolon-position key on the home row.
 4. Observe that Dayi root code `;` (`虫`) is not entered.
 
-The failure is source-reproducible from both affected resources. A physical-device reproduction is still required before claiming reporter-visible GREEN.
+The failure is source-reproducible from both affected resources. After the resource/generator fix, the maintainer confirmed the corrected behavior on a physical iPad.
 
 ## Evidence
 
@@ -104,29 +104,31 @@ Confirmed source defect in the full-width and narrow iPad variants of the Dayi E
 
 Not affected. Android's corresponding Dayi English-face and root-face layouts already dispatch code `59`. Android is the behavioral oracle and needs only a parity spot-check, not a source change.
 
-## Verification results and plan
+## Verification results
 
-Completed on this Linux host:
+Completed:
 
 1. Focused resource contract against `origin/master`: **RED**, both affected layouts had zero code-`59` keys.
 2. Same focused resource contract after the fix: **GREEN**.
-3. Regenerated all 24 full iPad layouts: the correction persisted with no unrelated full-layout diff.
-4. Regenerated narrow layouts: the corrected narrow Dayi key persisted. Two unrelated pre-existing non-idempotent narrow outputs were discarded from this branch.
-5. `scripts/test_dayi_ipad_semicolon.py`: **2 tests passed**.
-6. `scripts/test_ipad_language_mode_key.py`: **4 tests passed**.
-7. `scripts/test_custom_im_keyboard_ios.py`: **12 tests passed**.
-8. Every iOS layout JSON file decoded successfully.
-9. `git diff --check`: passed.
+3. `scripts/build_ipad_layouts.py` regenerated all 24 full iPad layouts and left the worktree clean.
+4. The layout diff gate confirmed that only `lime_dayi_ipad.json` and `lime_dayi_ipad_narrow.json` changed.
+5. Dayi Shift and Dayi root-face full/narrow resources are byte-identical to `origin/master`.
+6. `scripts/test_dayi_ipad_semicolon.py`: **2 tests passed**.
+7. `scripts/test_number_symbol_layout_ios.py`: **6 tests passed**.
+8. `scripts/test_ipad_language_mode_key.py`: **4 tests passed**.
+9. `scripts/test_custom_im_keyboard_ios.py`: **12 tests passed**.
+10. Every iOS layout JSON file decoded successfully; `git diff --check` and independent Codex review passed.
+11. The maintainer confirmed the bug fixed on a physical iPad and accepted PR #229 for merge.
 
-Still required:
+Native XCTest was not available on this Linux host. The maintainer accepted the PR based on the focused generator/resource gates, independent review, and successful physical-iPad verification.
 
-1. Run the focused XCTest regression and full feasible iOS unit suite on macOS/Xcode.
-2. On a physical iPad, verify both full-width and narrow Dayi English-face layouts in an ordinary text field.
-3. Confirm tapping semicolon enters composing code `;`, displays root name `虫`, and returns Dayi candidates.
-4. Round-trip Shift and symbol pages and confirm the corrected key remains intact.
-5. Spot-check iPhone Dayi and Android Dayi for parity.
-6. Ask the reporter to retest only after a newer iOS build contains the fix. PR acceptance is not gated on reporter response.
+## Delivery follow-up
+
+1. Merge PR #229 into `master`; `Fixes #228` closes the community issue automatically.
+2. Include the merged fix in a newer iOS build.
+3. Reporter retest after public delivery is useful but does not gate acceptance, merge, or release.
 
 ## Public response and follow-up
 
-The routine acknowledgement is live at https://github.com/lime-ime/limeime/issues/228#issuecomment-5238071606. It asks for LIME version, iPad model, iPadOS version, host app, exact result after tapping, and a short recording if practical. These details remain useful for device verification but are not required to establish the source defect.
+- Routine acknowledgement: https://github.com/lime-ime/limeime/issues/228#issuecomment-5238071606
+- Confirmed root cause and fix scope: https://github.com/lime-ime/limeime/issues/228#issuecomment-5238238350
