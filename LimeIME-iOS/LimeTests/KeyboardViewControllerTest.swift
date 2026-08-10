@@ -378,7 +378,10 @@ final class KeyboardViewControllerTest: XCTestCase {
         for layoutID in ["lime_dayi_ipad", "lime_dayi_ipad_narrow"] {
             let layout = try loadKeyboardLayoutFixture(layoutID)
             let keys = layout.rows.flatMap(\.keys)
-            let semicolon = try XCTUnwrap(keys.first { $0.code == 59 },
+            let semicolons = keys.filter { $0.code == 59 }
+            XCTAssertEqual(semicolons.count, 1,
+                           "\(layoutID) must expose exactly one ASCII ; key for the Dayi 虫 root")
+            let semicolon = try XCTUnwrap(semicolons.first,
                                           "\(layoutID) must expose ASCII ; as the Dayi 虫 root code")
 
             XCTAssertEqual(semicolon.label, ";")

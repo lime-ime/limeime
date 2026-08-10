@@ -83,7 +83,9 @@ No controller, database, metadata, Android, iPhone, Dayi root-face, Shift, or sy
 
 ## Regression coverage
 
-`KeyboardViewControllerTest.testDayiIPadAlphabetLayoutsKeepSemicolonAsRootKeyWithoutDualSlide` loads both affected layouts and requires:
+`scripts/test_dayi_ipad_semicolon.py` provides a Linux-executable generator/resource contract. It regenerates the expected full and narrow Dayi layouts in memory, requires the committed JSON to match those outputs, and verifies the semantic key contract.
+
+`KeyboardViewControllerTest.testDayiIPadAlphabetLayoutsKeepSemicolonAsRootKeyWithoutDualSlide` provides the corresponding native XCTest coverage. Both regressions require:
 
 1. exactly one key with code `59`
 2. label `;`
@@ -110,10 +112,11 @@ Completed on this Linux host:
 2. Same focused resource contract after the fix: **GREEN**.
 3. Regenerated all 24 full iPad layouts: the correction persisted with no unrelated full-layout diff.
 4. Regenerated narrow layouts: the corrected narrow Dayi key persisted. Two unrelated pre-existing non-idempotent narrow outputs were discarded from this branch.
-5. `scripts/test_ipad_language_mode_key.py`: **4 tests passed**.
-6. `scripts/test_custom_im_keyboard_ios.py`: **12 tests passed**.
-7. Every iOS layout JSON file decoded successfully.
-8. `git diff --check`: passed.
+5. `scripts/test_dayi_ipad_semicolon.py`: **2 tests passed**.
+6. `scripts/test_ipad_language_mode_key.py`: **4 tests passed**.
+7. `scripts/test_custom_im_keyboard_ios.py`: **12 tests passed**.
+8. Every iOS layout JSON file decoded successfully.
+9. `git diff --check`: passed.
 
 Still required:
 
