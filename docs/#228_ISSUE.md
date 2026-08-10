@@ -2,11 +2,11 @@
 
 ## Current status
 
-- Issue: https://github.com/lime-ime/limeime/issues/228
+- Issue: https://github.com/lime-ime/limeime/issues/228 (closed automatically when the fix merged)
 - Classification: confirmed iOS/iPadOS source defect; fix confirmed on physical iPad and accepted by the maintainer
 - Affected layouts: Dayi English-face keyboard on full-width and narrow iPad
 - Android: not affected by the source defect
-- Delivery: accepted in PR #229 for merge to `master`
+- Delivery: source merged to `master` in PR #229 as merge commit `696ecbaaff5fdc47d0b94baca5c8f5cacdcf10d4`; pending inclusion in a newer iOS build
 
 ## Problem statement
 
@@ -119,14 +119,15 @@ Completed:
 9. `scripts/test_custom_im_keyboard_ios.py`: **12 tests passed**.
 10. Every iOS layout JSON file decoded successfully; `git diff --check` and independent Codex review passed.
 11. The maintainer confirmed the bug fixed on a physical iPad and accepted PR #229 for merge.
+12. PR #229 merged to `master` as `696ecbaaff5fdc47d0b94baca5c8f5cacdcf10d4`; the focused 2/6/4/12 Python suites, all-layout JSON decode, generator-cleanliness check, and `git diff --check` passed again on the merge commit.
 
 Native XCTest was not available on this Linux host. The maintainer accepted the PR based on the focused generator/resource gates, independent review, and successful physical-iPad verification.
 
 ## Delivery follow-up
 
-1. Merge PR #229 into `master`; `Fixes #228` closes the community issue automatically.
+1. The source fix is merged and `Fixes #228` closed the community issue automatically.
 2. Include the merged fix in a newer iOS build.
-3. Reporter retest after public delivery is useful but does not gate acceptance, merge, or release.
+3. Reporter retest after public delivery is useful but does not gate source acceptance, merge, or release.
 
 ## Public response and follow-up
 
