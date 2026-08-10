@@ -636,10 +636,11 @@ def append_semicolon_key(row, source_id, semicolon_popup=None):
 
     - Source `;` (59) or `:` (58) without sublabel -> upgraded in-place to
       fullwidth ；\n：(65306 tap, 65307 long-press).
-    - Exception: lime_num_sym2 / lime_num_sym2_shift keep the ASCII tap code --
-      `;`/`:` is one of the five 3code symbol keys and must survive the iPad
-      scaffold -- upgraded in-place to `:\n;` (59 tap, 58 long-press)
-      instead of the fullwidth glyph.
+    - Exceptions that keep an ASCII tap code:
+      * lime_dayi keeps `;` (59) unchanged because it is the Dayi 虫 root.
+      * lime_num_sym2 / lime_num_sym2_shift keep `;`/`:` as one of the five
+        3code symbol roots and are upgraded in-place to `:\n;` (59 tap,
+        58 long-press) instead of the fullwidth glyph.
     - Source `;`/`:` with sublabel (IM component, e.g. phonetic ㄧ / et_41 ㄦ)
       -> left unchanged; the IM key stays as the last character key.
     - No `;`/`:` in the row (last in {108, 76}) -> fullwidth ；\n：appended after l.
@@ -649,11 +650,16 @@ def append_semicolon_key(row, source_id, semicolon_popup=None):
     keys = row["keys"]
     if not keys or keys[-1].get("code") not in (58, 59, 108, 76):
         return row
+    preserve_dayi_root = source_id == "lime_dayi"
     ascii_tap = source_id in ("lime_num_sym2", "lime_num_sym2_shift")
     if keys[-1].get("code") in (58, 59):
         lk = keys[-1]
         if not lk.get("sublabel", ""):
-            if ascii_tap:
+            if preserve_dayi_root:
+                lk["code"] = 59
+                lk["label"] = ";"
+                lk["longPressCode"] = 0
+            elif ascii_tap:
                 lk["code"]         = 59
                 lk["label"]        = ':\\n;'
                 lk["longPressCode"] = 58

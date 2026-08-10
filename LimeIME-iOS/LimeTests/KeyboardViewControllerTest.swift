@@ -374,6 +374,22 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(lessThan.label, "<")
     }
 
+    func testDayiIPadAlphabetLayoutsKeepSemicolonAsRootKeyWithoutDualSlide() throws {
+        for layoutID in ["lime_dayi_ipad", "lime_dayi_ipad_narrow"] {
+            let layout = try loadKeyboardLayoutFixture(layoutID)
+            let keys = layout.rows.flatMap(\.keys)
+            let semicolon = try XCTUnwrap(keys.first { $0.code == 59 },
+                                          "\(layoutID) must expose ASCII ; as the Dayi 虫 root code")
+
+            XCTAssertEqual(semicolon.label, ";")
+            XCTAssertEqual(semicolon.longPressCode, 0,
+                           "\(layoutID) must not turn the Dayi root into a dual-slide punctuation key")
+            XCTAssertFalse(semicolon.label.contains("\n"))
+            XCTAssertFalse(keys.contains { $0.code == 65306 || $0.code == 65307 },
+                           "\(layoutID) must reserve this position for the ; root, not full-width punctuation")
+        }
+    }
+
     // feat#N02: computer_simple is phone_simple with the digit grid in computer-numpad
     // order — 7 8 9 on top, 4 5 6, 1 2 3, then 0 on the bottom row. The framing modifier
     // keys (123, ABC, ⌫, +-*/=, space, ↵) stay put; only the digit keys move.

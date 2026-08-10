@@ -510,8 +510,8 @@
           "longPressCode": 0
         },
         {
-          "code": 65306,
-          "label": "；\\n：",
+          "code": 59,
+          "label": ";",
           "sublabel": "",
           "widthPercent": 7.0,
           "icon": "",
@@ -520,7 +520,7 @@
           "isSticky": false,
           "popupKeyboard": "",
           "popupCharacters": "",
-          "longPressCode": 65307
+          "longPressCode": 0
         },
         {
           "code": 65292,
