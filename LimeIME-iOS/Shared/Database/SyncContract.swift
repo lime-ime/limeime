@@ -651,6 +651,12 @@ enum ActiveKeyboardProbeMode: String {
         }
     }
 
+    /// Presenting a hidden text field necessarily raises the user's current keyboard.
+    /// Settings activation is passive, so only an explicit switch request may do that.
+    var shouldPresentKeyboard: Bool {
+        self == .manualSwitch
+    }
+
     var notificationUserInfo: [String: String] {
         [Self.notificationKey: rawValue]
     }

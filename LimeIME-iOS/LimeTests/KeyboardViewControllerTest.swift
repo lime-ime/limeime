@@ -1868,6 +1868,27 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertTrue(syncSource.contains("static let limeRelayResolvedNotActive"))
     }
 
+    func testOnlyManualRelayRequestsMayPresentTheKeyboard() {
+        XCTAssertFalse(ActiveKeyboardProbeMode.automatic.shouldPresentKeyboard)
+        XCTAssertTrue(ActiveKeyboardProbeMode.manualSwitch.shouldPresentKeyboard)
+    }
+
+    func testSettingsRelayGuardsTheFirstResponderAndPreservesManualPendingRetries() throws {
+        let source = try String(contentsOf: projectFileURL("LimeSettings/LimeSettingsView.swift"),
+                                encoding: .utf8)
+        let functionStart = try XCTUnwrap(source.range(of: "private func triggerRootRelay"))
+        let functionEnd = try XCTUnwrap(source.range(of: "private func handleRootRelayTextChange"))
+        let function = String(source[functionStart.lowerBound..<functionEnd.lowerBound])
+
+        let pendingGuard = try XCTUnwrap(function.range(of: "guard !rootRelayPending else { return }"))
+        let presentationGuard = try XCTUnwrap(function.range(of: "guard mode.shouldPresentKeyboard else"))
+        let focus = try XCTUnwrap(function.range(of: "rootRelayFocused = true"))
+        XCTAssertLessThan(pendingGuard.lowerBound, presentationGuard.lowerBound)
+        XCTAssertLessThan(presentationGuard.lowerBound, focus.lowerBound)
+        XCTAssertTrue(function.contains("relayActiveState.markNotActive(fullAccess: rootFullAccessConfirmedOn)"))
+        XCTAssertTrue(source.contains("triggerRootRelay(mode: .manualSwitch)"))
+    }
+
     func testLimeToastStateShowsTrimmedNonEmptyMessage() {
         var state = LimeToastState()
 
