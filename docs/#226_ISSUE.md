@@ -3,14 +3,15 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/226
-- State: fixed, device-confirmed on iPhone
+- State: resolved and closed on 2026-08-11 after reporter confirmation
 - Classification: confirmed iOS defect, LIME-owned — prediction flag disabled the candidate pipeline in Chinese mode
 - Reported environment: LIME 6.1.37, iOS 26.6, Outlook 5.2629.0
 - Reporter-confirmed platform split: iOS affected; Android works normally
+- Closure evidence: the reporter confirmed that Chinese input now works in Outlook's recipient field: https://github.com/lime-ime/limeime/issues/226#issuecomment-5247433658. The confirmation did not restate the installed LIME version or separately mention the sender field.
 
 ## Problem statement
 
-The reporter cannot use Chinese input in Outlook's recipient and sender fields on iOS. The behavior occurs with both Cangjie and Array, while Android works normally. The report includes a portrait screenshot and exact LIME, iOS, and Outlook versions.
+The reporter originally could not use Chinese input in Outlook's recipient and sender fields on iOS. The behavior occurred with both Cangjie and Array, while Android worked normally. The report included a portrait screenshot and exact LIME, iOS, and Outlook versions.
 
 The expected behavior is that address fields which accept contact names should allow the active Chinese input method, while still allowing the user to switch to English for a literal email address.
 
@@ -107,11 +108,11 @@ Completed:
 - `testChineseModeAlwaysKeepsPredictionInEnglishFirstField()` — PASS (covers the root cause)
 - `testForcedEnglishFieldKeepsManualChineseSwitch()` — PASS
 - Physical iPhone, Outlook recipient field: opens in English, `中` switches to the Chinese IM, **Chinese composition and candidates work** — maintainer-confirmed
+- Reporter confirmation: Chinese input works in Outlook's recipient field. The reporter did not restate the installed build or separately confirm the sender field.
 
-Remaining, on device:
+Remaining engineering checks, not active reporter watches:
 
 1. Confirm the mode survives a committed recipient chip (host re-init path).
 2. Verify the same in the 寄件者 field, and with both Cangjie and Array.
 3. Spot-check an ordinary email form field, plus URL, search, numeric and phone fields, for regressions.
 4. Confirm switching back to English inside the field sticks (flag-clears-on-English path).
-4. Ask the reporter to retest after the fix ships in a build.
