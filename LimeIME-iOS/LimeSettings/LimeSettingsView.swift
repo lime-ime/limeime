@@ -268,15 +268,6 @@ struct LimeSettingsView: View {
         }
 #endif
         guard !rootRelayPending else { return }
-        // The relay uses a real first responder, which visibly presents the current
-        // keyboard. Never do that merely because Settings appeared or became active.
-        // Resolve the passive status conservatively from the readable heartbeat and
-        // leave presentation to the setup screen's explicit switch action.
-        guard mode.shouldPresentKeyboard else {
-            relayActiveState.markNotActive(fullAccess: rootFullAccessConfirmedOn)
-            NotificationCenter.default.post(name: .limeRelayResolvedNotActive, object: nil)
-            return
-        }
         let firedAt = Date().timeIntervalSince1970
         rootRelayPending = true
         rootRelayDidReceivePayload = false
@@ -338,9 +329,7 @@ struct LimeSettingsView: View {
         guard pendingSyncRetries < 3 else { return }
         pendingSyncRetries += 1
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // This retry belongs to an explicit manual relay session. Preserve that
-            // presentation permission so the post-flush answer can actually arrive.
-            if relayActiveState.isSyncPending { triggerRootRelay(mode: .manualSwitch) }
+            if relayActiveState.isSyncPending { triggerRootRelay() }
         }
     }
 
