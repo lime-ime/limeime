@@ -5,12 +5,14 @@
 - Live issue: https://github.com/lime-ime/limeime/issues/239
 - Reporter: `walin333`
 - Reported version: LIME IME v6.1.38
-- Classification: plausible Android UI regression / usability defect, pending device and runtime confirmation
+- Classification: plausible Android UI regression / usability defect. The reporter has confirmed the device/app context and repeatable trigger; maintainer-device reproduction and the intended replacement behavior remain unresolved.
 - Backlog: not added yet. The implementation direction is not confirmed, and the accepted candidate-layout document conflicts with the older #124 containment description about whether Android composing popups may extend above the candidate bar.
 
 ## Problem statement
 
 While using Array 30 in LINE on Android, the reporter sees LIME's composing/root hint above the candidate row covering the text being entered in LINE's bottom message field. The attached screenshot marks the overlap area. The reporter asks whether LIME can add an option to disable this hint.
+
+The reporter later confirmed this occurs on every Array 30 root keystroke on a Samsung Galaxy A54 5G running Android 14 and LINE 15.12.2. English and number input do not show the hint. Reverse lookup is configured as `無`, so this report does not establish whether the reverse-lookup popup also overlaps.
 
 This is closely related to the behavior previously tracked in #124, but it is a new focused report against v6.1.38 after the v6.1.23 and v6.1.27 popup-placement changes. The #124 closeout explicitly says a later bottom-composer overlap on v6.1.27 or newer should be triaged as a new issue rather than reopening #124 automatically.
 
@@ -18,17 +20,16 @@ This is closely related to the behavior previously tracked in #124, but it is a 
 
 Known from the report:
 
-1. Use LIME IME v6.1.38 on Android.
+1. Use LIME IME v6.1.38 on a Samsung Galaxy A54 5G running Android 14.
 2. Select the Array 30 input method.
-3. Enter text in LINE.
-4. Observe the composing/root hint above the candidate row overlap the message input content.
+3. Enter Array roots in LINE 15.12.2.
+4. Observe the composing/root hint appear on every root keystroke and overlap the message input content.
+5. Enter English letters or numbers and observe that this composing/root hint does not appear.
 
 Still needed:
 
-- Device model and Android version.
-- LINE version.
-- Whether the overlap occurs on every Array 30 keystroke or only particular codes.
-- Whether reverse-lookup text after committing a candidate also overlaps, or only the composing/root hint while typing.
+- A controlled maintainer-device reproduction with the same app/device settings.
+- Reverse-lookup behavior with that feature enabled. The reporter uses `字根反查: 無`, so the current evidence covers only the composing/root hint while typing.
 - Display size, font size, and LIME candidate-font-size settings.
 - Whether other bottom-composer apps reproduce the same geometry.
 
@@ -36,6 +37,7 @@ Still needed:
 
 - Live issue body, attachment metadata, labels, comments, assignees, events, and timeline on 2026-08-14. At triage time there were no comments, labels, assignees, linked commits, or timeline events.
 - Reporter attachment: `https://github.com/user-attachments/assets/814f42bf-5e44-4ac4-bff4-0046095f305c`, a 600 × 600 Android screenshot. The issue text and marked region identify the visible symptom as a hint covering LINE's input content.
+- Reporter follow-up `https://github.com/lime-ime/limeime/issues/239#issuecomment-5289069217`: Samsung Galaxy A54 5G, Android 14, LINE 15.12.2; overlap on every Array 30 root keystroke; no hint for English or number input; reverse lookup configured as `無`.
 - Prior issue and analysis: `docs/#124_ISSUE.md` and live issue #124. #124 covered Android composing/root and reverse-lookup popups overlapping bottom message editors, shipped placement/readability changes in v6.1.23 and v6.1.27, and directs later recurrence reports to a new focused issue.
 - Current v6.1.38 source on `origin/master`:
   - `LimeStudio/app/src/main/java/org/limeime/candidate/CandidateView.java`
@@ -90,8 +92,9 @@ This is a source-backed explanation for why the reported geometry remains plausi
 ### Android
 
 - Confirmed reporter platform by screenshot metadata and Android build metadata.
+- Confirmed repeatable context: Samsung Galaxy A54 5G, Android 14, LINE 15.12.2, with the hint appearing on every Array 30 root keystroke but not for English or number input.
 - Plausibly affected path: `CandidateView.doSetComposing()` → `doUpdateComposing()` for the normal in-input candidate row.
-- Reverse lookup may share adjacent popup geometry, but the new report explicitly identifies the composing hint and does not yet confirm reverse-lookup overlap.
+- Reverse lookup may share adjacent popup geometry, but the reporter has it configured as `無`; the current report therefore does not confirm reverse-lookup overlap.
 
 ### iOS
 
