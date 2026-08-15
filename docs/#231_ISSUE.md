@@ -7,7 +7,7 @@
 - Confirmed scope: iOS iPhone Easy Input (`lime_ez`) popup construction
 - Android impact: no corresponding source defect identified
 - iPad impact: the direct `-` and `=` root keys do not use the affected phone popup path
-- Implementation: bounded fix and regression tests prepared on `fix/231-ios-ez-popup`. Draft PR and native/runtime RED/GREEN gates pending.
+- Implementation: draft PR https://github.com/lime-ime/limeime/pull/240 contains the bounded fix and regression tests. Native/runtime RED/GREEN gates remain pending.
 - Runtime evidence: source-confirmed, with iPhone UI/device reproduction still requested
 
 ## Architecture preflight and constraint ledger
