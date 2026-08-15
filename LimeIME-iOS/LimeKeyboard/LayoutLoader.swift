@@ -136,7 +136,8 @@ final class LayoutLoader {
                         isSticky: key.isSticky,
                         longPressCode: 39,
                         popupKeyboard: key.popupKeyboard,
-                        popupCharacters: key.popupCharacters
+                        popupCharacters: key.popupCharacters,
+                        routesThroughInputEngine: key.routesThroughInputEngine
                     )
                 }, isBottomRow: row.isBottomRow)
             }

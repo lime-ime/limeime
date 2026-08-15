@@ -4331,13 +4331,11 @@ extension KeyboardViewController: KeyboardViewDelegate {
         return layout
     }
 
-    /// Build a popup layout from a popupCharacters string (e.g. "àáâãäåæ").
-    /// Each Unicode scalar becomes one key. Returns nil if chars is empty.
+    /// Build a popup layout from popupCharacters. Android-style `code\\ndisplay`
+    /// entries become one IM-root key; ordinary strings remain one key per scalar.
     private func popupCharLayout(for chars: String) -> LimeKeyLayout? {
         guard !chars.isEmpty else { return nil }
-        let keys = chars.unicodeScalars.map { scalar in
-            KeyDef(code: Int(scalar.value), label: String(scalar))
-        }
+        let keys = PopupCharacterLayoutPolicy.keys(from: chars)
         return LimeKeyLayout(id: "popup_chars", rows: [KeyRow(keys: keys)])
     }
 
@@ -4354,7 +4352,8 @@ extension KeyboardViewController: KeyboardViewDelegate {
                 return KeyDef(code: key.code, label: label, sublabel: key.sublabel,
                               widthPercent: key.widthPercent, icon: key.icon,
                               isRepeatable: key.isRepeatable, isModifier: key.isModifier,
-                              isSticky: key.isSticky)
+                              isSticky: key.isSticky,
+                              routesThroughInputEngine: key.routesThroughInputEngine)
             }
             return KeyRow(keys: keys, isBottomRow: row.isBottomRow)
         }
@@ -5343,6 +5342,11 @@ extension KeyboardViewController: PopupKeyboardViewDelegate {
 
     /// Fire the action for a popup key (shared by popup selection and single-key direct dispatch).
     private func firePopupKey(_ keyDef: KeyDef) {
+        if keyDef.routesThroughInputEngine {
+            onKey(primaryCode: keyDef.code)
+            return
+        }
+
         // Special action codes (negative): route through the normal key handler
         if keyDef.code < 0 {
             onKey(primaryCode: keyDef.code)
@@ -6303,6 +6307,9 @@ extension KeyboardViewController {
 
     /// Drive the real key handler for one primary code.
     func _testDriveKey(_ primaryCode: Int) { onKey(primaryCode: primaryCode) }
+
+    /// Drive popup dispatch through the production route.
+    func _testFirePopupKey(_ keyDef: KeyDef) { firePopupKey(keyDef) }
 
     var _testComposing: String { mComposing }
     var _testCandidateCount: Int { mCandidateList.count }

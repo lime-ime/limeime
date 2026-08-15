@@ -253,6 +253,33 @@ enum EmojiPanelScrollLayout {
     }
 }
 
+// MARK: - Popup-character decoding
+enum PopupCharacterLayoutPolicy {
+    static func keys(from chars: String) -> [KeyDef] {
+        if let delimiter = chars.range(of: "\\n") {
+            let encodedCode = String(chars[..<delimiter.lowerBound])
+            let label = String(chars[delimiter.upperBound...])
+            let decodedCode = encodedCode.first == "\\" && encodedCode.count > 1
+                ? String(encodedCode.dropFirst())
+                : encodedCode
+
+            let codeScalars = Array(decodedCode.unicodeScalars)
+            let labelScalars = Array(label.unicodeScalars)
+            if !codeScalars.isEmpty, codeScalars.count == labelScalars.count {
+                return zip(codeScalars, labelScalars).map { code, display in
+                    KeyDef(code: Int(code.value),
+                           label: String(display),
+                           routesThroughInputEngine: true)
+                }
+            }
+        }
+
+        return chars.unicodeScalars.map { scalar in
+            KeyDef(code: Int(scalar.value), label: String(scalar))
+        }
+    }
+}
+
 // MARK: - Key definition
 struct KeyDef: Equatable {
     let code: Int            // Key code. Positive = Unicode codepoint; negative = special
@@ -267,6 +294,7 @@ struct KeyDef: Equatable {
     let longPressCode: Int    // 0 = none; -100 = keyboard options menu; other = special action
     let popupKeyboard: String // e.g. "popup_template", "popup_punctuation"; "" = none
     let popupCharacters: String // characters for popup_template keys (e.g. "àáâãäåæ"); "" = none
+    let routesThroughInputEngine: Bool // true for popup roots encoded with table-code/display metadata
 
     init(
         code: Int,
@@ -280,7 +308,8 @@ struct KeyDef: Equatable {
         isSticky: Bool = false,
         longPressCode: Int = 0,
         popupKeyboard: String = "",
-        popupCharacters: String = ""
+        popupCharacters: String = "",
+        routesThroughInputEngine: Bool = false
     ) {
         self.code = code
         self.codes = codes.isEmpty ? [code] : codes
@@ -294,6 +323,7 @@ struct KeyDef: Equatable {
         self.longPressCode = longPressCode
         self.popupKeyboard = popupKeyboard
         self.popupCharacters = popupCharacters
+        self.routesThroughInputEngine = routesThroughInputEngine
     }
 
     /// Copy of this key with a different width — used by the split keyboard to cut a
@@ -302,7 +332,8 @@ struct KeyDef: Equatable {
         KeyDef(code: code, codes: codes, label: label, sublabel: sublabel,
                widthPercent: widthPercent, icon: icon, isRepeatable: isRepeatable,
                isModifier: isModifier, isSticky: isSticky, longPressCode: longPressCode,
-               popupKeyboard: popupKeyboard, popupCharacters: popupCharacters)
+               popupKeyboard: popupKeyboard, popupCharacters: popupCharacters,
+               routesThroughInputEngine: routesThroughInputEngine)
     }
 
     /// Returns the string character to append to the composing code.

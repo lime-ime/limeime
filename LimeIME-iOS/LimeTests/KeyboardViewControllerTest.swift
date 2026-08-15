@@ -435,6 +435,76 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(equals.popupKeyboard, "@xml/popup_template")
     }
 
+    func testEasyInputPopupCharactersDecodeCodeAndDisplayRoots() {
+        let cases: [(String, Int, String)] = [
+            ("-\\n儿", 45, "儿"),
+            ("=\\n母", 61, "母"),
+            ("[\\n匚", 91, "匚"),
+            ("]\\n]", 93, "]"),
+            ("'\\nＬ", 39, "Ｌ"),
+            ("\\\\\\nㄏ", 92, "ㄏ")
+        ]
+
+        for (encoded, expectedCode, expectedLabel) in cases {
+            let keys = PopupCharacterLayoutPolicy.keys(from: encoded)
+            XCTAssertEqual(keys.count, 1, encoded)
+            XCTAssertEqual(keys.first?.code, expectedCode, encoded)
+            XCTAssertEqual(keys.first?.label, expectedLabel, encoded)
+            XCTAssertEqual(keys.first?.routesThroughInputEngine, true, encoded)
+        }
+    }
+
+    func testEncodedPopupAlternativesDecodePairwise() {
+        let keys = PopupCharacterLayoutPolicy.keys(from: "123\\nＡＢＣ")
+
+        XCTAssertEqual(keys.map(\.code), [49, 50, 51])
+        XCTAssertEqual(keys.map(\.label), ["Ａ", "Ｂ", "Ｃ"])
+        XCTAssertTrue(keys.allSatisfy { $0.routesThroughInputEngine })
+    }
+
+    func testEasyInputLayoutMetadataDecodesAllSixPhoneRoots() throws {
+        let layout = try loadKeyboardLayoutFixture("lime_ez")
+        let digitKeys = layout.rows.flatMap(\.keys).filter { (49...54).contains($0.code) }
+        let expected: [Int: (code: Int, label: String)] = [
+            49: (45, "儿"), 50: (61, "母"), 51: (91, "匚"),
+            52: (93, "]"), 53: (39, "Ｌ"), 54: (92, "ㄏ")
+        ]
+
+        XCTAssertEqual(digitKeys.count, expected.count)
+        for sourceKey in digitKeys {
+            let decoded = PopupCharacterLayoutPolicy.keys(from: sourceKey.popupCharacters ?? "")
+            let wanted = try XCTUnwrap(expected[sourceKey.code])
+            XCTAssertEqual(decoded.count, 1, "source key \(sourceKey.code)")
+            XCTAssertEqual(decoded.first?.code, wanted.code)
+            XCTAssertEqual(decoded.first?.label, wanted.label)
+            XCTAssertEqual(decoded.first?.routesThroughInputEngine, true)
+        }
+    }
+
+    @MainActor
+    func testEasyInputPopupRootUsesComposingPathInsteadOfDirectInsertion() throws {
+        let controller = KeyboardViewController()
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        controller._testConfigureDeclaredEndkeyPath(
+            imkeys: "-=\\[]'",
+            limeendkey: "",
+            composing: "",
+            candidateBar: bar)
+        let root = try XCTUnwrap(PopupCharacterLayoutPolicy.keys(from: "-\\n儿").first)
+
+        controller._testFirePopupKey(root)
+
+        XCTAssertEqual(controller._testComposing, "-")
+    }
+
+    func testOrdinaryPopupCharactersRemainIndependentDirectInsertKeys() {
+        let keys = PopupCharacterLayoutPolicy.keys(from: "àáâãäåæ")
+
+        XCTAssertEqual(keys.map(\.label), ["à", "á", "â", "ã", "ä", "å", "æ"])
+        XCTAssertEqual(keys.map(\.code), [224, 225, 226, 227, 228, 229, 230])
+        XCTAssertTrue(keys.allSatisfy { !$0.routesThroughInputEngine })
+    }
+
     func testHSLayoutsUseLowercaseUnshiftedAndUppercaseShiftedLetterCodesAndLabels() throws {
         try assertLetterKeyCodes(in: "lime_hs", shouldBeUppercase: false)
         try assertLetterKeyCodes(in: "lime_hs_ipad", shouldBeUppercase: false)
