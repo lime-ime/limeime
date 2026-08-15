@@ -6,7 +6,7 @@
 - Classification: confirmed iOS/iPadOS source defect; fix confirmed on physical iPad and accepted by the maintainer
 - Affected layouts: Dayi English-face keyboard on full-width and narrow iPad
 - Android: not affected by the source defect
-- Delivery: source merged to `master` in PR #229 as merge commit `696ecbaaff5fdc47d0b94baca5c8f5cacdcf10d4`; pending inclusion in a newer iOS build
+- Delivery: source merged to `master` in PR #229 as merge commit `696ecbaaff5fdc47d0b94baca5c8f5cacdcf10d4` and shipped in the public Taiwan App Store version 6.1.38 build 1
 
 ## Problem statement
 
@@ -126,8 +126,10 @@ Native XCTest was not available on this Linux host. The maintainer accepted the 
 ## Delivery follow-up
 
 1. The source fix is merged and `Fixes #228` closed the community issue automatically.
-2. Include the merged fix in a newer iOS build.
-3. Reporter retest after public delivery is useful but does not gate source acceptance, merge, or release.
+2. Jeremy selected locally uploaded App Store build `6.1.38(1)` after the fix merged and replaced build 0 with build 1 plus the #228 release note.
+3. App Store Connect identifies build 1 as the selected `READY_FOR_SALE`, `VALID`, `APP_STORE_ELIGIBLE` build. The Taiwan storefront publishes version 6.1.38 with the #228 release note.
+4. This locally uploaded build has no Xcode Cloud `sourceCommit.commitSha` relationship. Shipment attribution therefore follows the maintainer-confirmed post-merge build chronology rather than an API-attributed archive SHA.
+5. The community reporter has not provided a post-release retest. Preserve the current maintainer-closed issue state unless directed otherwise or the reporter says the defect persists.
 
 ## Public response and follow-up
 
