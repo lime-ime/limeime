@@ -7,7 +7,7 @@
 - Confirmed scope: iOS iPhone Easy Input (`lime_ez`) popup construction
 - Android impact: no corresponding source defect identified
 - iPad impact: the direct `-` and `=` root keys do not use the affected phone popup path
-- Implementation: draft PR https://github.com/lime-ime/limeime/pull/240 contains the bounded fix and regression tests. Native/runtime RED/GREEN gates remain pending.
+- Implementation: draft PR https://github.com/lime-ime/limeime/pull/240 contains the bounded fix and regression tests. Exact-head Xcode Cloud run 54 completed with status `FAILED`: the focused #231 tests and required archive action passed, but the required aggregate test action failed in two `LimeDBTest` methods. Native RED evidence and iPhone runtime verification remain pending.
 - Runtime evidence: source-confirmed, with iPhone UI/device reproduction still requested
 
 ## Architecture preflight and constraint ledger
@@ -101,7 +101,7 @@ The implementation must be driven by a failing behavioral regression before the 
 
 The bounded slice adds `PopupCharacterLayoutPolicy` so valid escaped `code\\ndisplay` metadata resolves to one `KeyDef` whose emitted code and visible label remain distinct. Such keys carry an explicit input-engine routing marker, and `firePopupKey(_:)` sends them through `onKey(primaryCode:)`. Ordinary popup strings continue to resolve scalar by scalar and use the existing direct-insertion path.
 
-Focused XCTest cases cover the decoder, the actual `lime_ez.json` metadata for all six phone roots, the escaped backslash code, multi-alternative encoded metadata, ordinary accented-character popups, and production popup dispatch into the composing path. This Linux host has no `xcodebuild`, so RED/GREEN XCTest execution and iPhone runtime verification remain explicit draft-PR gates rather than completed evidence.
+Five focused XCTest methods collectively cover the decoder, the actual `lime_ez.json` metadata for all six phone roots, escaped-backslash and multi-alternative metadata, ordinary accented-character popups, and production popup dispatch into the composing path. Xcode Cloud run 54 executed exact PR head `39b2a95313a4569a8f0937adc7022bec3a00f509` and completed with status `FAILED`. All five focused methods passed on the iPhone SE (3rd generation), iPhone 16, iPhone 16 Pro, and iPhone 16 Pro Max destinations, and the required archive action succeeded. The required aggregate test action failed because `LimeDBTest.testDB103DBServerRestoreOldBackupRunsUpgradeRepairAndEmojiRefresh()` and `LimeDBTest.testDB103DBServerFactoryResetCopiesBundled103SeedAndEmojiData()` reported `datasourceUnavailable` at `DBServer.swift` lines 1051 and 1171 on the iPhone 16 and iPhone 16 Pro destinations while passing on the other two destinations. Neither the failing test class nor the reported source file is in PR #240's four-file diff, but the aggregate gate remains failed until the failures are investigated or the qualified gap is explicitly accepted. The exact-head run provides native GREEN evidence only, so native RED evidence remains unrecorded. iPhone runtime/device verification of all six roots, candidate lookup, ordinary popups, and the corrected single-key long-press release interaction also remains pending.
 
 ## Follow-up Questions
 
@@ -151,4 +151,6 @@ Android's `lime_ez.xml` uses the established XML `popupCharacters` convention fr
 - [ ] Ordinary one-character-per-alternate popups remain unchanged.
 - [ ] Popup root selection participates in candidate lookup rather than directly committing the display root.
 - [ ] Full and narrow iPad direct-root behavior remains unchanged.
-- [ ] Focused XCTest coverage passes, followed by simulator/device verification.
+- [x] The five focused #231 XCTest methods pass at exact PR head `39b2a95313a4569a8f0937adc7022bec3a00f509` across all four Xcode Cloud destinations.
+- [ ] Native RED evidence is recorded and the required aggregate Xcode Cloud test gate passes, or the qualified unrelated-test gap is explicitly accepted.
+- [ ] iPhone runtime/device verification passes.
