@@ -26,7 +26,7 @@
 #   python3 scripts/build_tricode_db.py --date "2026-07-20 00:00:00 +0800"
 #
 # Optional overrides (defaults match the repo layout):
-#   --cin PATH             input .cin (default Database/tricode-20260805.2.cin)
+#   --cin PATH             input .cin (default Database/tricode-20260816.2.cin)
 #   --out PATH              output .limedb (default Database/tricode.limedb)
 #   --hanconvert-db PATH    basescore source (default
 #                           LimeStudio/app/src/main/res/raw/hanconvertv2.db)
@@ -258,7 +258,7 @@ def main():
     ap = argparse.ArgumentParser(description="Build Database/tricode.limedb from 3code.cin")
     ap.add_argument(
         "--cin",
-        default="Database/tricode-20260805.2.cin",
+        default="Database/tricode-20260816.2.cin",
         help="input .cin path",
     )
     ap.add_argument("--out", default="Database/tricode.limedb", help="output .limedb path")

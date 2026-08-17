@@ -16,7 +16,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "Database" / "tricode-20260805.2.cin"
+SOURCE = ROOT / "Database" / "tricode-20260816.2.cin"
 ARCHIVE = ROOT / "Database" / "tricode.limedb"
 BUILDER_PATH = ROOT / "scripts" / "build_tricode_db.py"
 ORDER_GATE_PATH = ROOT / "scripts" / "test_limedb_order.py"
@@ -28,7 +28,7 @@ ANDROID_CATALOG = (
 )
 IOS_CATALOG = ROOT / "LimeIME-iOS/LimeSettings/IMCatalog.swift"
 LICENSE_PATH = ROOT / "LICENSE.md"
-SOURCE_SHA256 = "fec903da134a8756aa9695ea481083a6a3a436fd16d091d761a30aa1a6838d94"
+SOURCE_SHA256 = "9240641bc03d73f5a2ed1aa41fda65307495db181e2d3ce5aecf13e692aff478"
 
 
 def load_builder():
@@ -57,15 +57,15 @@ class TricodeSourceTest(unittest.TestCase):
             path.write_text(source, encoding="utf-8")
             self.assertEqual("v.current", load_builder().parse_cin(path)["version"])
 
-    def test_committed_source_is_the_reviewed_20260805_2_table(self):
+    def test_committed_source_is_the_reviewed_20260816_2_table(self):
         self.assertTrue(SOURCE.is_file(), f"missing authoritative source: {SOURCE}")
         self.assertEqual(SOURCE_SHA256, hashlib.sha256(SOURCE.read_bytes()).hexdigest())
 
         parsed = load_builder().parse_cin(SOURCE)
-        self.assertEqual("v.20260805.2", parsed["version"])
+        self.assertEqual("v.20260816.2", parsed["version"])
         self.assertEqual("1234567890", parsed["selkey"])
         self.assertEqual(31, len(parsed["keynames"]))
-        self.assertEqual(23_299, len(parsed["rows"]))
+        self.assertEqual(23_359, len(parsed["rows"]))
         self.assertEqual(len(parsed["rows"]), len(set(parsed["rows"])))
 
     def test_order_gate_matches_builder_normalization(self):
@@ -137,7 +137,7 @@ class TricodeBuildTest(unittest.TestCase):
                     ).fetchall()
                 )
             self.assertEqual(load_builder().parse_cin(SOURCE)["rows"], rows)
-            self.assertEqual("v.20260805.2", metadata.get("version"))
+            self.assertEqual("v.20260816.2", metadata.get("version"))
 
     def test_committed_archive_matches_source_order_and_metadata(self):
         builder = load_builder()
@@ -180,8 +180,8 @@ class TricodeBuildTest(unittest.TestCase):
                         "SELECT title, desc FROM im WHERE code = 'tricode'"
                     ).fetchall()
                 )
-                self.assertEqual("v.20260805.2", metadata.get("version"))
-                self.assertEqual("23299", metadata.get("amount"))
+                self.assertEqual("v.20260816.2", metadata.get("version"))
+                self.assertEqual("23359", metadata.get("amount"))
                 self.assertEqual(
                     "https://3code-type.github.io/3code.cin", metadata.get("source")
                 )
@@ -192,7 +192,7 @@ class TricodeWorkflowTest(unittest.TestCase):
     def test_android_catalog_matches_committed_archive(self):
         catalog = ANDROID_CATALOG.read_text(encoding="utf-8")
         self.assertIn(
-            'new CloudVariant("三碼字元", "23,299", "355 KB",',
+            'new CloudVariant("三碼字元", "23,359", "355 KB",',
             catalog,
         )
 
@@ -210,7 +210,7 @@ class TricodeWorkflowTest(unittest.TestCase):
     def test_ios_catalog_matches_committed_archive(self):
         catalog = IOS_CATALOG.read_text(encoding="utf-8")
         self.assertIn('name: "三碼字元"', catalog)
-        self.assertIn("recordCount: 23_299, compressedKB: 355", catalog)
+        self.assertIn("recordCount: 23_359, compressedKB: 355", catalog)
 
     def test_license_attribution_is_version_independent(self):
         tricode_row = next(

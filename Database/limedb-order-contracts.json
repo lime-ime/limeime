@@ -27,18 +27,18 @@
       "grandfathered_sha256": "35a776cf86f06925ddc01e23459e1aeccde24ea62cc2f8ffd4f46fe1c5f4bc52"
     },
     "tricode.limedb": {
-      "source": "Database/tricode-20260805.2.cin",
+      "source": "Database/tricode-20260816.2.cin",
       "source_format": "tricode-cin",
-      "source_sha256": "fec903da134a8756aa9695ea481083a6a3a436fd16d091d761a30aa1a6838d94",
+      "source_sha256": "9240641bc03d73f5a2ed1aa41fda65307495db181e2d3ce5aecf13e692aff478",
       "inner_database": "tricode.db",
       "mapping_table": "custom",
       "metadata_code": "tricode",
       "expected_metadata": {
         "source": "https://3code-type.github.io/3code.cin",
-        "version": "v.20260805.2",
+        "version": "v.20260816.2",
         "name": "三碼",
-        "amount": "23299",
-        "import": "2026-08-05 00:00:00 +0800",
+        "amount": "23359",
+        "import": "2026-08-16 00:00:00 +0800",
         "selkey": "1234567890",
         "imkeys": "',./;abcdefghijklmnopqrstuvwxyz",
         "imkeynames": "〃|，|．|／|；|Ａ|Ｂ|Ｃ|Ｄ|Ｅ|Ｆ|Ｇ|Ｈ|Ｉ|Ｊ|Ｋ|Ｌ|Ｍ|Ｎ|Ｏ|Ｐ|Ｑ|Ｒ|Ｓ|Ｔ|Ｕ|Ｖ|Ｗ|Ｘ|Ｙ|Ｚ"
