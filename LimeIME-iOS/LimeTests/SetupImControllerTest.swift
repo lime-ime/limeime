@@ -590,6 +590,43 @@ final class SetupImControllerTest: XCTestCase {
         XCTAssertEqual(try meta.generation(), 1)
     }
 
+    func testIssue242ExactTricodeCinImportsAndPublishesEveryRow() async throws {
+        let fixtureURL = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(
+                forResource: "3code_v.20260816.2_utf8-corrected",
+                withExtension: "cin"
+            )
+        )
+        let (liveURL, db) = try makeDB()
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.SetupImController(
+            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: fixtureURL, tableName: "tricode")
+
+        switch result {
+        case .success(let count):
+            XCTAssertEqual(count, 23_359, "Import result must report every chardef row")
+        case .failure(let error):
+            XCTFail("Expected exact Issue #242 fixture import to succeed, got \(error)")
+        }
+        XCTAssertEqual(db.countRecords("tricode", nil, nil), 23_359,
+                       "Live tricode table must contain every fixture row")
+        XCTAssertEqual(db.getImConfig("tricode", "version"), "v.20260816.2",
+                       "Live tricode metadata must retain the fixture version")
+        XCTAssertEqual(db.getImConfig("tricode", "name"), "三碼輸入法",
+                       "Live tricode metadata must retain the fixture name")
+
+        let publishedSnapshot = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: publishedSnapshot.path),
+                      "Import must publish a cold database snapshot")
+        if FileManager.default.fileExists(atPath: publishedSnapshot.path) {
+            XCTAssertEqual(try rawRowCount("tricode", in: publishedSnapshot), 23_359,
+                           "Published cold snapshot must contain every tricode row")
+        }
+    }
+
     func testExportIMAsTextIncludesImMetadataFromDatabase() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
