@@ -4,8 +4,8 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/231
 - Classification: confirmed iOS bug
-- State: fixed 2026-08-17 — source corrected, unit-verified on simulator, maintainer-verified on iPhone hardware
-- Scope: iPhone Easy Input (`lime_ez`) long-press popups. iPad and Android unaffected
+- State: PR #245 merged as squash commit `9a38d34de8782bae7c617c1aba82965f9833abc1` on 2026-08-18. The reporter-visible iPhone path is source-corrected and maintainer-verified on hardware; generated-layout durability, direct `code == 0` route coverage, and public iOS delivery remain pending
+- Scope: iPhone Easy Input (`lime_ez`) long-press popups. iPad behavior and Android production behavior are unchanged
 - Supersedes: PR #240 (`fix/231-ios-ez-popup`), closed — see **Rejected approach** below
 
 ## Problem statement
@@ -98,7 +98,7 @@ An alternative using iOS's `longPressCode` (feat#124) was considered and rejecte
 
 ### Automated — passing
 
-`xcodebuild test`, iPhone 16 simulator (18.6), all passed:
+All five focused `xcodebuild test` methods passed on an iOS simulator at PR head `d286af4621dfc3fd51d771fb31724069d3d6b301`. Its relevant implementation and test files are byte-identical to final head `7b5026f584a68c0b771d405509bd65a5d9424e11`, whose complete tree exactly matches squash commit `9a38d34de8782bae7c617c1aba82965f9833abc1`:
 
 - `testEasyInputPhoneRootsDecodeToOneKeyEmittingTheTableCode` — all six roots decode from the real fixture to one key with the table code; no stray separator keys
 - `testOrdinaryPopupCharactersRemainOneKeyPerCharacter` — `àáâãäåæ` stays seven independent keys
@@ -112,7 +112,7 @@ Maintainer-verified on iPhone hardware, 2026-08-17:
 
 - [x] iPhone: long-press `1`–`6`, roots emit their Easy Input table codes through composing and candidate lookup
 
-Not separately exercised — no production behavior path suggests regression, but untested:
+Not separately exercised:
 
 - [ ] Full and narrow iPad: Easy Input direct root keys unchanged (iPad uses direct keys, not this popup path)
 - [ ] Android: Easy Input long-press smoke check (the only Android edit removes a stale comment)
@@ -131,5 +131,6 @@ The checked-in `lime_ez.json` values are corrected and covered by the fixture re
 - [x] No separator characters appear as selectable popup keys
 - [x] Popup root selection enters composing and candidate lookup instead of committing text
 - [x] Ordinary one-key-per-character popups unchanged
-- [x] `popup_domains` text-output keys unchanged
+- [ ] Direct regression for the retained `code == 0` `popup_domains` text-output route. Source inspection supports the retained behavior, but no direct regression currently exists in the repository
 - [x] Device verification on all six roots
+- [ ] The layout converter preserves the AAPT-equivalent values for all six roots and has a focused regeneration/anti-reversion contract
