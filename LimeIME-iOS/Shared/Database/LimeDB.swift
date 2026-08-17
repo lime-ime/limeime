@@ -4927,6 +4927,13 @@ private final class StreamReader: Sequence {
     }
     deinit { fileHandle.closeFile() }
 
+    private func decode(_ data: Data) -> String? {
+        if encoding == .utf8 {
+            return String(decoding: data, as: UTF8.self)
+        }
+        return String(data: data, encoding: encoding)
+    }
+
     func makeIterator() -> AnyIterator<String> {
         AnyIterator {
             while true {
@@ -4937,14 +4944,14 @@ private final class StreamReader: Sequence {
                     let lineData = self.buffer[self.buffer.startIndex..<nl]
                     let removeCount = self.buffer.distance(from: self.buffer.startIndex, to: nl) + 1
                     self.buffer.removeFirst(removeCount)
-                    return String(data: lineData, encoding: self.encoding)
+                    return self.decode(lineData)
                 }
                 if self.eof {
                     // Return any trailing data without a final newline as a last line.
                     if !self.buffer.isEmpty {
                         let tail = self.buffer
                         self.buffer.removeAll(keepingCapacity: false)
-                        return String(data: tail, encoding: self.encoding)
+                        return self.decode(tail)
                     }
                     return nil
                 }
