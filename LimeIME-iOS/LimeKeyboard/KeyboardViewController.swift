@@ -4335,9 +4335,7 @@ extension KeyboardViewController: KeyboardViewDelegate {
     /// Each Unicode scalar becomes one key. Returns nil if chars is empty.
     private func popupCharLayout(for chars: String) -> LimeKeyLayout? {
         guard !chars.isEmpty else { return nil }
-        let keys = chars.unicodeScalars.map { scalar in
-            KeyDef(code: Int(scalar.value), label: String(scalar))
-        }
+        let keys = PopupCharacterLayoutPolicy.keys(from: chars)
         return LimeKeyLayout(id: "popup_chars", rows: [KeyRow(keys: keys)])
     }
 
@@ -5343,25 +5341,20 @@ extension KeyboardViewController: PopupKeyboardViewDelegate {
 
     /// Fire the action for a popup key (shared by popup selection and single-key direct dispatch).
     private func firePopupKey(_ keyDef: KeyDef) {
-        // Special action codes (negative): route through the normal key handler
-        if keyDef.code < 0 {
+        // Any real key code routes through the normal key handler, matching Android's
+        // mini-keyboard listener (LIMEKeyboardBaseView) which forwards primaryCode straight
+        // to mKeyboardActionListener.onKey — so IM popup roots reach composing/candidates.
+        if keyDef.code != 0 {
             onKey(primaryCode: keyDef.code)
             return
         }
 
-        // Determine the character to insert
-        let char: String
-        if keyDef.code > 0, let scalar = Unicode.Scalar(keyDef.code) {
-            char = String(scalar)
-        } else if !keyDef.label.isEmpty {
-            // Strip Android escape prefix if present (e.g. \' → ')
-            let label = keyDef.label
-            char = (label.hasPrefix("\\") && label.count > 1)
-                ? String(label.dropFirst())
-                : label
-        } else {
-            return
-        }
+        // code 0 = text-output key (popup_domains) — Android's onText path.
+        guard !keyDef.label.isEmpty else { return }
+        // Strip Android escape prefix if present (e.g. \' → ')
+        let char = (keyDef.label.hasPrefix("\\") && keyDef.label.count > 1)
+            ? String(keyDef.label.dropFirst())
+            : keyDef.label
 
         // Clear any inline composing first (popup commits bypass the IM engine)
         if composingLength > 0 { clearComposing(force: true) }
@@ -6303,6 +6296,9 @@ extension KeyboardViewController {
 
     /// Drive the real key handler for one primary code.
     func _testDriveKey(_ primaryCode: Int) { onKey(primaryCode: primaryCode) }
+
+    /// Drive popup dispatch through the production route.
+    func _testFirePopupKey(_ keyDef: KeyDef) { firePopupKey(keyDef) }
 
     var _testComposing: String { mComposing }
     var _testCandidateCount: Int { mCandidateList.count }

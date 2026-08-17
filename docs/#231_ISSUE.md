@@ -1,156 +1,131 @@
-# Issue #231: iOS Easy Input Phone Popup Roots Emit Display Text Instead of Table Codes
+# Issue #231: iOS Easy Input phone popup roots emit the wrong code
 
 ## Status
 
-- GitHub issue: https://github.com/lime-ime/limeime/issues/231
-- Classification: `bug`
-- Confirmed scope: iOS iPhone Easy Input (`lime_ez`) popup construction
-- Android impact: no corresponding source defect identified
-- iPad impact: the direct `-` and `=` root keys do not use the affected phone popup path
-- Implementation: draft PR https://github.com/lime-ime/limeime/pull/240 contains the bounded fix and regression tests. Exact-head Xcode Cloud run 54 completed with status `FAILED`: the focused #231 tests and required archive action passed, but the required aggregate test action failed in two `LimeDBTest` methods. Native RED evidence and iPhone runtime verification remain pending.
-- Runtime evidence: source-confirmed, with iPhone UI/device reproduction still requested
+- Issue: https://github.com/lime-ime/limeime/issues/231
+- Classification: confirmed iOS bug
+- State: fixed 2026-08-17 — source corrected, unit-verified on simulator, maintainer-verified on iPhone hardware
+- Scope: iPhone Easy Input (`lime_ez`) long-press popups. iPad and Android unaffected
+- Supersedes: PR #240 (`fix/231-ios-ez-popup`), closed — see **Rejected approach** below
 
-## Architecture preflight and constraint ledger
+## Problem statement
 
-The current accepted references reviewed for this change are:
+On the iPhone Easy Input layout, the number-row keys `1`–`6` carry long-press popup roots whose Easy Input table codes differ from the root shown. Selecting a root emitted the wrong character and did not enter the composing buffer, so the root never reached candidate lookup.
 
-- `docs/KEYBOARD_TYPE.md`, especially the iOS Chinese-IM layout inventory and `resolvedLayoutId(for:)` flow
-- `docs/IPAD_KEYBOARD.md`, especially the Chinese IM iPad generator/direct-key contracts
-- `docs/LIMEIME_ARCHITECTURE.md`, for the normal IM key → composing/search flow
-- `docs/UI_ARCHITECTURE.md`, confirming that this keyboard-extension input path is separate from the Android Settings MVC layer
-- `docs/IM_KEYBOARD_ISSUE.md`, for the cross-platform IM-to-layout resolution and fallback boundaries
+## Reproduction
 
-No accepted amendment or successor document was found that supersedes the relevant popup/key-dispatch contracts.
+1. Enable Easy Input on an iPhone and enter Chinese mode.
+2. Long-press `1` and select the popup root.
+3. Before the fix: the popup offered four items (`-`, `\`, `n`, `儿`), and selecting any of them committed that character to the host editor without entering the composing buffer.
+4. After the fix: the popup offers one item, and selecting it puts `-` into composing and updates candidates.
+5. Repeat for `2`–`6` — see the table below for each key's table code.
 
-| Required behavior | Governing invariant / platform limit | Removable behavior | Consequence of this change |
-|---|---|---|---|
-| A displayed Easy Input root must emit its table code | `KeyDef.code` is the input code and `KeyDef.label` is presentation. Positive Chinese-IM keys normally enter `onKey`. | Scalar-by-scalar parsing of an encoded `code\\ndisplay` entry | The encoded popup becomes one key with a distinct code and label |
-| Root popup selection must query candidates | Chinese composition and lookup are owned by the normal `onKey` path | Direct host insertion for encoded IM roots | Encoded roots compose like direct Chinese-IM keys instead of bypassing the IM engine |
-| Ordinary character alternates must still insert directly | Accent/domain popups are host-text alternates, not IM roots | Nothing in the ordinary scalar path | Ordinary popup strings remain one direct-insert key per scalar |
-| iPad direct roots must remain unchanged | Full/narrow iPad Easy Input layouts use direct positive key codes rather than the phone popup template | No iPad behavior | The decoder is used only for `popup_template` metadata and leaves direct keys unchanged |
-| Android remains the behavioral oracle | Android receives AAPT-resolved popup metadata and already sends the corresponding table codes through its IM path. Its encoding and two-line popup rendering are platform-specific. | No Android production behavior | iOS matches the emitted-code and composing behavior without changing Android or requiring identical popup rendering |
-| Single-key popup release follows the existing iOS popup contract | Decoding each current Easy Input entry produces one popup key. This newly changes long-press release without a slide from no commit under the malformed four-key popup to dispatching the sole root choice on iOS. Android retains its own popup gesture behavior. | The previous malformed four-key popup behavior | Verify the new commit-on-release interaction and preview behavior on iPhone before completion |
+## Root cause
 
-## Problem Statement
+Two independent defects. Neither is repairable from layout data alone.
 
-On the iPhone Easy Input layout, `儿` and `母` are exposed through long-press popups on the `1` and `2` keys. Their table query codes are `-` and `=` respectively, but selecting the displayed root can emit the displayed Chinese character rather than the code required by the Easy Input table. This prevents the selected root from participating in the intended candidate lookup.
+### 1. `popupCharacters` was never decoded
 
-The same encoding convention is present on the phone layout for the `3` through `6` popup roots, so those keys must be checked in the same investigation even though the live issue specifically names `儿` and `母`. Keys `3`, `5`, and `6` also have distinct display roots and table codes. Key `4` uses `]` for both, but the current scalar parser can still expose the separator characters as stray popup keys.
+Android has parsed `popupCharacters` as `codes\ndisplay` since 2012 — `LIMEBaseKeyboard.java:877`, in the constructor that builds a keyboard from a character string:
 
-## Reproduction Steps
-
-1. Enable and select Easy Input on an iPhone.
-2. Enter Chinese mode.
-3. Long-press `1`, then select the popup item displayed as `儿`.
-4. Observe whether the composing code/candidate lookup receives `-` or the displayed `儿`.
-5. Repeat with `2` and `母`, whose required table code is `=`.
-6. Repeat the same check for the popup roots on `3`, `4`, `5`, and `6`.
-
-Expected: selecting a displayed root sends its Easy Input table code and updates candidates through the normal composing path.
-
-Observed from source: the popup creates independent keys from every Unicode scalar and dispatches the selected scalar directly, so the display root is not associated with the required table code.
-
-## Evidence Summary
-
-`LimeKeyboard/Layouts/lime_ez.json` encodes the first two alternates as:
-
-```json
-"popupCharacters": "-\\n儿"
-"popupCharacters": "=\\n母"
+```java
+CharSequence labels = null;
+if (characters.toString().contains("\n")) {
+    String[] charactersAndLabel = characters.toString().split("\n");
+    characters = charactersAndLabel[0];   // → key.codes
+    labels     = charactersAndLabel[1];
+}
 ```
 
-After JSON decoding, these are literal Android-style `\\n`-separated strings. The phone layout uses the same convention for six number-row popup roots:
+The first half supplies `key.codes`; without a newline every character is its own key and supplies both. `lime_ez.xml` uses this for all six phone roots.
 
-| Phone key | Table code prefix | Display root |
+iOS implemented neither half:
+
+- **Data.** `lime_ez.json` carried the *raw XML text* rather than the AAPT-processed value, so the separator arrived as a literal backslash-`n` (`"-\\n儿"`) instead of a newline. The converter copied the attribute verbatim; note that key `6` shows the tell — `\\` is only written that way for a consumer that processes escapes.
+- **Parser.** `popupCharLayout(for:)` mapped every Unicode scalar to its own key with `code == scalar`. Key `1` therefore produced four keys emitting `-`, `\`, `n`, and `儿`.
+
+### 2. Popup dispatch bypassed the input engine
+
+`firePopupKey(_:)` routed negative codes to `onKey` but inserted every positive code directly:
+
+```swift
+if composingLength > 0 { clearComposing(force: true) }
+textDocumentProxy.insertText(char)
+```
+
+So even a correctly decoded code 45 would have been committed as text rather than looked up. Android has no such branch: the mini-keyboard listener installed in `inflateMiniKeyboardContainer` forwards `primaryCode` straight to `mKeyboardActionListener.onKey(...)` for every popup key.
+
+## Affected keys
+
+| Phone key | Table code | Root |
 |---|---:|---|
-| `1` | `-` | `儿` |
-| `2` | `=` | `母` |
-| `3` | `[` | `匚` |
-| `4` | `]` | `]` |
-| `5` | `'` | `Ｌ` |
-| `6` | `\\` | `ㄏ` |
+| `1` | `-` (45) | 儿 |
+| `2` | `=` (61) | 母 |
+| `3` | `[` (91) | 匚 |
+| `4` | `]` (93) | ] |
+| `5` | `'` (39) | Ｌ |
+| `6` | `\` (92) | ㄏ |
 
-`KeyboardViewController.resolvePopupLayout(for:)` explicitly routes `popupKeyboard == "popup_template"` to `popupCharLayout(for:)`, passing the key's `popupCharacters`. That helper currently maps every Unicode scalar to `KeyDef(code: scalar, label: scalar)`. For `-\\n儿`, it creates four popup keys: `-`, `\\`, `n`, and `儿`. `firePopupKey(_:)` then inserts the selected positive key's Unicode scalar directly through `textDocumentProxy.insertText` after clearing composition. It does not preserve a distinct lookup code and display label or route an IM-root popup through candidate lookup.
+`lime_ez` is the only layout using the newline form — verified across all 60 layout JSONs.
 
-The iPad Easy Input layouts expose code `45` (`-`) and code `61` (`=`) as direct keys, so the reported iPhone popup construction is the confirmed source boundary rather than a shared table-data failure.
+## Fix
 
-## Existing Test Coverage And Gap
+Three changes, mirroring Android.
 
-The inspected iOS suite has one nearby layout-fixture test, `testET41PopupDigitsShowOnPhoneLongPressKeyLabels`, which verifies raw `popupCharacters` metadata for another input method. Generic popup touch tests cover hit testing and gesture dispatch. None of the inspected tests exercises Android-style `code\\ndisplay` decoding into a popup `KeyDef`, verifies that a display root carries a different emitted code, or checks the Easy Input `1`/`2` user path.
+**Data** — `lime_ez.json` ×6 now carries the processed value (real newline), matching what AAPT hands Android.
 
-The current helper is structurally fragile for any popup entry where display text differs from emitted text because its scalar-by-scalar representation cannot express that distinction.
+**Parser** — `PopupCharacterLayoutPolicy.keys(from:)` in `Shared/Models/KeyLayout.swift` is the Java split transcribed:
 
-## Likely Root Cause
+```swift
+let parts  = chars.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+let labels = parts.count > 1 ? parts[1].unicodeScalars : parts[0].unicodeScalars
+return zip(parts[0].unicodeScalars, labels).map { KeyDef(code: Int($0.value), label: String($1)) }
+```
 
-The root cause is confirmed at the source boundary: iOS reused Android-originated `popupCharacters` strings without implementing their code/display separator semantics. The generic iOS helper assumes that each scalar is both the visible label and emitted character. Easy Input requires one popup item whose visible root and emitted table code differ.
+`labels = codes` when there is no newline reproduces Android's `labels == null` branch. `zip` truncates a mismatched pair where Android throws `StringIndexOutOfBounds`.
 
-Physical-device evidence is still useful to confirm the rendered popup arrangement and all affected phone keys, but it is not required to establish that the current helper cannot satisfy the layout contract.
+**Dispatch** — `firePopupKey(_:)` forwards any real code to `onKey`, matching the mini-keyboard listener. The `code == 0` branch is retained for `popup_domains`, whose keys carry their output in the label — that is Android's `keyOutputText`/`onText` path, and a bare `onKey` would drop it (`handleCharacter` guards `code > 0`).
 
-## Proposed Solution
+No new `KeyDef` field. Files touched: `lime_ez.json`, `KeyLayout.swift`, `KeyboardViewController.swift`, plus tests.
 
-1. Move popup-character decoding into a focused, testable helper shared by popup layout resolution.
-2. Preserve ordinary popup strings such as accented-letter lists as one key per character.
-3. Recognize the Android-style escaped separator used by converted LIME layouts and create one `KeyDef` with the decoded table code plus the display root label.
-4. Correctly handle an escaped backslash table code before the separator.
-5. Add explicit dispatch semantics for IM-root popup keys so their positive table codes enter `onKey` or the equivalent composing/candidate path instead of using `firePopupKey(_:)`'s ordinary direct-insertion branch. Keep ordinary character alternates on the existing direct-insertion path.
-6. Avoid changing iPad direct-key behavior or unrelated standard character popups.
+## Rejected approach (PR #240)
 
-The implementation must be driven by a failing behavioral regression before the production helper is changed.
+PR #240 identified the same defect but added a `routesThroughInputEngine` flag to `KeyDef` — a per-key opt-in for behavior that has no opt-out on Android — and threaded it through `LayoutLoader` and `resolvedDomainLayout`, where nothing sets it. It also taught the Swift parser to match the literal backslash-`n` in the JSON rather than correcting the data, which would have locked the conversion error in as the iOS format. Its Xcode Cloud run failed and device verification was outstanding.
 
-## Implementation slice
+An alternative using iOS's `longPressCode` (feat#124) was considered and rejected: `longPressCode` has no counterpart in Android's `LIMEBaseKeyboard_Key` styleable, so `lime_ez.json` would have stopped mirroring `lime_ez.xml` structurally. `popupCharacters` is the attribute both platforms have.
 
-The bounded slice adds `PopupCharacterLayoutPolicy` so valid escaped `code\\ndisplay` metadata resolves to one `KeyDef` whose emitted code and visible label remain distinct. Such keys carry an explicit input-engine routing marker, and `firePopupKey(_:)` sends them through `onKey(primaryCode:)`. Ordinary popup strings continue to resolve scalar by scalar and use the existing direct-insertion path.
+## Verification
 
-Five focused XCTest methods collectively cover the decoder, the actual `lime_ez.json` metadata for all six phone roots, escaped-backslash and multi-alternative metadata, ordinary accented-character popups, and production popup dispatch into the composing path. Xcode Cloud run 54 executed exact PR head `39b2a95313a4569a8f0937adc7022bec3a00f509` and completed with status `FAILED`. All five focused methods passed on the iPhone SE (3rd generation), iPhone 16, iPhone 16 Pro, and iPhone 16 Pro Max destinations, and the required archive action succeeded. The required aggregate test action failed because `LimeDBTest.testDB103DBServerRestoreOldBackupRunsUpgradeRepairAndEmojiRefresh()` and `LimeDBTest.testDB103DBServerFactoryResetCopiesBundled103SeedAndEmojiData()` reported `datasourceUnavailable` at `DBServer.swift` lines 1051 and 1171 on the iPhone 16 and iPhone 16 Pro destinations while passing on the other two destinations. Neither the failing test class nor the reported source file is in PR #240's four-file diff, but the aggregate gate remains failed until the failures are investigated or the qualified gap is explicitly accepted. The exact-head run provides native GREEN evidence only, so native RED evidence remains unrecorded. iPhone runtime/device verification of all six roots, candidate lookup, ordinary popups, and the corrected single-key long-press release interaction also remains pending.
+### Automated — passing
 
-## Follow-up Questions
+`xcodebuild test`, iPhone 16 simulator (18.6), all passed:
 
-- Which LIME version and iOS version first reproduced this on an iPhone?
-- Does the popup visibly include stray `\\` or `n` items, or only the intended display root?
-- Do the `3` through `6` Easy Input popup roots fail in the same way?
+- `testEasyInputPhoneRootsDecodeToOneKeyEmittingTheTableCode` — all six roots decode from the real fixture to one key with the table code; no stray separator keys
+- `testOrdinaryPopupCharactersRemainOneKeyPerCharacter` — `àáâãäåæ` stays seven independent keys
+- `testEncodedPopupAlternativesDecodePairwise` — `123\nＡＢＣ` decodes pairwise
+- `testPopupRootDispatchEntersComposingInsteadOfCommittingText` — firing a decoded root through the production `firePopupKey` leaves `-` in the composing buffer instead of committing text
+- `testET41PopupDigitsShowOnPhoneLongPressKeyLabels` — pre-existing single-char popup unchanged
 
-These questions refine runtime scope but do not block source correction.
+### Runtime
 
-## Platform Impact
+Maintainer-verified on iPhone hardware, 2026-08-17:
 
-### iOS
+- [x] iPhone: long-press `1`–`6`, roots emit their Easy Input table codes through composing and candidate lookup
 
-- **iPhone:** source-confirmed defect in the `lime_ez` popup path. At minimum, `儿` and `母` cannot be represented with the required distinct display label and emitted code. Keys `3`, `5`, and `6` have the same display/code divergence. Key `4` shares the separator-parsing defect even though its display and code are both `]`. All six encoded popups require regression coverage and runtime verification.
-- **iPad:** no matching source defect identified for `儿` and `母` because the iPad layout provides direct code `45` and `61` keys. Verify full and narrow iPad layouts remain unchanged after any shared popup-parser change.
+Not separately exercised — no source path suggests regression, but untested:
 
-### Android
+- [ ] Full and narrow iPad: Easy Input direct root keys unchanged (iPad uses direct keys, not this popup path)
+- [ ] Android: Easy Input long-press smoke check (no Android source change in this fix)
 
-Android's `lime_ez.xml` uses the established XML `popupCharacters` convention from which the iOS JSON was converted. Android does not use `KeyboardViewController.popupCharLayout(for:)`, and the issue reports no Android failure. No Android source change is currently indicated. Run a focused Android Easy Input long-press smoke check to ensure the established behavior remains the parity oracle.
+## Platform impact
 
-## Verification Plan
+**iOS iPhone:** fixed. **iOS iPad:** the iPad Easy Input layouts expose `-` and `=` as direct keys and do not use this popup path; the shared parser change is covered by the ordinary-popup regression test. **Android:** no source change. The stale `onLongPress` TODO in `LIMEKeyboardBaseView` was removed — single-char popups have been handled since 2012 by injecting a synthetic `ACTION_DOWN` so the lone key is preselected and commits on release.
 
-### Automated RED/GREEN coverage
+## Acceptance criteria
 
-1. Add a focused test proving that `-\\n儿` resolves to one popup key with code `45` and label `儿`.
-2. Add the equivalent `=\\n母` assertion with code `61` and label `母`.
-3. Add an escaped-backslash case for the `6` key.
-4. Add a standard multi-character popup case such as accented letters to prove each ordinary character remains independently selectable.
-5. Add an Easy Input layout contract test covering all six encoded phone popup roots and forbidding stray `\\`/`n` keys.
-6. Prove selected root keys enter the composing/table lookup path instead of inserting their display labels as committed text.
-
-### Runtime verification
-
-- iPhone portrait: long-press `1` and `2`, select `儿` and `母`, and verify composing codes/candidates use `-` and `=`.
-- iPhone portrait: verify the popup roots on `3` through `6`.
-- iPhone portrait: verify long-press release behavior and preview presentation for the now-correct single-key popup.
-- iPhone: verify an ordinary accented-letter popup remains unchanged.
-- Full and narrow iPad: verify direct Easy Input root keys still emit the expected codes.
-- Android phone: smoke-test the equivalent Easy Input popups as the established behavior reference.
-
-## Acceptance Criteria
-
-- [ ] `儿` is displayed while emitting Easy Input code `-`.
-- [ ] `母` is displayed while emitting Easy Input code `=`.
-- [ ] No literal separator components appear as selectable popup keys.
-- [ ] The remaining encoded Easy Input phone roots are handled correctly.
-- [ ] Ordinary one-character-per-alternate popups remain unchanged.
-- [ ] Popup root selection participates in candidate lookup rather than directly committing the display root.
-- [ ] Full and narrow iPad direct-root behavior remains unchanged.
-- [x] The five focused #231 XCTest methods pass at exact PR head `39b2a95313a4569a8f0937adc7022bec3a00f509` across all four Xcode Cloud destinations.
-- [ ] Native RED evidence is recorded and the required aggregate Xcode Cloud test gate passes, or the qualified unrelated-test gap is explicitly accepted.
-- [ ] iPhone runtime/device verification passes.
+- [x] Each of the six roots resolves to exactly one popup key emitting its Easy Input table code
+- [x] No separator characters appear as selectable popup keys
+- [x] Popup root selection enters composing and candidate lookup instead of committing text
+- [x] Ordinary one-key-per-character popups unchanged
+- [x] `popup_domains` text-output keys unchanged
+- [x] Device verification on all six roots

@@ -15,7 +15,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "-\\n儿"
+          "popupCharacters": "-\n儿"
         },
         {
           "code": 50,
@@ -27,7 +27,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "=\\n母"
+          "popupCharacters": "=\n母"
         },
         {
           "code": 51,
@@ -39,7 +39,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "[\\n匚"
+          "popupCharacters": "[\n匚"
         },
         {
           "code": 52,
@@ -51,7 +51,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "]\\n]"
+          "popupCharacters": "]\n]"
         },
         {
           "code": 53,
@@ -63,7 +63,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "'\\nＬ"
+          "popupCharacters": "'\nＬ"
         },
         {
           "code": 54,
@@ -75,7 +75,7 @@
           "isRepeatable": false,
           "isSticky": false,
           "popupKeyboard": "@xml/popup_template",
-          "popupCharacters": "\\\\\\nㄏ"
+          "popupCharacters": "\\\nㄏ"
         },
         {
           "code": 55,
