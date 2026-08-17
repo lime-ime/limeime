@@ -33,6 +33,31 @@ Both platforms intentionally prepend a composing-code echo candidate containing 
 
 A focused Android regression using that exact candidate-list shape failed before the production change: expected selected index `0`, actual index `1`. Existing iOS candidate-selection tests covered exact-code promotion, code inequality for a punctuation record, arbitrary non-code candidates, and browse-only lists, but not a shorter `partialMatchToCode` record. Android had no focused unit test for this default-selection boundary.
 
+## Architecture preflight
+
+### Accepted architecture and design sources
+
+The affected subsystem is the cross-platform normal candidate-selection and commit path, including the separate Lime end-key resolver that can synchronously refresh the same composing list. The following current accepted documents were read in full before readiness progression:
+
+- `docs/LIMEIME_ARCHITECTURE.md`: core components, mapping record types, query path, and candidate selection/commit flow.
+- `docs/IM_SERVICE.md`: composing-state behavior, Space/Enter selection, continuous typing, default candidate selection, and commit behavior.
+- `docs/HIGHLIGHT_SELECTION_PORT.md`: Android source-of-truth behavior and normal-list versus associated-list selection rules.
+- `docs/CANDI_FUNCTION_KEYS.md`: candidate display states and Space/Enter behavior matrix.
+- `docs/CHI_PERIOD_COMMA_INS.md`: composing echo and exact-code punctuation behavior.
+- `docs/CIN_LIME_SPEC.md`: accepted table semantics and Lime end-key commit behavior.
+
+Repository history and design-document searches found no amendment, successor, rearchitecture, or supersession note that changes this contract.
+
+### Constraint ledger
+
+| Required behavior | Governing invariant | Platform limit | Removable behavior | Consequence of an over-broad change |
+|---|---|---|---|---|
+| Exact full-code mappings remain the default selection. An incomplete code with only a shorter-prefix partial candidate keeps the complete raw composing echo selected. | The visible highlight, normal service commit target, and Lime end-key re-resolution target agree. Partial candidates remain visible and manually selectable. Associated lists remain browse-only. | Android uses `InputConnection` composing text while iOS simulates inline composition, but both expose equivalent mapping record types and selection policies. Neither platform requires prefix promotion. | Unconditional promotion based only on `partialMatchToCode`, including duplicate Android and iOS Lime end-key selectors. | A broad removal could break exact Chinese commits, full-width punctuation defaults, continuous typing after explicit partial selection, or highlight/commit consistency. |
+
+### Architecture-aware review
+
+An independent review of PR head `c4902dd58604b05f427d6202a883bab62fcce56e` found that both Lime end-key resolvers still promoted a shorter partial candidate even when the visible normal-list policy selected the raw composing echo. Readiness progression was paused. The branch then added RED/GREEN resolver coverage and delegated composing/runtime end-key lists to the same normal selection policy on Android and iOS. A second independent review of exact head `b2b87a7617fbb5a68f0c9e17cef0292aa7c3a0e7` returned `NO-ARCHITECTURE-CONFLICT` with no source blocker. Exact-code and code-equal punctuation selection remain covered.
+
 ## Root cause
 
 The shared selection rule conflated two different conditions:
