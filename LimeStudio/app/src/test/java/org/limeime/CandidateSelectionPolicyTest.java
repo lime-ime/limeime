@@ -21,6 +21,15 @@ public class CandidateSelectionPolicyTest {
     }
 
     @Test
+    public void endkeyResolutionKeepsRawTextForIncompleteCode() {
+        Mapping composing = mapping("12345", "12345", MappingType.COMPOSING);
+        Mapping partial = mapping("1", "一", MappingType.PARTIAL);
+        java.util.List<Mapping> suggestions = Arrays.asList(composing, partial);
+
+        assertSame(composing, LIMEService.endkeyCommitCandidateForSuggestions(suggestions));
+    }
+
+    @Test
     public void exactCodeStillSelectsMappedCandidate() {
         Mapping composing = mapping("1", "1", MappingType.COMPOSING);
         Mapping exact = mapping("1", "一", MappingType.EXACT);

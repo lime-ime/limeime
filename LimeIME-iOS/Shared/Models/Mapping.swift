@@ -121,6 +121,9 @@ enum LimeEndkeyPolicy {
 
     static func commitCandidateIndex(_ suggestions: [Mapping]) -> Int {
         guard !suggestions.isEmpty else { return -1 }
+        if suggestions[0].isComposingCodeRecord || suggestions[0].isRuntimeBuiltPhraseRecord {
+            return CandidateSelectionPolicy.defaultHighlightedCandidateIndex(suggestions)
+        }
         if let index = suggestions.firstIndex(where: isEndkeyCommitCandidate) {
             return index
         }

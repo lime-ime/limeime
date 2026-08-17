@@ -2561,6 +2561,10 @@ public class LIMEService extends InputMethodService
         if (suggestions == null || suggestions.isEmpty()) {
             return -1;
         }
+        Mapping first = suggestions.get(0);
+        if (first.isComposingCodeRecord() || first.isRuntimeBuiltPhraseRecord()) {
+            return defaultHighlightedCandidateIndex(suggestions, false);
+        }
         for (int i = 0; i < suggestions.size(); i++) {
             if (isEndkeyCommitCandidate(suggestions.get(i))) {
                 return i;
