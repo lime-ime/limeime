@@ -394,6 +394,35 @@ final class SetupImControllerTest: XCTestCase {
         XCTAssertGreaterThan(db.countRecords("custom", nil, nil), 0)
     }
 
+    func testDatabaseImportFileRejectsInvalidTableBeforeSourceInterpolation() throws {
+        let (liveURL, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: liveURL) }
+        let sourceURL = liveURL.deletingLastPathComponent().appendingPathComponent("invalid-source.db")
+        let sourceQueue = try DatabaseQueue(path: sourceURL.path)
+        defer { try? sourceQueue.close() }
+        try sourceQueue.write { database in
+            try database.execute(sql: """
+                CREATE TABLE \"invalid;drop\" (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT,
+                    word TEXT,
+                    score INTEGER DEFAULT 0
+                )
+                """)
+            try database.execute(sql: "INSERT INTO \"invalid;drop\" (code, word, score) VALUES ('bad', '無效', 1)")
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+
+        XCTAssertThrowsError(try importDatabaseFile(server: server,
+                                                    url: sourceURL,
+                                                    tableName: "invalid;drop")) { error in
+            guard case LimeIME.LimeDBError.invalidTableName(let tableName) = error else {
+                return XCTFail("Expected invalidTableName, got \(error)")
+            }
+            XCTAssertEqual(tableName, "invalid;drop")
+        }
+    }
+
     func testExportLimedbRemoveAndReimportRestoresSameCustomEntries() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }

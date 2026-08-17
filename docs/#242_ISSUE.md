@@ -3,15 +3,15 @@
 ## Status
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/242
-- Classification: confirmed iOS defect; runtime boundary not yet isolated
-- State: open, source unfixed
+- Classification: confirmed iOS named-table CIN staging/publication defect
+- State: open; source fix implemented on `fix/242-ios-tricode-cin-import`, merge and physical-device verification pending
 - Reporter: `3code-type`
 - Reporter-supplied environment: iPhone 17, `OS 27.0 bets5` (understood as iOS 27.0 beta 5), LIME `6.1.38-2026`
 - Maintainer reproduction: independently reproduced on a physical iPhone 17 Pro Max using the official `3code.cin` through `三碼 → 匯入 .cin / .lime`; do not infer the reporter's OS or app build for this device
 
 ## Problem statement
 
-Importing the official 三碼輸入法 v.20260816.2 `3code.cin` through the named 三碼 import path does not complete successfully on iPhone. The reporter relayed repeated failure on an iPhone 17, and the maintainer independently reproduced the user-visible import failure on an iPhone 17 Pro Max. This confirms the iOS import contract is broken even though the exact failing runtime boundary is not yet known.
+Importing the official 三碼輸入法 v.20260816.2 `3code.cin` through the named 三碼 import path does not complete successfully on iPhone. The reporter relayed repeated failure on an iPhone 17, and the maintainer independently reproduced the user-visible import failure on an iPhone 17 Pro Max. Native RED tests isolated the failure to the named-table staging/publication handoff: parsing completes, but the populated `tricode` staging table is not selected for publication.
 
 The issue also requests a catalog update to v.20260816.2. That data-update request follows the existing downloadable-table workflow and must remain separate from the confirmed manual-import defect.
 
@@ -67,34 +67,38 @@ An independent architecture-aware review returned `NO-ARCHITECTURE-CONFLICT` for
 |---|---|---|---|---|
 | A valid UTF-8 `.cin` selected for the named 三碼 destination imports its mappings and reaches a terminal visible success count, or returns a terminal visible error. | The chosen named IM fixes the destination table; `.cin` uses text parsing; heavy I/O stays off `MainActor`; CIN metadata/chardef semantics and Android parity remain intact; successful replacement completes lifecycle publication. | iOS security-scoped file access and beta-OS behavior can affect the entry path, but neither prohibits import. | None identified before RED/runtime tracing. | Broad parser or lifecycle changes could regress legacy `.cin`/`.lime`, metadata/default-keyboard assignment, learned-record preservation, atomic replacement, or cold/hot publication. |
 
-## Likely root cause
+## Root cause
 
-The root cause is not yet established. The current path has four discriminating regions:
+The regression is in the iOS staging handoff introduced with the atomic cold table-lifecycle path around commit `9bd95179`:
 
-1. security-scoped picker access and copy into a temporary `.cin` URL;
-2. CIN stream reading and row parsing into a staging database;
-3. atomic replacement and learned-record preservation;
-4. pending-change publication and UI completion state.
+1. A fresh staging `LimeDB` always contains an empty `custom` table.
+2. Named CIN import correctly parses rows into the requested table, such as `tricode`.
+3. `readStagedTablePayload` nevertheless selected `custom` first whenever that table existed.
+4. Publication therefore validated the empty `custom` payload against destination `tricode`, threw `invalidStagingDatabase("tricode")`, and never committed rows, lifecycle intent, metadata, or the cold snapshot.
 
-Current evidence confirms only that the end-to-end iOS operation fails. It does not identify an error, imported count, timeout state, file-read result, parser result, transaction result, or publication result. The reporter's beta OS may contribute, but the maintainer reproduction must not inherit that OS/build detail without separate evidence.
+Both pinned fixtures prove that file content is not the discriminator: direct parsing imports 23,299 rows from v.20260805.2 and 23,359 rows from v.20260816.2, while the pre-fix complete lifecycle fails identically for both. The defect therefore affects iOS CIN/text imports into named non-`custom` destinations through this staging path, not only the reported 三碼 revision. CIN import into `custom` is unaffected because its requested source and destination are both `custom`.
 
-## Proposed solution
+Android is the behavioral oracle. Its text importer writes directly into the requested destination table; its database-backup importer separately supports mappings stored in `sourceDB.custom`. The iOS correction must preserve those two distinct contracts rather than globally reorder source-table fallback.
 
-Do not select an implementation until the first runtime boundary is observed. Add a focused RED/trace that proves whether the selected security-scoped URL is copied to a nonempty, UTF-8-readable temporary `.cin` and handed to `SetupImController.importTxtFile` with destination `tricode`.
+## Solution
 
-- If copy/access fails, preserve iOS security-scoped handling and return a terminal user-visible error.
-- If handoff succeeds, move the next RED boundary to staging parse completion and exact inserted count before changing parser behavior.
-- Preserve named-destination routing, CIN semantics, learned records, atomic replacement, default `limenumsym2` assignment, and lifecycle publication.
+Add explicit source-table intent to the atomic staging lifecycle mutation:
+
+- CIN/text import passes the requested table as its staging mapping and metadata source, so `tricode → tricode` and `custom → custom`, matching Android text-import behavior.
+- `.limedb`/ZIP/database imports leave the source unspecified, preserving Android backup compatibility: mappings select `sourceDB.custom` first and fall back to `sourceDB.<requested table>`, while metadata retains the backup path's destination-or-`custom` lookup.
+- Validate the requested destination and any explicit source table before using either as a SQL identifier.
+
+The parser, CIN directives, batching, duplicate handling, portable schema, Android source, learned-record preservation, atomic lifecycle transaction, and publication mechanisms remain unchanged.
 
 ## Platform impact
 
 ### iOS
 
-Confirmed affected by the maintainer on a physical iPhone 17 Pro Max. The reporter separately supplied iPhone 17, iOS 27.0 beta 5, and LIME 6.1.38-2026. Exact failing stage and broader iPhone/iPad scope remain unknown.
+Confirmed affected by the maintainer on a physical iPhone 17 Pro Max. The reporter separately supplied iPhone 17, iOS 27.0 beta 5, and LIME 6.1.38-2026. The source defect is device-independent within affected iOS builds: any named non-`custom` CIN destination using this staging path encounters the same empty-`custom` selection condition. Physical verification of the corrected build remains required.
 
 ### Android
 
-The reporter states Android phones can install the same table, and no Android failure is confirmed. Android has a separate file-picker/runtime path but shares CIN semantics; use Android as a compatibility baseline and do not change its behavior without a failing parity test.
+The reporter states Android phones can install the same table, and no Android failure is confirmed. Android text import writes directly into the requested table and does not use the defective iOS staging handoff. Android database backup import uses `sourceDB.custom` with requested-table fallback; the iOS fix keeps this behavior under a separate source-selection path.
 
 ## Follow-up questions
 

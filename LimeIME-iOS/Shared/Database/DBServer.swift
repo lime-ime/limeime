@@ -1752,6 +1752,7 @@ final class DBServer {
     func importFromAttachedDB(sourcePath: String, tableName: String, publish: Bool = true) throws {
         try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
                                                               stagingDatabaseURL: URL(fileURLWithPath: sourcePath),
+                                                              sourceTable: nil,
                                                               preserveLearning: false,
                                                               publishImmediately: publish))
     }
@@ -1774,6 +1775,7 @@ final class DBServer {
         defer { removeTemporaryItem(at: stagingURL.deletingLastPathComponent()) }
         try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
                                                               stagingDatabaseURL: stagingURL,
+                                                              sourceTable: tableName,
                                                               preserveLearning: preserveLearning,
                                                               publishImmediately: publish))
     }
@@ -1801,6 +1803,7 @@ final class DBServer {
         }
         try performTableLifecycleMutation(.replaceFromStaging(table: tableName,
                                                               stagingDatabaseURL: dbURL,
+                                                              sourceTable: nil,
                                                               preserveLearning: false,
                                                               publishImmediately: true))
     }
