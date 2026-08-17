@@ -112,14 +112,18 @@ Maintainer-verified on iPhone hardware, 2026-08-17:
 
 - [x] iPhone: long-press `1`–`6`, roots emit their Easy Input table codes through composing and candidate lookup
 
-Not separately exercised — no source path suggests regression, but untested:
+Not separately exercised — no production behavior path suggests regression, but untested:
 
 - [ ] Full and narrow iPad: Easy Input direct root keys unchanged (iPad uses direct keys, not this popup path)
-- [ ] Android: Easy Input long-press smoke check (no Android source change in this fix)
+- [ ] Android: Easy Input long-press smoke check (the only Android edit removes a stale comment)
 
 ## Platform impact
 
-**iOS iPhone:** fixed. **iOS iPad:** the iPad Easy Input layouts expose `-` and `=` as direct keys and do not use this popup path; the shared parser change is covered by the ordinary-popup regression test. **Android:** no source change. The stale `onLongPress` TODO in `LIMEKeyboardBaseView` was removed — single-char popups have been handled since 2012 by injecting a synthetic `ACTION_DOWN` so the lone key is preselected and commits on release.
+**iOS iPhone:** fixed. **iOS iPad:** the iPad Easy Input layouts expose `-` and `=` as direct keys and do not use this popup path; the shared parser change is covered by the ordinary-popup regression test. **Android:** no behavior change. The only Android source edit removed the stale `onLongPress` TODO in `LIMEKeyboardBaseView` — single-char popups have been handled since 2012 by injecting a synthetic `ACTION_DOWN` so the lone key is preselected and commits on release.
+
+## Regeneration follow-up
+
+The checked-in `lime_ez.json` values are corrected and covered by the fixture regression, but `scripts/convert_keyboard_layouts.py` still copies raw Android XML `popupCharacters` values verbatim. Running the converter therefore recreates the old literal backslash-`n` representation. Before any future iOS keyboard-layout regeneration, update the converter to emit AAPT-equivalent `codes\ndisplay` values and add a focused generator contract for all six Easy Input roots.
 
 ## Acceptance criteria
 
