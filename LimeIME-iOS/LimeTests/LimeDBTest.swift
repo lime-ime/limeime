@@ -1244,6 +1244,23 @@ final class LimeDBTest: XCTestCase {
 
     // MARK: - 10a. importTxtFile parity fix regression tests
 
+    func testImportContinuesAfterMalformedUtf8Line() throws {
+        let db = try makeLimeDB()
+        let importURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".cin")
+        defer { try? FileManager.default.removeItem(at: importURL) }
+
+        var content = Data("%chardef begin\na 甲\n".utf8)
+        content.append(contentsOf: [0xFF, 0x0A])
+        content.append(Data("b 乙\n%chardef end\n".utf8))
+        try content.write(to: importURL)
+
+        try db.importTxtFile(at: importURL.path, tableName: LIME.DB_TABLE_CUSTOM)
+
+        XCTAssertEqual(db.getMappingByCode("b", softKeyboard: true, getAllRecords: false)?.first?.getWord(), "乙",
+                       "A malformed UTF-8 line must not stop valid mappings on later physical lines from importing")
+    }
+
     func testImportReplacesRowsInsteadOfDuplicatingOnReimport() throws {
         let db = try makeLimeDB()
         let importURL = FileManager.default.temporaryDirectory
