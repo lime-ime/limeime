@@ -1,12 +1,13 @@
 encode=UTF-8
 name=三碼中文輸入法_次常用字版
+#授權宣告：CC BY-NC-SA 4.0（免費分享、禁止商用）
 #作者：無書自通（改編）源自王堯世先生創作之象形王碼輸入法（收錄BIG5碼13060個漢字&Unicode碼29092個漢字）
-#版本：v.20260805.2
+#版本：v.20260816.2
 #網址：https://3code-type.github.io/
 %ename 3code
 %cname 三碼輸入法
 %sname 三碼
-%version v.20260805.2
+%version v.20260816.2
 %selkey 1234567890
 %keyname begin
 '	〃
@@ -87,7 +88,6 @@ em	❤️
 ,	申
 ,	虫
 ,	亠
-,	讠
 .	心
 .	˙
 .	ˊ
@@ -165,6 +165,7 @@ f	厂
 f	广
 f	疒
 f	𠂇
+f	龵
 g	穴
 g	ㄢ
 g	冖
@@ -192,6 +193,7 @@ i	亞
 i	亜
 i	丨
 i	⺊
+i	讠
 i	⻈
 j	丁
 j	亅
@@ -360,6 +362,7 @@ s.	。
 s.	．
 s.	‰
 s/	？
+s/	／
 s;	：
 s;	；
 sj	；
@@ -648,6 +651,41 @@ ba	，
 ba	．
 ba	／
 ba	；
+us	¹
+us	²
+us	³
+us	⁴
+us	⁵
+us	⁶
+us	⁷
+us	⁸
+us	⁹
+us	⁰
+us	‧
+us	⁺
+us	⁻
+us	ˣ
+us	ᐟ
+us	⁼
+us	⁽
+us	⁾
+us	ⁿ
+us	ꜝ
+is	₁
+is	₂
+is	₃
+is	₄
+is	₅
+is	₆
+is	₇
+is	₈
+is	₉
+is	₀
+is	₊
+is	₋
+is	₌
+is	₍
+is	₎
 #常用字
 ''	仇
 '';	佻
@@ -1565,6 +1603,7 @@ ba	；
 /et	秤
 /et	拜
 /et	鼾
+/ew	舔
 /ex	段
 /fl	牴
 /fl	舐
@@ -1981,6 +2020,7 @@ ba	；
 ;kc	濫
 ;kl	汽
 ;ko	海
+;l	氾
 ;l'	滇
 ;la	凝
 ;ld	池
@@ -3191,6 +3231,7 @@ fon	厘
 fou	癌
 fpm	瘺
 fpt	癖
+fq	看
 fq'	魘
 fq'	覷
 fqa	厭
@@ -3285,6 +3326,7 @@ g/o	窖
 g/t	牢
 g;n	窪
 ga'	窺
+ga,	蛋
 ga.	突
 gaj	寄
 gaw	寮
@@ -3969,6 +4011,7 @@ jio	拈
 jio	捂
 jit	掉
 jj	打
+jjo	哥
 jk'	攬
 jkl	拖
 jkw	撫
@@ -4636,6 +4679,7 @@ ndd	趨
 ndd	翹
 ndl	地
 ndl	鮑
+ndl	龜
 ndo	超
 ndo	嘉
 ndt	解
@@ -4698,6 +4742,7 @@ nm,	坍
 nma	奐
 nmd	觔
 nmd	塌
+nml	龜
 nmm	堝
 nmn	角
 nmo	鯛
@@ -5296,6 +5341,7 @@ qel	曬
 qel	眺
 qel	晁
 qen	量
+qer	題
 qes	曇
 qet	旱
 qex	瞰
@@ -5775,6 +5821,7 @@ uit	舉
 uix	叟
 ukl	屹
 ull	鼠
+ull	崑
 ulx	崴
 um'	興
 umm	崩
@@ -5850,6 +5897,7 @@ vdw	為
 vdw	兼
 vel	瓶
 vh	并
+vh	並
 vhe	並
 vho	善
 vhq	普
@@ -6218,6 +6266,7 @@ ydr	賴
 ydy	樑
 ydz	橡
 ye	本
+yec	麵
 yed	朽
 yee	桓
 yel	桃
@@ -6435,6 +6484,7 @@ zj/	豺
 zjr	預
 zjy	柔
 zl	孔
+zl	犯
 zm.	恿
 zmd	勇
 zme	狙
@@ -6516,24 +6566,24 @@ zzc	猛
 ',k	儴
 ',l	儱
 ',l	豅
-',m	傐
 ',m	俼
-',o	傗
+',m	傐
 ',o	訄
+',o	傗
 ',o	詟
 ',o	詧
 ',q	偣
 ',r	僓
 ',r	尵
 ',s	伭
-',t	偙
 ',t	倅
+',t	偙
 ',t	傽
 ',v	傡
 ',w	倞
-',x	倿
 ',x	伩
 ',x	侫
+',x	倿
 ',x	敒
 ',x	僂
 ',z	儫
@@ -6620,15 +6670,15 @@ zzc	猛
 'al	伧
 'al	戣
 'an	侳
-'ao	倽
 'ao	佮
 'ao	倃
+'ao	倽
 'ao	谽
-'aq	傄
 'aq	偆
+'aq	傄
 'aq	僣
-'ar	儧
 'ar	僋
+'ar	儧
 'as	侩
 'as	偸
 'au	佡
@@ -6701,12 +6751,12 @@ zzc	猛
 'dt	侓
 'dt	颹
 'dw	炃
-'dx	傁
 'dx	攽
+'dx	傁
 'e'	発
-'ea	偄
 'ea	关
 'ea	佽
+'ea	偄
 'ed	傿
 'ee	仨
 'ee	仾
@@ -6721,11 +6771,11 @@ zzc	猛
 'el	倵
 'el	甁
 'el	甉
-'em	儞
 'em	侕
 'em	侢
 'em	俩
 'em	俪
+'em	儞
 'en	侄
 'eo	佦
 'eo	俖
@@ -6754,8 +6804,8 @@ zzc	猛
 'fa	俽
 'fe	儮
 'ff	傂
-'fj	傉
 'fj	俦
+'fj	傉
 'fk	侲
 'fl	伌
 'fl	侂
@@ -6772,9 +6822,9 @@ zzc	猛
 'fx	佊
 'fx	颰
 'fz	侟
-'g'	傧
 'g'	伔
 'g'	俒
+'g'	傧
 'ge	伫
 'ge	倧
 'gi	傕
@@ -6785,8 +6835,8 @@ zzc	猛
 'gl	倇
 'gm	偦
 'gn	僿
-'go	僒
 'go	傛
+'go	僒
 'gx	侒
 'gy	俕
 'h'	倛
@@ -6794,8 +6844,8 @@ zzc	猛
 'h'	谼
 'h'	僙
 'h/	儚
-'ha	傼
 'ha	偀
+'ha	傼
 'ha	僛
 'hb	傇
 'hd	僃
@@ -6809,8 +6859,8 @@ zzc	猛
 'hr	頩
 'ht	僀
 'hx	儆
-'hy	僷
 'hy	偞
+'hy	僷
 'i	仜
 'i	仼
 'i	尪
@@ -6840,13 +6890,13 @@ zzc	猛
 'jx	姇
 'k	伥
 'ka	颴
-'kc	儖
 'kc	尴
+'kc	儖
 'kd	伤
 'kl	仡
 'ko	倁
-'kt	儛
 'kt	仵
+'kt	儛
 'l	亿
 'l'	侥
 'l'	傎
@@ -6859,9 +6909,9 @@ zzc	猛
 'ln	侹
 'ln	垡
 'lo	儙
-'lr	倾
 'lr	货
 'lr	贷
+'lr	倾
 'lt	华
 'lt	帒
 'lt	牮
@@ -6884,16 +6934,16 @@ zzc	猛
 'mo	侗
 'mo	倜
 'mq	僴
-'n'	儬
 'n'	俛
+'n'	儬
 'n,	螸
 'n.	俧
 'na	佽
 'nd	侤
-'nl	傤
-'nl	儎
 'nl	佹
 'nl	尯
+'nl	傤
+'nl	儎
 'nn	儓
 'no	佶
 'no	俈
@@ -6922,27 +6972,27 @@ zzc	猛
 'oa	俣
 'ob	郤
 'ob	偮
-'od	偔
 'od	侽
+'od	偔
 'od	鹆
 'od	鵒
 'ol	俋
 'ol	兺
 'on	侱
-'oo	偘
 'oo	佀
 'oo	佪
 'oo	侣
+'oo	偘
 'oo	諐
 'or	傊
 'or	賲
 'ot	僤
-'ow	傫
 'ow	㷛
+'ow	傫
 'ow	煲
 'ow	儽
-'oy	僺
 'oy	倮
+'oy	僺
 'p/	伬
 'p/	侭
 'pd	傓
@@ -6973,8 +7023,8 @@ zzc	猛
 's'	兊
 's.	忩
 's/	傪
-'sl	僟
 'sl	瓮
+'sl	僟
 'sl	儠
 'so	佁
 'so	飗
@@ -6986,8 +7036,8 @@ zzc	猛
 't	凧
 't	仹
 't'	傎
-'t.	僡
 't.	传
+'t.	僡
 't;	俅
 'ta	侇
 'ta	侠
@@ -6998,23 +7048,23 @@ zzc	猛
 'th	倴
 'tj	倳
 'tk	儾
-'tl	傤
-'tl	儎
 'tl	伅
 'tl	値
+'tl	傤
+'tl	儎
 'tm	俌
 'tr	偾
 'tr	僨
 'tt	伂
 'tt	伡
 'tt	俥
-'tx	僌
 'tx	伎
+'tx	僌
 'ty	俫
 'tz	侼
-'um	儶
 'um	偳
 'um	傰
+'um	儶
 'uu	㑁
 'ux	傁
 'ux	飕
@@ -7034,8 +7084,8 @@ zzc	猛
 'vw	尲
 'vx	鼗
 'w	仦
-'w'	傥
 'w'	侊
+'w'	傥
 'w.	僽
 'w/	仯
 'wd	僗
@@ -7055,8 +7105,8 @@ zzc	猛
 'ww	飈
 'wx	偻
 'wx	僘
-'wy	儝
 'wy	侎
+'wy	儝
 'x	仅
 'x	凤
 'x	殳
@@ -7071,10 +7121,10 @@ zzc	猛
 'xd	翛
 'xi	傩
 'xm	倄
-'xo	偹
 'xo	佫
 'xo	侞
 'xo	俻
+'xo	偹
 'xp	爷
 'xt	佭
 'xt	俙
@@ -7102,8 +7152,6 @@ zzc	猛
 'zi	俇
 'zj	伃
 'zm	僪	
-#新增字集
-#新增字集	
 ,'	虮
 ,''	兖
 ,'.	蚘
@@ -7220,6 +7268,7 @@ zzc	猛
 ,/d	蟂
 ,/d	譌
 ,/h	竔
+,/i	𧦨
 ,/i	諻
 ,/j	竧
 ,/j	竫
@@ -8605,6 +8654,7 @@ zzc	猛
 /ee	秠
 /ee	毴
 /ee	徰
+/ee	𦩋
 /ee	馡
 /ei	牼
 /ei	皬
@@ -10783,6 +10833,7 @@ aoi	鋥
 aok	鍡
 aol	釲
 aol	戧
+aol	𪓡
 aom	锅
 aom	鋗
 aom	鍝
@@ -12172,6 +12223,7 @@ edj	襑
 edl	祂
 edl	衪
 edl	靤
+edl	𪛈
 edo	祒
 edo	袑
 edo	袧
@@ -12355,6 +12407,7 @@ egl	袉
 egl	雮
 egl	䘼
 egl	霵
+egl	𪛈
 egm	霌
 egm	霱
 ego	雼
@@ -12484,8 +12537,8 @@ ekl	駞
 ekl	霼
 ekw	袮
 el	礼
-el'	兠
 el'	硗
+el'	兠
 el'	磌
 el'	禛
 el.	残
@@ -12917,6 +12970,7 @@ exo	硌
 exo	臵
 exo	袼
 exo	袽
+exo	𩂰
 exr	礥
 ext	袶
 exx	裰
@@ -13087,6 +13141,7 @@ fcj	庌
 fcj	疨
 fck	癏
 fcn	癦
+fcr	𠃅
 fd	历
 fd	虏
 fd'	麍
@@ -13383,6 +13438,7 @@ ftx	庋
 fua	瘐
 ful	癙
 fur	𩓥
+fuu	𢇿
 fux	廋
 fux	𤺅
 fv	痒
@@ -18527,6 +18583,7 @@ oef	跅
 oeh	畀
 oeh	哑
 oeh	趼
+oeh	彜
 oeh	彝
 oei	吓
 oei	踁
@@ -18662,6 +18719,7 @@ ohe	咁
 ohh	囬
 ohh	囲
 ohh	畊
+ohi	𠿅
 ohi	嚾
 ohj	𠵝
 ohj	嗬
@@ -19049,6 +19107,7 @@ ow	吙
 ow	煲
 ow'	咣
 owh	彜
+owh	彝
 owi	𠻘
 owj	𨅝
 owl	啳
@@ -20255,10 +20314,10 @@ t',	蟿
 t'.	軓
 t'a	帿
 t'c	輶
-t'd	兝
 t'd	帉
 t'd	勀
 t'd	勊
+t'd	兝
 t'd	鷏
 t'h	帡
 t'h	軿
@@ -20392,8 +20451,8 @@ tem	轜
 ten	轾
 teo	砉
 teo	辐
-teq	兡
 teq	帞
+teq	兡
 ter	幁
 tes	転
 tet	轩
@@ -20414,8 +20473,8 @@ tfl	軝
 tfl	軧
 tfl	辘
 tfl	轆
-tfn	兣
 tfn	堑
+tfn	兣
 tfo	磛
 tfq	暂
 tfq	輴
@@ -21365,8 +21424,8 @@ weq	粨
 wer	烦
 wet	举
 wew	炋
-wf'	兤
 wf'	爌
+wf'	兤
 wf.	爈
 wfa	焮
 wfa	焿

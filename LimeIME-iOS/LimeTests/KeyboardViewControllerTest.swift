@@ -435,6 +435,56 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(equals.popupKeyboard, "@xml/popup_template")
     }
 
+    // MARK: - #231 Easy Input popup roots
+
+    /// Android splits `popupCharacters` on newline: first half → key.codes, second → display.
+    func testEasyInputPhoneRootsDecodeToOneKeyEmittingTheTableCode() throws {
+        let layout = try loadKeyboardLayoutFixture("lime_ez")
+        let expected: [Int: (code: Int, label: String)] = [
+            49: (45, "儿"), 50: (61, "母"), 51: (91, "匚"),
+            52: (93, "]"), 53: (39, "Ｌ"), 54: (92, "ㄏ")
+        ]
+        let digitKeys = layout.rows.flatMap(\.keys).filter { expected.keys.contains($0.code) }
+        XCTAssertEqual(digitKeys.count, expected.count)
+
+        for sourceKey in digitKeys {
+            let decoded = PopupCharacterLayoutPolicy.keys(from: sourceKey.popupCharacters ?? "")
+            let wanted = try XCTUnwrap(expected[sourceKey.code])
+            XCTAssertEqual(decoded.count, 1, "key \(sourceKey.code): no stray separator keys")
+            XCTAssertEqual(decoded.first?.code, wanted.code, "key \(sourceKey.code)")
+            XCTAssertEqual(decoded.first?.label, wanted.label, "key \(sourceKey.code)")
+        }
+    }
+
+    /// Android's `labels == null` branch: no newline → one key per char, code == display.
+    func testOrdinaryPopupCharactersRemainOneKeyPerCharacter() {
+        let keys = PopupCharacterLayoutPolicy.keys(from: "àáâãäåæ")
+
+        XCTAssertEqual(keys.map(\.code), [224, 225, 226, 227, 228, 229, 230])
+        XCTAssertEqual(keys.map(\.label), ["à", "á", "â", "ã", "ä", "å", "æ"])
+    }
+
+    /// Android's pairwise form, e.g. digits shown as fullwidth letters.
+    func testEncodedPopupAlternativesDecodePairwise() {
+        let keys = PopupCharacterLayoutPolicy.keys(from: "123\nＡＢＣ")
+
+        XCTAssertEqual(keys.map(\.code), [49, 50, 51])
+        XCTAssertEqual(keys.map(\.label), ["Ａ", "Ｂ", "Ｃ"])
+    }
+
+    @MainActor
+    func testPopupRootDispatchEntersComposingInsteadOfCommittingText() throws {
+        let controller = KeyboardViewController()
+        let bar = CandidateBarView(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        controller._testConfigureDeclaredEndkeyPath(
+            imkeys: "-=\\[]'", limeendkey: "", composing: "", candidateBar: bar)
+        let root = try XCTUnwrap(PopupCharacterLayoutPolicy.keys(from: "-\n儿").first)
+
+        controller._testFirePopupKey(root)
+
+        XCTAssertEqual(controller._testComposing, "-")
+    }
+
     func testHSLayoutsUseLowercaseUnshiftedAndUppercaseShiftedLetterCodesAndLabels() throws {
         try assertLetterKeyCodes(in: "lime_hs", shouldBeUppercase: false)
         try assertLetterKeyCodes(in: "lime_hs_ipad", shouldBeUppercase: false)

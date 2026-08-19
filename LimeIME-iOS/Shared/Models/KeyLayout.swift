@@ -253,6 +253,20 @@ enum EmojiPanelScrollLayout {
     }
 }
 
+// MARK: - Popup-character decoding
+/// Mirrors Android `LIMEBaseKeyboard(context:layoutTemplateResId:characters:…)`: a
+/// `popupCharacters` value split on newline is `codes\ndisplay` — the first half supplies
+/// `key.codes`, the second the per-key display char. Without a newline every char is its
+/// own key and supplies both (Android's `labels == null` branch).
+enum PopupCharacterLayoutPolicy {
+    static func keys(from chars: String) -> [KeyDef] {
+        let parts  = chars.split(separator: "\n", maxSplits: 1, omittingEmptySubsequences: false)
+        let labels = parts.count > 1 ? parts[1].unicodeScalars : parts[0].unicodeScalars
+        // zip truncates a mismatched pair; Android throws StringIndexOutOfBounds there.
+        return zip(parts[0].unicodeScalars, labels).map { KeyDef(code: Int($0.value), label: String($1)) }
+    }
+}
+
 // MARK: - Key definition
 struct KeyDef: Equatable {
     let code: Int            // Key code. Positive = Unicode codepoint; negative = special

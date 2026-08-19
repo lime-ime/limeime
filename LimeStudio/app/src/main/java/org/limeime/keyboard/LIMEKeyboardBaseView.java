@@ -1653,9 +1653,6 @@ public class LIMEKeyboardBaseView extends View implements PointerTracker.UIProxy
      * method on the base class if the subclass doesn't wish to handle the call.
      */
     protected boolean onLongPress(Key popupKey) {
-        // TODO if popupKey.popupCharacters has only one letter, send it as key without opening
-        // mini keyboard.
-
         if (popupKey.popupResId == 0)
             return false;
 

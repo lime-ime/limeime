@@ -4,7 +4,7 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/242
 - Classification: confirmed iOS named-table CIN staging/publication defect
-- State: open; source fix implemented on `fix/242-ios-tricode-cin-import`, merge and physical-device verification pending
+- State: open; draft PR #243 isolates and implements the named-table correction, but one backup-compatibility source blocker, repository hygiene, physical-device verification, and merge remain pending
 - Reporter: `3code-type`
 - Reporter-supplied environment: iPhone 17, `OS 27.0 bets5` (understood as iOS 27.0 beta 5), LIME `6.1.38-2026`
 - Maintainer reproduction: independently reproduced on a physical iPhone 17 Pro Max using the official `3code.cin` through `三碼 → 匯入 .cin / .lime`; do not infer the reporter's OS or app build for this device
@@ -89,6 +89,14 @@ Add explicit source-table intent to the atomic staging lifecycle mutation:
 - Validate the requested destination and any explicit source table before using either as a SQL identifier.
 
 The parser, CIN directives, batching, duplicate handling, portable schema, Android source, learned-record preservation, atomic lifecycle transaction, and publication mechanisms remain unchanged.
+
+## Current implementation and review state
+
+Draft PR #243 (`fix/242-ios-tricode-cin-import`) is open at `a4c7b5869c678c5adedff98493e70b7382f28fd7`. Its differential tests reproduce the empty-`custom` selection failure and pass after carrying the explicit named source table. Xcode Cloud run 60 reports successful required TEST and ARCHIVE actions at that exact head.
+
+The PR is not technically merge-ready. Review of the same backup-compatibility path found that `readStagedTablePayload` reads `im.disable` through `row["disable"] as Int? ?? 0`. GRDB 6.29.3's typed row subscript uses `try! decode`, while LIME's existing `parseBoolFlag` contract explicitly supports Android-compatible mixed INTEGER and TEXT (`true`/`false`) storage. A text-valued backup row can therefore fail at this boundary. Add a focused mixed-storage backup fixture, read the raw `DatabaseValue` through `parseBoolFlag`, and rerun focused/native and independent-review gates on the corrected exact head.
+
+The PR's checked `git diff --check` claim is also stale: the current three-dot diff reports three trailing-whitespace lines in the two byte-pinned CIN fixtures. Reconcile the fixture-preservation requirement with repository hygiene and correct the PR description. Finally, import the exact v.20260816.2 CIN through the Settings UI on a physical iPhone before treating the user-visible path as verified.
 
 ## Platform impact
 
