@@ -4,9 +4,21 @@
 
 - Issue: https://github.com/lime-ime/limeime/issues/224
 - Classification: confirmed iOS bug
-- State: fixed 2026-08-04 — device evidence captured, source corrected, unit + simulator + physical-device verified
+- Origin: non-private maintainer/project-account tracker
+- State: **resolved 2026-08-12**
+- Source fixed: 2026-08-04 — device evidence captured, source corrected, unit + simulator + physical-device verified
+- Shipped: App Store version 6.1.38, publicly available in Taiwan since 2026-08-11
+- Closeout: issue closed as completed on 2026-08-12 with a shipped-version delivery note
 - Reported environment: Apple's Notes app on iOS
 - Scope: independent of the active LIME input method and keyboard layout
+
+Commit `4268e718cdc8b786b40f0f61cbcd9a5760009216` is contained in tag
+`v6.1.38`. Taiwan App Store version 6.1.38 publicly delivers the fix and names
+the hard-line-boundary correction in its release notes. Physical-device
+verification had already confirmed the corrected path. The project-account
+tracker was then closed with the delivery note at
+https://github.com/lime-ime/limeime/issues/224#issuecomment-5261985247, completing
+the source-fixed, shipped, runtime-verified, and resolved lifecycle.
 
 ## Problem statement
 

@@ -3,13 +3,15 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/209
-- State: **closed / source fixed** by merged PR #223
+- State: **shipped — pending post-release runtime validation**
 - Classification: confirmed iOS database-concurrency/usability defect
+- Origin: private support intake tracked through the maintainer project account
 - Accepted pull request: PR #223, https://github.com/lime-ime/limeime/pull/223
 - Final PR head: `6e4ad3203a4675ce10335a303a4de9c2a9f433f5`
 - Merge commit: `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`
 - Merged: 2026-08-03
-- Reconciled: 2026-08-03
+- Shipped: App Store version 6.1.38, publicly available in Taiwan since 2026-08-11
+- Reconciled: 2026-08-24
 
 PR #223 replaces the discarded ownership-handoff design with the accepted cold/hot
 re-architecture 2. Settings editors now open cold immediately. Explicit editor and
@@ -26,9 +28,11 @@ passed, and the maintainer confirmed the full native suite and physical-device A
 gating behavior. The exact-head Xcode Cloud run was unavailable because the monthly
 quota was exhausted; the maintainer explicitly waived that gate before approving and merging.
 
-The iOS 6.1.37 source candidate predates PR #223. Source acceptance is complete,
-but reporter-testable delivery and post-delivery verification remain release QA
-rather than prerequisites for accepting the merged source.
+The iOS 6.1.37 source candidate predates PR #223. The fix is contained in tag
+`v6.1.38`, and Taiwan App Store version 6.1.38 publicly delivers it with release
+notes that identify the database-lock and synchronization improvement. Source
+acceptance and public delivery are complete. The remaining gate is runtime
+verification of the original Related-Phrase Management path on the public build.
 
 ## Superseded ownership-handoff record
 
@@ -423,8 +427,8 @@ No corresponding defect is established. Android does not use this App-Group keyb
 - [x] Focused lifecycle gate, Python compilation, and diff checks passed.
 - [x] Maintainer-reported native-suite and physical-device A1/A2 verification passed against the reviewed implementation/test tree.
 - Waived: the exact-head Xcode Cloud gate was not run because the monthly quota was exhausted.
-- [ ] Deliver a TestFlight/App Store build containing merge commit `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`.
-- [ ] Verify the original Related-Phrase Management path in that delivered build.
+- [x] App Store version 6.1.38 containing merge commit `daf9fb260756d1ed1d8954430b9ebfc761e6b58e` is publicly available in Taiwan.
+- [ ] Verify the original Related-Phrase Management path on public App Store version 6.1.38.
 
 ## 2026-08-02–03 — Superseded and merged as iOS editor-sync re-architecture 2
 
@@ -445,9 +449,10 @@ learning commits hot data plus `learn_outbox` atomically; dismissal/appearance
 flush validates marker and epoch inside the cold transaction and acknowledges by
 outbox version.
 
-Residual validation belongs to rearch2 release QA, not to the deleted #209 handoff.
-The source review and local checks are complete. The maintainer reported the native
-suite and physical-device A1/A2 pass against the reviewed implementation/test tree;
-the exact-final-head Xcode Cloud gate was waived rather than executed.
-The next boundary is a TestFlight/App Store build that contains PR #223, followed by
-verification of the original reporter-visible management path.
+Residual validation belongs to rearch2 post-release QA, not to the deleted #209
+handoff. The source review and local checks are complete. The maintainer reported
+the native suite and physical-device A1/A2 pass against the reviewed
+implementation/test tree, while the exact-final-head Xcode Cloud gate was waived
+rather than executed. App Store version 6.1.38 now contains PR #223 and is publicly
+available. The only remaining boundary is verification of the original
+reporter-visible Related-Phrase Management path on that public build.
