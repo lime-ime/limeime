@@ -6,7 +6,7 @@ Issue: https://github.com/lime-ime/limeime/issues/250
 
 Confirmed reporter-visible Android defect, pending maintainer reproduction and root-cause isolation.
 
-The report was received privately and was reproduced on two Android devices, Pixel 10 and Pixel 5, in Pikmin's search field. The Android, LIME, and Pikmin versions are not yet known. The private screenshots and reporter identity must remain private.
+The report was received privately and was reproduced on two Android devices, Pixel 10 and Pixel 5, in Pikmin's search field. The Pixel 10 runs Android 17; the Pixel 5 Android version and both LIME/Pikmin versions are not yet known. The private screenshots and reporter identity must remain private.
 
 ## Problem statement
 
@@ -76,7 +76,7 @@ Do not implement a speculative global lifecycle override from the current static
 
 ## Follow-up questions and evidence needed
 
-- Exact Android version on each Pixel device.
+- Exact Android version on the Pixel 5.
 - Exact LIME version and distribution channel.
 - Exact Pikmin version.
 - Active LIME input method and keyboard layout.
