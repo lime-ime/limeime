@@ -7,6 +7,7 @@
 - Affected layouts: Dayi English-face keyboard on full-width and narrow iPad
 - Android: not affected by the source defect
 - Delivery: source merged to `master` in PR #229 as merge commit `696ecbaaff5fdc47d0b94baca5c8f5cacdcf10d4` and shipped in the public Taiwan App Store version 6.1.38 build 1
+- Closeout: the reporter did not respond to the post-shipment retest request by the seven-day deadline of 2026-08-24 13:10:09 UTC+8. The auto-closed issue remains completed, and its validation watch is retired without a redundant GitHub comment or close action.
 
 ## Problem statement
 
@@ -129,9 +130,11 @@ Native XCTest was not available on this Linux host. The maintainer accepted the 
 2. Jeremy selected locally uploaded App Store build `6.1.38(1)` after the fix merged and replaced build 0 with build 1 plus the #228 release note.
 3. App Store Connect identifies build 1 as the selected `READY_FOR_SALE`, `VALID`, `APP_STORE_ELIGIBLE` build. The Taiwan storefront publishes version 6.1.38 with the #228 release note.
 4. This locally uploaded build has no Xcode Cloud `sourceCommit.commitSha` relationship. Shipment attribution therefore follows the maintainer-confirmed post-merge build chronology rather than an API-attributed archive SHA.
-5. The community reporter has not provided a post-release retest. Preserve the current maintainer-closed issue state unless directed otherwise or the reporter says the defect persists.
+5. A targeted post-shipment retest request was posted on 2026-08-17 at 13:10:09 UTC+8. The reporter did not respond by the seven-day deadline of 2026-08-24 at 13:10:09 UTC+8. Under the community auto-closed bug procedure, the existing closed state is preserved and the validation watch is complete.
 
 ## Public response and follow-up
 
 - Routine acknowledgement: https://github.com/lime-ime/limeime/issues/228#issuecomment-5238071606
 - Confirmed root cause and fix scope: https://github.com/lime-ime/limeime/issues/228#issuecomment-5238238350
+- Post-shipment retest request: https://github.com/lime-ime/limeime/issues/228#issuecomment-5312101586
+- No additional public closeout comment was posted because the fixing merge had already closed the issue.
