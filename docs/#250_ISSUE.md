@@ -6,11 +6,11 @@ Issue: https://github.com/lime-ime/limeime/issues/250
 
 Confirmed reporter-visible Android defect, pending maintainer reproduction and root-cause isolation.
 
-The report was received privately and was reproduced on two Android devices, Pixel 10 and Pixel 5, in Pikmin's search field. The Pixel 10 runs Android 17; the Pixel 5 Android version and both LIME/Pikmin versions are not yet known. The private screenshots and reporter identity must remain private.
+The report was received privately and was reproduced on two Android devices, Pixel 10 and Pixel 5, in Pikmin's search field. The Pixel 10 runs Android 17; the Pixel 5 Android version and both LIME/Pikmin versions are not yet known. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The recording and reporter identity must remain private.
 
 ## Problem statement
 
-In Pikmin's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key dismisses the entire input method instead of replacing the current layout with the first symbol page. The issue is app/field-specific so far. No equivalent behavior has been reported in another Android editor.
+In Pikmin's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key only shows the first symbol page briefly before the entire input method closes and the host content expands. The issue is app/field-specific so far. No equivalent behavior has been reported in another Android editor.
 
 The visible result conflicts with LIME's accepted mode-key contract: key code `-2` changes between the current alphabet/IM layout and symbol mode. Keyboard dismissal belongs to the separate done/dismiss key and global swipe-down path.
 
@@ -53,13 +53,13 @@ The current Android source does not intentionally close LIME for `123`:
 5. `setKeyboardMode(...)` resolves `symbols1`, obtains the keyboard object, and calls `mInputView.setKeyboard(...)` in place.
 6. The explicit close path is `KEYCODE_DONE -> handleClose() -> requestHideSelf(0)`, not the `-2` path.
 
-This makes a direct `requestHideSelf()` call from the normal `-2` branch unlikely. The remaining fault boundary includes a host-triggered focus/input-connection transition during the in-place layout change, an exception/state inconsistency around the switch, or an app-specific interaction that is not visible from static source inspection.
+The recording confirms that the normal mode-switch path reaches a visibly attached symbol keyboard before dismissal. This makes failure to resolve or attach `symbols1`, and a direct `requestHideSelf()` call from the normal `-2` branch, less likely. The remaining fault boundary is after attachment: a host-triggered focus/input-connection transition, an exception or state inconsistency immediately after the switch, or another app-specific lifecycle interaction that static source inspection cannot identify.
 
 ## Likely root cause
 
 Root cause is not yet established.
 
-The leading investigation hypothesis is an interaction at the Android editor/IME lifecycle boundary that Pikmin's search field exposes when LIME replaces its keyboard layout. Static inspection shows no intentional hide request in the `-2` path, so a code-only claim that `toggleSymbols()` directly closes LIME would be an overstatement. A logcat reproduction must establish which component initiates dismissal and whether the LIME process logs an exception.
+The leading investigation hypothesis is a post-switch interaction at the Android editor/IME lifecycle boundary that Pikmin's search field exposes after LIME replaces its keyboard layout. The observed symbol-page frame proves the replacement starts successfully, while static inspection shows no intentional hide request in the `-2` path. A code-only claim that `toggleSymbols()` directly closes LIME would still be an overstatement. A logcat reproduction must establish which component initiates dismissal and whether the LIME process logs an exception after the symbol layout is attached.
 
 ## Proposed solution direction
 
@@ -83,7 +83,6 @@ Do not implement a speculative global lifecycle override from the current static
 - Whether the failure occurs every time.
 - Whether tapping the input field immediately restores LIME after dismissal.
 - Whether `123` works in other Pikmin text fields, other apps' search fields, and ordinary text fields.
-- A short private recording if the failure is stable.
 - A filtered logcat covering the tap through dismissal, including LIME exceptions and input-method lifecycle callbacks.
 
 ## Verification plan
@@ -106,4 +105,4 @@ No iOS defect is established. Pikmin and both reported devices are Android-speci
 
 ## Public/private handling
 
-The public issue may state the app, generic Pixel models, and requested version/reproduction details already present in the issue. Do not publish the private screenshots, attachment metadata, reporter identity, or any additional private context.
+The public issue may state the app, generic Pixel models, maintainer-observed visible sequence, and requested version/reproduction details already present in the issue. Do not publish the private recording, attachment metadata, reporter identity, or any additional private context.
