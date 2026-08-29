@@ -6,7 +6,7 @@ Issue: https://github.com/lime-ime/limeime/issues/250
 
 Confirmed reporter-visible Android defect, pending maintainer reproduction and root-cause isolation.
 
-The report was received privately and was reproduced on two Android devices in Pikmin 152.0's search field: Pixel 10 with Android 17 and LIME 6.1.38, and Pixel 5 with Android 14 and LIME 5.2.4. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The reporter later confirmed that tapping the input field again immediately restores LIME, but another attempt to enter symbol/number mode still fails. Every `123` attempt reproduces on both devices, and the same failure occurs with both Daxin Cangjie and Zhuyin. Pikmin's name-entry field does not reproduce it. The recording and reporter identity must remain private.
+The report was received privately and was reproduced on two Android devices in Pikmin 152.0's search field: Pixel 10 with Android 17 and LIME 6.1.38, and Pixel 5 with Android 14 and LIME 5.2.4. Both LIME installations came from Google Play. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The reporter later confirmed that tapping the input field again immediately restores LIME, but another attempt to enter symbol/number mode still fails. Every `123` attempt reproduces on both devices, and the same failure occurs with both Daxin Cangjie and Zhuyin. Pikmin's name-entry field does not reproduce it. The recording and reporter identity must remain private.
 
 ## Problem statement
 
@@ -76,7 +76,6 @@ Do not implement a speculative global lifecycle override from the current static
 
 ## Follow-up questions and evidence needed
 
-- LIME distribution channel on each device.
 - Exact keyboard-layout option used with Daxin Cangjie and Zhuyin.
 - Whether `123` works in other apps' search fields and ordinary text fields. Pikmin's name-entry field is already confirmed unaffected.
 - A filtered logcat covering the tap through dismissal, including LIME exceptions and input-method lifecycle callbacks.
