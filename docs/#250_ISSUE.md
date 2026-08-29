@@ -6,11 +6,11 @@ Issue: https://github.com/lime-ime/limeime/issues/250
 
 Confirmed reporter-visible Android defect, pending maintainer reproduction and root-cause isolation.
 
-The report was received privately and was reproduced on two Android devices, Pixel 10 and Pixel 5, in Pikmin's search field. The Pixel 10 runs Android 17; the Pixel 5 Android version and both LIME/Pikmin versions are not yet known. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The recording and reporter identity must remain private.
+The report was received privately and was reproduced on two Android devices in Pikmin 152.0's search field: Pixel 10 with Android 17 and LIME 6.1.38, and Pixel 5 with Android 14 and LIME 5.2.4. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The reporter later confirmed that tapping the input field again immediately restores LIME, but another attempt to enter symbol/number mode still fails. The recording and reporter identity must remain private.
 
 ## Problem statement
 
-In Pikmin's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key only shows the first symbol page briefly before the entire input method closes and the host content expands. The issue is app/field-specific so far. No equivalent behavior has been reported in another Android editor.
+In Pikmin 152.0's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key only shows the first symbol page briefly before the entire input method closes and the host content expands. Tapping the field again restores LIME immediately, but does not make symbol/number switching succeed. The issue is app/field-specific so far: both reported devices exhibit it only in Pikmin, and no equivalent behavior has been reported in another Android editor. Reproduction across LIME 5.2.4 and 6.1.38 makes a recent single-version regression less likely, but does not establish a common root cause.
 
 The visible result conflicts with LIME's accepted mode-key contract: key code `-2` changes between the current alphabet/IM layout and symbol mode. Keyboard dismissal belongs to the separate done/dismiss key and global swipe-down path.
 
@@ -76,12 +76,9 @@ Do not implement a speculative global lifecycle override from the current static
 
 ## Follow-up questions and evidence needed
 
-- Exact Android version on the Pixel 5.
-- Exact LIME version and distribution channel.
-- Exact Pikmin version.
+- LIME distribution channel on each device.
 - Active LIME input method and keyboard layout.
 - Whether the failure occurs every time.
-- Whether tapping the input field immediately restores LIME after dismissal.
 - Whether `123` works in other Pikmin text fields, other apps' search fields, and ordinary text fields.
 - A filtered logcat covering the tap through dismissal, including LIME exceptions and input-method lifecycle callbacks.
 
