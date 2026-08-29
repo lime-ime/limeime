@@ -6,11 +6,11 @@ Issue: https://github.com/lime-ime/limeime/issues/250
 
 Confirmed reporter-visible Android defect, pending maintainer reproduction and root-cause isolation.
 
-The report was received privately and was reproduced on two Android devices in Pikmin 152.0's search field: Pixel 10 with Android 17 and LIME 6.1.38, and Pixel 5 with Android 14 and LIME 5.2.4. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The reporter later confirmed that tapping the input field again immediately restores LIME, but another attempt to enter symbol/number mode still fails. The recording and reporter identity must remain private.
+The report was received privately and was reproduced on two Android devices in Pikmin 152.0's search field: Pixel 10 with Android 17 and LIME 6.1.38, and Pixel 5 with Android 14 and LIME 5.2.4. A maintainer-reviewed private recording shows the first symbol page appearing briefly before the entire IME closes and the host content expands. The reporter later confirmed that tapping the input field again immediately restores LIME, but another attempt to enter symbol/number mode still fails. Every `123` attempt reproduces on both devices, and the same failure occurs with both Daxin Cangjie and Zhuyin. Pikmin's name-entry field does not reproduce it. The recording and reporter identity must remain private.
 
 ## Problem statement
 
-In Pikmin 152.0's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key only shows the first symbol page briefly before the entire input method closes and the host content expands. Tapping the field again restores LIME immediately, but does not make symbol/number switching succeed. The issue is app/field-specific so far: both reported devices exhibit it only in Pikmin, and no equivalent behavior has been reported in another Android editor. Reproduction across LIME 5.2.4 and 6.1.38 makes a recent single-version regression less likely, but does not establish a common root cause.
+In Pikmin 152.0's Android search field, LIME is visible and accepts input, but tapping the keyboard's `123` key only shows the first symbol page briefly before the entire input method closes and the host content expands. Tapping the field again restores LIME immediately, but does not make symbol/number switching succeed. The failure occurs on every attempt with both Daxin Cangjie and Zhuyin. The issue is app/field-specific so far: both reported devices exhibit it in Pikmin's search field, while Pikmin's name-entry field is unaffected and no equivalent behavior has been reported in another Android editor. Reproduction across two input methods and LIME 5.2.4 and 6.1.38 makes a single layout or recent single-version regression less likely, but does not establish a common root cause.
 
 The visible result conflicts with LIME's accepted mode-key contract: key code `-2` changes between the current alphabet/IM layout and symbol mode. Keyboard dismissal belongs to the separate done/dismiss key and global swipe-down path.
 
@@ -77,16 +77,16 @@ Do not implement a speculative global lifecycle override from the current static
 ## Follow-up questions and evidence needed
 
 - LIME distribution channel on each device.
-- Active LIME input method and keyboard layout.
-- Whether the failure occurs every time.
-- Whether `123` works in other Pikmin text fields, other apps' search fields, and ordinary text fields.
+- Exact keyboard-layout option used with Daxin Cangjie and Zhuyin.
+- Whether `123` works in other apps' search fields and ordinary text fields. Pikmin's name-entry field is already confirmed unaffected.
 - A filtered logcat covering the tap through dismissal, including LIME exceptions and input-method lifecycle callbacks.
 
 ## Verification plan
 
 ### Android
 
-- Reproduce the original Pikmin search-field workflow on both reported device generations when available.
+- Reproduce the original Pikmin search-field workflow on both reported device generations when available, using Daxin Cangjie and Zhuyin.
+- Compare Pikmin's failing search field with its unaffected name-entry field and record both fields' `EditorInfo` values.
 - Verify `123` changes to `symbols1` and LIME remains visible.
 - Verify symbol-page cycling and return from symbols still work.
 - Verify Chinese IM, English, Array10/phone-style, and number-row layouts that expose `-2`.
