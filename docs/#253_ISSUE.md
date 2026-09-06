@@ -4,7 +4,7 @@ Issue: https://github.com/lime-ime/limeime/issues/253
 
 ## Classification
 
-Confirmed Android defect in the automatic Chinese-punctuation candidate lifecycle, with the exact production root cause still pending runtime isolation.
+Confirmed Android defect in the automatic Chinese-punctuation candidate lifecycle. Draft PR #255 isolates and gates stale asynchronous callback mutations, but source acceptance remains pending review and exact signed-build runtime validation.
 
 Android LIME 6.1.38 with Array 30 and `auto_chinese_symbol` enabled fails to show the Chinese-punctuation strip after either deleting the final composing code or selecting a candidate that has no related phrase. In the same environment, dismissing active composition with the candidate-row X does show the strip. The first two results violate the accepted candidate-cycle contract in `docs/AUTO_CHINESE_PUNC.md`; the working X path confirms that the preference, Chinese-mode gate, punctuation data, and basic strip renderer are available in the reported session.
 
@@ -74,19 +74,21 @@ The iOS implementation independently preserves the accepted behavior:
 
 No iOS runtime failure is reported. Android should retain this accepted behavior without introducing an Android-only product exception.
 
-## Likely root cause
+## Root cause and draft implementation status
 
-The exact final state mutation is not yet established. The strongest supported diagnosis is a production-seam candidate-lifecycle defect: one or both failing Android paths either lose the populated-cycle signal before `clearSuggestions()` evaluates it or allow a later candidate/query callback to clear or replace the punctuation strip after it is built.
+Draft PR #255 at exact head `e3e784f28db76c6c626ee9aee65f3f26d0735663` establishes a stale asynchronous-callback boundary. A candidate database query can return after Backspace has cleared the final composing code and replace the punctuation strip with obsolete candidates. Deterministic regressions also show that a delayed related-phrase query can restore stale content after dismissal and that delayed work can mutate candidate state after service destruction. Java thread interruption alone does not invalidate a backend or Binder result that still returns.
 
-The working X path narrows the failure away from the preference and fixed punctuation list. The two missing end-to-end regressions explain why the current suite can remain green while the shipped workflow fails. Static inspection alone cannot distinguish a pre-builder state reset from a post-builder overwrite, especially for the asynchronous empty-related path, so implementation must begin with a RED test or runtime trace at the real event boundary rather than a speculative flag assignment.
+The draft makes candidate-query worker ownership local to each `LIMEService` instance and applies one generation contract across candidate, related-phrase, and English-prediction terminal mutations. It adds 196 lines of instrumentation coverage for stale candidate and related callbacks, service ownership, teardown, and the empty-related commit path. The exact head passed all 296 `LIMEServiceTest` cases on a Pixel 9 Pro API 36 emulator, and an independent review returned `READY` with no unresolved findings.
 
-## Proposed solution direction
+This evidence proves the stale-callback source boundary and the focused regression behavior. It does not yet prove that both reporter-visible Array 30 paths are fixed in a signed app. The required Claude Code review was attempted but could not authenticate because its OAuth session had expired. PR #255 therefore remains a draft and must not be presented as source-fixed or merge-ready until that review and exact signed-build/device validation succeed.
 
-1. Add a focused Android RED regression that starts with an actual populated composing candidate state, invokes `handleBackspace()` for a one-code composition, and verifies the final visible list and flags after all queued candidate work settles.
-2. Add a production-seam regression for `pickCandidateManually()` / `commitTyped()` followed by an empty related-phrase result. Control the query completion deterministically and assert that the punctuation strip is the final candidate state.
-3. Instrument or capture ordered state transitions for `mComposing`, `hasCandidatesShown`, `hasChineseSymbolCandidatesShown`, candidate/query generation, `clearComposing()`, `clearSuggestions()`, `updateChineseSymbol()`, `setSuggestions()`, and the final candidate-view contents on the reported workflow.
-4. Correct the lowest proven state/sequencing boundary. If stale asynchronous work is responsible, gate completion by the current candidate generation rather than adding timing delays. If a synchronous reset is responsible, preserve the populated-cycle transition only for cases (a) and (b).
-5. Keep the existing X, punctuation-dismiss, punctuation-Backspace, related-list Backspace, English-mode, and preference-off behavior unchanged.
+## Remaining implementation and acceptance work
+
+1. Complete the required Claude Code review against exact head `e3e784f28db76c6c626ee9aee65f3f26d0735663` and resolve any source-backed blocker without broadening the fix.
+2. Build an exact signed candidate and exercise both reported Array 30 transitions on an Android device: final-code Backspace and committing a candidate with no related phrase.
+3. Confirm that punctuation remains the final visible candidate state after queued work settles, including related-phrase prediction enabled and disabled where applicable.
+4. Recheck candidate-row X, punctuation dismissal and Backspace, related-list Backspace, English mode, preference off, idle Space, service teardown, and another table-based input method.
+5. Keep PR #255 in draft status until the review and runtime gates pass. A passing focused test or full instrumentation class alone is not merge readiness.
 
 Do not implement idle-Space punctuation under this defect. That is a separate cross-platform product decision for a later feature workflow if approved.
 
