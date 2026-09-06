@@ -76,15 +76,15 @@ No iOS runtime failure is reported. Android should retain this accepted behavior
 
 ## Root cause and draft implementation status
 
-Draft PR #255 at exact head `e3e784f28db76c6c626ee9aee65f3f26d0735663` establishes a stale asynchronous-callback boundary. A candidate database query can return after Backspace has cleared the final composing code and replace the punctuation strip with obsolete candidates. Deterministic regressions also show that a delayed related-phrase query can restore stale content after dismissal and that delayed work can mutate candidate state after service destruction. Java thread interruption alone does not invalidate a backend or Binder result that still returns.
+Production implementation commit `e3e784f28db76c6c626ee9aee65f3f26d0735663` in draft PR #255 establishes a stale asynchronous-callback boundary. A candidate database query can return after Backspace has cleared the final composing code and replace the punctuation strip with obsolete candidates. Deterministic regressions also show that a delayed related-phrase query can restore stale content after dismissal and that delayed work can mutate candidate state after service destruction. Java thread interruption alone does not invalidate a backend or Binder result that still returns.
 
-The draft makes candidate-query worker ownership local to each `LIMEService` instance and applies one generation contract across candidate, related-phrase, and English-prediction terminal mutations. It adds 196 lines of instrumentation coverage for stale candidate and related callbacks, service ownership, teardown, and the empty-related commit path. The exact head passed all 296 `LIMEServiceTest` cases on a Pixel 9 Pro API 36 emulator, and an independent review returned `READY` with no unresolved findings.
+The draft makes candidate-query worker ownership local to each `LIMEService` instance and applies one generation contract across candidate, related-phrase, and English-prediction terminal mutations. It adds 196 lines of instrumentation coverage for stale candidate and related callbacks, service ownership, teardown, and the empty-related commit path. That implementation commit passed all 296 `LIMEServiceTest` cases on a Pixel 9 Pro API 36 emulator, and an independent review returned `READY` with no unresolved findings.
 
 This evidence proves the stale-callback source boundary and the focused regression behavior. It does not yet prove that both reporter-visible Array 30 paths are fixed in a signed app. The required Claude Code review was attempted but could not authenticate because its OAuth session had expired. PR #255 therefore remains a draft and must not be presented as source-fixed or merge-ready until that review and exact signed-build/device validation succeed.
 
 ## Remaining implementation and acceptance work
 
-1. Complete the required Claude Code review against exact head `e3e784f28db76c6c626ee9aee65f3f26d0735663` and resolve any source-backed blocker without broadening the fix.
+1. Complete the required Claude Code review against the final exact PR head and resolve any source-backed blocker without broadening the fix.
 2. Build an exact signed candidate and exercise both reported Array 30 transitions on an Android device: final-code Backspace and committing a candidate with no related phrase.
 3. Confirm that punctuation remains the final visible candidate state after queued work settles, including related-phrase prediction enabled and disabled where applicable.
 4. Recheck candidate-row X, punctuation dismissal and Backspace, related-list Backspace, English mode, preference off, idle Space, service teardown, and another table-based input method.
