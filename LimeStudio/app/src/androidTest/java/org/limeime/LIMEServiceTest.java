@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -526,7 +527,7 @@ public class LIMEServiceTest {
         verify(inputConnection, never()).commitText(any(), anyInt());
 
         // updateCandidates() performs the strip refresh on a background query thread.
-        joinQueryThread();
+        joinQueryThread(service);
 
         // The combined code has no candidate, so the stale pre-append strip must be cleared
         // rather than left showing the previous code's candidates.
@@ -581,12 +582,13 @@ public class LIMEServiceTest {
     }
 
     /** Waits for the current asynchronous candidate query thread to finish, if any. */
-    private void joinQueryThread() throws Exception {
+    private void joinQueryThread(LIMEService service) throws Exception {
         java.lang.reflect.Field queryThreadField = LIMEService.class.getDeclaredField("queryThread");
         queryThreadField.setAccessible(true);
-        Thread queryThread = (Thread) queryThreadField.get(null);
+        Thread queryThread = (Thread) queryThreadField.get(service);
         if (queryThread != null) {
             queryThread.join(2_000);
+            assertFalse("service-owned query worker must terminate", queryThread.isAlive());
         }
     }
 
@@ -1216,6 +1218,197 @@ public class LIMEServiceTest {
         assertFalse("punctuation list should not be empty", captor.getValue().isEmpty());
         assertTrue("hasChineseSymbolCandidatesShown should be true after strip shown",
                 (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    /**
+     * #253 production seam: a candidate lookup may still return after Backspace removes
+     * the final composing code. The obsolete result must not replace the punctuation strip
+     * produced by clearComposing(true) -> clearSuggestions().
+     */
+    @Test
+    public void autoChinesePunc_finalCodeBackspaceRejectsStaleCandidateQueryResult() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        CountDownLatch queryStarted = new CountDownLatch(1);
+        CountDownLatch releaseQuery = new CountDownLatch(1);
+        SearchServer searchServer = mock(SearchServer.class);
+        Mapping staleCandidate = createCandidate("a", "stale");
+        LinkedList<Mapping> staleResults = new LinkedList<>();
+        staleResults.add(staleCandidate);
+        when(searchServer.getMappingByCode("a", true, false)).thenAnswer(invocation -> {
+            queryStarted.countDown();
+            boolean released = false;
+            while (!released) {
+                try {
+                    released = releaseQuery.await(2, TimeUnit.SECONDS);
+                } catch (InterruptedException ignored) {
+                    // Binder-backed queries need not complete just because the Java worker
+                    // was interrupted. Model that seam by allowing the obsolete result back.
+                }
+            }
+            return staleResults;
+        });
+        when(searchServer.getSelkey()).thenReturn("1234567890");
+        setPrivateField(service, "SearchSrv", searchServer);
+        setPrivateField(service, "mComposing", new StringBuilder("a"));
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasMappingList", true);
+
+        service.updateCandidates(false);
+        assertTrue("candidate query should be in flight",
+                queryStarted.await(2, TimeUnit.SECONDS));
+
+        invokePrivateNoArg(service, "handleBackspace");
+        releaseQuery.countDown();
+        joinQueryThread(service);
+
+        LinkedList<Mapping> finalCandidates = getPrivateField(service, "mCandidateList");
+        assertFalse("punctuation strip should remain populated", finalCandidates.isEmpty());
+        assertNotEquals("obsolete composing candidate must not replace punctuation strip",
+                "stale", finalCandidates.getFirst().getWord());
+        assertTrue("punctuation strip must remain the final candidate state",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    /**
+     * #253 production seam: selecting a normal candidate commits it, then an empty
+     * related-phrase query must leave the automatic Chinese punctuation strip visible.
+     */
+    @Test
+    public void autoChinesePunc_candidateWithNoRelatedPhraseShowsPunctuation() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        Mapping candidate = createCandidate("a", "甲");
+        LinkedList<Mapping> candidates = new LinkedList<>();
+        candidates.add(candidate);
+
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getRealCodeLength(candidate, "a")).thenReturn(1);
+        when(searchServer.getRelatedByWord("甲", false)).thenReturn(new LinkedList<>());
+        setPrivateField(service, "SearchSrv", searchServer);
+        setPrivateField(service, "mComposing", new StringBuilder("a"));
+        setPrivateField(service, "mCandidateList", candidates);
+        setPrivateField(service, "hasCandidatesShown", true);
+        setPrivateField(service, "hasMappingList", true);
+        setPrivateField(service, "currentSoftKeyboard", "cj");
+        setPrivateField(service, "LDComposingBuffer", "");
+
+        service.pickCandidateManually(0);
+        joinQueryThread(service);
+
+        verify(inputConnection).commitText("甲", 1);
+        verify(searchServer).getRelatedByWord("甲", false);
+        LinkedList<Mapping> finalCandidates = getPrivateField(service, "mCandidateList");
+        assertFalse("punctuation strip should remain populated", finalCandidates.isEmpty());
+        assertEquals("，", finalCandidates.getFirst().getWord());
+        assertTrue("punctuation strip must be the final candidate state",
+                (boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+        verify(candidateView, atLeastOnce()).setSuggestions(any(), anyBoolean(), anyString());
+    }
+
+    @Test
+    public void queryWorkerOwnershipIsPerServiceInstance() throws Exception {
+        Field queryThreadField = LIMEService.class.getDeclaredField("queryThread");
+        assertFalse("query worker must not be shared across LIMEService instances",
+                Modifier.isStatic(queryThreadField.getModifiers()));
+    }
+
+    @Test
+    public void autoChinesePunc_delayedStaleRelatedPhraseCannotReplaceDismissedCycle() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        Mapping committed = createCandidate("a", "甲");
+        Mapping staleRelated = createCandidate("", "乙");
+        CountDownLatch relatedStarted = new CountDownLatch(1);
+        CountDownLatch releaseRelated = new CountDownLatch(1);
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getRelatedByWord("甲", false)).thenAnswer(invocation -> {
+            relatedStarted.countDown();
+            while (true) {
+                try {
+                    if (releaseRelated.await(2, TimeUnit.SECONDS)) break;
+                } catch (InterruptedException ignored) {
+                    // Model a remote query that returns despite worker cancellation.
+                }
+            }
+            LinkedList<Mapping> result = new LinkedList<>();
+            result.add(staleRelated);
+            return result;
+        });
+        setPrivateField(service, "SearchSrv", searchServer);
+        setPrivateField(service, "committedCandidate", committed);
+        setPrivateField(service, "hasMappingList", true);
+        setPrivateField(service, "hasCandidatesShown", true);
+
+        Method updateRelatedPhrase = LIMEService.class.getDeclaredMethod("updateRelatedPhrase", boolean.class);
+        updateRelatedPhrase.setAccessible(true);
+        updateRelatedPhrase.invoke(service, false);
+        assertTrue("related query should be in flight", relatedStarted.await(2, TimeUnit.SECONDS));
+
+        service.dismissCandidateComposing();
+        releaseRelated.countDown();
+        joinQueryThread(service);
+
+        LinkedList<Mapping> finalCandidates = getPrivateField(service, "mCandidateList");
+        assertFalse("automatic punctuation should remain populated", finalCandidates.isEmpty());
+        assertEquals("，", finalCandidates.getFirst().getWord());
+        assertFalse("stale related phrase must not be restored", finalCandidates.contains(staleRelated));
+        assertTrue((boolean) getPrivateField(service, "hasChineseSymbolCandidatesShown"));
+    }
+
+    @Test
+    public void destroyedServiceRejectsDelayedCandidateMutation() throws Exception {
+        InputConnection inputConnection = createMockInputConnection();
+        LIMEService service = createAutoChinesePuncService(inputConnection, true);
+        CandidateView candidateView = createMockCandidateView();
+        injectMockComponents(service, candidateView, null, null, null);
+
+        CountDownLatch queryStarted = new CountDownLatch(1);
+        CountDownLatch releaseQuery = new CountDownLatch(1);
+        Mapping staleCandidate = createCandidate("a", "stale-after-destroy");
+        SearchServer searchServer = mock(SearchServer.class);
+        when(searchServer.getMappingByCode("a", true, false)).thenAnswer(invocation -> {
+            queryStarted.countDown();
+            while (true) {
+                try {
+                    if (releaseQuery.await(2, TimeUnit.SECONDS)) break;
+                } catch (InterruptedException ignored) {
+                    // The backend may finish after service destruction despite interruption.
+                }
+            }
+            LinkedList<Mapping> result = new LinkedList<>();
+            result.add(staleCandidate);
+            return result;
+        });
+        when(searchServer.getSelkey()).thenReturn("1234567890");
+        setPrivateField(service, "SearchSrv", searchServer);
+        setPrivateField(service, "mComposing", new StringBuilder("a"));
+
+        service.updateCandidates(false);
+        assertTrue("candidate query should be in flight", queryStarted.await(2, TimeUnit.SECONDS));
+        clearInvocations(candidateView);
+
+        try {
+            service.onDestroy();
+        } catch (NullPointerException ignored) {
+            // This directly constructed service is not window-attached; framework teardown
+            // may dereference its absent decor after LIMEService performs its own teardown.
+        } finally {
+            releaseQuery.countDown();
+        }
+        joinQueryThread(service);
+
+        verify(candidateView, never()).setSuggestions(any(), anyBoolean(), anyString());
+        assertFalse(((LinkedList<?>) getPrivateField(service, "mCandidateList")).contains(staleCandidate));
     }
 
     /**
