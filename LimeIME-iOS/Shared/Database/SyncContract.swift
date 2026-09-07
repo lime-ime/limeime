@@ -224,6 +224,7 @@ struct EditorMutationResult {
 enum TableLifecycleMutation {
     case replaceFromStaging(table: String,
                             stagingDatabaseURL: URL,
+                            sourceTable: String?,
                             preserveLearning: Bool,
                             publishImmediately: Bool)
     case delete(table: String,
@@ -232,7 +233,7 @@ enum TableLifecycleMutation {
 
     var publishImmediately: Bool {
         switch self {
-        case let .replaceFromStaging(_, _, _, publishImmediately),
+        case let .replaceFromStaging(_, _, _, _, publishImmediately),
              let .delete(_, _, publishImmediately):
             return publishImmediately
         }
