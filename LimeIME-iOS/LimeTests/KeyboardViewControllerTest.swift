@@ -1572,6 +1572,24 @@ final class KeyboardViewControllerTest: XCTestCase {
         XCTAssertEqual(CandidateSelectionPolicy.defaultHighlightedCandidateIndex([composing, nonExact]), 0)
     }
 
+    func testIncompleteCodeKeepsRawComposingTextHighlighted() {
+        let composing = Mapping(id: 0, code: "12345", word: "12345", score: 0, baseScore: 0,
+                                recordType: Mapping.RecordType.composingCode)
+        let partial = Mapping(id: 1, code: "1", word: "一", score: 0, baseScore: 0,
+                              recordType: Mapping.RecordType.partialMatchToCode)
+
+        XCTAssertEqual(CandidateSelectionPolicy.defaultHighlightedCandidateIndex([composing, partial]), 0)
+    }
+
+    func testEndkeyResolutionKeepsRawTextForIncompleteCode() {
+        let composing = Mapping(id: 0, code: "12345", word: "12345", score: 0, baseScore: 0,
+                                recordType: Mapping.RecordType.composingCode)
+        let partial = Mapping(id: 1, code: "1", word: "一", score: 0, baseScore: 0,
+                              recordType: Mapping.RecordType.partialMatchToCode)
+
+        XCTAssertEqual(LimeEndkeyPolicy.commitCandidateIndex([composing, partial]), 0)
+    }
+
     // A second candidate whose code is NOT an exact match to the typed code (and is not an
     // exact/partial code record) must not be promoted; the composing echo stays highlighted.
     func testDefaultHighlightedCandidateDoesNotPromoteArbitrarySecondCandidate() {

@@ -121,6 +121,9 @@ enum LimeEndkeyPolicy {
 
     static func commitCandidateIndex(_ suggestions: [Mapping]) -> Int {
         guard !suggestions.isEmpty else { return -1 }
+        if suggestions[0].isComposingCodeRecord || suggestions[0].isRuntimeBuiltPhraseRecord {
+            return CandidateSelectionPolicy.defaultHighlightedCandidateIndex(suggestions)
+        }
         if let index = suggestions.firstIndex(where: isEndkeyCommitCandidate) {
             return index
         }
@@ -145,13 +148,13 @@ enum CandidateSelectionPolicy {
     /// `code` (the full code the user typed). This deliberately does NOT inspect the
     /// record type, so any exact-code candidate — a DB exact match or an auto-inserted
     /// `，`/`。` whose code equals the typed `,`/`.` — is highlighted the same way.
-    /// Partial-match records remain highlighted as before (browse-friendly default).
+    /// A shorter prefix/partial candidate must not replace the raw composing text when
+    /// Space or Enter is pressed.
     static func defaultHighlightedCandidateIndex(_ suggestions: [Mapping]) -> Int {
         guard !suggestions.isEmpty else { return -1 }
         let first = suggestions[0]
         if suggestions.count > 1,
            suggestions[1].isExactMatchToCodeRecord
-            || suggestions[1].isPartialMatchToCodeRecord
             || isExactMatchToComposing(suggestions[1], composing: first) {
             return 1
         }

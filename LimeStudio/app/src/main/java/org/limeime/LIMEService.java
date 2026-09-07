@@ -2561,6 +2561,10 @@ public class LIMEService extends InputMethodService
         if (suggestions == null || suggestions.isEmpty()) {
             return -1;
         }
+        Mapping first = suggestions.get(0);
+        if (first.isComposingCodeRecord() || first.isRuntimeBuiltPhraseRecord()) {
+            return defaultHighlightedCandidateIndex(suggestions, false);
+        }
         for (int i = 0; i < suggestions.size(); i++) {
             if (isEndkeyCommitCandidate(suggestions.get(i))) {
                 return i;
@@ -2584,8 +2588,8 @@ public class LIMEService extends InputMethodService
     // "Exact match" means the candidate's code equals the composing-code echo's code (the
     // full code the user typed). This deliberately does NOT inspect the record type, so any
     // exact-code candidate -- a DB exact match or an auto-inserted comma/period whose code
-    // equals the typed ',' / '.' -- is highlighted the same way. Partial-match records stay
-    // highlighted as before.
+    // equals the typed ',' / '.' -- is highlighted the same way. A shorter prefix/partial
+    // candidate must not replace the raw composing text when Space or Enter is pressed.
     public static int defaultHighlightedCandidateIndex(List<Mapping> suggestions,
                                                        boolean physicalKeyPressed) {
         if (suggestions == null || suggestions.isEmpty()) {
@@ -2594,7 +2598,6 @@ public class LIMEService extends InputMethodService
         Mapping first = suggestions.get(0);
         if (suggestions.size() > 1
                 && (suggestions.get(1).isExactMatchToCodeRecord()
-                || suggestions.get(1).isPartialMatchToCodeRecord()
                 || isExactMatchToComposing(suggestions.get(1), first))) {
             return 1;
         }
@@ -2622,18 +2625,10 @@ public class LIMEService extends InputMethodService
                 && candidateCode.equals(composingCode);
     }
 
-    private static Mapping defaultServiceSelectedCandidate(List<Mapping> suggestions,
-                                                           boolean physicalKeyPressed) {
-        if (suggestions == null || suggestions.isEmpty()) {
-            return null;
-        }
-        if (suggestions.size() > 1
-                && (!physicalKeyPressed
-                || suggestions.get(1).isExactMatchToCodeRecord()
-                || suggestions.get(1).isPartialMatchToCodeRecord())) {
-            return suggestions.get(1);
-        }
-        return suggestions.get(0);
+    static Mapping defaultServiceSelectedCandidate(List<Mapping> suggestions,
+                                                   boolean physicalKeyPressed) {
+        int index = defaultHighlightedCandidateIndex(suggestions, physicalKeyPressed);
+        return index >= 0 ? suggestions.get(index) : null;
     }
 
     public static LinkedList<Mapping> buildEnglishPredictionCandidates(String word,
