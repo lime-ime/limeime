@@ -2,7 +2,7 @@
 
 ## Status
 
-Resolved and closed after reporter confirmation. The reporter's Android v6.1.35 retest failed on Nokia 3.4 and Redmi 13C because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. After the targeted v6.1.36 retest request at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560, the reporter confirmed that 三碼 now works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. The issue was closed as completed with acknowledgement https://github.com/lime-ime/limeime/issues/159#issuecomment-5039613977. This confirmation covers the reported Android phone paths only. The iOS catalog remains separate unverified product work.
+Resolved and closed after reporter confirmation. The reporter's Android v6.1.35 retest failed on Nokia 3.4 and Redmi 13C because the installed 三碼 code was absent from Android's activated-IM picker arrays. Commit `935338dc13f70056c5ec22855bdee1b66eb73810` appends `tricode` and its names without changing persisted indices. The fix is published in Android v6.1.36 through GitHub and Google Play. After the targeted v6.1.36 retest request at https://github.com/lime-ime/limeime/issues/159#issuecomment-5037493560, the reporter confirmed that 三碼 now works normally on both phones at https://github.com/lime-ime/limeime/issues/159#issuecomment-5039606167. The issue was closed as completed with acknowledgement https://github.com/lime-ime/limeime/issues/159#issuecomment-5039613977. This confirmation covers the reported Android phone paths only. The separate iOS product/data-table addition is included in public iOS v6.1.35 and later, including the current App Store version 6.1.38. Its remaining work is release QA rather than `6.2.x` product implementation.
 
 ## Problem statement
 
@@ -70,7 +70,7 @@ No further reporter follow-up is needed for the resolved Android paths. The repo
 
 ### iOS
 
-The reporter supplied no iOS retest evidence. iOS has a separate implementation of the `tricode` catalog, default-keyboard mapping, metadata import, and `limenumsym2` registration. For iOS release QA, add equivalent import/registration assertions and verify phone, full-iPad, and narrow-iPad activation. Treat cross-platform impact as possible until an iOS test proves the automatic paths select the intended keyboard and enable Chinese composition.
+The reporter supplied no iOS retest evidence. The `tricode` database, catalog registration, default-keyboard mapping, metadata handling, and phone/full-iPad/narrow-iPad `limenumsym2` layouts are present in the public iOS v6.1.35 source and remain in the current public App Store version 6.1.38. The iOS product/data-table addition is therefore shipped, while runtime validation remains incomplete. For retained release QA, verify catalog import, metadata, attribution, automatic `limenumsym2` selection, and basic lookup/input behavior on iPhone, full iPad, and narrow iPad. Preserve author `無書自通`, official source `https://3code-type.github.io/`, and the stated free/non-commercial distribution condition.
 
 ## Privacy-safe reporter summary
 
