@@ -2665,14 +2665,15 @@ final class LimeDB {
         for ch in code {
             // Determine if this character is at initial position
             let atInitial: Bool
-            if alwaysSet.contains(ch) {
+            if code.count == 1 && alwaysSet.contains(ch) {
                 atInitial = true
             } else if accumulated.isEmpty {
                 atInitial = true
             } else {
                 // Check if accumulated code ends with a trigger sequence
                 let range = NSRange(accumulated.startIndex..., in: accumulated)
-                atInitial = regex?.firstMatch(in: accumulated, range: range) != nil
+                atInitial = accumulated.count > 1 &&
+                    regex?.firstMatch(in: accumulated, range: range) != nil
             }
             let remapped = atInitial ? (initial[ch] ?? ch) : (finalMap[ch] ?? ch)
             result += String(remapped)

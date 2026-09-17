@@ -2664,6 +2664,64 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    func testHsuMultiKeyRemappingUsesFinalMapForTrailingExceptionKey() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+        db.phoneticKeyboardType = "hsu"
+
+        XCTAssertEqual(db.preProcessingRemappingCode("xmf"), "ja3")
+        XCTAssertEqual(db.preProcessingRemappingCode("hnf"), "cs3")
+    }
+
+    func testHsuAlwaysInitialExceptionsApplyOnlyToSingleCharacterInput() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+        db.phoneticKeyboardType = "hsu"
+
+        let cases = [
+            ("a", "h", "hh"), ("e", "u", "hu"), ("s", "n", "h7"),
+            ("d", "2", "h6"), ("f", "z", "h3"), ("j", "5", "h4")
+        ]
+        for (key, singleExpected, trailingExpected) in cases {
+            XCTAssertEqual(db.preProcessingRemappingCode(key), singleExpected)
+            XCTAssertEqual(db.preProcessingRemappingCode("a" + key), trailingExpected)
+        }
+
+        XCTAssertEqual(db.preProcessingRemappingCode("ss"), "n7")
+        XCTAssertEqual(db.preProcessingRemappingCode("asf"), "h7z")
+    }
+
+    func testEten26AlwaysInitialExceptionRemainsSingleCharacterOnly() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+        db.phoneticKeyboardType = "eten26"
+
+        let cases = [
+            ("q", "y", "8y"), ("w", "h", "8h"), ("d", "2", "87"),
+            ("f", "z", "86"), ("j", "b", "83"), ("k", "d", "84")
+        ]
+        for (key, singleExpected, trailingExpected) in cases {
+            XCTAssertEqual(db.preProcessingRemappingCode(key), singleExpected)
+            XCTAssertEqual(db.preProcessingRemappingCode("a" + key), trailingExpected)
+        }
+
+        XCTAssertEqual(db.preProcessingRemappingCode("dd"), "27")
+        XCTAssertEqual(db.preProcessingRemappingCode("adf"), "87z")
+    }
+
+    func testHsuReportedSequencesReachBundledCanonicalCandidates() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+        db.phoneticKeyboardType = "hsu"
+        db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "j03", "晚", 0)
+        db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "cp3", "很", 0)
+
+        let evening = try XCTUnwrap(db.getMappingByCode("xmf", softKeyboard: true, getAllRecords: true))
+        let very = try XCTUnwrap(db.getMappingByCode("hnf", softKeyboard: true, getAllRecords: true))
+        XCTAssertTrue(evening.contains { $0.word == "晚" })
+        XCTAssertTrue(very.contains { $0.word == "很" })
+    }
+
     // MARK: - 25. getCodeListStringByWord
 
     func testLimeDBGetCodeListStringByWord() throws {
