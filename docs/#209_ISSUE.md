@@ -3,7 +3,7 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/209
-- State: **shipped — pending post-release runtime validation**
+- State: **shipped and terminally closed under the private-intake tracker workflow**
 - Classification: confirmed iOS database-concurrency/usability defect
 - Origin: private support intake tracked through the maintainer project account
 - Accepted pull request: PR #223, https://github.com/lime-ime/limeime/pull/223
@@ -31,8 +31,11 @@ quota was exhausted; the maintainer explicitly waived that gate before approving
 The iOS 6.1.37 source candidate predates PR #223. The fix is contained in tag
 `v6.1.38`, and Taiwan App Store version 6.1.38 publicly delivers it with release
 notes that identify the database-lock and synchronization improvement. Source
-acceptance and public delivery are complete. The remaining gate is runtime
-verification of the original Related-Phrase Management path on the public build.
+acceptance and public delivery are complete. Because this is a project-account
+tracker created from private intake, shipped-release verification completes the
+public tracker workflow without a GitHub reporter wait. The still-unexecuted
+Related-Phrase Management device check remains internal release QA and must not be
+described as completed runtime validation.
 
 ## Superseded ownership-handoff record
 
@@ -428,7 +431,8 @@ No corresponding defect is established. Android does not use this App-Group keyb
 - [x] Maintainer-reported native-suite and physical-device A1/A2 verification passed against the reviewed implementation/test tree.
 - Waived: the exact-head Xcode Cloud gate was not run because the monthly quota was exhausted.
 - [x] App Store version 6.1.38 containing merge commit `daf9fb260756d1ed1d8954430b9ebfc761e6b58e` is publicly available in Taiwan.
-- [ ] Verify the original Related-Phrase Management path on public App Store version 6.1.38.
+- [x] Private-intake tracker closeout completed after shipped-release verification.
+- Internal release QA remains: verify the original Related-Phrase Management path on public App Store version 6.1.38. This does not keep the public defect backlog item active and is not evidence that the reporter-visible path has been runtime-resolved.
 
 ## 2026-08-02–03 — Superseded and merged as iOS editor-sync re-architecture 2
 
@@ -454,5 +458,6 @@ handoff. The source review and local checks are complete. The maintainer reporte
 the native suite and physical-device A1/A2 pass against the reviewed
 implementation/test tree, while the exact-final-head Xcode Cloud gate was waived
 rather than executed. App Store version 6.1.38 now contains PR #223 and is publicly
-available. The only remaining boundary is verification of the original
-reporter-visible Related-Phrase Management path on that public build.
+available. The public private-intake tracker is therefore terminally closed. The
+original reporter-visible Related-Phrase Management path remains an internal device-QA
+check rather than active defect-backlog work or a claim of runtime resolution.
