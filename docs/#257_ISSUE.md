@@ -3,10 +3,11 @@
 ## Current status
 
 - Issue: https://github.com/lime-ime/limeime/issues/257
-- State: **confirmed iOS defect — source fix pending**
+- State: **confirmed iOS defect — draft PR #258 under validation**
 - Classification: community-created iOS phonetic-input defect
 - Reported environment: LIME 6.1.38 on iOS 27, built-in Phonetic IM, HSU (許氏) phonetic keyboard
 - Android: reporter-confirmed working and used as the behavioral oracle
+- Implementation: draft PR #258, https://github.com/lime-ime/limeime/pull/258
 - Last reconciled: 2026-09-17
 
 ## Problem statement
@@ -70,6 +71,11 @@ This is an iOS source defect rather than a missing table record, user configurat
 2. Restrict the `alwaysInitial` exception in `applyDualRemap` to single-character input, matching Android.
 3. Preserve the existing one-character exception tests and add multi-key cases where `f` and the other exception keys occur in final positions.
 4. Verify that standard Phonetic, ETEN 41-key, and ETEN 26-key remapping remain unchanged.
+
+Draft PR #258 implements the narrow exception-scope correction and also aligns the
+shared HSU/ETEN26 syllable-boundary position guard with Android. Its focused Linux
+contract and full repository Python suite pass, and an independent exact-diff review
+returned `READY`. Native XCTest and keyboard-extension runtime validation remain.
 
 ## Follow-up questions
 
