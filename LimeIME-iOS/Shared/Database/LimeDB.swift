@@ -2465,7 +2465,8 @@ final class LimeDB {
                 c = initialMap[s]
             } else {
                 let prefix = String(code.prefix(i))
-                let atInitial = prefix.range(of: triggerRegex, options: .regularExpression) != nil
+                let atInitial = i > 1 &&
+                    prefix.range(of: triggerRegex, options: .regularExpression) != nil
                 c = atInitial ? initialMap[s] : finalMap[s]
             }
             if let c { result += c.trimmingCharacters(in: .whitespaces) }

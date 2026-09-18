@@ -52,6 +52,27 @@ class HsuPositionalRemapContract(unittest.TestCase):
         ):
             self.assertIn(assertion, source)
 
+    def test_composing_display_matches_android_position_guard(self):
+        source = IOS_DB.read_text(encoding="utf-8")
+        helper = re.search(
+            r"private func buildKeyNameDual\(.*?\n    \}",
+            source,
+            flags=re.DOTALL,
+        )
+        if helper is None:
+            self.fail("buildKeyNameDual helper is missing")
+        normalized = re.sub(r"\s+", " ", helper.group(0))
+        self.assertIn("i > 1 &&", normalized)
+
+        native_tests = IOS_TEST.read_text(encoding="utf-8")
+        for assertion in (
+            'db.keyToKeyName("sf", LIME.DB_TABLE_PHONETIC, true), "ㄙ(ㄈ/ˇ)"',
+            'db.keyToKeyName("asf", LIME.DB_TABLE_PHONETIC, true), "(ㄘ/ㄟ)(ㄙ/˙)ㄈ"',
+            'db.keyToKeyName("df", LIME.DB_TABLE_PHONETIC, true), "ㄉˊ"',
+            'db.keyToKeyName("adf", LIME.DB_TABLE_PHONETIC, true), "ㄚ˙ㄈ"',
+        ):
+            self.assertIn(assertion, native_tests)
+
 
 if __name__ == "__main__":
     unittest.main()

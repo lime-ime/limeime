@@ -2617,6 +2617,19 @@ final class LimeDBTest: XCTestCase {
         }
     }
 
+    func testDualMapKeyNameRequiresMoreThanOnePrecedingKeyForSyllableBoundary() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+
+        db.phoneticKeyboardType = "hsu"
+        XCTAssertEqual(db.keyToKeyName("sf", LIME.DB_TABLE_PHONETIC, true), "ㄙ(ㄈ/ˇ)")
+        XCTAssertEqual(db.keyToKeyName("asf", LIME.DB_TABLE_PHONETIC, true), "(ㄘ/ㄟ)(ㄙ/˙)ㄈ")
+
+        db.phoneticKeyboardType = "eten26"
+        XCTAssertEqual(db.keyToKeyName("df", LIME.DB_TABLE_PHONETIC, true), "ㄉˊ")
+        XCTAssertEqual(db.keyToKeyName("adf", LIME.DB_TABLE_PHONETIC, true), "ㄚ˙ㄈ")
+    }
+
     // MARK: - 24. preProcessingRemappingCode
 
     func testLimeDBPreProcessingRemappingCode() throws {
