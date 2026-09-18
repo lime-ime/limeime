@@ -2722,6 +2722,20 @@ final class LimeDBTest: XCTestCase {
         XCTAssertEqual(db.preProcessingRemappingCode("adf"), "87z")
     }
 
+    func testEten26SingleCharacterNonExceptionKeysUseFinalMapping() throws {
+        let db = try makeLimeDB()
+        db.setTableName(LIME.DB_TABLE_PHONETIC)
+        db.phoneticKeyboardType = "eten26"
+
+        let cases = [
+            ("a", "8"), ("e", "u"), ("x", "j"),
+            ("r", "k"), ("v", "e"), (",", "<"), (".", ">")
+        ]
+        for (key, expected) in cases {
+            XCTAssertEqual(db.preProcessingRemappingCode(key), expected)
+        }
+    }
+
     func testHsuReportedSequencesReachBundledCanonicalCandidates() throws {
         let db = try makeLimeDB()
         db.setTableName(LIME.DB_TABLE_PHONETIC)

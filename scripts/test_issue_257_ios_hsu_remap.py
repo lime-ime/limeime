@@ -22,7 +22,7 @@ class HsuPositionalRemapContract(unittest.TestCase):
         if helper is None:
             self.fail("applyDualRemap helper is missing")
         normalized = re.sub(r"\s+", " ", helper.group(0))
-        self.assertIn("code.count == 1 && alwaysSet.contains(ch)", normalized)
+        self.assertIn("if code.count == 1 { atInitial = alwaysSet.contains(ch)", normalized)
         self.assertIn("accumulated.count > 1 &&", normalized)
 
     def test_android_oracle_scopes_hsu_exception_to_single_character_input(self):
@@ -45,6 +45,9 @@ class HsuPositionalRemapContract(unittest.TestCase):
             'XCTAssertEqual(db.preProcessingRemappingCode("asf"), "h7z")',
             'XCTAssertEqual(db.preProcessingRemappingCode("dd"), "27")',
             'XCTAssertEqual(db.preProcessingRemappingCode("adf"), "87z")',
+            'func testEten26SingleCharacterNonExceptionKeysUseFinalMapping()',
+            '("a", "8"), ("e", "u"), ("x", "j")',
+            '("r", "k"), ("v", "e"), (",", "<"), (".", ">")',
             'db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "j03", "晚", 0)',
             'db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "cp3", "很", 0)',
             'XCTAssertTrue(evening.contains { $0.word == "晚" })',

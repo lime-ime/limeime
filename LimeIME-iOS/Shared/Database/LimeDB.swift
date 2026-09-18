@@ -2666,8 +2666,8 @@ final class LimeDB {
         for ch in code {
             // Determine if this character is at initial position
             let atInitial: Bool
-            if code.count == 1 && alwaysSet.contains(ch) {
-                atInitial = true
+            if code.count == 1 {
+                atInitial = alwaysSet.contains(ch)
             } else if accumulated.isEmpty {
                 atInitial = true
             } else {
