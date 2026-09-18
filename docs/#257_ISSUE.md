@@ -70,16 +70,17 @@ This is an iOS source defect rather than a missing table record, user configurat
 1. Add focused iOS regression tests for HSU multi-key positional remapping using `xmf → 晚` and `hnf → 很`.
 2. Restrict the `alwaysInitial` exception in `applyDualRemap` to single-character input, matching Android.
 3. Preserve the existing one-character exception tests and add multi-key cases where `f` and the other exception keys occur in final positions.
-4. Verify that standard Phonetic, ETEN 41-key, and ETEN 26-key remapping remain unchanged.
+4. Make the single-character branch total so ETEN26/HSU keys outside the forced-initial set explicitly use the final map, matching Android.
+5. Verify that standard Phonetic, ETEN 41-key, and ETEN 26-key remapping remain unchanged.
 
-Draft PR #258 implements the narrow exception-scope correction and aligns the query
-remapper's shared HSU/ETEN26 syllable-boundary position guard with Android. Its focused
-Linux contract and full repository Python suite pass. A later source review superseded
-the earlier `READY` verdict: the sibling `buildKeyNameDual` composing-display path still
-tests the syllable-boundary trigger at input position 1, while Android requires `i > 1`.
-The PR therefore remains blocked until that path has a focused RED/GREEN regression and
-the same positional guard. Native XCTest, repeat independent review, and keyboard-extension
-runtime validation also remain.
+Draft PR #258 now implements the narrow exception-scope correction, aligns both the query
+remapper and `buildKeyNameDual` composing-display syllable-boundary guards with Android,
+and makes the single-character dual-map branch explicitly choose the final map for keys
+outside the forced-initial set. Focused RED/GREEN coverage exists for the reported queries,
+the composing-display sibling path, and representative ETEN26 non-exception single keys.
+The focused Linux contract and full repository Python suite pass on head `553ccfc7`.
+Source work remains under validation because exact-head independent review, focused/full
+XCTest, and iPhone/iPad keyboard-extension runtime validation remain outstanding.
 
 ## Follow-up questions
 
