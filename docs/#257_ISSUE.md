@@ -8,7 +8,7 @@
 - Reported environment: LIME 6.1.38 on iOS 27, built-in Phonetic IM, HSU (許氏) phonetic keyboard
 - Android: reporter-confirmed working and used as the behavioral oracle
 - Implementation: draft PR #258, https://github.com/lime-ime/limeime/pull/258
-- Last reconciled: 2026-09-17
+- Last reconciled: 2026-09-18
 
 ## Problem statement
 
@@ -72,10 +72,14 @@ This is an iOS source defect rather than a missing table record, user configurat
 3. Preserve the existing one-character exception tests and add multi-key cases where `f` and the other exception keys occur in final positions.
 4. Verify that standard Phonetic, ETEN 41-key, and ETEN 26-key remapping remain unchanged.
 
-Draft PR #258 implements the narrow exception-scope correction and also aligns the
-shared HSU/ETEN26 syllable-boundary position guard with Android. Its focused Linux
-contract and full repository Python suite pass, and an independent exact-diff review
-returned `READY`. Native XCTest and keyboard-extension runtime validation remain.
+Draft PR #258 implements the narrow exception-scope correction and aligns the query
+remapper's shared HSU/ETEN26 syllable-boundary position guard with Android. Its focused
+Linux contract and full repository Python suite pass. A later source review superseded
+the earlier `READY` verdict: the sibling `buildKeyNameDual` composing-display path still
+tests the syllable-boundary trigger at input position 1, while Android requires `i > 1`.
+The PR therefore remains blocked until that path has a focused RED/GREEN regression and
+the same positional guard. Native XCTest, repeat independent review, and keyboard-extension
+runtime validation also remain.
 
 ## Follow-up questions
 
@@ -89,6 +93,8 @@ No reporter clarification is required to establish the defect. Runtime validatio
 - Run the same tests GREEN after the narrow correction.
 - Keep or add one-character assertions for every forced-initial HSU key.
 - Verify the exact bundled phonetic database contains `j03 → 晚` and `cp3 → 很`.
+- Add a focused composing-display regression proving HSU and ETEN26 do not apply the
+  syllable-boundary trigger at input position 1, but do apply it after position 1.
 
 ### Broader iOS checks
 
