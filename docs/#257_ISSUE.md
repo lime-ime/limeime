@@ -8,7 +8,7 @@
 - Reported environment: LIME 6.1.38 on iOS 27, built-in Phonetic IM, HSU (許氏) phonetic keyboard
 - Android: reporter-confirmed working and used as the behavioral oracle
 - Implementation: draft PR #258, https://github.com/lime-ime/limeime/pull/258
-- Last reconciled: 2026-09-18
+- Last reconciled: 2026-09-19
 
 ## Problem statement
 
@@ -73,14 +73,18 @@ This is an iOS source defect rather than a missing table record, user configurat
 4. Make the single-character branch total so ETEN26/HSU keys outside the forced-initial set explicitly use the final map, matching Android.
 5. Verify that standard Phonetic, ETEN 41-key, and ETEN 26-key remapping remain unchanged.
 
-Draft PR #258 now implements the narrow exception-scope correction, aligns both the query
+Draft PR #258 implements the narrow exception-scope correction, aligns both the query
 remapper and `buildKeyNameDual` composing-display syllable-boundary guards with Android,
 and makes the single-character dual-map branch explicitly choose the final map for keys
-outside the forced-initial set. Focused RED/GREEN coverage exists for the reported queries,
-the composing-display sibling path, and representative ETEN26 non-exception single keys.
-The focused Linux contract and full repository Python suite pass on head `553ccfc7`.
-Source work remains under validation because exact-head independent review, focused/full
-XCTest, and iPhone/iPad keyboard-extension runtime validation remain outstanding.
+outside the forced-initial set. Review found that the first candidate-lookup regression was
+not executable: a fresh `LimeDB` creates no `phonetic` table, and the non-throwing seed
+overload silently discarded both missing-table errors. Commit `3d767bc8` corrects the fixture
+by creating a real `phonetic` table and using the throwing seed path. The corrected focused
+XCTest passed on an iPhone 17 Pro iOS 26.5 simulator, and the updated Linux contract passes
+all four checks. A pre-fix native RED replay did not complete before the simulator runs timed
+out, so that RED evidence, full XCTest, exact-final-head independent review, and iPhone/iPad
+keyboard-extension runtime validation remain outstanding. The PR remains draft and is not
+candidate-ready.
 
 ## Follow-up questions
 
@@ -90,8 +94,8 @@ No reporter clarification is required to establish the defect. Runtime validatio
 
 ### Focused source and data checks
 
-- Capture RED tests proving current iOS HSU remapping omits `晚` for `xmf` and `很` for `hnf`.
-- Run the same tests GREEN after the narrow correction.
+- Capture a completed pre-fix native RED proving iOS HSU remapping omits `晚` for `xmf` and `很` for `hnf`.
+- Preserve the corrected focused XCTest GREEN result and rerun it on the exact final head.
 - Keep or add one-character assertions for every forced-initial HSU key.
 - Verify the exact bundled phonetic database contains `j03 → 晚` and `cp3 → 很`.
 - Add a focused composing-display regression proving HSU and ETEN26 do not apply the
