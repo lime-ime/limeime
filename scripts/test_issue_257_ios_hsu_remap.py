@@ -48,8 +48,9 @@ class HsuPositionalRemapContract(unittest.TestCase):
             'func testEten26SingleCharacterNonExceptionKeysUseFinalMapping()',
             '("a", "8"), ("e", "u"), ("x", "j")',
             '("r", "k"), ("v", "e"), (",", "<"), (".", ">")',
-            'db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "j03", "晚", 0)',
-            'db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "cp3", "很", 0)',
+            'CREATE TABLE phonetic (',
+            'try db.addOrUpdateMappingRecord(code: "j03", word: "晚", tableName: LIME.DB_TABLE_PHONETIC)',
+            'try db.addOrUpdateMappingRecord(code: "cp3", word: "很", tableName: LIME.DB_TABLE_PHONETIC)',
             'XCTAssertTrue(evening.contains { $0.word == "晚" })',
             'XCTAssertTrue(very.contains { $0.word == "很" })',
         ):

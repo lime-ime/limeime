@@ -2738,10 +2738,23 @@ final class LimeDBTest: XCTestCase {
 
     func testHsuReportedSequencesReachBundledCanonicalCandidates() throws {
         let db = try makeLimeDB()
+        try withRawDB { rawDB in
+            try rawDB.execute(sql: """
+                CREATE TABLE phonetic (
+                    _id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code      TEXT,
+                    word      TEXT,
+                    score     INTEGER DEFAULT 0,
+                    basescore INTEGER DEFAULT 0,
+                    code3r    TEXT,
+                    related   TEXT
+                )
+                """)
+        }
         db.setTableName(LIME.DB_TABLE_PHONETIC)
         db.phoneticKeyboardType = "hsu"
-        db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "j03", "晚", 0)
-        db.addOrUpdateMappingRecord(LIME.DB_TABLE_PHONETIC, "cp3", "很", 0)
+        try db.addOrUpdateMappingRecord(code: "j03", word: "晚", tableName: LIME.DB_TABLE_PHONETIC)
+        try db.addOrUpdateMappingRecord(code: "cp3", word: "很", tableName: LIME.DB_TABLE_PHONETIC)
 
         let evening = try XCTUnwrap(db.getMappingByCode("xmf", softKeyboard: true, getAllRecords: true))
         let very = try XCTUnwrap(db.getMappingByCode("hnf", softKeyboard: true, getAllRecords: true))
