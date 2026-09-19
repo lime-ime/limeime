@@ -394,6 +394,35 @@ final class SetupImControllerTest: XCTestCase {
         XCTAssertGreaterThan(db.countRecords("custom", nil, nil), 0)
     }
 
+    func testDatabaseImportFileRejectsInvalidTableBeforeSourceInterpolation() throws {
+        let (liveURL, db) = try makeDB()
+        defer { try? FileManager.default.removeItem(at: liveURL) }
+        let sourceURL = liveURL.deletingLastPathComponent().appendingPathComponent("invalid-source.db")
+        let sourceQueue = try DatabaseQueue(path: sourceURL.path)
+        defer { try? sourceQueue.close() }
+        try sourceQueue.write { database in
+            try database.execute(sql: """
+                CREATE TABLE \"invalid;drop\" (
+                    _id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT,
+                    word TEXT,
+                    score INTEGER DEFAULT 0
+                )
+                """)
+            try database.execute(sql: "INSERT INTO \"invalid;drop\" (code, word, score) VALUES ('bad', '無效', 1)")
+        }
+        let server = LimeIME.DBServer(_testDatasource: db)
+
+        XCTAssertThrowsError(try importDatabaseFile(server: server,
+                                                    url: sourceURL,
+                                                    tableName: "invalid;drop")) { error in
+            guard case LimeIME.LimeDBError.invalidTableName(let tableName) = error else {
+                return XCTFail("Expected invalidTableName, got \(error)")
+            }
+            XCTAssertEqual(tableName, "invalid;drop")
+        }
+    }
+
     func testExportLimedbRemoveAndReimportRestoresSameCustomEntries() async throws {
         let (url, db) = try makeDB()
         defer { try? FileManager.default.removeItem(at: url) }
@@ -588,6 +617,107 @@ final class SetupImControllerTest: XCTestCase {
         let meta = try syncMeta(for: url)
         XCTAssertEqual(try meta.revision(forTable: "custom"), 1)
         XCTAssertEqual(try meta.generation(), 1)
+    }
+
+    func testIssue242ExactTricodeCinImportsAndPublishesEveryRow() async throws {
+        let fixtureURL = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(
+                forResource: "3code_v.20260816.2_utf8-corrected",
+                withExtension: "cin"
+            )
+        )
+        let (liveURL, db) = try makeDB()
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.SetupImController(
+            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: fixtureURL, tableName: "tricode")
+
+        switch result {
+        case .success(let count):
+            XCTAssertEqual(count, 23_359, "Import result must report every chardef row")
+        case .failure(let error):
+            XCTFail("Expected exact Issue #242 fixture import to succeed, got \(error)")
+        }
+        XCTAssertEqual(db.countRecords("tricode", nil, nil), 23_359,
+                       "Live tricode table must contain every fixture row")
+        XCTAssertEqual(db.getImConfig("tricode", "version"), "v.20260816.2",
+                       "Live tricode metadata must retain the fixture version")
+        XCTAssertEqual(db.getImConfig("tricode", "name"), "三碼輸入法",
+                       "Live tricode metadata must retain the fixture name")
+
+        let publishedSnapshot = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: publishedSnapshot.path),
+                      "Import must publish a cold database snapshot")
+        if FileManager.default.fileExists(atPath: publishedSnapshot.path) {
+            XCTAssertEqual(try rawRowCount("tricode", in: publishedSnapshot), 23_359,
+                           "Published cold snapshot must contain every tricode row")
+        }
+    }
+
+    func testIssue242DirectLimeDBParserDifferentialFor0805And0816() throws {
+        let fixtures: [(resource: String, rowCount: Int, version: String)] = [
+            ("3code_v.20260805.2_known-working", 23_299, "v.20260805.2"),
+            ("3code_v.20260816.2_utf8-corrected", 23_359, "v.20260816.2")
+        ]
+
+        for fixture in fixtures {
+            let fixtureURL = try XCTUnwrap(
+                Bundle(for: type(of: self)).url(forResource: fixture.resource,
+                                                withExtension: "cin"),
+                "Missing bundled Issue #242 fixture \(fixture.resource).cin"
+            )
+            let (_, db) = try makeDB()
+
+            try db.importTxtFile(at: fixtureURL.path, tableName: "tricode")
+
+            XCTAssertEqual(db.countRecords("tricode", nil, nil), fixture.rowCount,
+                           "Direct LimeDB parser must import every row from \(fixture.resource).cin")
+            XCTAssertEqual(db.getImConfig("tricode", "version"), fixture.version,
+                           "Direct LimeDB parser must retain the exact version from \(fixture.resource).cin")
+            XCTAssertEqual(db.getImConfig("tricode", "name"), "三碼輸入法",
+                           "Direct LimeDB parser must retain the exact name from \(fixture.resource).cin")
+        }
+    }
+
+    func testIssue242Exact0805TricodeCinImportsAndPublishesEveryRow() async throws {
+        let fixtureURL = try XCTUnwrap(
+            Bundle(for: type(of: self)).url(
+                forResource: "3code_v.20260805.2_known-working",
+                withExtension: "cin"
+            ),
+            "Missing bundled known-working Issue #242 0805 fixture"
+        )
+        let (liveURL, db) = try makeDB()
+        let server = LimeIME.DBServer(_testDatasource: db)
+        let controller = await LimeIME.SetupImController(
+            dbServer: server, prefs: makePrefs(), progress: LimeIME.ProgressManager()
+        )
+
+        let result = await controller.importTxtFile(url: fixtureURL, tableName: "tricode")
+
+        switch result {
+        case .success(let count):
+            XCTAssertEqual(count, 23_299,
+                           "0805 import result must report every chardef row")
+        case .failure(let error):
+            XCTFail("Expected known-working Issue #242 0805 fixture import to succeed, got \(error)")
+        }
+        XCTAssertEqual(db.countRecords("tricode", nil, nil), 23_299,
+                       "Live tricode table must contain every 0805 fixture row")
+        XCTAssertEqual(db.getImConfig("tricode", "version"), "v.20260805.2",
+                       "Live tricode metadata must retain the exact 0805 fixture version")
+        XCTAssertEqual(db.getImConfig("tricode", "name"), "三碼輸入法",
+                       "Live tricode metadata must retain the exact 0805 fixture name")
+
+        let publishedSnapshot = SyncPaths.coldDB(liveURL.deletingLastPathComponent())
+        XCTAssertTrue(FileManager.default.fileExists(atPath: publishedSnapshot.path),
+                      "0805 import must publish a cold database snapshot")
+        if FileManager.default.fileExists(atPath: publishedSnapshot.path) {
+            XCTAssertEqual(try rawRowCount("tricode", in: publishedSnapshot), 23_299,
+                           "Published cold snapshot must contain every 0805 tricode row")
+        }
     }
 
     func testExportIMAsTextIncludesImMetadataFromDatabase() async throws {
