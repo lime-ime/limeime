@@ -8,7 +8,7 @@
 - Reported environment: LIME 6.1.38 on iOS 27, built-in Phonetic IM, HSU (許氏) phonetic keyboard
 - Android: reporter-confirmed working and used as the behavioral oracle
 - Implementation: draft PR #258, https://github.com/lime-ime/limeime/pull/258
-- Last reconciled: 2026-09-19
+- Last reconciled: 2026-09-20
 
 ## Problem statement
 
@@ -81,10 +81,11 @@ not executable: a fresh `LimeDB` creates no `phonetic` table, and the non-throwi
 overload silently discarded both missing-table errors. Commit `3d767bc8` corrects the fixture
 by creating a real `phonetic` table and using the throwing seed path. The corrected focused
 XCTest passed on an iPhone 17 Pro iOS 26.5 simulator, and the updated Linux contract passes
-all four checks. A pre-fix native RED replay did not complete before the simulator runs timed
-out, so that RED evidence, full XCTest, exact-final-head independent review, and iPhone/iPad
-keyboard-extension runtime validation remain outstanding. The PR remains draft and is not
-candidate-ready.
+all four checks. On exact head `684a45b40067d4dd2ee38d116d79279aba5297db`, the full
+XCTest suite subsequently passed 1,194 tests with 5 skips and 0 failures, and an independent
+review found no blocker. A pre-fix native RED replay did not complete before the simulator
+runs timed out, so that RED evidence and iPhone/iPad keyboard-extension runtime validation
+remain outstanding. The PR remains draft and is not candidate-ready.
 
 ## Follow-up questions
 
@@ -92,21 +93,19 @@ No reporter clarification is required to establish the defect. Runtime validatio
 
 ## Verification plan
 
-### Focused source and data checks
+### Completed source, data, and iOS checks
 
-- Capture a completed pre-fix native RED proving iOS HSU remapping omits `晚` for `xmf` and `很` for `hnf`.
-- Preserve the corrected focused XCTest GREEN result and rerun it on the exact final head.
-- Keep or add one-character assertions for every forced-initial HSU key.
-- Verify the exact bundled phonetic database contains `j03 → 晚` and `cp3 → 很`.
-- Add a focused composing-display regression proving HSU and ETEN26 do not apply the
-  syllable-boundary trigger at input position 1, but do apply it after position 1.
+- [x] The corrected focused XCTest GREEN result passed at fixture commit `3d767bc8`; its production and test files are byte-identical at exact head `684a45b40067d4dd2ee38d116d79279aba5297db`.
+- [x] One-character assertions cover every forced-initial HSU key, and the bundled phonetic database contains `j03 → 晚` and `cp3 → 很`.
+- [x] The focused composing-display regression covers the HSU and ETEN26 syllable-boundary guard at and after input position 1.
+- [x] The full applicable iOS XCTest suite passed 1,194 tests with 5 skips and 0 failures on exact head `684a45b40067d4dd2ee38d116d79279aba5297db`.
+- [x] Source-boundary/structural tests and `git diff --check` passed on that exact head.
+- [x] Exact-head independent review found no blocker in remapping parity or the adjacent ETEN and shifted-symbol paths.
 
-### Broader iOS checks
+### Remaining validation
 
-- Run the focused `LimeDBTest` remapping/query tests.
-- Run the full applicable iOS XCTest suite on the exact source head.
-- Run source-boundary/structural tests and `git diff --check`.
-- Independently review the final diff for remapping parity and unintended changes to ETEN or shifted-symbol paths.
+- [ ] Capture a completed pre-fix native RED proving iOS HSU remapping omits `晚` for `xmf` and `很` for `hnf`.
+- [ ] Repeat the full XCTest and independent-review gates if the PR source or tests change after `684a45b40067d4dd2ee38d116d79279aba5297db`.
 
 ### Reporter-visible runtime checks
 
