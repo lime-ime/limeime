@@ -11,7 +11,7 @@
 - Merge commit: `daf9fb260756d1ed1d8954430b9ebfc761e6b58e`
 - Merged: 2026-08-03
 - Shipped: App Store version 6.1.38, publicly available in Taiwan since 2026-08-11
-- Reconciled: 2026-08-24
+- Reconciled: 2026-09-20
 
 PR #223 replaces the discarded ownership-handoff design with the accepted cold/hot
 re-architecture 2. Settings editors now open cold immediately. Explicit editor and
@@ -87,7 +87,7 @@ Issue #209 was created on 2026-07-27 after a private support report supplied dir
 
 The reported environment was LIME 6.1.37 on iOS 26.6 RC. Private mail identity and screenshots are intentionally excluded from this repository document.
 
-The issue was created from the maintainer project account, assigned to `jrywu`, and labeled `bug` and `Usability`. It was automatically closed when PR #223 merged and has no public comments.
+The issue was created from the maintainer project account, assigned to `jrywu`, and labeled `bug` and `Usability`. It was automatically closed when PR #223 merged. After shipped-release verification, the project account posted the public closeout comment on 2026-09-17: https://github.com/lime-ime/limeime/issues/209#issuecomment-5707102754.
 
 ## Reporter-visible failure
 
