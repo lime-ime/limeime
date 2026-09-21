@@ -707,8 +707,10 @@ final class LimeDB {
     func performTableLifecycleMutation(_ mutation: TableLifecycleMutation) throws {
         guard !checkDBConnection() else { throw DBServerError.datasourceUnavailable }
         switch mutation {
-        case let .replaceFromStaging(table, stagingDatabaseURL, preserveLearning, _):
-            let payload = try readStagedTablePayload(stagingDatabaseURL, table: table)
+        case let .replaceFromStaging(table, stagingDatabaseURL, sourceTable, preserveLearning, _):
+            let payload = try readStagedTablePayload(stagingDatabaseURL,
+                                                     table: table,
+                                                     sourceTable: sourceTable)
             try dbQueue.write { db in
                 try ensureColdIntentTables(db)
                 try replaceTableFromPayload(table: table,
@@ -988,9 +990,14 @@ final class LimeDB {
         try deleteSupersededRowFences(table: table, revision: revision, db: db)
     }
 
-    private func readStagedTablePayload(_ url: URL, table: String) throws -> StagedTablePayload {
+    private func readStagedTablePayload(_ url: URL,
+                                        table: String,
+                                        sourceTable explicitSourceTable: String?) throws -> StagedTablePayload {
         guard FileManager.default.fileExists(atPath: url.path) else {
             throw DBServerError.fileNotFound(url.path)
+        }
+        guard isValidTableName(table) else {
+            throw LimeDBError.invalidTableName(table)
         }
         var config = Configuration()
         config.readonly = true
@@ -998,7 +1005,15 @@ final class LimeDB {
         defer { closeQueue(sourceQueue, label: url.path) }
         return try sourceQueue.read { db in
             let sourceTable: String
-            if try db.tableExists("custom") {
+            if let explicitSourceTable {
+                guard isValidTableName(explicitSourceTable) else {
+                    throw LimeDBError.invalidTableName(explicitSourceTable)
+                }
+                guard try db.tableExists(explicitSourceTable) else {
+                    throw DBServerError.invalidStagingDatabase(table)
+                }
+                sourceTable = explicitSourceTable
+            } else if try db.tableExists("custom") {
                 sourceTable = "custom"
             } else if try db.tableExists(table) {
                 sourceTable = table
@@ -1029,11 +1044,21 @@ final class LimeDB {
 
             let imRows: [StagedIMRow]
             if try db.tableExists("im") {
-                imRows = try Row.fetchAll(db, sql: """
-                    SELECT title, desc, keyboard, disable, selkey, endkey, spacestyle
-                    FROM im
-                    WHERE code = ? OR code = 'custom'
-                    """, arguments: [table]).map {
+                let metadataRows: [Row]
+                if explicitSourceTable != nil {
+                    metadataRows = try Row.fetchAll(db, sql: """
+                        SELECT title, desc, keyboard, disable, selkey, endkey, spacestyle
+                        FROM im
+                        WHERE code = ?
+                        """, arguments: [sourceTable])
+                } else {
+                    metadataRows = try Row.fetchAll(db, sql: """
+                        SELECT title, desc, keyboard, disable, selkey, endkey, spacestyle
+                        FROM im
+                        WHERE code = ? OR code = 'custom'
+                        """, arguments: [table])
+                }
+                imRows = metadataRows.map {
                     StagedIMRow(title: $0["title"] as String?,
                                 desc: $0["desc"] as String?,
                                 keyboard: $0["keyboard"] as String?,
