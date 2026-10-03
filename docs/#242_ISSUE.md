@@ -92,11 +92,11 @@ The parser, CIN directives, batching, duplicate handling, portable schema, Andro
 
 ## Current implementation and review state
 
-Draft PR #243 (`fix/242-ios-tricode-cin-import`) is open at `a4c7b5869c678c5adedff98493e70b7382f28fd7`. Its differential tests reproduce the empty-`custom` selection failure and pass after carrying the explicit named source table. Xcode Cloud run 60 reports successful required TEST and ARCHIVE actions at that exact head.
+Draft PR #243 (`fix/242-ios-tricode-cin-import`) is open at current head `0559afb621840e2405f735ae099b634703058e89` (verified 2026-10-03). The earlier executable head `a4c7b5869c678c5adedff98493e70b7382f28fd7` carries the differential tests that reproduce the empty-`custom` selection failure and pass after carrying the explicit named source table. Xcode Cloud run 60 reports successful required TEST and ARCHIVE actions at that earlier exact head, not validation of the current head. The current head merged `origin/master` into the issue branch and remains blocked by the gates below.
 
 The PR is not technically merge-ready. Review of the same backup-compatibility path found that `readStagedTablePayload` reads `im.disable` through `row["disable"] as Int? ?? 0`. GRDB 6.29.3's typed row subscript uses `try! decode`, while LIME's existing `parseBoolFlag` contract explicitly supports Android-compatible mixed INTEGER and TEXT (`true`/`false`) storage. A text-valued backup row can therefore fail at this boundary. Add a focused mixed-storage backup fixture, read the raw `DatabaseValue` through `parseBoolFlag`, and rerun focused/native and independent-review gates on the corrected exact head.
 
-The PR's checked `git diff --check` claim is also stale: the current three-dot diff reports three trailing-whitespace lines in the two byte-pinned CIN fixtures. Reconcile the fixture-preservation requirement with repository hygiene and correct the PR description. Finally, import the exact v.20260816.2 CIN through the Settings UI on a physical iPhone before treating the user-visible path as verified.
+Repository hygiene remains blocked: the current three-dot diff reports three trailing-whitespace lines in the two byte-pinned CIN fixtures. The live PR description now correctly lists this gate as unresolved. Reconcile the fixture-preservation requirement with repository hygiene before rerunning exact-head validation. Finally, import the exact v.20260816.2 CIN through the Settings UI on a physical iPhone before treating the user-visible path as verified.
 
 ## Platform impact
 
