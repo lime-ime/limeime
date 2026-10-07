@@ -656,6 +656,9 @@ func importDatabaseFile(server: DBServer,
                         url: URL,
                         tableName: String,
                         restoreLearning: Bool = false) throws {
+    guard server.isValidTableName(tableName) else {
+        throw LimeDBError.invalidTableName(tableName)
+    }
     let sourceURL: URL
     let cleanupURL: URL?
     if isZipArchive(at: url) {
@@ -674,6 +677,7 @@ func importDatabaseFile(server: DBServer,
     try validateImportDatabaseSource(sourceURL, tableName: tableName)
     try server.performTableLifecycleMutation(.replaceFromStaging(table: tableName,
                                                                  stagingDatabaseURL: sourceURL,
+                                                                 sourceTable: nil,
                                                                  preserveLearning: restoreLearning,
                                                                  publishImmediately: true))
 }

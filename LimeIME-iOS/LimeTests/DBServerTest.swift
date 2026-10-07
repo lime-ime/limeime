@@ -407,6 +407,7 @@ final class DBServerTest: XCTestCase {
 
         try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
                                                                      stagingDatabaseURL: stagingURL,
+                                                                     sourceTable: nil,
                                                                      preserveLearning: true,
                                                                      publishImmediately: false))
 
@@ -426,6 +427,148 @@ final class DBServerTest: XCTestCase {
         XCTAssertTrue(try tableExists("im_lifecycle_intent", in: db))
     }
 
+    func testDatabaseBackupImportUsesCustomAsSourceForDistinctDestination() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB(rows: [("backup", "備份", 7)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let stagingQueue = try DatabaseQueue(path: stagingURL.path)
+        defer { try? stagingQueue.close() }
+        try stagingQueue.write { database in
+            try database.execute(sql: "DELETE FROM im")
+            try database.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES ('dayi', 'name', 'Backup Dayi', '', 0, '', '', '')
+                """)
+            try database.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES ('dayi', 'keyboard', 'limenumsym2', '', 0, '', '', '')
+                """)
+        }
+
+        try server.importFromAttachedDB(sourcePath: stagingURL.path,
+                                        tableName: "dayi",
+                                        publish: false)
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'backup' AND word = '備份' AND score = 7",
+                                    in: db), 1)
+        XCTAssertEqual(db.getImConfig("dayi", "name"), "Backup Dayi")
+        XCTAssertEqual(db.getImConfig("dayi", "keyboard"), "limenumsym2")
+    }
+
+    func testDatabaseBackupImportFallsBackToRequestedSourceTableWhenCustomIsAbsent() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB(rows: [("direct", "直接", 5)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let stagingQueue = try DatabaseQueue(path: stagingURL.path)
+        defer { try? stagingQueue.close() }
+        try stagingQueue.write { database in
+            try database.execute(sql: "ALTER TABLE custom RENAME TO dayi")
+        }
+
+        try server.importFromAttachedDB(sourcePath: stagingURL.path,
+                                        tableName: "dayi",
+                                        publish: false)
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'direct' AND word = '直接' AND score = 5",
+                                    in: db), 1)
+    }
+
+    func testExplicitNamedSourceWinsOverPopulatedCustomAndCommitsLifecycleState() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB(rows: [("backup", "備份", 7)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let stagingQueue = try DatabaseQueue(path: stagingURL.path)
+        defer { try? stagingQueue.close() }
+        try stagingQueue.write { database in
+            try database.execute(sql: "CREATE TABLE dayi AS SELECT * FROM custom WHERE 0")
+            try database.execute(sql: "INSERT INTO dayi (code, word, score) VALUES ('named', '指定', 11)")
+            try database.execute(sql: """
+                INSERT INTO im (code, title, desc, keyboard, disable, selkey, endkey, spacestyle)
+                VALUES ('dayi', 'name', 'Named Dayi', 'limenumsym2', 0, '', '', '')
+                """)
+        }
+
+        try server.performTableLifecycleMutation(.replaceFromStaging(table: "dayi",
+                                                                     stagingDatabaseURL: stagingURL,
+                                                                     sourceTable: "dayi",
+                                                                     preserveLearning: true,
+                                                                     publishImmediately: false))
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'named' AND word = '指定' AND score = 11",
+                                    in: db), 1)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'backup'",
+                                    in: db), 0)
+        XCTAssertEqual(db.getImConfig("dayi", "name"), "Named Dayi")
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM im WHERE code = 'dayi' AND title = 'name'",
+                                    in: db), 1)
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: "dayi"), 1)
+        let lifecycle = try lifecycleIntentRows(in: db, table: "dayi")
+        XCTAssertEqual(lifecycle.count, 1)
+        XCTAssertEqual(lifecycle[0]["action"] as String?, "install")
+        XCTAssertEqual(lifecycle[0]["preserve_learning"] as Int?, 1)
+        let tableFence = try tableFenceRows(in: db, table: "dayi")
+        XCTAssertEqual(tableFence.count, 1)
+        XCTAssertEqual(tableFence[0]["action"] as String?, "replace")
+        XCTAssertEqual(tableFence[0]["revision"] as Int?, 1)
+    }
+
+    func testInvalidUnspecifiedSourceIsRejectedBeforeFallbackInterpolation() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let stagingURL = try makeStagingDB(rows: [("bad", "無效", 1)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+        let stagingQueue = try DatabaseQueue(path: stagingURL.path)
+        defer { try? stagingQueue.close() }
+        try stagingQueue.write { database in
+            try database.execute(sql: "ALTER TABLE custom RENAME TO \"invalid;drop\"")
+        }
+
+        XCTAssertThrowsError(try server.importFromAttachedDB(sourcePath: stagingURL.path,
+                                                              tableName: "invalid;drop",
+                                                              publish: false)) { error in
+            guard case LimeDBError.invalidTableName(let tableName) = error else {
+                return XCTFail("Expected invalidTableName, got \(error)")
+            }
+            XCTAssertEqual(tableName, "invalid;drop")
+        }
+        XCTAssertFalse(try tableExists("im_lifecycle_intent", in: db))
+        XCTAssertFalse(try tableExists("editor_table_fence", in: db))
+    }
+
+    func testInvalidOrMissingExplicitSourceLeavesLiveTableUntouched() throws {
+        let db = try makeLimeDB()
+        let server = DBServer(_testDatasource: db)
+        let liveQueue = try DatabaseQueue(path: db.dbPath())
+        defer { try? liveQueue.close() }
+        try liveQueue.write { database in
+            try database.execute(sql: "CREATE TABLE dayi AS SELECT * FROM custom WHERE 0")
+            try database.execute(sql: "INSERT INTO dayi (code, word, score) VALUES ('old', '原有', 3)")
+        }
+        let stagingURL = try makeStagingDB(rows: [("new", "不應匯入", 9)])
+        defer { try? FileManager.default.removeItem(at: stagingURL) }
+
+        for sourceTable in ["invalid;drop", "dayi"] {
+            XCTAssertThrowsError(try server.performTableLifecycleMutation(
+                .replaceFromStaging(table: "dayi",
+                                    stagingDatabaseURL: stagingURL,
+                                    sourceTable: sourceTable,
+                                    preserveLearning: false,
+                                    publishImmediately: false)
+            ))
+        }
+
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'old' AND word = '原有' AND score = 3",
+                                    in: db), 1)
+        XCTAssertEqual(try intValue("SELECT COUNT(*) FROM dayi WHERE code = 'new'",
+                                    in: db), 0)
+        XCTAssertEqual(try syncMeta(for: db).revision(forTable: "dayi"), 0)
+        XCTAssertFalse(try tableExists("im_lifecycle_intent", in: db))
+        XCTAssertFalse(try tableExists("editor_table_fence", in: db))
+    }
+
     func testTableLifecycleMutationRollsBackLiveRowsWhenIntentInsertFails() throws {
         let db = try makeLimeDB()
         let server = DBServer(_testDatasource: db)
@@ -440,6 +583,7 @@ final class DBServerTest: XCTestCase {
 
         XCTAssertThrowsError(try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
                                                                                           stagingDatabaseURL: stagingURL,
+                                                                                          sourceTable: nil,
                                                                                           preserveLearning: false,
                                                                                           publishImmediately: false)))
         XCTAssertEqual(try intValue("SELECT COUNT(*) FROM custom WHERE code = 'old' AND word = '舊'",
@@ -460,6 +604,7 @@ final class DBServerTest: XCTestCase {
 
         XCTAssertThrowsError(try server.performTableLifecycleMutation(.replaceFromStaging(table: LIME.DB_TABLE_CUSTOM,
                                                                                           stagingDatabaseURL: stagingURL,
+                                                                                          sourceTable: nil,
                                                                                           preserveLearning: false,
                                                                                           publishImmediately: true)))
 
