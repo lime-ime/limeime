@@ -116,6 +116,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.core.os.ConfigurationCompat;
 import androidx.core.content.ContextCompat;
@@ -130,7 +131,54 @@ public class LIMEService extends InputMethodService
     private static final String IMKEYS_CONFIG = "imkeys";
     private static final String IMKEYNAMES_CONFIG = "imkeynames";
 
-    private static Thread queryThread; // queryThread for no-blocking I/O  Jeremy '15,6,1
+    private Thread queryThread; // instance-owned non-blocking candidate I/O worker
+    private final AtomicInteger candidateUiGeneration = new AtomicInteger();
+
+    private synchronized int beginCandidateUiQuery() {
+        int generation = candidateUiGeneration.incrementAndGet();
+        if (queryThread != null && queryThread.isAlive()) {
+            queryThread.interrupt();
+        }
+        return generation;
+    }
+
+    private synchronized void invalidateCandidateUiQueries() {
+        candidateUiGeneration.incrementAndGet();
+        if (queryThread != null && queryThread.isAlive()) {
+            queryThread.interrupt();
+        }
+    }
+
+    private synchronized boolean setSuggestionsIfCurrent(int generation, List<Mapping> suggestions,
+                                                          boolean showNumber, String selkey) {
+        if (generation != candidateUiGeneration.get()) return false;
+        setSuggestions(suggestions, showNumber, selkey);
+        return true;
+    }
+
+    private synchronized boolean setEnglishSuggestionsIfCurrent(int generation,
+                                                                 LinkedList<Mapping> suggestions,
+                                                                 boolean showNumber, String selkey) {
+        if (generation != candidateUiGeneration.get()) return false;
+        tempEnglishList.clear();
+        tempEnglishList.addAll(suggestions);
+        setEnglishPredictionSuggestions(suggestions, showNumber, selkey);
+        return true;
+    }
+
+    private synchronized boolean clearSuggestionsIfCurrent(int generation,
+                                                            boolean clearCommittedCandidate) {
+        if (generation != candidateUiGeneration.get()) return false;
+        if (clearCommittedCandidate) committedCandidate = null;
+        clearSuggestions();
+        return true;
+    }
+
+    private synchronized void setCandidateComposingTextIfCurrent(int generation, String text) {
+        if (generation == candidateUiGeneration.get() && mCandidateView != null) {
+            mCandidateView.setComposingText(text);
+        }
+    }
 
     static final int KEYCODE_SWITCH_TO_SYMBOL_MODE = -2;
     static final int KEYCODE_SWITCH_TO_ENGLISH_MODE = -9;
@@ -648,6 +696,7 @@ public class LIMEService extends InputMethodService
     @Override
     public void onFinishInput() {
 
+        invalidateCandidateUiQueries();
         if (DEBUG) {
             Log.i(TAG, "onFinishInput()");
         }
@@ -699,6 +748,7 @@ public class LIMEService extends InputMethodService
     private void finishComposing() {
         if (DEBUG)
             Log.i(TAG, "finishComposing()");
+        invalidateCandidateUiQueries();
         //Jeremy '11,8,14
         if (mComposing != null && mComposing.length() > 0)
             mComposing.setLength(0);
@@ -727,6 +777,7 @@ public class LIMEService extends InputMethodService
         //Log.i(TAG, "===========> clear composing");
 
         try {
+            invalidateCandidateUiQueries();
             //Jeremy '11,8,14
             if (mComposing != null && mComposing.length() > 0)
                 mComposing.setLength(0);
@@ -4502,6 +4553,7 @@ public class LIMEService extends InputMethodService
         if (DEBUG) Log.i(TAG, "updateCandidate():Update Candidate mComposing:" + mComposing);
 
         hasChineseSymbolCandidatesShown = false;
+        final int queryGeneration = beginCandidateUiQuery();
 
         if (mComposing.length() > 0) {
 
@@ -4522,7 +4574,6 @@ public class LIMEService extends InputMethodService
 
             final String finalKeyString = keyString;
             final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
-            if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
             queryThread = new Thread() {
 
                 public void run() {
@@ -4536,11 +4587,17 @@ public class LIMEService extends InputMethodService
                     } catch (RemoteException e) {
                         Log.e(TAG, "Error in suggestion processing", e);
                     }
+                    if (queryGeneration != candidateUiGeneration.get()) {
+                        return;
+                    }
                     try {
                         sleep(THREAD_YIELD_DELAY_MS);
                     } catch (InterruptedException e) {
                         Log.e(TAG, "Error in suggestion processing", e);
                         return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
+                    }
+                    if (queryGeneration != candidateUiGeneration.get()) {
+                        return;
                     }
                     //Jeremy '11,6,19 EZ and ETEN use "`" as IM Keys, and also custom may use "`".
                     if (!list.isEmpty()) {
@@ -4641,14 +4698,15 @@ public class LIMEService extends InputMethodService
                             }
                         }
 
-                        setSuggestions(list, finalHasPhysicalKeyPressed, selkey);
+                        if (!setSuggestionsIfCurrent(queryGeneration, list,
+                                finalHasPhysicalKeyPressed, selkey)) return;
 
                         if (DEBUG) Log.i(TAG, "updateCandidates(): display selkey:" + selkey
                                 + ", list.size:" + list.size()
                                 + ", mComposing = " + mComposing);
                     } else {
                         //Jeremy '11,8,14
-                        clearSuggestions();
+                        if (!clearSuggestionsIfCurrent(queryGeneration, false)) return;
                     }
 
                     // Show composing window if keyToKeyname got different string. Revised by Jeremy '11,6,4
@@ -4666,7 +4724,7 @@ public class LIMEService extends InputMethodService
                                 // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 return;
                             }
-                            mCandidateView.setComposingText(keynameString);
+                            setCandidateComposingTextIfCurrent(queryGeneration, keynameString);
                         }
                     }
                 }
@@ -4685,6 +4743,7 @@ public class LIMEService extends InputMethodService
     private void updateEnglishPrediction() {
 
         hasChineseSymbolCandidatesShown = false;
+        final int queryGeneration = beginCandidateUiQuery();
         if (mPredictionOn && mLIMEPref.getEnglishPrediction()) {
 
             try {
@@ -4734,12 +4793,12 @@ public class LIMEService extends InputMethodService
                         tempEnglishList.clear();
 
                         final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
-                        if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
+                        final String queriedEnglishWord = tempEnglishWord.toString();
                         queryThread = new Thread() {
                             public void run() {
                                 List<Mapping> suggestions = null;
                                 try {
-                                    suggestions = SearchSrv.getEnglishSuggestions(tempEnglishWord.toString());
+                                    suggestions = SearchSrv.getEnglishSuggestions(queriedEnglishWord);
                                 } catch (RemoteException e) {
                                     Log.e(TAG, "Error in suggestion processing", e);
                                 }
@@ -4750,7 +4809,7 @@ public class LIMEService extends InputMethodService
                                     return;   // terminate thread here, since it is interrupted and more recent getMappingByCode will update the suggestions.
                                 }
 
-                                list.addAll(buildEnglishPredictionCandidates(tempEnglishWord.toString(), suggestions));
+                                list.addAll(buildEnglishPredictionCandidates(queriedEnglishWord, suggestions));
 
                                 if (!list.isEmpty()) {
                                     // Setup sel key display if
@@ -4799,14 +4858,14 @@ public class LIMEService extends InputMethodService
 
 
                                     //Log.i("EMOJIbefore:", tempEnglishList.size() + "");
-                                    tempEnglishList.addAll(list);
-                                    setEnglishPredictionSuggestions(list, finalHasPhysicalKeyPressed, selkey);
+                                    if (!setEnglishSuggestionsIfCurrent(queryGeneration, list,
+                                            finalHasPhysicalKeyPressed, selkey)) return;
 
                                     //Log.i("EMOJIafter:", tempEnglishList.size() + "");
 
                                 } else {
                                     //Jeremy '11,8,14
-                                    clearSuggestions();
+                                    clearSuggestionsIfCurrent(queryGeneration, false);
                                 }
                             }
                         };
@@ -4829,6 +4888,7 @@ public class LIMEService extends InputMethodService
         if (DEBUG)
             Log.i(TAG, "updateRelatedPhrase()");
         hasChineseSymbolCandidatesShown = false;
+        final int queryGeneration = beginCandidateUiQuery();
         // Also use this to control whether need to display the english
         // suggestions words.
 
@@ -4841,7 +4901,6 @@ public class LIMEService extends InputMethodService
                 && !relatedCandidate.getWord().isEmpty()) {
 
             final boolean finalHasPhysicalKeyPressed = hasPhysicalKeyPressed;
-            if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
             queryThread = new Thread() {
                 public void run() {
 
@@ -4854,7 +4913,6 @@ public class LIMEService extends InputMethodService
 
 
                     if (hasMappingList) {
-                        if (queryThread != null && queryThread.isAlive()) queryThread.interrupt();
                         try {
                             if (!relatedCandidate.isEmojiRecord() && !relatedCandidate.isChinesePunctuationSymbolRecord()) {
                                 list.addAll(SearchSrv.getRelatedByWord(relatedCandidate.getWord(), getAllRecords));
@@ -4872,11 +4930,11 @@ public class LIMEService extends InputMethodService
                                 selkey = "";
                             }
 
-                            setSuggestions(list, finalHasPhysicalKeyPressed && !isFullscreenMode(), selkey);
+                            setSuggestionsIfCurrent(queryGeneration, list,
+                                    finalHasPhysicalKeyPressed && !isFullscreenMode(), selkey);
                         } else {
-                            committedCandidate = null;
                             //Jermy '11,8,14
-                            clearSuggestions();
+                            clearSuggestionsIfCurrent(queryGeneration, true);
                         }
                     }
                 }
@@ -6293,6 +6351,8 @@ public class LIMEService extends InputMethodService
         if (DEBUG)
             Log.i(TAG, "onDestroy()");
 
+        invalidateCandidateUiQueries();
+
         // Stop monitoring IME changes when service is destroyed
         stopMonitoringIMEChanges();
         if (mDictationController != null) {
@@ -6346,6 +6406,7 @@ public class LIMEService extends InputMethodService
     public void onFinishInputView(boolean finishingInput) {
         if (DEBUG)
             Log.i(TAG, "onFinishInputView()");
+        invalidateCandidateUiQueries();
         super.onFinishInputView(finishingInput);
         cancelInlineDictation();
         resetEmojiKeyboardState();
