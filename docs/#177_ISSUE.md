@@ -4,7 +4,8 @@
 
 - GitHub issue: https://github.com/lime-ime/limeime/issues/177
 - Classification: `bug`, `Type-Defect`, `Usability`
-- State: closed. PR #180 and the iPad-narrow follow-up from PR #183 are included in iOS v6.1.35 build 22, which passed Xcode Cloud and is waiting for App Store review. Reporter verification remains pending.
+- State: closed, source-fixed and publicly delivered, with physical-device validation still pending. PR #180 and the iPad-narrow follow-up from PR #183 are included in iOS v6.1.35 build 22. Historical Xcode Cloud verification applies to that release candidate, not to every later head.
+- Closeout: project-account defect tracker, not a community-created bug report. Preserve the existing closed state. No GitHub reporter-retest request or seven-day waiting period applies.
 - Platform: iOS
 
 ## Problem statement
@@ -82,8 +83,9 @@ Match Android and reuse existing iOS resources. No new keyboard layout family is
 
 - [x] Correct the iPad-narrow fallback so every selected `lime_number` variant provides a working English switch.
 - [x] Add a semantic assertion that requires the correct mode key across committed iPad layout variants.
-- [x] Run iOS tests and archive through Xcode Cloud for v6.1.35 build 22.
-- [ ] Verify App Store delivery and complete reporter/device retesting.
+- [x] Run iOS tests and archive through Xcode Cloud on v6.1.35 candidate `5eaa5953afaa328dbbb4faedfd758ea65ed8bbf2`. GitHub retains both successful action checks and overall workflow status. This is separate from the App Store build-22 delivery readback.
+- [x] Verify App Store delivery of v6.1.35 build 22. App Store Connect now records it as `READY_FOR_SALE` / `READY_FOR_DISTRIBUTION`, with build `945e8c3d-bb34-47d1-b613-0a98a12d87df` (`VALID`, `APP_STORE_ELIGIBLE`).
+- [ ] Complete physical-device verification of the reported custom-IM path. Do not treat source acceptance, CI success, public delivery, or issue closure as runtime-resolution proof.
 - Verify on iPhone and iPad:
   - another IM → custom switches the layout immediately
   - custom → another IM switches back immediately
@@ -92,3 +94,12 @@ Match Android and reuse existing iOS resources. No new keyboard layout family is
   - custom Chinese composition → English → custom composition
   - fresh and upgraded databases
   - user-selected custom keyboard layouts remain preserved
+
+## Evidence reconciliation — 2026-10-07
+
+- Both accepted fixing merges are ancestors of `origin/master`, `v6.1.35`, and `v6.1.38`. PR #183's merge is `bc05231f3d17f8300e30c7c84e5f5fe94bfa63ee`. The narrow English-switch source gap found immediately after PR #180 was corrected by that separate follow-up, not left as new implementation work under #177.
+- Live GitHub check runs on the v6.1.35 candidate `5eaa5953afaa328dbbb4faedfd758ea65ed8bbf2` retain successful Xcode Cloud TEST and ARCHIVE results and a successful overall workflow status, linked to historical run `1837ed7f-85be-43ec-9cbb-1d5bb68e8b84`. Apple currently returns 404 for that historical run and empty product/workflow run collections. Preserve the historical pass with its GitHub evidence, without claiming fresh Apple action-level re-verification.
+- App Store Connect confirms the delivered v6.1.35 build 22. Its current v6.1.38 version also reports `READY_FOR_SALE` with build 1, and the Taiwan public lookup independently shows v6.1.38. The GitHub release tag is source-containment evidence, not by itself the provenance of the later App Store replacement build.
+- Focused Linux checks on documentation base `0d1d47eb994f313b31284a0e00fa0fe9e0e22908` passed: custom-IM contract (12), all-iPad mode-key contract (4), and number/symbol layout contract (6). These are structural checks, not rendered keyboard-extension tests.
+- This reconciliation changes documentation only. No new executable head or candidate is introduced, so no new exact-head native gate is created by this transaction. Future executable changes retain their normal native verification requirements.
+- Canonical `fix#177` belongs under `Fixed — pending validation or delivery`, retaining the custom-IM device scenarios above. Android remains the working reference and requires no source change. The resource-generation correction remains separately attributed to #181 / PR #183.

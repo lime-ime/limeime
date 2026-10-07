@@ -6,7 +6,8 @@
 - Pull request: https://github.com/lime-ime/limeime/pull/183
 - Classification: bug, usability, iPad narrow layout generation
 - Platform: iOS iPad layouts only. Phone JSON and Android XML resources are unchanged.
-- State: PR #183 merged and issue #181 closed. Included in iOS v6.1.35 build 22, which passed Xcode Cloud and is waiting for App Store review.
+- State: PR #183 merged and issue #181 closed. Source-fixed and publicly delivered in iOS v6.1.35 build 22, with rendered full/narrow iPad device validation still pending.
+- Origin and closeout: non-private maintainer/project-account defect tracker. Preserve its accepted source closure. No GitHub reporter-retest request or seven-day wait applies, and closure does not prove rendered runtime resolution.
 - Final PR head: `dc8fa0159903b60137daf1ebd775d8db539382e1`
 - Merge commit: `bc05231f3d17f8300e30c7c84e5f5fe94bfa63ee`
 
@@ -65,4 +66,12 @@ Their full iPad siblings already use `-9`, confirming a narrow-trimming defect.
 - Generator rerun is deterministic.
 - Final generated-resource diff contains exactly the five narrow Chinese-mode layouts.
 - `git diff --check` passes.
-- Source merge and Xcode Cloud verification are complete for iOS v6.1.35 build 22. Rendered full/narrow iPad verification and verified App Store delivery remain pending.
+- Source merge is complete. Historical Xcode Cloud TEST/ARCHIVE checks and overall workflow status pass on v6.1.35 candidate `5eaa5953afaa328dbbb4faedfd758ea65ed8bbf2`. Separately, App Store delivery of v6.1.35 build 22 is verified. Rendered full/narrow iPad physical-device verification remains pending.
+
+## Evidence reconciliation — 2026-10-07
+
+- Merge `bc05231f3d17f8300e30c7c84e5f5fe94bfa63ee` is contained in `origin/master`, `v6.1.35`, and `v6.1.38`. Current `lime_number_ipad_narrow.json` retains `-9` / `abc`. Do not reimplement this accepted correction under #177 or #181.
+- Live GitHub check runs and overall workflow status on v6.1.35 candidate `5eaa5953afaa328dbbb4faedfd758ea65ed8bbf2` retain successful Xcode Cloud TEST and ARCHIVE evidence for historical run `1837ed7f-85be-43ec-9cbb-1d5bb68e8b84`. Apple currently returns 404 for the historical run and empty product/workflow run collections, so this is retained exact-candidate evidence, not a fresh action-level Apple readback.
+- App Store Connect records v6.1.35 as `READY_FOR_SALE` / `READY_FOR_DISTRIBUTION`, attached to build 22 (`945e8c3d-bb34-47d1-b613-0a98a12d87df`, `VALID`, `APP_STORE_ELIGIBLE`). The former waiting-for-review wording is historical, not the current delivery state. Current v6.1.38 is independently visible through the Taiwan public lookup and attached to valid eligible build 1 in App Store Connect.
+- Linux contracts on documentation base `0d1d47eb994f313b31284a0e00fa0fe9e0e22908` passed: custom IM (12), all-iPad mode keys (4), and number/symbol layouts (6). They do not replace rendered device tests.
+- No new executable head is introduced by this documentation-only reconciliation. The historical native pass is not an outstanding unexecuted gate and is not generalized to later executable changes. Keep canonical `fix#181` in `Fixed — pending validation or delivery` for rendered full/narrow iPad checks, preserving neutral symbol-overlay behavior and keeping #177's custom-IM workflow separate.
