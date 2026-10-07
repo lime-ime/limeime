@@ -34,6 +34,16 @@ Xcode Cloud run 52 executed the required full `LimeTests` action at `1a2a781bc41
 - Both 60-second tests passed once on one iOS 26.5 simulator from the exact `v6.1.38` tag.
 - Xcode Cloud run 60 passed its required TEST and ARCHIVE actions at PR #243 head `a4c7b5869c678c5adedff98493e70b7382f28fd7`; these two tests were unchanged from `v6.1.38`.
 
+### 2026-08-21 local remediation evidence
+
+The exact `origin/master` head `8724ffb97d8eb8f85b9c688b3328dd00cb675905` was exercised on the project macOS host with Xcode 26.6 and an iOS 26.5 iPhone 17 Pro simulator:
+
+- With process relaunch enabled for every repetition, both tests passed in 19 completed iterations. Xcode then failed before the twentieth iteration because the cloned simulator could not launch `org.limeime`. The result was an XCTest host-launch failure, not either production-seam timeout.
+- With one test process and 20 repetitions, both tests passed all 20 iterations. The cold-role test ranged from 0.346 to 3.399 seconds, and the hot-role test ranged from 0.310 to 0.433 seconds.
+- The first remediation slice adds thread-safe phase tracing around bootstrap, learning submission, finish enqueue, completion callback, and database inspection. Timeout failures now report the last completed phase rather than only a generic XCTest timeout. Production code and the 60-second deadlock guard remain unchanged while evidence is gathered.
+
+This local run does not reproduce the historical Xcode Cloud completion timeout. It does establish a separate simulator relaunch boundary and provides the diagnostics needed to distinguish Cloud queue non-execution from bootstrap or inspection delay on the next failing run.
+
 A later green run does not erase the earlier cross-destination timeout or prove repeatability. It does narrow this issue to synchronization and test-environment reliability unless an independent production reproduction is found.
 
 ## Architecture preflight

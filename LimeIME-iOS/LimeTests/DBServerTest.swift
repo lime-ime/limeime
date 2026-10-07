@@ -60,6 +60,25 @@ private final class ThreadSafeError: @unchecked Sendable {
     }
 }
 
+private final class ProductionSeamTrace: @unchecked Sendable {
+    private let lock = NSLock()
+    private let startedAt = ProcessInfo.processInfo.systemUptime
+    private var phases: [String] = []
+
+    func mark(_ phase: String) {
+        let elapsed = ProcessInfo.processInfo.systemUptime - startedAt
+        lock.lock()
+        phases.append(String(format: "%.3fs %@", elapsed, phase))
+        lock.unlock()
+    }
+
+    var summary: String {
+        lock.lock()
+        defer { lock.unlock() }
+        return phases.joined(separator: " -> ")
+    }
+}
+
 // MARK: - DBServerTest
 final class DBServerTest: XCTestCase {
 
@@ -608,9 +627,12 @@ final class DBServerTest: XCTestCase {
         try FileManager.default.createDirectory(at: hotDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: hotDir) }
 
+        let trace = ProductionSeamTrace()
+        trace.mark("hot bootstrap starting")
         let server = DBServer(_testDatabaseDirectory: hotDir, tracksHotLearning: true)
         let context = try server.prepareKeyboardRuntimeDatabase()
         let ss = context.searchServer
+        trace.mark("hot bootstrap completed")
 
         // Drive learning the way the keyboard does: commit two candidates, then the
         // dismiss path (postFinishInput) performs the related-phrase learning write.
@@ -621,11 +643,20 @@ final class DBServerTest: XCTestCase {
                              recordType: Mapping.RecordType.exactMatchToCode)
         ss.learnRelatedPhraseAndUpdateScore(first)
         ss.learnRelatedPhraseAndUpdateScore(second)
+        trace.mark("hot learning submitted")
 
         let finished = expectation(description: "postFinishInput learning completed")
-        ss.postFinishInput { finished.fulfill() }
-        wait(for: [finished], timeout: 60.0)
+        ss.postFinishInput {
+            trace.mark("hot completion callback")
+            finished.fulfill()
+        }
+        trace.mark("hot finish enqueued")
+        let waitResult = XCTWaiter.wait(for: [finished], timeout: 60.0)
+        XCTAssertEqual(waitResult, .completed,
+                       "hot production seam did not complete; phases: \(trace.summary)")
+        guard waitResult == .completed else { return }
 
+        trace.mark("hot inspection starting")
         let queue = try DatabaseQueue(path: hotDir.appendingPathComponent("lime.db").path)
         defer { try? queue.close() }
         let journaled = try queue.read { db -> [String] in
@@ -636,7 +667,7 @@ final class DBServerTest: XCTestCase {
                 .map { "\($0["tbl"] as String? ?? "")|\($0["k1"] as String? ?? "")|\($0["k2"] as String? ?? "")" }
         }
         XCTAssertTrue(journaled.contains("related|甲|乙"),
-                      "keyboard-role learning through the production DBServer→SearchServer seam must journal learn_outbox; got \(journaled)")
+                      "keyboard-role learning through the production DBServer→SearchServer seam must journal learn_outbox; got \(journaled); phases: \(trace.summary)")
     }
 
     func testAppRoleRuntimeDoesNotCreateLearnOutbox() throws {
@@ -647,9 +678,12 @@ final class DBServerTest: XCTestCase {
         try FileManager.default.createDirectory(at: coldDir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: coldDir) }
 
+        let trace = ProductionSeamTrace()
+        trace.mark("cold bootstrap starting")
         let server = DBServer(_testDatabaseDirectory: coldDir)
         let context = try server.prepareKeyboardRuntimeDatabase()
         let ss = context.searchServer
+        trace.mark("cold bootstrap completed")
         ss.candidateSuggestion = true
         ss.learnRelatedPhraseAndUpdateScore(
             Mapping(id: 0, code: "aa", word: "甲", score: 0, baseScore: 0,
@@ -657,14 +691,24 @@ final class DBServerTest: XCTestCase {
         ss.learnRelatedPhraseAndUpdateScore(
             Mapping(id: 0, code: "bb", word: "乙", score: 0, baseScore: 0,
                     recordType: Mapping.RecordType.exactMatchToCode))
+        trace.mark("cold learning submitted")
         let finished = expectation(description: "postFinishInput learning completed")
-        ss.postFinishInput { finished.fulfill() }
-        wait(for: [finished], timeout: 60.0)
+        ss.postFinishInput {
+            trace.mark("cold completion callback")
+            finished.fulfill()
+        }
+        trace.mark("cold finish enqueued")
+        let waitResult = XCTWaiter.wait(for: [finished], timeout: 60.0)
+        XCTAssertEqual(waitResult, .completed,
+                       "cold production seam did not complete; phases: \(trace.summary)")
+        guard waitResult == .completed else { return }
 
+        trace.mark("cold inspection starting")
         let queue = try DatabaseQueue(path: coldDir.appendingPathComponent("lime.db").path)
         defer { try? queue.close() }
         let outboxExists = try queue.read { db in try db.tableExists("learn_outbox") }
-        XCTAssertFalse(outboxExists, "cold-role datasource must not create learn_outbox")
+        XCTAssertFalse(outboxExists,
+                       "cold-role datasource must not create learn_outbox; phases: \(trace.summary)")
     }
 
     func testDBServerGetInstanceWithoutContext() {
